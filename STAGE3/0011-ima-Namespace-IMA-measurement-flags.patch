@@ -1,0 +1,30 @@
+From 5aa425d536fd3cb87ced90010ee8c773cae8b69b Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.ibm.com>
+Date: Fri, 3 Dec 2021 10:41:45 -0500
+Subject: [PATCH 11/17] ima: Namespace IMA measurement flags
+
+Support IMA measurements in IMA namespaces.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/ima/ima.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+index fee5483ead09..439a0b1c362c 100644
+--- a/security/integrity/ima/ima.h
++++ b/security/integrity/ima/ima.h
+@@ -489,8 +489,8 @@ static inline void ima_free_modsig(struct modsig *modsig)
+ }
+ #endif /* CONFIG_IMA_APPRAISE_MODSIG */
+ 
+-#define IMA_NS_STATUS_ACTIONS   IMA_AUDIT
+-#define IMA_NS_STATUS_FLAGS     IMA_AUDITED
++#define IMA_NS_STATUS_ACTIONS   (IMA_AUDIT | IMA_MEASURE)
++#define IMA_NS_STATUS_FLAGS     (IMA_AUDITED | IMA_MEASURED)
+ 
+ int ima_ns_init(void);
+ struct ima_namespace;
+-- 
+2.31.1
+

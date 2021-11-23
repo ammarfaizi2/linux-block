@@ -1,0 +1,198 @@
+From 3dbd0d97e8347d9aebdde116bc543ee1aeadb38e Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.ibm.com>
+Date: Tue, 30 Nov 2021 21:10:46 -0500
+Subject: [PATCH] ima: Implement a hash memory for hierarchical processing
+
+This seems not necessary due to caching occurring with in the iint (?).
+---
+ security/integrity/ima/ima.h          | 12 ++++++-
+ security/integrity/ima/ima_api.c      | 48 ++++++++++++++++++++++++---
+ security/integrity/ima/ima_appraise.c |  2 +-
+ security/integrity/ima/ima_main.c     |  9 +++--
+ 4 files changed, 61 insertions(+), 10 deletions(-)
+
+diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+index 9bcd71bb716c..23ae9d7cd9e9 100644
+--- a/security/integrity/ima/ima.h
++++ b/security/integrity/ima/ima.h
+@@ -114,6 +114,15 @@ struct ima_kexec_hdr {
+ 	u64 count;
+ };
+ 
++/* To remember hashes that have already been calculated in namespaces */
++struct ima_hash_memory {
++	int last_valid;
++	struct hash {
++		enum hash_algo algo;
++		char buffer[sizeof(struct ima_digest_data) + IMA_MAX_DIGEST_SIZE];
++	} hashes[5];
++};
++
+ extern const int read_idmap[];
+ 
+ #ifdef CONFIG_HAVE_IMA_KEXEC
+@@ -261,7 +270,8 @@ int ima_get_action(struct ima_namespace *ns,
+ int ima_must_measure(struct inode *inode, int mask, enum ima_hooks func);
+ int ima_collect_measurement(struct integrity_iint_cache *iint,
+ 			    struct file *file, void *buf, loff_t size,
+-			    enum hash_algo algo, struct modsig *modsig);
++			    enum hash_algo algo, struct modsig *modsig,
++			    struct ima_hash_memory *ihm);
+ void ima_store_measurement(struct ima_namespace *ns,
+ 			   struct integrity_iint_cache *iint, struct file *file,
+ 			   const unsigned char *filename,
+diff --git a/security/integrity/ima/ima_api.c b/security/integrity/ima/ima_api.c
+index 71c5517fe8bc..085ee3cfc530 100644
+--- a/security/integrity/ima/ima_api.c
++++ b/security/integrity/ima/ima_api.c
+@@ -204,6 +204,32 @@ int ima_get_action(struct ima_namespace *ns,
+ 				allowed_algos);
+ }
+ 
++static const char *ima_hash_memory_get(struct ima_hash_memory *ihm, enum hash_algo algo)
++{
++	int i;
++
++	for (i = 0; i <= ihm->last_valid; i++) {
++		printk(KERN_INFO "Finding hash %d: %d\n", algo, ihm->hashes[i].algo);
++		if (algo == ihm->hashes[i].algo)
++			return ihm->hashes[i].buffer;
++	}
++
++	return NULL;
++}
++
++static void ima_hash_memory_add(struct ima_hash_memory *ihm, enum hash_algo algo,
++				const char *buffer, size_t buflen)
++{
++	int i = ihm->last_valid + 1;
++	if (i < ARRAY_SIZE(ihm->hashes)) {
++		if (get_current_ns() != &init_ima_ns)
++			printk(KERN_INFO "Adding hash %d to memory\n", algo);
++		ihm->last_valid++;
++		ihm->hashes[i].algo = algo;
++		memcpy(ihm->hashes[i].buffer, buffer, buflen);
++	}
++}
++
+ /*
+  * ima_collect_measurement - collect file measurement
+  *
+@@ -216,7 +242,8 @@ int ima_get_action(struct ima_namespace *ns,
+  */
+ int ima_collect_measurement(struct integrity_iint_cache *iint,
+ 			    struct file *file, void *buf, loff_t size,
+-			    enum hash_algo algo, struct modsig *modsig)
++			    enum hash_algo algo, struct modsig *modsig,
++			    struct ima_hash_memory *ihm)
+ {
+ 	const char *audit_cause = "failed";
+ 	struct inode *inode = file_inode(file);
+@@ -224,11 +251,11 @@ int ima_collect_measurement(struct integrity_iint_cache *iint,
+ 	int result = 0;
+ 	int length;
+ 	void *tmpbuf;
+-	u64 i_version;
+ 	struct {
+ 		struct ima_digest_data hdr;
+ 		char digest[IMA_MAX_DIGEST_SIZE];
+ 	} hash;
++	const char *target_hash;
+ 
+ 	/*
+ 	 * Always collect the modsig, because IMA might have already collected
+@@ -241,12 +268,19 @@ int ima_collect_measurement(struct integrity_iint_cache *iint,
+ 	if (iint->flags & IMA_COLLECTED)
+ 		goto out;
+ 
++	if (ihm) {
++		target_hash = ima_hash_memory_get(ihm, algo);
++		if (target_hash) {
++			printk(KERN_INFO "EXISTING HASH!\n");
++			goto skip_hashcalc;
++		}
++	}
++
+ 	/*
+ 	 * Dectecting file change is based on i_version. On filesystems
+ 	 * which do not support i_version, support is limited to an initial
+ 	 * measurement/appraisal/audit.
+ 	 */
+-	i_version = inode_query_iversion(inode);
+ 	hash.hdr.algo = algo;
+ 
+ 	/* Initialize hash digest to 0's in case of failure */
+@@ -260,6 +294,10 @@ int ima_collect_measurement(struct integrity_iint_cache *iint,
+ 	if (result && result != -EBADF && result != -EINVAL)
+ 		goto out;
+ 
++	ima_hash_memory_add(ihm, algo, (const char *)&hash, length);
++	target_hash = (const char *)&hash;
++
++skip_hashcalc:
+ 	length = sizeof(hash.hdr) + hash.hdr.length;
+ 	tmpbuf = krealloc(iint->ima_hash, length, GFP_NOFS);
+ 	if (!tmpbuf) {
+@@ -268,8 +306,8 @@ int ima_collect_measurement(struct integrity_iint_cache *iint,
+ 	}
+ 
+ 	iint->ima_hash = tmpbuf;
+-	memcpy(iint->ima_hash, &hash, length);
+-	iint->version = i_version;
++	memcpy(iint->ima_hash, target_hash, length);
++	iint->version = inode_query_iversion(inode);
+ 
+ 	/* Possibly temporary failure due to type of read (eg. O_DIRECT) */
+ 	if (!result)
+diff --git a/security/integrity/ima/ima_appraise.c b/security/integrity/ima/ima_appraise.c
+index b0c1992d8c4b..29739e970a97 100644
+--- a/security/integrity/ima/ima_appraise.c
++++ b/security/integrity/ima/ima_appraise.c
+@@ -506,7 +506,7 @@ void ima_update_xattr(struct integrity_iint_cache *iint, struct file *file)
+ 	    !(iint->flags & IMA_HASH))
+ 		return;
+ 
+-	rc = ima_collect_measurement(iint, file, NULL, 0, ima_hash_algo, NULL);
++	rc = ima_collect_measurement(iint, file, NULL, 0, ima_hash_algo, NULL, NULL);
+ 	if (rc < 0)
+ 		return;
+ 
+diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
+index 42cbcaf2dc1e..818654a711ab 100644
+--- a/security/integrity/ima/ima_main.c
++++ b/security/integrity/ima/ima_main.c
+@@ -202,7 +202,7 @@ void ima_file_free(struct file *file)
+ static int _process_measurement(struct ima_namespace *ns,
+ 				struct file *file, const struct cred *cred,
+ 				u32 secid, char *buf, loff_t size, int mask,
+-				enum ima_hooks func)
++				enum ima_hooks func, struct ima_hash_memory *ihm)
+ {
+ 	struct inode *inode = file_inode(file);
+ 	struct integrity_iint_cache *iint = NULL;
+@@ -346,7 +346,7 @@ static int _process_measurement(struct ima_namespace *ns,
+ 
+ 	hash_algo = ima_get_hash_algo(xattr_value, xattr_len);
+ 
+-	rc = ima_collect_measurement(iint, file, buf, size, hash_algo, modsig);
++	rc = ima_collect_measurement(iint, file, buf, size, hash_algo, modsig, ihm);
+ 	if (rc != 0 && rc != -EBADF && rc != -EINVAL)
+ 		goto out_locked;
+ 
+@@ -411,9 +411,12 @@ static int process_measurement(struct ima_namespace *ns,
+ {
+ 	int ret = 0;
+ 	struct user_namespace *user_ns;
++	struct ima_hash_memory ihm;
++
++	ihm.last_valid = -1;
+ 
+ 	do {
+-		ret = _process_measurement(ns, file, cred, secid, buf, size, mask, func);
++		ret = _process_measurement(ns, file, cred, secid, buf, size, mask, func, &ihm);
+ 		if (ret)
+ 			break;
+ 		user_ns = ns->user_ns->parent;
+-- 
+2.31.1
+

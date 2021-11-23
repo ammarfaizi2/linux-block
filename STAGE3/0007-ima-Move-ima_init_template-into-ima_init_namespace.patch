@@ -1,0 +1,68 @@
+From fc75fb8799b761d8f2674a25ca2766c7234400a5 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.ibm.com>
+Date: Thu, 16 Dec 2021 08:47:33 -0500
+Subject: [PATCH 07/17] ima: Move ima_init_template() into ima_init_namespace()
+
+To preserve the order of initilization, move ima_init_template()
+and ima_load_kexec_buffer() into ima_init_namespace() and only call them
+for initialization of init_ima_ns.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/ima/ima_init.c        |  7 -------
+ security/integrity/ima/ima_init_ima_ns.c | 21 ++++++++++++++++++++-
+ 2 files changed, 20 insertions(+), 8 deletions(-)
+
+diff --git a/security/integrity/ima/ima_init.c b/security/integrity/ima/ima_init.c
+index be7467de00a9..4e62c495e324 100644
+--- a/security/integrity/ima/ima_init.c
++++ b/security/integrity/ima/ima_init.c
+@@ -123,13 +123,6 @@ int __init ima_init(void)
+ 	if (rc)
+ 		return rc;
+ 
+-	rc = ima_init_template();
+-	if (rc != 0)
+-		return rc;
+-
+-	/* It can be called before ima_init_digests(), it does not use TPM. */
+-	ima_load_kexec_buffer();
+-
+ 	rc = ima_init_digests(&init_ima_ns);
+ 	if (rc != 0)
+ 		return rc;
+diff --git a/security/integrity/ima/ima_init_ima_ns.c b/security/integrity/ima/ima_init_ima_ns.c
+index 96951009dd19..f288d033150b 100644
+--- a/security/integrity/ima/ima_init_ima_ns.c
++++ b/security/integrity/ima/ima_init_ima_ns.c
+@@ -53,7 +53,26 @@ int ima_init_namespace(struct ima_namespace *ns)
+ 			return rc;
+ 	}
+ 
+-	return ima_init_crypto(ns);
++	rc = ima_init_crypto(ns);
++	if (rc)
++		goto error;
++
++	if (ns == &init_ima_ns) {
++		rc = ima_init_template();
++		if (rc != 0)
++			goto err_deinit_crypto;
++
++		/* It can be called before ima_init_digests(), it does not use TPM. */
++		ima_load_kexec_buffer();
++	}
++
++	return 0;
++
++err_deinit_crypto:
++	ima_deinit_crypto(ns);
++
++error:
++	return rc;
+ }
+ 
+ int __init ima_ns_init(void)
+-- 
+2.31.1
+

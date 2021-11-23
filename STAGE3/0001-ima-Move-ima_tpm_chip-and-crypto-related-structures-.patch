@@ -1,0 +1,1205 @@
+From 1174a7e8cb8daedf9d8b2e25881784e251ed2b44 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.ibm.com>
+Date: Tue, 23 Nov 2021 09:06:04 -0500
+Subject: [PATCH 01/17] ima: Move ima_tpm_chip and crypto related structures
+ into ima_namespace
+
+Move the ima_tpm_chip and a first set of crypto related structures into
+the ima_namespace. Since the latter depend on the number of PCR banks
+the ima_tpm_chip has, they also need to be moved. This then allows us
+to namespace ima_init_crypto() where the initialization of the algorithms
+depends on the TPM's number of PCR banks and where a NULL pointer for
+the tpm_chip is also handled for the IMA namespacing case then.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/ima/ima.h              |  44 ++++---
+ security/integrity/ima/ima_api.c          |  24 ++--
+ security/integrity/ima/ima_appraise.c     |   5 +-
+ security/integrity/ima/ima_crypto.c       | 144 ++++++++++++----------
+ security/integrity/ima/ima_fs.c           |   6 +-
+ security/integrity/ima/ima_init.c         |  15 ++-
+ security/integrity/ima/ima_main.c         |  15 +--
+ security/integrity/ima/ima_queue.c        |  33 +++--
+ security/integrity/ima/ima_template.c     |   8 +-
+ security/integrity/ima/ima_template_lib.c |  54 +++++---
+ security/integrity/ima/ima_template_lib.h |  45 ++++---
+ 11 files changed, 230 insertions(+), 163 deletions(-)
+
+diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+index 9b0f6a3763f9..585668611a90 100644
+--- a/security/integrity/ima/ima.h
++++ b/security/integrity/ima/ima.h
+@@ -46,11 +46,7 @@ extern atomic_t ima_setxattr_allowed_hash_algorithms;
+ 
+ /* set during initialization */
+ extern int ima_hash_algo __ro_after_init;
+-extern int ima_sha1_idx __ro_after_init;
+-extern int ima_hash_algo_idx __ro_after_init;
+-extern int ima_extra_slots __ro_after_init;
+ extern int ima_appraise;
+-extern struct tpm_chip *ima_tpm_chip;
+ extern const char boot_aggregate_name[];
+ 
+ /* IMA event related data */
+@@ -75,7 +71,8 @@ struct ima_field_data {
+ /* IMA template field definition */
+ struct ima_template_field {
+ 	const char field_id[IMA_TEMPLATE_FIELD_ID_MAX_LEN];
+-	int (*field_init)(struct ima_event_data *event_data,
++	int (*field_init)(struct ima_namespace *ns,
++			  struct ima_event_data *event_data,
+ 			  struct ima_field_data *field_data);
+ 	void (*field_show)(struct seq_file *m, enum ima_show_type show,
+ 			   struct ima_field_data *field_data);
+@@ -149,6 +146,18 @@ struct ima_namespace {
+ 
+ 	struct dentry *policy_dentry;
+ 	bool policy_dentry_removed;
++
++	/* TPM and hash algo related */
++	struct tpm_chip *ima_tpm_chip;
++	struct tpm_digest *digests;
++	struct ima_algo_desc *ima_algo_array;
++	int ima_sha1_idx;
++	int ima_hash_algo_idx;
++	/*
++	 * Additional number of slots reserved, as needed, for SHA1
++	 * and IMA default algo.
++	 */
++	int ima_extra_slots;
+ } __randomize_layout;
+ 
+ extern const int read_idmap[];
+@@ -180,17 +189,21 @@ int ima_add_template_entry(struct ima_namespace *ns,
+ 			   struct ima_template_entry *entry, int violation,
+ 			   const char *op, struct inode *inode,
+ 			   const unsigned char *filename);
+-int ima_calc_file_hash(struct file *file, struct ima_digest_data *hash);
+-int ima_calc_buffer_hash(const void *buf, loff_t len,
++int ima_calc_file_hash(struct ima_namespace *ns,
++		       struct file *file, struct ima_digest_data *hash);
++int ima_calc_buffer_hash(struct ima_namespace *ns,
++			 const void *buf, loff_t len,
+ 			 struct ima_digest_data *hash);
+-int ima_calc_field_array_hash(struct ima_field_data *field_data,
++int ima_calc_field_array_hash(struct ima_namespace *ns,
++			      struct ima_field_data *field_data,
+ 			      struct ima_template_entry *entry);
+-int ima_calc_boot_aggregate(struct ima_digest_data *hash);
++int ima_calc_boot_aggregate(struct ima_namespace *ns,
++			    struct ima_digest_data *hash);
+ void ima_add_violation(struct ima_namespace *ns,
+ 		       struct file *file, const unsigned char *filename,
+ 		       struct integrity_iint_cache *iint,
+ 		       const char *op, const char *cause);
+-int ima_init_crypto(void);
++int ima_init_crypto(struct ima_namespace *ns);
+ void ima_putc(struct seq_file *m, void *data, int datalen);
+ void ima_print_digest(struct seq_file *m, u8 *digest, u32 size);
+ int template_desc_init_fields(const char *template_fmt,
+@@ -209,7 +222,7 @@ int ima_measurements_show(struct seq_file *m, void *v);
+ unsigned long ima_get_binary_runtime_size(struct ima_namespace *ns);
+ int ima_init_template(void);
+ void ima_init_template_list(void);
+-int __init ima_init_digests(void);
++int __init ima_init_digests(struct ima_namespace *ns);
+ int ima_lsm_policy_change(struct notifier_block *nb, unsigned long event,
+ 			  void *lsm_data);
+ 
+@@ -293,7 +306,8 @@ int ima_get_action(struct ima_namespace *ns,
+ 		   struct ima_template_desc **template_desc,
+ 		   const char *func_data, unsigned int *allowed_algos);
+ int ima_must_measure(struct inode *inode, int mask, enum ima_hooks func);
+-int ima_collect_measurement(struct integrity_iint_cache *iint,
++int ima_collect_measurement(struct ima_namespace *ns,
++			    struct integrity_iint_cache *iint,
+ 			    struct file *file, void *buf, loff_t size,
+ 			    enum hash_algo algo, struct modsig *modsig);
+ void ima_store_measurement(struct ima_namespace *ns,
+@@ -311,7 +325,8 @@ int process_buffer_measurement(struct ima_namespace *ns,
+ void ima_audit_measurement(struct integrity_iint_cache *iint,
+ 			   const unsigned char *filename,
+ 			   struct ns_status *status);
+-int ima_alloc_init_template(struct ima_event_data *event_data,
++int ima_alloc_init_template(struct ima_namespace *ns,
++			    struct ima_event_data *event_data,
+ 			    struct ima_template_entry **entry,
+ 			    struct ima_template_desc *template_desc);
+ int ima_store_template(struct ima_namespace *ns,
+@@ -361,7 +376,8 @@ int ima_appraise_measurement(enum ima_hooks func,
+ int ima_must_appraise(struct ima_namespace *ns,
+ 		      struct user_namespace *mnt_userns, struct inode *inode,
+ 		      int mask, enum ima_hooks func);
+-void ima_update_xattr(struct integrity_iint_cache *iint, struct file *file);
++void ima_update_xattr(struct ima_namespace *ns,
++		      struct integrity_iint_cache *iint, struct file *file);
+ enum integrity_status ima_get_cache_status(struct integrity_iint_cache *iint,
+ 					   enum ima_hooks func);
+ enum hash_algo ima_get_hash_algo(const struct evm_ima_xattr_data *xattr_value,
+diff --git a/security/integrity/ima/ima_api.c b/security/integrity/ima/ima_api.c
+index 25163d64c057..eb7a3de6464c 100644
+--- a/security/integrity/ima/ima_api.c
++++ b/security/integrity/ima/ima_api.c
+@@ -34,10 +34,12 @@ void ima_free_template_entry(struct ima_template_entry *entry)
+ /*
+  * ima_alloc_init_template - create and initialize a new template entry
+  */
+-int ima_alloc_init_template(struct ima_event_data *event_data,
++int ima_alloc_init_template(struct ima_namespace *ns,
++			    struct ima_event_data *event_data,
+ 			    struct ima_template_entry **entry,
+ 			    struct ima_template_desc *desc)
+ {
++	struct tpm_chip *ima_tpm_chip = ns->ima_tpm_chip;
+ 	struct ima_template_desc *template_desc;
+ 	struct tpm_digest *digests;
+ 	int i, result = 0;
+@@ -52,8 +54,8 @@ int ima_alloc_init_template(struct ima_event_data *event_data,
+ 	if (!*entry)
+ 		return -ENOMEM;
+ 
+-	digests = kcalloc(NR_BANKS(ima_tpm_chip) + ima_extra_slots,
+-			  sizeof(*digests), GFP_NOFS);
++	digests = kcalloc(NR_BANKS(ima_tpm_chip) + ns->ima_extra_slots,
++			  sizeof(*ns->digests), GFP_NOFS);
+ 	if (!digests) {
+ 		kfree(*entry);
+ 		*entry = NULL;
+@@ -67,7 +69,7 @@ int ima_alloc_init_template(struct ima_event_data *event_data,
+ 			template_desc->fields[i];
+ 		u32 len;
+ 
+-		result = field->field_init(event_data,
++		result = field->field_init(ns, event_data,
+ 					   &((*entry)->template_data[i]));
+ 		if (result != 0)
+ 			goto out;
+@@ -110,7 +112,8 @@ int ima_store_template(struct ima_namespace *ns,
+ 	int result;
+ 
+ 	if (!violation) {
+-		result = ima_calc_field_array_hash(&entry->template_data[0],
++		result = ima_calc_field_array_hash(ns,
++						   &entry->template_data[0],
+ 						   entry);
+ 		if (result < 0) {
+ 			integrity_audit_msg(AUDIT_INTEGRITY_PCR, inode,
+@@ -149,7 +152,7 @@ void ima_add_violation(struct ima_namespace *ns,
+ 	/* can overflow, only indicator */
+ 	atomic_long_inc(&ns->ima_htable.violations);
+ 
+-	result = ima_alloc_init_template(&event_data, &entry, NULL);
++	result = ima_alloc_init_template(ns, &event_data, &entry, NULL);
+ 	if (result < 0) {
+ 		result = -ENOMEM;
+ 		goto err_out;
+@@ -215,7 +218,8 @@ int ima_get_action(struct ima_namespace *ns,
+  *
+  * Return 0 on success, error code otherwise
+  */
+-int ima_collect_measurement(struct integrity_iint_cache *iint,
++int ima_collect_measurement(struct ima_namespace *ns,
++			    struct integrity_iint_cache *iint,
+ 			    struct file *file, void *buf, loff_t size,
+ 			    enum hash_algo algo, struct modsig *modsig)
+ {
+@@ -254,9 +258,9 @@ int ima_collect_measurement(struct integrity_iint_cache *iint,
+ 	memset(&hash.digest, 0, sizeof(hash.digest));
+ 
+ 	if (buf)
+-		result = ima_calc_buffer_hash(buf, size, &hash.hdr);
++		result = ima_calc_buffer_hash(ns, buf, size, &hash.hdr);
+ 	else
+-		result = ima_calc_file_hash(file, &hash.hdr);
++		result = ima_calc_file_hash(ns, file, &hash.hdr);
+ 
+ 	if (result && result != -EBADF && result != -EINVAL)
+ 		goto out;
+@@ -331,7 +335,7 @@ void ima_store_measurement(struct ima_namespace *ns,
+ 	if (iint->measured_pcrs & (0x1 << pcr) && !modsig)
+ 		return;
+ 
+-	result = ima_alloc_init_template(&event_data, &entry, template_desc);
++	result = ima_alloc_init_template(ns, &event_data, &entry, template_desc);
+ 	if (result < 0) {
+ 		integrity_audit_msg(AUDIT_INTEGRITY_PCR, inode, filename,
+ 				    op, audit_cause, result, 0);
+diff --git a/security/integrity/ima/ima_appraise.c b/security/integrity/ima/ima_appraise.c
+index 3461025f671b..07f9d370cdb5 100644
+--- a/security/integrity/ima/ima_appraise.c
++++ b/security/integrity/ima/ima_appraise.c
+@@ -494,7 +494,8 @@ int ima_appraise_measurement(enum ima_hooks func,
+ /*
+  * ima_update_xattr - update 'security.ima' hash value
+  */
+-void ima_update_xattr(struct integrity_iint_cache *iint, struct file *file)
++void ima_update_xattr(struct ima_namespace *ns,
++		      struct integrity_iint_cache *iint, struct file *file)
+ {
+ 	struct dentry *dentry = file_dentry(file);
+ 	int rc = 0;
+@@ -507,7 +508,7 @@ void ima_update_xattr(struct integrity_iint_cache *iint, struct file *file)
+ 	    !(iint->flags & IMA_HASH))
+ 		return;
+ 
+-	rc = ima_collect_measurement(iint, file, NULL, 0, ima_hash_algo, NULL);
++	rc = ima_collect_measurement(ns, iint, file, NULL, 0, ima_hash_algo, NULL);
+ 	if (rc < 0)
+ 		return;
+ 
+diff --git a/security/integrity/ima/ima_crypto.c b/security/integrity/ima/ima_crypto.c
+index a7206cc1d7d1..c2c930e41480 100644
+--- a/security/integrity/ima/ima_crypto.c
++++ b/security/integrity/ima/ima_crypto.c
+@@ -62,16 +62,6 @@ struct ima_algo_desc {
+ 	enum hash_algo algo;
+ };
+ 
+-int ima_sha1_idx __ro_after_init;
+-int ima_hash_algo_idx __ro_after_init;
+-/*
+- * Additional number of slots reserved, as needed, for SHA1
+- * and IMA default algo.
+- */
+-int ima_extra_slots __ro_after_init;
+-
+-static struct ima_algo_desc *ima_algo_array;
+-
+ static int __init ima_init_ima_crypto(void)
+ {
+ 	long rc;
+@@ -88,8 +78,11 @@ static int __init ima_init_ima_crypto(void)
+ 	return 0;
+ }
+ 
+-static struct crypto_shash *ima_alloc_tfm(enum hash_algo algo)
++static struct crypto_shash *ima_alloc_tfm(struct ima_namespace *ns,
++					  enum hash_algo algo)
+ {
++	struct ima_algo_desc *ima_algo_array = ns->ima_algo_array;
++	struct tpm_chip *ima_tpm_chip = ns->ima_tpm_chip;
+ 	struct crypto_shash *tfm = ima_shash_tfm;
+ 	int rc, i;
+ 
+@@ -99,7 +92,7 @@ static struct crypto_shash *ima_alloc_tfm(enum hash_algo algo)
+ 	if (algo == ima_hash_algo)
+ 		return tfm;
+ 
+-	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++)
++	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ns->ima_extra_slots; i++)
+ 		if (ima_algo_array[i].tfm && ima_algo_array[i].algo == algo)
+ 			return ima_algo_array[i].tfm;
+ 
+@@ -112,8 +105,10 @@ static struct crypto_shash *ima_alloc_tfm(enum hash_algo algo)
+ 	return tfm;
+ }
+ 
+-int __init ima_init_crypto(void)
++int __init ima_init_crypto(struct ima_namespace *ns)
+ {
++	struct tpm_chip *ima_tpm_chip = ns->ima_tpm_chip;
++	struct ima_algo_desc *ima_algo_array;
+ 	enum hash_algo algo;
+ 	long rc;
+ 	int i;
+@@ -122,33 +117,34 @@ int __init ima_init_crypto(void)
+ 	if (rc)
+ 		return rc;
+ 
+-	ima_sha1_idx = -1;
+-	ima_hash_algo_idx = -1;
++	ns->ima_sha1_idx = -1;
++	ns->ima_hash_algo_idx = -1;
+ 
+ 	for (i = 0; i < NR_BANKS(ima_tpm_chip); i++) {
+ 		algo = ima_tpm_chip->allocated_banks[i].crypto_id;
+ 		if (algo == HASH_ALGO_SHA1)
+-			ima_sha1_idx = i;
++			ns->ima_sha1_idx = i;
+ 
+ 		if (algo == ima_hash_algo)
+-			ima_hash_algo_idx = i;
++			ns->ima_hash_algo_idx = i;
+ 	}
+ 
+-	if (ima_sha1_idx < 0) {
+-		ima_sha1_idx = NR_BANKS(ima_tpm_chip) + ima_extra_slots++;
++	if (ns->ima_sha1_idx < 0) {
++		ns->ima_sha1_idx = NR_BANKS(ima_tpm_chip) + ns->ima_extra_slots++;
+ 		if (ima_hash_algo == HASH_ALGO_SHA1)
+-			ima_hash_algo_idx = ima_sha1_idx;
++			ns->ima_hash_algo_idx = ns->ima_sha1_idx;
+ 	}
+ 
+-	if (ima_hash_algo_idx < 0)
+-		ima_hash_algo_idx = NR_BANKS(ima_tpm_chip) + ima_extra_slots++;
++	if (ns->ima_hash_algo_idx < 0)
++		ns->ima_hash_algo_idx = NR_BANKS(ima_tpm_chip) + ns->ima_extra_slots++;
+ 
+-	ima_algo_array = kcalloc(NR_BANKS(ima_tpm_chip) + ima_extra_slots,
+-				 sizeof(*ima_algo_array), GFP_KERNEL);
+-	if (!ima_algo_array) {
++	ns->ima_algo_array = kcalloc(NR_BANKS(ima_tpm_chip) + ns->ima_extra_slots,
++				     sizeof(*ns->ima_algo_array), GFP_KERNEL);
++	if (!ns->ima_algo_array) {
+ 		rc = -ENOMEM;
+ 		goto out;
+ 	}
++	ima_algo_array = ns->ima_algo_array;
+ 
+ 	for (i = 0; i < NR_BANKS(ima_tpm_chip); i++) {
+ 		algo = ima_tpm_chip->allocated_banks[i].crypto_id;
+@@ -163,7 +159,7 @@ int __init ima_init_crypto(void)
+ 			continue;
+ 		}
+ 
+-		ima_algo_array[i].tfm = ima_alloc_tfm(algo);
++		ima_algo_array[i].tfm = ima_alloc_tfm(ns, algo);
+ 		if (IS_ERR(ima_algo_array[i].tfm)) {
+ 			if (algo == HASH_ALGO_SHA1) {
+ 				rc = PTR_ERR(ima_algo_array[i].tfm);
+@@ -175,30 +171,30 @@ int __init ima_init_crypto(void)
+ 		}
+ 	}
+ 
+-	if (ima_sha1_idx >= NR_BANKS(ima_tpm_chip)) {
++	if (ns->ima_sha1_idx >= NR_BANKS(ima_tpm_chip)) {
+ 		if (ima_hash_algo == HASH_ALGO_SHA1) {
+-			ima_algo_array[ima_sha1_idx].tfm = ima_shash_tfm;
++			ima_algo_array[ns->ima_sha1_idx].tfm = ima_shash_tfm;
+ 		} else {
+-			ima_algo_array[ima_sha1_idx].tfm =
+-						ima_alloc_tfm(HASH_ALGO_SHA1);
+-			if (IS_ERR(ima_algo_array[ima_sha1_idx].tfm)) {
+-				rc = PTR_ERR(ima_algo_array[ima_sha1_idx].tfm);
++			ima_algo_array[ns->ima_sha1_idx].tfm =
++						ima_alloc_tfm(ns, HASH_ALGO_SHA1);
++			if (IS_ERR(ima_algo_array[ns->ima_sha1_idx].tfm)) {
++				rc = PTR_ERR(ima_algo_array[ns->ima_sha1_idx].tfm);
+ 				goto out_array;
+ 			}
+ 		}
+ 
+-		ima_algo_array[ima_sha1_idx].algo = HASH_ALGO_SHA1;
++		ima_algo_array[ns->ima_sha1_idx].algo = HASH_ALGO_SHA1;
+ 	}
+ 
+-	if (ima_hash_algo_idx >= NR_BANKS(ima_tpm_chip) &&
+-	    ima_hash_algo_idx != ima_sha1_idx) {
+-		ima_algo_array[ima_hash_algo_idx].tfm = ima_shash_tfm;
+-		ima_algo_array[ima_hash_algo_idx].algo = ima_hash_algo;
++	if (ns->ima_hash_algo_idx >= NR_BANKS(ima_tpm_chip) &&
++	    ns->ima_hash_algo_idx != ns->ima_sha1_idx) {
++		ima_algo_array[ns->ima_hash_algo_idx].tfm = ima_shash_tfm;
++		ima_algo_array[ns->ima_hash_algo_idx].algo = ima_hash_algo;
+ 	}
+ 
+ 	return 0;
+ out_array:
+-	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++) {
++	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ns->ima_extra_slots; i++) {
+ 		if (!ima_algo_array[i].tfm ||
+ 		    ima_algo_array[i].tfm == ima_shash_tfm)
+ 			continue;
+@@ -210,14 +206,16 @@ int __init ima_init_crypto(void)
+ 	return rc;
+ }
+ 
+-static void ima_free_tfm(struct crypto_shash *tfm)
++static void ima_free_tfm(struct ima_namespace *ns, struct crypto_shash *tfm)
+ {
++	struct ima_algo_desc *ima_algo_array = ns->ima_algo_array;
++	struct tpm_chip *ima_tpm_chip = ns->ima_tpm_chip;
+ 	int i;
+ 
+ 	if (tfm == ima_shash_tfm)
+ 		return;
+ 
+-	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++)
++	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ns->ima_extra_slots; i++)
+ 		if (ima_algo_array[i].tfm == tfm)
+ 			return;
+ 
+@@ -503,18 +501,19 @@ static int ima_calc_file_hash_tfm(struct file *file,
+ 	return rc;
+ }
+ 
+-static int ima_calc_file_shash(struct file *file, struct ima_digest_data *hash)
++static int ima_calc_file_shash(struct ima_namespace *ns,
++			       struct file *file, struct ima_digest_data *hash)
+ {
+ 	struct crypto_shash *tfm;
+ 	int rc;
+ 
+-	tfm = ima_alloc_tfm(hash->algo);
++	tfm = ima_alloc_tfm(ns, hash->algo);
+ 	if (IS_ERR(tfm))
+ 		return PTR_ERR(tfm);
+ 
+ 	rc = ima_calc_file_hash_tfm(file, hash, tfm);
+ 
+-	ima_free_tfm(tfm);
++	ima_free_tfm(ns, tfm);
+ 
+ 	return rc;
+ }
+@@ -532,7 +531,8 @@ static int ima_calc_file_shash(struct file *file, struct ima_digest_data *hash)
+  * shash for the hash calculation.  If ahash fails, it falls back to using
+  * shash.
+  */
+-int ima_calc_file_hash(struct file *file, struct ima_digest_data *hash)
++int ima_calc_file_hash(struct ima_namespace *ns,
++		       struct file *file, struct ima_digest_data *hash)
+ {
+ 	loff_t i_size;
+ 	int rc;
+@@ -569,7 +569,7 @@ int ima_calc_file_hash(struct file *file, struct ima_digest_data *hash)
+ 			goto out;
+ 	}
+ 
+-	rc = ima_calc_file_shash(f, hash);
++	rc = ima_calc_file_shash(ns, f, hash);
+ out:
+ 	if (new_file_instance)
+ 		fput(f);
+@@ -579,10 +579,12 @@ int ima_calc_file_hash(struct file *file, struct ima_digest_data *hash)
+ /*
+  * Calculate the hash of template data
+  */
+-static int ima_calc_field_array_hash_tfm(struct ima_field_data *field_data,
++static int ima_calc_field_array_hash_tfm(struct ima_namespace *ns,
++					 struct ima_field_data *field_data,
+ 					 struct ima_template_entry *entry,
+ 					 int tfm_idx)
+ {
++	struct ima_algo_desc *ima_algo_array = ns->ima_algo_array;
+ 	SHASH_DESC_ON_STACK(shash, ima_algo_array[tfm_idx].tfm);
+ 	struct ima_template_desc *td = entry->template_desc;
+ 	int num_fields = entry->template_desc->num_fields;
+@@ -623,20 +625,23 @@ static int ima_calc_field_array_hash_tfm(struct ima_field_data *field_data,
+ 	return rc;
+ }
+ 
+-int ima_calc_field_array_hash(struct ima_field_data *field_data,
++int ima_calc_field_array_hash(struct ima_namespace *ns,
++			      struct ima_field_data *field_data,
+ 			      struct ima_template_entry *entry)
+ {
++	struct ima_algo_desc *ima_algo_array = ns->ima_algo_array;
++	struct tpm_chip *ima_tpm_chip = ns->ima_tpm_chip;
+ 	u16 alg_id;
+ 	int rc, i;
+ 
+-	rc = ima_calc_field_array_hash_tfm(field_data, entry, ima_sha1_idx);
++	rc = ima_calc_field_array_hash_tfm(ns, field_data, entry, ns->ima_sha1_idx);
+ 	if (rc)
+ 		return rc;
+ 
+-	entry->digests[ima_sha1_idx].alg_id = TPM_ALG_SHA1;
++	entry->digests[ns->ima_sha1_idx].alg_id = TPM_ALG_SHA1;
+ 
+-	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ima_extra_slots; i++) {
+-		if (i == ima_sha1_idx)
++	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ns->ima_extra_slots; i++) {
++		if (i == ns->ima_sha1_idx)
+ 			continue;
+ 
+ 		if (i < NR_BANKS(ima_tpm_chip)) {
+@@ -647,12 +652,12 @@ int ima_calc_field_array_hash(struct ima_field_data *field_data,
+ 		/* for unmapped TPM algorithms digest is still a padded SHA1 */
+ 		if (!ima_algo_array[i].tfm) {
+ 			memcpy(entry->digests[i].digest,
+-			       entry->digests[ima_sha1_idx].digest,
++			       entry->digests[ns->ima_sha1_idx].digest,
+ 			       TPM_DIGEST_SIZE);
+ 			continue;
+ 		}
+ 
+-		rc = ima_calc_field_array_hash_tfm(field_data, entry, i);
++		rc = ima_calc_field_array_hash_tfm(ns, field_data, entry, i);
+ 		if (rc)
+ 			return rc;
+ 	}
+@@ -746,23 +751,25 @@ static int calc_buffer_shash_tfm(const void *buf, loff_t size,
+ 	return rc;
+ }
+ 
+-static int calc_buffer_shash(const void *buf, loff_t len,
++static int calc_buffer_shash(struct ima_namespace *ns,
++			     const void *buf, loff_t len,
+ 			     struct ima_digest_data *hash)
+ {
+ 	struct crypto_shash *tfm;
+ 	int rc;
+ 
+-	tfm = ima_alloc_tfm(hash->algo);
++	tfm = ima_alloc_tfm(ns, hash->algo);
+ 	if (IS_ERR(tfm))
+ 		return PTR_ERR(tfm);
+ 
+ 	rc = calc_buffer_shash_tfm(buf, len, hash, tfm);
+ 
+-	ima_free_tfm(tfm);
++	ima_free_tfm(ns, tfm);
+ 	return rc;
+ }
+ 
+-int ima_calc_buffer_hash(const void *buf, loff_t len,
++int ima_calc_buffer_hash(struct ima_namespace *ns,
++			 const void *buf, loff_t len,
+ 			 struct ima_digest_data *hash)
+ {
+ 	int rc;
+@@ -773,11 +780,13 @@ int ima_calc_buffer_hash(const void *buf, loff_t len,
+ 			return 0;
+ 	}
+ 
+-	return calc_buffer_shash(buf, len, hash);
++	return calc_buffer_shash(ns, buf, len, hash);
+ }
+ 
+-static void ima_pcrread(u32 idx, struct tpm_digest *d)
++static void ima_pcrread(struct ima_namespace *ns, u32 idx, struct tpm_digest *d)
+ {
++	struct tpm_chip *ima_tpm_chip = ns->ima_tpm_chip;
++
+ 	if (!ima_tpm_chip)
+ 		return;
+ 
+@@ -796,7 +805,8 @@ static void ima_pcrread(u32 idx, struct tpm_digest *d)
+  * hash algorithm for reading the TPM PCRs as for calculating the boot
+  * aggregate digest as stored in the measurement list.
+  */
+-static int ima_calc_boot_aggregate_tfm(char *digest, u16 alg_id,
++static int ima_calc_boot_aggregate_tfm(struct ima_namespace *ns,
++				       char *digest, u16 alg_id,
+ 				       struct crypto_shash *tfm)
+ {
+ 	struct tpm_digest d = { .alg_id = alg_id, .digest = {0} };
+@@ -815,7 +825,7 @@ static int ima_calc_boot_aggregate_tfm(char *digest, u16 alg_id,
+ 
+ 	/* cumulative digest over TPM registers 0-7 */
+ 	for (i = TPM_PCR0; i < TPM_PCR8; i++) {
+-		ima_pcrread(i, &d);
++		ima_pcrread(ns, i, &d);
+ 		/* now accumulate with current aggregate */
+ 		rc = crypto_shash_update(shash, d.digest,
+ 					 crypto_shash_digestsize(tfm));
+@@ -830,7 +840,7 @@ static int ima_calc_boot_aggregate_tfm(char *digest, u16 alg_id,
+ 	 */
+ 	if (alg_id != TPM_ALG_SHA1) {
+ 		for (i = TPM_PCR8; i < TPM_PCR10; i++) {
+-			ima_pcrread(i, &d);
++			ima_pcrread(ns, i, &d);
+ 			rc = crypto_shash_update(shash, d.digest,
+ 						crypto_shash_digestsize(tfm));
+ 		}
+@@ -840,8 +850,10 @@ static int ima_calc_boot_aggregate_tfm(char *digest, u16 alg_id,
+ 	return rc;
+ }
+ 
+-int ima_calc_boot_aggregate(struct ima_digest_data *hash)
++int ima_calc_boot_aggregate(struct ima_namespace *ns,
++			    struct ima_digest_data *hash)
+ {
++	struct tpm_chip *ima_tpm_chip = ns->ima_tpm_chip;
+ 	struct crypto_shash *tfm;
+ 	u16 crypto_id, alg_id;
+ 	int rc, i, bank_idx = -1;
+@@ -867,15 +879,15 @@ int ima_calc_boot_aggregate(struct ima_digest_data *hash)
+ 
+ 	hash->algo = ima_tpm_chip->allocated_banks[bank_idx].crypto_id;
+ 
+-	tfm = ima_alloc_tfm(hash->algo);
++	tfm = ima_alloc_tfm(ns, hash->algo);
+ 	if (IS_ERR(tfm))
+ 		return PTR_ERR(tfm);
+ 
+ 	hash->length = crypto_shash_digestsize(tfm);
+ 	alg_id = ima_tpm_chip->allocated_banks[bank_idx].alg_id;
+-	rc = ima_calc_boot_aggregate_tfm(hash->digest, alg_id, tfm);
++	rc = ima_calc_boot_aggregate_tfm(ns, hash->digest, alg_id, tfm);
+ 
+-	ima_free_tfm(tfm);
++	ima_free_tfm(ns, tfm);
+ 
+ 	return rc;
+ }
+diff --git a/security/integrity/ima/ima_fs.c b/security/integrity/ima/ima_fs.c
+index 3b8001ba62e3..c04427ae9071 100644
+--- a/security/integrity/ima/ima_fs.c
++++ b/security/integrity/ima/ima_fs.c
+@@ -129,6 +129,7 @@ void ima_putc(struct seq_file *m, void *data, int datalen)
+ int ima_measurements_show(struct seq_file *m, void *v)
+ {
+ 	/* the list never shrinks, so we don't need a lock here */
++	struct ima_namespace *ns = ima_ns_from_file(m->file);
+ 	struct ima_queue_entry *qe = v;
+ 	struct ima_template_entry *e;
+ 	char *template_name;
+@@ -153,7 +154,7 @@ int ima_measurements_show(struct seq_file *m, void *v)
+ 	ima_putc(m, &pcr, sizeof(e->pcr));
+ 
+ 	/* 2nd: template digest */
+-	ima_putc(m, e->digests[ima_sha1_idx].digest, TPM_DIGEST_SIZE);
++	ima_putc(m, e->digests[ns->ima_sha1_idx].digest, TPM_DIGEST_SIZE);
+ 
+ 	/* 3rd: template name size */
+ 	namelen = !ima_canonical_fmt ? strlen(template_name) :
+@@ -219,6 +220,7 @@ void ima_print_digest(struct seq_file *m, u8 *digest, u32 size)
+ static int ima_ascii_measurements_show(struct seq_file *m, void *v)
+ {
+ 	/* the list never shrinks, so we don't need a lock here */
++	struct ima_namespace *ns = ima_ns_from_file(m->file);
+ 	struct ima_queue_entry *qe = v;
+ 	struct ima_template_entry *e;
+ 	char *template_name;
+@@ -236,7 +238,7 @@ static int ima_ascii_measurements_show(struct seq_file *m, void *v)
+ 	seq_printf(m, "%2d ", e->pcr);
+ 
+ 	/* 2nd: SHA1 template hash */
+-	ima_print_digest(m, e->digests[ima_sha1_idx].digest, TPM_DIGEST_SIZE);
++	ima_print_digest(m, e->digests[ns->ima_sha1_idx].digest, TPM_DIGEST_SIZE);
+ 
+ 	/* 3th:  template name */
+ 	seq_printf(m, " %s", template_name);
+diff --git a/security/integrity/ima/ima_init.c b/security/integrity/ima/ima_init.c
+index 22ca5d872be0..f04466222c1c 100644
+--- a/security/integrity/ima/ima_init.c
++++ b/security/integrity/ima/ima_init.c
+@@ -22,7 +22,6 @@
+ 
+ /* name for boot aggregate entry */
+ const char boot_aggregate_name[] = "boot_aggregate";
+-struct tpm_chip *ima_tpm_chip;
+ 
+ /* Add the boot aggregate to the IMA measurement list and extend
+  * the PCR register.
+@@ -72,15 +71,15 @@ static int __init ima_add_boot_aggregate(struct ima_namespace *ns)
+ 	 * Ultimately select SHA1 also for TPM 2.0 if the SHA256 PCR bank
+ 	 * is not found.
+ 	 */
+-	if (ima_tpm_chip) {
+-		result = ima_calc_boot_aggregate(&hash.hdr);
++	if (ns->ima_tpm_chip) {
++		result = ima_calc_boot_aggregate(ns, &hash.hdr);
+ 		if (result < 0) {
+ 			audit_cause = "hashing_error";
+ 			goto err_out;
+ 		}
+ 	}
+ 
+-	result = ima_alloc_init_template(&event_data, &entry, NULL);
++	result = ima_alloc_init_template(ns, &event_data, &entry, NULL);
+ 	if (result < 0) {
+ 		audit_cause = "alloc_entry";
+ 		goto err_out;
+@@ -124,15 +123,15 @@ int __init ima_init(void)
+ 	if (rc)
+ 		return rc;
+ 
+-	ima_tpm_chip = tpm_default_chip();
+-	if (!ima_tpm_chip)
++	init_ima_ns.ima_tpm_chip = tpm_default_chip();
++	if (!init_ima_ns.ima_tpm_chip)
+ 		pr_info("No TPM chip found, activating TPM-bypass!\n");
+ 
+ 	rc = integrity_init_keyring(INTEGRITY_KEYRING_IMA);
+ 	if (rc)
+ 		return rc;
+ 
+-	rc = ima_init_crypto();
++	rc = ima_init_crypto(&init_ima_ns);
+ 	if (rc)
+ 		return rc;
+ 	rc = ima_init_template();
+@@ -142,7 +141,7 @@ int __init ima_init(void)
+ 	/* It can be called before ima_init_digests(), it does not use TPM. */
+ 	ima_load_kexec_buffer();
+ 
+-	rc = ima_init_digests();
++	rc = ima_init_digests(&init_ima_ns);
+ 	if (rc != 0)
+ 		return rc;
+ 	/* boot aggregate must be first entry */
+diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
+index 4c85a8df3c86..7dcabe1dc96b 100644
+--- a/security/integrity/ima/ima_main.c
++++ b/security/integrity/ima/ima_main.c
+@@ -153,7 +153,8 @@ static void ima_rdwr_violation_check(struct ima_namespace *ns,
+ 				  "invalid_pcr", "open_writers");
+ }
+ 
+-static void ima_check_last_writer(struct integrity_iint_cache *iint,
++static void ima_check_last_writer(struct ima_namespace *ns,
++				  struct integrity_iint_cache *iint,
+ 				  struct inode *inode, struct file *file)
+ {
+ 	fmode_t mode = file->f_mode;
+@@ -172,7 +173,7 @@ static void ima_check_last_writer(struct integrity_iint_cache *iint,
+ 			iint->flags &= ~(IMA_DONE_MASK | IMA_NEW_FILE);
+ 			iint->measured_pcrs = 0;
+ 			if (update)
+-				ima_update_xattr(iint, file);
++				ima_update_xattr(ns, iint, file);
+ 		}
+ 	}
+ 	mutex_unlock(&iint->mutex);
+@@ -197,7 +198,7 @@ void ima_file_free(struct file *file)
+ 	if (!iint)
+ 		return;
+ 
+-	ima_check_last_writer(iint, inode, file);
++	ima_check_last_writer(ns, iint, inode, file);
+ }
+ 
+ static int __process_measurement(struct ima_namespace *ns,
+@@ -347,7 +348,7 @@ static int __process_measurement(struct ima_namespace *ns,
+ 
+ 	hash_algo = ima_get_hash_algo(xattr_value, xattr_len);
+ 
+-	rc = ima_collect_measurement(iint, file, buf, size, hash_algo, modsig);
++	rc = ima_collect_measurement(ns, iint, file, buf, size, hash_algo, modsig);
+ 	if (rc != 0 && rc != -EBADF && rc != -EINVAL)
+ 		goto out_locked;
+ 
+@@ -970,7 +971,7 @@ int process_buffer_measurement(struct ima_namespace *ns,
+ 	iint.ima_hash->algo = ima_hash_algo;
+ 	iint.ima_hash->length = hash_digest_size[ima_hash_algo];
+ 
+-	ret = ima_calc_buffer_hash(buf, size, iint.ima_hash);
++	ret = ima_calc_buffer_hash(ns, buf, size, iint.ima_hash);
+ 	if (ret < 0) {
+ 		audit_cause = "hashing_error";
+ 		goto out;
+@@ -979,7 +980,7 @@ int process_buffer_measurement(struct ima_namespace *ns,
+ 	if (buf_hash) {
+ 		memcpy(digest_hash, hash.hdr.digest, digest_hash_len);
+ 
+-		ret = ima_calc_buffer_hash(digest_hash, digest_hash_len,
++		ret = ima_calc_buffer_hash(ns, digest_hash, digest_hash_len,
+ 					   iint.ima_hash);
+ 		if (ret < 0) {
+ 			audit_cause = "hashing_error";
+@@ -996,7 +997,7 @@ int process_buffer_measurement(struct ima_namespace *ns,
+ 	if (!ns->ima_policy_flag || (func && !(action & IMA_MEASURE)))
+ 		return 1;
+ 
+-	ret = ima_alloc_init_template(&event_data, &entry, template);
++	ret = ima_alloc_init_template(ns, &event_data, &entry, template);
+ 	if (ret < 0) {
+ 		audit_cause = "alloc_entry";
+ 		goto out;
+diff --git a/security/integrity/ima/ima_queue.c b/security/integrity/ima/ima_queue.c
+index ca225d76357f..701ff237f117 100644
+--- a/security/integrity/ima/ima_queue.c
++++ b/security/integrity/ima/ima_queue.c
+@@ -21,9 +21,6 @@
+ 
+ #define AUDIT_CAUSE_LEN_MAX 32
+ 
+-/* pre-allocated array of tpm_digest structures to extend a PCR */
+-static struct tpm_digest *digests;
+-
+ /* mutex protects atomicity of extending measurement list
+  * and extending the TPM PCR aggregate. Since tpm_extend can take
+  * long (and the tpm driver uses a mutex), we can't use the spinlock.
+@@ -50,7 +47,7 @@ static struct ima_queue_entry *ima_lookup_digest_entry(
+ 	key = ima_hash_key(digest_value);
+ 	rcu_read_lock();
+ 	hlist_for_each_entry_rcu(qe, &ns->ima_htable.queue[key], hnext) {
+-		rc = memcmp(qe->entry->digests[ima_hash_algo_idx].digest,
++		rc = memcmp(qe->entry->digests[ns->ima_hash_algo_idx].digest,
+ 			    digest_value, hash_digest_size[ima_hash_algo]);
+ 		if ((rc == 0) && (qe->entry->pcr == pcr)) {
+ 			ret = qe;
+@@ -104,7 +101,7 @@ static int ima_add_digest_entry(struct ima_namespace *ns,
+ 
+ 	atomic_long_inc(&ns->ima_htable.len);
+ 	if (update_htable) {
+-		key = ima_hash_key(entry->digests[ima_hash_algo_idx].digest);
++		key = ima_hash_key(entry->digests[ns->ima_hash_algo_idx].digest);
+ 		hlist_add_head_rcu(&qe->hnext, &ns->ima_htable.queue[key]);
+ 	} else
+ 		INIT_HLIST_NODE(&qe->hnext);
+@@ -135,14 +132,15 @@ unsigned long ima_get_binary_runtime_size(struct ima_namespace *ns)
+ 		return ns->binary_runtime_size + sizeof(struct ima_kexec_hdr);
+ }
+ 
+-static int ima_pcr_extend(struct tpm_digest *digests_arg, int pcr)
++static int ima_pcr_extend(struct ima_namespace *ns,
++			  struct tpm_digest *digests_arg, int pcr)
+ {
+ 	int result = 0;
+ 
+-	if (!ima_tpm_chip)
++	if (!ns->ima_tpm_chip)
+ 		return result;
+ 
+-	result = tpm_pcr_extend(ima_tpm_chip, pcr, digests_arg);
++	result = tpm_pcr_extend(ns->ima_tpm_chip, pcr, digests_arg);
+ 	if (result != 0)
+ 		pr_err("Error Communicating to TPM chip, result: %d\n", result);
+ 	return result;
+@@ -161,7 +159,7 @@ int ima_add_template_entry(struct ima_namespace *ns,
+ 			   const char *op, struct inode *inode,
+ 			   const unsigned char *filename)
+ {
+-	u8 *digest = entry->digests[ima_hash_algo_idx].digest;
++	u8 *digest = entry->digests[ns->ima_hash_algo_idx].digest;
+ 	struct tpm_digest *digests_arg = entry->digests;
+ 	const char *audit_cause = "hash_added";
+ 	char tpm_audit_cause[AUDIT_CAUSE_LEN_MAX];
+@@ -186,9 +184,9 @@ int ima_add_template_entry(struct ima_namespace *ns,
+ 	}
+ 
+ 	if (violation)		/* invalidate pcr */
+-		digests_arg = digests;
++		digests_arg = ns->digests;
+ 
+-	tpmresult = ima_pcr_extend(digests_arg, entry->pcr);
++	tpmresult = ima_pcr_extend(ns, digests_arg, entry->pcr);
+ 	if (tpmresult != 0) {
+ 		snprintf(tpm_audit_cause, AUDIT_CAUSE_LEN_MAX, "TPM_error(%d)",
+ 			 tpmresult);
+@@ -225,8 +223,9 @@ void ima_free_measurements(struct ima_namespace *ns)
+ 	}
+ }
+ 
+-int __init ima_init_digests(void)
++int __init ima_init_digests(struct ima_namespace *ns)
+ {
++	struct tpm_chip *ima_tpm_chip = ns->ima_tpm_chip;
+ 	u16 digest_size;
+ 	u16 crypto_id;
+ 	int i;
+@@ -234,13 +233,13 @@ int __init ima_init_digests(void)
+ 	if (!ima_tpm_chip)
+ 		return 0;
+ 
+-	digests = kcalloc(ima_tpm_chip->nr_allocated_banks, sizeof(*digests),
+-			  GFP_NOFS);
+-	if (!digests)
++	ns->digests = kcalloc(ima_tpm_chip->nr_allocated_banks,
++			      sizeof(*ns->digests), GFP_NOFS);
++	if (!ns->digests)
+ 		return -ENOMEM;
+ 
+ 	for (i = 0; i < ima_tpm_chip->nr_allocated_banks; i++) {
+-		digests[i].alg_id = ima_tpm_chip->allocated_banks[i].alg_id;
++		ns->digests[i].alg_id = ima_tpm_chip->allocated_banks[i].alg_id;
+ 		digest_size = ima_tpm_chip->allocated_banks[i].digest_size;
+ 		crypto_id = ima_tpm_chip->allocated_banks[i].crypto_id;
+ 
+@@ -248,7 +247,7 @@ int __init ima_init_digests(void)
+ 		if (crypto_id == HASH_ALGO__LAST)
+ 			digest_size = SHA1_DIGEST_SIZE;
+ 
+-		memset(digests[i].digest, 0xff, digest_size);
++		memset(ns->digests[i].digest, 0xff, digest_size);
+ 	}
+ 
+ 	return 0;
+diff --git a/security/integrity/ima/ima_template.c b/security/integrity/ima/ima_template.c
+index 0f8aa10b56fc..334ff1cc7087 100644
+--- a/security/integrity/ima/ima_template.c
++++ b/security/integrity/ima/ima_template.c
+@@ -342,7 +342,8 @@ static struct ima_template_desc *restore_template_fmt(char *template_name)
+ 	return template_desc;
+ }
+ 
+-static int ima_restore_template_data(struct ima_template_desc *template_desc,
++static int ima_restore_template_data(struct ima_namespace *ns,
++				     struct ima_template_desc *template_desc,
+ 				     void *template_data,
+ 				     int template_data_size,
+ 				     struct ima_template_entry **entry)
+@@ -356,7 +357,7 @@ static int ima_restore_template_data(struct ima_template_desc *template_desc,
+ 	if (!*entry)
+ 		return -ENOMEM;
+ 
+-	digests = kcalloc(NR_BANKS(ima_tpm_chip) + ima_extra_slots,
++	digests = kcalloc(NR_BANKS(ns->ima_tpm_chip) + ns->ima_extra_slots,
+ 			  sizeof(*digests), GFP_NOFS);
+ 	if (!digests) {
+ 		kfree(*entry);
+@@ -497,7 +498,7 @@ int ima_restore_measurement_list(struct ima_namespace *ns,
+ 			break;
+ 		}
+ 
+-		ret = ima_restore_template_data(template_desc,
++		ret = ima_restore_template_data(ns, template_desc,
+ 						hdr[HDR_TEMPLATE_DATA].data,
+ 						hdr[HDR_TEMPLATE_DATA].len,
+ 						&entry);
+@@ -506,6 +507,7 @@ int ima_restore_measurement_list(struct ima_namespace *ns,
+ 
+ 		if (memcmp(hdr[HDR_DIGEST].data, zero, sizeof(zero))) {
+ 			ret = ima_calc_field_array_hash(
++						ns,
+ 						&entry->template_data[0],
+ 						entry);
+ 			if (ret < 0) {
+diff --git a/security/integrity/ima/ima_template_lib.c b/security/integrity/ima/ima_template_lib.c
+index ca017cae73eb..59a1c181d0fb 100644
+--- a/security/integrity/ima/ima_template_lib.c
++++ b/security/integrity/ima/ima_template_lib.c
+@@ -12,6 +12,7 @@
+ #include "ima_template_lib.h"
+ #include <linux/xattr.h>
+ #include <linux/evm.h>
++#include <linux/ima.h>
+ 
+ static bool ima_template_hash_algo_allowed(u8 algo)
+ {
+@@ -304,7 +305,8 @@ static int ima_eventdigest_init_common(const u8 *digest, u32 digestsize,
+ /*
+  * This function writes the digest of an event (with size limit).
+  */
+-int ima_eventdigest_init(struct ima_event_data *event_data,
++int ima_eventdigest_init(struct ima_namespace *ns,
++			 struct ima_event_data *event_data,
+ 			 struct ima_field_data *field_data)
+ {
+ 	struct {
+@@ -328,9 +330,9 @@ int ima_eventdigest_init(struct ima_event_data *event_data,
+ 	}
+ 
+ 	if ((const char *)event_data->filename == boot_aggregate_name) {
+-		if (ima_tpm_chip) {
++		if (ns->ima_tpm_chip) {
+ 			hash.hdr.algo = HASH_ALGO_SHA1;
+-			result = ima_calc_boot_aggregate(&hash.hdr);
++			result = ima_calc_boot_aggregate(ns, &hash.hdr);
+ 
+ 			/* algo can change depending on available PCR banks */
+ 			if (!result && hash.hdr.algo != HASH_ALGO_SHA1)
+@@ -351,7 +353,7 @@ int ima_eventdigest_init(struct ima_event_data *event_data,
+ 	inode = file_inode(event_data->file);
+ 	hash.hdr.algo = ima_template_hash_algo_allowed(ima_hash_algo) ?
+ 	    ima_hash_algo : HASH_ALGO_SHA1;
+-	result = ima_calc_file_hash(event_data->file, &hash.hdr);
++	result = ima_calc_file_hash(ns, event_data->file, &hash.hdr);
+ 	if (result) {
+ 		integrity_audit_msg(AUDIT_INTEGRITY_DATA, inode,
+ 				    event_data->filename, "collect_data",
+@@ -368,7 +370,8 @@ int ima_eventdigest_init(struct ima_event_data *event_data,
+ /*
+  * This function writes the digest of an event (without size limit).
+  */
+-int ima_eventdigest_ng_init(struct ima_event_data *event_data,
++int ima_eventdigest_ng_init(struct ima_namespace *ns,
++			    struct ima_event_data *event_data,
+ 			    struct ima_field_data *field_data)
+ {
+ 	u8 *cur_digest = NULL, hash_algo = HASH_ALGO_SHA1;
+@@ -390,7 +393,8 @@ int ima_eventdigest_ng_init(struct ima_event_data *event_data,
+  * This function writes the digest of the file which is expected to match the
+  * digest contained in the file's appended signature.
+  */
+-int ima_eventdigest_modsig_init(struct ima_event_data *event_data,
++int ima_eventdigest_modsig_init(struct ima_namespace *ns,
++				struct ima_event_data *event_data,
+ 				struct ima_field_data *field_data)
+ {
+ 	enum hash_algo hash_algo;
+@@ -455,7 +459,8 @@ static int ima_eventname_init_common(struct ima_event_data *event_data,
+ /*
+  * This function writes the name of an event (with size limit).
+  */
+-int ima_eventname_init(struct ima_event_data *event_data,
++int ima_eventname_init(struct ima_namespace *ns,
++		       struct ima_event_data *event_data,
+ 		       struct ima_field_data *field_data)
+ {
+ 	return ima_eventname_init_common(event_data, field_data, true);
+@@ -464,7 +469,8 @@ int ima_eventname_init(struct ima_event_data *event_data,
+ /*
+  * This function writes the name of an event (without size limit).
+  */
+-int ima_eventname_ng_init(struct ima_event_data *event_data,
++int ima_eventname_ng_init(struct ima_namespace *ns,
++			  struct ima_event_data *event_data,
+ 			  struct ima_field_data *field_data)
+ {
+ 	return ima_eventname_init_common(event_data, field_data, false);
+@@ -473,13 +479,14 @@ int ima_eventname_ng_init(struct ima_event_data *event_data,
+ /*
+  *  ima_eventsig_init - include the file signature as part of the template data
+  */
+-int ima_eventsig_init(struct ima_event_data *event_data,
++int ima_eventsig_init(struct ima_namespace *ns,
++		      struct ima_event_data *event_data,
+ 		      struct ima_field_data *field_data)
+ {
+ 	struct evm_ima_xattr_data *xattr_value = event_data->xattr_value;
+ 
+ 	if ((!xattr_value) || (xattr_value->type != EVM_IMA_XATTR_DIGSIG))
+-		return ima_eventevmsig_init(event_data, field_data);
++		return ima_eventevmsig_init(ns, event_data, field_data);
+ 
+ 	return ima_write_template_field_data(xattr_value, event_data->xattr_len,
+ 					     DATA_FMT_HEX, field_data);
+@@ -489,7 +496,8 @@ int ima_eventsig_init(struct ima_event_data *event_data,
+  *  ima_eventbuf_init - include the buffer(kexec-cmldine) as part of the
+  *  template data.
+  */
+-int ima_eventbuf_init(struct ima_event_data *event_data,
++int ima_eventbuf_init(struct ima_namespace *ns,
++		      struct ima_event_data *event_data,
+ 		      struct ima_field_data *field_data)
+ {
+ 	if ((!event_data->buf) || (event_data->buf_len == 0))
+@@ -504,7 +512,8 @@ int ima_eventbuf_init(struct ima_event_data *event_data,
+  *  ima_eventmodsig_init - include the appended file signature as part of the
+  *  template data
+  */
+-int ima_eventmodsig_init(struct ima_event_data *event_data,
++int ima_eventmodsig_init(struct ima_namespace *ns,
++			 struct ima_event_data *event_data,
+ 			 struct ima_field_data *field_data)
+ {
+ 	const void *data;
+@@ -530,7 +539,8 @@ int ima_eventmodsig_init(struct ima_event_data *event_data,
+  *  ima_eventevmsig_init - include the EVM portable signature as part of the
+  *  template data
+  */
+-int ima_eventevmsig_init(struct ima_event_data *event_data,
++int ima_eventevmsig_init(struct ima_namespace *ns,
++			 struct ima_event_data *event_data,
+ 			 struct ima_field_data *field_data)
+ {
+ 	struct evm_ima_xattr_data *xattr_data = NULL;
+@@ -585,7 +595,8 @@ static int ima_eventinodedac_init_common(struct ima_event_data *event_data,
+  *  ima_eventinodeuid_init - include the inode UID as part of the template
+  *  data
+  */
+-int ima_eventinodeuid_init(struct ima_event_data *event_data,
++int ima_eventinodeuid_init(struct ima_namespace *ns,
++			   struct ima_event_data *event_data,
+ 			   struct ima_field_data *field_data)
+ {
+ 	return ima_eventinodedac_init_common(event_data, field_data, true);
+@@ -595,7 +606,8 @@ int ima_eventinodeuid_init(struct ima_event_data *event_data,
+  *  ima_eventinodegid_init - include the inode GID as part of the template
+  *  data
+  */
+-int ima_eventinodegid_init(struct ima_event_data *event_data,
++int ima_eventinodegid_init(struct ima_namespace *ns,
++			   struct ima_event_data *event_data,
+ 			   struct ima_field_data *field_data)
+ {
+ 	return ima_eventinodedac_init_common(event_data, field_data, false);
+@@ -605,7 +617,8 @@ int ima_eventinodegid_init(struct ima_event_data *event_data,
+  *  ima_eventinodemode_init - include the inode mode as part of the template
+  *  data
+  */
+-int ima_eventinodemode_init(struct ima_event_data *event_data,
++int ima_eventinodemode_init(struct ima_namespace *ns,
++			    struct ima_event_data *event_data,
+ 			    struct ima_field_data *field_data)
+ {
+ 	struct inode *inode;
+@@ -660,7 +673,8 @@ static int ima_eventinodexattrs_init_common(struct ima_event_data *event_data,
+  *  ima_eventinodexattrnames_init - include a list of xattr names as part of the
+  *  template data
+  */
+-int ima_eventinodexattrnames_init(struct ima_event_data *event_data,
++int ima_eventinodexattrnames_init(struct ima_namespace *ns,
++				  struct ima_event_data *event_data,
+ 				  struct ima_field_data *field_data)
+ {
+ 	return ima_eventinodexattrs_init_common(event_data, field_data, 'n');
+@@ -670,7 +684,8 @@ int ima_eventinodexattrnames_init(struct ima_event_data *event_data,
+  *  ima_eventinodexattrlengths_init - include a list of xattr lengths as part of
+  *  the template data
+  */
+-int ima_eventinodexattrlengths_init(struct ima_event_data *event_data,
++int ima_eventinodexattrlengths_init(struct ima_namespace *ns,
++				    struct ima_event_data *event_data,
+ 				    struct ima_field_data *field_data)
+ {
+ 	return ima_eventinodexattrs_init_common(event_data, field_data, 'l');
+@@ -680,7 +695,8 @@ int ima_eventinodexattrlengths_init(struct ima_event_data *event_data,
+  *  ima_eventinodexattrvalues_init - include a list of xattr values as part of
+  *  the template data
+  */
+-int ima_eventinodexattrvalues_init(struct ima_event_data *event_data,
++int ima_eventinodexattrvalues_init(struct ima_namespace *ns,
++				   struct ima_event_data *event_data,
+ 				   struct ima_field_data *field_data)
+ {
+ 	return ima_eventinodexattrs_init_common(event_data, field_data, 'v');
+diff --git a/security/integrity/ima/ima_template_lib.h b/security/integrity/ima/ima_template_lib.h
+index c71f1de95753..925d87b17928 100644
+--- a/security/integrity/ima/ima_template_lib.h
++++ b/security/integrity/ima/ima_template_lib.h
+@@ -32,34 +32,49 @@ void ima_show_template_uint(struct seq_file *m, enum ima_show_type show,
+ int ima_parse_buf(void *bufstartp, void *bufendp, void **bufcurp,
+ 		  int maxfields, struct ima_field_data *fields, int *curfields,
+ 		  unsigned long *len_mask, int enforce_mask, char *bufname);
+-int ima_eventdigest_init(struct ima_event_data *event_data,
++int ima_eventdigest_init(struct ima_namespace *ns,
++			 struct ima_event_data *event_data,
+ 			 struct ima_field_data *field_data);
+-int ima_eventname_init(struct ima_event_data *event_data,
++int ima_eventname_init(struct ima_namespace *ns,
++		       struct ima_event_data *event_data,
+ 		       struct ima_field_data *field_data);
+-int ima_eventdigest_ng_init(struct ima_event_data *event_data,
++int ima_eventdigest_ng_init(struct ima_namespace *ns,
++			    struct ima_event_data *event_data,
+ 			    struct ima_field_data *field_data);
+-int ima_eventdigest_modsig_init(struct ima_event_data *event_data,
++int ima_eventdigest_modsig_init(struct ima_namespace *ns,
++				struct ima_event_data *event_data,
+ 				struct ima_field_data *field_data);
+-int ima_eventname_ng_init(struct ima_event_data *event_data,
++int ima_eventname_ng_init(struct ima_namespace *ns,
++			  struct ima_event_data *event_data,
+ 			  struct ima_field_data *field_data);
+-int ima_eventsig_init(struct ima_event_data *event_data,
++int ima_eventsig_init(struct ima_namespace *ns,
++		      struct ima_event_data *event_data,
+ 		      struct ima_field_data *field_data);
+-int ima_eventbuf_init(struct ima_event_data *event_data,
++int ima_eventbuf_init(struct ima_namespace *ns,
++		      struct ima_event_data *event_data,
+ 		      struct ima_field_data *field_data);
+-int ima_eventmodsig_init(struct ima_event_data *event_data,
++int ima_eventmodsig_init(struct ima_namespace *ns,
++			 struct ima_event_data *event_data,
+ 			 struct ima_field_data *field_data);
+-int ima_eventevmsig_init(struct ima_event_data *event_data,
++int ima_eventevmsig_init(struct ima_namespace *ns,
++			 struct ima_event_data *event_data,
+ 			 struct ima_field_data *field_data);
+-int ima_eventinodeuid_init(struct ima_event_data *event_data,
++int ima_eventinodeuid_init(struct ima_namespace *ns,
++			   struct ima_event_data *event_data,
+ 			   struct ima_field_data *field_data);
+-int ima_eventinodegid_init(struct ima_event_data *event_data,
++int ima_eventinodegid_init(struct ima_namespace *ns,
++			   struct ima_event_data *event_data,
+ 			   struct ima_field_data *field_data);
+-int ima_eventinodemode_init(struct ima_event_data *event_data,
++int ima_eventinodemode_init(struct ima_namespace *ns,
++			    struct ima_event_data *event_data,
+ 			    struct ima_field_data *field_data);
+-int ima_eventinodexattrnames_init(struct ima_event_data *event_data,
++int ima_eventinodexattrnames_init(struct ima_namespace *ns,
++				  struct ima_event_data *event_data,
+ 				  struct ima_field_data *field_data);
+-int ima_eventinodexattrlengths_init(struct ima_event_data *event_data,
++int ima_eventinodexattrlengths_init(struct ima_namespace *ns,
++				    struct ima_event_data *event_data,
+ 				    struct ima_field_data *field_data);
+-int ima_eventinodexattrvalues_init(struct ima_event_data *event_data,
++int ima_eventinodexattrvalues_init(struct ima_namespace *ns,
++				   struct ima_event_data *event_data,
+ 				   struct ima_field_data *field_data);
+ #endif /* __LINUX_IMA_TEMPLATE_LIB_H */
+-- 
+2.31.1
+

@@ -1,0 +1,77 @@
+From dd723787de6ffead5c719c10511f747fc526d84c Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.ibm.com>
+Date: Wed, 15 Dec 2021 17:47:09 -0500
+Subject: [PATCH 09/17] ima: Move add_boot_aggregate() into
+ init_ima_namespace()
+
+Move ima_add_boot_aggregate() into init_ima_namespace() so that also
+an IMA namespace's first measurement list entry is the boot aggregate.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/ima/ima.h             | 1 +
+ security/integrity/ima/ima_init.c        | 7 +------
+ security/integrity/ima/ima_init_ima_ns.c | 8 ++++++++
+ 3 files changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+index 857e784640b6..8429b017e413 100644
+--- a/security/integrity/ima/ima.h
++++ b/security/integrity/ima/ima.h
+@@ -235,6 +235,7 @@ int ima_init_digests(struct ima_namespace *ns);
+ void ima_free_digests(struct ima_namespace *ns);
+ int ima_lsm_policy_change(struct notifier_block *nb, unsigned long event,
+ 			  void *lsm_data);
++int ima_add_boot_aggregate(struct ima_namespace *ns);
+ 
+ /*
+  * used to protect h_table and sha_table
+diff --git a/security/integrity/ima/ima_init.c b/security/integrity/ima/ima_init.c
+index 64d2e40f4916..ef1e2f9cb33e 100644
+--- a/security/integrity/ima/ima_init.c
++++ b/security/integrity/ima/ima_init.c
+@@ -38,7 +38,7 @@ const char boot_aggregate_name[] = "boot_aggregate";
+  * a different value.) Violations add a zero entry to the measurement
+  * list and extend the aggregate PCR value with ff...ff's.
+  */
+-static int __init ima_add_boot_aggregate(struct ima_namespace *ns)
++int ima_add_boot_aggregate(struct ima_namespace *ns)
+ {
+ 	static const char op[] = "add_boot_aggregate";
+ 	const char *audit_cause = "ENOMEM";
+@@ -123,11 +123,6 @@ int __init ima_init(void)
+ 	if (rc)
+ 		return rc;
+ 
+-	/* boot aggregate must be first entry */
+-	rc = ima_add_boot_aggregate(&init_ima_ns);
+-	if (rc != 0)
+-		return rc;
+-
+ 	ima_init_policy(&init_ima_ns);
+ 
+ 	rc = ima_fs_init();
+diff --git a/security/integrity/ima/ima_init_ima_ns.c b/security/integrity/ima/ima_init_ima_ns.c
+index e450fcce6fd8..09e53b19eaba 100644
+--- a/security/integrity/ima/ima_init_ima_ns.c
++++ b/security/integrity/ima/ima_init_ima_ns.c
+@@ -70,8 +70,16 @@ int ima_init_namespace(struct ima_namespace *ns)
+ 	if (rc)
+ 		goto err_deinit_crypto;
+ 
++	/* boot aggregate must be first entry */
++	rc = ima_add_boot_aggregate(ns);
++	if (rc != 0)
++		goto err_free_digests;
++
+ 	return 0;
+ 
++err_free_digests:
++	ima_free_digests(ns);
++
+ err_deinit_crypto:
+ 	ima_deinit_crypto(ns);
+ 
+-- 
+2.31.1
+

@@ -1,0 +1,95 @@
+From 2e651f17815d3b5b008efefcc520d3624a0f085a Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Date: Fri, 4 Aug 2017 23:13:37 -0400
+Subject: [PATCH 12/17] integrity: introduce kref for integrity_iint_cache
+
+Prepare the integrity_iint_cache pointers to be pointed to by the
+struct ns_status as well.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/iint.c      |  8 ++++++--
+ security/integrity/integrity.h | 19 +++++++++++++++++++
+ 2 files changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/security/integrity/iint.c b/security/integrity/iint.c
+index 8638976f7990..f98fdaed9283 100644
+--- a/security/integrity/iint.c
++++ b/security/integrity/iint.c
+@@ -68,8 +68,10 @@ struct integrity_iint_cache *integrity_iint_find(struct inode *inode)
+ 	return iint;
+ }
+ 
+-static void iint_free(struct integrity_iint_cache *iint)
++void iint_free(struct kref *ref)
+ {
++	struct integrity_iint_cache *iint = container_of(ref, typeof(*iint), ref);
++
+ 	kfree(iint->ima_hash);
+ 	iint->ima_hash = NULL;
+ 	iint->version = 0;
+@@ -114,6 +116,8 @@ struct integrity_iint_cache *integrity_inode_get(struct inode *inode)
+ 	if (!iint)
+ 		return NULL;
+ 
++	kref_init(&iint->ref);
++
+ 	write_lock(&integrity_iint_lock);
+ 
+ 	p = &integrity_iint_tree.rb_node;
+@@ -155,7 +159,7 @@ void integrity_inode_free(struct inode *inode)
+ 	rb_erase(&iint->rb_node, &integrity_iint_tree);
+ 	write_unlock(&integrity_iint_lock);
+ 
+-	iint_free(iint);
++	iint_put(iint);
+ }
+ 
+ static void init_once(void *foo)
+diff --git a/security/integrity/integrity.h b/security/integrity/integrity.h
+index 547425c20e11..9f1f774d7070 100644
+--- a/security/integrity/integrity.h
++++ b/security/integrity/integrity.h
+@@ -17,6 +17,7 @@
+ #include <crypto/sha1.h>
+ #include <linux/key.h>
+ #include <linux/audit.h>
++#include <linux/kref.h>
+ 
+ /* iint action cache flags */
+ #define IMA_MEASURE		0x00000001
+@@ -124,6 +125,7 @@ struct signature_v2_hdr {
+ 
+ /* integrity data associated with an inode */
+ struct integrity_iint_cache {
++	struct kref ref;
+ 	struct rb_node rb_node;	/* rooted in integrity_iint_tree */
+ 	struct mutex mutex;	/* protects: version, flags, digest */
+ 	struct inode *inode;	/* back pointer to inode in question */
+@@ -148,6 +150,23 @@ struct integrity_iint_cache *integrity_iint_find(struct inode *inode);
+ int integrity_kernel_read(struct file *file, loff_t offset,
+ 			  void *addr, unsigned long count);
+ 
++int __init integrity_read_file(const char *path, char **data);
++
++void iint_free(struct kref *ref);
++static inline struct integrity_iint_cache *
++iint_get(struct integrity_iint_cache *iint)
++{
++	if (iint)
++		kref_get(&iint->ref);
++	return iint;
++}
++
++static inline void iint_put(struct integrity_iint_cache *iint)
++{
++	if (iint)
++		kref_put(&iint->ref, iint_free);
++}
++
+ #define INTEGRITY_KEYRING_EVM		0
+ #define INTEGRITY_KEYRING_IMA		1
+ #define INTEGRITY_KEYRING_PLATFORM	2
+-- 
+2.31.1
+

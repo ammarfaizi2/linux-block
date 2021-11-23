@@ -1,0 +1,181 @@
+From 3a3fab4d158221b4c750456767252001cd14ace3 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Date: Mon, 30 Apr 2018 09:44:17 -0400
+Subject: [PATCH 16/17] integrity: move measured_pcrs into struct ns_status
+
+Move the measured_pcrs field from integrity_iint_cache into
+ns_status struct so we can track the usage of PCRs on a per
+namespace basis.
+
+In some cases, when the measured_pcrs field is reset then it is
+necessary to walk the list of ns_status connected to an iint and
+reset it in all ns_status structures.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/iint.c              |  1 -
+ security/integrity/ima/ima.h           |  1 +
+ security/integrity/ima/ima_api.c       |  4 ++--
+ security/integrity/ima/ima_appraise.c  |  8 +++++++-
+ security/integrity/ima/ima_main.c      | 12 +++++++++---
+ security/integrity/ima/ima_ns_status.c |  1 +
+ security/integrity/ima/ima_policy.c    |  2 +-
+ security/integrity/integrity.h         |  1 -
+ 8 files changed, 21 insertions(+), 9 deletions(-)
+
+diff --git a/security/integrity/iint.c b/security/integrity/iint.c
+index 06fb1b3ad52c..81c5bfd3166b 100644
+--- a/security/integrity/iint.c
++++ b/security/integrity/iint.c
+@@ -83,7 +83,6 @@ void iint_free(struct kref *ref)
+ 	iint->ima_read_status = INTEGRITY_UNKNOWN;
+ 	iint->ima_creds_status = INTEGRITY_UNKNOWN;
+ 	iint->evm_status = INTEGRITY_UNKNOWN;
+-	iint->measured_pcrs = 0;
+ 	kmem_cache_free(iint_cache, iint);
+ }
+ 
+diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+index 24614245f410..79b78635886b 100644
+--- a/security/integrity/ima/ima.h
++++ b/security/integrity/ima/ima.h
+@@ -192,6 +192,7 @@ struct ns_status {
+ 	ino_t i_ino;
+ 	u32 i_generation;
+ 	unsigned long flags;
++	unsigned long measured_pcrs;
+ };
+ 
+ static inline struct ns_status *ns_status_get(struct ns_status *status)
+diff --git a/security/integrity/ima/ima_api.c b/security/integrity/ima/ima_api.c
+index e9baf141c442..5e59b2fb7294 100644
+--- a/security/integrity/ima/ima_api.c
++++ b/security/integrity/ima/ima_api.c
+@@ -334,7 +334,7 @@ void ima_store_measurement(struct ima_namespace *ns,
+ 	 * appraisal, but a file measurement from earlier might already exist in
+ 	 * the measurement list.
+ 	 */
+-	if (iint->measured_pcrs & (0x1 << pcr) && !modsig)
++	if (status->measured_pcrs & (0x1 << pcr) && !modsig)
+ 		return;
+ 
+ 	result = ima_alloc_init_template(ns, &event_data, &entry, template_desc);
+@@ -347,7 +347,7 @@ void ima_store_measurement(struct ima_namespace *ns,
+ 	result = ima_store_template(ns, entry, violation, inode, filename, pcr);
+ 	if ((!result || result == -EEXIST) && !(file->f_flags & O_DIRECT)) {
+ 		set_iint_flags(iint, status, flags | IMA_MEASURED);
+-		iint->measured_pcrs |= (0x1 << pcr);
++		status->measured_pcrs |= (0x1 << pcr);
+ 	}
+ 	if (result < 0)
+ 		ima_free_template_entry(entry);
+diff --git a/security/integrity/ima/ima_appraise.c b/security/integrity/ima/ima_appraise.c
+index 07f9d370cdb5..59cd989e2dbd 100644
+--- a/security/integrity/ima/ima_appraise.c
++++ b/security/integrity/ima/ima_appraise.c
+@@ -569,6 +569,7 @@ static void ima_reset_appraise_flags(struct ima_namespace *ns,
+ 				     struct inode *inode, int digsig)
+ {
+ 	struct integrity_iint_cache *iint;
++	struct ns_status *status;
+ 
+ 	if (!(ns->ima_policy_flag & IMA_APPRAISE) || !S_ISREG(inode->i_mode))
+ 		return;
+@@ -576,7 +577,12 @@ static void ima_reset_appraise_flags(struct ima_namespace *ns,
+ 	iint = integrity_iint_find(inode);
+ 	if (!iint)
+ 		return;
+-	iint->measured_pcrs = 0;
++
++	read_lock(&iint->ns_list_lock);
++	list_for_each_entry(status, &iint->ns_list, ns_next)
++		status->measured_pcrs = 0;
++	read_unlock(&iint->ns_list_lock);
++
+ 	set_bit(IMA_CHANGE_XATTR, &iint->atomic_flags);
+ 	if (digsig)
+ 		set_bit(IMA_DIGSIG, &iint->atomic_flags);
+diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
+index 5fa9157ca388..086046a622c4 100644
+--- a/security/integrity/ima/ima_main.c
++++ b/security/integrity/ima/ima_main.c
+@@ -159,6 +159,7 @@ static void ima_check_last_writer(struct ima_namespace *ns,
+ {
+ 	fmode_t mode = file->f_mode;
+ 	bool update;
++	struct ns_status *status;
+ 
+ 	if (!(mode & FMODE_WRITE))
+ 		return;
+@@ -171,7 +172,12 @@ static void ima_check_last_writer(struct ima_namespace *ns,
+ 		    !inode_eq_iversion(inode, iint->version) ||
+ 		    (iint->flags & IMA_NEW_FILE)) {
+ 			iint->flags &= ~(IMA_DONE_MASK | IMA_NEW_FILE);
+-			iint->measured_pcrs = 0;
++
++			read_lock(&iint->ns_list_lock);
++			list_for_each_entry(status, &iint->ns_list, ns_next)
++				status->measured_pcrs = 0;
++			read_unlock(&iint->ns_list_lock);
++
+ 			if (update)
+ 				ima_update_xattr(ns, iint, file);
+ 		}
+@@ -289,7 +295,7 @@ static int __process_measurement(struct ima_namespace *ns,
+ 	     !(inode->i_sb->s_iflags & SB_I_UNTRUSTED_MOUNTER) &&
+ 	     !(action & IMA_FAIL_UNVERIFIABLE_SIGS))) {
+ 		flags &= ~IMA_DONE_MASK;
+-		iint->measured_pcrs = 0;
++		status->measured_pcrs = 0;
+ 	}
+ 
+ 	/* Determine if already appraised/measured based on bitmask
+@@ -301,7 +307,7 @@ static int __process_measurement(struct ima_namespace *ns,
+ 	action &= ~((flags & (IMA_DONE_MASK ^ IMA_MEASURED)) >> 1);
+ 
+ 	/* If target pcr is already measured, unset IMA_MEASURE action */
+-	if ((action & IMA_MEASURE) && (iint->measured_pcrs & (0x1 << pcr)))
++	if ((action & IMA_MEASURE) && (status->measured_pcrs & (0x1 << pcr)))
+ 		action ^= IMA_MEASURE;
+ 
+ 	/* HASH sets the digital signature and update flags, nothing else */
+diff --git a/security/integrity/ima/ima_ns_status.c b/security/integrity/ima/ima_ns_status.c
+index 36df71e96c4b..0e69aa48d14e 100644
+--- a/security/integrity/ima/ima_ns_status.c
++++ b/security/integrity/ima/ima_ns_status.c
+@@ -191,6 +191,7 @@ struct ns_status *ima_get_ns_status(struct ima_namespace *ns,
+ 	status->i_generation = inode->i_generation;
+ 	status->flags = 0UL;
+ 	status->ns = ns;
++	status->measured_pcrs = 0;
+ 
+ 	write_lock(&iint->ns_list_lock);
+ 	if (list_empty(&status->ns_next))
+diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
+index 3191979235fc..6c62ba490310 100644
+--- a/security/integrity/ima/ima_policy.c
++++ b/security/integrity/ima/ima_policy.c
+@@ -50,7 +50,7 @@
+ #define DONT_HASH	0x0200
+ 
+ #define INVALID_PCR(a) (((a) < 0) || \
+-	(a) >= (sizeof_field(struct integrity_iint_cache, measured_pcrs) * 8))
++	(a) >= (sizeof_field(struct ns_status, measured_pcrs) * 8))
+ 
+ static int temp_ima_appraise;
+ static int build_ima_appraise __ro_after_init;
+diff --git a/security/integrity/integrity.h b/security/integrity/integrity.h
+index 1776ae7ecff6..362dae8e4b45 100644
+--- a/security/integrity/integrity.h
++++ b/security/integrity/integrity.h
+@@ -131,7 +131,6 @@ struct integrity_iint_cache {
+ 	struct inode *inode;	/* back pointer to inode in question */
+ 	u64 version;		/* track inode changes */
+ 	unsigned long flags;
+-	unsigned long measured_pcrs;
+ 	unsigned long atomic_flags;
+ 	enum integrity_status ima_file_status:4;
+ 	enum integrity_status ima_mmap_status:4;
+-- 
+2.31.1
+

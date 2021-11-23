@@ -1,0 +1,58 @@
+From 49ddad33bdd9c53b805c51d20ce566cffce01120 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.ibm.com>
+Date: Thu, 16 Dec 2021 08:34:57 -0500
+Subject: [PATCH 04/17] ima: Move integrity_init_keyring() into
+ ima_init_namespace()
+
+To be able to preserve the order of initialization move
+integrity_init_keyring() into ima_init_namespace() but only call it for
+init_ima_ns initialiation.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/ima/ima_init.c        | 4 ----
+ security/integrity/ima/ima_init_ima_ns.c | 6 ++++++
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/security/integrity/ima/ima_init.c b/security/integrity/ima/ima_init.c
+index 64a196c5fb77..06e8c5f4a9fd 100644
+--- a/security/integrity/ima/ima_init.c
++++ b/security/integrity/ima/ima_init.c
+@@ -123,10 +123,6 @@ int __init ima_init(void)
+ 	if (rc)
+ 		return rc;
+ 
+-	rc = integrity_init_keyring(INTEGRITY_KEYRING_IMA);
+-	if (rc)
+-		return rc;
+-
+ 	rc = ima_init_crypto(&init_ima_ns);
+ 	if (rc)
+ 		return rc;
+diff --git a/security/integrity/ima/ima_init_ima_ns.c b/security/integrity/ima/ima_init_ima_ns.c
+index c13c265fb98f..fb365637b73e 100644
+--- a/security/integrity/ima/ima_init_ima_ns.c
++++ b/security/integrity/ima/ima_init_ima_ns.c
+@@ -16,6 +16,8 @@
+ 
+ int ima_init_namespace(struct ima_namespace *ns)
+ {
++	int rc;
++
+ 	ns->ns_status_tree = RB_ROOT;
+ 	rwlock_init(&ns->ns_status_lock);
+ 	/* Use KMEM_CACHE for simplicity ? */
+@@ -44,6 +46,10 @@ int ima_init_namespace(struct ima_namespace *ns)
+ 		ns->ima_tpm_chip = tpm_default_chip();
+ 		if (ns->ima_tpm_chip)
+ 			pr_info("No TPM chip found, activating TPM-bypass!\n");
++
++		rc = integrity_init_keyring(INTEGRITY_KEYRING_IMA);
++		if (rc)
++			return rc;
+ 	}
+ 
+ 	return 0;
+-- 
+2.31.1
+

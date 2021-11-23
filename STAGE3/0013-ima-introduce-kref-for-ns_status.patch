@@ -1,0 +1,134 @@
+From 63a0a4ae88b3e2a52322dc0544ba86d11f00f8e0 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Date: Mon, 30 Apr 2018 13:08:40 -0400
+Subject: [PATCH 13/17] ima: introduce kref for ns_status
+
+Introduce a kref for the ns_status structure. Use the reference when
+returning a ns_status structure pointer from ima_get_ns_status()
+and have all callers put that reference.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/ima/ima.h           | 17 +++++++++++++++
+ security/integrity/ima/ima_main.c      |  1 +
+ security/integrity/ima/ima_ns_status.c | 30 ++++++++++++--------------
+ 3 files changed, 32 insertions(+), 16 deletions(-)
+
+diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+index 439a0b1c362c..202b987dae34 100644
+--- a/security/integrity/ima/ima.h
++++ b/security/integrity/ima/ima.h
+@@ -183,13 +183,30 @@ static inline void ima_load_kexec_buffer(void) {}
+ extern bool ima_canonical_fmt;
+ 
+ struct ns_status {
++	struct kref ref;
+ 	struct rb_node rb_node;
+ 	struct inode *inode;
++	struct ima_namespace *ns;
+ 	ino_t i_ino;
+ 	u32 i_generation;
+ 	unsigned long flags;
+ };
+ 
++static inline struct ns_status *ns_status_get(struct ns_status *status)
++{
++	if (status)
++		kref_get(&status->ref);
++	return status;
++}
++
++void ns_status_free(struct kref *ref);
++
++static inline void ns_status_put(struct ns_status *status)
++{
++	if (status)
++		kref_put(&status->ref, ns_status_free);
++}
++
+ /* Internal IMA function definitions */
+ int ima_init(void);
+ int ima_fs_init(void);
+diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
+index dec7fc816858..202567681bc1 100644
+--- a/security/integrity/ima/ima_main.c
++++ b/security/integrity/ima/ima_main.c
+@@ -395,6 +395,7 @@ static int __process_measurement(struct ima_namespace *ns,
+ 	kfree(xattr_value);
+ 	ima_free_modsig(modsig);
+ out:
++	ns_status_put(status);
+ 	if (pathbuf)
+ 		__putname(pathbuf);
+ 	if (must_appraise) {
+diff --git a/security/integrity/ima/ima_ns_status.c b/security/integrity/ima/ima_ns_status.c
+index f5b183b62894..5ec297391a05 100644
+--- a/security/integrity/ima/ima_ns_status.c
++++ b/security/integrity/ima/ima_ns_status.c
+@@ -49,21 +49,6 @@ static struct ns_status *__ima_ns_status_find(struct ima_namespace *ns,
+ 	return status;
+ }
+ 
+-/*
+- * ima_ns_status_find - return the ns_status associated with an inode
+- */
+-static struct ns_status *ima_ns_status_find(struct ima_namespace *ns,
+-					    struct inode *inode)
+-{
+-	struct ns_status *status;
+-
+-	read_lock(&ns->ns_status_lock);
+-	status = __ima_ns_status_find(ns, inode);
+-	read_unlock(&ns->ns_status_lock);
+-
+-	return status;
+-}
+-
+ static void insert_ns_status(struct ima_namespace *ns, struct inode *inode,
+ 			     struct ns_status *status)
+ {
+@@ -85,13 +70,24 @@ static void insert_ns_status(struct ima_namespace *ns, struct inode *inode,
+ 	rb_insert_color(node, &ns->ns_status_tree);
+ }
+ 
++void ns_status_free(struct kref *ref)
++{
++	struct ns_status *status = container_of(ref, struct ns_status, ref);
++
++	kmem_cache_free(status->ns->ns_status_cache, status);
++}
++
+ struct ns_status *ima_get_ns_status(struct ima_namespace *ns,
+ 				    struct inode *inode)
+ {
+ 	struct ns_status *status;
+ 	int skip_insert = 0;
+ 
+-	status = ima_ns_status_find(ns, inode);
++	read_lock(&ns->ns_status_lock);
++
++	status = ns_status_get(__ima_ns_status_find(ns, inode));
++
++	read_unlock(&ns->ns_status_lock);
+ 	if (status) {
+ 		/*
+ 		 * Unlike integrity_iint_cache we are not free'ing the
+@@ -109,6 +105,7 @@ struct ns_status *ima_get_ns_status(struct ima_namespace *ns,
+ 		status = kmem_cache_alloc(ns->ns_status_cache, GFP_NOFS);
+ 		if (!status)
+ 			return ERR_PTR(-ENOMEM);
++		kref_init(&status->ref);
+ 	}
+ 
+ 	write_lock(&ns->ns_status_lock);
+@@ -120,6 +117,7 @@ struct ns_status *ima_get_ns_status(struct ima_namespace *ns,
+ 	status->i_ino = inode->i_ino;
+ 	status->i_generation = inode->i_generation;
+ 	status->flags = 0UL;
++	status->ns = ns;
+ 
+ 	write_unlock(&ns->ns_status_lock);
+ 
+-- 
+2.31.1
+

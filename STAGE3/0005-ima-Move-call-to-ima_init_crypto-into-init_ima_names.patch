@@ -1,0 +1,123 @@
+From a67ec319c0a67e68077817aaf08eb6b6297acf02 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.ibm.com>
+Date: Fri, 3 Dec 2021 12:36:47 -0500
+Subject: [PATCH 05/17] ima: Move call to ima_init_crypto() into
+ init_ima_namespace()
+
+Move the call to ima_init_crypto() into init_ima_namespace function
+and call it for all IMA namespaces, including the init_ima_ns.
+
+When an IMA namespace is deleted, call the new ima_deinit_crypto()
+to free all IMA namespace-specific data structures.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/ima/ima.h             |  1 +
+ security/integrity/ima/ima_crypto.c      | 23 +++++++++++++++++++++--
+ security/integrity/ima/ima_init.c        |  3 ---
+ security/integrity/ima/ima_init_ima_ns.c |  2 +-
+ security/integrity/ima/ima_ns.c          |  1 +
+ 5 files changed, 24 insertions(+), 6 deletions(-)
+
+diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+index 901174d30f01..61bd1703096c 100644
+--- a/security/integrity/ima/ima.h
++++ b/security/integrity/ima/ima.h
+@@ -207,6 +207,7 @@ void ima_add_violation(struct ima_namespace *ns,
+ 		       struct integrity_iint_cache *iint,
+ 		       const char *op, const char *cause);
+ int ima_init_crypto(struct ima_namespace *ns);
++void ima_deinit_crypto(struct ima_namespace *ns);
+ void ima_putc(struct seq_file *m, void *data, int datalen);
+ void ima_print_digest(struct seq_file *m, u8 *digest, u32 size);
+ int template_desc_init_fields(const char *template_fmt,
+diff --git a/security/integrity/ima/ima_crypto.c b/security/integrity/ima/ima_crypto.c
+index a53f859f501c..8d977138412e 100644
+--- a/security/integrity/ima/ima_crypto.c
++++ b/security/integrity/ima/ima_crypto.c
+@@ -59,7 +59,7 @@ struct ima_algo_desc {
+ 	enum hash_algo algo;
+ };
+ 
+-static int __init ima_init_ima_crypto(struct ima_namespace *ns)
++static int ima_init_ima_crypto(struct ima_namespace *ns)
+ {
+ 	long rc;
+ 
+@@ -102,7 +102,7 @@ static struct crypto_shash *ima_alloc_tfm(struct ima_namespace *ns,
+ 	return tfm;
+ }
+ 
+-int __init ima_init_crypto(struct ima_namespace *ns)
++int ima_init_crypto(struct ima_namespace *ns)
+ {
+ 	struct tpm_chip *ima_tpm_chip = ns->ima_tpm_chip;
+ 	struct ima_algo_desc *ima_algo_array;
+@@ -203,6 +203,25 @@ int __init ima_init_crypto(struct ima_namespace *ns)
+ 	return rc;
+ }
+ 
++void ima_deinit_crypto(struct ima_namespace *ns)
++{
++	struct ima_algo_desc *ima_algo_array = ns->ima_algo_array;
++	struct tpm_chip *ima_tpm_chip = ns->ima_tpm_chip;
++	int i;
++
++	for (i = 0; i < NR_BANKS(ima_tpm_chip) + ns->ima_extra_slots; i++) {
++		if (!ima_algo_array[i].tfm ||
++		    ima_algo_array[i].tfm == ns->ima_shash_tfm)
++			continue;
++
++		crypto_free_shash(ima_algo_array[i].tfm);
++	}
++	kfree(ns->ima_algo_array);
++
++	crypto_free_shash(ns->ima_shash_tfm);
++	crypto_free_ahash(ns->ima_ahash_tfm);
++}
++
+ static void ima_free_tfm(struct ima_namespace *ns, struct crypto_shash *tfm)
+ {
+ 	struct ima_algo_desc *ima_algo_array = ns->ima_algo_array;
+diff --git a/security/integrity/ima/ima_init.c b/security/integrity/ima/ima_init.c
+index 06e8c5f4a9fd..be7467de00a9 100644
+--- a/security/integrity/ima/ima_init.c
++++ b/security/integrity/ima/ima_init.c
+@@ -123,9 +123,6 @@ int __init ima_init(void)
+ 	if (rc)
+ 		return rc;
+ 
+-	rc = ima_init_crypto(&init_ima_ns);
+-	if (rc)
+-		return rc;
+ 	rc = ima_init_template();
+ 	if (rc != 0)
+ 		return rc;
+diff --git a/security/integrity/ima/ima_init_ima_ns.c b/security/integrity/ima/ima_init_ima_ns.c
+index fb365637b73e..0cc26ea8a471 100644
+--- a/security/integrity/ima/ima_init_ima_ns.c
++++ b/security/integrity/ima/ima_init_ima_ns.c
+@@ -52,7 +52,7 @@ int ima_init_namespace(struct ima_namespace *ns)
+ 			return rc;
+ 	}
+ 
+-	return 0;
++	return ima_init_crypto(ns);
+ }
+ 
+ int __init ima_ns_init(void)
+diff --git a/security/integrity/ima/ima_ns.c b/security/integrity/ima/ima_ns.c
+index d192a80c927f..7fb21178843d 100644
+--- a/security/integrity/ima/ima_ns.c
++++ b/security/integrity/ima/ima_ns.c
+@@ -44,6 +44,7 @@ int create_ima_ns(struct user_namespace *user_ns)
+ static void destroy_ima_ns(struct ima_namespace *ns)
+ {
+ 	pr_debug("DESTROY ima_ns: 0x%p\n", ns);
++	ima_deinit_crypto(ns);
+ 	ima_free_policy_rules(ns);
+ 	free_ns_status_cache(ns);
+ 	ima_free_measurements(ns);
+-- 
+2.31.1
+

@@ -1,0 +1,50 @@
+From f9f235b4b877b8a4254c44ea96482f942d89bf02 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.ibm.com>
+Date: Thu, 2 Dec 2021 20:06:06 -0500
+Subject: [PATCH 02/17] ima: Move initialization of ima_tpm_chip into
+ ima_init_namespace()
+
+Move the initialization of ima_tpm_chip into ima_init_namespace()
+function. Only initialize the variable for the init_ima_ns.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/ima/ima_init.c        | 4 ----
+ security/integrity/ima/ima_init_ima_ns.c | 6 ++++++
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/security/integrity/ima/ima_init.c b/security/integrity/ima/ima_init.c
+index f04466222c1c..64a196c5fb77 100644
+--- a/security/integrity/ima/ima_init.c
++++ b/security/integrity/ima/ima_init.c
+@@ -123,10 +123,6 @@ int __init ima_init(void)
+ 	if (rc)
+ 		return rc;
+ 
+-	init_ima_ns.ima_tpm_chip = tpm_default_chip();
+-	if (!init_ima_ns.ima_tpm_chip)
+-		pr_info("No TPM chip found, activating TPM-bypass!\n");
+-
+ 	rc = integrity_init_keyring(INTEGRITY_KEYRING_IMA);
+ 	if (rc)
+ 		return rc;
+diff --git a/security/integrity/ima/ima_init_ima_ns.c b/security/integrity/ima/ima_init_ima_ns.c
+index 0972167a4af1..c13c265fb98f 100644
+--- a/security/integrity/ima/ima_init_ima_ns.c
++++ b/security/integrity/ima/ima_init_ima_ns.c
+@@ -40,6 +40,12 @@ int ima_init_namespace(struct ima_namespace *ns)
+ 	ns->valid_policy = 1;
+ 	ns->ima_fs_flags = 0;
+ 
++	if (ns == &init_ima_ns) {
++		ns->ima_tpm_chip = tpm_default_chip();
++		if (ns->ima_tpm_chip)
++			pr_info("No TPM chip found, activating TPM-bypass!\n");
++	}
++
+ 	return 0;
+ }
+ 
+-- 
+2.31.1
+

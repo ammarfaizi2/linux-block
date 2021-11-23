@@ -1,0 +1,369 @@
+From 21834dae972912e421a707e8d092083c67f72dee Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Date: Mon, 30 Apr 2018 10:55:20 -0400
+Subject: [PATCH 14/17] integrity: connect a list of ns_status to the
+ integrity_iint_cache
+
+In subsequent patches we will have to find all ns_status entries an iint
+is being used in and reset flags there. To do this we now connect a list
+of ns_status to the integrity_iint_cache and provide a reader-writer lock
+in the integrity_iint_cache so we can lock access to it.
+
+There are two cases for freeing:
+- when the iint is freed: In this case we walk the list of ns_status
+  entries and disconnect each ns_status on the list; we take the writer
+  lock to protect access to the list
+- when the ns_status is freed: In this case we only remove the ns_status
+  from the list while also holding the iint's writer lock; to be able to
+  grab the lock we have to have a pointer to the iint on the ns_status
+  structure.
+
+In the 1st case above an ns_status is not on the iint's list anymore and
+therefore can be freed. The freeing is done lazily while walking the
+rbtree with the rbtree's writer lock held.
+
+We can run into the case that ns_status found in the RB tree has a
+different iint associated with it for the same inode. In this case we
+need to delete the ns_status structure and get a new one.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/iint.c              |   6 ++
+ security/integrity/ima/Makefile        |   3 +-
+ security/integrity/ima/ima.h           |  10 ++-
+ security/integrity/ima/ima_iint.c      |  24 ++++++
+ security/integrity/ima/ima_main.c      |   2 +-
+ security/integrity/ima/ima_ns_status.c | 105 ++++++++++++++++++++++---
+ security/integrity/integrity.h         |   4 +
+ 7 files changed, 141 insertions(+), 13 deletions(-)
+ create mode 100644 security/integrity/ima/ima_iint.c
+
+diff --git a/security/integrity/iint.c b/security/integrity/iint.c
+index f98fdaed9283..06fb1b3ad52c 100644
+--- a/security/integrity/iint.c
++++ b/security/integrity/iint.c
+@@ -134,6 +134,10 @@ struct integrity_iint_cache *integrity_inode_get(struct inode *inode)
+ 	iint->inode = inode;
+ 	node = &iint->rb_node;
+ 	inode->i_flags |= S_IMA;
++
++	rwlock_init(&iint->ns_list_lock);
++	INIT_LIST_HEAD(&iint->ns_list);
++
+ 	rb_link_node(node, parent, p);
+ 	rb_insert_color(node, &integrity_iint_tree);
+ 
+@@ -159,6 +163,8 @@ void integrity_inode_free(struct inode *inode)
+ 	rb_erase(&iint->rb_node, &integrity_iint_tree);
+ 	write_unlock(&integrity_iint_lock);
+ 
++	ima_iint_clear_ns_list(iint);
++
+ 	iint_put(iint);
+ }
+ 
+diff --git a/security/integrity/ima/Makefile b/security/integrity/ima/Makefile
+index 78c84214e109..5754009f82db 100644
+--- a/security/integrity/ima/Makefile
++++ b/security/integrity/ima/Makefile
+@@ -7,7 +7,8 @@
+ obj-$(CONFIG_IMA) += ima.o
+ 
+ ima-y := ima_fs.o ima_queue.o ima_init.o ima_main.o ima_crypto.o ima_api.o \
+-	 ima_policy.o ima_template.o ima_template_lib.o ima_init_ima_ns.o
++	 ima_policy.o ima_template.o ima_template_lib.o ima_init_ima_ns.o \
++	 ima_iint.o
+ ima-$(CONFIG_IMA_APPRAISE) += ima_appraise.o
+ ima-$(CONFIG_IMA_APPRAISE_MODSIG) += ima_modsig.o
+ ima-$(CONFIG_IMA_NS) += ima_ns.o ima_ns_status.o
+diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+index 202b987dae34..be1ae230f056 100644
+--- a/security/integrity/ima/ima.h
++++ b/security/integrity/ima/ima.h
+@@ -184,7 +184,9 @@ extern bool ima_canonical_fmt;
+ 
+ struct ns_status {
+ 	struct kref ref;
++	struct list_head ns_next;
+ 	struct rb_node rb_node;
++	struct integrity_iint_cache *iint;
+ 	struct inode *inode;
+ 	struct ima_namespace *ns;
+ 	ino_t i_ino;
+@@ -207,6 +209,8 @@ static inline void ns_status_put(struct ns_status *status)
+ 		kref_put(&status->ref, ns_status_free);
+ }
+ 
++void ima_ns_status_list_del(struct ns_status *status);
++
+ /* Internal IMA function definitions */
+ int ima_init(void);
+ int ima_fs_init(void);
+@@ -515,7 +519,8 @@ int ima_init_namespace(struct ima_namespace *ns);
+ 
+ #ifdef CONFIG_IMA_NS
+ struct ns_status *ima_get_ns_status(struct ima_namespace *ns,
+-				    struct inode *inode);
++				    struct inode *inode,
++				    struct integrity_iint_cache *iint);
+ 
+ void free_ns_status_cache(struct ima_namespace *ns);
+ 
+@@ -526,7 +531,8 @@ unsigned long set_iint_flags(struct integrity_iint_cache *iint,
+ #else
+ 
+ static inline struct ns_status *ima_get_ns_status(struct ima_namespace *ns,
+-						  struct inode *inode)
++						  struct inode *inode,
++						  struct integrity_iint_cache *iint)
+ {
+ 	return NULL;
+ }
+diff --git a/security/integrity/ima/ima_iint.c b/security/integrity/ima/ima_iint.c
+new file mode 100644
+index 000000000000..9cf6b9414825
+--- /dev/null
++++ b/security/integrity/ima/ima_iint.c
+@@ -0,0 +1,24 @@
++/*
++ * Copyright (C) 2018 IBM Corporation
++ * Author:
++ *  Yuqiong Sun <suny@us.ibm.com>
++ *  Stefan Berger <stefanb@linux.vnet.ibm.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, version 2 of the License.
++ */
++
++#include "ima.h"
++
++void ima_iint_clear_ns_list(struct integrity_iint_cache *iint)
++{
++	struct ns_status *curr, *next;
++
++	write_lock(&iint->ns_list_lock);
++
++	list_for_each_entry_safe(curr, next, &iint->ns_list, ns_next)
++		ima_ns_status_list_del(curr);
++
++	write_unlock(&iint->ns_list_lock);
++}
+diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
+index 202567681bc1..5fa9157ca388 100644
+--- a/security/integrity/ima/ima_main.c
++++ b/security/integrity/ima/ima_main.c
+@@ -252,7 +252,7 @@ static int __process_measurement(struct ima_namespace *ns,
+ 			rc = -ENOMEM;
+ 
+ 		if (!rc && (action & IMA_NS_STATUS_ACTIONS)) {
+-			status = ima_get_ns_status(ns, inode);
++			status = ima_get_ns_status(ns, inode, iint);
+ 			if (IS_ERR(status))
+ 				rc = PTR_ERR(status);
+ 		}
+diff --git a/security/integrity/ima/ima_ns_status.c b/security/integrity/ima/ima_ns_status.c
+index 5ec297391a05..6bc71e2bf5db 100644
+--- a/security/integrity/ima/ima_ns_status.c
++++ b/security/integrity/ima/ima_ns_status.c
+@@ -17,15 +17,47 @@ void free_ns_status_cache(struct ima_namespace *ns)
+ 
+ 	write_lock(&ns->ns_status_lock);
+ 	rbtree_postorder_for_each_entry_safe(status, next,
+-					     &ns->ns_status_tree, rb_node)
++					     &ns->ns_status_tree, rb_node) {
++		write_lock(&status->iint->ns_list_lock);
++
++		if (!list_empty(&status->ns_next)) {
++			list_del(&status->ns_next);
++			INIT_LIST_HEAD(&status->ns_next);
++		}
++
++		write_unlock(&status->iint->ns_list_lock);
++
++		iint_put(status->iint);
++
+ 		kmem_cache_free(ns->ns_status_cache, status);
++	}
+ 	ns->ns_status_tree = RB_ROOT;
+ 	write_unlock(&ns->ns_status_lock);
+ 	kmem_cache_destroy(ns->ns_status_cache);
+ }
+ 
++static void ns_status_list_free(struct ima_namespace *ns,
++				struct list_head *head)
++{
++	struct ns_status *curr, *next;
++
++	list_for_each_entry_safe(curr, next, head, ns_next) {
++		list_del_init(&curr->ns_next);
++
++		iint_put(curr->iint);
++
++		rb_erase(&curr->rb_node, &ns->ns_status_tree);
++		RB_CLEAR_NODE(&curr->rb_node);
++
++		ns_status_put(curr);
++	}
++}
++
+ /*
+  * __ima_ns_status_find - return the ns_status associated with an inode
++ *                        since this function is called with the writer
++ *                        lock held, we can clean up unused ns_status we
++ *                        find
+  */
+ static struct ns_status *__ima_ns_status_find(struct ima_namespace *ns,
+ 					      struct inode *inode)
+@@ -55,6 +87,7 @@ static void insert_ns_status(struct ima_namespace *ns, struct inode *inode,
+ 	struct rb_node **p;
+ 	struct rb_node *node, *parent = NULL;
+ 	struct ns_status *test_status;
++	struct list_head to_free = LIST_HEAD_INIT(to_free);
+ 
+ 	p = &ns->ns_status_tree.rb_node;
+ 	while (*p) {
+@@ -64,10 +97,16 @@ static void insert_ns_status(struct ima_namespace *ns, struct inode *inode,
+ 			p = &(*p)->rb_left;
+ 		else
+ 			p = &(*p)->rb_right;
++
++		/* cleanup: unused ns_status will be freed */
++		if (list_empty(&test_status->ns_next))
++			list_add(&test_status->ns_next, &to_free);
+ 	}
+ 	node = &status->rb_node;
+ 	rb_link_node(node, parent, p);
+ 	rb_insert_color(node, &ns->ns_status_tree);
++
++	ns_status_list_free(ns, &to_free);
+ }
+ 
+ void ns_status_free(struct kref *ref)
+@@ -77,41 +116,84 @@ void ns_status_free(struct kref *ref)
+ 	kmem_cache_free(status->ns->ns_status_cache, status);
+ }
+ 
++/*
++ * ima_ns_status_list_del: remove an ns_status from the list it is on
++ *                         that we will free while walking the tree
++ */
++void ima_ns_status_list_del(struct ns_status *status)
++{
++	list_del_init(&status->ns_next);
++}
++
++static void ima_ns_status_unlink(struct ima_namespace *ns,
++				 struct ns_status *status)
++{
++	write_lock(&status->iint->ns_list_lock);
++
++	if (!list_empty(&status->ns_next))
++		list_del_init(&status->ns_next);
++	write_unlock(&status->iint->ns_list_lock);
++
++	iint_put(status->iint);
++
++	rb_erase(&status->rb_node, &ns->ns_status_tree);
++	RB_CLEAR_NODE(&status->rb_node);
++}
++
+ struct ns_status *ima_get_ns_status(struct ima_namespace *ns,
+-				    struct inode *inode)
++				    struct inode *inode,
++				    struct integrity_iint_cache *iint)
+ {
+ 	struct ns_status *status;
+ 	int skip_insert = 0;
+ 
+-	read_lock(&ns->ns_status_lock);
++	/* prevent anyone from finding the status since we may free it */
++	write_lock(&ns->ns_status_lock);
+ 
+ 	status = ns_status_get(__ima_ns_status_find(ns, inode));
+ 
+-	read_unlock(&ns->ns_status_lock);
+ 	if (status) {
++		BUG_ON(status->inode != inode);
+ 		/*
+ 		 * Unlike integrity_iint_cache we are not free'ing the
+ 		 * ns_status data when the inode is free'd. So, in addition to
+ 		 * checking the inode pointer, we need to make sure the
+ 		 * (i_generation, i_ino) pair matches as well.
+ 		 */
+-		if (inode->i_ino == status->i_ino &&
+-		    inode->i_generation == status->i_generation)
++		if (status->iint != iint) {
++			ima_ns_status_unlink(ns, status);
++			/* put reference from above */
++			ns_status_put(status);
++			/* free it */
++			ns_status_put(status);
++			goto get_new;
++		} else if (inode->i_ino == status->i_ino &&
++			   inode->i_generation == status->i_generation) {
++			write_unlock(&ns->ns_status_lock);
+ 			return status;
++		}
+ 
+ 		/* Same inode number is reused, overwrite the ns_status */
+ 		skip_insert = 1;
+ 	} else {
++get_new:
++		write_unlock(&ns->ns_status_lock);
++
+ 		status = kmem_cache_alloc(ns->ns_status_cache, GFP_NOFS);
+ 		if (!status)
+ 			return ERR_PTR(-ENOMEM);
++
+ 		kref_init(&status->ref);
+-	}
++		ns_status_get(status);
++		INIT_LIST_HEAD(&status->ns_next);
+ 
+-	write_lock(&ns->ns_status_lock);
++		write_lock(&ns->ns_status_lock);
++	}
+ 
+-	if (!skip_insert)
++	if (!skip_insert) {
+ 		insert_ns_status(ns, inode, status);
++		status->iint = iint_get(iint);
++	}
+ 
+ 	status->inode = inode;
+ 	status->i_ino = inode->i_ino;
+@@ -119,6 +201,11 @@ struct ns_status *ima_get_ns_status(struct ima_namespace *ns,
+ 	status->flags = 0UL;
+ 	status->ns = ns;
+ 
++	write_lock(&iint->ns_list_lock);
++	if (list_empty(&status->ns_next))
++		list_add_tail(&status->ns_next, &iint->ns_list);
++	write_unlock(&iint->ns_list_lock);
++
+ 	write_unlock(&ns->ns_status_lock);
+ 
+ 	return status;
+diff --git a/security/integrity/integrity.h b/security/integrity/integrity.h
+index 9f1f774d7070..1776ae7ecff6 100644
+--- a/security/integrity/integrity.h
++++ b/security/integrity/integrity.h
+@@ -140,6 +140,8 @@ struct integrity_iint_cache {
+ 	enum integrity_status ima_creds_status:4;
+ 	enum integrity_status evm_status:4;
+ 	struct ima_digest_data *ima_hash;
++	rwlock_t ns_list_lock;
++	struct list_head ns_list;
+ };
+ 
+ /* rbtree tree calls to lookup, insert, delete
+@@ -302,3 +304,5 @@ static inline void __init add_to_platform_keyring(const char *source,
+ {
+ }
+ #endif
++
++void ima_iint_clear_ns_list(struct integrity_iint_cache *iint);
+-- 
+2.31.1
+

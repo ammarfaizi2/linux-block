@@ -1,0 +1,128 @@
+From 1e5d6bf4bd5f67e6a887cba8b9f0a45cbf3559ba Mon Sep 17 00:00:00 2001
+From: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Date: Thu, 7 Jun 2018 16:42:09 -0400
+Subject: [PATCH 15/17] ima: implement different ns_status freeing strategy
+
+Merge into 'connect a list of ns_status to the integrity_iint_cache'
+
+Do away with the lazy freeing of the ns_status after it was disconnected
+from the ns_status list of the iint. Instead free it right away.
+
+Signed-off-by: Stefan Berger <stefanb@linux.ibm.com>
+---
+ security/integrity/ima/ima.h           |  2 +-
+ security/integrity/ima/ima_iint.c      |  9 ++++----
+ security/integrity/ima/ima_ns_status.c | 29 +++++++++-----------------
+ 3 files changed, 15 insertions(+), 25 deletions(-)
+
+diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+index be1ae230f056..24614245f410 100644
+--- a/security/integrity/ima/ima.h
++++ b/security/integrity/ima/ima.h
+@@ -209,7 +209,7 @@ static inline void ns_status_put(struct ns_status *status)
+ 		kref_put(&status->ref, ns_status_free);
+ }
+ 
+-void ima_ns_status_list_del(struct ns_status *status);
++void ns_status_off_list_free(struct list_head *list);
+ 
+ /* Internal IMA function definitions */
+ int ima_init(void);
+diff --git a/security/integrity/ima/ima_iint.c b/security/integrity/ima/ima_iint.c
+index 9cf6b9414825..6988f84f0508 100644
+--- a/security/integrity/ima/ima_iint.c
++++ b/security/integrity/ima/ima_iint.c
+@@ -13,12 +13,11 @@
+ 
+ void ima_iint_clear_ns_list(struct integrity_iint_cache *iint)
+ {
+-	struct ns_status *curr, *next;
++	LIST_HEAD(list);
+ 
+ 	write_lock(&iint->ns_list_lock);
+-
+-	list_for_each_entry_safe(curr, next, &iint->ns_list, ns_next)
+-		ima_ns_status_list_del(curr);
+-
++	list_replace(&iint->ns_list, &list);
+ 	write_unlock(&iint->ns_list_lock);
++
++	ns_status_off_list_free(&list);
+ }
+diff --git a/security/integrity/ima/ima_ns_status.c b/security/integrity/ima/ima_ns_status.c
+index 6bc71e2bf5db..36df71e96c4b 100644
+--- a/security/integrity/ima/ima_ns_status.c
++++ b/security/integrity/ima/ima_ns_status.c
+@@ -36,8 +36,11 @@ void free_ns_status_cache(struct ima_namespace *ns)
+ 	kmem_cache_destroy(ns->ns_status_cache);
+ }
+ 
+-static void ns_status_list_free(struct ima_namespace *ns,
+-				struct list_head *head)
++/*
++ * ns_status_off_list_free: a list of items that is NOT connected to the
++ *                          iint's list anymore is to be freed
++ */
++void ns_status_off_list_free(struct list_head *head)
+ {
+ 	struct ns_status *curr, *next;
+ 
+@@ -46,9 +49,13 @@ static void ns_status_list_free(struct ima_namespace *ns,
+ 
+ 		iint_put(curr->iint);
+ 
+-		rb_erase(&curr->rb_node, &ns->ns_status_tree);
++		write_lock(&curr->ns->ns_status_lock);
++
++		rb_erase(&curr->rb_node, &curr->ns->ns_status_tree);
+ 		RB_CLEAR_NODE(&curr->rb_node);
+ 
++		write_unlock(&curr->ns->ns_status_lock);
++
+ 		ns_status_put(curr);
+ 	}
+ }
+@@ -87,7 +94,6 @@ static void insert_ns_status(struct ima_namespace *ns, struct inode *inode,
+ 	struct rb_node **p;
+ 	struct rb_node *node, *parent = NULL;
+ 	struct ns_status *test_status;
+-	struct list_head to_free = LIST_HEAD_INIT(to_free);
+ 
+ 	p = &ns->ns_status_tree.rb_node;
+ 	while (*p) {
+@@ -97,16 +103,10 @@ static void insert_ns_status(struct ima_namespace *ns, struct inode *inode,
+ 			p = &(*p)->rb_left;
+ 		else
+ 			p = &(*p)->rb_right;
+-
+-		/* cleanup: unused ns_status will be freed */
+-		if (list_empty(&test_status->ns_next))
+-			list_add(&test_status->ns_next, &to_free);
+ 	}
+ 	node = &status->rb_node;
+ 	rb_link_node(node, parent, p);
+ 	rb_insert_color(node, &ns->ns_status_tree);
+-
+-	ns_status_list_free(ns, &to_free);
+ }
+ 
+ void ns_status_free(struct kref *ref)
+@@ -116,15 +116,6 @@ void ns_status_free(struct kref *ref)
+ 	kmem_cache_free(status->ns->ns_status_cache, status);
+ }
+ 
+-/*
+- * ima_ns_status_list_del: remove an ns_status from the list it is on
+- *                         that we will free while walking the tree
+- */
+-void ima_ns_status_list_del(struct ns_status *status)
+-{
+-	list_del_init(&status->ns_next);
+-}
+-
+ static void ima_ns_status_unlink(struct ima_namespace *ns,
+ 				 struct ns_status *status)
+ {
+-- 
+2.31.1
+
