@@ -1,1 +1,1 @@
-rcutorture.fwd_progress=28
+rcutorture.fwd_progress=2
