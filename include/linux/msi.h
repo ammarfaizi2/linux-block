@@ -553,11 +553,13 @@ struct irq_domain *pci_msi_create_irq_domain(struct fwnode_handle *fwnode,
 u32 pci_msi_domain_get_msi_rid(struct irq_domain *domain, struct pci_dev *pdev);
 struct irq_domain *pci_msi_get_device_domain(struct pci_dev *pdev);
 bool pci_dev_has_special_msi_domain(struct pci_dev *pdev);
+bool pci_msi_domain_supports_expand(struct pci_dev *dev);
 #else
 static inline struct irq_domain *pci_msi_get_device_domain(struct pci_dev *pdev)
 {
 	return NULL;
 }
+static inline bool pci_msi_domain_supports_expand(struct pci_dev *dev) { return false; }
 #endif /* CONFIG_PCI_MSI_IRQ_DOMAIN */
 
 #endif /* LINUX_MSI_H */

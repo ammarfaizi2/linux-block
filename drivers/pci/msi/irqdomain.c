@@ -8,12 +8,18 @@
 
 #include "msi.h"
 
+static struct irq_domain *pci_get_msi_domain(struct pci_dev *dev)
+{
+	struct irq_domain *domain = dev_get_msi_domain(&dev->dev);
+
+	return domain && irq_domain_is_hierarchy(domain) ? domain : NULL;
+}
+
 int pci_msi_setup_msi_irqs(struct pci_dev *dev, struct msi_range *range, int type)
 {
-	struct irq_domain *domain;
+	struct irq_domain *domain = pci_get_msi_domain(dev);
 
-	domain = dev_get_msi_domain(&dev->dev);
-	if (domain && irq_domain_is_hierarchy(domain))
+	if (domain)
 		return msi_domain_alloc_irqs_descs_locked(domain, &dev->dev, range);
 
 	return pci_msi_legacy_setup_msi_irqs(dev, range->ndesc, type);
@@ -21,13 +27,24 @@ int pci_msi_setup_msi_irqs(struct pci_dev *dev, struct msi_range *range, int typ
 
 void pci_msi_teardown_msi_irqs(struct pci_dev *dev, struct msi_range *range)
 {
-	struct irq_domain *domain;
+	struct irq_domain *domain = pci_get_msi_domain(dev);
 
-	domain = dev_get_msi_domain(&dev->dev);
-	if (domain && irq_domain_is_hierarchy(domain))
+	if (domain)
 		msi_domain_free_irqs_descs_locked(domain, &dev->dev, range);
 	else
 		pci_msi_legacy_teardown_msi_irqs(dev);
+}
+
+bool pci_msi_domain_supports_expand(struct pci_dev *dev)
+{
+	struct irq_domain *domain = pci_get_msi_domain(dev);
+	struct msi_domain_info *info;
+
+	if (!domain)
+		return false;
+
+	info = domain->host_data;
+	return info->flags & MSI_FLAG_CAN_EXPAND;
 }
 
 /**
