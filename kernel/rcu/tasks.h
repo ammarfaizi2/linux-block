@@ -217,7 +217,6 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 		lim = nr_cpu_ids;
 	WRITE_ONCE(rtp->percpu_enqueue_shift, ilog2(nr_cpu_ids / rcu_task_enqueue_lim));
 	smp_store_release(&rtp->percpu_enqueue_lim, lim);
-	pr_info("%s: Setting shift to %d and lim to %d.\n", __func__, rtp->percpu_enqueue_shift, rtp->percpu_enqueue_lim);
 	for_each_possible_cpu(cpu) {
 		struct rcu_tasks_percpu *rtpcp = per_cpu_ptr(rtp->rtpcpu, cpu);
 
@@ -233,7 +232,7 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 		raw_spin_unlock_rcu_node(rtpcp); // irqs remain disabled.
 	}
 	raw_spin_unlock_irqrestore(&rtp->cbs_gbl_lock, flags);
-
+	pr_info("%s: Setting shift to %d and lim to %d.\n", __func__, data_race(rtp->percpu_enqueue_shift), data_race(rtp->percpu_enqueue_lim));
 }
 
 // IRQ-work handler that does deferred wakeup for call_rcu_tasks_generic().
