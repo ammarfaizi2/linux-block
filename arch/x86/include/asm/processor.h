@@ -13,9 +13,8 @@ struct vm86;
 #include <asm/desc_defs.h>
 #include <asm/msr_types.h>
 #include <asm/fpu/types.h>
-#include <asm/percpu.h>
 #include <asm/ptrace_types.h>
-#include <asm/segment.h>
+#include <asm/segment_types.h>
 
 /*
  * We handle most unaligned accesses in hardware.  On the other hand
@@ -234,51 +233,6 @@ struct tss_struct {
 
 	struct x86_io_bitmap	io_bitmap;
 } __aligned(PAGE_SIZE);
-
-DECLARE_PER_CPU_PAGE_ALIGNED(struct tss_struct, cpu_tss_rw);
-
-/* Per CPU interrupt stacks */
-struct irq_stack {
-	char		stack[IRQ_STACK_SIZE];
-} __aligned(IRQ_STACK_SIZE);
-
-DECLARE_PER_CPU(unsigned long, cpu_current_top_of_stack);
-
-#ifdef CONFIG_X86_64
-struct fixed_percpu_data {
-	/*
-	 * GCC hardcodes the stack canary as %gs:40.  Since the
-	 * irq_stack is the object at %gs:0, we reserve the bottom
-	 * 48 bytes of the irq stack for the canary.
-	 *
-	 * Once we are willing to require -mstack-protector-guard-symbol=
-	 * support for x86_64 stackprotector, we can get rid of this.
-	 */
-	char		gs_base[40];
-	unsigned long	stack_canary;
-};
-
-DECLARE_PER_CPU_FIRST(struct fixed_percpu_data, fixed_percpu_data) __visible;
-DECLARE_INIT_PER_CPU(fixed_percpu_data);
-
-static inline unsigned long cpu_kernelmode_gs_base(int cpu)
-{
-	return (unsigned long)per_cpu(fixed_percpu_data.gs_base, cpu);
-}
-
-DECLARE_PER_CPU(void *, hardirq_stack_ptr);
-DECLARE_PER_CPU(bool, hardirq_stack_inuse);
-extern asmlinkage void ignore_sysret(void);
-
-/* Save actual FS/GS selectors and bases to task_thread(current) */
-void current_save_fsgs(void);
-#else	/* X86_64 */
-#ifdef CONFIG_STACKPROTECTOR
-DECLARE_PER_CPU(unsigned long, __stack_chk_guard);
-#endif
-DECLARE_PER_CPU(struct irq_stack *, hardirq_stack_ptr);
-DECLARE_PER_CPU(struct irq_stack *, softirq_stack_ptr);
-#endif	/* !X86_64 */
 
 struct perf_event;
 
