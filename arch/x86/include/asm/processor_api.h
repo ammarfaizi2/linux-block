@@ -2,7 +2,8 @@
 #ifndef _ASM_X86_PROCESSOR_API_H
 #define _ASM_X86_PROCESSOR_API_H
 
-#include <asm/processor.h>
+#include <asm/processor_types.h>
+
 #include <asm/percpu.h>
 #include <asm/special_insns.h>
 
