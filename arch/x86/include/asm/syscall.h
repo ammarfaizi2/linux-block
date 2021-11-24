@@ -17,6 +17,10 @@
 #include <asm/unistd.h>
 #include <asm/ptrace_types.h>
 
+#ifdef CONFIG_X86_32
+# include <linux/string.h>
+#endif
+
 typedef long (*sys_call_ptr_t)(const struct pt_regs *);
 extern const sys_call_ptr_t sys_call_table[];
 
