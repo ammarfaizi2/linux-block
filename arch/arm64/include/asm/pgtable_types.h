@@ -13,6 +13,9 @@
 
 #include <asm/types.h>
 
+struct page;
+typedef struct page *pgtable_t;
+
 typedef u64 pteval_t;
 typedef u64 pmdval_t;
 typedef u64 pudval_t;
@@ -53,6 +56,8 @@ typedef struct { pteval_t pgprot; } pgprot_t;
 #elif CONFIG_PGTABLE_LEVELS == 4
 #include <asm-generic/pgtable-nop4d.h>
 #endif
+
+#include <asm/pgtable-prot.h>
 
 #endif /* _ASSEMBLY__ */
 #endif	/* __ASM_PGTABLE_TYPES_H */

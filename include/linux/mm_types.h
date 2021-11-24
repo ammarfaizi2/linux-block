@@ -2,6 +2,8 @@
 #ifndef _LINUX_MM_TYPES_H
 #define _LINUX_MM_TYPES_H
 
+#ifndef __ASSEMBLY__
+
 #include <linux/irqflags.h>
 #include <linux/mm_types_task.h>
 
@@ -293,6 +295,10 @@ static inline atomic_t *compound_pincount_ptr(struct page *page)
  * Used for sizing the vmemmap region on some architectures
  */
 #define STRUCT_PAGE_MAX_SHIFT	(order_base_2(sizeof(struct page)))
+
+#ifndef __ALIGN_MASK
+# define __ALIGN_MASK(x, mask)   __ALIGN_KERNEL_MASK((x), (mask))
+#endif
 
 #define PAGE_FRAG_CACHE_MAX_SIZE	__ALIGN_MASK(32768, ~PAGE_MASK)
 
@@ -825,5 +831,7 @@ enum fault_flag {
 
 /* test whether an address (unsigned long or pointer) is aligned to PAGE_SIZE */
 #define PAGE_ALIGNED(addr)	IS_ALIGNED((unsigned long)(addr), PAGE_SIZE)
+
+#endif
 
 #endif /* _LINUX_MM_TYPES_H */

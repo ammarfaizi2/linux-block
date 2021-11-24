@@ -12,6 +12,8 @@
 
 #include <linux/const.h>
 #include <linux/sizes.h>
+#include <linux/mm_types.h>
+
 #include <asm/page-def.h>
 
 /*
