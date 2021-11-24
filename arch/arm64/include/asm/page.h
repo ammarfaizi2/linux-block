@@ -39,8 +39,6 @@ void tag_clear_highpage(struct page *to);
 #define clear_user_page(page, vaddr, pg)	clear_page(page)
 #define copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
 
-typedef struct page *pgtable_t;
-
 int pfn_is_map_memory(unsigned long pfn);
 
 #include <asm/memory.h>
