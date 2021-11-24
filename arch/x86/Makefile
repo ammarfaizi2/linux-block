@@ -146,6 +146,10 @@ else
         cflags-$(CONFIG_MCORE2)		+= -march=core2
         cflags-$(CONFIG_MATOM)		+= -march=atom
         cflags-$(CONFIG_GENERIC_CPU)	+= -mtune=generic
+        cflags-$(CONFIG_AMD_RYZEN2)	+= -march=znver2
+        cflags-$(CONFIG_AMD_RYZEN3)	+= -march=znver3
+        cflags-$(CONFIG_TIGERLAKE)	+= -march=tigerlake
+        cflags-$(CONFIG_ALDERLAKE)	+= -march=alderlake
         KBUILD_CFLAGS += $(cflags-y)
 
         KBUILD_CFLAGS += -mno-red-zone
