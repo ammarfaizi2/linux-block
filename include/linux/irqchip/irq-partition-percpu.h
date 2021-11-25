@@ -7,7 +7,6 @@
 #ifndef __LINUX_IRQCHIP_IRQ_PARTITION_PERCPU_H
 #define __LINUX_IRQCHIP_IRQ_PARTITION_PERCPU_H
 
-#include <linux/fwnode.h>
 #include <linux/cpumask.h>
 #include <linux/irqdomain.h>
 
@@ -17,6 +16,7 @@ struct partition_affinity {
 };
 
 struct partition_desc;
+struct fwnode_handle;
 
 #ifdef CONFIG_PARTITION_PERCPU
 int partition_translate_id(struct partition_desc *desc, void *partition_id);

@@ -18,7 +18,6 @@
 #include <linux/bug.h>
 #include <linux/lockdep.h>
 #include <linux/iopoll.h>
-#include <linux/fwnode.h>
 
 struct module;
 struct clk;
@@ -36,6 +35,7 @@ struct regmap_range_cfg;
 struct regmap_field;
 struct snd_ac97;
 struct sdw_slave;
+struct fwnode_handle;
 
 /* An enum of all the supported cache types */
 enum regcache_type {

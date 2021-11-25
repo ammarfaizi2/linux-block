@@ -8,7 +8,9 @@
 #ifndef __LINUX_LOGIC_PIO_H
 #define __LINUX_LOGIC_PIO_H
 
-#include <linux/fwnode.h>
+#include <linux/list.h>
+
+struct fwnode_handle;
 
 enum {
 	LOGIC_PIO_INDIRECT,		/* Indirect IO flag */

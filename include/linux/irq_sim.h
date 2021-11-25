@@ -8,8 +8,9 @@
 #define _LINUX_IRQ_SIM_H
 
 #include <linux/device.h>
-#include <linux/fwnode.h>
 #include <linux/irqdomain.h>
+
+struct fwnode_handle;
 
 /*
  * Provides a framework for allocating simulated interrupts which can be
