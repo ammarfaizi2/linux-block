@@ -17,7 +17,6 @@
 #include <linux/kdev_t.h>
 #include <linux/uuid.h>
 #include <linux/blk_types.h>
-#include <linux/device.h>
 #include <linux/xarray.h>
 
 extern const struct device_type disk_type;
