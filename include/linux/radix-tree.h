@@ -8,11 +8,6 @@
 #ifndef _LINUX_RADIX_TREE_H
 #define _LINUX_RADIX_TREE_H
 
-#include <linux/preempt.h>
-#include <linux/percpu.h>
-#include <linux/bitops.h>
-#include <linux/gfp.h>
-#include <linux/lockdep.h>
 #include <linux/xarray_types.h>
 
 /* Keep unconverted code working */
