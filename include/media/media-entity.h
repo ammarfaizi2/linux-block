@@ -15,10 +15,12 @@
 #include <linux/bitmap.h>
 #include <linux/bug.h>
 #include <linux/container_of.h>
-#include <linux/fwnode.h>
 #include <linux/list.h>
 #include <linux/media.h>
 #include <linux/types.h>
+
+struct fwnode_handle;
+struct fwnode_endpoint;
 
 /* Enums used internally at the media controller to represent graphs */
 

@@ -8,8 +8,9 @@
 #define __ACPI_IORT_H__
 
 #include <linux/acpi.h>
-#include <linux/fwnode.h>
 #include <linux/irqdomain.h>
+
+struct fwnode_handle;
 
 #define IORT_IRQ_MASK(irq)		(irq & 0xffffffffULL)
 #define IORT_IRQ_TRIGGER_MASK(irq)	((irq >> 32) & 0xffffffffULL)
