@@ -29,6 +29,26 @@
 	label = "USB-C Left-front";
 };
 
+&spi3 {
+	status = "okay";
+
+	hid-transport@0 {
+		compatible = "apple,spi-hid-transport";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+		/*
+		 * cs-setup and cs-hold delays are derived from Apple's ADT
+		 * Mac OS driver meta data secify 45 us for 'cs to clock' and
+		 * 'clock to cs' delays.
+		 */
+		spi-cs-setup-delay-ns = <20000>;
+		spi-cs-hold-delay-ns = <20000>;
+		spi-cs-inactive-delay-ns = <250000>;
+		spien-gpios = <&pinctrl_ap 195 0>;
+		interrupts-extended = <&pinctrl_nub 13 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
 /*
  * Remove unused PCIe ports and disable the associated DARTs.
  */
