@@ -4,6 +4,11 @@
 
 #include <linux/jump_label.h>
 
+struct page;
+struct zone;
+struct pglist_data;
+struct seq_file;
+
 #ifdef CONFIG_PAGE_OWNER
 extern struct static_key_false page_owner_inited;
 extern struct page_ext_operations page_owner_ops;
@@ -16,7 +21,7 @@ extern void __folio_copy_owner(struct folio *newfolio, struct folio *old);
 extern void __set_page_owner_migrate_reason(struct page *page, int reason);
 extern void __dump_page_owner(const struct page *page);
 extern void pagetypeinfo_showmixedcount_print(struct seq_file *m,
-					pg_data_t *pgdat, struct zone *zone);
+					struct pglist_data *pgdat, struct zone *zone);
 
 static inline void reset_page_owner(struct page *page, unsigned short order)
 {

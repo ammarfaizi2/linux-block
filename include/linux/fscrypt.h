@@ -266,7 +266,7 @@ static inline bool fscrypt_is_bounce_page(struct page *page)
 
 static inline struct page *fscrypt_pagecache_page(struct page *bounce_page)
 {
-	return (struct page *)page_private(bounce_page);
+	return (struct page *)(bounce_page->private);
 }
 
 void fscrypt_free_bounce_page(struct page *bounce_page);

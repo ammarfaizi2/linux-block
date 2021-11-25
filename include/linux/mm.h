@@ -3,6 +3,5 @@
 #define _LINUX_MM_H
 
 #include <linux/mm_types.h>
-#include <linux/mm_api.h>
 
 #endif /* _LINUX_MM_H */

@@ -183,6 +183,8 @@ int hv_ringbuffer_init(struct hv_ring_buffer_info *ring_info,
 
 void hv_ringbuffer_cleanup(struct hv_ring_buffer_info *ring_info);
 
+struct kvec;
+
 int hv_ringbuffer_write(struct vmbus_channel *channel,
 			const struct kvec *kv_list, u32 kv_count,
 			u64 requestid);
