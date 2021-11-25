@@ -26,6 +26,7 @@
 #ifndef DRM_PRINT_H_
 #define DRM_PRINT_H_
 
+#include <linux/device_types.h>
 #include <linux/dev_printk.h>
 #include <linux/printk.h>
 
