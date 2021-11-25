@@ -357,7 +357,7 @@ dev_t tty_devnum(struct tty_struct *tty);
 void proc_clear_tty(struct task_struct *p);
 struct tty_struct *get_current_tty(void);
 /* tty_io.c */
-int __init tty_init(void);
+int tty_init(void);
 const char *tty_name(const struct tty_struct *tty);
 struct tty_struct *tty_kopen_exclusive(dev_t device);
 struct tty_struct *tty_kopen_shared(dev_t device);
@@ -379,7 +379,7 @@ static inline void proc_clear_tty(struct task_struct *p)
 static inline struct tty_struct *get_current_tty(void)
 { return NULL; }
 /* tty_io.c */
-static inline int __init tty_init(void)
+static inline int tty_init(void)
 { return 0; }
 static inline const char *tty_name(const struct tty_struct *tty)
 { return "(none)"; }
@@ -480,7 +480,7 @@ extern struct mutex tty_mutex;
 /* n_tty.c */
 void n_tty_inherit_ops(struct tty_ldisc_ops *ops);
 #ifdef CONFIG_TTY
-void __init n_tty_init(void);
+void n_tty_init(void);
 #else
 static inline void n_tty_init(void) { }
 #endif
