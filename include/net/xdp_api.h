@@ -6,10 +6,11 @@
 #ifndef __LINUX_NET_XDP_API_H
 #define __LINUX_NET_XDP_API_H
 
+#include <net/xdp_types.h>
+
 #include <linux/err.h>
 #include <linux/align.h>
 #include <linux/skbuff.h>
-#include <net/xdp.h>
 
 static __always_inline void
 xdp_init_buff(struct xdp_buff *xdp, u32 frame_sz, struct xdp_rxq_info *rxq)
