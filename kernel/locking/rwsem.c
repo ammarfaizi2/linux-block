@@ -42,6 +42,10 @@
 #ifndef CONFIG_PREEMPT_RT
 #include "lock_events.h"
 
+#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
+#include <linux/osq_lock.h>
+#endif
+
 /*
  * The least significant 2 bits of the owner value has the following
  * meanings when set.
