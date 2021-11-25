@@ -12,14 +12,7 @@
 
 #include <linux/linkage.h>
 
-#include <linux/types.h>
 #include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/atomic_api.h>
-#include <linux/err.h>
-#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
-#include <linux/osq_lock.h>
-#endif
 
 #ifndef CONFIG_PREEMPT_RT
 

@@ -60,7 +60,7 @@ struct rw_semaphore {
 };
 
 #define RWSEM_UNLOCKED_VALUE		0L
-#define __RWSEM_COUNT_INIT(name)	.count = ATOMIC_LONG_INIT(RWSEM_UNLOCKED_VALUE)
+#define __RWSEM_COUNT_INIT(name)	.count = { RWSEM_UNLOCKED_VALUE }
 
 /* Common initializer macros and functions */
 
@@ -78,7 +78,6 @@ struct rw_semaphore {
 
 #define __RWSEM_INITIALIZER(name)				\
 	{ __RWSEM_COUNT_INIT(name),				\
-	  .owner = ATOMIC_LONG_INIT(0),				\
 	  __RWSEM_OPT_INIT(name)				\
 	  .wait_lock = __RAW_SPIN_LOCK_UNLOCKED(name.wait_lock),\
 	  .wait_list = LIST_HEAD_INIT((name).wait_list),	\
