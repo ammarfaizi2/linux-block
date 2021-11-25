@@ -8,15 +8,10 @@
 #ifndef _LINUX_RWSEM_TYPES_H
 #define _LINUX_RWSEM_TYPES_H
 
-#include <linux/linkage.h>
+#include <linux/spinlock_types.h>
 
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/atomic_api.h>
-#include <linux/err.h>
 #ifdef CONFIG_RWSEM_SPIN_ON_OWNER
-#include <linux/osq_lock.h>
+# include <linux/osq_lock_types.h>
 #endif
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
