@@ -127,9 +127,11 @@ int memblock_mark_mirror(phys_addr_t base, phys_addr_t size);
 int memblock_mark_nomap(phys_addr_t base, phys_addr_t size);
 int memblock_clear_nomap(phys_addr_t base, phys_addr_t size);
 
+struct pglist_data;
+
 void memblock_free_all(void);
 void memblock_free(void *ptr, size_t size);
-void reset_node_managed_pages(pg_data_t *pgdat);
+void reset_node_managed_pages(struct pglist_data *pgdat);
 void reset_all_zones_managed_pages(void);
 
 /* Low level functions */
@@ -286,6 +288,9 @@ void __next_mem_pfn_range(int *idx, int nid, unsigned long *out_start_pfn,
 	     i >= 0; __next_mem_pfn_range(&i, nid, p_start, p_end, p_nid))
 
 #ifdef CONFIG_DEFERRED_STRUCT_PAGE_INIT
+
+struct zone;
+
 void __next_mem_pfn_range_in_zone(u64 *idx, struct zone *zone,
 				  unsigned long *out_spfn,
 				  unsigned long *out_epfn);
@@ -324,6 +329,8 @@ void __next_mem_pfn_range_in_zone(u64 *idx, struct zone *zone,
 #define for_each_free_mem_pfn_range_in_zone_from(i, zone, p_start, p_end) \
 	for (; i != U64_MAX;					  \
 	     __next_mem_pfn_range_in_zone(&i, zone, p_start, p_end))
+
+struct cpumask;
 
 int __init deferred_page_init_max_threads(const struct cpumask *node_cpumask);
 

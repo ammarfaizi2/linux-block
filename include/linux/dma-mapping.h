@@ -14,7 +14,7 @@
 #include <linux/mm_page_address.h>
 
 #ifdef CONFIG_SPARSEMEM
-# include <linux/mm.h> /* page_to_section() for asm-generic/memory_model.h */
+# include <linux/mm_api.h> /* page_to_section() for asm-generic/memory_model.h */
 #endif
 
 /**
