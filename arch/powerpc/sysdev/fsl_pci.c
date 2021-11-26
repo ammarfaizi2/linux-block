@@ -1051,7 +1051,7 @@ static int is_in_pci_mem_space(phys_addr_t addr)
 int fsl_pci_mcheck_exception(struct pt_regs *regs)
 {
 	u32 inst;
-	int ret;
+	long ret;
 	phys_addr_t addr = 0;
 
 	/* Let KVM/QEMU deal with the exception */

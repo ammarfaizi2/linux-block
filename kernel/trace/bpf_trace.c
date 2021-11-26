@@ -152,12 +152,14 @@ static const struct bpf_func_proto bpf_override_return_proto = {
 static __always_inline int
 bpf_probe_read_user_common(void *dst, u32 size, const void __user *unsafe_ptr)
 {
-	int ret;
+	unsigned long ret;
 
 	ret = copy_from_user_nofault(dst, unsafe_ptr, size);
-	if (unlikely(ret < 0))
+	if (unlikely(ret)) {
 		memset(dst, 0, size);
-	return ret;
+		return -EFAULT;
+	}
+	return 0;
 }
 
 BPF_CALL_3(bpf_probe_read_user, void *, dst, u32, size,
@@ -337,7 +339,7 @@ BPF_CALL_3(bpf_probe_write_user, void __user *, unsafe_ptr, const void *, src,
 	if (unlikely(!nmi_uaccess_okay()))
 		return -EPERM;
 
-	return copy_to_user_nofault(unsafe_ptr, src, size);
+	return copy_to_user_nofault(unsafe_ptr, src, size) ? -EFAULT : 0;
 }
 
 static const struct bpf_func_proto bpf_probe_write_user_proto = {

@@ -26,7 +26,7 @@ static inline int __read_user_stack(const void __user *ptr, void *ret,
 				    size_t size)
 {
 	unsigned long addr = (unsigned long)ptr;
-	int rc;
+	unsigned long rc;
 
 	if (addr > TASK_SIZE - size || (addr & (size - 1)))
 		return -EFAULT;
@@ -36,7 +36,7 @@ static inline int __read_user_stack(const void __user *ptr, void *ret,
 	if (IS_ENABLED(CONFIG_PPC64) && !radix_enabled() && rc)
 		return read_user_stack_slow(ptr, ret, size);
 
-	return rc;
+	return rc ? -EFAULT : 0;
 }
 
 #endif /* _POWERPC_PERF_CALLCHAIN_H */

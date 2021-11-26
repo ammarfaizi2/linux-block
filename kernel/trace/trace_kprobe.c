@@ -1306,7 +1306,7 @@ probe_mem_read_user(void *dest, void *src, size_t size)
 {
 	const void __user *uaddr =  (__force const void __user *)src;
 
-	return copy_from_user_nofault(dest, uaddr, size);
+	return copy_from_user_nofault(dest, uaddr, size) ? -EFAULT : 0;
 }
 
 static nokprobe_inline int

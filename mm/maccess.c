@@ -216,11 +216,12 @@ long strncpy_from_kernel_nofault(char *dst, const void *unsafe_addr, long count)
  * @size: size of the data chunk
  *
  * Safely read from user address @src to the buffer at @dst. If a kernel fault
- * happens, handle that and return -EFAULT.
+ * happens, handle that and return the number of bytes not copied.
  */
-long copy_from_user_nofault(void *dst, const void __user *src, size_t size)
+unsigned long copy_from_user_nofault(void *dst, const void __user *src,
+				     size_t size)
 {
-	long ret = -EFAULT;
+	unsigned long ret = size;
 	mm_segment_t old_fs = force_uaccess_begin();
 
 	if (access_ok(src, size)) {
@@ -230,9 +231,7 @@ long copy_from_user_nofault(void *dst, const void __user *src, size_t size)
 	}
 	force_uaccess_end(old_fs);
 
-	if (ret)
-		return -EFAULT;
-	return 0;
+	return ret;
 }
 EXPORT_SYMBOL_GPL(copy_from_user_nofault);
 
@@ -243,11 +242,12 @@ EXPORT_SYMBOL_GPL(copy_from_user_nofault);
  * @size: size of the data chunk
  *
  * Safely write to address @dst from the buffer at @src.  If a kernel fault
- * happens, handle that and return -EFAULT.
+ * happens, handle that and return the number of bytes not copied.
  */
-long copy_to_user_nofault(void __user *dst, const void *src, size_t size)
+unsigned long copy_to_user_nofault(void __user *dst, const void *src,
+				   size_t size)
 {
-	long ret = -EFAULT;
+	unsigned long ret = size;
 	mm_segment_t old_fs = force_uaccess_begin();
 
 	if (access_ok(dst, size)) {
@@ -257,9 +257,7 @@ long copy_to_user_nofault(void __user *dst, const void *src, size_t size)
 	}
 	force_uaccess_end(old_fs);
 
-	if (ret)
-		return -EFAULT;
-	return 0;
+	return ret;
 }
 EXPORT_SYMBOL_GPL(copy_to_user_nofault);
 
