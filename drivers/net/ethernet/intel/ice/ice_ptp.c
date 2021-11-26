@@ -4,6 +4,10 @@
 #include "ice.h"
 #include "ice_lib.h"
 
+#if IS_ENABLED(CONFIG_X86_TSC) && !defined(CONFIG_UML)
+# include <asm/tsc.h>
+#endif
+
 #define E810_OUT_PROP_DELAY_NS 1
 
 #define UNKNOWN_INCVAL_E822 0x100000000ULL
