@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #include <linux/node.h>
-#include <linux/mmzone.h>
+#include <linux/mmzone_api.h>
 #include <linux/compaction.h>
 /*
  * The order of these masks is important. Matching masks will be seen
