@@ -5,6 +5,7 @@
 #ifndef __LINUX_BIO_H
 #define __LINUX_BIO_H
 
+#include <linux/err.h>
 #include <linux/atomic_api.h>
 #include <linux/uio_api.h>
 #include <linux/page-flags.h>
