@@ -57,6 +57,7 @@ extern void mm_init_cpumask(struct mm_struct *mm);
 struct mempolicy;
 struct anon_vma;
 struct anon_vma_chain;
+struct vmem_altmap;
 struct user_struct;
 struct pt_regs;
 struct task_struct;
