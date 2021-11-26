@@ -4,8 +4,10 @@
 
 #include <linux/gfp_types.h>
 
-#include <linux/mmzone.h>
+#include <linux/mmzone_types.h>
 #include <linux/topology.h>
+#include <linux/page-flags-layout.h>
+#include <linux/mmdebug.h>
 
 struct vm_area_struct;
 
