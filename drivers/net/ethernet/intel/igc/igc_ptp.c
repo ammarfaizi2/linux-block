@@ -12,6 +12,10 @@
 #include <linux/delay.h>
 #include <linux/iopoll.h>
 
+#if IS_ENABLED(CONFIG_X86_TSC) && !defined(CONFIG_UML)
+# include <asm/tsc.h>
+#endif
+
 #define INCVALUE_MASK		0x7fffffff
 #define ISGN			0x80000000
 
