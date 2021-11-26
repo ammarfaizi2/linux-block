@@ -239,8 +239,9 @@ void read_extent_buffer(const struct extent_buffer *eb, void *dst,
 			unsigned long start,
 			unsigned long len);
 int read_extent_buffer_to_user_nofault(const struct extent_buffer *eb,
-				       void __user *dst, unsigned long start,
-				       unsigned long len);
+				       void __user *dstv,
+				       char __user **fault_in_addr,
+				       unsigned long start, unsigned long len);
 void write_extent_buffer_fsid(const struct extent_buffer *eb, const void *src);
 void write_extent_buffer_chunk_tree_uuid(const struct extent_buffer *eb,
 		const void *src);

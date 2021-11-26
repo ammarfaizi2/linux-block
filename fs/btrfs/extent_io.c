@@ -6764,6 +6764,7 @@ void read_extent_buffer(const struct extent_buffer *eb, void *dstv,
 
 int read_extent_buffer_to_user_nofault(const struct extent_buffer *eb,
 				       void __user *dstv,
+				       char __user **fault_in_addr,
 				       unsigned long start, unsigned long len)
 {
 	size_t cur;
@@ -6784,7 +6785,9 @@ int read_extent_buffer_to_user_nofault(const struct extent_buffer *eb,
 
 		cur = min(len, (PAGE_SIZE - offset));
 		kaddr = page_address(page);
-		if (copy_to_user_nofault(dst, kaddr + offset, cur)) {
+		ret = copy_to_user_nofault(dst, kaddr + offset, cur);
+		*fault_in_addr = dst + cur - ret;
+		if (ret) {
 			ret = -EFAULT;
 			break;
 		}

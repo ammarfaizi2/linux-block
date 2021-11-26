@@ -2057,6 +2057,7 @@ static noinline int copy_to_sk(struct btrfs_path *path,
 			       size_t *buf_size,
 			       char __user *ubuf,
 			       unsigned long *sk_offset,
+			       char __user **fault_in_addr,
 			       int *num_found)
 {
 	u64 found_transid;
@@ -2121,7 +2122,9 @@ static noinline int copy_to_sk(struct btrfs_path *path,
 		 * problem. Otherwise we'll fault and then copy the buffer in
 		 * properly this next time through
 		 */
-		if (copy_to_user_nofault(ubuf + *sk_offset, &sh, sizeof(sh))) {
+		ret = copy_to_user_nofault(ubuf + *sk_offset, &sh, sizeof(sh));
+		*fault_in_addr = ubuf + *sk_offset + sizeof(sh) - ret;
+		if (ret) {
 			ret = 0;
 			goto out;
 		}
@@ -2135,6 +2138,7 @@ static noinline int copy_to_sk(struct btrfs_path *path,
 			 * * sk_offset so we copy the full thing again.
 			 */
 			if (read_extent_buffer_to_user_nofault(leaf, up,
+						fault_in_addr,
 						item_off, item_len)) {
 				ret = 0;
 				*sk_offset -= sizeof(sh);
@@ -2196,6 +2200,8 @@ static noinline int search_ioctl(struct inode *inode,
 	int ret;
 	int num_found = 0;
 	unsigned long sk_offset = 0;
+	char __user *fault_in_addr;
+
 
 	if (*buf_size < sizeof(struct btrfs_ioctl_search_header)) {
 		*buf_size = sizeof(struct btrfs_ioctl_search_header);
@@ -2221,9 +2227,11 @@ static noinline int search_ioctl(struct inode *inode,
 	key.type = sk->min_type;
 	key.offset = sk->min_offset;
 
+	fault_in_addr = ubuf;
 	while (1) {
 		ret = -EFAULT;
-		if (fault_in_writeable(ubuf + sk_offset, *buf_size - sk_offset))
+		if (fault_in_writeable(fault_in_addr,
+				       ubuf + *buf_size - fault_in_addr))
 			break;
 
 		ret = btrfs_search_forward(root, &key, path, sk->min_transid);
@@ -2233,7 +2241,7 @@ static noinline int search_ioctl(struct inode *inode,
 			goto err;
 		}
 		ret = copy_to_sk(path, &key, sk, buf_size, ubuf,
-				 &sk_offset, &num_found);
+				 &sk_offset, &fault_in_addr, &num_found);
 		btrfs_release_path(path);
 		if (ret)
 			break;
