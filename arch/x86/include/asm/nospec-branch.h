@@ -4,13 +4,10 @@
 #define _ASM_X86_NOSPEC_BRANCH_H_
 
 #include <linux/static_key.h>
-#include <linux/objtool.h>
 #include <linux/linkage.h>
 
 #include <asm/alternative.h>
-#include <asm/cpufeatures.h>
 #include <asm/msr-index.h>
-#include <asm/unwind_hints.h>
 
 #define RETPOLINE_THUNK_SIZE	32
 
@@ -62,6 +59,8 @@
 	jnz	771b;
 
 #ifdef __ASSEMBLY__
+
+#include <asm/unwind_hints.h>
 
 /*
  * This should be used immediately before an indirect jump/call. It tells

@@ -2,6 +2,7 @@
 /*
  * x86 implementation of rethook. Mostly copied from arch/x86/kernel/kprobes/core.c.
  */
+#include <asm/unwind_hints.h>
 #include <linux/bug.h>
 #include <linux/rethook.h>
 #include <linux/kprobes.h>

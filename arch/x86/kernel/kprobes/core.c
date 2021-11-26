@@ -47,6 +47,7 @@
 #include <linux/vmalloc.h>
 #include <linux/pgtable.h>
 
+#include <asm/unwind_hints.h>
 #include <asm/text-patching.h>
 #include <asm/cacheflush.h>
 #include <asm/desc.h>
