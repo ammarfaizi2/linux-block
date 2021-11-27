@@ -328,9 +328,7 @@ static const struct rt6_info ip6_blk_hole_entry_template = {
 
 static void rt6_info_init(struct rt6_info *rt)
 {
-	struct dst_entry *dst = &rt->dst;
-
-	memset(dst + 1, 0, sizeof(*rt) - sizeof(*dst));
+	memset_after(rt, 0, dst);
 	INIT_LIST_HEAD(&rt->rt6i_uncached);
 }
 
@@ -1485,7 +1483,7 @@ static void rt6_exception_remove_oldest(struct rt6_exception_bucket *bucket)
 static u32 rt6_exception_hash(const struct in6_addr *dst,
 			      const struct in6_addr *src)
 {
-	static siphash_key_t rt6_exception_key __read_mostly;
+	static siphash_aligned_key_t rt6_exception_key;
 	struct {
 		struct in6_addr dst;
 		struct in6_addr src;
@@ -3678,6 +3676,25 @@ void fib6_nh_release(struct fib6_nh *fib6_nh)
 	}
 
 	fib_nh_common_release(&fib6_nh->nh_common);
+}
+
+void fib6_nh_release_dsts(struct fib6_nh *fib6_nh)
+{
+	int cpu;
+
+	if (!fib6_nh->rt6i_pcpu)
+		return;
+
+	for_each_possible_cpu(cpu) {
+		struct rt6_info *pcpu_rt, **ppcpu_rt;
+
+		ppcpu_rt = per_cpu_ptr(fib6_nh->rt6i_pcpu, cpu);
+		pcpu_rt = xchg(ppcpu_rt, NULL);
+		if (pcpu_rt) {
+			dst_dev_put(&pcpu_rt->dst);
+			dst_release(&pcpu_rt->dst);
+		}
+	}
 }
 
 static struct fib6_info *ip6_route_info_create(struct fib6_config *cfg,

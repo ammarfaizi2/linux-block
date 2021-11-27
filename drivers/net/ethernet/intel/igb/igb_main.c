@@ -2927,7 +2927,7 @@ static int igb_xdp_xmit_back(struct igb_adapter *adapter, struct xdp_buff *xdp)
 	nq = txring_txq(tx_ring);
 	__netif_tx_lock(nq, cpu);
 	/* Avoid transmit queue timeout since we share it with the slow path */
-	nq->trans_start = jiffies;
+	txq_trans_cond_update(nq);
 	ret = igb_xmit_xdp_ring(adapter, tx_ring, xdpf);
 	__netif_tx_unlock(nq);
 
@@ -2961,7 +2961,7 @@ static int igb_xdp_xmit(struct net_device *dev, int n,
 	__netif_tx_lock(nq, cpu);
 
 	/* Avoid transmit queue timeout since we share it with the slow path */
-	nq->trans_start = jiffies;
+	txq_trans_cond_update(nq);
 
 	for (i = 0; i < n; i++) {
 		struct xdp_frame *xdpf = frames[i];
@@ -8026,7 +8026,7 @@ static int igb_poll(struct napi_struct *napi, int budget)
 	if (likely(napi_complete_done(napi, work_done)))
 		igb_ring_irq_enable(q_vector);
 
-	return min(work_done, budget - 1);
+	return work_done;
 }
 
 /**

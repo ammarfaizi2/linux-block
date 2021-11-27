@@ -1011,11 +1011,9 @@ ctnetlink_alloc_filter(const struct nlattr * const cda[], u8 family)
 						   CTA_TUPLE_REPLY,
 						   filter->family,
 						   &filter->zone,
-						   filter->orig_flags);
-		if (err < 0) {
-			err = -EINVAL;
+						   filter->reply_flags);
+		if (err < 0)
 			goto err_filter;
-		}
 	}
 
 	return filter;
@@ -2997,7 +2995,7 @@ static const union nf_inet_addr any_addr;
 
 static __be32 nf_expect_get_id(const struct nf_conntrack_expect *exp)
 {
-	static __read_mostly siphash_key_t exp_id_seed;
+	static siphash_aligned_key_t exp_id_seed;
 	unsigned long a, b, c, d;
 
 	net_get_random_once(&exp_id_seed, sizeof(exp_id_seed));

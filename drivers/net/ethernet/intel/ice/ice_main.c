@@ -2609,7 +2609,18 @@ int ice_prepare_xdp_rings(struct ice_vsi *vsi, struct bpf_prog *prog)
 			ice_stat_str(status));
 		goto clear_xdp_rings;
 	}
-	ice_vsi_assign_bpf_prog(vsi, prog);
+
+	/* assign the prog only when it's not already present on VSI;
+	 * this flow is a subject of both ethtool -L and ndo_bpf flows;
+	 * VSI rebuild that happens under ethtool -L can expose us to
+	 * the bpf_prog refcount issues as we would be swapping same
+	 * bpf_prog pointers from vsi->xdp_prog and calling bpf_prog_put
+	 * on it as it would be treated as an 'old_prog'; for ndo_bpf
+	 * this is not harmful as dev_xdp_install bumps the refcount
+	 * before calling the op exposed by the driver;
+	 */
+	if (!ice_is_xdp_ena_vsi(vsi))
+		ice_vsi_assign_bpf_prog(vsi, prog);
 
 	return 0;
 clear_xdp_rings:
@@ -2785,6 +2796,11 @@ ice_xdp_setup_prog(struct ice_vsi *vsi, struct bpf_prog *prog,
 		if (xdp_ring_err)
 			NL_SET_ERR_MSG_MOD(extack, "Freeing XDP Tx resources failed");
 	} else {
+		/* safe to call even when prog == vsi->xdp_prog as
+		 * dev_xdp_install in net/core/dev.c incremented prog's
+		 * refcount so corresponding bpf_prog_put won't cause
+		 * underflow
+		 */
 		ice_vsi_assign_bpf_prog(vsi, prog);
 	}
 
@@ -4705,6 +4721,10 @@ probe_done:
 	if (err)
 		goto err_netdev_reg;
 
+	err = ice_devlink_register_params(pf);
+	if (err)
+		goto err_netdev_reg;
+
 	/* ready to go, so clear down state bit */
 	clear_bit(ICE_DOWN, pf->state);
 	if (ice_is_aux_ena(pf)) {
@@ -4712,7 +4732,7 @@ probe_done:
 		if (pf->aux_idx < 0) {
 			dev_err(dev, "Failed to allocate device ID for AUX driver\n");
 			err = -ENOMEM;
-			goto err_netdev_reg;
+			goto err_devlink_reg_param;
 		}
 
 		err = ice_init_rdma(pf);
@@ -4731,6 +4751,8 @@ probe_done:
 err_init_aux_unroll:
 	pf->adev = NULL;
 	ida_free(&ice_aux_ida, pf->aux_idx);
+err_devlink_reg_param:
+	ice_devlink_unregister_params(pf);
 err_netdev_reg:
 err_send_version_unroll:
 	ice_vsi_release_all(pf);
@@ -4845,6 +4867,7 @@ static void ice_remove(struct pci_dev *pdev)
 	ice_unplug_aux_dev(pf);
 	if (pf->aux_idx >= 0)
 		ida_free(&ice_aux_ida, pf->aux_idx);
+	ice_devlink_unregister_params(pf);
 	set_bit(ICE_DOWN, pf->state);
 
 	mutex_destroy(&(&pf->hw)->fdir_fltr_lock);

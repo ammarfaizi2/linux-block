@@ -1873,7 +1873,9 @@ static int rtl8169_set_eee(struct net_device *dev, struct ethtool_eee *data)
 }
 
 static void rtl8169_get_ringparam(struct net_device *dev,
-				  struct ethtool_ringparam *data)
+				  struct ethtool_ringparam *data,
+				  struct kernel_ethtool_ringparam *kernel_data,
+				  struct netlink_ext_ack *extack)
 {
 	data->rx_max_pending = NUM_RX_DESC;
 	data->rx_pending = NUM_RX_DESC;
@@ -1969,8 +1971,11 @@ static enum mac_version rtl8169_get_mac_version(u16 xid, bool gmii)
 		{ 0x7cf, 0x641,	RTL_GIGA_MAC_VER_63 },
 
 		/* 8125A family. */
-		{ 0x7cf, 0x608,	RTL_GIGA_MAC_VER_60 },
-		{ 0x7c8, 0x608,	RTL_GIGA_MAC_VER_61 },
+		{ 0x7cf, 0x609,	RTL_GIGA_MAC_VER_61 },
+		/* It seems only XID 609 made it to the mass market.
+		 * { 0x7cf, 0x608,	RTL_GIGA_MAC_VER_60 },
+		 * { 0x7c8, 0x608,	RTL_GIGA_MAC_VER_61 },
+		 */
 
 		/* RTL8117 */
 		{ 0x7cf, 0x54b,	RTL_GIGA_MAC_VER_53 },
@@ -1978,17 +1983,26 @@ static enum mac_version rtl8169_get_mac_version(u16 xid, bool gmii)
 
 		/* 8168EP family. */
 		{ 0x7cf, 0x502,	RTL_GIGA_MAC_VER_51 },
-		{ 0x7cf, 0x501,	RTL_GIGA_MAC_VER_50 },
-		{ 0x7cf, 0x500,	RTL_GIGA_MAC_VER_49 },
+		/* It seems this chip version never made it to
+		 * the wild. Let's disable detection.
+		 * { 0x7cf, 0x501,      RTL_GIGA_MAC_VER_50 },
+		 * { 0x7cf, 0x500,      RTL_GIGA_MAC_VER_49 },
+		 */
 
 		/* 8168H family. */
 		{ 0x7cf, 0x541,	RTL_GIGA_MAC_VER_46 },
-		{ 0x7cf, 0x540,	RTL_GIGA_MAC_VER_45 },
+		/* It seems this chip version never made it to
+		 * the wild. Let's disable detection.
+		 * { 0x7cf, 0x540,	RTL_GIGA_MAC_VER_45 },
+		 */
 
 		/* 8168G family. */
 		{ 0x7cf, 0x5c8,	RTL_GIGA_MAC_VER_44 },
 		{ 0x7cf, 0x509,	RTL_GIGA_MAC_VER_42 },
-		{ 0x7cf, 0x4c1,	RTL_GIGA_MAC_VER_41 },
+		/* It seems this chip version never made it to
+		 * the wild. Let's disable detection.
+		 * { 0x7cf, 0x4c1,	RTL_GIGA_MAC_VER_41 },
+		 */
 		{ 0x7cf, 0x4c0,	RTL_GIGA_MAC_VER_40 },
 
 		/* 8168F family. */
@@ -5217,8 +5231,8 @@ static int rtl_get_ether_clk(struct rtl8169_private *tp)
 
 static void rtl_init_mac_address(struct rtl8169_private *tp)
 {
+	u8 mac_addr[ETH_ALEN] __aligned(2) = {};
 	struct net_device *dev = tp->dev;
-	u8 mac_addr[ETH_ALEN];
 	int rc;
 
 	rc = eth_platform_get_mac_address(tp_to_dev(tp), mac_addr);
@@ -5233,7 +5247,8 @@ static void rtl_init_mac_address(struct rtl8169_private *tp)
 	if (is_valid_ether_addr(mac_addr))
 		goto done;
 
-	eth_hw_addr_random(dev);
+	eth_random_addr(mac_addr);
+	dev->addr_assign_type = NET_ADDR_RANDOM;
 	dev_warn(tp_to_dev(tp), "can't read MAC address, setting random one\n");
 done:
 	eth_hw_addr_set(dev, mac_addr);
@@ -5270,12 +5285,6 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	rc = rtl_get_ether_clk(tp);
 	if (rc)
 		return rc;
-
-	/* Disable ASPM L1 as that cause random device stop working
-	 * problems as well as full system hangs for some PCIe devices users.
-	 */
-	rc = pci_disable_link_state(pdev, PCIE_LINK_STATE_L1);
-	tp->aspm_manageable = !rc;
 
 	/* enable device (incl. PCI PM wakeup and hotplug setup) */
 	rc = pcim_enable_device(pdev);
@@ -5318,6 +5327,17 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	}
 
 	tp->mac_version = chipset;
+
+	/* Disable ASPM L1 as that cause random device stop working
+	 * problems as well as full system hangs for some PCIe devices users.
+	 * Chips from RTL8168h partially have issues with L1.2, but seem
+	 * to work fine with L1 and L1.1.
+	 */
+	if (tp->mac_version >= RTL_GIGA_MAC_VER_45)
+		rc = pci_disable_link_state(pdev, PCIE_LINK_STATE_L1_2);
+	else
+		rc = pci_disable_link_state(pdev, PCIE_LINK_STATE_L1);
+	tp->aspm_manageable = !rc;
 
 	tp->dash_type = rtl_check_dash(tp);
 
@@ -5374,12 +5394,12 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	 */
 	if (rtl_chip_supports_csum_v2(tp)) {
 		dev->hw_features |= NETIF_F_SG | NETIF_F_TSO | NETIF_F_TSO6;
-		dev->gso_max_size = RTL_GSO_MAX_SIZE_V2;
-		dev->gso_max_segs = RTL_GSO_MAX_SEGS_V2;
+		netif_set_gso_max_size(dev, RTL_GSO_MAX_SIZE_V2);
+		netif_set_gso_max_segs(dev, RTL_GSO_MAX_SEGS_V2);
 	} else {
 		dev->hw_features |= NETIF_F_SG | NETIF_F_TSO;
-		dev->gso_max_size = RTL_GSO_MAX_SIZE_V1;
-		dev->gso_max_segs = RTL_GSO_MAX_SEGS_V1;
+		netif_set_gso_max_size(dev, RTL_GSO_MAX_SIZE_V1);
+		netif_set_gso_max_segs(dev, RTL_GSO_MAX_SEGS_V1);
 	}
 
 	dev->hw_features |= NETIF_F_RXALL;
