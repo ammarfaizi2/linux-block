@@ -961,6 +961,11 @@ static inline unsigned char *skb_inner_network_header(const struct sk_buff *skb)
 	return skb->head + skb->inner_network_header;
 }
 
+static inline void skb_mark_not_on_list(struct sk_buff *skb)
+{
+	skb->next = NULL;
+}
+
 #endif	/* __KERNEL__ */
 
 #endif	/* _LINUX_SKBUFF_TYPES_H */
