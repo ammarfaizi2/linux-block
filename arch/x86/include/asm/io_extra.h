@@ -4,6 +4,8 @@
 
 #include <asm/io.h>
 
+#include <asm/special_insns.h>
+
 /**
  * iosubmit_cmds512 - copy data to single MMIO location, in 512-bit units
  * @dst: destination, in MMIO space (must be 512-bit aligned)
