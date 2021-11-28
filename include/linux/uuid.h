@@ -9,6 +9,5 @@
 #define _LINUX_UUID_H_
 
 #include <linux/uuid_types.h>
-#include <linux/uuid_api.h>
 
 #endif
