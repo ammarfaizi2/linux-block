@@ -4,6 +4,7 @@
 
 #include <linux/scatterlist_types.h>
 
+#include <linux/io_extra.h>
 #include <linux/io.h>
 #include <linux/mm_page_address.h>
 #include <linux/string.h>
