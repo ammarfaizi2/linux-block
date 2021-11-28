@@ -17,7 +17,6 @@
 
 #include <asm/page.h>
 #include <asm/pgtable.h>
-#include <asm/pgtable_api_access.h>
 
 #ifndef __ASSEMBLY__
 #ifdef CONFIG_MMU
