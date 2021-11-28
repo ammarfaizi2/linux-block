@@ -43,7 +43,6 @@
 #include <net/tcp_states.h>
 #include <linux/percpu_counter.h>
 #include <linux/net_tstamp.h>
-#include <net/l3mdev.h>
 
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
