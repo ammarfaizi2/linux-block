@@ -7,7 +7,7 @@
 #ifndef _LINUX_HASHTABLE_TYPES_H
 #define _LINUX_HASHTABLE_TYPES_H
 
-#include <linux/log2.h>
+#include <linux/log2_const.h>
 #include <linux/types.h>
 
 #define DEFINE_HASHTABLE(name, bits)						\
