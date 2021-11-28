@@ -5,7 +5,7 @@
 #include <net/ip.h>
 
 #ifdef CONFIG_INET
-#include <net/dst.h>
+#include <net/dst_api.h>
 
 /* The function in 2.2 was invalid, producing wrong result for
  * check=0xFEFF. It was noticed by Arthur Skawina _year_ ago. --ANK(000625) */
