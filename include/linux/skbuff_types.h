@@ -20,7 +20,8 @@
 #include <linux/spinlock_types.h>
 #include <linux/align.h>
 
-#include <asm/page.h>
+#include <asm/page_types.h>
+#include <vdso/bits.h>
 
 #include <uapi/linux/in6.h>
 

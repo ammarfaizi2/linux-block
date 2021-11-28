@@ -33,6 +33,7 @@
 #include <linux/dynamic_queue_limits.h>
 #include <linux/netdev_features.h>
 #include <linux/smp_types.h>
+#include <linux/bitops.h>
 
 #include <net/xdp.h>
 #include <net/net_trackers.h>

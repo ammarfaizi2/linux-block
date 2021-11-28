@@ -17,6 +17,7 @@
 #include <linux/gfp_types.h>
 #include <linux/rbtree_api.h>
 #include <linux/skbuff_types.h>
+#include <linux/log2.h>
 
 #include <linux/lockdep_api.h>
 #include <linux/bvec.h>
