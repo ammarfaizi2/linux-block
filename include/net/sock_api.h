@@ -1289,42 +1289,6 @@ static inline void dst_negative_advice(struct sock *sk)
 	__dst_negative_advice(sk);
 }
 
-static inline void
-__sk_dst_set(struct sock *sk, struct dst_entry *dst)
-{
-	struct dst_entry *old_dst;
-
-	sk_tx_queue_clear(sk);
-	sk->sk_dst_pending_confirm = 0;
-	old_dst = rcu_dereference_protected(sk->sk_dst_cache,
-					    lockdep_sock_is_held(sk));
-	rcu_assign_pointer(sk->sk_dst_cache, dst);
-	dst_release(old_dst);
-}
-
-static inline void
-sk_dst_set(struct sock *sk, struct dst_entry *dst)
-{
-	struct dst_entry *old_dst;
-
-	sk_tx_queue_clear(sk);
-	sk->sk_dst_pending_confirm = 0;
-	old_dst = xchg((__force struct dst_entry **)&sk->sk_dst_cache, dst);
-	dst_release(old_dst);
-}
-
-static inline void
-__sk_dst_reset(struct sock *sk)
-{
-	__sk_dst_set(sk, NULL);
-}
-
-static inline void
-sk_dst_reset(struct sock *sk)
-{
-	sk_dst_set(sk, NULL);
-}
-
 struct dst_entry *__sk_dst_check(struct sock *sk, u32 cookie);
 
 struct dst_entry *sk_dst_check(struct sock *sk, u32 cookie);
