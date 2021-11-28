@@ -287,53 +287,6 @@ void ip_send_unicast_reply(struct sock *sk, struct sk_buff *skb,
 #define NET_ADD_STATS(net, field, adnd)	SNMP_ADD_STATS((net)->mib.net_statistics, field, adnd)
 #define __NET_ADD_STATS(net, field, adnd) __SNMP_ADD_STATS((net)->mib.net_statistics, field, adnd)
 
-static inline u64 snmp_get_cpu_field(void __percpu *mib, int cpu, int offt)
-{
-	return  *(((unsigned long *)per_cpu_ptr(mib, cpu)) + offt);
-}
-
-unsigned long snmp_fold_field(void __percpu *mib, int offt);
-#if BITS_PER_LONG==32
-u64 snmp_get_cpu_field64(void __percpu *mib, int cpu, int offct,
-			 size_t syncp_offset);
-u64 snmp_fold_field64(void __percpu *mib, int offt, size_t sync_off);
-#else
-static inline u64  snmp_get_cpu_field64(void __percpu *mib, int cpu, int offct,
-					size_t syncp_offset)
-{
-	return snmp_get_cpu_field(mib, cpu, offct);
-
-}
-
-static inline u64 snmp_fold_field64(void __percpu *mib, int offt, size_t syncp_off)
-{
-	return snmp_fold_field(mib, offt);
-}
-#endif
-
-#define snmp_get_cpu_field64_batch(buff64, stats_list, mib_statistic, offset) \
-{ \
-	int i, c; \
-	for_each_possible_cpu(c) { \
-		for (i = 0; stats_list[i].name; i++) \
-			buff64[i] += snmp_get_cpu_field64( \
-					mib_statistic, \
-					c, stats_list[i].entry, \
-					offset); \
-	} \
-}
-
-#define snmp_get_cpu_field_batch(buff, stats_list, mib_statistic) \
-{ \
-	int i, c; \
-	for_each_possible_cpu(c) { \
-		for (i = 0; stats_list[i].name; i++) \
-			buff[i] += snmp_get_cpu_field( \
-						mib_statistic, \
-						c, stats_list[i].entry); \
-	} \
-}
-
 void inet_get_local_port_range(struct net *net, int *low, int *high);
 
 #ifdef CONFIG_SYSCTL
