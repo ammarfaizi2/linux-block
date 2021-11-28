@@ -4,6 +4,8 @@
 
 #include <net/sock_api.h>
 
+#include <net/dst_api.h>
+
 /* OOB backlog add */
 static inline void __sk_add_backlog(struct sock *sk, struct sk_buff *skb)
 {

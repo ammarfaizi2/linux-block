@@ -6,7 +6,6 @@
 
 #include <net/net_namespace_types.h>
 #include <net/neighbour_api.h>
-#include <net/dst_api.h>
 #include <linux/uio_api.h>
 #include <linux/mutex_api.h>
 #include <linux/sched/types.h>
