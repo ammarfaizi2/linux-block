@@ -133,6 +133,7 @@ static inline void * phys_to_virt(unsigned long address)
 {
 	return (void *)(address + PAGE_OFFSET - PHYS_OFFSET);
 }
+#define phys_to_virt phys_to_virt
 
 /*
  * ISA I/O bus memory addresses are 1:1 with the physical address.
@@ -494,14 +495,19 @@ static inline void memset_io(volatile void __iomem *addr, unsigned char val, int
 {
 	memset((void __force *) addr, val, count);
 }
+#define memset_io memset_io
+
 static inline void memcpy_fromio(void *dst, const volatile void __iomem *src, int count)
 {
 	memcpy(dst, (void __force *) src, count);
 }
+#define memcpy_fromio memcpy_fromio
+
 static inline void memcpy_toio(volatile void __iomem *dst, const void *src, int count)
 {
 	memcpy((void __force *) dst, src, count);
 }
+#define memcpy_toio memcpy_toio
 
 /*
  * The caches on some architectures aren't dma-coherent and have need to
