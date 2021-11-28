@@ -5,6 +5,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) "mce: " fmt
 
+#include <asm/msr.h>
 #include <linux/device.h>
 #include <asm/mce.h>
 
