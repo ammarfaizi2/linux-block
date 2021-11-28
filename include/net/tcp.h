@@ -32,6 +32,7 @@
 #include <linux/indirect_call_wrapper.h>
 #include <linux/hrtimer_api.h>
 #include <linux/percpu_counter.h>
+#include <linux/seq_file_net.h>
 
 #include <net/inet_connection_sock.h>
 #include <net/inet_timewait_sock.h>
