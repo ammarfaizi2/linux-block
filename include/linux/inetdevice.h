@@ -14,7 +14,7 @@
 #include <linux/timer.h>
 #include <linux/sysctl.h>
 #include <linux/rtnetlink.h>
-#include <linux/refcount.h>
+#include <linux/refcount_api.h>
 
 struct ipv4_devconf {
 	void	*sysctl;
