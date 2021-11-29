@@ -9,7 +9,6 @@
 #include <linux/kernel.h>
 #include <linux/bug.h>
 #include <linux/mm.h>
-#include <linux/uaccess.h>
 
 #ifdef CONFIG_HIGHMEM
 # include <asm/highmem.h>
