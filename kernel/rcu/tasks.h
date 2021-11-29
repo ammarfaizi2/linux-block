@@ -214,7 +214,7 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 	if (rcu_task_enqueue_lim < 0) {
 		rcu_task_enqueue_lim = 1;
 		rcu_task_cb_adjust = true;
-		pr_alert("%s: Setting adjustable number of callback queues.\n", __func__);
+		pr_info("%s: Setting adjustable number of callback queues.\n", __func__);
 	}
 	else if (rcu_task_enqueue_lim == 0)
 		rcu_task_enqueue_lim = 1;
@@ -291,7 +291,7 @@ static void call_rcu_tasks_generic(struct rcu_head *rhp, rcu_callback_t func,
 		if (rtp->percpu_enqueue_lim != nr_cpu_ids) {
 			WRITE_ONCE(rtp->percpu_enqueue_shift, ilog2(nr_cpu_ids));
 			smp_store_release(&rtp->percpu_enqueue_lim, nr_cpu_ids);
-			pr_alert("Switching %s to per-CPU callback queuing.\n", rtp->name);
+			pr_info("Switching %s to per-CPU callback queuing.\n", rtp->name);
 		}
 		raw_spin_unlock_irqrestore(&rtp->cbs_gbl_lock, flags);
 	}
