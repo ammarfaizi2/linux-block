@@ -2,8 +2,6 @@
 #ifndef _X86_IRQFLAGS_H_
 #define _X86_IRQFLAGS_H_
 
-#include <asm/processor-flags.h>
-
 #ifndef __ASSEMBLY__
 
 #include <asm/nospec-branch.h>
@@ -122,7 +120,7 @@ static __always_inline unsigned long arch_local_irq_save(void)
 #ifndef __ASSEMBLY__
 static __always_inline int arch_irqs_disabled_flags(unsigned long flags)
 {
-	return !(flags & X86_EFLAGS_IF);
+	return !(flags & 0x200); /* X86_EFLAGS_IF */
 }
 
 static __always_inline int arch_irqs_disabled(void)
