@@ -4,6 +4,8 @@
 
 #include <linux/fs_api.h>
 
+#include <linux/percpu_rwsem_api.h>
+
 /*
  * Snapshotting support.
  */
