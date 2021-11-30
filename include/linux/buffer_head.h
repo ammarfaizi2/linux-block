@@ -8,12 +8,16 @@
 #ifndef _LINUX_BUFFER_HEAD_H
 #define _LINUX_BUFFER_HEAD_H
 
+#include <linux/page-flags.h>
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/linkage.h>
-#include <linux/pagemap.h>
 #include <linux/wait.h>
-#include <linux/atomic.h>
+#include <linux/bitops.h>
+#include <linux/fs_types_sb.h>
+#include <linux/mm_types.h>
+#include <linux/atomic_api.h>
+#include <linux/kernel.h>
 
 #ifdef CONFIG_BLOCK
 
