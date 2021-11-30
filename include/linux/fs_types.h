@@ -987,7 +987,7 @@ struct file_operations {
 	int (*fadvise)(struct file *, loff_t, loff_t, int);
 } __randomize_layout;
 
-struct inode_operations {
+struct ____cacheline_aligned inode_operations {
 	struct dentry * (*lookup) (struct inode *,struct dentry *, unsigned int);
 	const char * (*get_link) (struct dentry *, struct inode *, struct delayed_call *);
 	int (*permission) (struct user_namespace *, struct inode *, int);
@@ -1026,7 +1026,7 @@ struct inode_operations {
 	int (*fileattr_set)(struct user_namespace *mnt_userns,
 			    struct dentry *dentry, struct fileattr *fa);
 	int (*fileattr_get)(struct dentry *dentry, struct fileattr *fa);
-} ____cacheline_aligned;
+};
 
 struct super_operations {
    	struct inode *(*alloc_inode)(struct super_block *sb);
