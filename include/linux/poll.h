@@ -6,7 +6,6 @@
 #include <linux/compiler.h>
 #include <linux/ktime.h>
 #include <linux/wait.h>
-#include <linux/string.h>
 
 #include <uapi/linux/poll.h>
 #include <uapi/linux/eventpoll.h>
