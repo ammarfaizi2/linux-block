@@ -8,6 +8,7 @@
 #include <linux/list_bl_types.h>
 #include <linux/list_lru_types.h>
 #include <linux/shrinker.h>
+#include <linux/workqueue_types.h>
 
 /*
  * sb->s_flags.  Note that these mirror the equivalent MS_* flags where

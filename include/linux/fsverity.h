@@ -17,6 +17,8 @@
 
 #include <asm/barrier.h>
 
+struct work_struct;
+
 /* Verity operations for filesystems */
 struct fsverity_operations {
 

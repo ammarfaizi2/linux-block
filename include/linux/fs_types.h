@@ -13,10 +13,10 @@
 #include <linux/errseq.h>
 #include <linux/quota_types.h>
 #include <linux/rbtree_types.h>
-#include <linux/workqueue_types.h>
 #include <linux/mutex_types.h>
 #include <linux/llist_types.h>
 #include <linux/wait_types.h>
+#include <linux/atomic_types.h>
 
 #include <uapi/linux/fs.h>
 
