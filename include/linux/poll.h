@@ -7,7 +7,7 @@
 #include <linux/ktime.h>
 #include <linux/wait.h>
 #include <linux/string.h>
-#include <linux/uaccess.h>
+
 #include <uapi/linux/poll.h>
 #include <uapi/linux/eventpoll.h>
 
