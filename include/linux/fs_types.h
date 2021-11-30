@@ -3,7 +3,6 @@
 #define _LINUX_FS_TYPES_H
 
 #include <linux/list.h>
-#include <linux/list_bl_types.h>
 #include <linux/cache.h>
 #include <linux/path.h>
 #include <linux/list_lru_types.h>
