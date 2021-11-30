@@ -17,6 +17,7 @@
 #ifndef __VISORBUS_H__
 #define __VISORBUS_H__
 
+#include <linux/uuid.h>
 #include <linux/device.h>
 
 #define VISOR_CHANNEL_SIGNATURE ('L' << 24 | 'N' << 16 | 'C' << 8 | 'E')

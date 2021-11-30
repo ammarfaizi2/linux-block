@@ -5,11 +5,11 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
-#include <linux/rbtree.h>
-
 #ifndef _CIFS_FS_SB_H
 #define _CIFS_FS_SB_H
 
+#include <linux/uuid.h>
+#include <linux/rbtree.h>
 #include <linux/backing-dev.h>
 
 #define CIFS_MOUNT_NO_PERM      1 /* do not do client vfs_perm check */
