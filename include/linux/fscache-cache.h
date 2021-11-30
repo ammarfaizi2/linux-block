@@ -14,6 +14,8 @@
 #ifndef _LINUX_FSCACHE_CACHE_H
 #define _LINUX_FSCACHE_CACHE_H
 
+#include <linux/sched.h>
+#include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/fscache.h>
 
