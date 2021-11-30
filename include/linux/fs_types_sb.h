@@ -4,6 +4,8 @@
 
 #include <linux/fs_types.h>
 
+#include <linux/percpu_rwsem_types.h>
+
 /*
  * sb->s_flags.  Note that these mirror the equivalent MS_* flags where
  * represented in both.

@@ -11,7 +11,6 @@
 #include <linux/pid_types.h>
 #include <linux/fcntl.h>
 #include <linux/migrate_mode.h>
-#include <linux/percpu_rwsem_types.h>
 #include <linux/uuid.h>
 #include <linux/errseq.h>
 #include <linux/quota_types.h>
@@ -20,8 +19,13 @@
 #include <linux/mutex_types.h>
 #include <linux/llist_types.h>
 #include <linux/shrinker.h>
+#include <linux/wait_types.h>
 
 #include <uapi/linux/fs.h>
+
+#if BITS_PER_LONG==32
+# include <linux/atomic_api.h>
+#endif
 
 #if BITS_PER_LONG==32 && defined(CONFIG_SMP)
 #include <linux/seqlock_api.h>

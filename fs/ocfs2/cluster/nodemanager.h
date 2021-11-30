@@ -13,6 +13,7 @@
 #include "ocfs2_nodemanager.h"
 
 /* This totally doesn't belong here. */
+#include <linux/bitops_types.h>
 #include <linux/configfs.h>
 #include <linux/rbtree.h>
 
