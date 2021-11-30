@@ -3,6 +3,7 @@
 #define _IP_EXTRA_H
 
 #include <net/ip.h>
+#include <linux/percpu.h>
 
 #ifdef CONFIG_INET
 #include <net/dst_api.h>

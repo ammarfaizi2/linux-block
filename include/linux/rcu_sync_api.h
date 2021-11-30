@@ -13,6 +13,8 @@
 #include <linux/rcu_sync_types.h>
 
 #include <linux/rcupdate.h>
+#include <linux/rcupdate_api_debug.h>
+#include <linux/irqflags.h>
 
 /**
  * rcu_sync_is_idle() - Are readers permitted to use their fastpaths?

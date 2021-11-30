@@ -22,17 +22,8 @@
 
 #include <linux/rcupdate_api_debug.h>
 
-#include <linux/lockdep_api.h>
-#include <linux/err.h>
 #include <linux/bug.h>
-#include <linux/types.h>
-#include <linux/compiler.h>
-#include <linux/atomic.h>
-#include <linux/irqflags.h>
-#include <linux/preempt.h>
 #include <linux/bottom_half.h>
-#include <linux/lockdep.h>
-#include <linux/cpumask.h>
 #include <linux/sched/per_task.h>
 
 #ifdef CONFIG_TASKS_RCU

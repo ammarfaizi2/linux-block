@@ -10,6 +10,7 @@
 #ifndef _LINUX_SKBUFF_API_H
 #define _LINUX_SKBUFF_API_H
 
+#include <linux/list.h>
 #include <linux/cache.h>
 #include <linux/uio_api.h>
 #include <linux/rcupdate_api_debug.h>

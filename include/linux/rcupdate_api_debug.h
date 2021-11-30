@@ -2,12 +2,12 @@
 #ifndef __LINUX_RCUPDATE_API_DEBUG_H
 #define __LINUX_RCUPDATE_API_DEBUG_H
 
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/lockdep_api.h>
 #include <linux/kernel.h>
-
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
 
 static inline void rcu_lock_acquire(struct lockdep_map *map)
 {
@@ -40,15 +40,8 @@ static inline int rcu_read_lock_bh_held(void)
 	return 1;
 }
 
-static inline int rcu_read_lock_sched_held(void)
-{
-	return !preemptible();
-}
-
-static inline int rcu_read_lock_any_held(void)
-{
-	return !preemptible();
-}
+#define rcu_read_lock_sched_held()	(!preemptible())
+#define rcu_read_lock_any_held()	(!preemptible())
 
 #endif /* #else #ifdef CONFIG_DEBUG_LOCK_ALLOC */
 
