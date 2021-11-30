@@ -5,6 +5,7 @@
 #include <linux/fs_api.h>
 
 #include <linux/wait_bit.h>
+#include <linux/atomic_api.h>
 
 #ifdef CONFIG_BLOCK
 typedef void (dio_submit_t)(struct bio *bio, struct inode *inode,

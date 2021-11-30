@@ -12,6 +12,7 @@
 #include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
+#include <linux/atomic_api.h>
 
 #define DQUOT_SPACE_WARN	0x1
 #define DQUOT_SPACE_RESERVE	0x2

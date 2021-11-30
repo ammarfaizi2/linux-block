@@ -4,6 +4,8 @@
 
 #include <linux/fs_api.h>
 
+#include <linux/atomic_api.h>
+
 #if defined(CONFIG_IMA) || defined(CONFIG_FILE_LOCKING)
 static inline void i_readcount_dec(struct inode *inode)
 {

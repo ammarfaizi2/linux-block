@@ -4,6 +4,8 @@
 
 #include <linux/fs_api.h>
 
+#include <linux/atomic_api.h>
+
 static inline struct file *get_file(struct file *f)
 {
 	atomic_long_inc(&f->f_count);
