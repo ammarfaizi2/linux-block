@@ -4,6 +4,8 @@
 
 #include <linux/fs_api.h>
 
+#include <linux/atomic_api.h>
+
 /*
  * Might pages of this file have been modified in userspace?
  * Note that i_mmap_writable counts all VM_SHARED vmas: do_mmap
