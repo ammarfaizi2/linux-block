@@ -7,7 +7,14 @@
  */
 
 #include <linux/xarray_api.h>
-#include <linux/pagemap.h>
+#include <linux/huge_mm.h>
+#include <linux/fs_types.h>
+#include <linux/mm_page_address.h>
+
+/*
+ * Returns true if any of the pages in the mapping are marked with the tag.
+ */
+#define mapping_tagged(mapping, tag) xa_marked(&(mapping)->i_pages, tag)
 
 bool filemap_range_has_writeback(struct address_space *mapping,
 				 loff_t start_byte, loff_t end_byte);
