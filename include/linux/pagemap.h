@@ -5,6 +5,7 @@
 /*
  * Copyright 1995 Linus Torvalds
  */
+#include <uapi/linux/stat.h>
 #include <linux/fs_types_sb.h>
 #include <linux/xarray_api.h>
 #include <linux/mm_page_address.h>
@@ -12,7 +13,6 @@
 #include <linux/mm_api.h>
 #include <linux/xarray_types.h>
 #include <linux/page-flags-thp.h>
-#include <linux/fs_api.h>
 #include <linux/mm.h>
 #include <linux/fs.h>
 #include <linux/list.h>
