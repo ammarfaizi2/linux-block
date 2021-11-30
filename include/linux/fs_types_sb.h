@@ -9,6 +9,7 @@
 #include <linux/list_lru_types.h>
 #include <linux/shrinker.h>
 #include <linux/workqueue_types.h>
+#include <linux/uuid.h>
 
 /*
  * sb->s_flags.  Note that these mirror the equivalent MS_* flags where
