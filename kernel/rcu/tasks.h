@@ -229,7 +229,7 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 
 	if (lim > nr_cpu_ids)
 		lim = nr_cpu_ids;
-	WRITE_ONCE(rtp->percpu_enqueue_shift, ilog2(nr_cpu_ids / rcu_task_enqueue_lim));
+	WRITE_ONCE(rtp->percpu_enqueue_shift, ilog2(nr_cpu_ids / lim));
 	WRITE_ONCE(rtp->percpu_dequeue_lim, lim);
 	smp_store_release(&rtp->percpu_enqueue_lim, lim);
 	for_each_possible_cpu(cpu) {
