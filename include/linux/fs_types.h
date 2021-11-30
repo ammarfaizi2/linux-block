@@ -5,7 +5,6 @@
 #include <linux/list.h>
 #include <linux/cache.h>
 #include <linux/path.h>
-#include <linux/list_lru_types.h>
 #include <linux/xarray_types.h>
 #include <linux/pid_types.h>
 #include <linux/fcntl.h>
