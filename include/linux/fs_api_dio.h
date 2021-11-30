@@ -4,6 +4,8 @@
 
 #include <linux/fs_api.h>
 
+#include <linux/wait_bit.h>
+
 #ifdef CONFIG_BLOCK
 typedef void (dio_submit_t)(struct bio *bio, struct inode *inode,
 			    loff_t file_offset);

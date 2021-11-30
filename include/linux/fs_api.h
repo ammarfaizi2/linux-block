@@ -9,7 +9,6 @@
 #include <linux/stat.h>
 #include <linux/lockdep_api.h>
 #include <linux/rwsem_api.h>
-#include <linux/wait_bit.h>
 #include <linux/kdev_t.h>
 #include <linux/dcache.h>
 #include <linux/path.h>
