@@ -12,10 +12,9 @@
 
 #ifndef __ASSEMBLY__
 
-#include <linux/init.h>
-#include <linux/cc_platform.h>
+#include <linux/types.h>
 
-#include <asm/bootparam.h>
+struct boot_params;
 
 #ifdef CONFIG_AMD_MEM_ENCRYPT
 
@@ -28,31 +27,31 @@ void sme_encrypt_execute(unsigned long encrypted_kernel_vaddr,
 			 unsigned long encryption_wa,
 			 unsigned long encryption_pgd);
 
-void __init sme_early_encrypt(resource_size_t paddr,
+void sme_early_encrypt(resource_size_t paddr,
 			      unsigned long size);
-void __init sme_early_decrypt(resource_size_t paddr,
+void sme_early_decrypt(resource_size_t paddr,
 			      unsigned long size);
 
-void __init sme_map_bootdata(char *real_mode_data);
-void __init sme_unmap_bootdata(char *real_mode_data);
+void sme_map_bootdata(char *real_mode_data);
+void sme_unmap_bootdata(char *real_mode_data);
 
-void __init sme_early_init(void);
-void __init sev_setup_arch(void);
+void sme_early_init(void);
+void sev_setup_arch(void);
 
-void __init sme_encrypt_kernel(struct boot_params *bp);
-void __init sme_enable(struct boot_params *bp);
+void sme_encrypt_kernel(struct boot_params *bp);
+void sme_enable(struct boot_params *bp);
 
-int __init early_set_memory_decrypted(unsigned long vaddr, unsigned long size);
-int __init early_set_memory_encrypted(unsigned long vaddr, unsigned long size);
-void __init early_set_mem_enc_dec_hypercall(unsigned long vaddr, int npages,
+int early_set_memory_decrypted(unsigned long vaddr, unsigned long size);
+int early_set_memory_encrypted(unsigned long vaddr, unsigned long size);
+void early_set_mem_enc_dec_hypercall(unsigned long vaddr, int npages,
 					    bool enc);
 
-void __init mem_encrypt_free_decrypted_mem(void);
+void mem_encrypt_free_decrypted_mem(void);
 
 /* Architecture __weak replacement functions */
-void __init mem_encrypt_init(void);
+void mem_encrypt_init(void);
 
-void __init sev_es_init_vc_handling(void);
+void sev_es_init_vc_handling(void);
 
 #define __bss_decrypted __section(".bss..decrypted")
 
@@ -60,27 +59,27 @@ void __init sev_es_init_vc_handling(void);
 
 #define sme_me_mask	0ULL
 
-static inline void __init sme_early_encrypt(resource_size_t paddr,
+static inline void sme_early_encrypt(resource_size_t paddr,
 					    unsigned long size) { }
-static inline void __init sme_early_decrypt(resource_size_t paddr,
+static inline void sme_early_decrypt(resource_size_t paddr,
 					    unsigned long size) { }
 
-static inline void __init sme_map_bootdata(char *real_mode_data) { }
-static inline void __init sme_unmap_bootdata(char *real_mode_data) { }
+static inline void sme_map_bootdata(char *real_mode_data) { }
+static inline void sme_unmap_bootdata(char *real_mode_data) { }
 
-static inline void __init sme_early_init(void) { }
-static inline void __init sev_setup_arch(void) { }
+static inline void sme_early_init(void) { }
+static inline void sev_setup_arch(void) { }
 
-static inline void __init sme_encrypt_kernel(struct boot_params *bp) { }
-static inline void __init sme_enable(struct boot_params *bp) { }
+static inline void sme_encrypt_kernel(struct boot_params *bp) { }
+static inline void sme_enable(struct boot_params *bp) { }
 
 static inline void sev_es_init_vc_handling(void) { }
 
-static inline int __init
+static inline int
 early_set_memory_decrypted(unsigned long vaddr, unsigned long size) { return 0; }
-static inline int __init
+static inline int
 early_set_memory_encrypted(unsigned long vaddr, unsigned long size) { return 0; }
-static inline void __init
+static inline void
 early_set_mem_enc_dec_hypercall(unsigned long vaddr, int npages, bool enc) {}
 
 static inline void mem_encrypt_free_decrypted_mem(void) { }

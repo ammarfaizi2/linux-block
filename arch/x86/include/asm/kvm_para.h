@@ -117,7 +117,7 @@ static __always_inline bool kvm_handle_async_pf(struct pt_regs *regs, u32 token)
 }
 
 #ifdef CONFIG_PARAVIRT_SPINLOCKS
-void __init kvm_spinlock_init(void);
+void kvm_spinlock_init(void);
 #else /* !CONFIG_PARAVIRT_SPINLOCKS */
 static inline void kvm_spinlock_init(void)
 {

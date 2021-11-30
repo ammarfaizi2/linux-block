@@ -160,7 +160,7 @@ extern void arch_static_call_transform(void *site, void *tramp, void *func, bool
 
 #ifdef CONFIG_HAVE_STATIC_CALL_INLINE
 
-extern int __init static_call_init(void);
+extern int static_call_init(void);
 
 struct static_call_mod {
 	struct static_call_mod *next;
