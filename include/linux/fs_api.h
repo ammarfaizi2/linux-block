@@ -248,16 +248,6 @@ static inline int ra_has_index(struct file_ra_state *ra, pgoff_t index)
 		index <  ra->start + ra->size);
 }
 
-static inline struct file *get_file(struct file *f)
-{
-	atomic_long_inc(&f->f_count);
-	return f;
-}
-#define get_file_rcu_many(x, cnt)	\
-	atomic_long_add_unless(&(x)->f_count, (cnt), 0)
-#define get_file_rcu(x) get_file_rcu_many((x), 1)
-#define file_count(x)	atomic_long_read(&(x)->f_count)
-
 struct net;
 void locks_start_grace(struct net *, struct lock_manager *);
 void locks_end_grace(struct lock_manager *);
