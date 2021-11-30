@@ -32,11 +32,6 @@ int pagecache_write_end(struct file *, struct address_space *mapping,
 				loff_t pos, unsigned len, unsigned copied,
 				struct page *page, void *fsdata);
 
-/*
- * Returns true if any of the pages in the mapping are marked with the tag.
- */
-#define mapping_tagged(mapping, tag) xa_marked(&(mapping)->i_pages, tag)
-
 static inline void i_mmap_lock_write(struct address_space *mapping)
 {
 	down_write(&mapping->i_mmap_rwsem);
