@@ -13,7 +13,6 @@
 #include <linux/bug.h>
 #include <linux/fs.h>
 #include <linux/mempool.h>
-#include <linux/pagemap.h>
 #include <linux/wait.h>
 #include <linux/writeback.h>
 #include <linux/slab.h>
