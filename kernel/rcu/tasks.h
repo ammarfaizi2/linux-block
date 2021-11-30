@@ -222,9 +222,9 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 		rcu_task_enqueue_lim = 1;
 		rcu_task_cb_adjust = true;
 		pr_info("%s: Setting adjustable number of callback queues.\n", __func__);
-	}
-	else if (rcu_task_enqueue_lim == 0)
+	} else if (rcu_task_enqueue_lim == 0) {
 		rcu_task_enqueue_lim = 1;
+	}
 	lim = rcu_task_enqueue_lim;
 
 	if (lim > nr_cpu_ids)
