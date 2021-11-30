@@ -11,7 +11,6 @@
 #include <uapi/linux/eventpoll.h>
 
 struct file;
-struct timespec64;
 
 /* ~832 bytes of stack space used max in sys_select/sys_poll before allocating
    additional memory. */
@@ -99,15 +98,6 @@ struct poll_wqueues {
 
 extern void poll_initwait(struct poll_wqueues *pwq);
 extern void poll_freewait(struct poll_wqueues *pwq);
-extern u64 select_estimate_accuracy(struct timespec64 *tv);
-
-#define MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
-
-extern int core_sys_select(int n, fd_set __user *inp, fd_set __user *outp,
-			   fd_set __user *exp, struct timespec64 *end_time);
-
-extern int poll_select_set_timeout(struct timespec64 *to, time64_t sec,
-				   long nsec);
 
 #define __MAP_POLL(v, from, to) \
 	(from < to ? (v & from) * (to/from) : (v & from) / (from/to))
