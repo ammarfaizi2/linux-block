@@ -36,7 +36,8 @@
  */
 #ifndef _LINUX_BALLOON_COMPACTION_H
 #define _LINUX_BALLOON_COMPACTION_H
-#include <linux/pagemap.h>
+
+#include <linux/atomic_api.h>
 #include <linux/page-flags.h>
 #include <linux/migrate.h>
 #include <linux/gfp.h>
