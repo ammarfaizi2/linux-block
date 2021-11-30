@@ -164,7 +164,7 @@ do
 		if test "$ret" -ne 0
 		then
 			echo Unable to download $T/binres.tgz to system $i, giving up. | tee -a "$oldrun/remote-log"
-			exit 10 | tee -a "$oldrun/remote-log"
+			exit 10
 		fi
 	fi
 done
