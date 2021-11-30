@@ -60,8 +60,8 @@ extern int xen_alloc_p2m_entry(unsigned long pfn);
 extern unsigned long get_phys_to_machine(unsigned long pfn);
 extern bool set_phys_to_machine(unsigned long pfn, unsigned long mfn);
 extern bool __set_phys_to_machine(unsigned long pfn, unsigned long mfn);
-extern unsigned long __init set_phys_range_identity(unsigned long pfn_s,
-						    unsigned long pfn_e);
+extern unsigned long set_phys_range_identity(unsigned long pfn_s,
+					     unsigned long pfn_e);
 
 #ifdef CONFIG_XEN_PV
 extern int set_foreign_p2m_mapping(struct gnttab_map_grant_ref *map_ops,

@@ -111,7 +111,7 @@ static inline struct cma *dev_get_cma_area(struct device *dev)
 }
 
 void dma_contiguous_reserve(phys_addr_t addr_limit);
-int __init dma_contiguous_reserve_area(phys_addr_t size, phys_addr_t base,
+int dma_contiguous_reserve_area(phys_addr_t size, phys_addr_t base,
 		phys_addr_t limit, struct cma **res_cma, bool fixed);
 
 struct page *dma_alloc_from_contiguous(struct device *dev, size_t count,
