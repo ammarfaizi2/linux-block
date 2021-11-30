@@ -2,7 +2,6 @@
 #ifndef _LINUX_FS_API_H
 #define _LINUX_FS_API_H
 
-#include <linux/xarray_api.h>
 #include <linux/atomic_api.h>
 #include <linux/fs_types.h>
 
