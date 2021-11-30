@@ -6,7 +6,6 @@
 #include <linux/errno.h>
 #include <linux/compiler.h>
 #include <linux/workqueue.h>
-#include <linux/sysctl.h>
 
 struct cred;
 struct file;
