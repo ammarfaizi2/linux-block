@@ -13,6 +13,7 @@
 
 #include <linux/trace_events_types.h>
 #include <trace/syscall.h>
+#include <linux/ptrace_types.h>
 
 #ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
 /*
