@@ -2228,7 +2228,7 @@ static noinline int search_ioctl(struct inode *inode,
 		 * Ensure that the whole user buffer is faulted in at sub-page
 		 * granularity, otherwise the loop may live-lock.
 		 */
-		if (fault_in_writeable(ubuf + sk_offset, len, len))
+		if (fault_in_safe_writeable(ubuf + sk_offset, len, len))
 			break;
 
 		ret = btrfs_search_forward(root, &key, path, sk->min_transid);
