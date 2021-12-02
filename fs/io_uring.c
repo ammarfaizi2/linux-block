@@ -3000,7 +3000,7 @@ static bool __io_complete_rw_common(struct io_kiocb *req, long res)
 	return false;
 }
 
-static inline void io_req_task_complete(struct io_kiocb *req, bool *locked)
+static inline void __io_req_task_complete(struct io_kiocb *req, bool *locked)
 {
 	int res = req->result;
 
@@ -3011,6 +3011,16 @@ static inline void io_req_task_complete(struct io_kiocb *req, bool *locked)
 		io_req_complete_post(req, res,
 					io_put_kbuf(req, IO_URING_F_UNLOCKED));
 	}
+}
+
+static void io_req_task_complete(struct io_kiocb *req, bool *locked)
+{
+#ifdef CONFIG_BLOCK
+	if (req->rw.kiocb.ki_flags & IOCB_PRIV_IS_BIO)
+		bio_put(req->rw.kiocb.private);
+#endif
+
+	__io_req_task_complete(req, locked);
 }
 
 static void __io_complete_rw(struct io_kiocb *req, long res,
@@ -3198,6 +3208,7 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	} else {
 		if (kiocb->ki_flags & IOCB_HIPRI)
 			return -EINVAL;
+		kiocb->ki_flags |= IOCB_ALLOC_CACHE | IOCB_BIO_PASSBACK;
 		kiocb->ki_complete = io_complete_rw;
 	}
 
@@ -6459,7 +6470,7 @@ static int io_poll_update(struct io_kiocb *req, unsigned int issue_flags)
 	req_set_fail(preq);
 	preq->result = -ECANCELED;
 	locked = !(issue_flags & IO_URING_F_UNLOCKED);
-	io_req_task_complete(preq, &locked);
+	__io_req_task_complete(preq, &locked);
 out:
 	if (ret < 0)
 		req_set_fail(req);
@@ -6486,7 +6497,7 @@ static enum hrtimer_restart io_timeout_fn(struct hrtimer *timer)
 		req_set_fail(req);
 
 	req->result = -ETIME;
-	req->io_task_work.func = io_req_task_complete;
+	req->io_task_work.func = __io_req_task_complete;
 	io_req_task_work_add(req, false);
 	return HRTIMER_NORESTART;
 }
