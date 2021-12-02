@@ -303,7 +303,7 @@ static inline size_t probe_subpage_writeable(void __user *uaddr, size_t size)
  * It is expected that the caller checked for the write permission of each
  * page in the range either by put_user() or GUP.
  */
-static inline size_t probe_subpage_safe_writeable(void __user *uaddr,
+static inline size_t probe_subpage_safe_writeable(const void __user *uaddr,
 						  size_t size)
 {
 	return 0;
@@ -317,7 +317,8 @@ static inline size_t probe_subpage_safe_writeable(void __user *uaddr,
  *
  * Returns 0 on success, the number of bytes not probed on fault.
  */
-static inline size_t probe_subpage_readable(void __user *uaddr, size_t size)
+static inline size_t probe_subpage_readable(const void __user *uaddr,
+					    size_t size)
 {
 	return 0;
 }
