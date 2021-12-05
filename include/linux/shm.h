@@ -3,8 +3,11 @@
 #define _LINUX_SHM_H_
 
 #include <linux/list.h>
-#include <asm/page.h>
+#include <linux/sched/per_task.h>
+
 #include <uapi/linux/shm.h>
+
+#include <asm/page.h>
 #include <asm/shmparam.h>
 
 struct file;
@@ -14,11 +17,13 @@ struct sysv_shm {
 	struct list_head shm_clist;
 };
 
+DECLARE_PER_TASK(struct sysv_shm, sysvshm);
+
 long do_shmat(int shmid, char __user *shmaddr, int shmflg, unsigned long *addr,
 	      unsigned long shmlba);
 bool is_file_shm_hugepages(struct file *file);
 void exit_shm(struct task_struct *task);
-#define shm_init_task(task) INIT_LIST_HEAD(&(task)->sysvshm.shm_clist)
+#define shm_init_task(task) INIT_LIST_HEAD(&per_task(task, sysvshm).shm_clist)
 #else
 struct sysv_shm {
 	/* empty */

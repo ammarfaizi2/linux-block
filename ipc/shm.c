@@ -49,6 +49,8 @@
 
 #include "util.h"
 
+DEFINE_PER_TASK(struct sysv_shm, sysvshm);
+
 struct shmid_kernel /* private to the kernel */
 {
 	struct kern_ipc_perm	shm_perm;
@@ -443,12 +445,12 @@ void exit_shm(struct task_struct *task)
 
 		task_lock(task);
 
-		if (list_empty(&task->sysvshm.shm_clist)) {
+		if (list_empty(&per_task(task, sysvshm).shm_clist)) {
 			task_unlock(task);
 			break;
 		}
 
-		shp = list_first_entry(&task->sysvshm.shm_clist, struct shmid_kernel,
+		shp = list_first_entry(&per_task(task, sysvshm).shm_clist, struct shmid_kernel,
 				shm_clist);
 
 		/*
@@ -786,7 +788,7 @@ static int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 	shp->ns = ns;
 
 	task_lock(current);
-	list_add(&shp->shm_clist, &current->sysvshm.shm_clist);
+	list_add(&shp->shm_clist, &per_task(current, sysvshm).shm_clist);
 	task_unlock(current);
 
 	/*
