@@ -608,7 +608,7 @@ static struct lock_torture_ops rwsem_lock_ops = {
 	.name		= "rwsem_lock"
 };
 
-#include <linux/percpu-rwsem.h>
+#include <linux/percpu_rwsem.h>
 static struct percpu_rw_semaphore pcpu_rwsem;
 
 static void torture_percpu_rwsem_init(void)

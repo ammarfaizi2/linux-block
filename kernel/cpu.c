@@ -32,7 +32,7 @@
 #include <linux/relay.h>
 #include <linux/slab.h>
 #include <linux/scs.h>
-#include <linux/percpu-rwsem.h>
+#include <linux/percpu_rwsem.h>
 #include <linux/cpuset.h>
 
 #include <trace/events/power.h>
