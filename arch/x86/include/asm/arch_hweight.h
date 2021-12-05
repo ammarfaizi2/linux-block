@@ -12,6 +12,8 @@
 #define REG_OUT "a"
 #endif
 
+extern unsigned int __sw_hweight32(unsigned int w);
+
 static __always_inline unsigned int __arch_hweight32(unsigned int w)
 {
 	unsigned int res;
@@ -40,6 +42,9 @@ static inline unsigned long __arch_hweight64(__u64 w)
 		__arch_hweight32((u32)(w >> 32));
 }
 #else
+
+extern unsigned long __sw_hweight64(__u64 w);
+
 static __always_inline unsigned long __arch_hweight64(__u64 w)
 {
 	unsigned long res;
