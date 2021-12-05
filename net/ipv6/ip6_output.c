@@ -1992,7 +1992,7 @@ struct sk_buff *ip6_make_skb(struct sock *sk,
 		ipc6->dontfrag = inet6_sk(sk)->dontfrag;
 
 	err = __ip6_append_data(sk, fl6, &queue, &cork->base, &v6_cork,
-				&current->task_frag, getfrag, from,
+				&per_task(current, task_frag), getfrag, from,
 				length + exthdrlen, transhdrlen + exthdrlen,
 				flags, ipc6);
 	if (err) {

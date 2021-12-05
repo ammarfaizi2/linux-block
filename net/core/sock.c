@@ -2692,7 +2692,7 @@ struct page_frag *sk_page_frag(struct sock *sk)
 {
 	if ((sk->sk_allocation & (__GFP_DIRECT_RECLAIM | __GFP_MEMALLOC | __GFP_FS)) ==
 	    (__GFP_DIRECT_RECLAIM | __GFP_FS))
-		return &current->task_frag;
+		return &per_task(current, task_frag);
 
 	return &sk->sk_frag;
 }

@@ -1634,7 +1634,7 @@ struct sk_buff *ip_make_skb(struct sock *sk,
 		return ERR_PTR(err);
 
 	err = __ip_append_data(sk, fl4, &queue, cork,
-			       &current->task_frag, getfrag,
+			       &per_task(current, task_frag), getfrag,
 			       from, length, transhdrlen, flags);
 	if (err) {
 		__ip_flush_pending_frames(sk, &queue, cork);

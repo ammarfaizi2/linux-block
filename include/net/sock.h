@@ -70,6 +70,8 @@
 #include <net/l3mdev.h>
 #include <uapi/linux/socket.h>
 
+DECLARE_PER_TASK(struct page_frag, task_frag);
+
 /*
  * This structure really needs to be cleaned up.
  * Most of it is for TCP, and not used by any of

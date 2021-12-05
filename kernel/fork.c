@@ -150,6 +150,8 @@ static const char * const resident_page_types[] = {
 
 DEFINE_PER_TASK(struct thread_struct, thread);
 
+DEFINE_PER_TASK(struct page_frag, task_frag);
+
 DEFINE_PER_CPU(unsigned long, process_counts) = 0;
 
 __cacheline_aligned DEFINE_RWLOCK(tasklist_lock);  /* outer */
@@ -977,7 +979,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 	per_task(tsk, btrace_seq) = 0;
 #endif
 	tsk->splice_pipe = NULL;
-	tsk->task_frag.page = NULL;
+	per_task(tsk, task_frag).page = NULL;
 	tsk->wake_q.next = NULL;
 	tsk->worker_private = NULL;
 

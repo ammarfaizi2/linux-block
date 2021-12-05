@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <net/sock.h>
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/sched/autogroup.h>
@@ -843,8 +844,8 @@ void __noreturn do_exit(long code)
 	if (tsk->splice_pipe)
 		free_pipe_info(tsk->splice_pipe);
 
-	if (tsk->task_frag.page)
-		put_page(tsk->task_frag.page);
+	if (per_task(tsk, task_frag).page)
+		put_page(per_task(tsk, task_frag).page);
 
 	validate_creds_for_do_exit(tsk);
 
