@@ -33,7 +33,7 @@
  * mapping slot available the function blocks until a slot is released via
  * kunmap().
  */
-static inline void *kmap(struct page *page);
+void *kmap(struct page *page);
 
 /**
  * kunmap - Unmap the virtual address mapped by kmap()
@@ -42,7 +42,7 @@ static inline void *kmap(struct page *page);
  * Counterpart to kmap(). A NOOP for CONFIG_HIGHMEM=n and for mappings of
  * pages in the low memory area.
  */
-static inline void kunmap(struct page *page);
+void kunmap(struct page *page);
 
 /**
  * kmap_to_page - Get the page for a kmap'ed address
