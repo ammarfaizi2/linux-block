@@ -15,6 +15,8 @@
 #include <linux/blk_types.h>
 #include <linux/blk-cgroup.h>
 
+struct pglist_data;
+
 static inline int wbc_to_write_flags(struct writeback_control *wbc)
 {
 	int flags = 0;

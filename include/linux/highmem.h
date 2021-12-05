@@ -2,12 +2,20 @@
 #ifndef _LINUX_HIGHMEM_H
 #define _LINUX_HIGHMEM_H
 
-#include <linux/mm_api.h>
+#include <linux/gfp_api.h>
+#include <linux/mmdebug.h>
+#include <linux/mm_page_address.h>
+#include <linux/mm_types.h>
 #include <linux/kernel.h>
 #include <linux/bug.h>
 #include <linux/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/uaccess.h>
+
+/* This memory layout mode's definitions are full of layering violations & require this header: */
+#ifdef CONFIG_SPARSEMEM
+#include <linux/mm_api.h>
+#endif
 
 #include "highmem-internal.h"
 
