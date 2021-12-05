@@ -993,9 +993,6 @@ struct task_struct {
 
 	struct nameidata		*nameidata;
 
-#ifdef CONFIG_SYSVIPC
-	struct sysv_shm			sysvshm;
-#endif
 #ifdef CONFIG_DETECT_HUNG_TASK
 	unsigned long			last_switch_count;
 	unsigned long			last_switch_time;
