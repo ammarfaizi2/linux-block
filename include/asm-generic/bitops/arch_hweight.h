@@ -4,6 +4,11 @@
 
 #include <asm/types.h>
 
+extern unsigned int __sw_hweight8(unsigned int w);
+extern unsigned int __sw_hweight16(unsigned int w);
+extern unsigned int __sw_hweight32(unsigned int w);
+extern unsigned long __sw_hweight64(__u64 w);
+
 static inline unsigned int __arch_hweight32(unsigned int w)
 {
 	return __sw_hweight32(w);
