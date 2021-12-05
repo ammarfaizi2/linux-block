@@ -3,7 +3,7 @@
 #include <linux/percpu.h>
 #include <linux/wait.h>
 #include <linux/lockdep.h>
-#include <linux/percpu-rwsem.h>
+#include <linux/percpu_rwsem.h>
 #include <linux/rcupdate.h>
 #include <linux/sched.h>
 #include <linux/sched/task.h>

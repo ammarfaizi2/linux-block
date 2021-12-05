@@ -30,7 +30,7 @@
 #include <linux/migrate_mode.h>
 #include <linux/uidgid.h>
 #include <linux/lockdep.h>
-#include <linux/percpu-rwsem.h>
+#include <linux/percpu_rwsem.h>
 #include <linux/workqueue.h>
 #include <linux/delayed_call.h>
 #include <linux/uuid.h>

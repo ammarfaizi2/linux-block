@@ -45,7 +45,7 @@
 #include <linux/sched/task.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
-#include <linux/percpu-rwsem.h>
+#include <linux/percpu_rwsem.h>
 #include <linux/string.h>
 #include <linux/hashtable.h>
 #include <linux/idr.h>

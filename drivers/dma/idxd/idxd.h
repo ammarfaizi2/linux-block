@@ -5,7 +5,7 @@
 
 #include <linux/sbitmap.h>
 #include <linux/dmaengine.h>
-#include <linux/percpu-rwsem.h>
+#include <linux/percpu_rwsem.h>
 #include <linux/wait.h>
 #include <linux/cdev.h>
 #include <linux/idr.h>

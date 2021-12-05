@@ -8,7 +8,7 @@
 #include <linux/pci.h>
 #include <linux/sbitmap.h>
 #include <linux/dmaengine.h>
-#include <linux/percpu-rwsem.h>
+#include <linux/percpu_rwsem.h>
 #include <linux/wait.h>
 #include <linux/cdev.h>
 #include <linux/uuid.h>
