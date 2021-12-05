@@ -2687,6 +2687,16 @@ static void sk_leave_memory_pressure(struct sock *sk)
 
 DEFINE_STATIC_KEY_FALSE(net_high_order_alloc_disable_key);
 
+struct page_frag *sk_page_frag(struct sock *sk)
+{
+	if ((sk->sk_allocation & (__GFP_DIRECT_RECLAIM | __GFP_MEMALLOC | __GFP_FS)) ==
+	    (__GFP_DIRECT_RECLAIM | __GFP_FS))
+		return &current->task_frag;
+
+	return &sk->sk_frag;
+}
+EXPORT_SYMBOL(sk_page_frag);
+
 /**
  * skb_page_frag_refill - check that a page_frag contains enough room
  * @sz: minimum size of the fragment we want to get
@@ -2824,6 +2834,19 @@ int sk_wait_data(struct sock *sk, long *timeo, const struct sk_buff *skb)
 	return rc;
 }
 EXPORT_SYMBOL(sk_wait_data);
+
+bool sk_under_memory_pressure(const struct sock *sk)
+{
+	if (!sk->sk_prot->memory_pressure)
+		return false;
+
+	if (mem_cgroup_sockets_enabled && sk->sk_memcg &&
+	    mem_cgroup_under_socket_pressure(sk->sk_memcg))
+		return true;
+
+	return !!*sk->sk_prot->memory_pressure;
+}
+EXPORT_SYMBOL(sk_under_memory_pressure);
 
 /**
  *	__sk_mem_raise_allocated - increase memory_allocated

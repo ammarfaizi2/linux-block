@@ -1361,17 +1361,7 @@ static inline bool sk_has_memory_pressure(const struct sock *sk)
 	return sk->sk_prot->memory_pressure != NULL;
 }
 
-static inline bool sk_under_memory_pressure(const struct sock *sk)
-{
-	if (!sk->sk_prot->memory_pressure)
-		return false;
-
-	if (mem_cgroup_sockets_enabled && sk->sk_memcg &&
-	    mem_cgroup_under_socket_pressure(sk->sk_memcg))
-		return true;
-
-	return !!*sk->sk_prot->memory_pressure;
-}
+extern bool sk_under_memory_pressure(const struct sock *sk);
 
 static inline long
 sk_memory_allocated(const struct sock *sk)
@@ -2486,14 +2476,7 @@ static inline void sk_stream_moderate_sndbuf(struct sock *sk)
  * Return: a per task page_frag if context allows that,
  * otherwise a per socket one.
  */
-static inline struct page_frag *sk_page_frag(struct sock *sk)
-{
-	if ((sk->sk_allocation & (__GFP_DIRECT_RECLAIM | __GFP_MEMALLOC | __GFP_FS)) ==
-	    (__GFP_DIRECT_RECLAIM | __GFP_FS))
-		return &current->task_frag;
-
-	return &sk->sk_frag;
-}
+extern struct page_frag *sk_page_frag(struct sock *sk);
 
 bool sk_page_frag_refill(struct sock *sk, struct page_frag *pfrag);
 
