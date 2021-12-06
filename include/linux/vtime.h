@@ -2,6 +2,7 @@
 #ifndef _LINUX_KERNEL_VTIME_H
 #define _LINUX_KERNEL_VTIME_H
 
+#include <linux/preempt.h>
 #include <linux/context_tracking_state.h>
 #include <linux/sched.h>
 
