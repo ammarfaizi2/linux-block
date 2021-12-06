@@ -165,6 +165,8 @@ DEFINE_PER_TASK(struct hlist_head,			preempt_notifiers);
 
 DEFINE_PER_TASK(struct sched_info,			sched_info);
 
+DEFINE_PER_TASK(struct prev_cputime,			prev_cputime);
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.

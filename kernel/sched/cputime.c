@@ -620,7 +620,7 @@ void task_cputime_adjusted(struct task_struct *p, u64 *ut, u64 *st)
 
 	if (task_cputime(p, &cputime.utime, &cputime.stime))
 		cputime.sum_exec_runtime = task_sched_runtime(p);
-	cputime_adjust(&cputime, &p->prev_cputime, ut, st);
+	cputime_adjust(&cputime, &per_task(p, prev_cputime), ut, st);
 }
 EXPORT_SYMBOL_GPL(task_cputime_adjusted);
 

@@ -941,6 +941,9 @@ void __init init_per_task_early(void)
 #ifdef CONFIG_RT_MUTEXES
 	per_task(&init_task, pi_waiters) = RB_ROOT_CACHED;
 #endif
+#ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+	raw_spin_lock_init(&per_task(&init_task, prev_cputime).lock);
+#endif
 }
 
 static void __init print_unknown_bootoptions(void)

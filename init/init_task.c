@@ -123,7 +123,6 @@ struct task_struct init_task
 #ifdef CONFIG_RT_MUTEXES
 	.pi_top_task	= NULL,
 #endif
-	INIT_PREV_CPUTIME(init_task)
 #ifdef CONFIG_NUMA_BALANCING
 	.numa_preferred_nid = NUMA_NO_NODE,
 	.numa_group	= NULL,
