@@ -1530,6 +1530,7 @@ static inline pg_data_t *folio_pgdat(const struct folio *folio)
 }
 
 #ifdef SECTION_IN_PAGE_FLAGS
+#ifndef BUILD_VDSO32_64
 static inline void set_page_section(struct page *page, unsigned long section)
 {
 	page->flags &= ~(SECTIONS_MASK << SECTIONS_PGSHIFT);
@@ -1540,6 +1541,7 @@ static inline unsigned long page_to_section(const struct page *page)
 {
 	return (page->flags >> SECTIONS_PGSHIFT) & SECTIONS_MASK;
 }
+#endif
 #endif
 
 /**
