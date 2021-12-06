@@ -33,7 +33,11 @@
  */
 #define PAGE_OFFSET		_AC(CONFIG_PAGE_OFFSET, UL)
 
-#define KERN_VIRT_SIZE (-PAGE_OFFSET)
+/*
+ * Half of the kernel address space (half of the entries of the page global
+ * directory) is for the direct mapping.
+ */
+#define KERN_VIRT_SIZE		((PTRS_PER_PGD / 2 * PGDIR_SIZE) / 2)
 
 #ifndef __ASSEMBLY__
 
