@@ -19,7 +19,7 @@
 
 #include <linux/mutex_api.h>
 #include <linux/instruction_pointer.h>
-#include <linux/mutex.h>
+#include <linux/atomic_api.h>
 #include <linux/rtmutex.h>
 #include <asm/current.h>
 
