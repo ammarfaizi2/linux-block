@@ -118,6 +118,8 @@ DECLARE_PER_TASK(struct rb_node,			core_node);
 DECLARE_PER_TASK(unsigned long,				core_cookie);
 #endif
 
+DECLARE_PER_TASK(struct prev_cputime,			prev_cputime);
+
 enum vtime_state {
 	/* Task is sleeping or running in a CPU with VTIME inactive: */
 	VTIME_INACTIVE = 0,

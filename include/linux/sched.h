@@ -607,7 +607,6 @@ struct task_struct {
 	u64				stimescaled;
 #endif
 	u64				gtime;
-	struct prev_cputime		prev_cputime;
 
 	/* Context switch counts: */
 	unsigned long			nvcsw;
