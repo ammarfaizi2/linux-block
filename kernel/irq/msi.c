@@ -147,7 +147,7 @@ void msi_device_set_properties(struct device *dev, unsigned long prop)
 {
 	if (WARN_ON_ONCE(!dev->msi.data))
 		return ;
-	dev->msi.data->properties = 0;
+	dev->msi.data->properties = prop;
 }
 
 /**
