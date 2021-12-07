@@ -117,6 +117,7 @@ enum ath11k_hw_rev {
 	ATH11K_HW_IPQ6018_HW10,
 	ATH11K_HW_QCN9074_HW10,
 	ATH11K_HW_WCN6855_HW20,
+	ATH11K_HW_WCN6855_HW21,
 };
 
 enum ath11k_firmware_mode {
@@ -199,6 +200,8 @@ enum ath11k_dev_flags {
 	ATH11K_FLAG_REGISTERED,
 	ATH11K_FLAG_QMI_FAIL,
 	ATH11K_FLAG_HTC_SUSPEND_COMPLETE,
+	ATH11K_FLAG_CE_IRQ_ENABLED,
+	ATH11K_FLAG_EXT_IRQ_ENABLED,
 };
 
 enum ath11k_monitor_flags {
@@ -711,6 +714,11 @@ struct ath11k_base {
 	/* Protects data like peers */
 	spinlock_t base_lock;
 	struct ath11k_pdev pdevs[MAX_RADIOS];
+	struct {
+		enum WMI_HOST_WLAN_BAND supported_bands;
+		u32 pdev_id;
+	} target_pdev_ids[MAX_RADIOS];
+	u8 target_pdev_count;
 	struct ath11k_pdev __rcu *pdevs_active[MAX_RADIOS];
 	struct ath11k_hal_reg_capabilities_ext hal_reg_cap[MAX_RADIOS];
 	unsigned long long free_vdev_map;
