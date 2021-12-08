@@ -20,10 +20,24 @@ static inline void xstate_init_xcomp_bv(struct xregs_state *xsave, u64 mask)
 		xsave->header.xcomp_bv = mask | XCOMP_BV_COMPACTED_FORMAT;
 }
 
+static inline u64 xstate_get_group_perm(bool guest)
+{
+	struct fpu *fpu = &current->group_leader->thread.fpu;
+	struct fpu_state_perm *perm;
+
+	/* Pairs with WRITE_ONCE() in xstate_request_perm() */
+	perm = guest ? &fpu->guest_perm : &fpu->perm;
+	return READ_ONCE(perm->__state_perm);
+}
+
 static inline u64 xstate_get_host_group_perm(void)
 {
-	/* Pairs with WRITE_ONCE() in xstate_request_perm() */
-	return READ_ONCE(current->group_leader->thread.fpu.perm.__state_perm);
+	return xstate_get_group_perm(false);
+}
+
+static inline u64 xstate_get_guest_group_perm(void)
+{
+	return xstate_get_group_perm(true);
 }
 
 enum xstate_copy_mode {
