@@ -261,6 +261,63 @@ void fpu_free_guest_fpstate(struct fpu_guest *gfpu)
 }
 EXPORT_SYMBOL_GPL(fpu_free_guest_fpstate);
 
+/**
+ * __fpu_update_guest_features - Validate and enable guest XCR0 and XFD updates
+ * @guest_fpu:	Pointer to the guest FPU container
+ * @xcr0:	Guest XCR0
+ * @xfd:	Guest XFD
+ *
+ * Note: @xcr0 and @xfd must either be the already validated values or the
+ * requested values (guest emulation or host write on restore).
+ *
+ * Do not invoke directly. Use the provided wrappers fpu_validate_guest_xcr0()
+ * and fpu_update_guest_xfd() instead.
+ *
+ * Return: 0 on success, error code otherwise
+ */
+int __fpu_update_guest_features(struct fpu_guest *guest_fpu, u64 xcr0, u64 xfd)
+{
+	u64 expand, requested;
+
+	lockdep_assert_preemption_enabled();
+
+	/* Only permitted features are allowed in XCR0 */
+	if (xcr0 & ~guest_fpu->perm)
+		return -EPERM;
+
+	/* Check for unsupported XFD values */
+	if (xfd & ~XFEATURE_MASK_USER_DYNAMIC || xfd & ~fpu_user_cfg.max_features)
+		return -ENOTSUPP;
+
+	if (!IS_ENABLED(CONFIG_X86_64))
+		return 0;
+
+	/*
+	 * The requested features are set in XCR0 and not set in XFD.
+	 * Feature expansion is required when the requested features are
+	 * not a subset of the xfeatures for which @guest_fpu->fpstate
+	 * is sized.
+	 */
+	requested = xcr0 & ~xfd;
+	expand = requested & ~guest_fpu->xfeatures;
+	if (!expand) {
+		/*
+		 * fpstate size is correct, update the XFD value in fpstate
+		 * and if @guest_fpu->fpstate is active also the per CPU
+		 * cache and the MSR.
+		 */
+		fpregs_lock();
+		guest_fpu->fpstate->xfd = xfd;
+		if (guest_fpu->fpstate->in_use)
+			xfd_update_state(guest_fpu->fpstate);
+		fpregs_unlock();
+		return 0;
+	}
+
+	return __xfd_enable_feature(expand, guest_fpu);
+}
+EXPORT_SYMBOL_GPL(__fpu_update_guest_features);
+
 int fpu_swap_kvm_fpstate(struct fpu_guest *guest_fpu, bool enter_guest)
 {
 	struct fpstate *guest_fps = guest_fpu->fpstate;

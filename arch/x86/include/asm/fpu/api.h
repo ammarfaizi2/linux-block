@@ -136,6 +136,63 @@ extern void fpstate_clear_xstate_component(struct fpstate *fps, unsigned int xfe
 extern bool fpu_alloc_guest_fpstate(struct fpu_guest *gfpu);
 extern void fpu_free_guest_fpstate(struct fpu_guest *gfpu);
 extern int fpu_swap_kvm_fpstate(struct fpu_guest *gfpu, bool enter_guest);
+extern int __fpu_update_guest_features(struct fpu_guest *guest_fpu, u64 xcr0, u64 xfd);
+
+/**
+ * fpu_update_guest_xcr0 - Update guest XCR0 from XSETBV emulation
+ * @guest_fpu:	Pointer to the guest FPU container
+ * @xcr0:	Requested guest XCR0
+ *
+ * Has to be invoked before making the guest XCR0 update effective. The
+ * function validates that the requested features are permitted and ensures
+ * that @guest_fpu->fpstate is properly sized taking @guest_fpu->fpstate->xfd
+ * into account.
+ *
+ * If @guest_fpu->fpstate is not the current tasks active fpstate then the
+ * caller has to ensure that @guest_fpu->fpstate cannot be concurrently in
+ * use, i.e. the guest restore case.
+ *
+ * Return:
+ * 0		- Success
+ * -EPERM	- Feature(s) not permitted
+ * -EFAULT	- Resizing of fpstate failed
+ */
+static inline int fpu_update_guest_xcr0(struct fpu_guest *guest_fpu, u64 xcr0)
+{
+	return __fpu_update_guest_features(guest_fpu, xcr0, guest_fpu->fpstate->xfd);
+}
+
+/**
+ * fpu_update_guest_xfd - Update guest XFD from MSR write emulation
+ * @guest_fpu:	Pointer to the guest FPU container
+ * @xcr0:	Current guest XCR0
+ * @xfd:	Requested XFD value
+ *
+ * Has to be invoked to make the guest XFD update effective. The function
+ * validates the XFD value and ensures that @guest_fpu->fpstate is properly
+ * sized by taking @xcr0 into account.
+ *
+ * The caller must not modify @guest_fpu->fpstate->xfd or the XFD MSR
+ * directly.
+ *
+ * If @guest_fpu->fpstate is not the current tasks active fpstate then the
+ * caller has to ensure that @guest_fpu->fpstate cannot be concurrently in
+ * use, i.e. the guest restore case.
+ *
+ * On success the buffer size is valid, @guest_fpu->fpstate.xfd == @xfd and
+ * if the guest fpstate is active then MSR_IA32_XFD == @xfd.
+ *
+ * On failure the previous state is retained.
+ *
+ * Return:
+ * 0		- Success
+ * -ENOTSUPP	- XFD value not supported
+ * -EFAULT	- Resizing of fpstate failed
+ */
+static inline int fpu_update_guest_xfd(struct fpu_guest *guest_fpu, u64 xcr0, u64 xfd)
+{
+	return __fpu_update_guest_features(guest_fpu, xcr0, xfd);
+}
 
 extern void fpu_copy_guest_fpstate_to_uabi(struct fpu_guest *gfpu, void *buf, unsigned int size, u32 pkru);
 extern int fpu_copy_uabi_to_guest_fpstate(struct fpu_guest *gfpu, const void *buf, u64 xcr0, u32 *vpkru);
