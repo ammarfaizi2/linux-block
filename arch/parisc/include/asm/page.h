@@ -179,6 +179,8 @@ extern int npmem_ranges;
 
 #define page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
 #define virt_to_page(kaddr)     pfn_to_page(__pa(kaddr) >> PAGE_SHIFT)
+#define virt_to_pfn(kaddr)	(phys_to_pfn(__pa(kaddr)))
+#define phys_to_pfn(paddr)	((paddr) >> PAGE_SHIFT)
 
 #include <asm-generic/memory_model.h>
 #include <asm-generic/getorder.h>
