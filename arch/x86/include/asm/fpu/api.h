@@ -194,6 +194,12 @@ static inline int fpu_update_guest_xfd(struct fpu_guest *guest_fpu, u64 xcr0, u6
 	return __fpu_update_guest_features(guest_fpu, xcr0, xfd);
 }
 
+#ifdef CONFIG_X86_64
+extern void fpu_sync_guest_vmexit_xfd_state(void);
+#else
+static inline void fpu_sync_guest_vmexit_xfd_state(void) { }
+#endif
+
 extern void fpu_copy_guest_fpstate_to_uabi(struct fpu_guest *gfpu, void *buf, unsigned int size, u32 pkru);
 extern int fpu_copy_uabi_to_guest_fpstate(struct fpu_guest *gfpu, const void *buf, u64 xcr0, u32 *vpkru);
 
