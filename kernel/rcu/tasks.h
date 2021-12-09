@@ -384,12 +384,12 @@ static int rcu_tasks_need_gpcb(struct rcu_tasks *rtp)
 		struct rcu_tasks_percpu *rtpcp = per_cpu_ptr(rtp->rtpcpu, cpu);
 
 		/* Advance and accelerate any new callbacks. */
-		if (rcu_segcblist_empty(&rtpcp->cblist))
+		if (!rcu_segcblist_n_cbs(&rtpcp->cblist))
 			continue;
 		raw_spin_lock_irqsave_rcu_node(rtpcp, flags);
 		// Should we shrink down to a single callback queue?
-		if (!rcu_segcblist_empty(&rtpcp->cblist)) {
-			n = rcu_segcblist_n_cbs(&rtpcp->cblist);
+		n = rcu_segcblist_n_cbs(&rtpcp->cblist);
+		if (n) {
 			ncbs += n;
 			if (cpu > 0)
 				ncbsnz += n;
