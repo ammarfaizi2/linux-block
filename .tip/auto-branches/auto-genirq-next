@@ -1,2 +1,3 @@
 irq/core
+irq/msi
 irq/urgent
