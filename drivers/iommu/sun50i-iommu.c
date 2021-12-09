@@ -90,7 +90,7 @@
 #define DT_SIZE				(NUM_DT_ENTRIES * PT_ENTRY_SIZE)
 
 #define NUM_PT_ENTRIES			256
-#define PT_SIZE				(NUM_PT_ENTRIES * PT_ENTRY_SIZE)
+#define IOMMU_PT_SIZE				(NUM_PT_ENTRIES * PT_ENTRY_SIZE)
 
 struct sun50i_iommu {
 	struct iommu_device iommu;
@@ -456,7 +456,7 @@ static void *sun50i_iommu_alloc_page_table(struct sun50i_iommu *iommu,
 	if (!page_table)
 		return ERR_PTR(-ENOMEM);
 
-	pt_dma = dma_map_single(iommu->dev, page_table, PT_SIZE, DMA_TO_DEVICE);
+	pt_dma = dma_map_single(iommu->dev, page_table, IOMMU_PT_SIZE, DMA_TO_DEVICE);
 	if (dma_mapping_error(iommu->dev, pt_dma)) {
 		dev_err(iommu->dev, "Couldn't map L2 Page Table\n");
 		kmem_cache_free(iommu->pt_pool, page_table);
@@ -474,7 +474,7 @@ static void sun50i_iommu_free_page_table(struct sun50i_iommu *iommu,
 {
 	phys_addr_t pt_phys = virt_to_phys(page_table);
 
-	dma_unmap_single(iommu->dev, pt_phys, PT_SIZE, DMA_TO_DEVICE);
+	dma_unmap_single(iommu->dev, pt_phys, IOMMU_PT_SIZE, DMA_TO_DEVICE);
 	kmem_cache_free(iommu->pt_pool, page_table);
 }
 
@@ -511,7 +511,7 @@ static u32 *sun50i_dte_get_page_table(struct sun50i_iommu_domain *sun50i_domain,
 		sun50i_iommu_free_page_table(iommu, drop_pt);
 	}
 
-	sun50i_table_flush(sun50i_domain, page_table, PT_SIZE);
+	sun50i_table_flush(sun50i_domain, page_table, IOMMU_PT_SIZE);
 	sun50i_table_flush(sun50i_domain, dte_addr, 1);
 
 	return page_table;
@@ -914,7 +914,7 @@ static int sun50i_iommu_probe(struct platform_device *pdev)
 	iommu->dev = &pdev->dev;
 
 	iommu->pt_pool = kmem_cache_create(dev_name(&pdev->dev),
-					   PT_SIZE, PT_SIZE,
+					   IOMMU_PT_SIZE, IOMMU_PT_SIZE,
 					   SLAB_HWCACHE_ALIGN,
 					   NULL);
 	if (!iommu->pt_pool)
