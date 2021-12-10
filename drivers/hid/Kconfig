@@ -1284,4 +1284,6 @@ source "drivers/hid/amd-sfh-hid/Kconfig"
 
 source "drivers/hid/surface-hid/Kconfig"
 
+source "drivers/hid/spi-hid/Kconfig"
+
 endmenu
