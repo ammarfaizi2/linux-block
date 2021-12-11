@@ -82,6 +82,18 @@ properties:
     description:
       Delay, in microseconds, after a write transfer.
 
+  spi-cs-setup-delay-ns:
+    description:
+      Delay, in nanoseconds, after chip select is asserted.
+
+  spi-cs-hold-delay-ns:
+    description:
+      Delay, in nanoseconds, before chip select is de-asserted.
+
+  spi-cs-inactive-delay-ns:
+    description:
+      Delay, in nanoseconds, after chip select is de-asserted.
+
 # The controller specific properties go here.
 allOf:
   - $ref: cdns,qspi-nor-peripheral-props.yaml#
