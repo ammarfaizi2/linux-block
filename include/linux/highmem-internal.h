@@ -24,6 +24,7 @@
  * Outside of CONFIG_HIGHMEM to support X86 32bit iomap_atomic() cruft.
  */
 #ifdef CONFIG_KMAP_LOCAL
+#include <asm/highmem.h>
 
 struct kmap_ctrl {
 	int				idx;
@@ -46,6 +47,8 @@ static inline void kmap_assert_nomap(void) { }
 
 #ifdef CONFIG_HIGHMEM
 #include <linux/cacheflush.h>
+#include <linux/page-flags.h>
+#include <linux/pgtable_api.h>
 
 #ifndef ARCH_HAS_KMAP_FLUSH_TLB
 static inline void kmap_flush_tlb(unsigned long addr) { }
