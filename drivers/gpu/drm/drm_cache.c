@@ -40,6 +40,8 @@
 #define MEMCPY_BOUNCE_SIZE 128
 
 #if defined(CONFIG_X86)
+#include <asm/cpufeature.h>
+#include <asm/fpu/api.h>
 #include <asm/smp.h>
 
 /*
