@@ -17,6 +17,7 @@
 #include <linux/smp.h>
 #include <linux/slab.h>
 
+#include <asm/pgtable.h>
 #include <asm/barrier.h>
 #include <asm/cacheflush.h>
 #include <asm/dsemul.h>
