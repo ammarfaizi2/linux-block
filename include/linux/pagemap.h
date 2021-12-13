@@ -17,7 +17,7 @@
 #include <linux/highmem.h>
 #include <linux/compiler.h>
 #include <linux/uaccess.h>
-#include <linux/gfp.h>
+#include <linux/gfp_api.h>
 #include <linux/bitops.h>
 #include <linux/hugetlb_inline.h>
 #include <linux/page_ref_api_extra.h>
