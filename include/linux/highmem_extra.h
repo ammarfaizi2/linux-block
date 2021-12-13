@@ -3,6 +3,7 @@
 #define _LINUX_HIGHMEM_EXTRA_H
 
 #include <linux/highmem.h>
+#include <linux/cacheflush.h>
 
 /* Highmem related interfaces for management code */
 static inline unsigned int nr_free_highpages(void);
