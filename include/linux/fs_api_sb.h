@@ -2,6 +2,7 @@
 #ifndef _LINUX_FS_API_SB_H
 #define _LINUX_FS_API_SB_H
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 
 #include <linux/percpu_rwsem_api.h>

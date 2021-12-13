@@ -3,7 +3,6 @@
 #define _LINUX_FS_API_H
 
 #include <linux/fs_types.h>
-#include <linux/fs_types_sb.h>
 
 #include <linux/mnt_idmapping.h>
 #include <linux/stat.h>
@@ -1293,6 +1292,8 @@ static inline int vfs_lstat(const char __user *name, struct kstat *stat)
 
 extern const char *vfs_get_link(struct dentry *, struct delayed_call *);
 extern int vfs_readlink(struct dentry *, char __user *, int);
+
+struct block_device;
 
 extern struct file_system_type *get_filesystem(struct file_system_type *fs);
 extern void put_filesystem(struct file_system_type *fs);

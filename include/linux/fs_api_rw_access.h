@@ -3,6 +3,7 @@
 #define _LINUX_FS_API_RW_H
 
 #include <linux/fs_api.h>
+#include <linux/fs_types_sb.h>
 
 #include <linux/atomic_api.h>
 

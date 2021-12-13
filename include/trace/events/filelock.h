@@ -10,6 +10,7 @@
 #if !defined(_TRACE_FILELOCK_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_FILELOCK_H
 
+#include <linux/fs_types_sb.h>
 #include <linux/tracepoint.h>
 #include <linux/fs.h>
 #include <linux/device.h>
