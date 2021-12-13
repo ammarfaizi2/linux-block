@@ -41,7 +41,6 @@
 #include <linux/page_ref.h>
 #include <linux/overflow.h>
 #include <linux/sizes.h>
-#include <linux/pgtable_api.h>
 #include <linux/kasan.h>
 #include <linux/fcntl.h>
 

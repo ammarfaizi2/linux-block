@@ -14,8 +14,11 @@
 #endif
 
 #include <linux/mm_page_address.h>
-#include <linux/pgtable_api.h>
 #include <linux/sched/per_task.h>
+
+#if defined(CONFIG_HIGHMEM) || defined(CONFIG_KMAP_LOCAL)
+# include <asm/highmem.h>
+#endif
 
 /*
  * Outside of CONFIG_HIGHMEM to support X86 32bit iomap_atomic() cruft.
@@ -42,7 +45,6 @@ static inline void kmap_assert_nomap(void) { }
 #endif
 
 #ifdef CONFIG_HIGHMEM
-#include <asm/highmem.h>
 
 #ifndef ARCH_HAS_KMAP_FLUSH_TLB
 static inline void kmap_flush_tlb(unsigned long addr) { }
