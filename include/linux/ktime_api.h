@@ -24,7 +24,6 @@
 #include <linux/ktime_types.h>
 
 #include <linux/time.h>
-#include <linux/jiffies.h>
 #include <asm/bug.h>
 
 /*
