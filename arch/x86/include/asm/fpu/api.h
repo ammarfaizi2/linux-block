@@ -107,6 +107,8 @@ extern int  fpu__exception_code(struct fpu *fpu, int trap_nr);
 extern void fpu_sync_fpstate(struct fpu *fpu);
 extern void fpu_reset_from_exception_fixup(void);
 
+struct cpuinfo_x86;
+
 /* Boot, hotplug and resume */
 extern void fpu__init_cpu(void);
 extern void fpu__init_system(struct cpuinfo_x86 *c);
