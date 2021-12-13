@@ -2,8 +2,10 @@
 #ifndef _LINUX_HIGHMEM_EXTRA_H
 #define _LINUX_HIGHMEM_EXTRA_H
 
+#include <linux/gfp_api.h>
 #include <linux/highmem.h>
 #include <linux/cacheflush.h>
+#include <linux/string.h>
 #include <linux/mmdebug.h>
 
 /* Highmem related interfaces for management code */
