@@ -20,6 +20,7 @@
 #include <linux/gfp.h>
 #include <linux/bitops.h>
 #include <linux/hugetlb_inline.h>
+#include <linux/page_ref_api_extra.h>
 
 struct folio_batch;
 
