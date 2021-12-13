@@ -6,9 +6,9 @@
 #define _TRACE_PAGE_REF_H
 
 #include <linux/mmzone_api.h>
-#include <linux/types.h>
-#include <linux/page_ref.h>
-#include <linux/tracepoint.h>
+#include <linux/mm_api.h>
+#include <linux/mm.h>
+
 #include <trace/events/mmflags.h>
 
 DECLARE_EVENT_CLASS(page_ref_mod_template,
