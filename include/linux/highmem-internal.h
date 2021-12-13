@@ -45,6 +45,7 @@ static inline void kmap_assert_nomap(void) { }
 #endif
 
 #ifdef CONFIG_HIGHMEM
+#include <linux/cacheflush.h>
 
 #ifndef ARCH_HAS_KMAP_FLUSH_TLB
 static inline void kmap_flush_tlb(unsigned long addr) { }

@@ -8,7 +8,6 @@
 #include <linux/mm_types.h>
 #include <linux/kernel.h>
 #include <linux/bug.h>
-#include <linux/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/uaccess.h>
 
