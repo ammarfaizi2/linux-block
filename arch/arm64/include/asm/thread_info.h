@@ -14,9 +14,9 @@
 
 struct task_struct;
 
-#include <asm/memory.h>
 #include <asm/stack_pointer.h>
 #include <asm/types.h>
+#include <asm/page-def.h>
 
 /*
  * low level task data that entry.S needs immediate access to.
@@ -122,5 +122,52 @@ int arch_dup_task_struct(struct task_struct *dst,
 	.preempt_count	= INIT_PREEMPT_COUNT,				\
 	INIT_SCS							\
 }
+
+/*
+ * Generic and tag-based KASAN require 1/8th and 1/16th of the kernel virtual
+ * address space for the shadow region respectively. They can bloat the stack
+ * significantly, so double the (minimum) stack size when they are in use.
+ */
+#if defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)
+#define KASAN_SHADOW_OFFSET	_AC(CONFIG_KASAN_SHADOW_OFFSET, UL)
+#define KASAN_SHADOW_END	((UL(1) << (64 - KASAN_SHADOW_SCALE_SHIFT)) \
+					+ KASAN_SHADOW_OFFSET)
+#define KASAN_THREAD_SHIFT	1
+#else
+#define KASAN_THREAD_SHIFT	0
+#endif /* CONFIG_KASAN */
+
+#define MIN_THREAD_SHIFT	(14 + KASAN_THREAD_SHIFT)
+
+/*
+ * VMAP'd stacks are allocated at page granularity, so we must ensure that such
+ * stacks are a multiple of page size.
+ */
+#if defined(CONFIG_VMAP_STACK) && (MIN_THREAD_SHIFT < PAGE_SHIFT)
+#define THREAD_SHIFT		PAGE_SHIFT
+#else
+#define THREAD_SHIFT		MIN_THREAD_SHIFT
+#endif
+
+#if THREAD_SHIFT >= PAGE_SHIFT
+#define THREAD_SIZE_ORDER	(THREAD_SHIFT - PAGE_SHIFT)
+#endif
+
+#define THREAD_SIZE		(UL(1) << THREAD_SHIFT)
+
+/*
+ * By aligning VMAP'd stacks to 2 * THREAD_SIZE, we can detect overflow by
+ * checking sp & (1 << THREAD_SHIFT), which we can do cheaply in the entry
+ * assembly.
+ */
+#ifdef CONFIG_VMAP_STACK
+#define THREAD_ALIGN		(2 * THREAD_SIZE)
+#else
+#define THREAD_ALIGN		THREAD_SIZE
+#endif
+
+#define IRQ_STACK_SIZE		THREAD_SIZE
+
+#define OVERFLOW_STACK_SIZE	SZ_4K
 
 #endif /* __ASM_THREAD_INFO_H */

@@ -6,6 +6,8 @@
  */
 
 #include <asm/hyp_image.h>
+#include <asm/thread_info.h>
+
 #ifdef CONFIG_KVM
 #define HYPERVISOR_EXTABLE					\
 	. = ALIGN(SZ_8);					\

@@ -70,48 +70,10 @@
  * significantly, so double the (minimum) stack size when they are in use.
  */
 #if defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)
-#define KASAN_SHADOW_OFFSET	_AC(CONFIG_KASAN_SHADOW_OFFSET, UL)
-#define KASAN_SHADOW_END	((UL(1) << (64 - KASAN_SHADOW_SCALE_SHIFT)) \
-					+ KASAN_SHADOW_OFFSET)
 #define PAGE_END		(KASAN_SHADOW_END - (1UL << (vabits_actual - KASAN_SHADOW_SCALE_SHIFT)))
-#define KASAN_THREAD_SHIFT	1
 #else
-#define KASAN_THREAD_SHIFT	0
 #define PAGE_END		(_PAGE_END(VA_BITS_MIN))
 #endif /* CONFIG_KASAN */
-
-#define MIN_THREAD_SHIFT	(14 + KASAN_THREAD_SHIFT)
-
-/*
- * VMAP'd stacks are allocated at page granularity, so we must ensure that such
- * stacks are a multiple of page size.
- */
-#if defined(CONFIG_VMAP_STACK) && (MIN_THREAD_SHIFT < PAGE_SHIFT)
-#define THREAD_SHIFT		PAGE_SHIFT
-#else
-#define THREAD_SHIFT		MIN_THREAD_SHIFT
-#endif
-
-#if THREAD_SHIFT >= PAGE_SHIFT
-#define THREAD_SIZE_ORDER	(THREAD_SHIFT - PAGE_SHIFT)
-#endif
-
-#define THREAD_SIZE		(UL(1) << THREAD_SHIFT)
-
-/*
- * By aligning VMAP'd stacks to 2 * THREAD_SIZE, we can detect overflow by
- * checking sp & (1 << THREAD_SHIFT), which we can do cheaply in the entry
- * assembly.
- */
-#ifdef CONFIG_VMAP_STACK
-#define THREAD_ALIGN		(2 * THREAD_SIZE)
-#else
-#define THREAD_ALIGN		THREAD_SIZE
-#endif
-
-#define IRQ_STACK_SIZE		THREAD_SIZE
-
-#define OVERFLOW_STACK_SIZE	SZ_4K
 
 /*
  * Alignment of kernel segments (e.g. .text, .data).
