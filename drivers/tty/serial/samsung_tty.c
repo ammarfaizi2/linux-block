@@ -42,6 +42,10 @@
 #include <linux/of.h>
 #include <asm/irq.h>
 
+#ifdef CONFIG_ARM64
+# include <asm/fixmap.h>
+#endif
+
 /* UART name and device definitions */
 
 #define S3C24XX_SERIAL_NAME	"ttySAC"
