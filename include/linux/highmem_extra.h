@@ -4,6 +4,7 @@
 
 #include <linux/highmem.h>
 #include <linux/cacheflush.h>
+#include <linux/mmdebug.h>
 
 /* Highmem related interfaces for management code */
 static inline unsigned int nr_free_highpages(void);
