@@ -2,6 +2,8 @@
 #ifndef _ASM_X86_QSPINLOCK_H
 #define _ASM_X86_QSPINLOCK_H
 
+#include <asm/spinlock_types.h>
+
 #include <linux/atomic_api.h>
 
 #include <asm/paravirt.h>

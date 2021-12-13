@@ -8,8 +8,6 @@
 
 #include <asm/paravirt_types.h>
 
-#include <linux/build_bug.h>
-
 #ifndef __ASSEMBLY__
 
 #include <asm/alternative.h>
