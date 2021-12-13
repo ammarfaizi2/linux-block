@@ -2,6 +2,8 @@
 #ifndef _SPARC64_MMZONE_H
 #define _SPARC64_MMZONE_H
 
+#include <asm/pgtable.h>
+
 #ifdef CONFIG_NUMA
 
 #include <linux/cpumask.h>
