@@ -9,6 +9,7 @@
 
 #include <linux/bvec_types.h>
 
+#include <linux/highmem_extra.h>
 #include <linux/highmem.h>
 
 /**
