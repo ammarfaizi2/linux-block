@@ -2,6 +2,7 @@
 /*
  * x86 FPU bug checks:
  */
+#include <asm/processor_api.h>
 #include <linux/init.h>
 #include <asm/fpu/api.h>
 
