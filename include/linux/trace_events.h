@@ -4,16 +4,17 @@
 #define _LINUX_TRACE_EVENT_H
 
 #include <linux/trace_events_types.h>
+#include <linux/tracepoint-defs.h>
 
 #include <linux/module.h>
+#include <linux/irqflags.h>
+#include <linux/mutex.h>
 #include <linux/cpumask.h>
-#include <linux/ring_buffer.h>
-#include <linux/trace_seq.h>
-#include <linux/percpu.h>
 #include <linux/hardirq.h>
 #include <linux/perf_event.h>
 #include <linux/tracepoint.h>
 
+struct ring_buffer_iter;
 struct trace_array;
 struct array_buffer;
 struct tracer;
@@ -114,15 +115,15 @@ extern int unregister_trace_event(struct trace_event *event);
 
 enum print_line_t trace_handle_return(struct trace_seq *s);
 
-static inline void tracing_generic_entry_update(struct trace_entry *entry,
-						unsigned short type,
-						unsigned int trace_ctx)
-{
-	entry->preempt_count		= trace_ctx & 0xff;
-	entry->pid			= current->pid;
-	entry->type			= type;
-	entry->flags =			trace_ctx >> 16;
-}
+#define tracing_generic_entry_update(_entry, _type, _trace_ctx)		\
+do {									\
+	struct trace_entry *__entry = (_entry);				\
+									\
+	(__entry)->preempt_count	= (_trace_ctx) & 0xff;		\
+	(__entry)->pid			= (current)->pid;		\
+	(__entry)->type			= (_type);			\
+	(__entry)->flags		= (_trace_ctx) >> 16;		\
+} while (0)
 
 unsigned int tracing_gen_ctx_irq_test(unsigned int irqs_status);
 
@@ -711,13 +712,8 @@ void perf_trace_run_bpf_submit(void *raw_data, int size, int rctx,
 			       struct pt_regs *regs, struct hlist_head *head,
 			       struct task_struct *task);
 
-static inline void
-perf_trace_buf_submit(void *raw_data, int size, int rctx, u16 type,
-		       u64 count, struct pt_regs *regs, void *head,
-		       struct task_struct *task)
-{
-	perf_tp_event(type, count, raw_data, size, regs, head, rctx, task);
-}
+#define perf_trace_buf_submit(raw_data, size, rctx, type, count, regs, head, task) \
+	perf_tp_event(type, count, raw_data, size, regs, head, rctx, task)
 
 #endif
 
