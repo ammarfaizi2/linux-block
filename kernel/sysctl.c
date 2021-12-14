@@ -18,6 +18,7 @@
  * The list_for_each() macro wasn't appropriate for the sysctl loop.
  *  Removed it and replaced it with older style, 03/23/00, Bill Wendling
  */
+#include <linux/umh_sysctl.h>
 #include <asm/elf_api.h>
 
 #include <linux/writeback_api.h>
