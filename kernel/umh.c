@@ -2,6 +2,7 @@
 /*
  * umh - the kernel usermode helper
  */
+#include <linux/umh_sysctl.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sysctl.h>
