@@ -13,8 +13,8 @@
 #include "etnaviv_mmu.h"
 #include "state_hi.xml.h"
 
-#define PT_SIZE		SZ_2M
-#define PT_ENTRIES	(PT_SIZE / sizeof(u32))
+#define IOMMU_PT_SIZE		SZ_2M
+#define PT_ENTRIES	(IOMMU_PT_SIZE / sizeof(u32))
 
 #define GPU_MEM_START	0x80000000
 
@@ -36,7 +36,7 @@ static void etnaviv_iommuv1_free(struct etnaviv_iommu_context *context)
 
 	drm_mm_takedown(&context->mm);
 
-	dma_free_wc(context->global->dev, PT_SIZE, v1_context->pgtable_cpu,
+	dma_free_wc(context->global->dev, IOMMU_PT_SIZE, v1_context->pgtable_cpu,
 		    v1_context->pgtable_dma);
 
 	context->global->v1.shared_context = NULL;
@@ -75,7 +75,7 @@ static size_t etnaviv_iommuv1_unmap(struct etnaviv_iommu_context *context,
 
 static size_t etnaviv_iommuv1_dump_size(struct etnaviv_iommu_context *context)
 {
-	return PT_SIZE;
+	return IOMMU_PT_SIZE;
 }
 
 static void etnaviv_iommuv1_dump(struct etnaviv_iommu_context *context,
@@ -83,7 +83,7 @@ static void etnaviv_iommuv1_dump(struct etnaviv_iommu_context *context,
 {
 	struct etnaviv_iommuv1_context *v1_context = to_v1_context(context);
 
-	memcpy(buf, v1_context->pgtable_cpu, PT_SIZE);
+	memcpy(buf, v1_context->pgtable_cpu, IOMMU_PT_SIZE);
 }
 
 static void etnaviv_iommuv1_restore(struct etnaviv_gpu *gpu,
@@ -149,7 +149,7 @@ etnaviv_iommuv1_context_alloc(struct etnaviv_iommu_global *global)
 		return NULL;
 	}
 
-	v1_context->pgtable_cpu = dma_alloc_wc(global->dev, PT_SIZE,
+	v1_context->pgtable_cpu = dma_alloc_wc(global->dev, IOMMU_PT_SIZE,
 					       &v1_context->pgtable_dma,
 					       GFP_KERNEL);
 	if (!v1_context->pgtable_cpu)
