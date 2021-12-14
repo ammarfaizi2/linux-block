@@ -14,6 +14,7 @@
 #include <linux/kernel.h>
 #include <asm/mipsregs.h>
 #include <asm/addrspace.h>
+#include <asm/io.h>
 
 /*
  * PAGE_SHIFT determines the page size
