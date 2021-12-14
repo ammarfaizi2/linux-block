@@ -23,6 +23,8 @@ void perf_get_regs_user(struct perf_regs *regs_user,
 			struct pt_regs *regs);
 #else
 
+#include <linux/ptrace_api.h>
+
 #define PERF_REG_EXTENDED_MASK	0
 
 static inline u64 perf_reg_value(struct pt_regs *regs, int idx)
