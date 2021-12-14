@@ -11,6 +11,9 @@
 #define _LINUX_NFS_PAGE_H
 
 
+#include <linux/nfs4.h>
+#include <linux/nfs_fs.h>
+
 #include <linux/list.h>
 #include <linux/pagemap.h>
 #include <linux/wait.h>

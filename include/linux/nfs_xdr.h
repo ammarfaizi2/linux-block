@@ -2,6 +2,8 @@
 #ifndef _LINUX_NFS_XDR_H
 #define _LINUX_NFS_XDR_H
 
+#include <linux/nfs.h>
+
 #include <linux/nfsacl.h>
 #include <linux/sunrpc/gss_api.h>
 
