@@ -18,6 +18,10 @@
 #include <asm/hazards.h>
 #include <asm/isa-rev.h>
 
+#ifndef __ASSEMBLY__
+# include <linux/irqflags.h>
+#endif
+
 /*
  * The following macros are especially useful for __asm__
  * inline assembler.
