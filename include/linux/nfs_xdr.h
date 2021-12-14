@@ -4,6 +4,7 @@
 
 #include <linux/nfs.h>
 
+#include <linux/dcache.h>
 #include <linux/nfsacl.h>
 #include <linux/sunrpc/gss_api.h>
 
