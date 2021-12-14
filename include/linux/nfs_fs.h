@@ -10,8 +10,9 @@
 #define _LINUX_NFS_FS_H
 
 #include <linux/spinlock_api.h>
-#include <uapi/linux/nfs_fs.h>
 
+#include <uapi/linux/nfs_fs.h>
+#include <uapi/linux/stat.h>
 
 /*
  * Enable dprintk() debugging support for nfs client.
@@ -22,7 +23,6 @@
 
 #include <linux/in.h>
 #include <linux/mm.h>
-#include <linux/pagemap.h>
 #include <linux/rbtree.h>
 #include <linux/refcount.h>
 #include <linux/rwsem.h>
