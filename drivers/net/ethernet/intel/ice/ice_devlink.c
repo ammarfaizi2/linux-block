@@ -39,13 +39,13 @@ static void ice_info_get_dsn(struct ice_pf *pf, struct ice_info_ctx *ctx)
 static void ice_info_pba(struct ice_pf *pf, struct ice_info_ctx *ctx)
 {
 	struct ice_hw *hw = &pf->hw;
-	enum ice_status status;
+	int status;
 
 	status = ice_read_pba_string(hw, (u8 *)ctx->buf, sizeof(ctx->buf));
 	if (status)
 		/* We failed to locate the PBA, so just skip this entry */
-		dev_dbg(ice_pf_to_dev(pf), "Failed to read Product Board Assembly string, status %s\n",
-			ice_stat_str(status));
+		dev_dbg(ice_pf_to_dev(pf), "Failed to read Product Board Assembly string, status %d\n",
+			status);
 }
 
 static void ice_info_fw_mgmt(struct ice_pf *pf, struct ice_info_ctx *ctx)
@@ -251,7 +251,6 @@ static int ice_devlink_info_get(struct devlink *devlink,
 	struct device *dev = ice_pf_to_dev(pf);
 	struct ice_hw *hw = &pf->hw;
 	struct ice_info_ctx *ctx;
-	enum ice_status status;
 	size_t i;
 	int err;
 
@@ -266,20 +265,19 @@ static int ice_devlink_info_get(struct devlink *devlink,
 		return -ENOMEM;
 
 	/* discover capabilities first */
-	status = ice_discover_dev_caps(hw, &ctx->dev_caps);
-	if (status) {
-		dev_dbg(dev, "Failed to discover device capabilities, status %s aq_err %s\n",
-			ice_stat_str(status), ice_aq_str(hw->adminq.sq_last_status));
+	err = ice_discover_dev_caps(hw, &ctx->dev_caps);
+	if (err) {
+		dev_dbg(dev, "Failed to discover device capabilities, status %d aq_err %s\n",
+			err, ice_aq_str(hw->adminq.sq_last_status));
 		NL_SET_ERR_MSG_MOD(extack, "Unable to discover device capabilities");
-		err = -EIO;
 		goto out_free_ctx;
 	}
 
 	if (ctx->dev_caps.common_cap.nvm_update_pending_orom) {
-		status = ice_get_inactive_orom_ver(hw, &ctx->pending_orom);
-		if (status) {
-			dev_dbg(dev, "Unable to read inactive Option ROM version data, status %s aq_err %s\n",
-				ice_stat_str(status), ice_aq_str(hw->adminq.sq_last_status));
+		err = ice_get_inactive_orom_ver(hw, &ctx->pending_orom);
+		if (err) {
+			dev_dbg(dev, "Unable to read inactive Option ROM version data, status %d aq_err %s\n",
+				err, ice_aq_str(hw->adminq.sq_last_status));
 
 			/* disable display of pending Option ROM */
 			ctx->dev_caps.common_cap.nvm_update_pending_orom = false;
@@ -287,10 +285,10 @@ static int ice_devlink_info_get(struct devlink *devlink,
 	}
 
 	if (ctx->dev_caps.common_cap.nvm_update_pending_nvm) {
-		status = ice_get_inactive_nvm_ver(hw, &ctx->pending_nvm);
-		if (status) {
-			dev_dbg(dev, "Unable to read inactive NVM version data, status %s aq_err %s\n",
-				ice_stat_str(status), ice_aq_str(hw->adminq.sq_last_status));
+		err = ice_get_inactive_nvm_ver(hw, &ctx->pending_nvm);
+		if (err) {
+			dev_dbg(dev, "Unable to read inactive NVM version data, status %d aq_err %s\n",
+				err, ice_aq_str(hw->adminq.sq_last_status));
 
 			/* disable display of pending Option ROM */
 			ctx->dev_caps.common_cap.nvm_update_pending_nvm = false;
@@ -298,10 +296,10 @@ static int ice_devlink_info_get(struct devlink *devlink,
 	}
 
 	if (ctx->dev_caps.common_cap.nvm_update_pending_netlist) {
-		status = ice_get_inactive_netlist_ver(hw, &ctx->pending_netlist);
-		if (status) {
-			dev_dbg(dev, "Unable to read inactive Netlist version data, status %s aq_err %s\n",
-				ice_stat_str(status), ice_aq_str(hw->adminq.sq_last_status));
+		err = ice_get_inactive_netlist_ver(hw, &ctx->pending_netlist);
+		if (err) {
+			dev_dbg(dev, "Unable to read inactive Netlist version data, status %d aq_err %s\n",
+				err, ice_aq_str(hw->adminq.sq_last_status));
 
 			/* disable display of pending Option ROM */
 			ctx->dev_caps.common_cap.nvm_update_pending_netlist = false;
@@ -430,6 +428,120 @@ static const struct devlink_ops ice_devlink_ops = {
 	.flash_update = ice_devlink_flash_update,
 };
 
+static int
+ice_devlink_enable_roce_get(struct devlink *devlink, u32 id,
+			    struct devlink_param_gset_ctx *ctx)
+{
+	struct ice_pf *pf = devlink_priv(devlink);
+
+	ctx->val.vbool = pf->rdma_mode & IIDC_RDMA_PROTOCOL_ROCEV2 ? true : false;
+
+	return 0;
+}
+
+static int
+ice_devlink_enable_roce_set(struct devlink *devlink, u32 id,
+			    struct devlink_param_gset_ctx *ctx)
+{
+	struct ice_pf *pf = devlink_priv(devlink);
+	bool roce_ena = ctx->val.vbool;
+	int ret;
+
+	if (!roce_ena) {
+		ice_unplug_aux_dev(pf);
+		pf->rdma_mode &= ~IIDC_RDMA_PROTOCOL_ROCEV2;
+		return 0;
+	}
+
+	pf->rdma_mode |= IIDC_RDMA_PROTOCOL_ROCEV2;
+	ret = ice_plug_aux_dev(pf);
+	if (ret)
+		pf->rdma_mode &= ~IIDC_RDMA_PROTOCOL_ROCEV2;
+
+	return ret;
+}
+
+static int
+ice_devlink_enable_roce_validate(struct devlink *devlink, u32 id,
+				 union devlink_param_value val,
+				 struct netlink_ext_ack *extack)
+{
+	struct ice_pf *pf = devlink_priv(devlink);
+
+	if (!test_bit(ICE_FLAG_RDMA_ENA, pf->flags))
+		return -EOPNOTSUPP;
+
+	if (pf->rdma_mode & IIDC_RDMA_PROTOCOL_IWARP) {
+		NL_SET_ERR_MSG_MOD(extack, "iWARP is currently enabled. This device cannot enable iWARP and RoCEv2 simultaneously");
+		return -EOPNOTSUPP;
+	}
+
+	return 0;
+}
+
+static int
+ice_devlink_enable_iw_get(struct devlink *devlink, u32 id,
+			  struct devlink_param_gset_ctx *ctx)
+{
+	struct ice_pf *pf = devlink_priv(devlink);
+
+	ctx->val.vbool = pf->rdma_mode & IIDC_RDMA_PROTOCOL_IWARP;
+
+	return 0;
+}
+
+static int
+ice_devlink_enable_iw_set(struct devlink *devlink, u32 id,
+			  struct devlink_param_gset_ctx *ctx)
+{
+	struct ice_pf *pf = devlink_priv(devlink);
+	bool iw_ena = ctx->val.vbool;
+	int ret;
+
+	if (!iw_ena) {
+		ice_unplug_aux_dev(pf);
+		pf->rdma_mode &= ~IIDC_RDMA_PROTOCOL_IWARP;
+		return 0;
+	}
+
+	pf->rdma_mode |= IIDC_RDMA_PROTOCOL_IWARP;
+	ret = ice_plug_aux_dev(pf);
+	if (ret)
+		pf->rdma_mode &= ~IIDC_RDMA_PROTOCOL_IWARP;
+
+	return ret;
+}
+
+static int
+ice_devlink_enable_iw_validate(struct devlink *devlink, u32 id,
+			       union devlink_param_value val,
+			       struct netlink_ext_ack *extack)
+{
+	struct ice_pf *pf = devlink_priv(devlink);
+
+	if (!test_bit(ICE_FLAG_RDMA_ENA, pf->flags))
+		return -EOPNOTSUPP;
+
+	if (pf->rdma_mode & IIDC_RDMA_PROTOCOL_ROCEV2) {
+		NL_SET_ERR_MSG_MOD(extack, "RoCEv2 is currently enabled. This device cannot enable iWARP and RoCEv2 simultaneously");
+		return -EOPNOTSUPP;
+	}
+
+	return 0;
+}
+
+static const struct devlink_param ice_devlink_params[] = {
+	DEVLINK_PARAM_GENERIC(ENABLE_ROCE, BIT(DEVLINK_PARAM_CMODE_RUNTIME),
+			      ice_devlink_enable_roce_get,
+			      ice_devlink_enable_roce_set,
+			      ice_devlink_enable_roce_validate),
+	DEVLINK_PARAM_GENERIC(ENABLE_IWARP, BIT(DEVLINK_PARAM_CMODE_RUNTIME),
+			      ice_devlink_enable_iw_get,
+			      ice_devlink_enable_iw_set,
+			      ice_devlink_enable_iw_validate),
+
+};
+
 static void ice_devlink_free(void *devlink_ptr)
 {
 	devlink_free((struct devlink *)devlink_ptr);
@@ -482,6 +594,36 @@ void ice_devlink_register(struct ice_pf *pf)
 void ice_devlink_unregister(struct ice_pf *pf)
 {
 	devlink_unregister(priv_to_devlink(pf));
+}
+
+int ice_devlink_register_params(struct ice_pf *pf)
+{
+	struct devlink *devlink = priv_to_devlink(pf);
+	union devlink_param_value value;
+	int err;
+
+	err = devlink_params_register(devlink, ice_devlink_params,
+				      ARRAY_SIZE(ice_devlink_params));
+	if (err)
+		return err;
+
+	value.vbool = false;
+	devlink_param_driverinit_value_set(devlink,
+					   DEVLINK_PARAM_GENERIC_ID_ENABLE_IWARP,
+					   value);
+
+	value.vbool = test_bit(ICE_FLAG_RDMA_ENA, pf->flags) ? true : false;
+	devlink_param_driverinit_value_set(devlink,
+					   DEVLINK_PARAM_GENERIC_ID_ENABLE_ROCE,
+					   value);
+
+	return 0;
+}
+
+void ice_devlink_unregister_params(struct ice_pf *pf)
+{
+	devlink_params_unregister(priv_to_devlink(pf), ice_devlink_params,
+				  ARRAY_SIZE(ice_devlink_params));
 }
 
 /**
@@ -618,9 +760,9 @@ static int ice_devlink_nvm_snapshot(struct devlink *devlink,
 	struct ice_pf *pf = devlink_priv(devlink);
 	struct device *dev = ice_pf_to_dev(pf);
 	struct ice_hw *hw = &pf->hw;
-	enum ice_status status;
 	void *nvm_data;
 	u32 nvm_size;
+	int status;
 
 	nvm_size = hw->flash.flash_size;
 	nvm_data = vzalloc(nvm_size);
@@ -633,7 +775,7 @@ static int ice_devlink_nvm_snapshot(struct devlink *devlink,
 			status, hw->adminq.sq_last_status);
 		NL_SET_ERR_MSG_MOD(extack, "Failed to acquire NVM semaphore");
 		vfree(nvm_data);
-		return -EIO;
+		return status;
 	}
 
 	status = ice_read_flat_nvm(hw, 0, &nvm_size, nvm_data, false);
@@ -643,7 +785,7 @@ static int ice_devlink_nvm_snapshot(struct devlink *devlink,
 		NL_SET_ERR_MSG_MOD(extack, "Failed to read NVM contents");
 		ice_release_nvm(hw);
 		vfree(nvm_data);
-		return -EIO;
+		return status;
 	}
 
 	ice_release_nvm(hw);
@@ -675,8 +817,8 @@ ice_devlink_devcaps_snapshot(struct devlink *devlink,
 	struct ice_pf *pf = devlink_priv(devlink);
 	struct device *dev = ice_pf_to_dev(pf);
 	struct ice_hw *hw = &pf->hw;
-	enum ice_status status;
 	void *devcaps;
+	int status;
 
 	devcaps = vzalloc(ICE_AQ_MAX_BUF_LEN);
 	if (!devcaps)
@@ -689,7 +831,7 @@ ice_devlink_devcaps_snapshot(struct devlink *devlink,
 			status, hw->adminq.sq_last_status);
 		NL_SET_ERR_MSG_MOD(extack, "Failed to read device capabilities");
 		vfree(devcaps);
-		return -EIO;
+		return status;
 	}
 
 	*data = (u8 *)devcaps;
