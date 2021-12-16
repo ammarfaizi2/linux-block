@@ -620,6 +620,8 @@ blk_status_t errno_to_blk_status(int errno);
 int bio_poll(struct bio *bio, struct io_comp_batch *iob, unsigned int flags);
 int iocb_bio_iopoll(struct kiocb *kiocb, struct io_comp_batch *iob,
 			unsigned int flags);
+int blk_async_cmd(struct block_device *bdev, struct io_uring_cmd *cmd,
+			enum io_uring_cmd_flags issue_flags);
 
 static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
 {

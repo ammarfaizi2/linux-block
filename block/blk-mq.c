@@ -4721,6 +4721,17 @@ int blk_mq_poll(struct request_queue *q, blk_qc_t cookie, struct io_comp_batch *
 	return blk_mq_poll_classic(q, cookie, iob, flags);
 }
 
+int blk_async_cmd(struct block_device *bdev, struct io_uring_cmd *cmd,
+		  enum io_uring_cmd_flags issue_flags)
+{
+	struct request_queue *q = bdev_get_queue(bdev);
+
+	if (!q->mq_ops || !q->mq_ops->async_cmd)
+		return -EOPNOTSUPP;
+
+	return q->mq_ops->async_cmd(q, cmd, issue_flags);
+}
+
 unsigned int blk_mq_rq_cpu(struct request *rq)
 {
 	return rq->mq_ctx->cpu;
