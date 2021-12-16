@@ -128,7 +128,7 @@ config HID_ACRUX_FF
 config HID_APPLE
 	tristate "Apple {i,Power,Mac}Books"
 	depends on HID
-	default !EXPERT
+	default !EXPERT || SPI_HID_APPLE
 	help
 	Support for some Apple devices which less or more break
 	HID specification.
