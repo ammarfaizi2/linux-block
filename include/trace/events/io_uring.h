@@ -530,9 +530,9 @@ TRACE_EVENT(io_uring_req_failed,
 	),
 
 	TP_fast_assign(
-		__entry->opcode		= sqe->opcode;
-		__entry->flags		= sqe->flags;
-		__entry->ioprio		= sqe->ioprio;
+		__entry->opcode		= sqe->hdr.opcode;
+		__entry->flags		= sqe->hdr.flags;
+		__entry->ioprio		= sqe->hdr.ioprio;
 		__entry->off		= sqe->off;
 		__entry->addr		= sqe->addr;
 		__entry->len		= sqe->len;
