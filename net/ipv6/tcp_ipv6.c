@@ -2163,6 +2163,7 @@ struct proto tcpv6_prot = {
 	.disconnect		= tcp_disconnect,
 	.accept			= inet_csk_accept,
 	.ioctl			= tcp_ioctl,
+	.async_cmd		= tcp_async_cmd,
 	.init			= tcp_v6_init_sock,
 	.destroy		= tcp_v6_destroy_sock,
 	.shutdown		= tcp_shutdown,
