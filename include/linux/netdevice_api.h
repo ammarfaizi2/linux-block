@@ -24,8 +24,10 @@
 #include <linux/netdevice_types.h>
 
 #include <linux/device_api.h>
+#include <linux/dev_printk.h>
+#include <linux/pm_wakeup.h>
 #include <linux/prefetch.h>
-#include <linux/cpumask_api.h>
+#include <linux/cpumask_types.h>
 #include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/dynamic_queue_limits.h>
