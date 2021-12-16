@@ -33,6 +33,17 @@ struct blk_queue_stats;
 struct blk_stat_callback;
 struct blk_crypto_profile;
 
+enum {
+	BLOCK_URING_OP_IOCTL = 1,
+};
+
+/* This overlays struct io_uring_cmd pdu (40 bytes) */
+struct block_uring_cmd {
+	__u32	ioctl_cmd;
+	__u32	unused1;
+	__u64	unused2[4];
+};
+
 /* Must be consistent with blk_mq_poll_stats_bkt() */
 #define BLK_MQ_POLL_STATS_BKTS 16
 
