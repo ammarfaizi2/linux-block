@@ -4,7 +4,6 @@
 #define __TRACE_CM_H
 
 #include <linux/refcount_api.h>
-#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/tracepoint.h>
 #include <linux/trace_seq.h>

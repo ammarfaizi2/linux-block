@@ -15,7 +15,6 @@
 #include <linux/skbuff_api.h>
 #include <linux/refcount_api.h>
 #include <linux/jiffies.h>
-#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/completion.h>
 #include <linux/debugfs.h>

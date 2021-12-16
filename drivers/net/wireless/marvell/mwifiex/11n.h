@@ -21,7 +21,6 @@
 #define _MWIFIEX_11N_H_
 
 #include <linux/spinlock_api.h>
-#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 
 #include "11n_aggr.h"

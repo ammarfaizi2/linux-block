@@ -2,7 +2,6 @@
 /* Copyright 2017-2019 NXP */
 
 #include <linux/netdevice_api.h>
-#include <linux/etherdevice_api.h>
 #include <linux/timer.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>

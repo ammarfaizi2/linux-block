@@ -17,7 +17,6 @@
 
 #include <linux/skbuff_api.h>
 #include <linux/jiffies.h>
-#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/types.h>
 #include <linux/if_ether.h>

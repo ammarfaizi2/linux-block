@@ -23,7 +23,6 @@
 #include <linux/netdevice_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
-#include <linux/etherdevice_api.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>
