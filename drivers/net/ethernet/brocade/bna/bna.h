@@ -11,7 +11,6 @@
 #ifndef __BNA_H__
 #define __BNA_H__
 
-#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 
 #include "bfa_defs.h"

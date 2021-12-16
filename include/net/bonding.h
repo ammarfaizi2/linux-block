@@ -16,7 +16,6 @@
 #define _NET_BONDING_H
 
 #include <linux/jiffies.h>
-#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/device/class.h>
 #include <linux/timer.h>

@@ -14,7 +14,6 @@
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
-#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/dev_printk.h>
 #include <linux/device_api_lock.h>

@@ -6,7 +6,6 @@
 #define __RDEV_OPS_TRACE
 
 #include <linux/if_ether_api.h>
-#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/tracepoint.h>
 

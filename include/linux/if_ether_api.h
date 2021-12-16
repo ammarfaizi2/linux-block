@@ -16,7 +16,6 @@
 #ifndef _LINUX_IF_ETHER_API_H
 #define _LINUX_IF_ETHER_API_H
 
-#include <linux/etherdevice_api.h>
 #include <linux/skbuff_api.h>
 #include <uapi/linux/if_ether.h>
 

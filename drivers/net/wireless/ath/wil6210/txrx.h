@@ -9,7 +9,6 @@
 
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
-#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 
 #include "wil6210.h"
