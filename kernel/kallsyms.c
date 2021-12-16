@@ -312,6 +312,19 @@ int kallsyms_on_each_symbol(int (*fn)(void *, const char *, struct module *,
 }
 #endif /* CONFIG_LIVEPATCH */
 
+#ifdef CONFIG_KALLSYMS_FAST
+static unsigned long get_symbol_pos(unsigned long addr,
+				    unsigned long *symbolsize,
+				    unsigned long *offset)
+{
+	WARN_ONCE(1, "# kallsyms: first get_symbol_pos() invocation\n");
+
+	/* Not yet ... */
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_KALLSYMS_GENERIC
 static unsigned long get_symbol_pos(unsigned long addr,
 				    unsigned long *symbolsize,
 				    unsigned long *offset)
@@ -319,12 +332,6 @@ static unsigned long get_symbol_pos(unsigned long addr,
 	unsigned long symbol_start = 0, symbol_end = 0;
 	unsigned long i, low, high, mid;
 
-#ifndef CONFIG_KALLSYMS_GENERIC
-	WARN_ONCE(1, "# kallsyms: first get_symbol_pos() invocation\n");
-
-	/* Not yet ... */
-	return 0;
-#endif
 
 	/* This kernel should never had been booted. */
 	if (!IS_ENABLED(CONFIG_KALLSYMS_BASE_RELATIVE))
@@ -378,7 +385,23 @@ static unsigned long get_symbol_pos(unsigned long addr,
 
 	return low;
 }
+#endif
 
+#ifdef CONFIG_KALLSYMS_FAST
+/*
+ * Lookup an address but don't bother to find any names.
+ */
+int kallsyms_lookup_size_offset(unsigned long addr, unsigned long *symbolsize,
+				unsigned long *offset)
+{
+	/* Not yet ... */
+	WARN_ONCE(1, "kallsyms_lookup_size_offset(): not yet");
+
+	return -EINVAL;
+}
+#endif
+
+#ifdef CONFIG_KALLSYMS_GENERIC
 /*
  * Lookup an address but don't bother to find any names.
  */
@@ -387,11 +410,6 @@ int kallsyms_lookup_size_offset(unsigned long addr, unsigned long *symbolsize,
 {
 	char namebuf[KSYM_NAME_LEN];
 
-#ifndef CONFIG_KALLSYMS_GENERIC
-	/* Not yet ... */
-	return -EINVAL;
-#endif
-
 	if (is_ksym_addr(addr)) {
 		get_symbol_pos(addr, symbolsize, offset);
 		return 1;
@@ -399,6 +417,7 @@ int kallsyms_lookup_size_offset(unsigned long addr, unsigned long *symbolsize,
 	return !!module_address_lookup(addr, symbolsize, offset, NULL, NULL, namebuf) ||
 	       !!__bpf_address_lookup(addr, symbolsize, offset, namebuf);
 }
+#endif
 
 static const char *kallsyms_lookup_buildid(unsigned long addr,
 			unsigned long *symbolsize,
@@ -411,6 +430,7 @@ static const char *kallsyms_lookup_buildid(unsigned long addr,
 	namebuf[0] = 0;
 
 #ifndef CONFIG_KALLSYMS_GENERIC
+	WARN_ONCE(1, "not yet: kallsyms_lookup_buildid()");
 	/* Not yet ... */
 	return NULL;
 #endif
@@ -463,17 +483,23 @@ const char *kallsyms_lookup(unsigned long addr,
 				       NULL, namebuf);
 }
 
+#ifdef CONFIG_KALLSYMS_FAST
+int lookup_symbol_name(unsigned long addr, char *symname)
+{
+	WARN_ONCE(1, "lookup_symbol_name(): not yet");
+
+	/* Not yet ... */
+	return -EINVAL;
+}
+#endif
+
+#ifdef CONFIG_KALLSYMS_GENERIC
 int lookup_symbol_name(unsigned long addr, char *symname)
 {
 	int res;
 
 	symname[0] = '\0';
 	symname[KSYM_NAME_LEN - 1] = '\0';
-
-#ifndef CONFIG_KALLSYMS_GENERIC
-	/* Not yet ... */
-	return -EINVAL;
-#endif
 
 	if (is_ksym_addr(addr)) {
 		unsigned long pos;
@@ -493,6 +519,7 @@ found:
 	cleanup_symbol_name(symname);
 	return 0;
 }
+#endif
 
 int lookup_symbol_attrs(unsigned long addr, unsigned long *size,
 			unsigned long *offset, char *modname, char *name)
@@ -1034,6 +1061,8 @@ void __init kallsyms_objtool_init(void)
 	printk("# kallsyms, &__kallsyms_strs_end: %p\n", &__kallsyms_strs_end);
 
 	WARN_ON(str != &__kallsyms_strs_end);
+
+	WARN(1, "test warning");
 }
 #endif
 
