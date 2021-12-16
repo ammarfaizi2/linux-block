@@ -23,7 +23,6 @@
 
 #include <linux/netdevice_types.h>
 
-#include <linux/device_api.h>
 #include <linux/dev_printk.h>
 #include <linux/pm_wakeup.h>
 #include <linux/prefetch.h>
