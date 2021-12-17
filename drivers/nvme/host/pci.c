@@ -229,6 +229,7 @@ struct nvme_iod {
 	struct nvme_queue *nvmeq;
 	bool use_sgl;
 	bool aborted;
+	bool persistent;
 	int npages;		/* In the PRP list. 0 means small pool in use */
 	int nents;		/* Used in scatterlist */
 	dma_addr_t first_dma;
@@ -592,8 +593,9 @@ static void nvme_unmap_data(struct nvme_dev *dev, struct request *req)
 	struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
 
 	if (iod->dma_len) {
-		dma_unmap_page(dev->dev, iod->first_dma, iod->dma_len,
-			       rq_dma_dir(req));
+		if (!iod->persistent)
+			dma_unmap_page(dev->dev, iod->first_dma, iod->dma_len,
+				       rq_dma_dir(req));
 		return;
 	}
 
@@ -807,9 +809,14 @@ static blk_status_t nvme_setup_prp_simple(struct nvme_dev *dev,
 	unsigned int offset = bv->bv_offset & (NVME_CTRL_PAGE_SIZE - 1);
 	unsigned int first_prp_len = NVME_CTRL_PAGE_SIZE - offset;
 
-	iod->first_dma = dma_map_bvec(dev->dev, bv, rq_dma_dir(req), 0);
-	if (dma_mapping_error(dev->dev, iod->first_dma))
-		return BLK_STS_RESOURCE;
+	if (bv->bv_dma_start) {
+		iod->persistent = true;
+		iod->first_dma = bv->bv_dma_start;
+	} else {
+		iod->first_dma = dma_map_bvec(dev->dev, bv, rq_dma_dir(req), 0);
+		if (dma_mapping_error(dev->dev, iod->first_dma))
+			return BLK_STS_RESOURCE;
+	}
 	iod->dma_len = bv->bv_len;
 
 	cmnd->dptr.prp1 = cpu_to_le64(iod->first_dma);
@@ -824,9 +831,14 @@ static blk_status_t nvme_setup_sgl_simple(struct nvme_dev *dev,
 {
 	struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
 
-	iod->first_dma = dma_map_bvec(dev->dev, bv, rq_dma_dir(req), 0);
-	if (dma_mapping_error(dev->dev, iod->first_dma))
-		return BLK_STS_RESOURCE;
+	if (bv->bv_dma_start) {
+		iod->persistent = true;
+		iod->first_dma = bv->bv_dma_start;
+	} else {
+		iod->first_dma = dma_map_bvec(dev->dev, bv, rq_dma_dir(req), 0);
+		if (dma_mapping_error(dev->dev, iod->first_dma))
+			return BLK_STS_RESOURCE;
+	}
 	iod->dma_len = bv->bv_len;
 
 	cmnd->flags = NVME_CMD_SGL_METABUF;
@@ -911,6 +923,7 @@ static blk_status_t nvme_prep_rq(struct nvme_dev *dev, struct request *req)
 	blk_status_t ret;
 
 	iod->aborted = false;
+	iod->persistent = false;
 	iod->npages = -1;
 	iod->nents = 0;
 
@@ -1721,6 +1734,46 @@ release_cq:
 	return result;
 }
 
+#ifdef CONFIG_HAS_DMA
+static int nvme_pci_dma_map_bvec(struct nvme_dev *ndev, struct bio_vec *bv,
+				 int dma_dir)
+{
+	dma_addr_t dma_addr;
+
+	dma_addr = dma_map_bvec(ndev->dev, bv, dma_dir, 0);
+	if (dma_mapping_error(ndev->dev, dma_addr))
+		return -EIO;
+
+	bv->bv_dma_start = dma_addr;
+	return 0;
+}
+
+static struct device *nvme_pci_dma_map(struct request_queue *q,
+				       struct bio_vec *bvec, int nr_vecs,
+				       int dma_dir)
+{
+	struct nvme_ns *ns = q->queuedata;
+	struct nvme_dev *ndev = to_nvme_dev(ns->ctrl);
+	int i, ret = -EINVAL;
+
+	for (i = 0; i < nr_vecs; i++) {
+		ret = nvme_pci_dma_map_bvec(ndev, bvec + i, dma_dir);
+		if (ret)
+			goto err;
+	}
+
+	get_device(ndev->dev);
+	return ndev->dev;
+err:
+	while (--i >= 0) {
+		struct bio_vec *bv = bvec + i;
+
+		dma_unmap_page(ndev->dev, bv->bv_dma_start, bv->bv_len, 0);
+	}
+	return ERR_PTR(ret);
+}
+#endif
+
 static const struct blk_mq_ops nvme_mq_admin_ops = {
 	.queue_rq	= nvme_queue_rq,
 	.complete	= nvme_pci_complete_rq,
@@ -1739,6 +1792,9 @@ static const struct blk_mq_ops nvme_mq_ops = {
 	.map_queues	= nvme_pci_map_queues,
 	.timeout	= nvme_timeout,
 	.poll		= nvme_poll,
+#ifdef CONFIG_HAS_DMA
+	.dma_map	= nvme_pci_dma_map,
+#endif
 };
 
 static void nvme_dev_remove_admin(struct nvme_dev *dev)
