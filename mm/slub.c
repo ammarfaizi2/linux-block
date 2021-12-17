@@ -3097,19 +3097,15 @@ static void *__slab_alloc(struct kmem_cache *s, gfp_t gfpflags, int node,
 {
 	void *p;
 
-#ifdef CONFIG_PREEMPT_COUNT
 	/*
 	 * We may have been preempted and rescheduled on a different
 	 * cpu before disabling preemption. Need to reload cpu area
 	 * pointer.
 	 */
 	c = slub_get_cpu_ptr(s->cpu_slab);
-#endif
 
 	p = ___slab_alloc(s, gfpflags, node, addr, c);
-#ifdef CONFIG_PREEMPT_COUNT
 	slub_put_cpu_ptr(s->cpu_slab);
-#endif
 	return p;
 }
 
