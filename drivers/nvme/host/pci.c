@@ -228,7 +228,7 @@ struct nvme_iod {
 	struct nvme_command cmd;
 	struct nvme_queue *nvmeq;
 	bool use_sgl;
-	int aborted;
+	bool aborted;
 	int npages;		/* In the PRP list. 0 means small pool in use */
 	int nents;		/* Used in scatterlist */
 	dma_addr_t first_dma;
@@ -910,7 +910,7 @@ static blk_status_t nvme_prep_rq(struct nvme_dev *dev, struct request *req)
 	struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
 	blk_status_t ret;
 
-	iod->aborted = 0;
+	iod->aborted = false;
 	iod->npages = -1;
 	iod->nents = 0;
 
@@ -1420,7 +1420,7 @@ static enum blk_eh_timer_return nvme_timeout(struct request *req, bool reserved)
 		atomic_inc(&dev->ctrl.abort_limit);
 		return BLK_EH_RESET_TIMER;
 	}
-	iod->aborted = 1;
+	iod->aborted = true;
 
 	cmd.abort.opcode = nvme_admin_abort_cmd;
 	cmd.abort.cid = nvme_cid(req);
