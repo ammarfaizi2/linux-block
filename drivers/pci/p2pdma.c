@@ -20,6 +20,11 @@
 #include <linux/seq_buf.h>
 #include <linux/xarray.h>
 
+#ifdef CONFIG_X86
+# include <asm/cpufeature.h>
+# include <asm/processor.h>
+#endif
+
 enum pci_p2pdma_map_type {
 	PCI_P2PDMA_MAP_UNKNOWN = 0,
 	PCI_P2PDMA_MAP_NOT_SUPPORTED,
