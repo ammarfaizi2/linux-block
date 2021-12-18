@@ -218,4 +218,7 @@ static inline bool ima_appraise_signature(enum kernel_read_file_id func)
 	return false;
 }
 #endif /* CONFIG_IMA_APPRAISE && CONFIG_INTEGRITY_TRUSTED_KEYRING */
+
+extern struct ima_namespace init_ima_ns;
+
 #endif /* _LINUX_IMA_H */

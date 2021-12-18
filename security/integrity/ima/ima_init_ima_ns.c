@@ -1,0 +1,29 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Copyright (C) 2016-2021 IBM Corporation
+ * Author:
+ *   Yuqiong Sun <suny@us.ibm.com>
+ *   Stefan Berger <stefanb@linux.vnet.ibm.com>
+ */
+
+#include <linux/export.h>
+#include <linux/proc_ns.h>
+#include <linux/ima.h>
+#include <linux/slab.h>
+
+#include "ima.h"
+
+int ima_init_namespace(struct ima_namespace *ns)
+{
+	ns->ima_policy_flag = 0;
+
+	return 0;
+}
+
+int __init ima_ns_init(void)
+{
+	return ima_init_namespace(&init_ima_ns);
+}
+
+EXPORT_SYMBOL(init_ima_ns);
+
