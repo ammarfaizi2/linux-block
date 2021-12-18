@@ -117,6 +117,12 @@ struct ima_kexec_hdr {
 };
 
 struct ima_namespace {
+	struct list_head ima_default_rules;
+	/* ns's policy rules */
+	struct list_head ima_policy_rules;
+	struct list_head ima_temp_rules;
+	/* Pointer to ns's current policy */
+	struct list_head __rcu *ima_rules;
 	/* current content of the policy */
 	int ima_policy_flag;
 } __randomize_layout;
