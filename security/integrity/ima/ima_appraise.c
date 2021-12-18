@@ -530,7 +530,7 @@ void ima_inode_post_setattr(struct user_namespace *mnt_userns,
 			    struct dentry *dentry)
 {
 	struct inode *inode = d_backing_inode(dentry);
-	struct ima_namespace *ns = &init_ima_ns;
+	struct ima_namespace *ns = get_current_ns();
 	struct integrity_iint_cache *iint;
 	int action;
 
@@ -647,7 +647,7 @@ int ima_inode_setxattr(struct dentry *dentry, const char *xattr_name,
 		       const void *xattr_value, size_t xattr_value_len)
 {
 	const struct evm_ima_xattr_data *xvalue = xattr_value;
-	struct ima_namespace *ns = &init_ima_ns;
+	struct ima_namespace *ns = get_current_ns();
 	int digsig = 0;
 	int result;
 
@@ -672,7 +672,7 @@ int ima_inode_setxattr(struct dentry *dentry, const char *xattr_name,
 
 int ima_inode_removexattr(struct dentry *dentry, const char *xattr_name)
 {
-	struct ima_namespace *ns = &init_ima_ns;
+	struct ima_namespace *ns = get_current_ns();
 	int result;
 
 	result = ima_protect_xattr(dentry, xattr_name, NULL, 0);
