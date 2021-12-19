@@ -131,6 +131,10 @@ static int full_duplex[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
 #include <asm/io.h>
 #include <asm/irq.h>
 
+#if defined (__i386__) && !defined(MODULE) && !defined(CONFIG_UML)
+# include <asm/cpufeature.h>
+#endif
+
 #include "tulip.h"
 
 #undef PKT_BUF_SZ			/* tulip.h also defines this */
