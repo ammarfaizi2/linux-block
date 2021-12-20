@@ -12,7 +12,7 @@
 struct io_uring_cmd {
 	struct file	*file;
 	__u16		op;
-	__u16		unused;
+	__u16		flags;
 	__u32		len;
 	/* used if driver requires update in task context*/
 	void (*driver_cb)(struct io_uring_cmd *cmd);
