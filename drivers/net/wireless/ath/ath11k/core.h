@@ -382,6 +382,7 @@ struct ath11k_sta {
 	struct work_struct update_wk;
 	struct work_struct set_4addr_wk;
 	struct rate_info txrate;
+	u32 peer_nss;
 	struct rate_info last_txrate;
 	u64 rx_duration;
 	u64 tx_duration;
@@ -785,6 +786,10 @@ struct ath11k_base {
 
 	struct ath11k_dbring_cap *db_caps;
 	u32 num_db_cap;
+	struct work_struct rfkill_work;
+
+	/* true means radio is on */
+	bool rfkill_radio_on;
 
 	/* To synchronize 11d scan vdev id */
 	struct mutex vdev_id_11d_lock;
