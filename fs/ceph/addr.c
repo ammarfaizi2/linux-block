@@ -335,6 +335,16 @@ out:
 	dout("%s: result %d\n", __func__, err);
 }
 
+static void ceph_update_i_size(struct file *file, loff_t new_i_size)
+{
+	struct inode *inode = file_inode(file);
+	struct ceph_inode_info *ci = ceph_inode(inode);
+
+	if (ceph_inode_set_size(inode, new_i_size))
+		ceph_check_caps(ceph_inode(inode), CHECK_CAPS_AUTHONLY, NULL);
+	fscache_update_cookie(ceph_fscache_cookie(ci), NULL, &new_i_size);
+}
+
 static void ceph_readahead_cleanup(struct address_space *mapping, void *priv)
 {
 	struct inode *inode = mapping->host;
@@ -350,6 +360,7 @@ const struct netfs_request_ops ceph_netfs_ops = {
 	.expand_readahead	= ceph_netfs_expand_readahead,
 	.clamp_length		= ceph_netfs_clamp_length,
 	.check_write_begin	= ceph_netfs_check_write_begin,
+	.update_i_size		= ceph_update_i_size,
 	.cleanup		= ceph_readahead_cleanup,
 };
 
@@ -1270,78 +1281,11 @@ static int ceph_netfs_check_write_begin(struct file *file, loff_t pos, unsigned 
 	return 0;
 }
 
-/*
- * We are only allowed to write into/dirty the page if the page is
- * clean, or already dirty within the same snap context.
- */
-static int ceph_write_begin(struct file *file, struct address_space *mapping,
-			    loff_t pos, unsigned len, unsigned aop_flags,
-			    struct page **pagep, void **fsdata)
-{
-	struct inode *inode = file_inode(file);
-	struct folio *folio = NULL;
-	int r;
-
-	r = netfs_write_begin(file, inode->i_mapping, pos, len, 0, &folio, NULL);
-	if (r == 0)
-		folio_wait_fscache(folio);
-	if (r < 0) {
-		if (folio)
-			folio_put(folio);
-	} else {
-		WARN_ON_ONCE(!folio_test_locked(folio));
-		*pagep = &folio->page;
-	}
-	return r;
-}
-
-/*
- * we don't do anything in here that simple_write_end doesn't do
- * except adjust dirty page accounting
- */
-static int ceph_write_end(struct file *file, struct address_space *mapping,
-			  loff_t pos, unsigned len, unsigned copied,
-			  struct page *subpage, void *fsdata)
-{
-	struct folio *folio = page_folio(subpage);
-	struct inode *inode = file_inode(file);
-	bool check_cap = false;
-
-	dout("write_end file %p inode %p folio %p %d~%d (%d)\n", file,
-	     inode, folio, (int)pos, (int)copied, (int)len);
-
-	if (!folio_test_uptodate(folio)) {
-		/* just return that nothing was copied on a short copy */
-		if (copied < len) {
-			copied = 0;
-			goto out;
-		}
-		folio_mark_uptodate(folio);
-	}
-
-	/* did file size increase? */
-	if (pos+copied > i_size_read(inode))
-		check_cap = ceph_inode_set_size(inode, pos+copied);
-
-	folio_mark_dirty(folio);
-
-out:
-	folio_unlock(folio);
-	folio_put(folio);
-
-	if (check_cap)
-		ceph_check_caps(ceph_inode(inode), CHECK_CAPS_AUTHONLY, NULL);
-
-	return copied;
-}
-
 const struct address_space_operations ceph_aops = {
 	.readpage = netfs_readpage,
 	.readahead = ceph_readahead,
 	.writepage = ceph_writepage,
 	.writepages = ceph_writepages_start,
-	.write_begin = ceph_write_begin,
-	.write_end = ceph_write_end,
 	.set_page_dirty = ceph_set_page_dirty,
 	.invalidatepage = ceph_invalidatepage,
 	.releasepage = netfs_releasepage,
