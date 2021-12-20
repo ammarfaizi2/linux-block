@@ -131,8 +131,13 @@ out:
 	return ERR_PTR(ret);
 }
 
+static inline bool nvme_is_fixedb_passthru(struct io_uring_cmd *ioucmd)
+{
+	return ((ioucmd) && (ioucmd->flags & URING_CMD_FIXEDBUFS));
+}
+
 static int nvme_submit_user_cmd(struct request_queue *q,
-		struct nvme_command *cmd, void __user *ubuffer,
+		struct nvme_command *cmd, u64 ubuffer,
 		unsigned bufflen, void __user *meta_buffer, unsigned meta_len,
 		u32 meta_seed, u64 *result, unsigned timeout,
 		struct io_uring_cmd *ioucmd)
@@ -154,8 +159,12 @@ static int nvme_submit_user_cmd(struct request_queue *q,
 	nvme_req(req)->flags |= NVME_REQ_USERCMD;
 
 	if (ubuffer && bufflen) {
-		ret = blk_rq_map_user(q, req, NULL, ubuffer, bufflen,
-				GFP_KERNEL);
+		if (likely(!nvme_is_fixedb_passthru(ioucmd)))
+			ret = blk_rq_map_user(q, req, NULL, nvme_to_user_ptr(ubuffer),
+					bufflen, GFP_KERNEL);
+		else
+			ret = blk_rq_map_user_fixedb(q, req, ubuffer, bufflen,
+					GFP_KERNEL, ioucmd);
 		if (ret)
 			goto out;
 		bio = req->bio;
@@ -254,9 +263,8 @@ static int nvme_submit_io(struct nvme_ns *ns, struct nvme_user_io __user *uio)
 	c.rw.appmask = cpu_to_le16(io.appmask);
 
 	return nvme_submit_user_cmd(ns->queue, &c,
-			nvme_to_user_ptr(io.addr), length,
-			metadata, meta_len, lower_32_bits(io.slba), NULL, 0,
-			NULL);
+			io.addr, length, metadata, meta_len,
+			lower_32_bits(io.slba), NULL, 0, NULL);
 }
 
 static bool nvme_validate_passthru_nsid(struct nvme_ctrl *ctrl,
@@ -308,9 +316,8 @@ static int nvme_user_cmd(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
 		timeout = msecs_to_jiffies(cmd.timeout_ms);
 
 	status = nvme_submit_user_cmd(ns ? ns->queue : ctrl->admin_q, &c,
-			nvme_to_user_ptr(cmd.addr), cmd.data_len,
-			nvme_to_user_ptr(cmd.metadata), cmd.metadata_len,
-			0, &result, timeout, NULL);
+			cmd.addr, cmd.data_len, nvme_to_user_ptr(cmd.metadata),
+			cmd.metadata_len, 0, &result, timeout, NULL);
 
 	if (status >= 0) {
 		if (put_user(result, &ucmd->result))
@@ -355,9 +362,8 @@ static int nvme_user_cmd64(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
 		timeout = msecs_to_jiffies(cmd.timeout_ms);
 
 	status = nvme_submit_user_cmd(ns ? ns->queue : ctrl->admin_q, &c,
-			nvme_to_user_ptr(cmd.addr), cmd.data_len,
-			nvme_to_user_ptr(cmd.metadata), cmd.metadata_len,
-			0, &cmd.result, timeout, ioucmd);
+			cmd.addr, cmd.data_len, nvme_to_user_ptr(cmd.metadata),
+			cmd.metadata_len, 0, &cmd.result, timeout, ioucmd);
 
 	if (!ioucmd && status >= 0) {
 		if (put_user(cmd.result, &ucmd->result))

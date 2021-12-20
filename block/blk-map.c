@@ -8,6 +8,7 @@
 #include <linux/bio.h>
 #include <linux/blkdev.h>
 #include <linux/uio.h>
+#include <linux/io_uring.h>
 
 #include "blk.h"
 
@@ -576,6 +577,51 @@ int blk_rq_map_user(struct request_queue *q, struct request *rq,
 	return blk_rq_map_user_iov(q, rq, map_data, &i, gfp_mask);
 }
 EXPORT_SYMBOL(blk_rq_map_user);
+
+/* Unlike blk_rq_map_user () this is only for fixed-buffer async passthrough. */
+int blk_rq_map_user_fixedb(struct request_queue *q, struct request *rq,
+		     u64 ubuf, unsigned long len, gfp_t gfp_mask,
+		     struct io_uring_cmd *ioucmd)
+{
+	struct iov_iter iter;
+	size_t iter_count, nr_segs;
+	struct bio *bio;
+	int ret;
+
+	/*
+	 * Talk to io_uring to obtain BVEC iterator for the buffer.
+	 * And use that iterator to form bio/request.
+	 */
+	ret = io_uring_cmd_import_fixed(ubuf, len, rq_data_dir(rq), &iter,
+			ioucmd);
+	if (unlikely(ret < 0))
+		return ret;
+	iter_count = iov_iter_count(&iter);
+	nr_segs = iter.nr_segs;
+
+	if (!iter_count || (iter_count >> 9) > queue_max_hw_sectors(q))
+		return -EINVAL;
+	if (nr_segs > queue_max_segments(q))
+		return -EINVAL;
+	/* no iovecs to alloc, as we already have a BVEC iterator */
+	bio = bio_alloc(gfp_mask, 0);
+	if (!bio)
+		return -ENOMEM;
+
+	bio->bi_opf |= req_op(rq);
+	ret = bio_iov_iter_get_pages(bio, &iter);
+	if (ret)
+		goto out_free;
+
+	blk_rq_bio_prep(rq, bio, nr_segs);
+	return 0;
+
+out_free:
+	bio_release_pages(bio, false);
+	bio_put(bio);
+	return ret;
+}
+EXPORT_SYMBOL(blk_rq_map_user_fixedb);
 
 /**
  * blk_rq_unmap_user - unmap a request with user data
