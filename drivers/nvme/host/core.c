@@ -633,11 +633,13 @@ static inline void nvme_init_request(struct request *req,
 }
 
 struct request *nvme_alloc_request(struct request_queue *q,
-		struct nvme_command *cmd, blk_mq_req_flags_t flags)
+		struct nvme_command *cmd, blk_mq_req_flags_t flags,
+		unsigned int rq_flags)
 {
+	unsigned int cmd_flags = nvme_req_op(cmd) | rq_flags;
 	struct request *req;
 
-	req = blk_mq_alloc_request(q, nvme_req_op(cmd), flags);
+	req = blk_mq_alloc_request(q, cmd_flags, flags);
 	if (!IS_ERR(req))
 		nvme_init_request(req, cmd);
 	return req;
@@ -1081,7 +1083,7 @@ int __nvme_submit_sync_cmd(struct request_queue *q, struct nvme_command *cmd,
 	int ret;
 
 	if (qid == NVME_QID_ANY)
-		req = nvme_alloc_request(q, cmd, flags);
+		req = nvme_alloc_request(q, cmd, flags, 0);
 	else
 		req = nvme_alloc_request_qid(q, cmd, flags, qid);
 	if (IS_ERR(req))
@@ -1277,7 +1279,7 @@ static void nvme_keep_alive_work(struct work_struct *work)
 	}
 
 	rq = nvme_alloc_request(ctrl->admin_q, &ctrl->ka_cmd,
-				BLK_MQ_REQ_RESERVED | BLK_MQ_REQ_NOWAIT);
+				BLK_MQ_REQ_RESERVED | BLK_MQ_REQ_NOWAIT, 0);
 	if (IS_ERR(rq)) {
 		/* allocation failure, reset the controller */
 		dev_err(ctrl->device, "keep-alive failed: %ld\n", PTR_ERR(rq));
