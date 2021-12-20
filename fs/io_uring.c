@@ -1122,6 +1122,10 @@ static const struct io_op_def io_op_defs[] = {
 		.needs_file		= 1,
 		.offsets		= 1,
 	},
+	[IORING_OP_URING_CMD_FIXED] = {
+		.needs_file		= 1,
+		.offsets		= 1,
+	},
 };
 
 /* requests with any of those set should undergo io_disarm_next() */
@@ -4133,6 +4137,7 @@ EXPORT_SYMBOL_GPL(io_uring_cmd_done);
 static int io_uring_cmd_prep(struct io_kiocb *req,
 			     const struct io_uring_sqe *sqe)
 {
+	struct io_ring_ctx *ctx = req->ctx;
 	const struct io_uring_cmd_sqe *csqe = (const void *) sqe;
 	struct io_uring_cmd *cmd = &req->uring_cmd;
 
@@ -4145,7 +4150,13 @@ static int io_uring_cmd_prep(struct io_kiocb *req,
 	}
 
 	cmd->op = READ_ONCE(csqe->op);
-	cmd->len = READ_ONCE(csqe->len);
+	if (req->opcode == IORING_OP_URING_CMD_FIXED) {
+		req->imu = NULL;
+		io_req_set_rsrc_node(req, ctx);
+		req->buf_index = READ_ONCE(csqe->buf_index);
+		req->uring_cmd.flags |= URING_CMD_FIXEDBUFS;
+	} else
+		cmd->len = READ_ONCE(csqe->len);
 
 	/*
 	 * The payload is the last 40 bytes of an io_uring_cmd_sqe, with the
@@ -4159,6 +4170,20 @@ static int io_uring_cmd(struct io_kiocb *req, unsigned int issue_flags)
 {
 	struct file *file = req->file;
 	int ret;
+
+	if (req->opcode == IORING_OP_URING_CMD_FIXED) {
+		u32 index, buf_index = req->buf_index;
+		struct io_ring_ctx *ctx = req->ctx;
+		struct io_mapped_ubuf *imu = req->imu;
+
+		if (likely(!imu)) {
+			if (unlikely(buf_index >= ctx->nr_user_bufs))
+				return -EFAULT;
+			index = array_index_nospec(buf_index, ctx->nr_user_bufs);
+			imu = READ_ONCE(ctx->user_bufs[index]);
+			req->imu = imu;
+		}
+	}
 
 	ret = file->f_op->async_cmd(&req->uring_cmd, issue_flags);
 	/* queued async, consumer will call io_uring_cmd_done() when complete */
@@ -6675,6 +6700,7 @@ static int io_req_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	case IORING_OP_LINKAT:
 		return io_linkat_prep(req, sqe);
 	case IORING_OP_URING_CMD:
+	case IORING_OP_URING_CMD_FIXED:
 		return io_uring_cmd_prep(req, sqe);
 	}
 
@@ -6960,6 +6986,7 @@ static int io_issue_sqe(struct io_kiocb *req, unsigned int issue_flags)
 		ret = io_linkat(req, issue_flags);
 		break;
 	case IORING_OP_URING_CMD:
+	case IORING_OP_URING_CMD_FIXED:
 		ret = io_uring_cmd(req, issue_flags);
 		break;
 	default:
