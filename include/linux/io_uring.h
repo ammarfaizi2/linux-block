@@ -6,6 +6,7 @@
 #include <linux/xarray.h>
 
 enum {
+	URING_CMD_POLLED = (1 << 0),
 	URING_CMD_FIXEDBUFS = (1 << 1),
 };
 /*
@@ -17,8 +18,13 @@ struct io_uring_cmd {
 	__u16		op;
 	__u16		flags;
 	__u32		len;
-	/* used if driver requires update in task context*/
-	void (*driver_cb)(struct io_uring_cmd *cmd);
+	union {
+		void *bio; // Used for polling based completion
+
+		/* used if driver requires update in task context for IRQ based completion*/
+		void (*driver_cb)(struct io_uring_cmd *cmd);
+	};
+
 	__u64		pdu[5];	/* 40 bytes available inline for free use */
 };
 
