@@ -118,6 +118,7 @@ enum ocelot_target {
 	S2,
 	HSIO,
 	PTP,
+	FDMA,
 	GCB,
 	DEV_GMII,
 	TARGET_MAX,
@@ -561,6 +562,7 @@ struct ocelot_ops {
 	int (*psfp_filter_del)(struct ocelot *ocelot, struct flow_cls_offload *f);
 	int (*psfp_stats_get)(struct ocelot *ocelot, struct flow_cls_offload *f,
 			      struct flow_stats *stats);
+	void (*cut_through_fwd)(struct ocelot *ocelot);
 };
 
 struct ocelot_vcap_policer {
@@ -655,6 +657,8 @@ struct ocelot_port {
 
 	struct net_device		*bridge;
 	u8				stp_state;
+
+	int				speed;
 };
 
 struct ocelot {
@@ -712,6 +716,8 @@ struct ocelot {
 
 	/* Lock for serializing access to the MAC table */
 	struct mutex			mact_lock;
+	/* Lock for serializing forwarding domain changes */
+	struct mutex			fwd_domain_lock;
 
 	struct workqueue_struct		*owq;
 
@@ -727,6 +733,8 @@ struct ocelot {
 	/* Protects the PTP clock */
 	spinlock_t			ptp_clock_lock;
 	struct ptp_pin_desc		ptp_pins[OCELOT_PTP_PINS_NUM];
+
+	struct ocelot_fdma		*fdma;
 };
 
 struct ocelot_policer {
@@ -789,8 +797,11 @@ void __ocelot_target_write_ix(struct ocelot *ocelot, enum ocelot_target target,
 bool ocelot_can_inject(struct ocelot *ocelot, int grp);
 void ocelot_port_inject_frame(struct ocelot *ocelot, int port, int grp,
 			      u32 rew_op, struct sk_buff *skb);
+void ocelot_ifh_port_set(void *ifh, int port, u32 rew_op, u32 vlan_tag);
 int ocelot_xtr_poll_frame(struct ocelot *ocelot, int grp, struct sk_buff **skb);
 void ocelot_drain_cpu_queue(struct ocelot *ocelot, int grp);
+void ocelot_ptp_rx_timestamp(struct ocelot *ocelot, struct sk_buff *skb,
+			     u64 timestamp);
 
 /* Hardware initialization */
 int ocelot_regfields_init(struct ocelot *ocelot,
@@ -811,7 +822,9 @@ void ocelot_set_ageing_time(struct ocelot *ocelot, unsigned int msecs);
 int ocelot_port_vlan_filtering(struct ocelot *ocelot, int port, bool enabled,
 			       struct netlink_ext_ack *extack);
 void ocelot_bridge_stp_state_set(struct ocelot *ocelot, int port, u8 state);
-void ocelot_apply_bridge_fwd_mask(struct ocelot *ocelot);
+u32 ocelot_get_dsa_8021q_cpu_mask(struct ocelot *ocelot);
+u32 ocelot_get_bridge_fwd_mask(struct ocelot *ocelot, int src_port);
+void ocelot_apply_bridge_fwd_mask(struct ocelot *ocelot, bool joining);
 int ocelot_port_pre_bridge_flags(struct ocelot *ocelot, int port,
 				 struct switchdev_brport_flags val);
 void ocelot_port_bridge_flags(struct ocelot *ocelot, int port,

@@ -625,18 +625,17 @@ int smcd_nl_get_lgr(struct sk_buff *skb, struct netlink_callback *cb)
 void smc_lgr_cleanup_early(struct smc_connection *conn)
 {
 	struct smc_link_group *lgr = conn->lgr;
-	struct list_head *lgr_list;
 	spinlock_t *lgr_lock;
 
 	if (!lgr)
 		return;
 
 	smc_conn_free(conn);
-	lgr_list = smc_lgr_list_head(lgr, &lgr_lock);
+	smc_lgr_list_head(lgr, &lgr_lock);
 	spin_lock_bh(lgr_lock);
 	/* do not use this link group for new connections */
-	if (!list_empty(lgr_list))
-		list_del_init(lgr_list);
+	if (!list_empty(&lgr->list))
+		list_del_init(&lgr->list);
 	spin_unlock_bh(lgr_lock);
 	__smc_lgr_terminate(lgr, true);
 }
@@ -1102,18 +1101,24 @@ static void smcr_buf_unuse(struct smc_buf_desc *rmb_desc,
 		smc_buf_free(lgr, true, rmb_desc);
 	} else {
 		rmb_desc->used = 0;
+		memset(rmb_desc->cpu_addr, 0, rmb_desc->len);
 	}
 }
 
 static void smc_buf_unuse(struct smc_connection *conn,
 			  struct smc_link_group *lgr)
 {
-	if (conn->sndbuf_desc)
+	if (conn->sndbuf_desc) {
 		conn->sndbuf_desc->used = 0;
-	if (conn->rmb_desc && lgr->is_smcd)
+		memset(conn->sndbuf_desc->cpu_addr, 0, conn->sndbuf_desc->len);
+	}
+	if (conn->rmb_desc && lgr->is_smcd) {
 		conn->rmb_desc->used = 0;
-	else if (conn->rmb_desc)
+		memset(conn->rmb_desc->cpu_addr, 0, conn->rmb_desc->len +
+		       sizeof(struct smcd_cdc_msg));
+	} else if (conn->rmb_desc) {
 		smcr_buf_unuse(conn->rmb_desc, lgr);
+	}
 }
 
 /* remove a finished connection from its link group */
@@ -1672,14 +1677,26 @@ static void smc_link_down_work(struct work_struct *work)
 	mutex_unlock(&lgr->llc_conf_mutex);
 }
 
-/* Determine vlan of internal TCP socket.
- * @vlan_id: address to store the determined vlan id into
- */
+static int smc_vlan_by_tcpsk_walk(struct net_device *lower_dev,
+				  struct netdev_nested_priv *priv)
+{
+	unsigned short *vlan_id = (unsigned short *)priv->data;
+
+	if (is_vlan_dev(lower_dev)) {
+		*vlan_id = vlan_dev_vlan_id(lower_dev);
+		return 1;
+	}
+
+	return 0;
+}
+
+/* Determine vlan of internal TCP socket. */
 int smc_vlan_by_tcpsk(struct socket *clcsock, struct smc_init_info *ini)
 {
 	struct dst_entry *dst = sk_dst_get(clcsock->sk);
+	struct netdev_nested_priv priv;
 	struct net_device *ndev;
-	int i, nest_lvl, rc = 0;
+	int rc = 0;
 
 	ini->vlan_id = 0;
 	if (!dst) {
@@ -1697,20 +1714,9 @@ int smc_vlan_by_tcpsk(struct socket *clcsock, struct smc_init_info *ini)
 		goto out_rel;
 	}
 
+	priv.data = (void *)&ini->vlan_id;
 	rtnl_lock();
-	nest_lvl = ndev->lower_level;
-	for (i = 0; i < nest_lvl; i++) {
-		struct list_head *lower = &ndev->adj_list.lower;
-
-		if (list_empty(lower))
-			break;
-		lower = lower->next;
-		ndev = (struct net_device *)netdev_lower_get_next(ndev, &lower);
-		if (is_vlan_dev(ndev)) {
-			ini->vlan_id = vlan_dev_vlan_id(ndev);
-			break;
-		}
-	}
+	netdev_walk_all_lower_dev(ndev, smc_vlan_by_tcpsk_walk, &priv);
 	rtnl_unlock();
 
 out_rel:
@@ -2148,7 +2154,6 @@ static int __smc_buf_create(struct smc_sock *smc, bool is_smcd, bool is_rmb)
 		if (buf_desc) {
 			SMC_STAT_RMB_SIZE(smc, is_smcd, is_rmb, bufsize);
 			SMC_STAT_BUF_REUSE(smc, is_smcd, is_rmb);
-			memset(buf_desc->cpu_addr, 0, bufsize);
 			break; /* found reusable slot */
 		}
 

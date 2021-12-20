@@ -607,7 +607,7 @@ void iavf_add_vlans(struct iavf_adapter *adapter)
 		if (f->add)
 			count++;
 	}
-	if (!count) {
+	if (!count || !VLAN_ALLOWED(adapter)) {
 		adapter->aq_required &= ~IAVF_FLAG_AQ_ADD_VLAN_FILTER;
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
 		return;
@@ -673,9 +673,19 @@ void iavf_del_vlans(struct iavf_adapter *adapter)
 
 	spin_lock_bh(&adapter->mac_vlan_list_lock);
 
-	list_for_each_entry(f, &adapter->vlan_filter_list, list) {
-		if (f->remove)
+	list_for_each_entry_safe(f, ftmp, &adapter->vlan_filter_list, list) {
+		/* since VLAN capabilities are not allowed, we dont want to send
+		 * a VLAN delete request because it will most likely fail and
+		 * create unnecessary errors/noise, so just free the VLAN
+		 * filters marked for removal to enable bailing out before
+		 * sending a virtchnl message
+		 */
+		if (f->remove && !VLAN_ALLOWED(adapter)) {
+			list_del(&f->list);
+			kfree(f);
+		} else if (f->remove) {
 			count++;
+		}
 	}
 	if (!count) {
 		adapter->aq_required &= ~IAVF_FLAG_AQ_DEL_VLAN_FILTER;
@@ -752,15 +762,23 @@ void iavf_set_promiscuous(struct iavf_adapter *adapter, int flags)
 	if (flags & FLAG_VF_MULTICAST_PROMISC) {
 		adapter->flags |= IAVF_FLAG_ALLMULTI_ON;
 		adapter->aq_required &= ~IAVF_FLAG_AQ_REQUEST_ALLMULTI;
-		dev_info(&adapter->pdev->dev, "Entering multicast promiscuous mode\n");
+		dev_info(&adapter->pdev->dev, "%s is entering multicast promiscuous mode\n",
+			 adapter->netdev->name);
 	}
 
 	if (!flags) {
-		adapter->flags &= ~(IAVF_FLAG_PROMISC_ON |
-				    IAVF_FLAG_ALLMULTI_ON);
-		adapter->aq_required &= ~(IAVF_FLAG_AQ_RELEASE_PROMISC |
-					  IAVF_FLAG_AQ_RELEASE_ALLMULTI);
-		dev_info(&adapter->pdev->dev, "Leaving promiscuous mode\n");
+		if (adapter->flags & IAVF_FLAG_PROMISC_ON) {
+			adapter->flags &= ~IAVF_FLAG_PROMISC_ON;
+			adapter->aq_required &= ~IAVF_FLAG_AQ_RELEASE_PROMISC;
+			dev_info(&adapter->pdev->dev, "Leaving promiscuous mode\n");
+		}
+
+		if (adapter->flags & IAVF_FLAG_ALLMULTI_ON) {
+			adapter->flags &= ~IAVF_FLAG_ALLMULTI_ON;
+			adapter->aq_required &= ~IAVF_FLAG_AQ_RELEASE_ALLMULTI;
+			dev_info(&adapter->pdev->dev, "%s is leaving multicast promiscuous mode\n",
+				 adapter->netdev->name);
+		}
 	}
 
 	adapter->current_op = VIRTCHNL_OP_CONFIG_PROMISCUOUS_MODE;
@@ -784,6 +802,8 @@ void iavf_request_stats(struct iavf_adapter *adapter)
 		/* no error message, this isn't crucial */
 		return;
 	}
+
+	adapter->aq_required &= ~IAVF_FLAG_AQ_REQUEST_STATS;
 	adapter->current_op = VIRTCHNL_OP_GET_STATS;
 	vqs.vsi_id = adapter->vsi_res->vsi_id;
 	/* queue maps are ignored for this message - only the vsi is used */
@@ -1005,7 +1025,7 @@ print_link_msg:
 	} else if (link_speed_mbps == SPEED_UNKNOWN) {
 		snprintf(speed, IAVF_MAX_SPEED_STRLEN, "%s", "Unknown Mbps");
 	} else {
-		snprintf(speed, IAVF_MAX_SPEED_STRLEN, "%u %s",
+		snprintf(speed, IAVF_MAX_SPEED_STRLEN, "%d %s",
 			 link_speed_mbps, "Mbps");
 	}
 
@@ -1510,7 +1530,7 @@ void iavf_virtchnl_completion(struct iavf_adapter *adapter,
 			iavf_print_link_message(adapter);
 			break;
 		case VIRTCHNL_EVENT_RESET_IMPENDING:
-			dev_info(&adapter->pdev->dev, "Reset warning received from the PF\n");
+			dev_info(&adapter->pdev->dev, "Reset indication received from the PF\n");
 			if (!(adapter->flags & IAVF_FLAG_RESET_PENDING)) {
 				adapter->flags |= IAVF_FLAG_RESET_PENDING;
 				dev_info(&adapter->pdev->dev, "Scheduling reset task\n");
@@ -1722,8 +1742,37 @@ void iavf_virtchnl_completion(struct iavf_adapter *adapter,
 		}
 		spin_lock_bh(&adapter->mac_vlan_list_lock);
 		iavf_add_filter(adapter, adapter->hw.mac.addr);
+
+		if (VLAN_ALLOWED(adapter)) {
+			if (!list_empty(&adapter->vlan_filter_list)) {
+				struct iavf_vlan_filter *vlf;
+
+				/* re-add all VLAN filters over virtchnl */
+				list_for_each_entry(vlf,
+						    &adapter->vlan_filter_list,
+						    list)
+					vlf->add = true;
+
+				adapter->aq_required |=
+					IAVF_FLAG_AQ_ADD_VLAN_FILTER;
+			}
+		}
+
 		spin_unlock_bh(&adapter->mac_vlan_list_lock);
 		iavf_process_config(adapter);
+
+		/* unlock crit_lock before acquiring rtnl_lock as other
+		 * processes holding rtnl_lock could be waiting for the same
+		 * crit_lock
+		 */
+		mutex_unlock(&adapter->crit_lock);
+		rtnl_lock();
+		netdev_update_features(adapter->netdev);
+		rtnl_unlock();
+		if (iavf_lock_timeout(&adapter->crit_lock, 10000))
+			dev_warn(&adapter->pdev->dev, "failed to acquire crit_lock in %s\n",
+				 __FUNCTION__);
+
 		}
 		break;
 	case VIRTCHNL_OP_ENABLE_QUEUES:

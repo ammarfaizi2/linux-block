@@ -21,6 +21,8 @@
 #define VSC9959_TAS_GCL_ENTRY_MAX	63
 #define VSC9959_VCAP_POLICER_BASE	63
 #define VSC9959_VCAP_POLICER_MAX	383
+#define VSC9959_SWITCH_PCI_BAR		4
+#define VSC9959_IMDIO_PCI_BAR		0
 
 static const u32 vsc9959_ana_regmap[] = {
 	REG(ANA_ADVLEARN,			0x0089a0),
@@ -1392,7 +1394,7 @@ struct felix_stream_gate {
 	u64 cycletime;
 	u64 cycletime_ext;
 	u32 num_entries;
-	struct action_gate_entry entries[0];
+	struct action_gate_entry entries[];
 };
 
 struct felix_stream_gate_entry {
@@ -1503,11 +1505,9 @@ static int vsc9959_stream_table_add(struct ocelot *ocelot,
 	struct felix_stream *stream_entry;
 	int ret;
 
-	stream_entry = kzalloc(sizeof(*stream_entry), GFP_KERNEL);
+	stream_entry = kmemdup(stream, sizeof(*stream_entry), GFP_KERNEL);
 	if (!stream_entry)
 		return -ENOMEM;
-
-	memcpy(stream_entry, stream, sizeof(*stream_entry));
 
 	if (!stream->dummy) {
 		ret = vsc9959_mact_stream_set(ocelot, stream_entry, extack);
@@ -1624,11 +1624,10 @@ static int vsc9959_psfp_sfi_list_add(struct ocelot *ocelot,
 	struct felix_stream_filter *sfi_entry;
 	int ret;
 
-	sfi_entry = kzalloc(sizeof(*sfi_entry), GFP_KERNEL);
+	sfi_entry = kmemdup(sfi, sizeof(*sfi_entry), GFP_KERNEL);
 	if (!sfi_entry)
 		return -ENOMEM;
 
-	memcpy(sfi_entry, sfi, sizeof(*sfi_entry));
 	refcount_set(&sfi_entry->refcount, 1);
 
 	ret = vsc9959_psfp_sfi_set(ocelot, sfi_entry);
@@ -2125,6 +2124,80 @@ static void vsc9959_psfp_init(struct ocelot *ocelot)
 	INIT_LIST_HEAD(&psfp->sgi_list);
 }
 
+/* When using cut-through forwarding and the egress port runs at a higher data
+ * rate than the ingress port, the packet currently under transmission would
+ * suffer an underrun since it would be transmitted faster than it is received.
+ * The Felix switch implementation of cut-through forwarding does not check in
+ * hardware whether this condition is satisfied or not, so we must restrict the
+ * list of ports that have cut-through forwarding enabled on egress to only be
+ * the ports operating at the lowest link speed within their respective
+ * forwarding domain.
+ */
+static void vsc9959_cut_through_fwd(struct ocelot *ocelot)
+{
+	struct felix *felix = ocelot_to_felix(ocelot);
+	struct dsa_switch *ds = felix->ds;
+	int port, other_port;
+
+	lockdep_assert_held(&ocelot->fwd_domain_lock);
+
+	for (port = 0; port < ocelot->num_phys_ports; port++) {
+		struct ocelot_port *ocelot_port = ocelot->ports[port];
+		int min_speed = ocelot_port->speed;
+		unsigned long mask = 0;
+		u32 tmp, val = 0;
+
+		/* Disable cut-through on ports that are down */
+		if (ocelot_port->speed <= 0)
+			goto set;
+
+		if (dsa_is_cpu_port(ds, port)) {
+			/* Ocelot switches forward from the NPI port towards
+			 * any port, regardless of it being in the NPI port's
+			 * forwarding domain or not.
+			 */
+			mask = dsa_user_ports(ds);
+		} else {
+			mask = ocelot_get_bridge_fwd_mask(ocelot, port);
+			mask &= ~BIT(port);
+			if (ocelot->npi >= 0)
+				mask |= BIT(ocelot->npi);
+			else
+				mask |= ocelot_get_dsa_8021q_cpu_mask(ocelot);
+		}
+
+		/* Calculate the minimum link speed, among the ports that are
+		 * up, of this source port's forwarding domain.
+		 */
+		for_each_set_bit(other_port, &mask, ocelot->num_phys_ports) {
+			struct ocelot_port *other_ocelot_port;
+
+			other_ocelot_port = ocelot->ports[other_port];
+			if (other_ocelot_port->speed <= 0)
+				continue;
+
+			if (min_speed > other_ocelot_port->speed)
+				min_speed = other_ocelot_port->speed;
+		}
+
+		/* Enable cut-through forwarding for all traffic classes. */
+		if (ocelot_port->speed == min_speed)
+			val = GENMASK(7, 0);
+
+set:
+		tmp = ocelot_read_rix(ocelot, ANA_CUT_THRU_CFG, port);
+		if (tmp == val)
+			continue;
+
+		dev_dbg(ocelot->dev,
+			"port %d fwd mask 0x%lx speed %d min_speed %d, %s cut-through forwarding\n",
+			port, mask, ocelot_port->speed, min_speed,
+			val ? "enabling" : "disabling");
+
+		ocelot_write_rix(ocelot, val, ANA_CUT_THRU_CFG, port);
+	}
+}
+
 static const struct ocelot_ops vsc9959_ops = {
 	.reset			= vsc9959_reset,
 	.wm_enc			= vsc9959_wm_enc,
@@ -2136,6 +2209,7 @@ static const struct ocelot_ops vsc9959_ops = {
 	.psfp_filter_add	= vsc9959_psfp_filter_add,
 	.psfp_filter_del	= vsc9959_psfp_filter_del,
 	.psfp_stats_get		= vsc9959_psfp_stats_get,
+	.cut_through_fwd	= vsc9959_cut_through_fwd,
 };
 
 static const struct felix_info felix_info_vsc9959 = {
@@ -2155,8 +2229,6 @@ static const struct felix_info felix_info_vsc9959 = {
 	.num_mact_rows		= 2048,
 	.num_ports		= 6,
 	.num_tx_queues		= OCELOT_NUM_TC,
-	.switch_pci_bar		= 4,
-	.imdio_pci_bar		= 0,
 	.quirk_no_xtr_irq	= true,
 	.ptp_caps		= &vsc9959_ptp_caps,
 	.mdio_bus_alloc		= vsc9959_mdio_bus_alloc,
@@ -2165,6 +2237,7 @@ static const struct felix_info felix_info_vsc9959 = {
 	.prevalidate_phy_mode	= vsc9959_prevalidate_phy_mode,
 	.port_setup_tc		= vsc9959_port_setup_tc,
 	.port_sched_speed_set	= vsc9959_sched_speed_set,
+	.init_regmap		= ocelot_regmap_init,
 };
 
 static irqreturn_t felix_irq_handler(int irq, void *data)
@@ -2215,10 +2288,8 @@ static int felix_pci_probe(struct pci_dev *pdev,
 	ocelot->dev = &pdev->dev;
 	ocelot->num_flooding_pgids = OCELOT_NUM_TC;
 	felix->info = &felix_info_vsc9959;
-	felix->switch_base = pci_resource_start(pdev,
-						felix->info->switch_pci_bar);
-	felix->imdio_base = pci_resource_start(pdev,
-					       felix->info->imdio_pci_bar);
+	felix->switch_base = pci_resource_start(pdev, VSC9959_SWITCH_PCI_BAR);
+	felix->imdio_base = pci_resource_start(pdev, VSC9959_IMDIO_PCI_BAR);
 
 	pci_set_master(pdev);
 

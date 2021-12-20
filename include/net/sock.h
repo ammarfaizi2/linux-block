@@ -350,6 +350,7 @@ struct bpf_local_storage;
   *	@sk_txtime_deadline_mode: set deadline mode for SO_TXTIME
   *	@sk_txtime_report_errors: set report errors mode for SO_TXTIME
   *	@sk_txtime_unused: unused txtime flags
+  *	@ns_tracker: tracker for netns reference
   */
 struct sock {
 	/*
@@ -538,6 +539,7 @@ struct sock {
 	struct bpf_local_storage __rcu	*sk_bpf_storage;
 #endif
 	struct rcu_head		sk_rcu;
+	netns_tracker		ns_tracker;
 };
 
 enum sk_pacing {
@@ -1633,16 +1635,6 @@ static inline void sk_mem_uncharge(struct sock *sk, int size)
 		__sk_mem_reclaim(sk, SK_RECLAIM_CHUNK);
 }
 
-static inline void sock_release_ownership(struct sock *sk)
-{
-	if (sk->sk_lock.owned) {
-		sk->sk_lock.owned = 0;
-
-		/* The sk_lock has mutex_unlock() semantics: */
-		mutex_release(&sk->sk_lock.dep_map, _RET_IP_);
-	}
-}
-
 /*
  * Macro so as to not evaluate some arguments when
  * lockdep is not enabled.
@@ -1769,12 +1761,23 @@ static inline bool sock_owned_by_user_nocheck(const struct sock *sk)
 	return sk->sk_lock.owned;
 }
 
+static inline void sock_release_ownership(struct sock *sk)
+{
+	if (sock_owned_by_user_nocheck(sk)) {
+		sk->sk_lock.owned = 0;
+
+		/* The sk_lock has mutex_unlock() semantics: */
+		mutex_release(&sk->sk_lock.dep_map, _RET_IP_);
+	}
+}
+
 /* no reclassification while locks are held */
 static inline bool sock_allow_reclassification(const struct sock *csk)
 {
 	struct sock *sk = (struct sock *)csk;
 
-	return !sk->sk_lock.owned && !spin_is_locked(&sk->sk_lock.slock);
+	return !sock_owned_by_user_nocheck(sk) &&
+		!spin_is_locked(&sk->sk_lock.slock);
 }
 
 struct sock *sk_alloc(struct net *net, int family, gfp_t priority,
@@ -1943,16 +1946,29 @@ static inline int sk_tx_queue_get(const struct sock *sk)
 	return -1;
 }
 
-static inline void sk_rx_queue_set(struct sock *sk, const struct sk_buff *skb)
+static inline void __sk_rx_queue_set(struct sock *sk,
+				     const struct sk_buff *skb,
+				     bool force_set)
 {
 #ifdef CONFIG_SOCK_RX_QUEUE_MAPPING
 	if (skb_rx_queue_recorded(skb)) {
 		u16 rx_queue = skb_get_rx_queue(skb);
 
-		if (unlikely(READ_ONCE(sk->sk_rx_queue_mapping) != rx_queue))
+		if (force_set ||
+		    unlikely(READ_ONCE(sk->sk_rx_queue_mapping) != rx_queue))
 			WRITE_ONCE(sk->sk_rx_queue_mapping, rx_queue);
 	}
 #endif
+}
+
+static inline void sk_rx_queue_set(struct sock *sk, const struct sk_buff *skb)
+{
+	__sk_rx_queue_set(sk, skb, true);
+}
+
+static inline void sk_rx_queue_update(struct sock *sk, const struct sk_buff *skb)
+{
+	__sk_rx_queue_set(sk, skb, false);
 }
 
 static inline void sk_rx_queue_clear(struct sock *sk)
@@ -2135,13 +2151,10 @@ static inline void sock_confirm_neigh(struct sk_buff *skb, struct neighbour *n)
 {
 	if (skb_get_dst_pending_confirm(skb)) {
 		struct sock *sk = skb->sk;
-		unsigned long now = jiffies;
 
-		/* avoid dirtying neighbour */
-		if (READ_ONCE(n->confirmed) != now)
-			WRITE_ONCE(n->confirmed, now);
 		if (sk && READ_ONCE(sk->sk_dst_pending_confirm))
 			WRITE_ONCE(sk->sk_dst_pending_confirm, 0);
+		neigh_confirm(n);
 	}
 }
 
@@ -2460,19 +2473,22 @@ static inline void sk_stream_moderate_sndbuf(struct sock *sk)
  * @sk: socket
  *
  * Use the per task page_frag instead of the per socket one for
- * optimization when we know that we're in the normal context and owns
+ * optimization when we know that we're in process context and own
  * everything that's associated with %current.
  *
- * gfpflags_allow_blocking() isn't enough here as direct reclaim may nest
- * inside other socket operations and end up recursing into sk_page_frag()
- * while it's already in use.
+ * Both direct reclaim and page faults can nest inside other
+ * socket operations and end up recursing into sk_page_frag()
+ * while it's already in use: explicitly avoid task page_frag
+ * usage if the caller is potentially doing any of them.
+ * This assumes that page fault handlers use the GFP_NOFS flags.
  *
  * Return: a per task page_frag if context allows that,
  * otherwise a per socket one.
  */
 static inline struct page_frag *sk_page_frag(struct sock *sk)
 {
-	if (gfpflags_normal_context(sk->sk_allocation))
+	if ((sk->sk_allocation & (__GFP_DIRECT_RECLAIM | __GFP_MEMALLOC | __GFP_FS)) ==
+	    (__GFP_DIRECT_RECLAIM | __GFP_FS))
 		return &current->task_frag;
 
 	return &sk->sk_frag;
