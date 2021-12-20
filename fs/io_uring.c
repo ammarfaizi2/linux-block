@@ -3125,12 +3125,10 @@ static void kiocb_done(struct io_kiocb *req, ssize_t ret,
 		}
 	}
 }
-
-static int __io_import_fixed(struct io_kiocb *req, int rw, struct iov_iter *iter,
-			     struct io_mapped_ubuf *imu)
+static int __io_import_fixed(u64 buf_addr, size_t len, int rw,
+			struct iov_iter *iter, struct io_mapped_ubuf *imu)
 {
-	size_t len = req->rw.len;
-	u64 buf_end, buf_addr = req->rw.addr;
+	u64 buf_end;
 	size_t offset;
 
 	if (unlikely(check_add_overflow(buf_addr, (u64)len, &buf_end)))
@@ -3199,8 +3197,18 @@ static int io_import_fixed(struct io_kiocb *req, int rw, struct iov_iter *iter)
 		imu = READ_ONCE(ctx->user_bufs[index]);
 		req->imu = imu;
 	}
-	return __io_import_fixed(req, rw, iter, imu);
+	return __io_import_fixed(req->rw.addr, req->rw.len, rw, iter, imu);
 }
+
+int io_uring_cmd_import_fixed(u64 ubuf, unsigned long len,
+		int rw, struct iov_iter *iter, void *ioucmd)
+{
+	struct io_kiocb *req = container_of(ioucmd, struct io_kiocb, uring_cmd);
+	struct io_mapped_ubuf *imu = req->imu;
+
+	return __io_import_fixed(ubuf, len, rw, iter, imu);
+}
+EXPORT_SYMBOL_GPL(io_uring_cmd_import_fixed);
 
 static void io_ring_submit_unlock(struct io_ring_ctx *ctx, bool needs_lock)
 {

@@ -5,6 +5,9 @@
 #include <linux/sched.h>
 #include <linux/xarray.h>
 
+enum {
+	URING_CMD_FIXEDBUFS = (1 << 1),
+};
 /*
  * Note that the first member here must be a struct file, as the
  * io_uring command layout depends on that.
@@ -20,6 +23,8 @@ struct io_uring_cmd {
 };
 
 #if defined(CONFIG_IO_URING)
+int io_uring_cmd_import_fixed(u64 ubuf, unsigned long len,
+		int rw, struct iov_iter *iter, void *ioucmd);
 void io_uring_cmd_done(struct io_uring_cmd *cmd, ssize_t ret);
 void io_uring_cmd_complete_in_task(struct io_uring_cmd *ioucmd,
 			void (*driver_cb)(struct io_uring_cmd *));
@@ -49,6 +54,11 @@ static inline void io_uring_cmd_done(struct io_uring_cmd *cmd, ssize_t ret)
 static inline void io_uring_cmd_complete_in_task(struct io_uring_cmd *ioucmd,
 			void (*driver_cb)(struct io_uring_cmd *))
 {
+}
+int io_uring_cmd_import_fixed(u64 ubuf, unsigned long len,
+		int rw, struct iov_iter *iter, void *ioucmd)
+{
+	return -1;
 }
 static inline struct sock *io_uring_get_socket(struct file *file)
 {
