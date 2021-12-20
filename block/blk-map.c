@@ -580,7 +580,7 @@ EXPORT_SYMBOL(blk_rq_map_user);
 
 /* Unlike blk_rq_map_user () this is only for fixed-buffer async passthrough. */
 int blk_rq_map_user_fixedb(struct request_queue *q, struct request *rq,
-		     u64 ubuf, unsigned long len, gfp_t gfp_mask,
+		     u64 ubuf, unsigned long len, struct bio_set *bs,
 		     struct io_uring_cmd *ioucmd)
 {
 	struct iov_iter iter;
@@ -604,7 +604,7 @@ int blk_rq_map_user_fixedb(struct request_queue *q, struct request *rq,
 	if (nr_segs > queue_max_segments(q))
 		return -EINVAL;
 	/* no iovecs to alloc, as we already have a BVEC iterator */
-	bio = bio_alloc(gfp_mask, 0);
+	bio = bio_from_cache(0, bs);
 	if (!bio)
 		return -ENOMEM;
 

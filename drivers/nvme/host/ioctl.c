@@ -43,6 +43,7 @@ static void nvme_pt_task_cb(struct io_uring_cmd *ioucmd)
 	struct request *req = cmd->req;
 	int status;
 	u64 result;
+	struct bio *bio = req->bio;
 
 	if (nvme_req(req)->flags & NVME_REQ_CANCELLED)
 		status = -EINTR;
@@ -52,6 +53,7 @@ static void nvme_pt_task_cb(struct io_uring_cmd *ioucmd)
 
 	/* we can free request */
 	blk_mq_free_request(req);
+	blk_rq_unmap_user(bio);
 
 	if (cmd->meta) {
 		if (status)
@@ -73,9 +75,9 @@ static void nvme_end_async_pt(struct request *req, blk_status_t err)
 	struct bio *bio = cmd->bio;
 
 	cmd->req = req;
+	req->bio = bio;
 	/* this takes care of setting up task-work */
 	io_uring_cmd_complete_in_task(ioucmd, nvme_pt_task_cb);
-	blk_rq_unmap_user(bio);
 }
 
 static void nvme_setup_uring_cmd_data(struct request *rq,
@@ -164,7 +166,7 @@ static int nvme_submit_user_cmd(struct request_queue *q,
 					bufflen, GFP_KERNEL);
 		else
 			ret = blk_rq_map_user_fixedb(q, req, ubuffer, bufflen,
-					GFP_KERNEL, ioucmd);
+					&nvme_bio_pool, ioucmd);
 		if (ret)
 			goto out;
 		bio = req->bio;

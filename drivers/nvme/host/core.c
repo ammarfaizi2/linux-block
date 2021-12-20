@@ -30,6 +30,9 @@
 
 #define NVME_MINORS		(1U << MINORBITS)
 
+#define NVME_BIO_POOL_SZ	(4)
+struct bio_set nvme_bio_pool;
+
 unsigned int admin_timeout = 60;
 module_param(admin_timeout, uint, 0644);
 MODULE_PARM_DESC(admin_timeout, "timeout in seconds for admin commands");
@@ -4793,6 +4796,11 @@ static int __init nvme_core_init(void)
 		goto unregister_generic_ns;
 	}
 
+	result = bioset_init(&nvme_bio_pool, NVME_BIO_POOL_SZ, 0,
+			BIOSET_NEED_BVECS | BIOSET_PERCPU_CACHE);
+	if (result < 0)
+		goto unregister_generic_ns;
+
 	return 0;
 
 unregister_generic_ns:
@@ -4815,6 +4823,7 @@ out:
 
 static void __exit nvme_core_exit(void)
 {
+	bioset_exit(&nvme_bio_pool);
 	class_destroy(nvme_ns_chr_class);
 	class_destroy(nvme_subsys_class);
 	class_destroy(nvme_class);

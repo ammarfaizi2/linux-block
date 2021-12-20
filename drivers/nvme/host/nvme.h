@@ -47,6 +47,7 @@ extern unsigned int admin_timeout;
 extern struct workqueue_struct *nvme_wq;
 extern struct workqueue_struct *nvme_reset_wq;
 extern struct workqueue_struct *nvme_delete_wq;
+extern struct bio_set nvme_bio_pool;
 
 /*
  * List of workarounds for devices that required behavior not specified in
