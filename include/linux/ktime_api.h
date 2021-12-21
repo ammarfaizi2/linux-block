@@ -23,6 +23,7 @@
 
 #include <linux/ktime_types.h>
 
+#include <linux/time64_api.h>
 #include <linux/time.h>
 #include <asm/bug.h>
 
