@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-#include <linux/perf_event.h>
+#include <linux/perf_event_api.h>
 #include <linux/device_api.h>
 #include <linux/types.h>
 
