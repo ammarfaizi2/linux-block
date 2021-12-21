@@ -14,6 +14,5 @@
 #define _LINUX_SIPHASH_H
 
 #include <linux/siphash_types.h>
-#include <linux/siphash_api.h>
 
 #endif /* _LINUX_SIPHASH_H */
