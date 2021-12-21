@@ -30,7 +30,7 @@
 #include <linux/irqflags.h>
 #include <linux/err.h>
 #include <linux/minmax.h>
-#include <linux/dynamic_queue_limits.h>
+#include <linux/dynamic_queue_limits_api.h>
 #include <linux/netdev_features.h>
 #include <linux/smp_types.h>
 #include <linux/bitops.h>

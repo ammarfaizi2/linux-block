@@ -3,6 +3,5 @@
 #define _LINUX_DQL_H
 
 #include <linux/dynamic_queue_limits_types.h>
-#include <linux/dynamic_queue_limits_api.h>
 
 #endif /* _LINUX_DQL_H */

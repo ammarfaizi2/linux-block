@@ -7,7 +7,7 @@
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/jiffies.h>
-#include <linux/dynamic_queue_limits.h>
+#include <linux/dynamic_queue_limits_api.h>
 #include <linux/compiler.h>
 #include <linux/export.h>
 
