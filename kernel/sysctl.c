@@ -75,6 +75,7 @@
 #include <asm/processor.h>
 
 #ifdef CONFIG_X86
+#include <asm/processor_api.h>
 #include <asm/nmi.h>
 #include <asm/stacktrace.h>
 #include <asm/io.h>
