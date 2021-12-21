@@ -6,6 +6,5 @@
 #define __LINUX_RESTART_BLOCK_H
 
 #include <linux/restart_block_types.h>
-#include <linux/restart_block_api.h>
 
 #endif /* __LINUX_RESTART_BLOCK_H */
