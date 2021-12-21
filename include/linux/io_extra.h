@@ -2,6 +2,8 @@
 #ifndef _LINUX_IO_EXTRA_H
 #define _LINUX_IO_EXTRA_H
 
+#include <asm/io_extra.h>
+
 #include <linux/io.h>
 #include <linux/string.h>
 
