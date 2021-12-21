@@ -24,6 +24,7 @@
 #include <asm/current.h>
 
 #ifdef CONFIG_DEBUG_MUTEXES
+# include <linux/bug.h>
 # include <linux/lockdep_api.h>
 # include <linux/debug_locks.h>
 #endif

@@ -18,6 +18,7 @@
  * The list_for_each() macro wasn't appropriate for the sysctl loop.
  *  Removed it and replaced it with older style, 03/23/00, Bill Wendling
  */
+#include <asm/elf_api.h>
 
 #include <linux/writeback_api.h>
 #include <linux/vfs_pressure.h>
@@ -31,7 +32,6 @@
 #include <linux/filter_api.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/atomic_api.h>
-#include <asm/elf_api.h>
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/swap.h>

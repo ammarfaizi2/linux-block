@@ -11,6 +11,8 @@
  * Copyright 2007 Jiri Kosina, SUSE Labs.
  */
 
+#include <asm/elf_api.h>
+
 #include <linux/sched/thread_info_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
@@ -18,7 +20,6 @@
 #include <linux/io_extra.h>
 #include <linux/capability.h>
 #include <asm/processor_api.h>
-#include <asm/elf_api.h>
 #include <linux/personality.h>
 #include <linux/mm.h>
 #include <linux/random.h>
@@ -32,7 +33,7 @@
 
 #include "physaddr.h"
 
-struct va_alignment __read_mostly va_align = {
+struct va_alignment __read_mostly ____cacheline_aligned va_align = {
 	.flags = -1,
 };
 

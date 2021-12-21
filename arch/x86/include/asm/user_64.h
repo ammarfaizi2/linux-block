@@ -3,7 +3,7 @@
 #define _ASM_X86_USER_64_H
 
 #include <asm/types.h>
-#include <asm/page.h>
+
 /* Core file format: The core file is written in such a way that gdb
    can understand it and provide useful information to the user.
    There are quite a number of obstacles to being able to view the
@@ -130,7 +130,7 @@ struct user {
   unsigned long error_code; /* CPU error code or 0 */
   unsigned long fault_address; /* CR3 or 0 */
 };
-#define NBPG PAGE_SIZE
+#define NBPG 4096
 #define UPAGES 1
 #define HOST_TEXT_START_ADDR (u.start_code)
 #define HOST_STACK_END_ADDR (u.start_stack + u.u_ssize * NBPG)

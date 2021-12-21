@@ -4,6 +4,8 @@
  *
  * This contains most of the x86 vDSO kernel-side code.
  */
+#include <asm/elf_api.h>
+
 #include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/pgtable_api.h>
@@ -12,7 +14,6 @@
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/io.h>
-#include <asm/elf_api.h>
 #include <linux/mm.h>
 #include <linux/err.h>
 #include <linux/sched.h>

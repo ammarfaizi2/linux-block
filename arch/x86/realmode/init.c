@@ -8,6 +8,7 @@
 #include <linux/cc_platform.h>
 #include <linux/pgtable.h>
 
+#include <asm/processor_api.h>
 #include <asm/set_memory.h>
 #include <asm/realmode.h>
 #include <asm/tlbflush.h>

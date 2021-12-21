@@ -2,7 +2,6 @@
 #ifndef _ASM_X86_USER_32_H
 #define _ASM_X86_USER_32_H
 
-#include <asm/page.h>
 /* Core file format: The core file is written in such a way that gdb
    can understand it and provide useful information to the user (under
    linux we use the 'trad-core' bfd).  There are quite a number of
@@ -124,7 +123,7 @@ struct user{
   char u_comm[32];		/* User command that was responsible */
   int u_debugreg[8];
 };
-#define NBPG PAGE_SIZE
+#define NBPG 4096
 #define UPAGES 1
 #define HOST_TEXT_START_ADDR (u.start_code)
 #define HOST_STACK_END_ADDR (u.start_stack + u.u_ssize * NBPG)
