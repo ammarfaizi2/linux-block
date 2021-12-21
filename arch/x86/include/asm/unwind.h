@@ -6,6 +6,19 @@
 #include <linux/kprobes.h>
 #include <asm/ptrace.h>
 #include <asm/stacktrace.h>
+#include <asm/switch_to.h>
+
+static inline unsigned long *
+get_stack_pointer(struct task_struct *task, struct pt_regs *regs)
+{
+	if (regs)
+		return (unsigned long *)regs->sp;
+
+	if (task == current)
+		return __builtin_frame_address(0);
+
+	return (unsigned long *)task_thread(task).sp;
+}
 
 #define IRET_FRAME_OFFSET (offsetof(struct pt_regs, ip))
 #define IRET_FRAME_SIZE   (sizeof(struct pt_regs) - IRET_FRAME_OFFSET)
@@ -141,5 +154,35 @@ unsigned long unwind_recover_ret_addr(struct unwind_state *state,
 		val = READ_ONCE_NOCHECK(x);		\
 	val;						\
 })
+
+#ifdef CONFIG_FRAME_POINTER
+static inline unsigned long *
+get_frame_pointer(struct task_struct *task, struct pt_regs *regs)
+{
+	if (regs)
+		return (unsigned long *)regs->bp;
+
+	if (task == current)
+		return __builtin_frame_address(0);
+
+	return &((struct inactive_task_frame *)task_thread(task).sp)->bp;
+}
+#else
+static inline unsigned long *
+get_frame_pointer(struct task_struct *task, struct pt_regs *regs)
+{
+	return NULL;
+}
+#endif /* CONFIG_FRAME_POINTER */
+
+static __always_inline
+bool get_stack_guard_info(unsigned long *stack, struct stack_info *info)
+{
+	/* make sure it's not in the stack proper */
+	if (get_stack_info_noinstr(stack, current, info))
+		return false;
+	/* but if it is in the page below it, we hit a guard */
+	return get_stack_info_noinstr((void *)stack + PAGE_SIZE, current, info);
+}
 
 #endif /* _ASM_X86_UNWIND_H */
