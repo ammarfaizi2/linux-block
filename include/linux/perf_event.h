@@ -15,6 +15,5 @@
 #define _LINUX_PERF_EVENT_H
 
 #include <linux/perf_event_types.h>
-#include <linux/perf_event_api.h>
 
 #endif /* _LINUX_PERF_EVENT_H */
