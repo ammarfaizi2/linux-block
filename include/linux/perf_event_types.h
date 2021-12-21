@@ -14,10 +14,6 @@
 #ifndef _LINUX_PERF_EVENT_TYPES_H
 #define _LINUX_PERF_EVENT_TYPES_H
 
-#include <linux/smp_api.h>
-#include <linux/lockdep_api.h>
-#include <linux/cred.h>
-#include <linux/cgroup_api.h>
 #include <uapi/linux/perf_event.h>
 #include <uapi/linux/bpf_perf_event.h>
 
@@ -43,27 +39,10 @@ struct perf_guest_info_callbacks {
 #include <asm/hw_breakpoint.h>
 #endif
 
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/rculist.h>
-#include <linux/rcupdate.h>
-#include <linux/spinlock.h>
-#include <linux/hrtimer.h>
-#include <linux/fs.h>
-#include <linux/pid_namespace.h>
-#include <linux/workqueue.h>
+#include <linux/hrtimer_types.h>
 #include <linux/ftrace.h>
-#include <linux/cpu.h>
 #include <linux/irq_work.h>
-#include <linux/static_key.h>
-#include <linux/jump_label_ratelimit.h>
-#include <linux/atomic.h>
-#include <linux/sysfs.h>
 #include <linux/perf_regs.h>
-#include <linux/cgroup.h>
-#include <linux/refcount.h>
-#include <linux/security.h>
-#include <linux/static_call.h>
 #include <asm/local.h>
 
 struct perf_callchain_entry {
