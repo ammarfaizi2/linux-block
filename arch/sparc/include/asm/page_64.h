@@ -56,6 +56,12 @@
 #define VMALLOC_START		_AC(0x0000000100000000,UL)
 #define VMEMMAP_BASE		VMALLOC_END
 
+/* The maximum number of physical memory address bits we support.  The
+ * largest value we can support is whatever "KPGD_SHIFT + KPTE_BITS"
+ * evaluates to.
+ */
+#define MAX_PHYS_ADDRESS_BITS	53
+
 #ifndef __ASSEMBLY__
 
 #if defined(CONFIG_HUGETLB_PAGE) || defined(CONFIG_TRANSPARENT_HUGEPAGE)
@@ -155,12 +161,6 @@ extern unsigned long sparc64_va_hole_bottom;
 extern unsigned long PAGE_OFFSET;
 
 #endif /* !(__ASSEMBLY__) */
-
-/* The maximum number of physical memory address bits we support.  The
- * largest value we can support is whatever "KPGD_SHIFT + KPTE_BITS"
- * evaluates to.
- */
-#define MAX_PHYS_ADDRESS_BITS	53
 
 #define ILOG2_4MB		22
 #define ILOG2_256MB		28
