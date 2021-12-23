@@ -25,6 +25,8 @@
 
 #include <linux/uaccess.h>
 
+#include "internal.h"
+
 static const char *
 strcmp_prefix(const char *a, const char *a_prefix)
 {
@@ -539,43 +541,84 @@ EXPORT_SYMBOL_GPL(vfs_removexattr);
 /*
  * Extended attribute SET operations
  */
-static long
-setxattr(struct user_namespace *mnt_userns, struct dentry *d,
-	 const char __user *name, const void __user *value, size_t size,
-	 int flags)
-{
-	int error;
-	void *kvalue = NULL;
-	char kname[XATTR_NAME_MAX + 1];
 
-	if (flags & ~(XATTR_CREATE|XATTR_REPLACE))
+int setxattr_copy(const char __user *name, struct xattr_ctx *ctx,
+		void **xattr_val)
+{
+	void *kvalue = NULL;
+	int error;
+
+	if (ctx->flags & ~(XATTR_CREATE|XATTR_REPLACE))
 		return -EINVAL;
 
-	error = strncpy_from_user(kname, name, sizeof(kname));
-	if (error == 0 || error == sizeof(kname))
-		error = -ERANGE;
+	error = strncpy_from_user(ctx->kname->name, name,
+				sizeof(ctx->kname->name));
+	if (error == 0 || error == sizeof(ctx->kname->name))
+		return  -ERANGE;
 	if (error < 0)
 		return error;
 
-	if (size) {
-		if (size > XATTR_SIZE_MAX)
+	if (ctx->size) {
+		if (ctx->size > XATTR_SIZE_MAX)
 			return -E2BIG;
-		kvalue = kvmalloc(size, GFP_KERNEL);
+
+		kvalue = kvmalloc(ctx->size, GFP_KERNEL);
 		if (!kvalue)
 			return -ENOMEM;
-		if (copy_from_user(kvalue, value, size)) {
-			error = -EFAULT;
-			goto out;
+
+		if (copy_from_user(kvalue, ctx->value, ctx->size)) {
+			kvfree(kvalue);
+			return -EFAULT;
 		}
-		if ((strcmp(kname, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
-		    (strcmp(kname, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
-			posix_acl_fix_xattr_from_user(mnt_userns, kvalue, size);
 	}
 
-	error = vfs_setxattr(mnt_userns, d, kname, kvalue, size, flags);
-out:
-	kvfree(kvalue);
+	*xattr_val = kvalue;
+	return 0;
+}
 
+static void setxattr_convert(struct user_namespace *mnt_userns,
+			struct xattr_ctx *ctx, void *xattr_value)
+{
+	if (ctx->size &&
+		((strcmp(ctx->kname->name, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
+		(strcmp(ctx->kname->name, XATTR_NAME_POSIX_ACL_DEFAULT) == 0)))
+		posix_acl_fix_xattr_from_user(mnt_userns, xattr_value, ctx->size);
+}
+
+int do_setxattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+		struct xattr_ctx *ctx, void *xattr_value)
+{
+	int error;
+
+	setxattr_convert(mnt_userns, ctx, xattr_value);
+	error = vfs_setxattr(mnt_userns, dentry, ctx->kname->name,
+			xattr_value, ctx->size, ctx->flags);
+
+	return error;
+}
+
+static long
+setxattr(struct user_namespace *mnt_userns, struct dentry *d,
+	const char __user *name, const void __user *value, size_t size,
+	int flags)
+{
+	struct xattr_name kname;
+	struct xattr_ctx ctx = {
+		.value    = value,
+		.size     = size,
+		.kname    = &kname,
+		.flags    = flags,
+	};
+	void *xattr_value = NULL;
+	int error;
+
+	error = setxattr_copy(name, &ctx, &xattr_value);
+	if (error)
+		return error;
+
+	error = do_setxattr(mnt_userns, d, &ctx, xattr_value);
+
+	kvfree(xattr_value);
 	return error;
 }
 
