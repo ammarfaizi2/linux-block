@@ -356,18 +356,6 @@ static void afs_init_rreq(struct netfs_read_request *rreq, struct file *file)
 	rreq->netfs_priv = key_get(afs_file_key(file));
 }
 
-static int afs_begin_cache_operation(struct netfs_read_request *rreq)
-{
-#ifdef CONFIG_AFS_FSCACHE
-	struct afs_vnode *vnode = AFS_FS_I(rreq->inode);
-
-	return fscache_begin_read_operation(&rreq->cache_resources,
-					    afs_vnode_cache(vnode));
-#else
-	return -ENOBUFS;
-#endif
-}
-
 static int afs_check_write_begin(struct file *file, loff_t pos, unsigned len,
 				 struct folio *folio, void **_fsdata)
 {
@@ -383,7 +371,6 @@ static void afs_priv_cleanup(struct address_space *mapping, void *netfs_priv)
 
 const struct netfs_request_ops afs_req_ops = {
 	.init_rreq		= afs_init_rreq,
-	.begin_cache_operation	= afs_begin_cache_operation,
 	.check_write_begin	= afs_check_write_begin,
 	.issue_op		= afs_req_issue_op,
 	.cleanup		= afs_priv_cleanup,

@@ -982,18 +982,20 @@ static int netfs_rreq_set_up_buffer(struct netfs_read_request *rreq,
 static int netfs_begin_cache_operation(struct netfs_read_request *rreq,
 				       struct netfs_i_context *ctx)
 {
-	int ret = -ENOBUFS;
+#ifdef CONFIG_FSCACHE
+	int ret;
 
-	if (ctx->ops->begin_cache_operation) {
-		ret = ctx->ops->begin_cache_operation(rreq);
-		/* TODO: Get the zero point value from the cache */
+	ret = fscache_begin_read_operation(&rreq->cache_resources, ctx->cache);
+	/* TODO: Get the zero point value from the cache */
 #if 0
-		if (ret == 0 &&
-		    !test_and_set_bit(NETFS_ICTX_GOT_CACHED_ZP, &ctx->flags))
-			ctx->zero_point = netfs_i_cookie(rreq->inode)->stored_zero_point;
+	if (ret == 0 &&
+	    !test_and_set_bit(NETFS_ICTX_GOT_CACHED_ZP, &ctx->flags))
+		ctx->zero_point = netfs_i_cookie(rreq->inode)->stored_zero_point;
 #endif
-	}
 	return ret;
+#else
+	return -ENOBUFS;
+#endif
 }
 
 /**

@@ -57,13 +57,6 @@ static inline int ceph_fscache_set_page_dirty(struct page *page)
 	return fscache_set_page_dirty(page, ceph_fscache_cookie(ci));
 }
 
-static inline int ceph_begin_cache_operation(struct netfs_read_request *rreq)
-{
-	struct fscache_cookie *cookie = ceph_fscache_cookie(ceph_inode(rreq->inode));
-
-	return fscache_begin_read_operation(&rreq->cache_resources, cookie);
-}
-
 static inline bool ceph_is_cache_enabled(struct inode *inode)
 {
 	return fscache_cookie_enabled(ceph_fscache_cookie(ceph_inode(inode)));
@@ -132,11 +125,6 @@ static inline int ceph_fscache_set_page_dirty(struct page *page)
 static inline bool ceph_is_cache_enabled(struct inode *inode)
 {
 	return false;
-}
-
-static inline int ceph_begin_cache_operation(struct netfs_read_request *rreq)
-{
-	return -ENOBUFS;
 }
 
 static inline void ceph_fscache_note_page_release(struct inode *inode)

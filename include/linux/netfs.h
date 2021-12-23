@@ -207,7 +207,6 @@ struct netfs_read_request {
  */
 struct netfs_request_ops {
 	void (*init_rreq)(struct netfs_read_request *rreq, struct file *file);
-	int (*begin_cache_operation)(struct netfs_read_request *rreq);
 	void (*expand_readahead)(struct netfs_read_request *rreq);
 	bool (*clamp_length)(struct netfs_read_subrequest *subreq);
 	void (*issue_op)(struct netfs_read_subrequest *subreq);

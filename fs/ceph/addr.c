@@ -346,7 +346,6 @@ static void ceph_readahead_cleanup(struct address_space *mapping, void *priv)
 }
 
 const struct netfs_request_ops ceph_netfs_ops = {
-	.begin_cache_operation	= ceph_begin_cache_operation,
 	.issue_op		= ceph_netfs_issue_op,
 	.expand_readahead	= ceph_netfs_expand_readahead,
 	.clamp_length		= ceph_netfs_clamp_length,
