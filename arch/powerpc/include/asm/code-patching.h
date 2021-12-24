@@ -58,18 +58,26 @@ static inline int modify_instruction_site(s32 *site, unsigned int clr, unsigned 
 	return modify_instruction((unsigned int *)patch_site_addr(site), clr, set);
 }
 
+static inline unsigned int branch_opcode(ppc_inst_t instr)
+{
+	return ppc_inst_primary_opcode(instr) & 0x3F;
+}
+
+static inline int instr_is_branch_iform(ppc_inst_t instr)
+{
+	return branch_opcode(instr) == 18;
+}
+
+static inline int instr_is_branch_bform(ppc_inst_t instr)
+{
+	return branch_opcode(instr) == 16;
+}
+
 int instr_is_relative_branch(ppc_inst_t instr);
 int instr_is_relative_link_branch(ppc_inst_t instr);
 unsigned long branch_target(const u32 *instr);
 int translate_branch(ppc_inst_t *instr, const u32 *dest, const u32 *src);
 bool is_conditional_branch(ppc_inst_t instr);
-#ifdef CONFIG_PPC_BOOK3E_64
-void __patch_exception(int exc, unsigned long addr);
-#define patch_exception(exc, name) do { \
-	extern unsigned int name; \
-	__patch_exception((exc), (unsigned long)&name); \
-} while (0)
-#endif
 
 #define OP_RT_RA_MASK	0xffff0000UL
 #define LIS_R2		(PPC_RAW_LIS(_R2, 0))

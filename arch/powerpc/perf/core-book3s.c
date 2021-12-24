@@ -17,6 +17,7 @@
 #include <asm/firmware.h>
 #include <asm/ptrace.h>
 #include <asm/code-patching.h>
+#include <asm/hw_irq.h>
 #include <asm/interrupt.h>
 
 #ifdef CONFIG_PPC64
@@ -2437,6 +2438,36 @@ static void perf_event_interrupt(struct pt_regs *regs)
 	perf_sample_event_took(sched_clock() - start_clock);
 }
 
+/*
+ * If the perf subsystem wants performance monitor interrupts as soon as
+ * possible (e.g., to sample the instruction address and stack chain),
+ * this should return true. The IRQ masking code can then enable MSR[EE]
+ * in some places (e.g., interrupt handlers) that allows PMI interrupts
+ * though to improve accuracy of profiles, at the cost of some performance.
+ *
+ * The PMU counters can be enabled by other means (e.g., sysfs raw SPR
+ * access), but in that case there is no need for prompt PMI handling.
+ *
+ * This currently returns true if any perf counter is being used. It
+ * could possibly return false if only events are being counted rather than
+ * samples being taken, but for now this is good enough.
+ */
+bool power_pmu_wants_prompt_pmi(void)
+{
+	struct cpu_hw_events *cpuhw;
+
+	/*
+	 * This could simply test local_paca->pmcregs_in_use if that were not
+	 * under ifdef KVM.
+	 */
+
+	if (!ppmu)
+		return false;
+
+	cpuhw = this_cpu_ptr(&cpu_hw_events);
+	return cpuhw->n_events;
+}
+
 static int power_pmu_prepare_cpu(unsigned int cpu)
 {
 	struct cpu_hw_events *cpuhw = &per_cpu(cpu_hw_events, cpu);
@@ -2448,7 +2479,7 @@ static int power_pmu_prepare_cpu(unsigned int cpu)
 	return 0;
 }
 
-int register_power_pmu(struct power_pmu *pmu)
+int __init register_power_pmu(struct power_pmu *pmu)
 {
 	if (ppmu)
 		return -EBUSY;		/* something's already registered */

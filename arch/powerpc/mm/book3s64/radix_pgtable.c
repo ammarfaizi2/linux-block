@@ -499,7 +499,7 @@ static int __init probe_memory_block_size(unsigned long node, const char *uname,
 	return 1;
 }
 
-static unsigned long radix_memory_block_size(void)
+static unsigned long __init radix_memory_block_size(void)
 {
 	unsigned long mem_block_size = MIN_MEMORY_BLOCK_SIZE;
 
@@ -517,7 +517,7 @@ static unsigned long radix_memory_block_size(void)
 
 #else   /* CONFIG_MEMORY_HOTPLUG */
 
-static unsigned long radix_memory_block_size(void)
+static unsigned long __init radix_memory_block_size(void)
 {
 	return 1UL * 1024 * 1024 * 1024;
 }
@@ -1076,7 +1076,7 @@ int pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot)
 
 int pud_clear_huge(pud_t *pud)
 {
-	if (pud_huge(*pud)) {
+	if (pud_is_leaf(*pud)) {
 		pud_clear(pud);
 		return 1;
 	}
@@ -1123,7 +1123,7 @@ int pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot)
 
 int pmd_clear_huge(pmd_t *pmd)
 {
-	if (pmd_huge(*pmd)) {
+	if (pmd_is_leaf(*pmd)) {
 		pmd_clear(pmd);
 		return 1;
 	}
