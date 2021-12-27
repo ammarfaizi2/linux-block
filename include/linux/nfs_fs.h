@@ -503,6 +503,7 @@ extern __be32 root_nfs_parse_addr(char *name); /*__init*/
 extern const struct file_operations nfs_file_operations;
 #if IS_ENABLED(CONFIG_NFS_V4)
 extern const struct file_operations nfs4_file_operations;
+extern const struct file_operations nfs4_dir_operations;
 #endif /* CONFIG_NFS_V4 */
 extern const struct address_space_operations nfs_file_aops;
 extern const struct address_space_operations nfs_dir_aops;

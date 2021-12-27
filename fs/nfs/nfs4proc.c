@@ -7963,6 +7963,129 @@ static int _nfs41_proc_get_locations(struct inode *inode,
 
 #endif	/* CONFIG_NFS_V4_1 */
 
+static int _nfs4_set_nfs4_statx(struct inode *inode,
+		struct nfs4_statx *statx,
+		struct nfs_fattr *fattr)
+{
+	const __u64 statx_win = NFS_FA_VALID_TIME_CREATE |
+				NFS_FA_VALID_TIME_BACKUP |
+				NFS_FA_VALID_ARCHIVE | NFS_FA_VALID_HIDDEN |
+				NFS_FA_VALID_SYSTEM;
+	struct iattr sattr = {0};
+	struct nfs_server *server = NFS_SERVER(inode);
+	__u32 bitmask[3];
+	struct nfs_setattrargs arg = {
+		.fh             = NFS_FH(inode),
+		.iap            = &sattr,
+		.server		= server,
+		.bitmask	= bitmask,
+		.statx		= statx,
+	};
+	struct nfs_setattrres res = {
+		.fattr		= fattr,
+		.server		= server,
+	};
+	struct rpc_message msg = {
+		.rpc_proc       = &nfs4_procedures[NFSPROC4_CLNT_SETATTR],
+		.rpc_argp       = &arg,
+		.rpc_resp       = &res,
+	};
+	int status;
+
+	nfs4_bitmap_copy_adjust(
+		bitmask, server->attr_bitmask, inode,
+		NFS_INO_INVALID_CHANGE | NFS_INO_INVALID_CTIME |
+			NFS_INO_INVALID_SIZE | NFS_INO_INVALID_OTHER |
+			NFS_INO_INVALID_BTIME | NFS_INO_INVALID_WINATTR);
+	/* Use the iattr structure to set atime and mtime since handling already
+	 * exists for them using the iattr struct in the encode_attrs()
+	 * (xdr encoding) routine.
+	 */
+	if (statx && (statx->fa_valid[0] & NFS_FA_VALID_MTIME)) {
+		sattr.ia_valid |= ATTR_MTIME_SET;
+		sattr.ia_mtime.tv_sec = statx->fa_mtime.tv_sec;
+		sattr.ia_mtime.tv_nsec = statx->fa_mtime.tv_nsec;
+	}
+
+	if (statx && (statx->fa_valid[0] & NFS_FA_VALID_ATIME)) {
+		sattr.ia_valid |= ATTR_ATIME_SET;
+		sattr.ia_atime.tv_sec = statx->fa_atime.tv_sec;
+		sattr.ia_atime.tv_nsec = statx->fa_atime.tv_nsec;
+	}
+
+	if (statx && (statx->fa_valid[0] & NFS_FA_VALID_OWNER)) {
+		sattr.ia_valid |= ATTR_UID;
+		sattr.ia_uid = statx->fa_owner_uid;
+	}
+
+	if (statx && (statx->fa_valid[0] & NFS_FA_VALID_OWNER_GROUP)) {
+		sattr.ia_valid |= ATTR_GID;
+		sattr.ia_gid = statx->fa_group_gid;
+	}
+
+	if (statx && (statx->fa_valid[0] & NFS_FA_VALID_SIZE)) {
+		sattr.ia_valid |= ATTR_SIZE;
+		sattr.ia_size = statx->fa_size;
+	}
+
+	nfs4_stateid_copy(&arg.stateid, &zero_stateid);
+
+	status = nfs4_call_sync(server->client, server, &msg, &arg.seq_args, &res.seq_res, 1);
+	if (!status) {
+		if (statx->fa_valid[0] & statx_win) {
+			struct nfs_inode *nfsi = NFS_I(inode);
+
+			spin_lock(&inode->i_lock);
+			if (statx->fa_valid[0] & NFS_FA_VALID_TIME_CREATE)
+				nfsi->btime = statx->fa_btime;
+			if (statx->fa_valid[0] & NFS_FA_VALID_TIME_BACKUP)
+				nfsi->timebackup = statx->fa_time_backup;
+			if (statx->fa_valid[0] & NFS_FA_VALID_ARCHIVE)
+				nfsi->archive = (statx->fa_flags &
+						 NFS_FA_FLAG_ARCHIVE) != 0;
+			if (statx->fa_valid[0] & NFS_FA_VALID_SYSTEM)
+				nfsi->system = (statx->fa_flags &
+						NFS_FA_FLAG_SYSTEM) != 0;
+			if (statx->fa_valid[0] & NFS_FA_VALID_HIDDEN)
+				nfsi->hidden = (statx->fa_flags &
+						NFS_FA_FLAG_HIDDEN) != 0;
+			if (statx->fa_valid[0] & NFS_FA_VALID_OFFLINE)
+				nfsi->offline = (statx->fa_flags &
+						 NFS_FA_FLAG_OFFLINE) != 0;
+
+			nfsi->cache_validity &= ~NFS_INO_INVALID_CTIME;
+			if (fattr->valid & NFS_ATTR_FATTR_CTIME)
+				inode->i_ctime = fattr->ctime;
+			else
+				nfs_set_cache_invalid(
+					inode, NFS_INO_INVALID_CHANGE |
+						   NFS_INO_INVALID_CTIME);
+			spin_unlock(&inode->i_lock);
+		}
+
+		nfs_setattr_update_inode(inode, &sattr, fattr);
+	} else
+		dprintk("%s failed: %d\n", __func__, status);
+
+	return status;
+}
+
+int nfs4_set_nfs4_statx(struct inode *inode,
+		struct nfs4_statx *statx,
+		struct nfs_fattr *fattr)
+{
+	struct nfs4_exception exception = { };
+	struct nfs_server *server = NFS_SERVER(inode);
+	int err;
+
+	do {
+		err = nfs4_handle_exception(server,
+				_nfs4_set_nfs4_statx(inode, statx, fattr),
+				&exception);
+	} while (exception.retry);
+	return err;
+}
+
 /**
  * nfs4_proc_get_locations - discover locations for a migrated FSID
  * @inode: inode on FSID that is migrating
@@ -10423,6 +10546,7 @@ const struct nfs_rpc_ops nfs_v4_clientops = {
 	.dir_inode_ops	= &nfs4_dir_inode_operations,
 	.file_inode_ops	= &nfs4_file_inode_operations,
 	.file_ops	= &nfs4_file_operations,
+	.dir_ops	= &nfs4_dir_operations,
 	.getroot	= nfs4_proc_get_root,
 	.submount	= nfs4_submount,
 	.try_get_tree	= nfs4_try_get_tree,

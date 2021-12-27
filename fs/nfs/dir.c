@@ -48,11 +48,6 @@
 
 /* #define NFS_DEBUG_VERBOSE 1 */
 
-static int nfs_opendir(struct inode *, struct file *);
-static int nfs_closedir(struct inode *, struct file *);
-static int nfs_readdir(struct file *, struct dir_context *);
-static int nfs_fsync_dir(struct file *, loff_t, loff_t, int);
-static loff_t nfs_llseek_dir(struct file *, loff_t, int);
 static void nfs_readdir_clear_array(struct page*);
 
 const struct file_operations nfs_dir_operations = {
@@ -63,6 +58,7 @@ const struct file_operations nfs_dir_operations = {
 	.release	= nfs_closedir,
 	.fsync		= nfs_fsync_dir,
 };
+EXPORT_SYMBOL_GPL(nfs_dir_operations);
 
 const struct address_space_operations nfs_dir_aops = {
 	.freepage = nfs_readdir_clear_array,
@@ -104,8 +100,7 @@ static void put_nfs_open_dir_context(struct inode *dir, struct nfs_open_dir_cont
 /*
  * Open file
  */
-static int
-nfs_opendir(struct inode *inode, struct file *filp)
+int nfs_opendir(struct inode *inode, struct file *filp)
 {
 	int res = 0;
 	struct nfs_open_dir_context *ctx;
@@ -123,13 +118,14 @@ nfs_opendir(struct inode *inode, struct file *filp)
 out:
 	return res;
 }
+EXPORT_SYMBOL_GPL(nfs_opendir);
 
-static int
-nfs_closedir(struct inode *inode, struct file *filp)
+int nfs_closedir(struct inode *inode, struct file *filp)
 {
 	put_nfs_open_dir_context(file_inode(filp), filp->private_data);
 	return 0;
 }
+EXPORT_SYMBOL_GPL(nfs_closedir);
 
 struct nfs_cache_array_entry {
 	u64 cookie;
@@ -1064,7 +1060,7 @@ out:
    last cookie cache takes care of the common case of reading the
    whole directory.
  */
-static int nfs_readdir(struct file *file, struct dir_context *ctx)
+int nfs_readdir(struct file *file, struct dir_context *ctx)
 {
 	struct dentry	*dentry = file_dentry(file);
 	struct inode	*inode = d_inode(dentry);
@@ -1157,8 +1153,9 @@ out:
 	dfprintk(FILE, "NFS: readdir(%pD2) returns %d\n", file, res);
 	return res;
 }
+EXPORT_SYMBOL_GPL(nfs_readdir);
 
-static loff_t nfs_llseek_dir(struct file *filp, loff_t offset, int whence)
+loff_t nfs_llseek_dir(struct file *filp, loff_t offset, int whence)
 {
 	struct nfs_open_dir_context *dir_ctx = filp->private_data;
 
@@ -1196,19 +1193,20 @@ static loff_t nfs_llseek_dir(struct file *filp, loff_t offset, int whence)
 	spin_unlock(&filp->f_lock);
 	return offset;
 }
+EXPORT_SYMBOL_GPL(nfs_llseek_dir);
 
 /*
  * All directory operations under NFS are synchronous, so fsync()
  * is a dummy operation.
  */
-static int nfs_fsync_dir(struct file *filp, loff_t start, loff_t end,
-			 int datasync)
+int nfs_fsync_dir(struct file *filp, loff_t start, loff_t end, int datasync)
 {
 	dfprintk(FILE, "NFS: fsync dir(%pD2) datasync %d\n", filp, datasync);
 
 	nfs_inc_stats(file_inode(filp), NFSIOS_VFSFSYNC);
 	return 0;
 }
+EXPORT_SYMBOL_GPL(nfs_fsync_dir);
 
 /**
  * nfs_force_lookup_revalidate - Mark the directory as having changed

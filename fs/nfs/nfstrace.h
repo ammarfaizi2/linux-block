@@ -166,6 +166,11 @@ DEFINE_NFS_INODE_EVENT_DONE(nfs_fsync_exit);
 DEFINE_NFS_INODE_EVENT(nfs_access_enter);
 DEFINE_NFS_INODE_EVENT_DONE(nfs_set_cache_invalid);
 
+DEFINE_NFS_INODE_EVENT(nfs_ioctl_file_statx_get_enter);
+DEFINE_NFS_INODE_EVENT_DONE(nfs_ioctl_file_statx_get_exit);
+DEFINE_NFS_INODE_EVENT(nfs_ioctl_file_statx_set_enter);
+DEFINE_NFS_INODE_EVENT_DONE(nfs_ioctl_file_statx_set_exit);
+
 TRACE_EVENT(nfs_access_exit,
 		TP_PROTO(
 			const struct inode *inode,
