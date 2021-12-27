@@ -611,6 +611,42 @@ out_free:
 	return ret;
 }
 
+static long
+nfs4_ioctl_file_access_get(struct file *file,
+			   struct nfs_ioctl_nfs4_access __user *uarg)
+{
+	struct inode *inode = file_inode(file);
+	struct nfs_access_entry cache;
+	__u64 ac_flags;
+	const struct cred *old_cred;
+	struct cred *override_cred;
+	long ret;
+
+	if (!NFS_PROTO(inode)->access)
+		return -ENOTSUPP;
+
+	if (get_user(ac_flags, &uarg->ac_flags))
+		return -EFAULT;
+
+	override_cred = prepare_creds();
+	if (!override_cred)
+		return -ENOMEM;
+
+	if (!(ac_flags & NFS_AC_FLAG_EACCESS)) {
+		override_cred->fsuid = override_cred->uid;
+		override_cred->fsgid = override_cred->gid;
+	}
+	old_cred = override_creds(override_cred);
+
+	ret = nfs_get_access(inode, override_cred, &cache, true);
+	if (!ret && unlikely(put_user(cache.mask, &uarg->ac_mask) != 0))
+		ret = -EFAULT;
+
+	revert_creds(old_cred);
+	put_cred(override_cred);
+	return ret;
+}
+
 static long nfs4_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	void __user *argp = (void __user *)arg;
@@ -622,6 +658,9 @@ static long nfs4_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	case NFS_IOC_FILE_STATX_SET:
 		ret = nfs4_ioctl_file_statx_set(file, argp);
+		break;
+	case NFS_IOC_FILE_ACCESS_GET:
+		ret = nfs4_ioctl_file_access_get(file, argp);
 		break;
 	default:
 		ret = -ENOIOCTLCMD;

@@ -41,6 +41,8 @@
 #define NFS_IOC_FILE_STATX_GET	_IOR('N', 2, struct nfs_ioctl_nfs4_statx)
 #define NFS_IOC_FILE_STATX_SET	_IOW('N', 3, struct nfs_ioctl_nfs4_statx)
 
+#define NFS_IOC_FILE_ACCESS_GET	_IOR('N', 4, struct nfs_ioctl_nfs4_access)
+
 /* Options for struct nfs_ioctl_nfs4_statx */
 #define NFS_FA_OPTIONS_SYNC_AS_STAT			0x0000
 #define NFS_FA_OPTIONS_FORCE_SYNC			0x2000 /* See statx */
@@ -124,6 +126,15 @@ struct nfs_ioctl_nfs4_statx {
 	__s64		fa_blocks;
 	__u64 		fa_padding[4];
 };
+
+struct nfs_ioctl_nfs4_access {
+	/* input */
+	__u64		ac_flags;		/* operation flags */
+	/* output */
+	__u64		ac_mask;		/* NFS raw ACCESS reply mask */
+};
+
+#define NFS_AC_FLAG_EACCESS (1UL << 0)
 
 /*
  * NFS stats. The good thing with these values is that NFSv3 errors are

@@ -2954,6 +2954,44 @@ void nfs_access_set_mask(struct nfs_access_entry *entry, u32 access_result)
 }
 EXPORT_SYMBOL_GPL(nfs_access_set_mask);
 
+int nfs_get_access(struct inode *inode, const struct cred *cred,
+		   struct nfs_access_entry *cache, bool may_block)
+{
+	int status;
+
+	status = nfs_access_get_cached(inode, cred, &cache->mask, may_block);
+	if (status == 0)
+		return 0;
+
+	if (!may_block)
+		return -ECHILD;
+	/*
+	 * Determine which access bits we want to ask for...
+	 */
+	cache->mask = NFS_ACCESS_READ | NFS_ACCESS_MODIFY | NFS_ACCESS_EXTEND;
+	if (nfs_server_capable(inode, NFS_CAP_XATTR)) {
+		cache->mask |= NFS_ACCESS_XAREAD | NFS_ACCESS_XAWRITE |
+		    NFS_ACCESS_XALIST;
+	}
+	if (S_ISDIR(inode->i_mode))
+		cache->mask |= NFS_ACCESS_DELETE | NFS_ACCESS_LOOKUP;
+	else
+		cache->mask |= NFS_ACCESS_EXECUTE;
+	status = NFS_PROTO(inode)->access(inode, cache, cred);
+	if (status != 0) {
+		if (status == -ESTALE) {
+			if (!S_ISDIR(inode->i_mode))
+				nfs_set_inode_stale(inode);
+			else
+				nfs_zap_caches(inode);
+		}
+		return status;
+	}
+	nfs_access_add_cache(inode, cache, cred);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(nfs_get_access);
+
 static int nfs_do_access(struct inode *inode, const struct cred *cred, int mask)
 {
 	struct nfs_access_entry cache;
@@ -2963,38 +3001,9 @@ static int nfs_do_access(struct inode *inode, const struct cred *cred, int mask)
 
 	trace_nfs_access_enter(inode);
 
-	status = nfs_access_get_cached(inode, cred, &cache.mask, may_block);
-	if (status == 0)
-		goto out_cached;
-
-	status = -ECHILD;
-	if (!may_block)
+	status = nfs_get_access(inode, cred, &cache, may_block);
+	if (status < 0)
 		goto out;
-
-	/*
-	 * Determine which access bits we want to ask for...
-	 */
-	cache.mask = NFS_ACCESS_READ | NFS_ACCESS_MODIFY | NFS_ACCESS_EXTEND;
-	if (nfs_server_capable(inode, NFS_CAP_XATTR)) {
-		cache.mask |= NFS_ACCESS_XAREAD | NFS_ACCESS_XAWRITE |
-		    NFS_ACCESS_XALIST;
-	}
-	if (S_ISDIR(inode->i_mode))
-		cache.mask |= NFS_ACCESS_DELETE | NFS_ACCESS_LOOKUP;
-	else
-		cache.mask |= NFS_ACCESS_EXECUTE;
-	status = NFS_PROTO(inode)->access(inode, &cache, cred);
-	if (status != 0) {
-		if (status == -ESTALE) {
-			if (!S_ISDIR(inode->i_mode))
-				nfs_set_inode_stale(inode);
-			else
-				nfs_zap_caches(inode);
-		}
-		goto out;
-	}
-	nfs_access_add_cache(inode, &cache, cred);
-out_cached:
 	cache_mask = nfs_access_calc_mask(cache.mask, inode->i_mode);
 	if ((mask & ~cache_mask & (MAY_READ | MAY_WRITE | MAY_EXEC)) != 0)
 		status = -EACCES;
