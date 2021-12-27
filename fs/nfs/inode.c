@@ -524,6 +524,7 @@ nfs_fhget(struct super_block *sb, struct nfs_fh *fh, struct nfs_fattr *fattr)
 		memset(&inode->i_mtime, 0, sizeof(inode->i_mtime));
 		memset(&inode->i_ctime, 0, sizeof(inode->i_ctime));
 		memset(&nfsi->btime, 0, sizeof(nfsi->btime));
+		memset(&nfsi->timebackup, 0, sizeof(nfsi->timebackup));
 		nfsi->archive = 0;
 		nfsi->hidden = 0;
 		nfsi->system = 0;
@@ -554,6 +555,10 @@ nfs_fhget(struct super_block *sb, struct nfs_fh *fh, struct nfs_fattr *fattr)
 			nfsi->btime = fattr->btime;
 		else if (fattr_supported & NFS_ATTR_FATTR_BTIME)
 			nfs_set_cache_invalid(inode, NFS_INO_INVALID_BTIME);
+		if (fattr->valid & NFS_ATTR_FATTR_TIME_BACKUP)
+			nfsi->timebackup = fattr->time_backup;
+		else if (fattr_supported & NFS_ATTR_FATTR_TIME_BACKUP)
+			nfs_set_cache_invalid(inode, NFS_INO_INVALID_WINATTR);
 		if (fattr->valid & NFS_ATTR_FATTR_ARCHIVE)
 			nfsi->archive = (fattr->hsa_flags & NFS_HSA_ARCHIVE) ? 1 : 0;
 		else if (fattr_supported & NFS_ATTR_FATTR_ARCHIVE)
@@ -2160,6 +2165,12 @@ static int nfs_update_inode(struct inode *inode, struct nfs_fattr *fattr)
 	else if (fattr_supported & NFS_ATTR_FATTR_BTIME)
 		nfsi->cache_validity |=
 			save_cache_validity & NFS_INO_INVALID_BTIME;
+
+	if (fattr->valid & NFS_ATTR_FATTR_TIME_BACKUP)
+		nfsi->timebackup = fattr->time_backup;
+	else if (fattr_supported & NFS_ATTR_FATTR_TIME_BACKUP)
+		nfsi->cache_validity |=
+			save_cache_validity & NFS_INO_INVALID_WINATTR;
 
 	if (fattr->valid & NFS_ATTR_FATTR_ARCHIVE)
 		nfsi->archive = (fattr->hsa_flags & NFS_HSA_ARCHIVE) ? 1 : 0;

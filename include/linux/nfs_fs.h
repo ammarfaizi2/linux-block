@@ -143,6 +143,7 @@ struct nfs_inode {
 	 */
 
 	struct timespec64	btime;
+	struct timespec64	timebackup;
 
 	unsigned char		archive : 1;
 	unsigned char		hidden : 1;
