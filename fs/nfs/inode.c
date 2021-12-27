@@ -528,6 +528,7 @@ nfs_fhget(struct super_block *sb, struct nfs_fh *fh, struct nfs_fattr *fattr)
 		nfsi->archive = 0;
 		nfsi->hidden = 0;
 		nfsi->system = 0;
+		nfsi->offline = 0;
 		inode_set_iversion_raw(inode, 0);
 		inode->i_size = 0;
 		clear_nlink(inode);
@@ -606,6 +607,10 @@ nfs_fhget(struct super_block *sb, struct nfs_fh *fh, struct nfs_fattr *fattr)
 		} else if (fattr_supported & NFS_ATTR_FATTR_SPACE_USED &&
 			   fattr->size != 0)
 			nfs_set_cache_invalid(inode, NFS_INO_INVALID_BLOCKS);
+		if (fattr->valid & NFS_ATTR_FATTR_OFFLINE)
+			nfsi->offline = (fattr->hsa_flags & NFS_HSA_OFFLINE) ? 1 : 0;
+		else if (fattr_supported & NFS_ATTR_FATTR_OFFLINE)
+			nfs_set_cache_invalid(inode, NFS_INO_INVALID_WINATTR);
 
 		nfs_setsecurity(inode, fattr);
 
@@ -2273,6 +2278,12 @@ static int nfs_update_inode(struct inode *inode, struct nfs_fattr *fattr)
 	else if (fattr_supported & NFS_ATTR_FATTR_BLOCKS_USED)
 		nfsi->cache_validity |=
 			save_cache_validity & NFS_INO_INVALID_BLOCKS;
+
+	if (fattr->valid & NFS_ATTR_FATTR_OFFLINE)
+		nfsi->offline = (fattr->hsa_flags & NFS_HSA_OFFLINE) ? 1 : 0;
+	else if (fattr_supported & NFS_ATTR_FATTR_OFFLINE)
+		nfsi->cache_validity |=
+			save_cache_validity & NFS_INO_INVALID_WINATTR;
 
 	/* Update attrtimeo value if we're out of the unstable period */
 	if (attr_changed) {

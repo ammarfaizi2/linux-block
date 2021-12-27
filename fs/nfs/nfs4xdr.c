@@ -1623,7 +1623,7 @@ static void encode_readdir(struct xdr_stream *xdr, const struct nfs4_readdir_arg
 			    FATTR4_WORD1_TIME_CREATE |
 			    FATTR4_WORD1_TIME_METADATA |
 			    FATTR4_WORD1_TIME_MODIFY;
-		attrs[2] |= FATTR4_WORD2_SECURITY_LABEL;
+		attrs[2] |= FATTR4_WORD2_SECURITY_LABEL | FATTR4_WORD2_OFFLINE;
 		dircount >>= 1;
 	}
 	/* Use mounted_on_fileid only if the server supports it */
@@ -4390,6 +4390,29 @@ static int decode_attr_xattrsupport(struct xdr_stream *xdr, uint32_t *bitmap,
 	return 0;
 }
 
+static int decode_attr_offline(struct xdr_stream *xdr, uint32_t *bitmap,
+			       uint32_t *res, uint64_t *flags)
+{
+	int status = 0;
+	__be32 *p;
+
+	if (unlikely(bitmap[2] & (FATTR4_WORD2_OFFLINE - 1U)))
+		return -EIO;
+	if (likely(bitmap[2] & FATTR4_WORD2_OFFLINE)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
+		if (be32_to_cpup(p))
+			*res |= NFS_HSA_OFFLINE;
+		else
+			*res &= ~NFS_HSA_OFFLINE;
+		bitmap[2] &= ~FATTR4_WORD2_OFFLINE;
+		*flags |= NFS_ATTR_FATTR_OFFLINE;
+	}
+	dprintk("%s: system file: =%s\n", __func__, (*res & NFS_HSA_OFFLINE) == 0 ? "false" : "true");
+	return status;
+}
+
 static int verify_attr_len(struct xdr_stream *xdr, unsigned int savep, uint32_t attrlen)
 {
 	unsigned int attrwords = XDR_QUADLEN(attrlen);
@@ -4882,6 +4905,12 @@ static int decode_getfattr_attrs(struct xdr_stream *xdr, uint32_t *bitmap,
 		fattr->valid |= status;
 	}
 
+	status = decode_attr_offline(xdr, bitmap, &fattr->hsa_flags,
+				     &fattr->valid);
+	if (status < 0)
+		goto xdr_error;
+
+	status = 0;
 xdr_error:
 	dprintk("%s: xdr returned %d\n", __func__, -status);
 	return status;

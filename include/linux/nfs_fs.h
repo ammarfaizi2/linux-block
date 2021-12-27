@@ -148,6 +148,7 @@ struct nfs_inode {
 	unsigned char		archive : 1;
 	unsigned char		hidden : 1;
 	unsigned char		system : 1;
+	unsigned char		offline : 1;
 
 	/*
 	 * read_cache_jiffies is when we started read-caching this inode.

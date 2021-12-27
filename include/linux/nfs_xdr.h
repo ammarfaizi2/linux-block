@@ -21,6 +21,7 @@
 #define NFS_HSA_HIDDEN		BIT(0)
 #define NFS_HSA_SYSTEM		BIT(1)
 #define NFS_HSA_ARCHIVE		BIT(2)
+#define NFS_HSA_OFFLINE		BIT(3)
 
 struct nfs4_string {
 	unsigned int len;
@@ -119,6 +120,7 @@ struct nfs_fattr {
 #define NFS_ATTR_FATTR_SYSTEM           BIT_ULL(28)
 #define NFS_ATTR_FATTR_ARCHIVE          BIT_ULL(29)
 #define NFS_ATTR_FATTR_TIME_BACKUP      BIT_ULL(30)
+#define NFS_ATTR_FATTR_OFFLINE          BIT_ULL(31)
 
 #define NFS_ATTR_FATTR (NFS_ATTR_FATTR_TYPE \
 		| NFS_ATTR_FATTR_MODE \
@@ -144,7 +146,8 @@ struct nfs_fattr {
 		| NFS_ATTR_FATTR_SYSTEM \
 		| NFS_ATTR_FATTR_ARCHIVE \
 		| NFS_ATTR_FATTR_TIME_BACKUP \
-		| NFS_ATTR_FATTR_V4_SECURITY_LABEL)
+		| NFS_ATTR_FATTR_V4_SECURITY_LABEL \
+		| NFS_ATTR_FATTR_OFFLINE)
 
 /*
  * Maximal number of supported layout drivers.
