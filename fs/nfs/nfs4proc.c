@@ -196,13 +196,16 @@ const u32 nfs4_fattr_bitmap[3] = {
 	| FATTR4_WORD0_CHANGE
 	| FATTR4_WORD0_SIZE
 	| FATTR4_WORD0_FSID
-	| FATTR4_WORD0_FILEID,
+	| FATTR4_WORD0_ARCHIVE
+	| FATTR4_WORD0_FILEID
+	| FATTR4_WORD0_HIDDEN,
 	FATTR4_WORD1_MODE
 	| FATTR4_WORD1_NUMLINKS
 	| FATTR4_WORD1_OWNER
 	| FATTR4_WORD1_OWNER_GROUP
 	| FATTR4_WORD1_RAWDEV
 	| FATTR4_WORD1_SPACE_USED
+	| FATTR4_WORD1_SYSTEM
 	| FATTR4_WORD1_TIME_ACCESS
 	| FATTR4_WORD1_TIME_CREATE
 	| FATTR4_WORD1_TIME_METADATA
@@ -218,13 +221,16 @@ static const u32 nfs4_pnfs_open_bitmap[3] = {
 	| FATTR4_WORD0_CHANGE
 	| FATTR4_WORD0_SIZE
 	| FATTR4_WORD0_FSID
-	| FATTR4_WORD0_FILEID,
+	| FATTR4_WORD0_ARCHIVE
+	| FATTR4_WORD0_FILEID
+	| FATTR4_WORD0_HIDDEN,
 	FATTR4_WORD1_MODE
 	| FATTR4_WORD1_NUMLINKS
 	| FATTR4_WORD1_OWNER
 	| FATTR4_WORD1_OWNER_GROUP
 	| FATTR4_WORD1_RAWDEV
 	| FATTR4_WORD1_SPACE_USED
+	| FATTR4_WORD1_SYSTEM
 	| FATTR4_WORD1_TIME_ACCESS
 	| FATTR4_WORD1_TIME_CREATE
 	| FATTR4_WORD1_TIME_METADATA
@@ -309,6 +315,11 @@ static void nfs4_bitmap_copy_adjust(__u32 *dst, const __u32 *src,
 
 	if (!(cache_validity & NFS_INO_INVALID_BTIME))
 		dst[1] &= ~FATTR4_WORD1_TIME_CREATE;
+
+	if (!(cache_validity & NFS_INO_INVALID_WINATTR)) {
+		dst[0] &= ~(FATTR4_WORD0_ARCHIVE | FATTR4_WORD0_HIDDEN);
+		dst[1] &= ~FATTR4_WORD1_SYSTEM;
+	}
 }
 
 static void nfs4_setup_readdir(u64 cookie, __be32 *verifier, struct dentry *dentry,
@@ -1235,6 +1246,7 @@ nfs4_update_changeattr_locked(struct inode *inode,
 				NFS_INO_INVALID_SIZE | NFS_INO_INVALID_OTHER |
 				NFS_INO_INVALID_BLOCKS | NFS_INO_INVALID_NLINK |
 				NFS_INO_INVALID_MODE | NFS_INO_INVALID_BTIME |
+				NFS_INO_INVALID_WINATTR |
 				NFS_INO_INVALID_XATTR | NFS_INO_REVAL_PAGECACHE;
 		nfsi->attrtimeo = NFS_MINATTRTIMEO(inode);
 	}
@@ -3880,8 +3892,12 @@ static int _nfs4_server_capabilities(struct nfs_server *server, struct nfs_fh *f
 		if (res.attr_bitmask[2] & FATTR4_WORD2_SECURITY_LABEL)
 			server->caps |= NFS_CAP_SECURITY_LABEL;
 #endif
+		if (!(res.attr_bitmask[0] & FATTR4_WORD0_ARCHIVE))
+			server->fattr_valid &= ~NFS_ATTR_FATTR_ARCHIVE;
 		if (!(res.attr_bitmask[0] & FATTR4_WORD0_FILEID))
 			server->fattr_valid &= ~NFS_ATTR_FATTR_FILEID;
+		if (!(res.attr_bitmask[0] & FATTR4_WORD0_HIDDEN))
+			server->fattr_valid &= ~NFS_ATTR_FATTR_HIDDEN;
 		if (!(res.attr_bitmask[1] & FATTR4_WORD1_MODE))
 			server->fattr_valid &= ~NFS_ATTR_FATTR_MODE;
 		if (!(res.attr_bitmask[1] & FATTR4_WORD1_NUMLINKS))
@@ -3904,6 +3920,8 @@ static int _nfs4_server_capabilities(struct nfs_server *server, struct nfs_fh *f
 			server->fattr_valid &= ~NFS_ATTR_FATTR_MTIME;
 		if (!(res.attr_bitmask[1] & FATTR4_WORD1_TIME_CREATE))
 			server->fattr_valid &= ~NFS_ATTR_FATTR_BTIME;
+		if (!(res.attr_bitmask[1] & FATTR4_WORD1_SYSTEM))
+			server->fattr_valid &= ~NFS_ATTR_FATTR_SYSTEM;
 		memcpy(server->attr_bitmask_nl, res.attr_bitmask,
 				sizeof(server->attr_bitmask));
 		server->attr_bitmask_nl[2] &= ~FATTR4_WORD2_SECURITY_LABEL;
@@ -5464,6 +5482,10 @@ void nfs4_bitmask_set(__u32 bitmask[], const __u32 src[],
 		bitmask[1] |= FATTR4_WORD1_SPACE_USED;
 	if (cache_validity & NFS_INO_INVALID_BTIME)
 		bitmask[1] |= FATTR4_WORD1_TIME_CREATE;
+	if (cache_validity & NFS_INO_INVALID_WINATTR) {
+		bitmask[0] |= FATTR4_WORD0_ARCHIVE | FATTR4_WORD0_HIDDEN;
+		bitmask[1] |= FATTR4_WORD1_SYSTEM;
+	}
 
 	if (cache_validity & NFS_INO_INVALID_SIZE)
 		bitmask[0] |= FATTR4_WORD0_SIZE;

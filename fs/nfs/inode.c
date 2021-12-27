@@ -202,6 +202,7 @@ void nfs_set_cache_invalid(struct inode *inode, unsigned long flags)
 			flags &= ~(NFS_INO_INVALID_MODE |
 				   NFS_INO_INVALID_OTHER |
 				   NFS_INO_INVALID_BTIME |
+				   NFS_INO_INVALID_WINATTR |
 				   NFS_INO_INVALID_XATTR);
 		flags &= ~(NFS_INO_INVALID_CHANGE | NFS_INO_INVALID_SIZE);
 	} else if (flags & NFS_INO_REVAL_PAGECACHE)
@@ -523,6 +524,9 @@ nfs_fhget(struct super_block *sb, struct nfs_fh *fh, struct nfs_fattr *fattr)
 		memset(&inode->i_mtime, 0, sizeof(inode->i_mtime));
 		memset(&inode->i_ctime, 0, sizeof(inode->i_ctime));
 		memset(&nfsi->btime, 0, sizeof(nfsi->btime));
+		nfsi->archive = 0;
+		nfsi->hidden = 0;
+		nfsi->system = 0;
 		inode_set_iversion_raw(inode, 0);
 		inode->i_size = 0;
 		clear_nlink(inode);
@@ -550,6 +554,18 @@ nfs_fhget(struct super_block *sb, struct nfs_fh *fh, struct nfs_fattr *fattr)
 			nfsi->btime = fattr->btime;
 		else if (fattr_supported & NFS_ATTR_FATTR_BTIME)
 			nfs_set_cache_invalid(inode, NFS_INO_INVALID_BTIME);
+		if (fattr->valid & NFS_ATTR_FATTR_ARCHIVE)
+			nfsi->archive = (fattr->hsa_flags & NFS_HSA_ARCHIVE) ? 1 : 0;
+		else if (fattr_supported & NFS_ATTR_FATTR_ARCHIVE)
+			nfs_set_cache_invalid(inode, NFS_INO_INVALID_WINATTR);
+		if (fattr->valid & NFS_ATTR_FATTR_HIDDEN)
+			nfsi->hidden = (fattr->hsa_flags & NFS_HSA_HIDDEN) ? 1 : 0;
+		else if (fattr_supported & NFS_ATTR_FATTR_HIDDEN)
+			nfs_set_cache_invalid(inode, NFS_INO_INVALID_WINATTR);
+		if (fattr->valid & NFS_ATTR_FATTR_SYSTEM)
+			nfsi->system = (fattr->hsa_flags & NFS_HSA_SYSTEM) ? 1 : 0;
+		else if (fattr_supported & NFS_ATTR_FATTR_SYSTEM)
+			nfs_set_cache_invalid(inode, NFS_INO_INVALID_WINATTR);
 		if (fattr->valid & NFS_ATTR_FATTR_CHANGE)
 			inode_set_iversion_raw(inode, fattr->change_attr);
 		else
@@ -1818,7 +1834,8 @@ static int nfs_inode_finish_partial_attr_update(const struct nfs_fattr *fattr,
 		NFS_INO_INVALID_ATIME | NFS_INO_INVALID_CTIME |
 		NFS_INO_INVALID_MTIME | NFS_INO_INVALID_SIZE |
 		NFS_INO_INVALID_BLOCKS | NFS_INO_INVALID_OTHER |
-		NFS_INO_INVALID_NLINK | NFS_INO_INVALID_BTIME;
+		NFS_INO_INVALID_NLINK | NFS_INO_INVALID_BTIME |
+		NFS_INO_INVALID_WINATTR;
 	unsigned long cache_validity = NFS_I(inode)->cache_validity;
 	enum nfs4_change_attr_type ctype = NFS_SERVER(inode)->change_attr_type;
 
@@ -2075,7 +2092,7 @@ static int nfs_update_inode(struct inode *inode, struct nfs_fattr *fattr)
 		  NFS_INO_INVALID_MTIME | NFS_INO_INVALID_SIZE |
 		  NFS_INO_INVALID_OTHER | NFS_INO_INVALID_BLOCKS |
 		  NFS_INO_INVALID_NLINK | NFS_INO_INVALID_MODE |
-		  NFS_INO_INVALID_BTIME);
+		  NFS_INO_INVALID_BTIME | NFS_INO_INVALID_WINATTR);
 
 	/* Do atomic weak cache consistency updates */
 	nfs_wcc_update_inode(inode, fattr);
@@ -2106,7 +2123,8 @@ static int nfs_update_inode(struct inode *inode, struct nfs_fattr *fattr)
 					| NFS_INO_INVALID_NLINK
 					| NFS_INO_INVALID_MODE
 					| NFS_INO_INVALID_OTHER
-					| NFS_INO_INVALID_BTIME;
+					| NFS_INO_INVALID_BTIME
+					| NFS_INO_INVALID_WINATTR;
 				if (S_ISDIR(inode->i_mode))
 					nfs_force_lookup_revalidate(inode);
 				attr_changed = true;
@@ -2142,6 +2160,24 @@ static int nfs_update_inode(struct inode *inode, struct nfs_fattr *fattr)
 	else if (fattr_supported & NFS_ATTR_FATTR_BTIME)
 		nfsi->cache_validity |=
 			save_cache_validity & NFS_INO_INVALID_BTIME;
+
+	if (fattr->valid & NFS_ATTR_FATTR_ARCHIVE)
+		nfsi->archive = (fattr->hsa_flags & NFS_HSA_ARCHIVE) ? 1 : 0;
+	else if (fattr_supported & NFS_ATTR_FATTR_ARCHIVE)
+		nfsi->cache_validity |=
+			save_cache_validity & NFS_INO_INVALID_WINATTR;
+
+	if (fattr->valid & NFS_ATTR_FATTR_HIDDEN)
+		nfsi->hidden = (fattr->hsa_flags & NFS_HSA_HIDDEN) ? 1 : 0;
+	else if (fattr_supported & NFS_ATTR_FATTR_HIDDEN)
+		nfsi->cache_validity |=
+			save_cache_validity & NFS_INO_INVALID_WINATTR;
+
+	if (fattr->valid & NFS_ATTR_FATTR_SYSTEM)
+		nfsi->system = (fattr->hsa_flags & NFS_HSA_SYSTEM) ? 1 : 0;
+	else if (fattr_supported & NFS_ATTR_FATTR_SYSTEM)
+		nfsi->cache_validity |=
+			save_cache_validity & NFS_INO_INVALID_WINATTR;
 
 	/* Check if our cached file size is stale */
 	if (fattr->valid & NFS_ATTR_FATTR_SIZE) {
