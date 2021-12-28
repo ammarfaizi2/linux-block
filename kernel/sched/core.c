@@ -8621,7 +8621,15 @@ void __init init_idle(struct task_struct *idle, int cpu)
 	idle->flags |= PF_IDLE | PF_KTHREAD | PF_NO_SETAFFINITY;
 	kthread_set_per_cpu(idle, cpu);
 
+	/*
+	 * NB: This is called from sched_init() on the *current* idle thread.
+	 * This seems fragile if not actively incorrect.
+	 *
+	 * Initializing SCS for about-to-be-brought-up CPU idle threads
+	 * is in bringup_cpu(), but that does not cover the boot CPU.
+	 */
 	scs_task_reset(idle);
+
 	kasan_unpoison_task_stack(idle);
 
 #ifdef CONFIG_SMP
@@ -8779,7 +8787,6 @@ void idle_task_exit(void)
 		finish_arch_post_lock_switch();
 	}
 
-	scs_task_reset(current);
 	/* finish_cpu(), as ran on the BP, will clean up the active_mm state */
 }
 

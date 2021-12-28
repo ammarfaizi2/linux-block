@@ -33,6 +33,7 @@
 #include <linux/slab.h>
 #include <linux/percpu-rwsem.h>
 #include <linux/cpuset.h>
+#include <linux/scs.h>
 
 #include <trace/events/power.h>
 #define CREATE_TRACE_POINTS
@@ -586,6 +587,8 @@ static int bringup_cpu(unsigned int cpu)
 {
 	struct task_struct *idle = idle_thread_get(cpu);
 	int ret;
+
+	scs_task_reset(idle);
 
 	/*
 	 * Some architectures have to walk the irq descriptors to
