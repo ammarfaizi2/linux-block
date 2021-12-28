@@ -329,7 +329,6 @@ void arch_cpu_idle_dead(void)
  */
 void __ref cpu_die(void)
 {
-	idle_task_exit();
 	local_irq_disable();
 	__asm__ __volatile__(
 			"	movi	a2, cpu_restart\n"

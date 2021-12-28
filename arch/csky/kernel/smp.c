@@ -309,8 +309,6 @@ void __cpu_die(unsigned int cpu)
 
 void arch_cpu_idle_dead(void)
 {
-	idle_task_exit();
-
 	cpu_report_death();
 
 	while (!secondary_stack)

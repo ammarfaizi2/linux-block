@@ -388,8 +388,6 @@ static void bmips_cpu_die(unsigned int cpu)
 
 void __ref play_dead(void)
 {
-	idle_task_exit();
-
 	/* flush data cache */
 	_dma_cache_wback_inv(0, ~0);
 

@@ -8678,6 +8678,30 @@ void __init init_idle(struct task_struct *idle, int cpu)
 #endif
 }
 
+/*
+ * Drops current->active_mm and switches current->active_mm to &init_mm.
+ * Caller must have IRQs off and must have current->mm == NULL (i.e. must
+ * be in a kernel thread).
+ */
+void unlazy_mm_irqs_off(void)
+{
+	struct mm_struct *mm = current->active_mm;
+
+	lockdep_assert_irqs_disabled();
+
+	if (WARN_ON_ONCE(current->mm))
+		return;
+
+	if (mm == &init_mm)
+		return;
+
+	switch_mm_irqs_off(mm, &init_mm, current);
+	mmgrab(&init_mm);
+	current->active_mm = &init_mm;
+	finish_arch_post_lock_switch();
+	mmdrop(mm);
+}
+
 #ifdef CONFIG_SMP
 
 int cpuset_cpumask_can_shrink(const struct cpumask *cur,
@@ -8771,25 +8795,6 @@ void sched_setnuma(struct task_struct *p, int nid)
 #endif /* CONFIG_NUMA_BALANCING */
 
 #ifdef CONFIG_HOTPLUG_CPU
-/*
- * Ensure that the idle task is using init_mm right before its CPU goes
- * offline.
- */
-void idle_task_exit(void)
-{
-	struct mm_struct *mm = current->active_mm;
-
-	BUG_ON(cpu_online(smp_processor_id()));
-	BUG_ON(current != this_rq()->idle);
-
-	if (mm != &init_mm) {
-		switch_mm(mm, &init_mm, current);
-		finish_arch_post_lock_switch();
-	}
-
-	/* finish_cpu(), as ran on the BP, will clean up the active_mm state */
-}
-
 static int __balance_push_cpu_stop(void *arg)
 {
 	struct task_struct *p = arg;

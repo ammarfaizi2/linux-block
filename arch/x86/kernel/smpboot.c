@@ -1656,8 +1656,6 @@ void native_cpu_die(unsigned int cpu)
 
 void play_dead_common(void)
 {
-	idle_task_exit();
-
 	/* Ack it */
 	(void)cpu_report_death();
 

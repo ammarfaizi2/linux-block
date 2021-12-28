@@ -77,8 +77,6 @@ void __cpu_die(unsigned int cpu)
  */
 void cpu_stop(void)
 {
-	idle_task_exit();
-
 	(void)cpu_report_death();
 
 	cpu_ops[smp_processor_id()]->cpu_stop();
