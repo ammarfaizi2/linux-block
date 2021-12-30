@@ -9,8 +9,8 @@ struct kallsyms_entry {
 };
 
 struct kallsyms_sym {
-	char *name;
 	u64 offset;
+	char *name;
 };
 
 #ifdef CONFIG_KALLSYMS_FAST
