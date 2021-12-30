@@ -32,6 +32,7 @@
 #include <linux/sizes.h>
 #include <linux/memblock.h>
 #include <linux/kallsyms_objtool.h>
+#include <linux/sort.h>
 
 /*
  * These will be re-linked against their real values
@@ -1014,6 +1015,18 @@ extern char __kallsyms_offsets_begin;
 extern char __kallsyms_offsets_end;
 
 #ifdef CONFIG_KALLSYMS_FAST
+
+static int sym_offset_cmp_func(const void *a, const void *b)
+{
+	const struct kallsyms_sym *sym_a = a;
+	const struct kallsyms_sym *sym_b = b;
+
+	if (sym_a->offset != sym_b->offset)
+		return sym_a->offset < sym_b->offset ? -1 : 1;
+
+	return strcmp(sym_a->name, sym_b->name);
+}
+
 /*
  * Must be called very early, before the first use of the kallsyms data
  * structures, or before crashes might trigger:
@@ -1021,18 +1034,18 @@ extern char __kallsyms_offsets_end;
 void __init kallsyms_objtool_init(void)
 {
 	struct kallsyms_entry *entries;
-	long nr_entries, i;
+	int nr_entries_max, i, num_duplicates;
 	size_t kallsyms_syms_size;
+	struct kallsyms_sym *sym_prev;
 	char *str;
 
 	printk("# kallsyms_objtool_init()\n");
 
-	nr_entries = ((long)&__kallsyms_offsets_end - (long)&__kallsyms_offsets_begin)/sizeof(struct kallsyms_entry);
-	kallsyms_num_syms = nr_entries;
+	nr_entries_max = ((long)&__kallsyms_offsets_end - (long)&__kallsyms_offsets_begin)/sizeof(struct kallsyms_entry);
 
-	printk("# kallsyms: %ld entries.\n", nr_entries);
+	printk("# kallsyms: %d max entries.\n", nr_entries_max);
 
-	BUG_ON(nr_entries <= 0);
+	BUG_ON(nr_entries_max <= 0);
 
 	str = &__kallsyms_strs_begin;
 	entries = (void *) &__kallsyms_offsets_begin;
@@ -1040,27 +1053,65 @@ void __init kallsyms_objtool_init(void)
 	printk("#     str: %p\n", str);
 	printk("# entries: %p\n", entries);
 
-	kallsyms_syms_size = kallsyms_num_syms * sizeof(struct kallsyms_sym);
+	kallsyms_syms_size = nr_entries_max * sizeof(struct kallsyms_sym);
 	kallsyms_syms = memblock_alloc(kallsyms_syms_size, SMP_CACHE_BYTES);
 
-	printk("# kallsyms/objtool: Allocated kallsyms_syms[] lookup table: %d entries, %ld.%02ld MB size\n", kallsyms_num_syms, kallsyms_syms_size/SZ_1M, (kallsyms_syms_size % SZ_1M)/(SZ_1M/100 + 1));
+	printk("# kallsyms/objtool: Allocated kallsyms_syms[] lookup table: %d max entries, %ld.%02ld MB size\n", nr_entries_max, kallsyms_syms_size/SZ_1M, (kallsyms_syms_size % SZ_1M)/(SZ_1M/100 + 1));
 
-	for (i = 0; i < nr_entries; i++) {
+	sym_prev = NULL;
+	for (i = 0; i < nr_entries_max; i++) {
 		struct kallsyms_sym *sym = kallsyms_syms + i;
 
 //		printk("# kallsyms entry %6ld/%6ld: [%016Lx]: {%s}\n", i, nr_entries, (u64)entries[i].offset, str);
 //		printk("%016Lx %s", (u64)entries[i].offset, str);
 
-		sym->name = str;
 		sym->offset = entries[i].offset;
+		sym->name = str;
 
+		sym_prev = sym;
 		str += strlen(str) + 1;
 
 	}
+
 	printk("# kallsyms, last str:             %p\n", str);
 	printk("# kallsyms, &__kallsyms_strs_end: %p\n", &__kallsyms_strs_end);
 
 	WARN_ON(str != &__kallsyms_strs_end);
+
+	printk("# Sorting the table ...\n");
+
+	sort(kallsyms_syms, nr_entries_max, sizeof(kallsyms_syms[0]), sym_offset_cmp_func, NULL);
+
+	/* Detect exact duplicates & squash them: */
+	kallsyms_num_syms = 1;
+	sym_prev = kallsyms_syms;
+	num_duplicates = 0;
+
+	for (i = 1; i < nr_entries_max; i++) {
+		struct kallsyms_sym *sym_new = kallsyms_syms + i;
+
+		/* Detect exact duplicates & squash them: */
+		if (sym_prev->offset == sym_new->offset && !strcmp(sym_prev->name, sym_new->name)) {
+//			printk("dup: # kallsyms entry %6ld/%6ld: [%016Lx]: {%s}\n", i, nr_entries_max, (u64)entries[i].offset, str);
+			num_duplicates++;
+		} else {
+			sym_prev++;
+			*sym_prev = *sym_new;
+			kallsyms_num_syms++;
+		}
+	}
+	BUG_ON(kallsyms_num_syms > nr_entries_max);
+	printk("# kallsyms, kallsyms_num_syms: %d, squashed %d duplicates\n", kallsyms_num_syms, num_duplicates);
+
+	printk("# Printing Symbol.map:\n");
+
+#if 0
+	for (i = 0; i < kallsyms_num_syms; i++) {
+		struct kallsyms_sym *sym = kallsyms_syms + i;
+
+		printk("System.map: %016Lx %s", sym->offset, sym->name);
+	}
+#endif
 
 	WARN(1, "test warning");
 }
