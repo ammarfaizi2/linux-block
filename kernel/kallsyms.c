@@ -34,6 +34,8 @@
 #include <linux/kallsyms_objtool.h>
 #include <linux/sort.h>
 
+#include <asm/setup.h>
+
 /*
  * These will be re-linked against their real values
  * during the second link stage.
@@ -52,14 +54,13 @@ static struct kallsyms_sym *kallsyms_syms;
 #else
 extern const unsigned int kallsyms_num_syms
 __section(".rodata") __attribute__((weak));
+extern const unsigned long kallsyms_relative_base
+__section(".rodata") __attribute__((weak));
 #endif
 
 static const int kallsyms_debug = 0;
 
 #define dprintk(fmt...) do { if (kallsyms_debug) printk(fmt); } while (0)
-
-extern const unsigned long kallsyms_relative_base
-__section(".rodata") __attribute__((weak));
 
 extern const char kallsyms_token_table[] __weak;
 extern const u16 kallsyms_token_index[] __weak;
@@ -154,9 +155,9 @@ static unsigned int get_symbol_offset(unsigned long pos)
 	const u8 *name;
 	int i;
 
-#ifdef CONFIG_KALLSYMS_FAST
 	dprintk("# kallsyms: get_symbol_offset() invocation: %ld\n", pos);
 
+#ifdef CONFIG_KALLSYMS_FAST
 	return pos;
 #endif
 
@@ -180,15 +181,20 @@ static unsigned int get_symbol_offset(unsigned long pos)
 
 static unsigned long kallsyms_sym_address(int idx)
 {
-#ifdef CONFIG_KALLSYMS_FAST
+	long offset;
+
 	if (WARN_ONCE(idx < 0 || idx >= kallsyms_num_syms, "# kallsyms: BUG: idx out of range!"))
 		return 0;
 
-	dprintk("# kallsyms: kallsyms_sym_address() invocation: %d => %p\n", idx, (void *)kallsyms_syms[idx].offset);
+#ifdef CONFIG_KALLSYMS_FAST
 
-	return kallsyms_syms[idx].offset;
+#if !defined(CONFIG_KALLSYMS_BASE_RELATIVE)
+# error BUG: bad KALLSYMS_FAST Kconfig settings!
 #endif
 
+	/* Already fixed up: */
+	offset = kallsyms_syms[idx].offset;
+#else
 	if (!IS_ENABLED(CONFIG_KALLSYMS_BASE_RELATIVE))
 		return kallsyms_addresses[idx];
 
@@ -196,12 +202,18 @@ static unsigned long kallsyms_sym_address(int idx)
 	if (!IS_ENABLED(CONFIG_KALLSYMS_ABSOLUTE_PERCPU))
 		return kallsyms_relative_base + (u32)kallsyms_offsets[idx];
 
-	/* ...otherwise, positive offsets are absolute values */
-	if (kallsyms_offsets[idx] >= 0)
-		return kallsyms_offsets[idx];
+	offset = kallsyms_offsets[idx];
 
-	/* ...and negative offsets are relative to kallsyms_relative_base - 1 */
-	return kallsyms_relative_base - 1 - kallsyms_offsets[idx];
+	/*
+	 * Otherwise, positive offsets are absolute values, and
+	 * negative offsets are relative to kallsyms_relative_base-1 :
+	 */
+	if (offset < 0)
+		offset = kallsyms_relative_base - 1 - offset;
+#endif
+	dprintk("# kallsyms: kallsyms_sym_address() invocation: %d => %p\n", idx, (void *)offset);
+
+	return offset;
 }
 
 static bool cleanup_symbol_name(char *s)
@@ -957,6 +969,7 @@ void __init kallsyms_objtool_init(void)
 {
 	struct kallsyms_entry *entries;
 	int nr_entries_max, i, num_duplicates;
+	unsigned long kallsyms_strs_size;
 	size_t kallsyms_syms_size;
 	struct kallsyms_sym *sym_prev;
 	char *str;
@@ -978,7 +991,8 @@ void __init kallsyms_objtool_init(void)
 	kallsyms_syms_size = nr_entries_max * sizeof(struct kallsyms_sym);
 	kallsyms_syms = memblock_alloc(kallsyms_syms_size, SMP_CACHE_BYTES);
 
-	printk("# kallsyms/objtool: Allocated kallsyms_syms[] lookup table: %d max entries, %ld.%02ld MB size\n", nr_entries_max, kallsyms_syms_size/SZ_1M, (kallsyms_syms_size % SZ_1M)/(SZ_1M/100 + 1));
+	printk("# kallsyms/objtool: Allocated kallsyms_syms[] lookup table: %d max entries, %ld.%02ld MB size\n",
+		nr_entries_max, kallsyms_syms_size/SZ_1M, (kallsyms_syms_size % SZ_1M)/(SZ_1M/100 + 1));
 
 	sym_prev = NULL;
 	for (i = 0; i < nr_entries_max; i++) {
@@ -988,6 +1002,9 @@ void __init kallsyms_objtool_init(void)
 //		printk("%016Lx %s", (u64)entries[i].offset, str);
 
 		sym->offset = entries[i].offset;
+		if ((long)sym->offset < 0)
+			sym->offset = sym->offset + kaslr_offset();
+
 		sym->name = str;
 
 		sym_prev = sym;
@@ -1025,6 +1042,10 @@ void __init kallsyms_objtool_init(void)
 	BUG_ON(kallsyms_num_syms > nr_entries_max);
 	printk("# kallsyms, kallsyms_num_syms: %d, squashed %d duplicates\n", kallsyms_num_syms, num_duplicates);
 
+	kallsyms_strs_size = (unsigned long)(&__kallsyms_strs_end - &__kallsyms_strs_begin);
+	printk("# kallsyms/objtool: Symbol table: %d entries, %ld.%02ld MB size\n",
+		kallsyms_num_syms, kallsyms_strs_size/SZ_1M, (kallsyms_strs_size % SZ_1M)/(SZ_1M/100 + 1));
+
 #if 0
 	printk("# Printing Symbol.map:\n");
 
@@ -1042,6 +1063,14 @@ void __init kallsyms_objtool_init(void)
 
 static int __init kallsyms_init(void)
 {
+#ifdef CONFIG_KALLSYMS_GENERIC
+	unsigned long size;
+
+	size = ((long)&kallsyms_token_index) - ((long)&kallsyms_offsets);
+	printk("# kallsyms/objtool: Compressed symbol table: %d entries, %ld.%02ld MB size\n", kallsyms_num_syms, size/SZ_1M, (size % SZ_1M)/(SZ_1M/100 + 1));
+#endif
+
+	WARN(1, "test warning #2");
 	proc_create("kallsyms", 0444, NULL, &kallsyms_proc_ops);
 	return 0;
 }
