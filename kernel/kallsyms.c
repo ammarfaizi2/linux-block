@@ -29,6 +29,9 @@
 #include <linux/compiler.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/sizes.h>
+#include <linux/memblock.h>
+#include <linux/kallsyms_objtool.h>
 
 /*
  * These will be re-linked against their real values
@@ -42,8 +45,13 @@ extern const u8 kallsyms_names[] __weak;
  * Tell the compiler that the count isn't in the small data section if the arch
  * has one (eg: FRV).
  */
+#ifdef CONFIG_KALLSYMS_FAST
+static int kallsyms_num_syms;
+static struct kallsyms_sym *kallsyms_syms;
+#else
 extern const unsigned int kallsyms_num_syms
 __section(".rodata") __attribute__((weak));
+#endif
 
 extern const unsigned long kallsyms_relative_base
 __section(".rodata") __attribute__((weak));
@@ -222,19 +230,43 @@ static bool cleanup_symbol_name(char *s)
 	return false;
 }
 
+#ifdef CONFIG_KALLSYMS_FAST
+/* Lookup the address for this symbol. Returns 0 if not found. */
+unsigned long kallsyms_lookup_name(const char *name)
+{
+	unsigned long i;
+	unsigned int off;
+
+	if (WARN_ONCE(!kallsyms_num_syms, "kallsyms/objtool: Weird, no symbol table."))
+		return 0;
+
+	for (i = 0, off = 0; i < kallsyms_num_syms; i++) {
+		struct kallsyms_sym *sym = kallsyms_syms + i;
+
+		if (!strcmp(sym->name, name)) {
+			static int once = 1;
+
+			if (once) {
+				once = 0;
+
+				printk("# kallsyms: first kallsyms_lookup_name() invocation: %s, kallsyms_num_syms: %d, kallsyms_syms: %p, offset: => %p\n", name, kallsyms_num_syms, kallsyms_syms, (void *)sym->offset);
+			}
+
+			return sym->offset;
+		}
+	}
+
+	return module_kallsyms_lookup_name(name);
+}
+#endif
+
+#ifdef CONFIG_KALLSYMS_GENERIC
 /* Lookup the address for this symbol. Returns 0 if not found. */
 unsigned long kallsyms_lookup_name(const char *name)
 {
 	char namebuf[KSYM_NAME_LEN];
 	unsigned long i;
 	unsigned int off;
-
-#ifndef CONFIG_KALLSYMS_GENERIC
-	WARN_ONCE(1, "# kallsyms: first kallsyms_lookup_name() invocation\n");
-
-	/* Not yet ... */
-	return 0;
-#endif
 
 	for (i = 0, off = 0; i < kallsyms_num_syms; i++) {
 		off = kallsyms_expand_symbol(off, namebuf, ARRAY_SIZE(namebuf));
@@ -245,8 +277,10 @@ unsigned long kallsyms_lookup_name(const char *name)
 		if (cleanup_symbol_name(namebuf) && strcmp(namebuf, name) == 0)
 			return kallsyms_sym_address(i);
 	}
+
 	return module_kallsyms_lookup_name(name);
 }
+#endif
 
 #ifdef CONFIG_LIVEPATCH
 /*
@@ -952,16 +986,22 @@ extern char __kallsyms_strs_end;
 extern char __kallsyms_offsets_begin;
 extern char __kallsyms_offsets_end;
 
-static void __init kallsyms_objtool_init(void)
-{
 #ifdef CONFIG_KALLSYMS_FAST
+/*
+ * Must be called very early, before the first use of the kallsyms data
+ * structures, or before crashes might trigger:
+ */
+void __init kallsyms_objtool_init(void)
+{
 	struct kallsyms_entry *entries;
 	long nr_entries, i;
+	size_t kallsyms_syms_size;
 	char *str;
 
 	printk("# kallsyms_objtool_init()\n");
 
 	nr_entries = ((long)&__kallsyms_offsets_end - (long)&__kallsyms_offsets_begin)/sizeof(struct kallsyms_entry);
+	kallsyms_num_syms = nr_entries;
 
 	printk("# kallsyms: %ld entries.\n", nr_entries);
 
@@ -973,9 +1013,19 @@ static void __init kallsyms_objtool_init(void)
 	printk("#     str: %p\n", str);
 	printk("# entries: %p\n", entries);
 
+	kallsyms_syms_size = kallsyms_num_syms * sizeof(struct kallsyms_sym);
+	kallsyms_syms = memblock_alloc(kallsyms_syms_size, SMP_CACHE_BYTES);
+
+	printk("# kallsyms/objtool: Allocated kallsyms_syms[] lookup table: %d entries, %ld.%02ld MB size\n", kallsyms_num_syms, kallsyms_syms_size/SZ_1M, (kallsyms_syms_size % SZ_1M)/(SZ_1M/100 + 1));
+
 	for (i = 0; i < nr_entries; i++) {
+		struct kallsyms_sym *sym = kallsyms_syms + i;
+
 //		printk("# kallsyms entry %6ld/%6ld: [%016Lx]: {%s}\n", i, nr_entries, (u64)entries[i].offset, str);
 //		printk("%016Lx %s", (u64)entries[i].offset, str);
+
+		sym->name = str;
+		sym->offset = entries[i].offset;
 
 		str += strlen(str) + 1;
 
@@ -984,14 +1034,12 @@ static void __init kallsyms_objtool_init(void)
 	printk("# kallsyms, &__kallsyms_strs_end: %p\n", &__kallsyms_strs_end);
 
 	WARN_ON(str != &__kallsyms_strs_end);
-#endif
 }
+#endif
+
 
 static int __init kallsyms_init(void)
 {
-	printk("# kallsyms init\n");
-	kallsyms_objtool_init();
-
 	proc_create("kallsyms", 0444, NULL, &kallsyms_proc_ops);
 	return 0;
 }

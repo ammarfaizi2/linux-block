@@ -46,6 +46,7 @@
 #include <linux/srcu.h>
 #include <linux/moduleparam.h>
 #include <linux/kallsyms.h>
+#include <linux/kallsyms_objtool.h>
 #include <linux/buildid.h>
 #include <linux/writeback.h>
 #include <linux/cpu.h>
@@ -1034,6 +1035,8 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 
 	build_all_zonelists(NULL);
 	page_alloc_init();
+
+	kallsyms_objtool_init();
 
 	pr_notice("Kernel command line: %s\n", saved_command_line);
 	/* parameters may set static keys */
