@@ -4057,6 +4057,7 @@ void rcu_barrier(void)
 	}
 
 	/* Mark the start of the barrier operation. */
+	raw_spin_lock_irqsave(&rcu_state.barrier_lock, flags);
 	rcu_seq_start(&rcu_state.barrier_sequence);
 	gseq = rcu_state.barrier_sequence;
 	rcu_barrier_trace(TPS("Inc1"), -1, rcu_state.barrier_sequence);
@@ -4070,6 +4071,7 @@ void rcu_barrier(void)
 	 */
 	init_completion(&rcu_state.barrier_completion);
 	atomic_set(&rcu_state.barrier_cpu_count, 2);
+	raw_spin_unlock_irqrestore(&rcu_state.barrier_lock, flags);
 
 	/*
 	 * Force each CPU with callbacks to register a new callback.
