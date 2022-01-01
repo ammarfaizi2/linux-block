@@ -19,7 +19,6 @@
 #include <linux/klist.h>
 #include <linux/pm.h>
 #include <linux/device/bus.h>
-#include <linux/module.h>
 
 #include <linux/device_types.h>
 
