@@ -110,7 +110,7 @@ def strip_brackets(w):
 
     w = re.sub(r'^(^.*)\((.+)\)(.*)$', r'\1\2\3', w)
 
-    dbg("ret:\t[%s]" % (w, ))
+    dbg("-->\t[%s]" % (w, ))
 
     return w
 
@@ -179,12 +179,12 @@ dc_words = [ "ABI", "AMD", "AMD64",
          "VMGEXIT", "VMLAUNCH", "VMSA", "vTOM", "WBINVD", "WRMSR", "x86", "Xen", "Xeon", "XSAVE" ]
 
 # known words as regexes to avoid duplication in the list above
-dc_regexes = [ r'MOVSB?', r'virtualized?' ]
+dc_regexes = [ r'MOVSB?', r'sev_(features|status)', r'virtualized?' ]
 
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars which get mentioned often in commit messages and comments
-known_vars = [ 'fpstate', 'sev_features', 'sev_status', 'sme_me_mask', 'xfeatures' ]
+known_vars = [ '__BOOT_DS', 'fpstate', 'sme_me_mask', 'xfeatures' ]
 
 def load_spellchecker():
     global dc
@@ -259,6 +259,24 @@ def spellcheck(s, where):
             # skip SHAs
             if re.match(r'^[a-f0-9]{12,40}$', w, re.I):
                 dbg("Skip SHA: [%s]" % (w, ))
+                continue
+
+            if w.startswith("CONFIG_"):
+                dbg("Skip CONFIG_ item: [%s]" % (w, ))
+                continue
+
+            if w in known_vars:
+                dbg("Skip known_vars [%s]" % (w, ))
+                continue
+
+            # clumsy way to continue the outer loop
+            match = False
+            for rgx in dc_regexes:
+                if re.match(rgx, w):
+                    dbg("Skip regexed word: [%s]" % (w, ))
+                    match = True
+
+            if match:
                 continue
 
             # a function name
@@ -352,20 +370,6 @@ def spellcheck(s, where):
             # kernel-doc arguments
             if re.match(r'^@\w+:?$', w):
                 dbg("Skip kernel-doc argument: [%s]" % (w, ))
-                continue
-
-            if w in known_vars:
-                dbg("Skip known_vars [%s]" % (w, ))
-                continue
-
-            # clumsy way to continue the outer loop
-            match = False
-            for rgx in dc_regexes:
-                if re.match(rgx, w):
-                    dbg("Skip regexed word: [%s]" % (w, ))
-                    match = True
-
-            if match:
                 continue
 
             if not dc.check(w):
@@ -802,7 +806,6 @@ class Patch:
                           ("Commit message has 'this patch':\n [%s]" % (l, )))
 
             if re.search(r'[a-f0-9]{7,40}\s?\(\".*', l, re.I):
-                print("Found: " + l)
                 verify_commit_quotation(lines[i - 1], lines[i], lines[i + 1])
 
         spellcheck(self.commit_msg, "commit message")
@@ -1005,6 +1008,7 @@ def verify_commit_quotation(prev, cur, nxt):
     if not prev and not nxt and cur.startswith("  "):
         return
 
+    warn(1, "line [%s]" % (cur, ))
     warn(1, "The proper commit quotation format is:\n<newline>\n[  ]<sha1, 12 chars> (\"commit name\")\n<newline>")
 ###
 
