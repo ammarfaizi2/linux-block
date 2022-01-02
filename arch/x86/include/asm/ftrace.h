@@ -2,6 +2,12 @@
 #ifndef _ASM_X86_FTRACE_H
 #define _ASM_X86_FTRACE_H
 
+#ifndef __ASSEMBLY__
+# include <linux/ptrace_types.h>
+# include <linux/atomic.h>
+# include <linux/string.h>
+#endif
+
 #ifdef CONFIG_FUNCTION_TRACER
 #ifndef CC_USING_FENTRY
 # error Compiler does not support fentry?
