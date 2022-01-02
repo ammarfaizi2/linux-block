@@ -792,12 +792,18 @@ class Patch:
         Do all kinds of checks to the commit message
         """
 
-        for l in self.commit_msg.splitlines():
+        lines = self.commit_msg.splitlines()
+
+        for i, l in enumerate(lines):
             warn(re.match(r'\W?we\W', l, re.I),
                           ("Commit message has 'we':\n [%s]" % (l, )))
 
             warn(re.match(r'(.*this\s+patch.*)', l, re.I),
                           ("Commit message has 'this patch':\n [%s]" % (l, )))
+
+            if re.search(r'[a-f0-9]{7,40}\s?\(\".*', l, re.I):
+                print("Found: " + l)
+                verify_commit_quotation(lines[i - 1], lines[i], lines[i + 1])
 
         spellcheck(self.commit_msg, "commit message")
 
@@ -990,6 +996,16 @@ def verify_comment_style(pfile, h):
         warn(re.match(r'^.*[;)]\s*/\*.*$', l), "No tail comments please:\n %s:%d [%s]\n" %
              (pfile, line.target_line_no, l.strip(), ))
 
+
+def verify_commit_quotation(prev, cur, nxt):
+    """
+    Verify if a commit is quoted properly. Args are the three lines surrounding the sha1
+    """
+
+    if not prev and not nxt and cur.startswith("  "):
+        return
+
+    warn(1, "The proper commit quotation format is:\n<newline>\n[  ]<sha1, 12 chars> (\"commit name\")\n<newline>")
 ###
 
 
