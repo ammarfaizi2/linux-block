@@ -59,7 +59,7 @@ struct cp_header {
 	__be16 len;
 };
 
-struct proto {
+struct ppp_proto {
 	struct net_device *dev;
 	struct timer_list timer;
 	unsigned long timeout;
@@ -70,7 +70,7 @@ struct proto {
 };
 
 struct ppp {
-	struct proto protos[IDX_COUNT];
+	struct ppp_proto protos[IDX_COUNT];
 	spinlock_t lock;
 	unsigned long last_pong;
 	unsigned int req_timeout, cr_retries, term_retries;
@@ -107,7 +107,7 @@ static inline struct ppp *get_ppp(struct net_device *dev)
 	return (struct ppp *)dev_to_hdlc(dev)->state;
 }
 
-static inline struct proto *get_proto(struct net_device *dev, u16 pid)
+static inline struct ppp_proto *get_proto(struct net_device *dev, u16 pid)
 {
 	struct ppp *ppp = get_ppp(dev);
 
@@ -301,7 +301,7 @@ static void ppp_cp_event(struct net_device *dev, u16 pid, u16 event, u8 code,
 {
 	int old_state, action;
 	struct ppp *ppp = get_ppp(dev);
-	struct proto *proto = get_proto(dev, pid);
+	struct ppp_proto *proto = get_proto(dev, pid);
 
 	old_state = proto->state;
 	BUG_ON(old_state >= STATES);
@@ -435,7 +435,7 @@ static int ppp_rx(struct sk_buff *skb)
 	struct hdlc_header *hdr = (struct hdlc_header *)skb->data;
 	struct net_device *dev = skb->dev;
 	struct ppp *ppp = get_ppp(dev);
-	struct proto *proto;
+	struct ppp_proto *proto;
 	struct cp_header *cp;
 	unsigned long flags;
 	unsigned int len;
@@ -561,7 +561,7 @@ out:
 
 static void ppp_timer(struct timer_list *t)
 {
-	struct proto *proto = from_timer(proto, t, timer);
+	struct ppp_proto *proto = from_timer(proto, t, timer);
 	struct ppp *ppp = get_ppp(proto->dev);
 	unsigned long flags;
 
@@ -618,7 +618,7 @@ static void ppp_start(struct net_device *dev)
 	int i;
 
 	for (i = 0; i < IDX_COUNT; i++) {
-		struct proto *proto = &ppp->protos[i];
+		struct ppp_proto *proto = &ppp->protos[i];
 
 		proto->dev = dev;
 		timer_setup(&proto->timer, ppp_timer, 0);
