@@ -20,6 +20,7 @@
 
 #include <asm/switch_to.h>
 #include <asm/tlb.h>
+#include <asm/mmu.h>
 
 #include "../workqueue_internal.h"
 #include "../../fs/io-wq.h"
@@ -4750,6 +4751,144 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
 	prepare_arch_switch(next);
 }
 
+/*
+ * Called after each context switch.
+ *
+ * Strictly speaking, no action at all is required here.  This rq
+ * can hold an extra reference to at most one mm, so the memory
+ * wasted by deferring the mmdrop() forever is bounded.  That being
+ * said, it's straightforward to safely drop spare references
+ * in the common case.
+ */
+static void mmdrop_lazy(struct rq *rq)
+{
+	struct mm_struct *old_mm;
+
+	old_mm = READ_ONCE(rq->drop_mm);
+
+	do {
+		/*
+		 * If there is nothing to drop or if we are still using old_mm,
+		 * then don't call mmdrop().
+		 */
+		if (likely(!old_mm || old_mm == rq->lazy_mm))
+			return;
+	} while (!try_cmpxchg_relaxed(&rq->drop_mm, &old_mm, NULL));
+
+	mmdrop(old_mm);
+}
+
+#ifndef for_each_possible_lazymm_cpu
+#define for_each_possible_lazymm_cpu(cpu, mm) for_each_online_cpu((cpu))
+#endif
+
+static bool __try_mm_drop_rq_ref(struct rq *rq, struct mm_struct *mm)
+{
+	struct mm_struct *old_drop_mm = smp_load_acquire(&rq->drop_mm);
+
+	/*
+	 * We know that old_mm != mm: this is the only function that
+	 * might set drop_mm to mm, and we haven't set it yet.
+	 */
+	WARN_ON_ONCE(old_drop_mm == mm);
+
+	if (!old_drop_mm) {
+		/*
+		 * Just set rq->drop_mm to mm and our reference will
+		 * get dropped eventually after rq is done with it.
+		 */
+		return try_cmpxchg(&rq->drop_mm, &old_drop_mm, mm);
+	}
+
+	/*
+	 * The target cpu could still be using old_drop_mm.  We know that, if
+	 * old_drop_mm still exists, then old_drop_mm->mm_users == 0.  Can we
+	 * drop it?
+	 *
+	 * NB: it is critical that we load rq->lazy_mm again after loading
+	 * drop_mm.  If we looked at a prior value of lazy_mm (which we
+	 * already know to be mm), then we would be subject to a race:
+	 *
+	 * Us:
+	 *     Load rq->lazy_mm.
+	 * Remote CPU:
+	 *     Switch to old_drop_mm (with mm_users > 0)
+	 *     Become lazy and set rq->lazy_mm = old_drop_mm
+	 * Third CPU:
+	 *     Set old_drop_mm->mm_users to 0.
+	 *     Set rq->drop_mm = old_drop_mm
+	 * Us:
+	 *     Incorrectly believe that old_drop_mm is unused
+	 *     because rq->lazy_mm != old_drop_mm
+	 *
+	 * In other words, to verify that rq->lazy_mm is not keeping a given
+	 * mm alive, we must load rq->lazy_mm _after_ we know that mm_users ==
+	 * 0 and therefore that rq will not switch to that mm.
+	 */
+	if (smp_load_acquire(&rq->lazy_mm) != mm) {
+		/*
+		 * We got lucky!  rq _was_ using mm, but it stopped.
+		 * Just drop our reference.
+		 */
+		mmdrop(mm);
+		return true;
+	}
+
+	/*
+	 * If we got here, rq->lazy_mm != old_drop_mm, and we ruled
+	 * out the race described above.  rq is done with old_drop_mm,
+	 * so we can steal the reference held by rq and replace it with
+	 * our reference to mm.
+	 */
+	if (cmpxchg(&rq->drop_mm, old_drop_mm, mm) != old_drop_mm)
+		return false;
+
+	mmdrop(old_drop_mm);
+	return true;
+}
+
+/*
+ * This converts all lazy_mm references to mm to mm_count refcounts.  Our
+ * caller holds an mm_count reference, so we don't need to worry about mm
+ * being freed out from under us.
+ */
+void mm_unlazy_mm_count(struct mm_struct *mm)
+{
+	unsigned int drop_count = 0;
+	int cpu;
+
+	/*
+	 * mm_users is zero, so no cpu will set its rq->lazy_mm to mm.
+	 */
+	WARN_ON_ONCE(atomic_read(&mm->mm_users) != 0);
+
+	for_each_possible_lazymm_cpu(cpu, mm) {
+		struct rq *rq = cpu_rq(cpu);
+
+		if (smp_load_acquire(&rq->lazy_mm) != mm)
+			continue;
+
+		/*
+		 * Grab one reference.  Do it as a batch so we do a maximum
+		 * of two atomic operations instead of one per lazy reference.
+		 */
+		if (!drop_count) {
+			/*
+			 * Collect lots of references.  We'll drop the ones we
+			 * don't use.
+			 */
+			drop_count = num_possible_cpus();
+			atomic_add(drop_count, &mm->mm_count);
+		}
+		drop_count--;
+
+		while (!__try_mm_drop_rq_ref(rq, mm))
+			;
+	}
+
+	atomic_sub(drop_count, &mm->mm_count);
+}
+
 /**
  * finish_task_switch - clean up after a task-switch
  * @prev: the thread we just switched away from.
@@ -4773,7 +4912,6 @@ static struct rq *finish_task_switch(struct task_struct *prev)
 	__releases(rq->lock)
 {
 	struct rq *rq = this_rq();
-	struct mm_struct *mm = rq->prev_mm;
 	long prev_state;
 
 	/*
@@ -4791,8 +4929,6 @@ static struct rq *finish_task_switch(struct task_struct *prev)
 		      "corrupted preempt_count: %s/%d/0x%x\n",
 		      current->comm, current->pid, preempt_count()))
 		preempt_count_set(FORK_PREEMPT_COUNT);
-
-	rq->prev_mm = NULL;
 
 	/*
 	 * A task struct has one reference for the use as "current".
@@ -4824,12 +4960,7 @@ static struct rq *finish_task_switch(struct task_struct *prev)
 
 	fire_sched_in_preempt_notifiers(current);
 
-	/*
-	 * If an architecture needs to take a specific action for
-	 * SYNC_CORE, it can do so in switch_mm_irqs_off().
-	 */
-	if (mm)
-		mmdrop(mm);
+	mmdrop_lazy(rq);
 
 	if (unlikely(prev_state == TASK_DEAD)) {
 		if (prev->sched_class->task_dead)
@@ -4892,35 +5023,54 @@ context_switch(struct rq *rq, struct task_struct *prev,
 	arch_start_context_switch(prev);
 
 	/*
+	 * Sanity check: if something went wrong and the previous mm was
+	 * freed while we were still using it, KASAN might not notice
+	 * without help.
+	 */
+	kasan_check_byte(prev->active_mm);
+
+	/*
 	 * kernel -> kernel   lazy + transfer active
-	 *   user -> kernel   lazy + mmgrab() active
+	 *   user -> kernel   lazy + lazy_mm grab active
 	 *
-	 * kernel ->   user   switch + mmdrop() active
+	 * kernel ->   user   switch + lazy_mm release active
 	 *   user ->   user   switch
 	 */
 	if (!next->mm) {                                // to kernel
 		enter_lazy_tlb(prev->active_mm, next);
 
 		next->active_mm = prev->active_mm;
-		if (prev->mm)                           // from user
-			mmgrab(prev->active_mm);
-		else
+		if (prev->mm) {                         // from user
+			SCHED_WARN_ON(rq->lazy_mm);
+
+			/*
+			 * Acqure a lazy_mm reference to the active
+			 * (lazy) mm.  No explicit barrier needed: we still
+			 * hold an explicit (mm_users) reference.  __mmput()
+			 * can't be called until we call mmput() to drop
+			 * our reference, and __mmput() is a release barrier.
+			 */
+			WRITE_ONCE(rq->lazy_mm, next->active_mm);
+		} else {
 			prev->active_mm = NULL;
+		}
 	} else {                                        // to user
 		membarrier_switch_mm(rq, prev->active_mm, next->mm);
 		switch_mm_irqs_off(prev->active_mm, next->mm, next);
 
 		/*
-		 * sys_membarrier() requires an smp_mb() between setting
-		 * rq->curr->mm to a membarrier-enabled mm and returning
-		 * to userspace.
+		 * An arch implementation of for_each_possible_lazymm_cpu()
+		 * may skip this CPU now that we have switched away from
+		 * prev->active_mm, so we must not reference it again.
 		 */
+
 		membarrier_finish_switch_mm(next->mm);
 
 		if (!prev->mm) {                        // from kernel
-			/* will mmdrop() in finish_task_switch(). */
-			rq->prev_mm = prev->active_mm;
 			prev->active_mm = NULL;
+
+			/* Drop our lazy_mm reference to the old lazy mm. */
+			smp_store_release(&rq->lazy_mm, NULL);
 		}
 	}
 
@@ -4938,7 +5088,8 @@ context_switch(struct rq *rq, struct task_struct *prev,
 void __change_current_mm(struct mm_struct *mm, bool mm_is_brand_new)
 {
 	struct task_struct *tsk = current;
-	struct mm_struct *old_active_mm, *mm_to_drop = NULL;
+	struct mm_struct *old_active_mm;
+	bool was_kernel;
 
 	BUG_ON(!mm);	/* likely to cause corruption if we continue */
 
@@ -4958,12 +5109,9 @@ void __change_current_mm(struct mm_struct *mm, bool mm_is_brand_new)
 	if (tsk->mm) {
 		/* We're detaching from an old mm.  Sync stats. */
 		sync_mm_rss(tsk->mm);
+		was_kernel = false;
 	} else {
-		/*
-		 * Switching from kernel mm to user.  Drop the old lazy
-		 * mm reference.
-		 */
-		mm_to_drop = tsk->active_mm;
+		was_kernel = true;
 	}
 
 	old_active_mm = tsk->active_mm;
@@ -4992,6 +5140,10 @@ void __change_current_mm(struct mm_struct *mm, bool mm_is_brand_new)
 
 	membarrier_finish_switch_mm(mm);
 	vmacache_flush(tsk);
+
+	if (was_kernel)
+		smp_store_release(&this_rq()->lazy_mm, NULL);
+
 	task_unlock(tsk);
 
 #ifdef finish_arch_post_lock_switch
@@ -5009,9 +5161,6 @@ void __change_current_mm(struct mm_struct *mm, bool mm_is_brand_new)
 		finish_arch_post_lock_switch();
 	}
 #endif
-
-	if (mm_to_drop)
-		mmdrop(mm_to_drop);
 }
 
 void __change_current_mm_to_kernel(void)
@@ -5044,8 +5193,17 @@ void __change_current_mm_to_kernel(void)
 	membarrier_update_current_mm(NULL);
 	vmacache_flush(tsk);
 
-	/* active_mm is still 'old_mm' */
-	mmgrab(old_mm);
+	/*
+	 * active_mm is still 'old_mm'
+	 *
+	 * Acqure a lazy_mm reference to the active (lazy) mm.  As in
+	 * context_switch(), no explicit barrier needed: we still hold an
+	 * explicit (mm_users) reference.  __mmput() can't be called until we
+	 * call mmput() to drop our reference, and __mmput() is a release
+	 * barrier.
+	 */
+	WRITE_ONCE(this_rq()->lazy_mm, old_mm);
+
 	enter_lazy_tlb(old_mm, tsk);
 
 	local_irq_enable();
@@ -8805,6 +8963,7 @@ void __init init_idle(struct task_struct *idle, int cpu)
 void unlazy_mm_irqs_off(void)
 {
 	struct mm_struct *mm = current->active_mm;
+	struct rq *rq = this_rq();
 
 	lockdep_assert_irqs_disabled();
 
@@ -8815,10 +8974,17 @@ void unlazy_mm_irqs_off(void)
 		return;
 
 	switch_mm_irqs_off(mm, &init_mm, current);
-	mmgrab(&init_mm);
 	current->active_mm = &init_mm;
+
+	/*
+	 * We don't need a lazy reference to init_mm -- it's not about
+	 * to go away.
+	 */
+	smp_store_release(&rq->lazy_mm, NULL);
+
 	finish_arch_post_lock_switch();
-	mmdrop(mm);
+
+	mmdrop_lazy(rq);
 }
 
 #ifdef CONFIG_SMP

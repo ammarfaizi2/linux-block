@@ -977,7 +977,15 @@ struct rq {
 	struct task_struct	*idle;
 	struct task_struct	*stop;
 	unsigned long		next_balance;
-	struct mm_struct	*prev_mm;
+
+	/*
+	 * Fast refcounting scheme for lazy mm.  lazy_mm is a hazard pointer:
+	 * setting it to point to a lazily used mm keeps that mm from being
+	 * freed.  drop_mm points to am mm that needs an mmdrop() call
+	 * after the CPU owning the rq is done with it.
+	 */
+	struct mm_struct	*lazy_mm;
+	struct mm_struct	*drop_mm;
 
 	unsigned int		clock_update_flags;
 	u64			clock;

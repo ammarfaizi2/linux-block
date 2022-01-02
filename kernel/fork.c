@@ -1122,6 +1122,17 @@ static inline void __mmput(struct mm_struct *mm)
 	}
 	if (mm->binfmt)
 		module_put(mm->binfmt->module);
+
+	/*
+	 * We hold one mm_count reference.  Convert all remaining lazy_mm
+	 * references to mm_count references so that the mm will be genuinely
+	 * unused when mm_count goes to zero.  Do this after exit_mmap() so
+	 * that, if the architecture shoots down remote TLB entries via IPI in
+	 * exit_mmap() and calls unlazy_mm_irqs_off() when doing so, most or
+	 * all lazy_mm references can be removed without
+	 * mm_unlazy_mm_count()'s help.
+	 */
+	mm_unlazy_mm_count(mm);
 	mmdrop(mm);
 }
 
