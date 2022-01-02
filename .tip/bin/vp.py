@@ -247,14 +247,26 @@ def spellcheck(s, where):
 
             dbg("%s: [%s]" % (where, w, ))
 
+            # bold font, for example: "_especially_"
+            if w.startswith('_') and w.endswith('_'):
+                w = w.lstrip('_')
+                w = w.rstrip('_')
+
+            # local asm label
+            if w.startswith('.L'):
+                continue
+
             # skip SHAs
             if re.match(r'^[a-f0-9]{12,40}$', w, re.I):
                 dbg("Skip SHA: [%s]" % (w, ))
                 continue
 
             # a function name
-            if '()' in w:
+            if w.endswith('()'):
                 dbg("Skip function name: [%s]" % (w, ))
+                continue
+            else:
+                warn('_' in w, ("Function name doesn't end with (): [%s]" % (w, )))
                 continue
 
             # skip words containing '_' - they're likely variable or function names
@@ -591,8 +603,6 @@ class Patch:
 
         self.commit_msg = "\n".join(plines[:])
 
-        spellcheck(self.commit_msg, "commit message")
-
     def verify_diff(self):
         ps = unidiff.PatchSet(self.diff)
 
@@ -789,34 +799,7 @@ class Patch:
             warn(re.match(r'(.*this\s+patch.*)', l, re.I),
                           ("Commit message has 'this patch':\n [%s]" % (l, )))
 
-        for w in re.split(r'[\s,/]', self.commit_msg):
-            w = w.rstrip('.')
-
-            w = strip_brackets(w)
-
-            # bold font, for example: "_especially_"
-            if w.startswith('_') and w.endswith('_'):
-                w = w.lstrip('_')
-                w = w.rstrip('_')
-
-            # local asm label
-            if w.startswith('.L'):
-                continue
-
-            # filepath
-            if re.match(r'^.*\.[chS]$', w):
-                continue
-
-            #define
-            if re.match(r'^[A-Z0-9_]+$', w):
-                continue
-
-            if w in known_vars:
-                continue
-
-            warn('_' in w and not w.endswith('()'),
-                 ("Function name doesn't end with (): [%s]" % (w, )))
-
+        spellcheck(self.commit_msg, "commit message")
 
     def format_tags(self, f):
         """
