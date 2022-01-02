@@ -6,6 +6,11 @@
 #include <asm/page.h>
 #include <asm/checksum.h>
 #include <asm/mce.h>
+#include <asm/nospec-branch.h>
+#include <asm/bitops.h>
+#include <asm/pgtable.h>
+#include <asm/arch_hweight.h>
+#include <linux/atomic.h>
 
 #include <asm-generic/asm-prototypes.h>
 
