@@ -178,6 +178,9 @@ static void destroy_resource_common(struct mlx5_ib_dev *dev,
 	struct mlx5_qp_table *table = &dev->qp_table;
 	unsigned long flags;
 
+	if (refcount_read(&qp->common.refcount) == 0)
+		return;
+
 	spin_lock_irqsave(&table->lock, flags);
 	radix_tree_delete(&table->tree,
 			  qp->qpn | (qp->common.res << MLX5_USER_INDEX_LEN));
