@@ -24,6 +24,10 @@ struct audit_sig_info {
 	char		ctx[];
 };
 
+#ifdef CONFIG_AUDIT
+DECLARE_PER_TASK(kuid_t, loginuid);
+#endif
+
 struct audit_buffer;
 struct audit_context;
 struct inode;

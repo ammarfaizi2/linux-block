@@ -62,6 +62,8 @@
 
 #include "audit.h"
 
+DEFINE_PER_TASK(kuid_t, loginuid);
+
 /* No auditing will take place until audit_initialized == AUDIT_INITIALIZED.
  * (Initialization happens after skb_init is called.) */
 #define AUDIT_DISABLED		-1
@@ -210,7 +212,7 @@ struct audit_reply {
 
 kuid_t audit_get_loginuid(struct task_struct *tsk)
 {
-	return tsk->loginuid;
+	return per_task(tsk, loginuid);
 }
 
 unsigned int audit_get_sessionid(struct task_struct *tsk)
@@ -2375,7 +2377,7 @@ int audit_set_loginuid(kuid_t loginuid)
 	}
 
 	current->sessionid = sessionid;
-	current->loginuid = loginuid;
+	per_task(current, loginuid) = loginuid;
 out:
 	audit_log_set_loginuid(oldloginuid, loginuid, oldsessionid, sessionid, rc);
 	return rc;
