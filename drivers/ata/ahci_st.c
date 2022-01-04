@@ -230,7 +230,7 @@ static int st_ahci_resume(struct device *dev)
 
 static SIMPLE_DEV_PM_OPS(st_ahci_pm_ops, st_ahci_suspend, st_ahci_resume);
 
-static const struct of_device_id st_ahci_match[] = {
+static const struct of_device_id __maybe_unused st_ahci_match[] = {
 	{ .compatible = "st,ahci", },
 	{},
 };
