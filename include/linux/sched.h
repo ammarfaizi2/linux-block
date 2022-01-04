@@ -933,7 +933,6 @@ struct task_struct {
 #ifdef CONFIG_AUDITSYSCALL
 	struct audit_context		*audit_context;
 #endif
-	kuid_t				loginuid;
 	unsigned int			sessionid;
 #endif
 	struct seccomp			seccomp;

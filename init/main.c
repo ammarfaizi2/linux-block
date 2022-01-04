@@ -102,6 +102,7 @@
 #include <linux/init_syscalls.h>
 #include <linux/stackdepot.h>
 #include <linux/scs.h>
+#include <linux/audit.h>
 
 #include <asm/io.h>
 #include <asm/bugs.h>
@@ -926,6 +927,9 @@ void __init init_per_task_early(void)
 #endif
 #ifdef CONFIG_SMP
 	plist_node_init(&per_task(&init_task, pushable_tasks), MAX_PRIO);
+#endif
+#ifdef CONFIG_AUDIT
+	per_task(&init_task, loginuid) = INVALID_UID;
 #endif
 }
 
