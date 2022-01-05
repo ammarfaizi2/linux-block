@@ -588,6 +588,8 @@ restart:
 	current_restore_flags(old_flags, PF_MEMALLOC);
 }
 
+DECLARE_PER_CPU(bool, tick_setup_sched_timer_help_needed);
+
 /**
  * irq_enter_rcu - Enter an interrupt context with RCU watching
  */
@@ -595,7 +597,7 @@ void irq_enter_rcu(void)
 {
 	__irq_enter_raw();
 
-	if (tick_nohz_full_cpu(smp_processor_id()) ||
+	if (__this_cpu_read(tick_setup_sched_timer_help_needed) ||
 	    (is_idle_task(current) && (irq_count() == HARDIRQ_OFFSET)))
 		tick_irq_enter();
 
