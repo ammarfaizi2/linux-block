@@ -153,11 +153,11 @@ def tag_sanity_check_fixes(s):
 dc = None
 
 # my words
-dc_words = [ "ABI", "AMD", "AMD64",
+dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          # that's some stupid dictionary
          "amongst",
           "API", "APM", "APU", "arm64", "asm",
-         "binutils", "bitmask", "bitfield", "bootup", "cmdline", "config", "CPPC", "CPUID",
+         "binutils", "bitmask", "bitfield", "bootparams", "bootup", "cmdline", "config", "CPPC", "CPUID",
          "DMA", "DIMM", "e.g.", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
          "GHCB", "GHCI", "GPR", "HLT", "hugepage",
          "hypercall", "HV", "I/O", "initializer", "initrd", "IRQ", "IST", "JMP", "kallsyms",
@@ -179,12 +179,13 @@ dc_words = [ "ABI", "AMD", "AMD64",
          "VMGEXIT", "VMLAUNCH", "VMSA", "vTOM", "WBINVD", "WRMSR", "x86", "Xen", "Xeon", "XSAVE" ]
 
 # known words as regexes to avoid duplication in the list above
-dc_regexes = [ r'MOVSB?', r'sev_(features|status)', r'virtualized?' ]
+dc_regexes = [ r'BIOS(e[sn])?', r'MOVSB?', r'params?', r'sev_(features|status)', r'virtualized?' ]
 
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'fpstate', 'pt_regs', 'sme_me_mask', 'xfeatures' ]
+known_vars = [ '__BOOT_DS', 'fpstate', 'kptr_restrict', 'pt_regs', 'sme_me_mask',
+               'sysctl_perf_event_paranoid', 'xfeatures' ]
 
 def load_spellchecker():
     global dc
@@ -313,9 +314,14 @@ def spellcheck(s, where, flags):
                 else:
                     continue
 
-            # skip words containing '_' - they're likely variable or function names
-            if '_' in w:
-                dbg("Skip '_'-containing word: [%s]" % (w, ))
+            # kernel-doc arguments
+            if re.match(r'^@\w+:?$', w):
+                dbg("Skip kernel-doc argument: [%s]" % (w, ))
+                continue
+
+            # number: decimal...
+            if re.match(r'^[0-9]+$', w):
+                dbg("Skip decimal number: [%s]" % (w, ))
                 continue
 
             # number: hex, units, ...
@@ -360,7 +366,7 @@ def spellcheck(s, where, flags):
                 continue
 
             # error value defines
-            if re.match(r'-E(EINVAL|EXIST)', w):
+            if re.match(r'-E(EINVAL|EXIST|OPNOTSUPP)', w):
                 dbg("Skip error define: [%s]" % (w, ))
                 continue
 
@@ -370,7 +376,7 @@ def spellcheck(s, where, flags):
                 continue
 
             # BLA-<adjective>
-            m = re.match(r'(\w+)-(active|controlled|related|specific|validated)', w)
+            m = re.match(r'([\w-]+)-(active|controlled|related|specific|validated)', w)
             if m:
                 if dc.check(m.group(1)):
                     dbg("Skip BLA-<adjective>: [%s]" % (w, ))
@@ -393,9 +399,9 @@ def spellcheck(s, where, flags):
                 dbg("Skip misc numbering: [%s]" % (w, ))
                 continue
 
-            # kernel-doc arguments
-            if re.match(r'^@\w+:?$', w):
-                dbg("Skip kernel-doc argument: [%s]" % (w, ))
+            # skip words containing '_' - they're likely variable or function names
+            if '_' in w:
+                dbg("Skip '_'-containing word: [%s]" % (w, ))
                 continue
 
             if not dc.check(w):
@@ -738,6 +744,10 @@ class Patch:
 
             # X file(s) changed, Y insertions?(+), Z deletions?(-)
             if re.match(r'^.*files?\s+changed(.*insertions?\(\+\))?(.*deletions?\(\-\))?$', line):
+                dfst.append(line)
+
+            # create/delete mode
+            if re.match(r'^\s+(create|delete) mode [0-9]+ .*', line):
                 dfst.append(line)
 
             ret += 1
