@@ -184,7 +184,7 @@ dc_regexes = [ r'MOVSB?', r'sev_(features|status)', r'virtualized?' ]
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'fpstate', 'sme_me_mask', 'xfeatures' ]
+known_vars = [ '__BOOT_DS', 'fpstate', 'pt_regs', 'sme_me_mask', 'xfeatures' ]
 
 def load_spellchecker():
     global dc
@@ -228,7 +228,9 @@ def spellcheck(s, where):
         line = re.sub(r'(\w+)\/(\w+)', r'\1 \2', line)
 
         # '/' to split "word/word" formulations
-        for w in re.split(r'[\s/]', line):
+        words = re.split(r'[\s/]', line)
+
+        for i, w in enumerate(words):
             # remove punctuation
             w = w.strip('`\',*+:;!|<>"=')
 
@@ -284,7 +286,16 @@ def spellcheck(s, where):
                 dbg("Skip function name: [%s]" % (w, ))
                 continue
             else:
-                warn('_' in w, ("Function name doesn't end with (): [%s]" % (w, )))
+                # if the previous word is not "struct"
+                if '_' in w and words[i - 1] != "struct":
+
+                    # all caps - likely a macro name
+                    if re.match(r'^[A-Z_]+$', w):
+                        dbg("Skip macro name: [%s]" % (w, ))
+                        continue
+
+                    warn(1, ("Function name doesn't end with (): [%s]" % (w, )))
+                    print(" [%s]" % (line, ))
                 continue
 
             # skip words containing '_' - they're likely variable or function names
@@ -780,16 +791,17 @@ class Patch:
                 if self.subject.startswith("Revert \""):
                     return
 
-                # exclude KVM
+                # do not check if patch touches multiple subsystems
                 if "/kvm/" in pfile.path or "/svm" in pfile.path:
-                    continue
-
-                # WIP: make sure there's no second ':' in the subject
-                # needs improving
-                if not re.match(r'^x86(/[\w/-]+)?:[^:]*$', self.subject):
-                    err(("Subject prefix wrong: [%s]" % (self.subject, )))
-
+                    return
+            # ditto
+            else:
                 return
+
+        # WIP: make sure there's no second ':' in the subject
+        # needs improving
+        if not re.match(r'^x86(/[\w/-]+)?:[^:]*$', self.subject):
+            err(("Subject prefix wrong: [%s]" % (self.subject, )))
 
     def verify_commit_message(self):
         """
