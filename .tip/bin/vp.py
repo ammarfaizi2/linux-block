@@ -197,10 +197,32 @@ def load_spellchecker():
     for w in dc_non_words:
         dc.remove(w)
 
-
-def spellcheck(s, where):
+def spellcheck_func_name(w, prev_word):
     """
-        Spell check a string @s, found @where.
+    Check a function's name
+
+    """
+    if w.endswith('()'):
+        dbg("Skip function name: [%s]" % (w, ))
+        return True
+    else:
+        if '_' in w and prev_word != "struct":
+            # all caps - likely a macro name
+            if re.match(r'^[A-Z_]+$', w):
+                dbg("Skip macro name: [%s]" % (w, ))
+                return True
+
+            return False
+
+        return True
+
+def spellcheck(s, where, flags):
+    """
+        Spellcheck a string @s, found @where.
+
+        @flags: a dictionary of bitfields which carry binary information which
+                control spellchecking aspects
+
     """
     global dc
 
@@ -281,22 +303,14 @@ def spellcheck(s, where):
             if match:
                 continue
 
-            # a function name
-            if w.endswith('()'):
-                dbg("Skip function name: [%s]" % (w, ))
-                continue
-            else:
-                # if the previous word is not "struct"
-                if '_' in w and words[i - 1] != "struct":
-
-                    # all caps - likely a macro name
-                    if re.match(r'^[A-Z_]+$', w):
-                        dbg("Skip macro name: [%s]" % (w, ))
-                        continue
-
+            if flags and flags['check_func']:
+                ret = spellcheck_func_name(w, words[i - 1])
+                if not ret:
                     warn(1, ("Function name doesn't end with (): [%s]" % (w, )))
                     print(" [%s]" % (line, ))
-                continue
+                    continue
+                else:
+                    continue
 
             # skip words containing '_' - they're likely variable or function names
             if '_' in w:
@@ -511,7 +525,7 @@ class Patch:
         title = title.lstrip()
         new_title = title[0].upper() + title[1:]
 
-        spellcheck(new_title, "Subject")
+        spellcheck(new_title, "Subject", None)
 
         new_subj = prefix + ": " + new_title
 
@@ -820,7 +834,7 @@ class Patch:
             if re.search(r'[a-f0-9]{7,40}\s?\(\".*', l, re.I):
                 verify_commit_quotation(lines[i - 1], lines[i], lines[i + 1])
 
-        spellcheck(self.commit_msg, "commit message")
+        spellcheck(self.commit_msg, "commit message", None)
 
     def format_tags(self, f):
         """
@@ -927,11 +941,24 @@ class Patch:
 def spellcheck_hunk(h):
     """ Spellcheck added lines if they're comments """
 
+    # spellecheck flags
+    flags = { 'check_func': True }
+
     for l in h.target_lines():
         line = str(l)
+        # kernel-doc comment?
+        m = re.match(r'\+\s*/\*\*\s*', line)
+        if m:
+            flags['check_func'] = False
+
         m = re.match(r'^\+\s+\*\s+.*$', line, re.I)
         if m:
-            spellcheck(line, "comment")
+            spellcheck(line, "comment", flags)
+
+        # end of comment?
+        m = re.match(r'^\+\s+\*\/', line)
+        if m:
+            flags['check_func'] = False
 
 ###
 # check whether there's a binutils version supplied in a comment over naked opcode bytes with
