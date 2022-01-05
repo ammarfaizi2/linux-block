@@ -303,6 +303,7 @@ def spellcheck(s, where, flags):
             if match:
                 continue
 
+            # Check function names
             if flags and flags['check_func']:
                 ret = spellcheck_func_name(w, words[i - 1])
                 if not ret:
@@ -408,7 +409,11 @@ def spellcheck(s, where, flags):
                     continue
 
                 print(line)
-                print(("Unknown word [%s] in %s, suggestions:\n\t%s\n" % (w, where, dc.suggest(w), )))
+                print(("Unknown word [%s] in %s." % (w, where, )))
+                suggestions = dc.suggest(w)
+                if suggestions:
+                    print("Suggestions: %s" % (suggestions, ))
+                print()
 
 #
 ### Class Patch
