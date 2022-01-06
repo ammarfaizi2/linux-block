@@ -178,9 +178,6 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          "VM", "VMM", "VMCALL", "VMCB", "VMEXIT",
          "VMGEXIT", "VMLAUNCH", "VMSA", "vTOM", "WBINVD", "WRMSR", "x86", "Xen", "Xeon", "XSAVE" ]
 
-# known words as regexes to avoid duplication in the list above
-dc_regexes = [ r'BIOS(e[sn])?', r'MOVSB?', r'params?', r'sev_(features|status)', r'virtualized?' ]
-
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars which get mentioned often in commit messages and comments
@@ -217,9 +214,25 @@ def spellcheck_func_name(w, prev_word):
 
         return True
 
+# known words as regexes to avoid duplication in the list above
+regexes = [ r'BIOS(e[sn])?', r'MOVSB?', r'params?', r'sev_(features|status)', r'virtualized?' ]
+
+def spellcheck_regexes(w):
+    """
+        Check word @w against a list of regexes of known words
+    """
+
+    for rgx in regexes:
+        if re.match(rgx, w):
+            dbg("Skip regexed word: [%s]" % (w, ))
+            return True
+
+    return False
+
+
 def spellcheck(s, where, flags):
     """
-        Spellcheck a string @s, found @where.
+        Spellcheck a string @s, found @where: {comment, commit message, etc}
 
         @flags: a dictionary of bitfields which carry binary information which
                 control spellchecking aspects
@@ -294,14 +307,7 @@ def spellcheck(s, where, flags):
                 dbg("Skip known_vars [%s]" % (w, ))
                 continue
 
-            # clumsy way to continue the outer loop
-            match = False
-            for rgx in dc_regexes:
-                if re.match(rgx, w):
-                    dbg("Skip regexed word: [%s]" % (w, ))
-                    match = True
-
-            if match:
+            if spellcheck_regexes(w):
                 continue
 
             # Check function names
