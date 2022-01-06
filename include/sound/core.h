@@ -15,7 +15,6 @@
 #include <linux/pm.h>			/* pm_message_t */
 #include <linux/stringify.h>
 #include <linux/printk.h>
-#include <linux/sched.h>
 #include <linux/wait_types.h>
 
 /* number of supported soundcards */
