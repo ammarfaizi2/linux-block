@@ -199,6 +199,38 @@ notrace void __weak stop_machine_yield(const struct cpumask *cpumask)
 	cpu_relax();
 }
 
+static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firsttime)
+{
+	struct cpu_stopper *stopper;
+	unsigned long flags;
+	int cpu;
+	u64 t;
+
+	tick_setup_sched_timer_dump();
+	pr_info("%s threads %d/%d state %d\n", __func__, atomic_read(&msdata->thread_ack), msdata->num_threads, msdata->state);
+	for_each_online_cpu(cpu) {
+		if (cpu_is_offline(cpu))
+			continue;
+		stopper = &per_cpu(cpu_stopper, cpu);
+		raw_spin_lock_irqsave(&stopper->lock, flags);
+		t = ktime_get();
+//		tlast = stopper->lasttime;
+		pr_info("%s: %s%s ->state=%#x%s\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!");
+		raw_spin_unlock_irqrestore(&stopper->lock, flags);
+		if (firsttime && *firsttime && !task_curr(stopper->thread)) {
+			trigger_single_cpu_backtrace(cpu);
+			*firsttime = false;
+		}
+//		if (time_after64(t, tlast + NSEC_PER_SEC) &&
+//		    smp_load_acquire(&multi_stop_cpu_ipi_handled)) {
+//			pr_info("%s: sending IPI from CPU %d to CPU %d\n", __func__, raw_smp_processor_id(), cpu);
+//			WRITE_ONCE(multi_stop_cpu_ipi_handled, false);
+//			smp_mb();
+//			smp_call_function_single(cpu, multi_stop_cpu_ipi, NULL, 0);
+//		}
+	}
+}
+
 /* This is the cpu_stop function which stops the CPU. */
 static int multi_cpu_stop(void *data)
 {
@@ -207,6 +239,7 @@ static int multi_cpu_stop(void *data)
 	int cpu = smp_processor_id(), err = 0;
 	const struct cpumask *cpumask;
 	unsigned long flags;
+	bool firsttime = 1;
 	bool is_active;
 
 	/*
@@ -253,7 +286,7 @@ static int multi_cpu_stop(void *data)
 		}
 		if (cpu_is_offline(smp_processor_id()) &&
 		    cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop))
-			tick_setup_sched_timer_dump();
+			dump_multi_cpu_stop_state(msdata, &firsttime);
 		rcu_momentary_dyntick_idle();
 	} while (curstate != MULTI_STOP_EXIT);
 
