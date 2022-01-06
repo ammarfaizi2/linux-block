@@ -3,7 +3,6 @@
 #define _LINUX_TRACE_RECURSION_H
 
 #include <linux/preempt.h>
-#include <linux/sched.h>
 
 #ifdef CONFIG_TRACING
 
