@@ -5,19 +5,6 @@
  *   Author(s): Steve French <stfrench@microsoft.com>
  *              David Howells <dhowells@redhat.com>
  */
-
-/*
-#include <linux/module.h>
-#include <linux/nsproxy.h>
-#include <linux/slab.h>
-#include <linux/magic.h>
-#include <linux/security.h>
-#include <net/net_namespace.h>
-#ifdef CONFIG_CIFS_DFS_UPCALL
-#include "dfs_cache.h"
-#endif
-*/
-
 #include <linux/ctype.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>
