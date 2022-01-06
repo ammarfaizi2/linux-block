@@ -20,7 +20,7 @@
  */
 
 #include <linux/math.h>
-#include <linux/sched.h>
+#include <linux/sched/types.h>
 
 extern unsigned long loops_per_jiffy;
 
