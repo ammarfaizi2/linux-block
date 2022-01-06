@@ -7,10 +7,8 @@
 #define _RDMA_RESTRACK_H_
 
 #include <linux/typecheck.h>
-#include <linux/sched.h>
 #include <linux/kref.h>
 #include <linux/completion.h>
-#include <linux/sched/task.h>
 #include <uapi/rdma/rdma_netlink.h>
 #include <linux/xarray.h>
 
