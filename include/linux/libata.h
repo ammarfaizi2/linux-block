@@ -22,7 +22,6 @@
 #include <scsi/scsi_host.h>
 #include <linux/acpi.h>
 #include <linux/cdrom.h>
-#include <linux/sched.h>
 #include <linux/async.h>
 
 /*
