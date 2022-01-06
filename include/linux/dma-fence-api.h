@@ -21,10 +21,12 @@
 #include <linux/list.h>
 #include <linux/bitops.h>
 #include <linux/kref.h>
-#include <linux/sched.h>
+#include <linux/sched/types.h>
 #include <linux/printk.h>
 #include <linux/rcupdate.h>
 #include <linux/ktime.h>
+
+struct seq_file;
 
 void dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
 		    spinlock_t *lock, u64 context, u64 seqno);
