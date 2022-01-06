@@ -17,6 +17,7 @@
 #include <linux/slab.h>
 #include <linux/set_memory.h>
 #include <linux/cc_platform.h>
+#include <linux/cpu.h>
 
 #include <asm/hypervisor.h>
 #include <asm/x86_init.h>
@@ -190,6 +191,7 @@ static void kvm_restore_sched_clock_state(void)
 static void kvm_setup_secondary_clock(void)
 {
 	kvm_register_clock("secondary cpu clock");
+	cpu_hp_start_now();
 }
 #endif
 

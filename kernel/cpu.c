@@ -137,6 +137,57 @@ struct cpuhp_step {
 	bool			multi_instance;
 };
 
+#ifdef CONFIG_SMP
+
+static u64 cpu_hp_start_time;
+static bool cpu_hp_start_time_valid;
+
+void cpu_hp_start_now(void)
+{
+	if (!rcu_inkernel_boot_has_ended())
+		return;
+	WRITE_ONCE(cpu_hp_start_time, ktime_get());
+	smp_store_release(&cpu_hp_start_time_valid, true);
+	pr_info("%s invoked on CPU %d, cpu_hp_start_time: %llu milliseconds.\n", __func__, raw_smp_processor_id(), cpu_hp_start_time / NSEC_PER_MSEC);
+}
+
+void cpu_hp_stop_now(void)
+{
+	u64 t;
+
+	if (!rcu_inkernel_boot_has_ended())
+		return;
+	t = ktime_get();
+	pr_info("%s invoked, %llu - %llu = %llu milliseconds elapsed with flag %s.\n", __func__, t / NSEC_PER_MSEC, cpu_hp_start_time / NSEC_PER_MSEC, (t - cpu_hp_start_time) / NSEC_PER_MSEC, cpu_hp_start_time_valid ? "set" : "clear");
+	smp_store_release(&cpu_hp_start_time_valid, false);
+}
+
+/* Return true if a time-delay anomaly was detected. */
+bool cpu_hp_check_delay(const char *s, const void *func)
+{
+	bool ret = false;
+	u64 t, t1;
+
+	if (!smp_load_acquire(&cpu_hp_start_time_valid))
+		return false;
+	t = READ_ONCE(cpu_hp_start_time);
+	smp_mb();
+	if (!READ_ONCE(cpu_hp_start_time_valid))
+		return false;
+	t1 = ktime_get();
+	if (WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "%s %ps took %llu milliseconds\n", s, func, (t1 - t) / NSEC_PER_MSEC)) {
+		WRITE_ONCE(cpu_hp_start_time, t1);
+		ret = true;
+	}
+	if (WARN_ONCE(time_before64(t1, t - 25 * NSEC_PER_MSEC), "%s %ps clock went backwards %llu milliseconds\n", s, func, (t - t1) / NSEC_PER_MSEC)){
+		WRITE_ONCE(cpu_hp_start_time, t1);
+		ret = true;
+	}
+	return ret;
+}
+
+#endif /* #ifdef CONFIG_SMP */
+
 static DEFINE_MUTEX(cpuhp_state_mutex);
 static struct cpuhp_step cpuhp_hp_states[];
 

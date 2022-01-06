@@ -251,6 +251,9 @@ static int multi_cpu_stop(void *data)
 			 */
 			touch_nmi_watchdog();
 		}
+		if (cpu_is_offline(smp_processor_id()) &&
+		    cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop))
+			tick_setup_sched_timer_dump();
 		rcu_momentary_dyntick_idle();
 	} while (curstate != MULTI_STOP_EXIT);
 

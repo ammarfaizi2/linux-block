@@ -1452,6 +1452,20 @@ static DEFINE_PER_CPU(unsigned long, tick_setup_sched_timer_jiffies);
 static DEFINE_PER_CPU(int, tick_setup_sched_timer_jiffies_count);
 DEFINE_PER_CPU(bool, tick_setup_sched_timer_help_needed);
 
+void tick_setup_sched_timer_dump(void)
+{
+	int cpu;
+	int j = jiffies;
+
+	pr_alert("%s state", __func__);
+	for_each_possible_cpu(cpu)
+		pr_cont(" j/c %x/%d %c",
+			(int)(j - per_cpu(tick_setup_sched_timer_jiffies, cpu)) & 0xfff,
+			per_cpu(tick_setup_sched_timer_jiffies_count, cpu),
+			".H"[per_cpu(tick_setup_sched_timer_help_needed, cpu)]);
+	pr_cont("\n");
+}
+
 /**
  * tick_setup_sched_timer - setup the tick emulation timer
  */
