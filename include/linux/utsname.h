@@ -4,7 +4,6 @@
 
 
 #include <linux/refcount_api.h>
-#include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <linux/ns_common.h>
 #include <linux/err.h>
@@ -77,10 +76,7 @@ static inline void uts_proc_notify(enum uts_proc proc)
 }
 #endif
 
-static inline struct new_utsname *utsname(void)
-{
-	return &current->nsproxy->uts_ns->name;
-}
+#define utsname() (&current->nsproxy->uts_ns->name)
 
 static inline struct new_utsname *init_utsname(void)
 {
