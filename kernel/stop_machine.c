@@ -217,7 +217,8 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 //		tlast = stopper->lasttime;
 		pr_info("%s: %s%s ->state=%#x%s\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!");
 		raw_spin_unlock_irqrestore(&stopper->lock, flags);
-		if (firsttime && *firsttime && !task_curr(stopper->thread)) {
+		if (firsttime && *firsttime) {
+			pr_info("%s: Triggering backtrace on CPU %d\n", __func__, cpu);
 			trigger_single_cpu_backtrace(cpu);
 			*firsttime = false;
 		}
