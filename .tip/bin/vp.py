@@ -157,7 +157,7 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          # that's some stupid dictionary
          "amongst",
           "API", "APM", "APU", "arm64", "asm",
-         "binutils", "bitmask", "bitfield", "bootparams", "bootup", "cmdline", "config", "CPPC", "CPUID",
+         "binutils", "bitmask", "bitfield", "cmdline", "config", "CPPC", "CPUID",
          "DMA", "DIMM", "e.g.", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
          "GHCB", "GHCI", "GPR", "GUID", "HLT", "hugepage",
          "hypercall", "HV", "I/O", "initializer", "initrd", "IRQ", "IST", "JMP", "kallsyms",
@@ -215,7 +215,8 @@ def spellcheck_func_name(w, prev_word):
         return True
 
 # known words as regexes to avoid duplication in the list above
-regexes = [ r'BIOS(e[sn])?', r'MOVSB?', r'params?', r'PS[CP]', r'sev_(features|status)', r'virtualized?' ]
+regexes = [ r'BIOS(e[sn])?', r'boot(loader|params?|up)', r'MOVSB?', r'params?', r'PS[CP]',
+            r'sev_(features|status)', r'virtualized?' ]
 
 def spellcheck_regexes(w):
     """
@@ -230,17 +231,32 @@ def spellcheck_regexes(w):
     return False
 
 
-def spellcheck_hunk(h):
+def spellcheck_hunk(pfile, hunk):
     """
-        Spellcheck added lines if they're comments
-        @h: unidiff.patch.Hunk object
+        Spellcheck added lines if they're comments or Documentation
+        @pfile: unidiff.patch.PatchedFile object
+        @hunk:  unidiff.patch.Hunk object
 
     """
+
+    # spellcheck .rst files fully
+    if pfile.target_file.endswith(".rst"):
+        for l in hunk.target_lines():
+
+            # only newly added lines
+            if not l.is_added:
+                continue
+
+            line = str(l)
+
+            spellcheck(line, "Documentation", None)
+
+        return
 
     # spellecheck flags
     flags = { 'check_func': True }
 
-    for l in h.target_lines():
+    for l in hunk.target_lines():
         line = str(l)
         # kernel-doc comment?
         m = re.match(r'\+\s*/\*\*\s*', line)
@@ -255,7 +271,6 @@ def spellcheck_hunk(h):
         m = re.match(r'^\+\s+\*\/', line)
         if m:
             flags['check_func'] = False
-
 
 def spellcheck(s, where, flags):
     """
@@ -690,7 +705,7 @@ class Patch:
                         warn(1, "Unicode char [%s] (0x%x) in line: %s"
                                 % (m.group(1), ord(m.group(1)), line, ))
 
-                spellcheck_hunk(hunk)
+                spellcheck_hunk(pfile, hunk)
 
                 # strip the first two "a/" or "b/"
                 f = pfile.target_file[2:]
