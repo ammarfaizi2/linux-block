@@ -79,6 +79,19 @@
  *
  * Only called from user space.
  *
+ * Registers on exit:
+ * rax  syscall return value
+ * rcx  return address
+ * r11  rflags
+ *
+ * For a historical reason in the glibc source, the kernel must restore all
+ * registers except the rax (syscall return value) before returning to the
+ * userspace.
+ *
+ * In other words, with respect to the userspace, when the kernel returns
+ * to the userspace, only 3 registers are clobbered, they are rax, rcx,
+ * and r11.
+ *
  * When user can change pt_regs->foo always force IRET. That is because
  * it deals with uncanonical addresses better. SYSRET has trouble
  * with them due to bugs in both AMD and Intel CPUs.
