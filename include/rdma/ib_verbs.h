@@ -27,7 +27,7 @@
 #include <net/ipv6.h>
 #include <linux/string.h>
 #include <linux/slab.h>
-#include <linux/netdevice.h>
+#include <net/net_namespace_types_possible.h>
 #include <linux/refcount.h>
 #include <linux/if_link.h>
 #include <linux/atomic.h>
