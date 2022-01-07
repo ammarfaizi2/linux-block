@@ -2569,16 +2569,18 @@ static int mlx5_vdpa_dev_add(struct vdpa_mgmt_dev *v_mdev, const char *name,
 	if (IS_ERR(ndev))
 		return PTR_ERR(ndev);
 
+	ndev->mvdev.mlx_features = mgtdev->mgtdev.supported_features;
+	ndev->mvdev.max_vqs = max_vqs;
+	mvdev = &ndev->mvdev;
+	mvdev->mdev = mdev;
+
 	ndev->vqs = kcalloc(max_vqs, sizeof(*ndev->vqs), GFP_KERNEL);
 	ndev->event_cbs = kcalloc(max_vqs + 1, sizeof(*ndev->event_cbs), GFP_KERNEL);
 	if (!ndev->vqs || !ndev->event_cbs) {
 		err = -ENOMEM;
 		goto err_alloc;
 	}
-	ndev->mvdev.mlx_features = mgtdev->mgtdev.supported_features;
-	ndev->mvdev.max_vqs = max_vqs;
-	mvdev = &ndev->mvdev;
-	mvdev->mdev = mdev;
+
 	init_mvqs(ndev);
 	mutex_init(&ndev->reslock);
 	config = &ndev->config;
