@@ -25,7 +25,6 @@
 #include <linux/irq_poll.h>
 #include <uapi/linux/if_ether.h>
 #include <net/ipv6.h>
-#include <net/ip.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/netdevice.h>
@@ -44,6 +43,7 @@
 #include <rdma/signature.h>
 #include <uapi/rdma/rdma_user_ioctl.h>
 #include <uapi/rdma/ib_user_ioctl_verbs.h>
+#include <uapi/linux/ip.h>
 
 #define IB_FW_VERSION_NAME_MAX	ETHTOOL_FWVERS_LEN
 
