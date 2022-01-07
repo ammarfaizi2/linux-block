@@ -13,7 +13,6 @@
 #define IB_VERBS_H
 
 #include <linux/refcount_api.h>
-#include <linux/xarray_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
@@ -2885,11 +2884,8 @@ rdma_block_iter_dma_address(struct ib_block_iter *biter)
  * registered to the device, once the ib_client remove() callback returns this
  * cannot be called.
  */
-static inline void *ib_get_client_data(struct ib_device *device,
-				       struct ib_client *client)
-{
-	return xa_load(&device->client_data, client->client_id);
-}
+#define ib_get_client_data(device, client) xa_load(&(device)->client_data, (client)->client_id)
+
 void  ib_set_client_data(struct ib_device *device, struct ib_client *client,
 			 void *data);
 void ib_set_device_ops(struct ib_device *device,
