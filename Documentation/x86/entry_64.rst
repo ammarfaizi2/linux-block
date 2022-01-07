@@ -108,3 +108,50 @@ We try to only use IST entries and the paranoid entry code for vectors
 that absolutely need the more expensive check for the GS base - and we
 generate all 'normal' entry points with the regular (faster) paranoid=0
 variant.
+
+
+Registers on entry:
+-------------------
+
+  - rax  system call number
+  - rcx  return address
+  - r11  saved rflags (note: r11 is callee-clobbered register in C ABI)
+  - rdi  arg0
+  - rsi  arg1
+  - rdx  arg2
+  - r10  arg3 (needs to be moved to rcx to conform to C ABI)
+  - r8   arg4
+  - r9   arg5
+
+
+Registers on exit:
+------------------
+
+This explanation is adapted from a controversial discussion about the
+wording in the System V ABI document regarding what registers the
+kernel is allowed to clobber when the userspace executes syscall.
+
+The resolution of the discussion was reviewing the clobber list in the
+glibc source. For a historical reason in the glibc source, the kernel
+must restore all registers before returning to the userspace (except
+for rax, rcx and r11).
+
+For the detailed story, see the email from Michael Matz:
+
+https://lore.kernel.org/lkml/alpine.LSU.2.20.2110131601000.26294@wotan.suse.de/
+
+The kernel saves/restores all registers, so the userspace using it can
+assume the value of all registers are still intact, except for the rax,
+rcx, and r11.
+
+When the kernel returns to the userspace, only 3 registers are
+clobbered:
+
+  - rax  syscall return value
+  - rcx  return address
+  - r11  rflags
+
+The kernel syscall entry actually also saves/restores rcx and r11, but
+at that point, they have already been overwritten by the syscall
+instruction itself with the userspace rip and rflags value, they will
+be used by the sysret instruction when returning to the userspace.
