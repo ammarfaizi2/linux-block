@@ -7,6 +7,8 @@
 #ifndef RXE_HDR_H
 #define RXE_HDR_H
 
+#include <linux/skbuff_types.h>
+
 /* extracted information about a packet carried in an sk_buff struct fits in
  * the skbuff cb array. Must be at most 48 bytes. stored in control block of
  * sk_buff for received packets.

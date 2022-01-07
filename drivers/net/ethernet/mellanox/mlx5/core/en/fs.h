@@ -108,6 +108,7 @@ enum {
 };
 
 struct mlx5e_priv;
+struct ethtool_rxnfc;
 
 #ifdef CONFIG_MLX5_EN_RXNFC
 

@@ -33,6 +33,8 @@
 #ifndef __MLX5_EN_STATS_H__
 #define __MLX5_EN_STATS_H__
 
+#include <linux/ethtool.h>
+
 #define MLX5E_READ_CTR64_CPU(ptr, dsc, i) \
 	(*(u64 *)((char *)ptr + dsc[i].offset))
 #define MLX5E_READ_CTR64_BE(ptr, dsc, i) \
