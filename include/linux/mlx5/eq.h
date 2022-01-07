@@ -8,6 +8,10 @@
 #define MLX5_NUM_ASYNC_EQE (0x1000)
 #define MLX5_NUM_SPARE_EQE (0x80)
 
+#include <linux/compiler.h>
+#include <linux/notifier_types.h>
+#include <linux/cpumask_types.h>
+
 struct mlx5_eq;
 struct mlx5_irq;
 struct mlx5_core_dev;
