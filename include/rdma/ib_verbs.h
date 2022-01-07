@@ -13,7 +13,6 @@
 #define IB_VERBS_H
 
 #include <linux/refcount_api.h>
-#include <net/ipv6_api.h>
 #include <linux/xarray_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
