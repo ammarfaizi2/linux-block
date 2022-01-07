@@ -305,13 +305,13 @@ SYM_CODE_END(ret_from_fork)
 
 .macro DEBUG_ENTRY_ASSERT_IRQS_OFF
 #ifdef CONFIG_DEBUG_ENTRY
-	pushq %rax
+	pushq	%rax
 	SAVE_FLAGS
-	testl $X86_EFLAGS_IF, %eax
-	jz .Lokay_\@
+	testl	$X86_EFLAGS_IF, %eax
+	jz	.Lokay_\@
 	ud2
 .Lokay_\@:
-	popq %rax
+	popq	%rax
 #endif
 .endm
 
@@ -749,8 +749,8 @@ SYM_CODE_START_LOCAL_NOALIGN(.Lbad_gs)
 	swapgs					/* switch back to user gs */
 .macro ZAP_GS
 	/* This can't be a string because the preprocessor needs to see it. */
-	movl $__USER_DS, %eax
-	movl %eax, %gs
+	movl	$__USER_DS, %eax
+	movl	%eax, %gs
 .endm
 	ALTERNATIVE "", "ZAP_GS", X86_BUG_NULL_SEG
 	xorl	%eax, %eax
@@ -1135,7 +1135,7 @@ SYM_CODE_START(asm_exc_nmi)
 	pushq	2*8(%rdx)	/* pt_regs->cs */
 	pushq	1*8(%rdx)	/* pt_regs->rip */
 	UNWIND_HINT_IRET_REGS
-	pushq   $-1		/* pt_regs->orig_ax */
+	pushq	$-1		/* pt_regs->orig_ax */
 	PUSH_AND_CLEAR_REGS rdx=(%rdx)
 	ENCODE_FRAME_POINTER
 
