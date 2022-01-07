@@ -159,13 +159,13 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
           "API", "APM", "APU", "arm64", "asm",
          "binutils", "bitmask", "bitfield", "bootparams", "bootup", "cmdline", "config", "CPPC", "CPUID",
          "DMA", "DIMM", "e.g.", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
-         "GHCB", "GHCI", "GPR", "HLT", "hugepage",
+         "GHCB", "GHCI", "GPR", "GUID", "HLT", "hugepage",
          "hypercall", "HV", "I/O", "initializer", "initrd", "IRQ", "IST", "JMP", "kallsyms",
          "KASAN", "kdump", "kprobe", "livepatch", "lvalue",
          "MCA", "MCE", "memmove",
          "memtype", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
          "NX", "offlining", "paravirt", "PASID", "PCI", "pdf", "percpu", "preemptible",
-         "PSC", "PTE",
+         "PTE",
          "PV", "PVALIDATE", "RDMSR", "rFLAGS", "RMP", "RMPADJUST", "Ryzen", "SEV", "SEV-ES",
          "SEV-SNP", "SIGSEGV", "Skylake", "SME", "SNP", "STI", "strtab", "struct", "swiotlb",
          "symtab", "syscall",
@@ -206,7 +206,7 @@ def spellcheck_func_name(w, prev_word):
     else:
         if '_' in w and prev_word != "struct":
             # all caps - likely a macro name
-            if re.match(r'^[A-Z_]+$', w):
+            if re.match(r'^[A-Z0-9_]+$', w):
                 dbg("Skip macro name: [%s]" % (w, ))
                 return True
 
@@ -215,7 +215,7 @@ def spellcheck_func_name(w, prev_word):
         return True
 
 # known words as regexes to avoid duplication in the list above
-regexes = [ r'BIOS(e[sn])?', r'MOVSB?', r'params?', r'sev_(features|status)', r'virtualized?' ]
+regexes = [ r'BIOS(e[sn])?', r'MOVSB?', r'params?', r'PS[CP]', r'sev_(features|status)', r'virtualized?' ]
 
 def spellcheck_regexes(w):
     """
@@ -228,6 +228,33 @@ def spellcheck_regexes(w):
             return True
 
     return False
+
+
+def spellcheck_hunk(h):
+    """
+        Spellcheck added lines if they're comments
+        @h: unidiff.patch.Hunk object
+
+    """
+
+    # spellecheck flags
+    flags = { 'check_func': True }
+
+    for l in h.target_lines():
+        line = str(l)
+        # kernel-doc comment?
+        m = re.match(r'\+\s*/\*\*\s*', line)
+        if m:
+            flags['check_func'] = False
+
+        m = re.match(r'^\+\s+\*\s+.*$', line, re.I)
+        if m:
+            spellcheck(line, "comment", flags)
+
+        # end of comment?
+        m = re.match(r'^\+\s+\*\/', line)
+        if m:
+            flags['check_func'] = False
 
 
 def spellcheck(s, where, flags):
@@ -958,28 +985,6 @@ class Patch:
 
 #
 ### diff verification using unidiff.patch.Hunk class instances as an arg
-
-def spellcheck_hunk(h):
-    """ Spellcheck added lines if they're comments """
-
-    # spellecheck flags
-    flags = { 'check_func': True }
-
-    for l in h.target_lines():
-        line = str(l)
-        # kernel-doc comment?
-        m = re.match(r'\+\s*/\*\*\s*', line)
-        if m:
-            flags['check_func'] = False
-
-        m = re.match(r'^\+\s+\*\s+.*$', line, re.I)
-        if m:
-            spellcheck(line, "comment", flags)
-
-        # end of comment?
-        m = re.match(r'^\+\s+\*\/', line)
-        if m:
-            flags['check_func'] = False
 
 ###
 # check whether there's a binutils version supplied in a comment over naked opcode bytes with
