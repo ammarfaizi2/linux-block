@@ -220,7 +220,6 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 		if (firsttime && *firsttime) {
 			pr_info("%s: Triggering backtrace on CPU %d\n", __func__, cpu);
 			trigger_single_cpu_backtrace(cpu);
-			*firsttime = false;
 		}
 //		if (time_after64(t, tlast + NSEC_PER_SEC) &&
 //		    smp_load_acquire(&multi_stop_cpu_ipi_handled)) {
@@ -230,6 +229,8 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 //			smp_call_function_single(cpu, multi_stop_cpu_ipi, NULL, 0);
 //		}
 	}
+	if (firsttime)
+		*firsttime = false;
 }
 
 /* This is the cpu_stop function which stops the CPU. */
