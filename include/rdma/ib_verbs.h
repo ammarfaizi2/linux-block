@@ -14,7 +14,6 @@
 
 #include <linux/refcount_api.h>
 #include <linux/mm_page_address.h>
-#include <linux/ethtool.h>
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
@@ -43,6 +42,8 @@
 #include <uapi/rdma/rdma_user_ioctl.h>
 #include <uapi/rdma/ib_user_ioctl_verbs.h>
 #include <uapi/linux/ip.h>
+#include <uapi/linux/if.h>
+#include <uapi/linux/ethtool.h>
 
 #define IB_FW_VERSION_NAME_MAX	ETHTOOL_FWVERS_LEN
 
