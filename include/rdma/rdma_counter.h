@@ -7,7 +7,6 @@
 #define _RDMA_COUNTER_H_
 
 #include <linux/mutex.h>
-#include <linux/pid_namespace.h>
 
 #include <rdma/restrack.h>
 #include <rdma/rdma_netlink.h>
