@@ -1769,6 +1769,24 @@ static void run_local_timers(void)
 	raise_softirq(TIMER_SOFTIRQ);
 }
 
+static DEFINE_PER_CPU(unsigned long, tick_setup_sched_timer_jiffies);
+static DEFINE_PER_CPU(int, tick_setup_sched_timer_jiffies_count);
+DEFINE_PER_CPU(bool, tick_setup_sched_timer_help_needed);
+
+void tick_setup_sched_timer_dump(void)
+{
+	int cpu;
+	int j = jiffies;
+
+	pr_alert("%s state", __func__);
+	for_each_possible_cpu(cpu)
+		pr_cont(" j/c %x/%d %c",
+			(int)(j - per_cpu(tick_setup_sched_timer_jiffies, cpu)) & 0xfff,
+			per_cpu(tick_setup_sched_timer_jiffies_count, cpu),
+			".H"[per_cpu(tick_setup_sched_timer_help_needed, cpu)]);
+	pr_cont("\n");
+}
+
 /*
  * Called from the timer interrupt handler to charge one tick to the current
  * process.  user_tick is 1 if the tick is user time, 0 for system.
@@ -1776,8 +1794,19 @@ static void run_local_timers(void)
 void update_process_times(int user_tick)
 {
 	struct task_struct *p = current;
+	unsigned long j = jiffies;
 
 	PRANDOM_ADD_NOISE(jiffies, user_tick, p, 0);
+
+	if (__this_cpu_read(tick_setup_sched_timer_jiffies) == j) {
+		__this_cpu_inc(tick_setup_sched_timer_jiffies_count);
+		if (__this_cpu_read(tick_setup_sched_timer_jiffies_count) > 3)
+			__this_cpu_write(tick_setup_sched_timer_help_needed, 1);
+	} else {
+		__this_cpu_write(tick_setup_sched_timer_jiffies, j);
+		__this_cpu_write(tick_setup_sched_timer_jiffies_count, 0);
+		__this_cpu_write(tick_setup_sched_timer_help_needed, 0);
+	}
 
 	/* Note: this timer irq context must be accounted for as well. */
 	account_process_tick(p, user_tick);
