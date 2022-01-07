@@ -198,20 +198,7 @@ static inline enum ib_gid_type ib_network_to_gid_type(enum rdma_network_type net
 		return IB_GID_TYPE_IB;
 }
 
-static inline enum rdma_network_type
-rdma_gid_attr_network_type(const struct ib_gid_attr *attr)
-{
-	if (attr->gid_type == IB_GID_TYPE_IB)
-		return RDMA_NETWORK_IB;
-
-	if (attr->gid_type == IB_GID_TYPE_ROCE)
-		return RDMA_NETWORK_ROCE_V1;
-
-	if (ipv6_addr_v4mapped((struct in6_addr *)&attr->gid))
-		return RDMA_NETWORK_IPV4;
-	else
-		return RDMA_NETWORK_IPV6;
-}
+enum rdma_network_type rdma_gid_attr_network_type(const struct ib_gid_attr *attr);
 
 enum rdma_link_layer {
 	IB_LINK_LAYER_UNSPECIFIED,
