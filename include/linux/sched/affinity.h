@@ -44,4 +44,18 @@ static inline int dl_task_check_affinity(struct task_struct *p, const struct cpu
 }
 #endif
 
+#ifdef CONFIG_SMP
+extern void scheduler_ipi(void);
+extern unsigned long wait_task_inactive(struct task_struct *, unsigned int match_state);
+#else
+static inline void scheduler_ipi(void) { }
+static inline unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state)
+{
+	return 1;
+}
+#endif
+
+extern long sched_setaffinity(pid_t pid, const struct cpumask *new_mask);
+extern long sched_getaffinity(pid_t pid, struct cpumask *mask);
+
 #endif /* _LINUX_SCHED_AFFINITY_H */
