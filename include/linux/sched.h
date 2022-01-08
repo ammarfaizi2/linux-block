@@ -1500,17 +1500,6 @@ extern char *__get_task_comm(char *to, size_t len, struct task_struct *tsk);
 	__get_task_comm(buf, sizeof(buf), tsk);		\
 })
 
-#ifdef CONFIG_SMP
-extern void scheduler_ipi(void);
-extern unsigned long wait_task_inactive(struct task_struct *, unsigned int match_state);
-#else
-static inline void scheduler_ipi(void) { }
-static inline unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state)
-{
-	return 1;
-}
-#endif
-
 static __always_inline bool need_resched(void)
 {
 	return unlikely(tif_need_resched());
@@ -1545,9 +1534,6 @@ extern bool sched_task_on_rq(struct task_struct *p);
 extern unsigned long get_wchan(struct task_struct *p);
 
 #include <linux/sched/cond_resched.h>
-
-extern long sched_setaffinity(pid_t pid, const struct cpumask *new_mask);
-extern long sched_getaffinity(pid_t pid, struct cpumask *mask);
 
 #ifdef CONFIG_SMP
 /* Returns effective CPU energy utilization, as seen by the scheduler */
