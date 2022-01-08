@@ -8,6 +8,7 @@
 #include <linux/export.h>
 #include <linux/cpu.h>
 #include <linux/debugfs.h>
+#include <linux/mmu_context.h>
 #include <linux/sched/smt.h>
 #include <linux/sched/mm.h>
 
@@ -294,28 +295,6 @@ static void load_new_mm_cr3(pgd_t *pgdir, u16 new_asid, bool need_flush)
 	write_cr3(new_mm_cr3);
 }
 
-void leave_mm(int cpu)
-{
-	struct mm_struct *loaded_mm = this_cpu_read(cpu_tlbstate.loaded_mm);
-
-	/*
-	 * It's plausible that we're in lazy TLB mode while our mm is init_mm.
-	 * If so, our callers still expect us to flush the TLB, but there
-	 * aren't any user TLB entries in init_mm to worry about.
-	 *
-	 * This needs to happen before any other sanity checks due to
-	 * intel_idle's shenanigans.
-	 */
-	if (loaded_mm == &init_mm)
-		return;
-
-	/* Warn if we're not lazy. */
-	WARN_ON(!this_cpu_read(cpu_tlbstate_shared.is_lazy));
-
-	switch_mm(NULL, &init_mm, NULL);
-}
-EXPORT_SYMBOL_GPL(leave_mm);
-
 void switch_mm(struct mm_struct *prev, struct mm_struct *next,
 	       struct task_struct *tsk)
 {
@@ -512,8 +491,6 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 	 * from lazy TLB mode to normal mode if active_mm isn't changing.
 	 * When this happens, we don't assume that CR3 (and hence
 	 * cpu_tlbstate.loaded_mm) matches next.
-	 *
-	 * NB: leave_mm() calls us with prev == NULL and tsk == NULL.
 	 */
 
 	/* We don't want flush_tlb_func() to run concurrently with us. */
@@ -523,7 +500,7 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 	/*
 	 * Verify that CR3 is what we think it is.  This will catch
 	 * hypothetical buggy code that directly switches to swapper_pg_dir
-	 * without going through leave_mm() / switch_mm_irqs_off() or that
+	 * without going through switch_mm_irqs_off() or that
 	 * does something like write_cr3(read_cr3_pa()).
 	 *
 	 * Only do this check if CONFIG_DEBUG_VM=y because __read_cr3()
@@ -732,7 +709,7 @@ temp_mm_state_t use_temporary_mm(struct mm_struct *mm)
 	 * restoring the previous mm.
 	 */
 	if (this_cpu_read(cpu_tlbstate_shared.is_lazy))
-		leave_mm(smp_processor_id());
+		unlazy_mm_irqs_off();
 
 	temp_state.mm = this_cpu_read(cpu_tlbstate.loaded_mm);
 	switch_mm_irqs_off(NULL, mm, current);

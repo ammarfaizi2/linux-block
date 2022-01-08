@@ -223,7 +223,7 @@ int cpuidle_enter_state(struct cpuidle_device *dev, struct cpuidle_driver *drv,
 	}
 
 	if (target_state->flags & CPUIDLE_FLAG_TLB_FLUSHED)
-		leave_mm(dev->cpu);
+		unlazy_mm_irqs_off();
 
 	/* Take note of the planned idle state. */
 	sched_idle_set_state(target_state);

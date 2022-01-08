@@ -10,9 +10,7 @@
 # define switch_mm_irqs_off switch_mm
 #endif
 
-#ifndef leave_mm
-static inline void leave_mm(int cpu) { }
-#endif
+extern void unlazy_mm_irqs_off(void);
 
 /*
  * CPUs that are capable of running user task @p. Must contain at least one

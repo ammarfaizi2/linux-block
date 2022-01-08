@@ -63,7 +63,5 @@ typedef struct {
 		.lock = __MUTEX_INITIALIZER(mm.context.lock),		\
 	}
 
-void leave_mm(int cpu);
-#define leave_mm leave_mm
 
 #endif /* _ASM_X86_MMU_H */

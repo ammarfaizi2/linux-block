@@ -3063,5 +3063,3 @@ extern int preempt_dynamic_mode;
 extern int sched_dynamic_mode(const char *str);
 extern void sched_dynamic_update(int mode);
 #endif
-
-extern void unlazy_mm_irqs_off(void);
