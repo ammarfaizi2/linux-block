@@ -12,6 +12,7 @@
 #ifndef _KERNEL_KCSAN_PERMISSIVE_H
 #define _KERNEL_KCSAN_PERMISSIVE_H
 
+#include <linux/sched/task_flags.h>
 #include <linux/bitops.h>
 #include <linux/sched.h>
 #include <linux/types.h>
@@ -28,7 +29,7 @@ static __always_inline bool kcsan_ignore_address(const volatile void *ptr)
 	 * Data-racy bitops on current->flags are too common, ignore completely
 	 * for now.
 	 */
-	return ptr == &current->flags;
+	return ptr == &per_task(current, flags);
 }
 
 /*

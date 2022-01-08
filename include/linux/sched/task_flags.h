@@ -3,6 +3,7 @@
 #define _LINUX_SCHED_TASK_FLAGS_H
 
 #include <linux/sched.h>
+#include <linux/sched/per_task.h>
 
 /*
  * Per process flags
@@ -37,7 +38,9 @@
 #define PF_FREEZER_SKIP		0x40000000	/* Freezer should not count it as freezable */
 #define PF_SUSPEND_TASK		0x80000000      /* This thread called freeze_processes() and should not be frozen */
 
-#define task_flags(task) (task)->flags
+DECLARE_PER_TASK(unsigned int, flags);
+
+#define task_flags(task) per_task(task, flags)
 
 /*
  * Only the _current_ task can read/write to tsk->flags, but other
