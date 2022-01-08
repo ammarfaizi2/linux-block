@@ -70,7 +70,6 @@ struct task_struct init_task
 = {
 #ifdef CONFIG_THREAD_INFO_IN_TASK
 	.thread_info	= INIT_THREAD_INFO(init_task),
-	.stack_refcount	= REFCOUNT_INIT(1),
 #endif
 	.__state	= 0,
 	.flags		= PF_KTHREAD,
