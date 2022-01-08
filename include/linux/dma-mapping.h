@@ -3,7 +3,6 @@
 #define _LINUX_DMA_MAPPING_H
 
 #include <linux/sizes.h>
-#include <linux/string.h>
 #include <linux/device_types.h>
 #include <linux/gfp_types.h>
 #include <linux/minmax.h>
