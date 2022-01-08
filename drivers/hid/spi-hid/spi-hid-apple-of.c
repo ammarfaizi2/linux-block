@@ -111,7 +111,12 @@ static const struct of_device_id spihid_apple_of_match[] = {
 	{ .compatible = "apple,spi-hid-transport" },
 	{},
 };
-MODULE_DEVICE_TABLE(of, spi_hid_apple_of_match);
+MODULE_DEVICE_TABLE(of, spihid_apple_of_match);
+
+static struct spi_device_id spihid_apple_of_id[] = {
+	{ "spi-hid-transport", 0 },
+	{}
+};
 
 static struct spi_driver spihid_apple_of_driver = {
 	.driver = {
@@ -120,9 +125,12 @@ static struct spi_driver spihid_apple_of_driver = {
 		.of_match_table = of_match_ptr(spihid_apple_of_match),
 	},
 
+	.id_table	= spihid_apple_of_id,
 	.probe		= spihid_apple_of_probe,
 	.remove		= spihid_apple_core_remove,
 	.shutdown	= spihid_apple_core_shutdown,
 };
 
 module_spi_driver(spihid_apple_of_driver);
+
+MODULE_LICENSE("GPL");

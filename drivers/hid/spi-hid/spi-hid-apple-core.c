@@ -52,6 +52,7 @@
 
 #define SPI_RW_CHG_DELAY_US 200 /* 'Inter Stage Us'? */
 
+static const u8 spi_hid_apple_booted[4] = { 0xa0, 0x80, 0x00, 0x00 };
 static const u8 spi_hid_apple_status_ok[4] = { 0xac, 0x27, 0x68, 0xd5 };
 
 struct spihid_interface {
@@ -397,17 +398,9 @@ static bool spihid_status_report(struct spihid_apple *spihid, u8 *pl,
 {
 	struct device *dev = &spihid->spidev->dev;
 	dev_dbg(dev, "%s: len: %zu", __func__, len);
-	if (len == 5 && pl[0] == 0xe0) {
-		// e0 10 00 00 00
-		if (pl[1] == 0x10 && pl[2] == 0x00 && pl[3] == 0x00 &&
-		    pl[4] == 0x00) {
-			if (!spihid->status_booted) {
-				spihid->status_booted = true;
-				wake_up_interruptible(&spihid->wait);
-			}
-		}
+	if (len == 5 && pl[0] == 0xe0)
 		return true;
-	}
+
 	return false;
 }
 
@@ -751,9 +744,17 @@ static void spihid_process_read(struct spihid_apple *spihid)
 	length = le16_to_cpu(pkt->length);
 
 	if (length < sizeof(struct spihid_msg_hdr) + 2) {
-		dev_info(dev, "R short packet: len:%zu\n", length);
-		print_hex_dump_debug("spihid pkt:", DUMP_PREFIX_OFFSET, 16, 1,
-				     pkt->data, length, false);
+		if (length == sizeof(spi_hid_apple_booted) &&
+		    !memcmp(pkt->data, spi_hid_apple_booted, length)) {
+			if (!spihid->status_booted) {
+				spihid->status_booted = true;
+				wake_up_interruptible(&spihid->wait);
+			}
+		} else {
+			dev_info(dev, "R short packet: len:%zu\n", length);
+			print_hex_dump_debug("spihid pkt:", DUMP_PREFIX_OFFSET, 16, 1,
+					pkt->data, length, false);
+		}
 		return;
 	}
 
@@ -946,7 +947,7 @@ int spihid_apple_core_probe(struct spi_device *spi, struct spihid_apple_ops *ops
 
 	// wait for boot message
 	err = wait_event_interruptible_timeout(spihid->wait,
-					       spihid->status_booted, 500);
+					       spihid->status_booted, msecs_to_jiffies(500));
 	if (err == 0)
 		err = -ENODEV;
 	if (err < 0) {
@@ -995,6 +996,7 @@ int spihid_apple_core_probe(struct spi_device *spi, struct spihid_apple_ops *ops
 error:
 	return err;
 }
+EXPORT_SYMBOL_GPL(spihid_apple_core_probe);
 
 int spihid_apple_core_remove(struct spi_device *spi)
 {
