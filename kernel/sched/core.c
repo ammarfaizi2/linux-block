@@ -91,6 +91,8 @@
 #include "../../fs/io-wq.h"
 #include "../smpboot.h"
 
+DEFINE_PER_TASK(unsigned int,				flags);
+
 DEFINE_PER_TASK(struct sched_dl_entity,			dl);
 
 DEFINE_PER_TASK(int,					on_rq);
