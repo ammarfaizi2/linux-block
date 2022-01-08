@@ -3,6 +3,7 @@
 #define _ASM_X86_CACHE_H
 
 #include <linux/linkage.h>
+#include <asm/cpufeature.h>
 
 /* L1 cache line size */
 #define L1_CACHE_SHIFT	(CONFIG_X86_L1_CACHE_SHIFT)
@@ -20,5 +21,7 @@
 	__page_aligned_data
 #endif
 #endif
+
+#define cache_line_size()	(boot_cpu_data.x86_cache_alignment)
 
 #endif /* _ASM_X86_CACHE_H */
