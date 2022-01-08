@@ -63,5 +63,9 @@ typedef struct {
 		.lock = __MUTEX_INITIALIZER(mm.context.lock),		\
 	}
 
+/* On x86, mm_cpumask(mm) contains all CPUs that might be lazily using mm */
+#define for_each_possible_lazymm_cpu(cpu, mm) \
+	for_each_cpu((cpu), mm_cpumask((mm)))
+
 
 #endif /* _ASM_X86_MMU_H */

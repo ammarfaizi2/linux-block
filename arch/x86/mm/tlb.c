@@ -706,7 +706,9 @@ temp_mm_state_t use_temporary_mm(struct mm_struct *mm)
 	/*
 	 * Make sure not to be in TLB lazy mode, as otherwise we'll end up
 	 * with a stale address space WITHOUT being in lazy mode after
-	 * restoring the previous mm.
+	 * restoring the previous mm.  Additionally, once we switch mms,
+	 * for_each_possible_lazymm_cpu() will no longer report this CPU,
+	 * so a lazymm pin wouldn't work.
 	 */
 	if (this_cpu_read(cpu_tlbstate_shared.is_lazy))
 		unlazy_mm_irqs_off();
