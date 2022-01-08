@@ -104,6 +104,11 @@ DEFINE_PER_TASK(void *,					stack);
 DEFINE_PER_TASK(refcount_t,				usage);
 
 
+/* A live task holds one reference: */
+#ifdef CONFIG_THREAD_INFO_IN_TASK
+DEFINE_PER_TASK(refcount_t,				stack_refcount);
+#endif
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.

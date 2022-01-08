@@ -12,6 +12,8 @@
 
 #ifdef CONFIG_THREAD_INFO_IN_TASK
 
+DECLARE_PER_TASK(refcount_t, stack_refcount);
+
 /*
  * When accessing the stack of a non-current task that might exit, use
  * try_get_task_stack() instead.  task_stack_page will return a pointer
@@ -66,7 +68,7 @@ static inline unsigned long *end_of_stack(struct task_struct *p)
 #ifdef CONFIG_THREAD_INFO_IN_TASK
 static inline void *try_get_task_stack(struct task_struct *tsk)
 {
-	return refcount_inc_not_zero(&tsk->stack_refcount) ?
+	return refcount_inc_not_zero(&per_task(tsk, stack_refcount)) ?
 		task_stack_page(tsk) : NULL;
 }
 
