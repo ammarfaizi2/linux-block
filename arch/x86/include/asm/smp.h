@@ -5,7 +5,6 @@
 #include <linux/cpumask.h>
 #include <asm/percpu.h>
 
-#include <asm/thread_info.h>
 #include <asm/cpumask.h>
 
 extern int smp_num_siblings;
