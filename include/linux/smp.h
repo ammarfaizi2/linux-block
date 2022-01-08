@@ -109,7 +109,6 @@ static inline void on_each_cpu_cond(smp_cond_func_t cond_func,
 
 #include <linux/preempt.h>
 #include <linux/compiler.h>
-#include <linux/thread_info.h>
 #include <asm/smp.h>
 
 /*
