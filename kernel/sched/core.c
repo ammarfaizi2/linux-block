@@ -91,12 +91,12 @@
 #include "../../fs/io-wq.h"
 #include "../smpboot.h"
 
-DEFINE_PER_TASK(struct sched_dl_entity, dl);
+DEFINE_PER_TASK(struct sched_dl_entity,			dl);
 
-DEFINE_PER_TASK(int, on_rq);
+DEFINE_PER_TASK(int,					on_rq);
 
-DEFINE_PER_TASK(struct sched_rt_entity, rt);
-DEFINE_PER_TASK(const struct sched_class *, sched_class);
+DEFINE_PER_TASK(struct sched_rt_entity,			rt);
+DEFINE_PER_TASK(const struct sched_class *,		sched_class);
 
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event

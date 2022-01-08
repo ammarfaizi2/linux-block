@@ -25,6 +25,8 @@
 #include <linux/sched/wake_q.h>
 #include <linux/ww_mutex.h>
 
+#include "../sched/sched.h"
+
 #include "rtmutex_common.h"
 
 #ifndef WW_RT
