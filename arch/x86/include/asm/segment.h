@@ -3,6 +3,5 @@
 #define _ASM_X86_SEGMENT_H
 
 #include <asm/segment_types.h>
-#include <asm/segment_api.h>
 
 #endif /* _ASM_X86_SEGMENT_H */

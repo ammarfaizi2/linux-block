@@ -11,6 +11,7 @@
 #include <asm/user.h>
 #include <asm/auxvec.h>
 #include <asm/fsgsbase.h>
+#include <asm/segment_api.h>
 
 #include <asm/vdso.h>
 
