@@ -8,6 +8,7 @@
  */
 
 #include <asm/segment.h>
+#include <linux/linkage.h>
 
 /* For ORIG_RAX */
 #include "../../entry/calling.h"

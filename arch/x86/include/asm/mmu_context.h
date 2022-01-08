@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_MMU_CONTEXT_H
 #define _ASM_X86_MMU_CONTEXT_H
 
+#include <asm/segment_api.h>
 #include <asm/pgtable_api_access.h>
 
 #include <linux/mm_api.h>
