@@ -1060,7 +1060,7 @@ static void check_for_stack(struct device *dev,
 			if (page != stack_vm_area->pages[i])
 				continue;
 
-			addr = (u8 *)current->stack + i * PAGE_SIZE + offset;
+			addr = (u8 *) per_task(current, stack) + i * PAGE_SIZE + offset;
 			err_printk(dev, NULL, "device driver maps memory from stack [probable addr=%p]\n", addr);
 			break;
 		}

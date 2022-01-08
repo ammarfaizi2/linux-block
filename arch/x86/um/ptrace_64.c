@@ -216,7 +216,7 @@ int is_syscall(unsigned long addr)
 
 static int get_fpregs(struct user_i387_struct __user *buf, struct task_struct *child)
 {
-	int err, n, cpu = ((struct thread_info *) child->stack)->cpu;
+	int err, n, cpu = ((struct thread_info *) per_task(child, stack))->cpu;
 	struct user_i387_struct fpregs;
 
 	err = save_i387_registers(userspace_pid[cpu],
@@ -233,7 +233,7 @@ static int get_fpregs(struct user_i387_struct __user *buf, struct task_struct *c
 
 static int set_fpregs(struct user_i387_struct __user *buf, struct task_struct *child)
 {
-	int n, cpu = ((struct thread_info *) child->stack)->cpu;
+	int n, cpu = ((struct thread_info *) per_task(child, stack))->cpu;
 	struct user_i387_struct fpregs;
 
 	n = copy_from_user(&fpregs, buf, sizeof(fpregs));

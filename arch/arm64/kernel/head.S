@@ -403,6 +403,9 @@ SYM_FUNC_END(__create_page_tables)
 	msr	sp_el0, \tsk
 
 	ldr	\tmp1, [\tsk, #TSK_STACK]
+	cbnz	\tmp1, 0f
+	adrp    \tmp1, init_stack
+0:
 	add	sp, \tmp1, #THREAD_SIZE
 	sub	sp, sp, #PT_REGS_SIZE
 

@@ -897,6 +897,8 @@ void __init init_per_task_early(void)
 
 	INIT_LIST_HEAD(&per_task(&init_task, se).group_node);
 
+	per_task(&init_task, stack) = init_stack;
+
 #ifdef CONFIG_CPUSETS
 	per_task(&init_task, mems_allowed_seq) = (seqcount_spinlock_t) SEQCNT_SPINLOCK_ZERO(init_task.mems_allowed_seq,
 						 &init_task.alloc_lock);
@@ -955,9 +957,9 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 	char *command_line;
 	char *after_dashes;
 
-	set_task_stack_end_magic(&init_task);
-
 	init_per_task_early();
+
+	set_task_stack_end_magic(&init_task);
 
 	smp_setup_processor_id();
 	debug_objects_early_init();

@@ -12,6 +12,7 @@
 #include <linux/sched/per_task.h>
 
 DECLARE_PER_TASK(struct thread_struct, thread);
+DECLARE_PER_TASK(void *, stack);
 
 #define task_thread(t) per_task(t, thread)
 

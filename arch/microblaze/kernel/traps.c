@@ -39,7 +39,7 @@ void show_stack(struct task_struct *task, unsigned long *sp, const char *loglvl)
 	if (fp == 0) {
 		if (task) {
 			fp = ((struct thread_info *)
-				(task->stack))->cpu_context.r1;
+				(per_task(task, stack)))->cpu_context.r1;
 		} else {
 			/* Pick up caller of dump_stack() */
 			fp = (u32)&sp - 8;
