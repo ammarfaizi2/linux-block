@@ -843,7 +843,7 @@ static void flush_tlb_func(void *info)
 		 * This should be rare, with native_flush_tlb_multi() skipping
 		 * IPIs to lazy TLB mode CPUs.
 		 */
-		switch_mm_irqs_off(NULL, &init_mm, NULL);
+		unlazy_mm_irqs_off();
 		return;
 	}
 
