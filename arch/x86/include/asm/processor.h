@@ -10,6 +10,8 @@ struct mm_struct;
 struct io_bitmap;
 struct vm86;
 
+#include <linux/sched/thread.h>
+
 #include <asm/math_emu.h>
 #include <asm/segment.h>
 #include <asm/types.h>
@@ -535,12 +537,16 @@ struct thread_struct {
 /*
  * X86 doesn't need any embedded-FPU-struct quirks:
  */
+
 static inline void arch_thread_struct_whitelist(unsigned long *offset,
 						unsigned long *size)
 {
 	*offset = 0;
 	*size = 0;
 }
+
+/* Bring in the task_thread() accessor: */
+#include <linux/sched/thread.h>
 
 static inline void
 native_load_sp0(unsigned long sp0)

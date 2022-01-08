@@ -100,6 +100,7 @@
 #include <linux/kcsan.h>
 #include <linux/init_syscalls.h>
 #include <linux/stackdepot.h>
+#include <linux/scs.h>
 
 #include <asm/io.h>
 #include <asm/bugs.h>
@@ -889,6 +890,7 @@ void __init init_per_task_early(void)
 #ifdef CONFIG_POSIX_TIMERS
 	per_task(&init_task, posix_cputimers) = (struct posix_cputimers) __INIT_CPU_TIMERS(init_task);
 #endif
+	task_thread(&init_task) = (struct thread_struct) INIT_THREAD;
 
 #ifdef CONFIG_CPUSETS
 	per_task(&init_task, mems_allowed_seq) = (seqcount_spinlock_t) SEQCNT_SPINLOCK_ZERO(init_task.mems_allowed_seq,

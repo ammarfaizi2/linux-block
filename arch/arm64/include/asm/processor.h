@@ -170,6 +170,9 @@ struct thread_struct {
 	u64			sctlr_user;
 };
 
+/* Bring in the task_thread() accessor: */
+#include <linux/sched/thread.h>
+
 static inline unsigned int thread_get_vl(struct thread_struct *thread,
 					 enum vec_type type)
 {

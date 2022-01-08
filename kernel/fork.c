@@ -142,6 +142,8 @@ static const char * const resident_page_types[] = {
 	NAMED_ARRAY_INDEX(MM_SHMEMPAGES),
 };
 
+DEFINE_PER_TASK(struct thread_struct, thread);
+
 DEFINE_PER_CPU(unsigned long, process_counts) = 0;
 
 __cacheline_aligned DEFINE_RWLOCK(tasklist_lock);  /* outer */
@@ -825,7 +827,7 @@ static void task_struct_whitelist(unsigned long *offset, unsigned long *size)
 	if (unlikely(*size == 0))
 		*offset = 0;
 	else
-		*offset += offsetof(struct task_struct, thread);
+		*offset += offsetof(struct task_struct, per_task_area) + per_task_offset(thread);
 }
 #endif /* CONFIG_ARCH_TASK_STRUCT_ALLOCATOR */
 
