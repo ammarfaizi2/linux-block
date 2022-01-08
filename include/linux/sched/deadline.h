@@ -85,9 +85,6 @@ struct sched_dl_entity {
 #endif
 };
 
-
-DECLARE_PER_TASK(struct sched_dl_entity, dl);
-
 #define MAX_DL_PRIO		0
 
 static inline int dl_prio(int prio)

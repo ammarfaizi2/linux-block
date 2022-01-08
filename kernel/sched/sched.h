@@ -100,9 +100,10 @@
 DECLARE_PER_TASK(struct vtime,				vtime);
 #endif
 
-DECLARE_PER_TASK(int, on_rq);
-DECLARE_PER_TASK(struct sched_rt_entity, rt);
-DECLARE_PER_TASK(const struct sched_class *, sched_class);
+DECLARE_PER_TASK(struct sched_dl_entity,		dl);
+DECLARE_PER_TASK(int,					on_rq);
+DECLARE_PER_TASK(struct sched_rt_entity,		rt);
+DECLARE_PER_TASK(const struct sched_class *,		sched_class);
 
 struct rq;
 struct cpuidle_state;
