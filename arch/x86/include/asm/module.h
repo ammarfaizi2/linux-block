@@ -3,7 +3,8 @@
 #define _ASM_X86_MODULE_H
 
 #include <asm-generic/module.h>
-#include <asm/orc_types.h>
+
+struct orc_entry;
 
 struct mod_arch_specific {
 #ifdef CONFIG_UNWINDER_ORC
