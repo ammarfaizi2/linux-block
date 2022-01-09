@@ -18,6 +18,7 @@ import inspect
 import argparse
 import datetime
 import traceback
+import requests             # for url checking
 import collections          # OrderedDict
 import configparser
 
@@ -969,9 +970,18 @@ class Patch:
                 info("%s: %s" % (tag, v, ))
                 f.write(("%s: %s\n" % (tag, v, )))
 
+        link_url = ("https://lore.kernel.org/r/%s" % (self.message_id, ))
+
+        try:
+            get = requests.get(link_url)
+            if get.status_code != 200:
+                err("Link URL %s not reachable, status_code: %d" % (link_url, get.status_code, ))
+        except requests.exceptions.RequestException as e:
+            err("Exception %s while trying to get URL: %s" % (e, link_url, ))
+
         # slap the Link at the end
-        info("Link: https://lore.kernel.org/r/%s\n" % (self.message_id, ))
-        f.write(("Link: https://lore.kernel.org/r/%s\n" % (self.message_id, )))
+        info(("Link: %s\n" % (link_url, )))
+        f.write(("Link: %s\n" % (link_url, )))
 
     def process_patch(self):
         """
