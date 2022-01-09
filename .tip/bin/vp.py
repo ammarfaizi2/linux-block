@@ -94,7 +94,7 @@ def rfc2822_now():
 
 # remove brackets which are left overs from splitting a line into words
 def strip_brackets(w):
-    if not re.match(r'^.*[()\[\]]+.*$', w):
+    if not rex_brackets.match(w):
         return w
 
     dbg("\t[%s]" % (w, ))
@@ -108,7 +108,7 @@ def strip_brackets(w):
     while '[' in w and ']' in w:
         w = w.replace('[', '', 1).replace(']', '', 1)
 
-    w = re.sub(r'^(^.*)\((.+)\)(.*)$', r'\1\2\3', w)
+    w = rex_ballanced_br.sub(r'\1\2\3', w)
 
     dbg("-->\t[%s]" % (w, ))
 
@@ -160,11 +160,11 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          "binutils", "bitmask", "bitfield", "cmdline", "config", "CPPC", "CPUID",
          "DMA", "DIMM", "e.g.", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
          "GHCB", "GHCI", "GPR", "GUID", "HLT", "hugepage",
-         "hypercall", "HV", "I/O", "initializer", "initrd", "IRQ", "IST", "JMP", "kallsyms",
-         "KASAN", "kdump", "kprobe", "livepatch", "lvalue",
+         "hypercall", "HV", "I/O", "initializer", "initrd", "IRQ", "JMP", "kallsyms",
+         "KASAN", "kdump", "kprobe", "KVM", "livepatch", "lvalue",
          "MCA", "MCE", "memmove",
          "memtype", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
-         "NX", "offlining", "paravirt", "PASID", "PCI", "pdf", "percpu", "preemptible",
+         "NX", "offlining", "PASID", "PCI", "pdf", "percpu", "preemptible",
          "PTE",
          "PV", "PVALIDATE", "RDMSR", "rFLAGS", "RMP", "RMPADJUST", "Ryzen", "SEV", "SEV-ES",
          "SEV-SNP", "SIGSEGV", "Skylake", "SME", "SNP", "STI", "strtab", "struct", "swiotlb",
@@ -176,7 +176,7 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          "untrusted",
          "userspace", "vCPU",
          "VM", "VMM", "VMCALL", "VMCB", "VMEXIT",
-         "VMGEXIT", "VMLAUNCH", "VMSA", "vTOM", "WBINVD", "WRMSR", "x86", "Xen", "Xeon", "XSAVE" ]
+         "VMGEXIT", "VMLAUNCH", "VMSA", "vTOM", "WBINVD", "WRMSR", "x86", "XCR0", "Xen", "Xeon", "XSS" ]
 
 dc_non_words = [ "E820", "X86" ]
 
@@ -184,8 +184,13 @@ dc_non_words = [ "E820", "X86" ]
 known_vars = [ '__BOOT_DS', 'fpstate', 'kptr_restrict', 'pt_regs', 'sme_me_mask',
                'sysctl_perf_event_paranoid', 'xfeatures' ]
 
+
 def load_spellchecker():
-    global dc
+    global dc, rex_commit_ref, rex_fnames, rex_url, rex_sha1, rex_kdoc_arg, rex_decimal, rex_units, \
+       rex_x86_traps, rex_gpr, rex_kcmdline, rex_version, rex_c_keywords, rex_sections, rex_errval,\
+       rex_opts, rex_bla_adj, rex_word_bla, rex_reg_field, rex_misc_num, rex_sent_end, rex_word_split, \
+       regexes, regexes_pats, rex_brackets, rex_ballanced_br, rex_c_macro, rex_kdoc_cmt, rex_comment, \
+       rex_comment_end, rex_non_alpha
 
     dc = enchant.Dict("en_US")
 
@@ -194,6 +199,40 @@ def load_spellchecker():
 
     for w in dc_non_words:
         dc.remove(w)
+
+    # compile all regexes
+    rex_ballanced_br = re.compile(r'^(^.*)\((.+)\)(.*)$')
+    rex_brackets    = re.compile(r'^.*[()\[\]]+.*$')
+    rex_bla_adj     = re.compile(r'([\w-]+)-(active|capable|controlled|related|specific|validated)')
+    rex_c_keywords  = re.compile(r'#ifdef')
+    rex_c_macro     = re.compile(r'^[A-Z0-9_]+$')
+    rex_comment     = re.compile(r'^\+\s+\*\s+.*$', re.I)
+    rex_comment_end = re.compile(r'^\+\s+\*\/')
+    rex_commit_ref  = re.compile(r'^.*(?P<sha1>[a-f0-9]{7,})\s?\(\".*\"\).*')
+    rex_decimal     = re.compile(r'^[0-9]+$')
+    rex_errval      = re.compile(r'-E(EINVAL|EXIST|OPNOTSUPP)')
+    rex_fnames      = re.compile(r'\s?/?(\w+/)*\w+\.[chS]')
+    rex_gpr         = re.compile(r'([re]?[abcd]x|r([89]|1[0-5]))', re.I)
+    rex_kcmdline    = re.compile(r'^\w+=([\w,]+)?$')
+    rex_kdoc_arg    = re.compile(r'^@\w+:?$')
+    rex_kdoc_cmt    = re.compile(r'\+\s*/\*\*\s*')
+    rex_misc_num    = re.compile(r'^#\d+$')
+    rex_non_alpha   = re.compile(r'^[-]*$')
+    rex_opts        = re.compile(r'-[\w\d=-]+$', re.I)
+    rex_reg_field   = re.compile(r'\w+\[\d+(:\d+)?\]', re.I)
+    rex_sections    = re.compile(r'(\.bss|\.data|\.head\.text)')
+    rex_sent_end    = re.compile(r'\.(\s?([A-Z]|$))')
+    rex_sha1        = re.compile(r'[a-f0-9]{12,40}', re.I)
+    rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9a-f]+(K|Mb))$', re.I)
+    rex_url         = re.compile(r'https?://[a-z0-9:/.-]+')
+    rex_version     = re.compile(r'v\d+$', re.I)
+    rex_word_bla    = re.compile(r'non-(\w+)')
+    rex_word_split  = re.compile(r'(\w+)\/(\w+)')
+    rex_x86_traps   = re.compile(r'^\#[A-ZA-Z]')
+
+    # precompile all regexes
+    for pat in regexes_pats:
+        regexes.append(re.compile(pat))
 
 def spellcheck_func_name(w, prev_word):
     """
@@ -206,7 +245,7 @@ def spellcheck_func_name(w, prev_word):
     else:
         if '_' in w and prev_word != "struct":
             # all caps - likely a macro name
-            if re.match(r'^[A-Z0-9_]+$', w):
+            if rex_c_macro.match(w):
                 dbg("Skip macro name: [%s]" % (w, ))
                 return True
 
@@ -215,8 +254,10 @@ def spellcheck_func_name(w, prev_word):
         return True
 
 # known words as regexes to avoid duplication in the list above
-regexes = [ r'BIOS(e[sn])?', r'boot(loader|params?|up)', r'MOVSB?', r'params?', r'PS[CP]',
-            r'sev_(features|status)', r'virtualized?' ]
+regexes_pats = [ r'BIOS(e[sn])?', r'boot(loader|params?|up)', r'DDR[1-5]', r'I[DS]T', r'MOVSB?', r'params?',
+            r'(para)?virt(ualiz(ed?|ing))?$', r'PS[CP]',
+            r'sev_(features|status)', r'VMPL[0-3]', r'XSAVE[CS]?' ]
+regexes = []
 
 def spellcheck_regexes(w):
     """
@@ -224,8 +265,9 @@ def spellcheck_regexes(w):
     """
 
     for rgx in regexes:
-        if re.match(rgx, w):
-            dbg("Skip regexed word: [%s]" % (w, ))
+        m = rgx.match(w)
+        if m:
+            dbg("Skip regexed word: [%s] match: (%s)" % (w, m.group(0)))
             return True
 
     return False
@@ -259,16 +301,16 @@ def spellcheck_hunk(pfile, hunk):
     for l in hunk.target_lines():
         line = str(l)
         # kernel-doc comment?
-        m = re.match(r'\+\s*/\*\*\s*', line)
+        m = rex_kdoc_cmt.match(line)
         if m:
             flags['check_func'] = False
 
-        m = re.match(r'^\+\s+\*\s+.*$', line, re.I)
+        m = rex_comment.match(line)
         if m:
             spellcheck(line, "comment", flags)
 
         # end of comment?
-        m = re.match(r'^\+\s+\*\/', line)
+        m = rex_comment_end.match(line)
         if m:
             flags['check_func'] = False
 
@@ -284,7 +326,7 @@ def spellcheck(s, where, flags):
 
     for line in s.splitlines():
         # see if the line contains a commit reference and check it if so
-        if re.match(r'^.*(?P<sha1>[a-f0-9]{7,})\s?\(\".*\"\).*', line):
+        if rex_commit_ref.match(line):
             tag_sanity_check_fixes(line.strip())
             continue
 
@@ -293,17 +335,17 @@ def spellcheck(s, where, flags):
             continue
 
         # URLs - ignore them
-        line = re.sub(r'https?://[a-z0-9:/.-]+', '', line)
+        line = rex_url.sub('', line)
 
         # filenames and -paths, ditto
-        line = re.sub(r'\s?/?(\w+/)*\w+\.[chS]', '', line)
+        line = rex_fnames.sub('', line)
 
         # remove fullstops ending a sentence - not other dots, as in "i.e." for example.
-        line = re.sub(r'\.(\s?([A-Z]|$))', r' \1', line)
+        line = rex_sent_end.sub(r' \1', line)
 
         # replace "word/word" with "word word" so that the line can be
         # split into words properly
-        line = re.sub(r'(\w+)\/(\w+)', r'\1 \2', line)
+        line = rex_word_split.sub(r'\1 \2', line)
 
         # '/' to split "word/word" formulations
         words = re.split(r'[\s/]', line)
@@ -321,7 +363,7 @@ def spellcheck(s, where, flags):
                 continue
 
             # only non-alphabetical chars left?
-            if re.match(r'^[-]*$', w):
+            if rex_non_alpha.match(w):
                 dbg("Only non-alpha chars left: [%s]" % (w, ))
                 continue
 
@@ -337,7 +379,7 @@ def spellcheck(s, where, flags):
                 continue
 
             # skip SHAs
-            if re.match(r'^[a-f0-9]{12,40}$', w, re.I):
+            if rex_sha1.match(w):
                 dbg("Skip SHA: [%s]" % (w, ))
                 continue
 
@@ -363,87 +405,81 @@ def spellcheck(s, where, flags):
                     continue
 
             # kernel-doc arguments
-            if re.match(r'^@\w+:?$', w):
+            if rex_kdoc_arg.match(w):
                 dbg("Skip kernel-doc argument: [%s]" % (w, ))
                 continue
 
             # number: decimal...
-            if re.match(r'^[0-9]+$', w):
+            if rex_decimal.match(w):
                 dbg("Skip decimal number: [%s]" % (w, ))
                 continue
 
             # number: hex, units, ...
-            if re.match(r'^(0x[0-9a-f]+|[0-9a-f]+(K|Mb))$', w, re.I):
-                dbg("Skip number [%s]" % (w, ))
+            if rex_units.match(w):
+                dbg("Skip hex number/unit [%s]" % (w, ))
                 continue
 
             # x86 trap names
-            if re.match(r'^\#[A-ZA-Z]', w):
+            if rex_x86_traps.match(w):
                 dbg("Skip x86 trap name: [%s]" % (w, ))
                 continue
 
             # x86 registers
-            # if re.match(r'r([abcd][ipx]|[89]|1[0-5])', w, re.I):
-            if re.match(r'([re]?[abcd]x|r([89]|1[0-5]))', w, re.I):
+            if rex_gpr.match(w):
                 dbg("Skip x86 register: [%s]" % (w, ))
                 continue
 
-            # x86-specific abbreviations
-            if re.match(r'(VMPL[0-3]?|DDR[1-5]?)', w):
-                dbg("Skip hw-specific abbrev.: [%s]" % (w, ))
-                continue
-
             # kernel cmdline params
-            if re.match(r'^\w+=([\w,]+)?$', w):
+            if rex_kcmdline.match(w):
                 dbg("Skip cmdline param: [%s]" % (w, ))
                 continue
 
             # versions...
-            if re.match(r'v\d+$', w, re.I):
+            if rex_version.match(w):
                 dbg("Skip version: [%s]" % (w, ))
                 continue
 
             # C keywords
-            if re.match(r'#ifdef', w):
+            if rex_c_keywords.match(w):
                 dbg("Skip C keyword: [%s]" % (w, ))
                 continue
 
             # sections
-            if re.match(r'(\.bss|\.data|\.head\.text)', w):
+            if rex_sections.match(w):
                 dbg("Skip section name: [%s]" % (w, ))
                 continue
 
             # error value defines
-            if re.match(r'-E(EINVAL|EXIST|OPNOTSUPP)', w):
+            if rex_errval.match(w):
                 dbg("Skip error define: [%s]" % (w, ))
                 continue
 
             # tool options
-            if re.match(r'-[\w\d=-]+$', w, re.I):
+            if rex_opts.match(w):
                 dbg("Skip tool option: [%s]" % (w, ))
                 continue
 
             # BLA-<adjective>
-            m = re.match(r'([\w-]+)-(active|controlled|related|specific|validated)', w)
+            m = rex_bla_adj.match(w)
             if m:
                 if dc.check(m.group(1)):
                     dbg("Skip BLA-<adjective>: [%s]" % (w, ))
                     continue
 
             # <word>-BLA
-            m = re.match(r'non-(\w+)', w)
+            m = rex_word_bla.match(w)
             if m:
                 if dc.check(m.group(1)):
                     dbg("Skip <word>-BLA: [%s]" % (w, ))
                     continue
 
             # reference to register fields like GHCBData[55:52], for example
-            if re.match(r'\w+\[\d+(:\d+)?\]', w, re.I):
+            if rex_reg_field.match(w):
                 dbg("Skip reference to register fields: [%s]" % (w, ))
                 continue
 
             # misc numbering with misc formatting
-            if re.match(r'^#\d+$', w):
+            if rex_misc_num.match(w):
                 dbg("Skip misc numbering: [%s]" % (w, ))
                 continue
 
@@ -679,9 +715,11 @@ class Patch:
             @plines: a list of commit message lines
         """
 
+        rex_from = re.compile(r'^\s?From:\s?(.*)', re.I)
+
         for line in plines:
             # Scan for a potential new From:
-            m = re.match(r'^\s?From:\s?(.*)', line, re.IGNORECASE)
+            m = rex_from.match(line)
             if m:
                 new_from = m.group(1)
                 if new_from != self.sender:
@@ -694,13 +732,15 @@ class Patch:
     def verify_diff(self):
         ps = unidiff.PatchSet(self.diff)
 
+        rex_unicode_chars = re.compile(r'([^\x00-\xff])')
+
         # a PatchSet contains a bunch of PatchedFile's
         for pfile in ps:
             # each PatchedFile contains a bunch of Hunk's
             for hunk in pfile:
                 for line in str(hunk).splitlines():
                     # check for unicode chars, aka https://trojansource.codes/
-                    m = re.search(r'([^\x00-\xff])', line)
+                    m = rex_unicode_chars.search(line)
                     if m:
                         warn(1, "Unicode char [%s] (0x%x) in line: %s"
                                 % (m.group(1), ord(m.group(1)), line, ))
@@ -733,6 +773,8 @@ class Patch:
 
         dbg("")
 
+        rex_cc_stable = re.compile(r'^\s*<stable@vger.kernel.org>\s*.*$', re.I)
+
         for line in reversed(clines):
             # relies on the fact that tags and commit message are separated by an empty line
             if not line:
@@ -749,7 +791,7 @@ class Patch:
 
             # Skip all Cc: tags except stable and explicitly added ones
             if tag.lower() == "cc":
-                m = re.match(r'^\s*<stable@vger.kernel.org>\s*.*$', name_email, re.I)
+                m = rex_cc_stable.match(name_email)
                 if not m:
                     warn(1, ("Skipping Cc: %s" % (name_email, )))
                     continue
@@ -780,6 +822,10 @@ class Patch:
         ret = 0
         dfst = []
 
+        rex_diffstat_file = re.compile(r'^.*\|\s+\d+\s+[+-]+\s?$')
+        rex_diffstat_sum  = re.compile(r'^.*files?\s+changed(.*insertions?\(\+\))?(.*deletions?\(\-\))?$')
+        rex_diffstat_mod  = re.compile(r'^\s+(create|delete) mode [0-9]+ .*')
+
         for line in lines:
             # git or quilt-type patch
             if line.startswith("diff"):
@@ -787,15 +833,15 @@ class Patch:
 
             # pick out only the actual diffstat lines
             # "<filepath> | <num> +-"
-            if re.match(r'^.*\|\s+\d+\s+[+-]+\s?$', line):
+            if rex_diffstat_file.match(line):
                 dfst.append(line)
 
             # X file(s) changed, Y insertions?(+), Z deletions?(-)
-            if re.match(r'^.*files?\s+changed(.*insertions?\(\+\))?(.*deletions?\(\-\))?$', line):
+            if rex_diffstat_sum.match(line):
                 dfst.append(line)
 
             # create/delete mode
-            if re.match(r'^\s+(create|delete) mode [0-9]+ .*', line):
+            if rex_diffstat_mod.match(line):
                 dfst.append(line)
 
             ret += 1
@@ -887,17 +933,18 @@ class Patch:
 
         lines = self.commit_msg.splitlines()
 
+        rex_pers_pronoun = re.compile(r'\W?we\W', re.I)
+        rex_this_patch   = re.compile(r'(.*this\s+patch.*)', re.I)
+
         for i, l in enumerate(lines):
-            warn(re.match(r'\W?we\W', l, re.I),
-                          ("Commit message has 'we':\n [%s]" % (l, )))
+            warn(rex_pers_pronoun.match(l), ("Commit message has 'we':\n [%s]" % (l, )))
+            warn(rex_this_patch.match(l),   ("Commit message has 'this patch':\n [%s]" % (l, )))
 
-            warn(re.match(r'(.*this\s+patch.*)', l, re.I),
-                          ("Commit message has 'this patch':\n [%s]" % (l, )))
-
-            if re.search(r'[a-f0-9]{7,40}\s?\(\".*', l, re.I):
+            if rex_sha1.search(l):
                 verify_commit_quotation(lines[i - 1], lines[i], lines[i + 1])
 
-        spellcheck(self.commit_msg, "commit message", None)
+        flags = { 'check_func': True }
+        spellcheck(self.commit_msg, "commit message", flags)
 
     def format_tags(self, f):
         """
@@ -1011,18 +1058,21 @@ def verify_binutils_version(f, h):
     lines = []
     asm_line = None
 
+    rex_asm_volatile = re.compile(r'^\s?\+\s?asm(\svolatile)?\s?\(')
+    rex_dot_byte     = re.compile(r'^\s?\+.*\.byte(\s[x0-9a-f,])+',  re.I)
+
     for l in h.target_lines():
         line = str(l)
 
         # first, scan for the asm volatile() statement
-        m = re.match(r'^\s?\+\s?asm(\svolatile)?\s?\(', line)
+        m = rex_asm_volatile.match(line)
         if m:
             inline_asm = True
             asm_line = l
 
         # now, scan for the .byte directive
         if inline_asm:
-            m = re.match(r'^\s?\+.*\.byte(\s[x0-9a-f,])+', line, re.I)
+            m = rex_dot_byte.match(line)
             if m:
                 opcodes = True
                 break
@@ -1032,8 +1082,10 @@ def verify_binutils_version(f, h):
 
     if not opcodes: return
 
+    rex_binutils = re.compile(r'^.*binutils\s[\d.]+.*')
+
     for l in lines:
-        m = re.match(r'^.*binutils\s[\d.]+.*', l)
+        m = rex_binutils.match(l)
         if m:
             return
 
@@ -1046,19 +1098,21 @@ def verify_comment_style(pfile, h):
     in_comment = False
     comment_start = None
 
+    rex_comment_start = re.compile(r'^.*/\*\s+\w+', re.I)
+
     for line in h.target_lines():
         l = str(line)
 
         # does the comment start have chars after the '*'?
         if not in_comment:
-            m = re.match(r'^.*/\*\s+\w+', l, re.I)
+            m = rex_comment_start.match(l)
             if m:
                 in_comment = True
                 comment_start = l
                 continue
 
         if in_comment:
-            warn(re.match(r'^\+?\s*\*\s*\w*', l),
+            warn(rex_comment.match(l),
                  "Multi-line comment needs to start text on the second line:\n [%s]\n" %
                  (comment_start.strip(), ))
             in_comment = False
@@ -1069,6 +1123,8 @@ def verify_comment_style(pfile, h):
     # exceptions to the rule
     if pfile == "arch/x86/include/asm/cpufeatures.h": return
 
+    rex_tail_comment = re.compile(r'^.*[;)]\s*/\*.*$')
+
     for line in h.target_lines():
         # look at only added (+) lines
         if not line.is_added:
@@ -1076,7 +1132,7 @@ def verify_comment_style(pfile, h):
 
         l = str(line)
 
-        warn(re.match(r'^.*[;)]\s*/\*.*$', l), "No tail comments please:\n %s:%d [%s]\n" %
+        warn(rex_tail_comment.match(l), "No tail comments please:\n %s:%d [%s]\n" %
              (pfile, line.target_line_no, l.strip(), ))
 
 
@@ -1092,34 +1148,6 @@ def verify_commit_quotation(prev, cur, nxt):
     warn(1, "The proper commit quotation format is:\n<newline>\n[  ]<sha1, 12 chars> (\"commit name\")\n<newline>")
 ###
 
-
-def check_unicode_chars_in_patch(msg):
-
-    lines = msg.as_string().splitlines(True)
-
-    # skip commit message
-    for line in lines:
-        # people create patches without that "---" line. Use two match objects because
-        # python can't do goto labels which will fit perfectly here
-        m0 = re.match(r'^---$', line)
-        m1 = re.match(r'^diff (--git)? a/.* b/.*', line)
-        if m0 or m1:
-            break
-
-    for i, line in enumerate(lines):
-        if re.search(r'[^\x00-\xff]', line):
-            print("Line %d has a unicode char: %s" % (i, line, ))
-            return True
-
-    return False
-
-def smoke_check(msg, force):
-
-    dbg("")
-
-    if check_unicode_chars_in_patch(msg):
-        if not force:
-            sys.exit(1)
 
 ## main
 #
@@ -1138,8 +1166,6 @@ def main(args):
 
     with open(input_file, 'rb') as fp:
         msg = BytesParser(policy=policy.default).parse(fp)
-
-    smoke_check(msg, args.force)
 
     if args.add_to_whitelist:
         for w in args.add_to_whitelist.split():
