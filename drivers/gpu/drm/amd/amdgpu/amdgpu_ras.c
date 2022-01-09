@@ -901,7 +901,7 @@ static void amdgpu_ras_get_ecc_info(struct amdgpu_device *adev, struct ras_err_d
 	 * choosing right query method according to
 	 * whether smu support query error information
 	 */
-	ret = smu_get_ecc_info(&adev->smu, (void *)&(ras->umc_ecc));
+	ret = amdgpu_dpm_get_ecc_info(adev, (void *)&(ras->umc_ecc));
 	if (ret == -EOPNOTSUPP) {
 		if (adev->umc.ras_funcs &&
 			adev->umc.ras_funcs->query_ras_error_count)
@@ -1592,6 +1592,7 @@ static void amdgpu_ras_interrupt_handler(struct ras_manager *obj)
 				/* Let IP handle its data, maybe we need get the output
 				 * from the callback to udpate the error type/count, etc
 				 */
+				memset(&err_data, 0, sizeof(err_data));
 				ret = data->cb(obj->adev, &err_data, &entry);
 				/* ue will trigger an interrupt, and in that case
 				 * we need do a reset to recovery the whole system.
@@ -1838,8 +1839,7 @@ static int amdgpu_ras_badpages_read(struct amdgpu_device *adev,
 			.size = AMDGPU_GPU_PAGE_SIZE,
 			.flags = AMDGPU_RAS_RETIRE_PAGE_RESERVED,
 		};
-		status = amdgpu_vram_mgr_query_page_status(
-				ttm_manager_type(&adev->mman.bdev, TTM_PL_VRAM),
+		status = amdgpu_vram_mgr_query_page_status(&adev->mman.vram_mgr,
 				data->bps[i].retired_page);
 		if (status == -EBUSY)
 			(*bps)[i].flags = AMDGPU_RAS_RETIRE_PAGE_PENDING;
@@ -1940,8 +1940,7 @@ int amdgpu_ras_add_bad_pages(struct amdgpu_device *adev,
 			goto out;
 		}
 
-		amdgpu_vram_mgr_reserve_range(
-			ttm_manager_type(&adev->mman.bdev, TTM_PL_VRAM),
+		amdgpu_vram_mgr_reserve_range(&adev->mman.vram_mgr,
 			bps[i].retired_page << AMDGPU_GPU_PAGE_SHIFT,
 			AMDGPU_GPU_PAGE_SIZE);
 
@@ -2142,8 +2141,7 @@ int amdgpu_ras_recovery_init(struct amdgpu_device *adev)
 		if (ret)
 			goto free;
 
-		if (adev->smu.ppt_funcs && adev->smu.ppt_funcs->send_hbm_bad_pages_num)
-			adev->smu.ppt_funcs->send_hbm_bad_pages_num(&adev->smu, con->eeprom_control.ras_num_recs);
+		amdgpu_dpm_send_hbm_bad_pages_num(adev, con->eeprom_control.ras_num_recs);
 	}
 
 #ifdef CONFIG_X86_MCE_AMD
