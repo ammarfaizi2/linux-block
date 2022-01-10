@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Advanced Micro Devices, Inc.
+ * Copyright 2021 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -19,40 +19,20 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: AMD
- *
  */
+#ifndef __LEGACY_DPM_H__
+#define __LEGACY_DPM_H__
 
-#ifndef DM_CP_PSP_IF__H
-#define DM_CP_PSP_IF__H
-
-struct dc_link;
-
-struct cp_psp_stream_config {
-	uint8_t otg_inst;
-	uint8_t dig_be;
-	uint8_t dig_fe;
-	uint8_t link_enc_idx;
-	uint8_t stream_enc_idx;
-	uint8_t dio_output_idx;
-	uint8_t phy_idx;
-	uint8_t assr_enabled;
-	uint8_t mst_enabled;
-	uint8_t dp2_enabled;
-	uint8_t usb4_enabled;
-	void *dm_stream_ctx;
-	bool dpms_off;
-};
-
-struct cp_psp_funcs {
-	bool (*enable_assr)(void *handle, struct dc_link *link);
-	void (*update_stream_config)(void *handle, struct cp_psp_stream_config *config);
-};
-
-struct cp_psp {
-	void *handle;
-	struct cp_psp_funcs funcs;
-};
-
-
-#endif /* DM_CP_PSP_IF__H */
+void amdgpu_dpm_print_class_info(u32 class, u32 class2);
+void amdgpu_dpm_print_cap_info(u32 caps);
+void amdgpu_dpm_print_ps_status(struct amdgpu_device *adev,
+				struct amdgpu_ps *rps);
+int amdgpu_get_platform_caps(struct amdgpu_device *adev);
+int amdgpu_parse_extended_power_table(struct amdgpu_device *adev);
+void amdgpu_free_extended_power_table(struct amdgpu_device *adev);
+void amdgpu_add_thermal_controller(struct amdgpu_device *adev);
+struct amd_vce_state* amdgpu_get_vce_clock_state(void *handle, u32 idx);
+void amdgpu_pm_print_power_states(struct amdgpu_device *adev);
+void amdgpu_legacy_dpm_compute_clocks(void *handle);
+void amdgpu_dpm_thermal_work_handler(struct work_struct *work);
+#endif

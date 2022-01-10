@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Advanced Micro Devices, Inc.
+ * Copyright 2021 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -19,40 +19,14 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: AMD
- *
  */
+#ifndef __AMDGPU_DPM_INTERNAL_H__
+#define __AMDGPU_DPM_INTERNAL_H__
 
-#ifndef DM_CP_PSP_IF__H
-#define DM_CP_PSP_IF__H
+void amdgpu_dpm_get_active_displays(struct amdgpu_device *adev);
 
-struct dc_link;
+u32 amdgpu_dpm_get_vblank_time(struct amdgpu_device *adev);
 
-struct cp_psp_stream_config {
-	uint8_t otg_inst;
-	uint8_t dig_be;
-	uint8_t dig_fe;
-	uint8_t link_enc_idx;
-	uint8_t stream_enc_idx;
-	uint8_t dio_output_idx;
-	uint8_t phy_idx;
-	uint8_t assr_enabled;
-	uint8_t mst_enabled;
-	uint8_t dp2_enabled;
-	uint8_t usb4_enabled;
-	void *dm_stream_ctx;
-	bool dpms_off;
-};
+u32 amdgpu_dpm_get_vrefresh(struct amdgpu_device *adev);
 
-struct cp_psp_funcs {
-	bool (*enable_assr)(void *handle, struct dc_link *link);
-	void (*update_stream_config)(void *handle, struct cp_psp_stream_config *config);
-};
-
-struct cp_psp {
-	void *handle;
-	struct cp_psp_funcs funcs;
-};
-
-
-#endif /* DM_CP_PSP_IF__H */
+#endif
