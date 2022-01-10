@@ -9,6 +9,11 @@
 #define CREATE_TRACE_POINTS
 #include "nfstrace.h"
 
+EXPORT_TRACEPOINT_SYMBOL_GPL(nfs_ioctl_file_statx_get_enter);
+EXPORT_TRACEPOINT_SYMBOL_GPL(nfs_ioctl_file_statx_get_exit);
+EXPORT_TRACEPOINT_SYMBOL_GPL(nfs_ioctl_file_statx_set_enter);
+EXPORT_TRACEPOINT_SYMBOL_GPL(nfs_ioctl_file_statx_set_exit);
+
 EXPORT_TRACEPOINT_SYMBOL_GPL(nfs_fsync_enter);
 EXPORT_TRACEPOINT_SYMBOL_GPL(nfs_fsync_exit);
 EXPORT_TRACEPOINT_SYMBOL_GPL(nfs_xdr_status);
