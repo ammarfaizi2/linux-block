@@ -24,6 +24,7 @@ enum { APPLE_RTKIT_EP_MGMT = 0,
        APPLE_RTKIT_EP_SYSLOG = 2,
        APPLE_RTKIT_EP_DEBUG = 3,
        APPLE_RTKIT_EP_IOREPORT = 4,
+       APPLE_RTKIT_EP_OSLOG = 8,
 };
 
 #define APPLE_RTKIT_MGMT_TYPE GENMASK(59, 52)
@@ -66,6 +67,10 @@ enum { APPLE_RTKIT_MGMT_HELLO = 1,
 #define APPLE_RTKIT_SYSLOG_INIT	     8
 #define APPLE_RTKIT_SYSLOG_N_ENTRIES GENMASK(7, 0)
 #define APPLE_RTKIT_SYSLOG_MSG_SIZE  GENMASK(31, 24)
+
+#define APPLE_RTKIT_OSLOG_TYPE GENMASK(63, 56)
+#define APPLE_RTKIT_OSLOG_INIT	1
+#define APPLE_RTKIT_OSLOG_ACK	3
 
 #define APPLE_RTKIT_MIN_SUPPORTED_VERSION 11
 #define APPLE_RTKIT_MAX_SUPPORTED_VERSION 12
@@ -167,6 +172,7 @@ static void apple_rtkit_management_rx_epmap(struct apple_rtkit *rtk, u64 msg)
 		case APPLE_RTKIT_EP_CRASHLOG:
 		case APPLE_RTKIT_EP_DEBUG:
 		case APPLE_RTKIT_EP_IOREPORT:
+		case APPLE_RTKIT_EP_OSLOG:
 			rtk_dbg("Starting system endpoint 0x%02x\n", ep);
 			apple_rtkit_start_ep(rtk, ep);
 			break;
@@ -425,6 +431,29 @@ static void apple_rtkit_syslog_rx(struct apple_rtkit *rtk, u64 msg)
 	}
 }
 
+static void apple_rtkit_oslog_rx_init(struct apple_rtkit *rtk, u64 msg)
+{
+	u64 ack;
+	rtk_dbg("oslog init: msg: %llx\n", msg);
+
+	ack = FIELD_PREP(APPLE_RTKIT_OSLOG_TYPE, APPLE_RTKIT_OSLOG_ACK);
+
+	apple_rtkit_send_message(rtk, APPLE_RTKIT_EP_OSLOG, ack);
+}
+
+static void apple_rtkit_oslog_rx(struct apple_rtkit *rtk, u64 msg)
+{
+	u8 type = FIELD_GET(APPLE_RTKIT_OSLOG_TYPE, msg);
+
+	switch (type) {
+	case APPLE_RTKIT_OSLOG_INIT:
+		apple_rtkit_oslog_rx_init(rtk, msg);
+		break;
+	default:
+		rtk_warn("Unknown oslog message: %llx\n", msg);
+	}
+}
+
 static void apple_rtkit_rx(struct apple_rtkit *rtk, struct apple_mbox_msg *msg)
 {
 	u8 ep = msg->msg1;
@@ -444,6 +473,9 @@ static void apple_rtkit_rx(struct apple_rtkit *rtk, struct apple_mbox_msg *msg)
 		break;
 	case APPLE_RTKIT_EP_IOREPORT:
 		apple_rtkit_ioreport_rx(rtk, msg->msg0);
+		break;
+	case APPLE_RTKIT_EP_OSLOG:
+		apple_rtkit_oslog_rx(rtk, msg->msg0);
 		break;
 	case APPLE_RTKIT_APP_ENDPOINT_START ... 0xff:
 		rtk->ops->recv_message(rtk->cookie, ep, msg->msg0);
