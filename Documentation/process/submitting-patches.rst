@@ -271,7 +271,6 @@ least a notification of the change, so that some information makes its way
 into the manual pages.  User-space API changes should also be copied to
 linux-api@vger.kernel.org.
 
-
 No MIME, no links, no compression, no attachments.  Just plain text
 -------------------------------------------------------------------
 
