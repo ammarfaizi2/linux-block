@@ -1088,13 +1088,9 @@ EXPORT_SYMBOL_GPL(poll_state_synchronize_srcu);
  */
 static void srcu_barrier_cb(struct rcu_head *rhp)
 {
-	struct srcu_data *sdp;
-	struct srcu_struct *ssp;
+	struct srcu_data *sdp = container_of(rhp, struct srcu_data, srcu_barrier_head);
 
-	sdp = container_of(rhp, struct srcu_data, srcu_barrier_head);
-	ssp = sdp->ssp;
-	if (atomic_dec_and_test(&ssp->srcu_barrier_cpu_cnt))
-		complete(&ssp->srcu_barrier_completion);
+	sdp->srcu_barrier_cb_done = true;
 }
 
 /**
@@ -1287,6 +1283,15 @@ static void srcu_invoke_callbacks(struct work_struct *work)
 	spin_unlock_irq_rcu_node(sdp);
 	if (more)
 		srcu_schedule_cbs_sdp(sdp, 0);
+
+	// Do complete() to wake up srcu_barrier() here to ensure no
+	// use-after-free should cleanup_srcu_struct() be invoked immediately
+	// after the return from srcu_barrier().
+	if (sdp->srcu_barrier_cb_done) {
+		sdp->srcu_barrier_cb_done = false;
+		if (atomic_dec_and_test(&ssp->srcu_barrier_cpu_cnt))
+			complete(&ssp->srcu_barrier_completion);
+	}
 }
 
 /*
