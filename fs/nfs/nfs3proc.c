@@ -220,7 +220,8 @@ static int nfs3_proc_lookupp(struct inode *inode, struct nfs_fh *fhandle,
 				  task_flags);
 }
 
-static int nfs3_proc_access(struct inode *inode, struct nfs_access_entry *entry)
+static int nfs3_proc_access(struct inode *inode, struct nfs_access_entry *entry,
+			    const struct cred *cred)
 {
 	struct nfs3_accessargs	arg = {
 		.fh		= NFS_FH(inode),
@@ -231,7 +232,7 @@ static int nfs3_proc_access(struct inode *inode, struct nfs_access_entry *entry)
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_ACCESS],
 		.rpc_argp	= &arg,
 		.rpc_resp	= &res,
-		.rpc_cred	= entry->cred,
+		.rpc_cred	= cred,
 	};
 	int status = -ENOMEM;
 
@@ -1018,6 +1019,7 @@ const struct nfs_rpc_ops nfs_v3_clientops = {
 	.dir_inode_ops	= &nfs3_dir_inode_operations,
 	.file_inode_ops	= &nfs3_file_inode_operations,
 	.file_ops	= &nfs_file_operations,
+	.dir_ops	= &nfs_dir_operations,
 	.nlmclnt_ops	= &nlmclnt_fl_close_lock_ops,
 	.getroot	= nfs3_proc_get_root,
 	.submount	= nfs_submount,
