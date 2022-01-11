@@ -104,11 +104,12 @@ mlx5_core-$(CONFIG_MLX5_SW_STEERING) += steering/dr_domain.o steering/dr_table.o
 					steering/dr_ste.o steering/dr_send.o \
 					steering/dr_ste_v0.o steering/dr_ste_v1.o \
 					steering/dr_cmd.o steering/dr_fw.o \
-					steering/dr_action.o steering/fs_dr.o
+					steering/dr_action.o steering/fs_dr.o \
+					steering/dr_dbg.o
 #
 # SF device
 #
-mlx5_core-$(CONFIG_MLX5_SF) += sf/vhca_event.o sf/dev/dev.o sf/dev/driver.o
+mlx5_core-$(CONFIG_MLX5_SF) += sf/vhca_event.o sf/dev/dev.o sf/dev/driver.o irq_affinity.o
 
 #
 # SF manager

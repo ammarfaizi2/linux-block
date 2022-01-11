@@ -641,14 +641,21 @@ int iwl_mvm_mac_setup_register(struct iwl_mvm *mvm)
 	}
 
 	if (iwl_mvm_is_oce_supported(mvm)) {
+		u8 scan_ver = iwl_fw_lookup_cmd_ver(mvm->fw,
+						    IWL_ALWAYS_LONG_GROUP,
+						    SCAN_REQ_UMAC, 0);
+
 		wiphy_ext_feature_set(hw->wiphy,
 			NL80211_EXT_FEATURE_ACCEPT_BCAST_PROBE_RESP);
 		wiphy_ext_feature_set(hw->wiphy,
 			NL80211_EXT_FEATURE_FILS_MAX_CHANNEL_TIME);
 		wiphy_ext_feature_set(hw->wiphy,
-			NL80211_EXT_FEATURE_OCE_PROBE_REQ_DEFERRAL_SUPPRESSION);
-		wiphy_ext_feature_set(hw->wiphy,
 			NL80211_EXT_FEATURE_OCE_PROBE_REQ_HIGH_TX_RATE);
+
+		/* Old firmware also supports probe deferral and suppression */
+		if (scan_ver < 15)
+			wiphy_ext_feature_set(hw->wiphy,
+					      NL80211_EXT_FEATURE_OCE_PROBE_REQ_DEFERRAL_SUPPRESSION);
 	}
 
 	if (mvm->nvm_data->sku_cap_11ax_enable &&
@@ -710,8 +717,7 @@ int iwl_mvm_mac_setup_register(struct iwl_mvm *mvm)
 
 	hw->netdev_features |= mvm->cfg->features;
 	if (!iwl_mvm_is_csum_supported(mvm))
-		hw->netdev_features &= ~(IWL_TX_CSUM_NETIF_FLAGS |
-					 NETIF_F_RXCSUM);
+		hw->netdev_features &= ~IWL_CSUM_NETIF_FLAGS_MASK;
 
 	if (mvm->cfg->vht_mu_mimo_supported)
 		wiphy_ext_feature_set(hw->wiphy,
@@ -2209,24 +2215,24 @@ static void iwl_mvm_cfg_he_sta(struct iwl_mvm *mvm,
 		}
 
 		flags |= STA_CTXT_HE_PACKET_EXT;
-	} else if ((sta->he_cap.he_cap_elem.phy_cap_info[9] &
-		    IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_MASK) !=
-		  IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_RESERVED) {
+	} else if (u8_get_bits(sta->he_cap.he_cap_elem.phy_cap_info[9],
+			       IEEE80211_HE_PHY_CAP9_NOMINAL_PKT_PADDING_MASK)
+		   != IEEE80211_HE_PHY_CAP9_NOMINAL_PKT_PADDING_RESERVED) {
 		int low_th = -1;
 		int high_th = -1;
 
 		/* Take the PPE thresholds from the nominal padding info */
-		switch (sta->he_cap.he_cap_elem.phy_cap_info[9] &
-			IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_MASK) {
-		case IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_0US:
+		switch (u8_get_bits(sta->he_cap.he_cap_elem.phy_cap_info[9],
+				    IEEE80211_HE_PHY_CAP9_NOMINAL_PKT_PADDING_MASK)) {
+		case IEEE80211_HE_PHY_CAP9_NOMINAL_PKT_PADDING_0US:
 			low_th = IWL_HE_PKT_EXT_NONE;
 			high_th = IWL_HE_PKT_EXT_NONE;
 			break;
-		case IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_8US:
+		case IEEE80211_HE_PHY_CAP9_NOMINAL_PKT_PADDING_8US:
 			low_th = IWL_HE_PKT_EXT_BPSK;
 			high_th = IWL_HE_PKT_EXT_NONE;
 			break;
-		case IEEE80211_HE_PHY_CAP9_NOMIMAL_PKT_PADDING_16US:
+		case IEEE80211_HE_PHY_CAP9_NOMINAL_PKT_PADDING_16US:
 			low_th = IWL_HE_PKT_EXT_NONE;
 			high_th = IWL_HE_PKT_EXT_BPSK;
 			break;
@@ -5516,6 +5522,10 @@ static bool iwl_mvm_mac_can_aggregate(struct ieee80211_hw *hw,
 				      struct sk_buff *skb)
 {
 	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
+
+	if (mvm->trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_BZ)
+		return iwl_mvm_tx_csum_bz(mvm, head, true) ==
+		       iwl_mvm_tx_csum_bz(mvm, skb, true);
 
 	/* For now don't aggregate IPv6 in AMSDU */
 	if (skb->protocol != htons(ETH_P_IP))

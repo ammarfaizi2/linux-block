@@ -56,7 +56,6 @@
 #include <linux/wait.h>
 #include <linux/cgroup-defs.h>
 #include <linux/rbtree.h>
-#include <linux/filter.h>
 #include <linux/rculist_nulls.h>
 #include <linux/poll.h>
 #include <linux/sockptr.h>
@@ -249,6 +248,7 @@ struct sock_common {
 };
 
 struct bpf_local_storage;
+struct sk_filter;
 
 /**
   *	struct sock - network layer representation of sockets
@@ -393,7 +393,7 @@ struct sock {
 #define sk_rxhash		__sk_common.skc_rxhash
 
 	/* early demux fields */
-	struct dst_entry	*sk_rx_dst;
+	struct dst_entry __rcu	*sk_rx_dst;
 	int			sk_rx_dst_ifindex;
 	u32			sk_rx_dst_cookie;
 
@@ -1209,6 +1209,7 @@ struct proto {
 	void			(*unhash)(struct sock *sk);
 	void			(*rehash)(struct sock *sk);
 	int			(*get_port)(struct sock *sk, unsigned short snum);
+	void			(*put_port)(struct sock *sk);
 #ifdef CONFIG_BPF_SYSCALL
 	int			(*psock_update_sk_prot)(struct sock *sk,
 							struct sk_psock *psock,

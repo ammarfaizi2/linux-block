@@ -335,7 +335,6 @@ static netdev_tx_t veth_xmit(struct sk_buff *skb, struct net_device *dev)
 		 */
 		use_napi = rcu_access_pointer(rq->napi) &&
 			   veth_skb_is_eligible_for_gro(dev, rcv, skb);
-		skb_record_rx_queue(skb, rxq);
 	}
 
 	skb_tx_timestamp(skb);
@@ -644,7 +643,7 @@ static struct xdp_frame *veth_xdp_rcv_one(struct veth_rq *rq,
 			rcu_read_unlock();
 			goto xdp_xmit;
 		default:
-			bpf_warn_invalid_xdp_action(act);
+			bpf_warn_invalid_xdp_action(rq->dev, xdp_prog, act);
 			fallthrough;
 		case XDP_ABORTED:
 			trace_xdp_exception(rq->dev, xdp_prog, act);
@@ -794,7 +793,7 @@ static struct sk_buff *veth_xdp_rcv_skb(struct veth_rq *rq,
 		rcu_read_unlock();
 		goto xdp_xmit;
 	default:
-		bpf_warn_invalid_xdp_action(act);
+		bpf_warn_invalid_xdp_action(rq->dev, xdp_prog, act);
 		fallthrough;
 	case XDP_ABORTED:
 		trace_xdp_exception(rq->dev, xdp_prog, act);
@@ -872,8 +871,12 @@ static int veth_xdp_rcv(struct veth_rq *rq, int budget,
 
 			stats->xdp_bytes += skb->len;
 			skb = veth_xdp_rcv_skb(rq, skb, bq, stats);
-			if (skb)
-				napi_gro_receive(&rq->xdp_napi, skb);
+			if (skb) {
+				if (skb_shared(skb) || skb_unclone(skb, GFP_ATOMIC))
+					netif_receive_skb(skb);
+				else
+					napi_gro_receive(&rq->xdp_napi, skb);
+			}
 		}
 		done++;
 	}

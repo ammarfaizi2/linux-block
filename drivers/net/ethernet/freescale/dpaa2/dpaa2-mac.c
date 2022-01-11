@@ -2,6 +2,7 @@
 /* Copyright 2019 NXP */
 
 #include <linux/acpi.h>
+#include <linux/pcs-lynx.h>
 #include <linux/property.h>
 
 #include "dpaa2-eth.h"
@@ -40,7 +41,7 @@ static int phy_mode(enum dpmac_eth_if eth_if, phy_interface_t *if_mode)
 static struct fwnode_handle *dpaa2_mac_get_node(struct device *dev,
 						u16 dpmac_id)
 {
-	struct fwnode_handle *fwnode, *parent, *child  = NULL;
+	struct fwnode_handle *fwnode, *parent = NULL, *child  = NULL;
 	struct device_node *dpmacs = NULL;
 	int err;
 	u32 id;
@@ -53,7 +54,16 @@ static struct fwnode_handle *dpaa2_mac_get_node(struct device *dev,
 		parent = of_fwnode_handle(dpmacs);
 	} else if (is_acpi_node(fwnode)) {
 		parent = fwnode;
+	} else {
+		/* The root dprc device didn't yet get to finalize it's probe,
+		 * thus the fwnode field is not yet set. Defer probe if we are
+		 * facing this situation.
+		 */
+		return ERR_PTR(-EPROBE_DEFER);
 	}
+
+	if (!parent)
+		return NULL;
 
 	fwnode_for_each_child_node(parent, child) {
 		err = -EINVAL;
@@ -204,11 +214,13 @@ static int dpaa2_pcs_create(struct dpaa2_mac *mac,
 
 static void dpaa2_pcs_destroy(struct dpaa2_mac *mac)
 {
-	struct lynx_pcs *pcs = mac->pcs;
+	struct phylink_pcs *phylink_pcs = mac->pcs;
 
-	if (pcs) {
-		struct device *dev = &pcs->mdio->dev;
-		lynx_pcs_destroy(pcs);
+	if (phylink_pcs) {
+		struct mdio_device *mdio = lynx_get_mdio_device(phylink_pcs);
+		struct device *dev = &mdio->dev;
+
+		lynx_pcs_destroy(phylink_pcs);
 		put_device(dev);
 		mac->pcs = NULL;
 	}
@@ -292,7 +304,7 @@ int dpaa2_mac_connect(struct dpaa2_mac *mac)
 	mac->phylink = phylink;
 
 	if (mac->pcs)
-		phylink_set_pcs(mac->phylink, &mac->pcs->pcs);
+		phylink_set_pcs(mac->phylink, mac->pcs);
 
 	err = phylink_fwnode_phy_connect(mac->phylink, dpmac_node, 0);
 	if (err) {
@@ -324,6 +336,7 @@ int dpaa2_mac_open(struct dpaa2_mac *mac)
 {
 	struct fsl_mc_device *dpmac_dev = mac->mc_dev;
 	struct net_device *net_dev = mac->net_dev;
+	struct fwnode_handle *fw_node;
 	int err;
 
 	err = dpmac_open(mac->mc_io, 0, dpmac_dev->obj_desc.id,
@@ -343,7 +356,13 @@ int dpaa2_mac_open(struct dpaa2_mac *mac)
 	/* Find the device node representing the MAC device and link the device
 	 * behind the associated netdev to it.
 	 */
-	mac->fw_node = dpaa2_mac_get_node(&mac->mc_dev->dev, mac->attr.id);
+	fw_node = dpaa2_mac_get_node(&mac->mc_dev->dev, mac->attr.id);
+	if (IS_ERR(fw_node)) {
+		err = PTR_ERR(fw_node);
+		goto err_close_dpmac;
+	}
+
+	mac->fw_node = fw_node;
 	net_dev->dev.of_node = to_of_node(mac->fw_node);
 
 	return 0;

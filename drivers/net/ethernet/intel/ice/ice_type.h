@@ -6,6 +6,7 @@
 
 #define ICE_BYTES_PER_WORD	2
 #define ICE_BYTES_PER_DWORD	4
+#define ICE_CHNL_MAX_TC		16
 
 #include "ice_hw_autogen.h"
 #include "ice_osdep.h"
@@ -229,8 +230,8 @@ enum ice_fd_hw_seg {
 	ICE_FD_HW_SEG_MAX,
 };
 
-/* 2 VSI = 1 ICE_VSI_PF + 1 ICE_VSI_CTRL */
-#define ICE_MAX_FDIR_VSI_PER_FILTER	2
+/* 1 ICE_VSI_PF + 1 ICE_VSI_CTRL + ICE_CHNL_MAX_TC */
+#define ICE_MAX_FDIR_VSI_PER_FILTER	(2 + ICE_CHNL_MAX_TC)
 
 struct ice_fd_hw_prof {
 	struct ice_flow_seg_info *fdir_seg[ICE_FD_HW_SEG_MAX];
@@ -298,9 +299,30 @@ struct ice_hw_common_caps {
 #define ICE_TS_TMR_IDX_ASSOC_S		24
 #define ICE_TS_TMR_IDX_ASSOC_M		BIT(24)
 
+/* TIME_REF clock rate specification */
+enum ice_time_ref_freq {
+	ICE_TIME_REF_FREQ_25_000	= 0,
+	ICE_TIME_REF_FREQ_122_880	= 1,
+	ICE_TIME_REF_FREQ_125_000	= 2,
+	ICE_TIME_REF_FREQ_153_600	= 3,
+	ICE_TIME_REF_FREQ_156_250	= 4,
+	ICE_TIME_REF_FREQ_245_760	= 5,
+
+	NUM_ICE_TIME_REF_FREQ
+};
+
+/* Clock source specification */
+enum ice_clk_src {
+	ICE_CLK_SRC_TCX0	= 0, /* Temperature compensated oscillator  */
+	ICE_CLK_SRC_TIME_REF	= 1, /* Use TIME_REF reference clock */
+
+	NUM_ICE_CLK_SRC
+};
+
 struct ice_ts_func_info {
 	/* Function specific info */
-	u32 clk_freq;
+	enum ice_time_ref_freq time_ref;
+	u8 clk_freq;
 	u8 clk_src;
 	u8 tmr_index_assoc;
 	u8 ena;

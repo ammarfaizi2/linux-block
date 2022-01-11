@@ -627,7 +627,6 @@ static void ethnl_default_notify(struct net_device *dev, unsigned int cmd,
 	}
 
 	req_info->dev = dev;
-	netdev_tracker_alloc(dev, &req_info->dev_tracker, GFP_KERNEL);
 	req_info->flags |= ETHTOOL_FLAG_COMPACT_BITSETS;
 
 	ethnl_init_reply_data(reply_data, ops, dev);
@@ -638,7 +637,6 @@ static void ethnl_default_notify(struct net_device *dev, unsigned int cmd,
 	if (ret < 0)
 		goto err_cleanup;
 	reply_len = ret + ethnl_reply_header_size();
-	ret = -ENOMEM;
 	skb = genlmsg_new(reply_len, GFP_KERNEL);
 	if (!skb)
 		goto err_cleanup;

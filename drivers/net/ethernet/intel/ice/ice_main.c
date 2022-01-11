@@ -472,6 +472,25 @@ static void ice_pf_dis_all_vsi(struct ice_pf *pf, bool locked)
 }
 
 /**
+ * ice_clear_sw_switch_recipes - clear switch recipes
+ * @pf: board private structure
+ *
+ * Mark switch recipes as not created in sw structures. There are cases where
+ * rules (especially advanced rules) need to be restored, either re-read from
+ * hardware or added again. For example after the reset. 'recp_created' flag
+ * prevents from doing that and need to be cleared upfront.
+ */
+static void ice_clear_sw_switch_recipes(struct ice_pf *pf)
+{
+	struct ice_sw_recipe *recp;
+	u8 i;
+
+	recp = pf->hw.switch_info->recp_list;
+	for (i = 0; i < ICE_MAX_NUM_RECIPES; i++)
+		recp[i].recp_created = false;
+}
+
+/**
  * ice_prepare_for_reset - prep for reset
  * @pf: board private structure
  * @reset_type: reset type requested
@@ -500,6 +519,11 @@ ice_prepare_for_reset(struct ice_pf *pf, enum ice_reset_req reset_type)
 	/* Disable VFs until reset is completed */
 	ice_for_each_vf(pf, i)
 		ice_set_vf_state_qs_dis(&pf->vf[i]);
+
+	if (ice_is_eswitch_mode_switchdev(pf)) {
+		if (reset_type != ICE_RESET_PFR)
+			ice_clear_sw_switch_recipes(pf);
+	}
 
 	/* release ADQ specific HW and SW resources */
 	vsi = ice_get_main_vsi(pf);
@@ -539,7 +563,7 @@ skip:
 	ice_pf_dis_all_vsi(pf, false);
 
 	if (test_bit(ICE_FLAG_PTP_SUPPORTED, pf->flags))
-		ice_ptp_release(pf);
+		ice_ptp_prepare_for_reset(pf);
 
 	if (hw->port_info)
 		ice_sched_clear_port(hw->port_info);
@@ -1062,6 +1086,9 @@ ice_link_event(struct ice_pf *pf, struct ice_port_info *pi, bool link_up,
 	/* if the old link up/down and speed is the same as the new */
 	if (link_up == old_link && link_speed == old_link_speed)
 		return 0;
+
+	if (!ice_is_e810(&pf->hw))
+		ice_ptp_link_change(pf, pf->hw.pf_id, link_up);
 
 	if (ice_is_dcb_active(pf)) {
 		if (test_bit(ICE_FLAG_DCB_ENA, pf->flags))
@@ -4123,13 +4150,14 @@ static void ice_log_pkg_init(struct ice_hw *hw, enum ice_ddp_state state)
 		break;
 	case ICE_DDP_PKG_LOAD_ERROR:
 		dev_err(dev, "An error occurred on the device while loading the DDP package.  The device will be reset.\n");
-			/* poll for reset to complete */
-			if (ice_check_reset(hw))
-				dev_err(dev, "Error resetting device. Please reload the driver\n");
+		/* poll for reset to complete */
+		if (ice_check_reset(hw))
+			dev_err(dev, "Error resetting device. Please reload the driver\n");
 		break;
 	case ICE_DDP_PKG_ERR:
 	default:
 		dev_err(dev, "An unknown error occurred when loading the DDP package.  Entering Safe Mode.\n");
+		break;
 	}
 }
 
@@ -5839,6 +5867,8 @@ static int ice_up_complete(struct ice_vsi *vsi)
 		ice_print_link_msg(vsi, true);
 		netif_tx_start_all_queues(vsi->netdev);
 		netif_carrier_on(vsi->netdev);
+		if (!ice_is_e810(&pf->hw))
+			ice_ptp_link_change(pf, pf->hw.pf_id, true);
 	}
 
 	/* clear this now, and the first stats read will be used as baseline */
@@ -6239,6 +6269,8 @@ int ice_down(struct ice_vsi *vsi)
 	WARN_ON(!test_bit(ICE_VSI_DOWN, vsi->state));
 
 	if (vsi->netdev && vsi->type == ICE_VSI_PF) {
+		if (!ice_is_e810(&vsi->back->hw))
+			ice_ptp_link_change(vsi->back, vsi->back->hw.pf_id, false);
 		netif_carrier_off(vsi->netdev);
 		netif_tx_disable(vsi->netdev);
 	} else if (vsi->type == ICE_VSI_SWITCHDEV_CTRL) {
@@ -6685,7 +6717,7 @@ static void ice_rebuild(struct ice_pf *pf, enum ice_reset_req reset_type)
 	 * fail.
 	 */
 	if (test_bit(ICE_FLAG_PTP_SUPPORTED, pf->flags))
-		ice_ptp_init(pf);
+		ice_ptp_reset(pf);
 
 	/* rebuild PF VSI */
 	err = ice_vsi_rebuild_by_type(pf, ICE_VSI_PF);
@@ -6693,6 +6725,10 @@ static void ice_rebuild(struct ice_pf *pf, enum ice_reset_req reset_type)
 		dev_err(dev, "PF VSI rebuild failed: %d\n", err);
 		goto err_vsi_rebuild;
 	}
+
+	/* configure PTP timestamping after VSI rebuild */
+	if (test_bit(ICE_FLAG_PTP_SUPPORTED, pf->flags))
+		ice_ptp_cfg_timestamp(pf, false);
 
 	err = ice_vsi_rebuild_by_type(pf, ICE_VSI_SWITCHDEV_CTRL);
 	if (err) {
@@ -7428,6 +7464,67 @@ ice_validate_mqprio_qopt(struct ice_vsi *vsi,
 }
 
 /**
+ * ice_add_vsi_to_fdir - add a VSI to the flow director group for PF
+ * @pf: ptr to PF device
+ * @vsi: ptr to VSI
+ */
+static int ice_add_vsi_to_fdir(struct ice_pf *pf, struct ice_vsi *vsi)
+{
+	struct device *dev = ice_pf_to_dev(pf);
+	bool added = false;
+	struct ice_hw *hw;
+	int flow;
+
+	if (!(vsi->num_gfltr || vsi->num_bfltr))
+		return -EINVAL;
+
+	hw = &pf->hw;
+	for (flow = 0; flow < ICE_FLTR_PTYPE_MAX; flow++) {
+		struct ice_fd_hw_prof *prof;
+		int tun, status;
+		u64 entry_h;
+
+		if (!(hw->fdir_prof && hw->fdir_prof[flow] &&
+		      hw->fdir_prof[flow]->cnt))
+			continue;
+
+		for (tun = 0; tun < ICE_FD_HW_SEG_MAX; tun++) {
+			enum ice_flow_priority prio;
+			u64 prof_id;
+
+			/* add this VSI to FDir profile for this flow */
+			prio = ICE_FLOW_PRIO_NORMAL;
+			prof = hw->fdir_prof[flow];
+			prof_id = flow + tun * ICE_FLTR_PTYPE_MAX;
+			status = ice_flow_add_entry(hw, ICE_BLK_FD, prof_id,
+						    prof->vsi_h[0], vsi->idx,
+						    prio, prof->fdir_seg[tun],
+						    &entry_h);
+			if (status) {
+				dev_err(dev, "channel VSI idx %d, not able to add to group %d\n",
+					vsi->idx, flow);
+				continue;
+			}
+
+			prof->entry_h[prof->cnt][tun] = entry_h;
+		}
+
+		/* store VSI for filter replay and delete */
+		prof->vsi_h[prof->cnt] = vsi->idx;
+		prof->cnt++;
+
+		added = true;
+		dev_dbg(dev, "VSI idx %d added to fdir group %d\n", vsi->idx,
+			flow);
+	}
+
+	if (!added)
+		dev_dbg(dev, "VSI idx %d not added to fdir groups\n", vsi->idx);
+
+	return 0;
+}
+
+/**
  * ice_add_channel - add a channel by adding VSI
  * @pf: ptr to PF device
  * @sw_id: underlying HW switching element ID
@@ -7450,6 +7547,8 @@ static int ice_add_channel(struct ice_pf *pf, u16 sw_id, struct ice_channel *ch)
 		dev_err(dev, "create chnl VSI failure\n");
 		return -EINVAL;
 	}
+
+	ice_add_vsi_to_fdir(pf, vsi);
 
 	ch->sw_id = sw_id;
 	ch->vsi_num = vsi->vsi_num;
@@ -7751,6 +7850,15 @@ static void ice_remove_q_channels(struct ice_vsi *vsi, bool rem_fltr)
 	if (rem_fltr)
 		ice_rem_all_chnl_fltrs(pf);
 
+	/* remove ntuple filters since queue configuration is being changed */
+	if  (vsi->netdev->features & NETIF_F_NTUPLE) {
+		struct ice_hw *hw = &pf->hw;
+
+		mutex_lock(&hw->fdir_fltr_lock);
+		ice_fdir_del_all_fltrs(vsi);
+		mutex_unlock(&hw->fdir_fltr_lock);
+	}
+
 	/* perform cleanup for channels if they exist */
 	list_for_each_entry_safe(ch, ch_tmp, &vsi->ch_list, list) {
 		struct ice_vsi *ch_vsi;
@@ -7780,6 +7888,9 @@ static void ice_remove_q_channels(struct ice_vsi *vsi, bool rem_fltr)
 					rx_ring->q_vector->ch = NULL;
 			}
 		}
+
+		/* Release FD resources for the channel VSI */
+		ice_fdir_rem_adq_chnl(&pf->hw, ch->ch_vsi->idx);
 
 		/* clear the VSI from scheduler tree */
 		ice_rm_vsi_lan_cfg(ch->ch_vsi->port_info, ch->ch_vsi->idx);
