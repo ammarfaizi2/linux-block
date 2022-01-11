@@ -25,6 +25,13 @@
 #define __KGD_PP_INTERFACE_H__
 
 extern const struct amdgpu_ip_block_version pp_smu_ip_block;
+extern const struct amdgpu_ip_block_version smu_v11_0_ip_block;
+extern const struct amdgpu_ip_block_version smu_v12_0_ip_block;
+extern const struct amdgpu_ip_block_version smu_v13_0_ip_block;
+
+enum smu_event_type {
+	SMU_EVENT_RESET_COMPLETE = 0,
+};
 
 struct amd_vce_state {
 	/* vce clocks */
@@ -400,6 +407,7 @@ struct amd_pm_funcs {
 	int (*get_dpm_clock_table)(void *handle,
 				   struct dpm_clocks *clock_table);
 	int (*get_smu_prv_buf_details)(void *handle, void **addr, size_t *size);
+	void (*pm_compute_clocks)(void *handle);
 };
 
 struct metrics_table_header {
