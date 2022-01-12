@@ -274,7 +274,7 @@ static inline void task_sig(struct seq_file *m, struct task_struct *p)
 		collect_sigign_sigcatch(p, &ignored, &caught);
 		num_threads = get_nr_threads(p);
 		rcu_read_lock();  /* FIXME: is this correct? */
-		qsize = get_ucounts_value(task_ucounts(p), UCOUNT_RLIMIT_SIGPENDING);
+		qsize = get_rlimit_value(task_ucounts(p), UCOUNT_RLIMIT_SIGPENDING);
 		rcu_read_unlock();
 		qlim = task_rlimit(p, RLIMIT_SIGPENDING);
 		unlock_task_sighand(p, &flags);
@@ -468,6 +468,7 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 	u64 cgtime, gtime;
 	unsigned long rsslim = 0;
 	unsigned long flags;
+	int exit_code = task->exit_code;
 
 	state = *get_task_state(task);
 	vsize = eip = esp = 0;
@@ -531,6 +532,9 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 			maj_flt += sig->maj_flt;
 			thread_group_cputime_adjusted(task, &utime, &stime);
 			gtime += sig->gtime;
+
+			if (sig->flags & (SIGNAL_GROUP_EXIT | SIGNAL_STOP_STOPPED))
+				exit_code = sig->group_exit_code;
 		}
 
 		sid = task_session_nr_ns(task, ns);
@@ -630,7 +634,7 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 		seq_puts(m, " 0 0 0 0 0 0 0");
 
 	if (permitted)
-		seq_put_decimal_ll(m, " ", task->exit_code);
+		seq_put_decimal_ll(m, " ", exit_code);
 	else
 		seq_puts(m, " 0");
 
