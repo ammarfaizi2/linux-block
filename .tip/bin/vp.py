@@ -53,9 +53,13 @@ def err(s):
     if not args.force:
         sys.exit(1)
 
-def warn(cond, s):
+def warn_on(cond, s):
     if cond:
         print(("%s: Warning: %s" % (__func__(), s, )))
+
+def warn(s):
+    print(("%s: Warning: %s" % (__func__(), s, )))
+
 
 def __verbose_helper(s, v, v_lvl):
     if v < v_lvl:
@@ -182,7 +186,7 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'fpstate', 'kptr_restrict', 'pt_regs', 'sme_me_mask',
+known_vars = [ '__BOOT_DS', 'fpstate', 'kobj_type', 'kptr_restrict', 'pt_regs', 'sme_me_mask',
                'sysctl_perf_event_paranoid', 'xfeatures' ]
 
 
@@ -255,7 +259,8 @@ def spellcheck_func_name(w, prev_word):
         return True
 
 # known words as regexes to avoid duplication in the list above
-regexes_pats = [ r'BIOS(e[sn])?', r'boot(loader|params?|up)', r'DDR[1-5]', r'I[DS]T', r'MOVSB?', r'params?',
+regexes_pats = [ r'BIOS(e[sn])?', r'boot(loader|params?|up)', r'default_(attrs|groups)', r'DDR[1-5]',
+            r'I[DS]T', r'MOVSB?', r'params?',
             r'(para)?virt(ualiz(ed?|ing))?$', r'PS[CP]',
             r'sev_(features|status)', r'VMPL[0-3]', r'XSAVE[CS]?' ]
 regexes = []
@@ -399,7 +404,7 @@ def spellcheck(s, where, flags):
             if flags and flags['check_func']:
                 ret = spellcheck_func_name(w, words[i - 1])
                 if not ret:
-                    warn(1, ("Function name doesn't end with (): [%s]" % (w, )))
+                    warn_on(1, ("Function name doesn't end with (): [%s]" % (w, )))
                     print(" [%s]" % (line, ))
                     continue
                 else:
@@ -743,7 +748,7 @@ class Patch:
                     # check for unicode chars, aka https://trojansource.codes/
                     m = rex_unicode_chars.search(line)
                     if m:
-                        warn(1, "Unicode char [%s] (0x%x) in line: %s"
+                        warn_on(1, "Unicode char [%s] (0x%x) in line: %s"
                                 % (m.group(1), ord(m.group(1)), line, ))
 
                 spellcheck_hunk(pfile, hunk)
@@ -760,7 +765,7 @@ class Patch:
             info("Adding tag [%s]" % (line, ))
             self.od[m.group(1)] += m.group(2)
         else:
-            warn(1, "add_tag: Cannot match tag properly\n")
+            warn_on(1, "add_tag: Cannot match tag properly\n")
 
     def process_tags(self, clines):
         """
@@ -794,7 +799,7 @@ class Patch:
             if tag.lower() == "cc":
                 m = rex_cc_stable.match(name_email)
                 if not m:
-                    warn(1, ("Skipping Cc: %s" % (name_email, )))
+                    warn_on(1, ("Skipping Cc: %s" % (name_email, )))
                     continue
 
             # check Fixes: tag
@@ -829,7 +834,7 @@ class Patch:
 
         for line in lines:
             # git or quilt-type patch
-            if line.startswith("diff"):
+            if not line or line.startswith("diff") or line.startswith("---"):
                 break
 
             # pick out only the actual diffstat lines
@@ -938,8 +943,8 @@ class Patch:
         rex_this_patch   = re.compile(r'(.*this\s+patch.*)', re.I)
 
         for i, l in enumerate(lines):
-            warn(rex_pers_pronoun.match(l), ("Commit message has 'we':\n [%s]" % (l, )))
-            warn(rex_this_patch.match(l),   ("Commit message has 'this patch':\n [%s]" % (l, )))
+            warn_on(rex_pers_pronoun.match(l), ("Commit message has 'we':\n [%s]" % (l, )))
+            warn_on(rex_this_patch.match(l),   ("Commit message has 'this patch':\n [%s]" % (l, )))
 
             if rex_sha1.search(l):
                 verify_commit_quotation(lines[i - 1], lines[i], lines[i + 1])
@@ -970,7 +975,12 @@ class Patch:
                 info("%s: %s" % (tag, v, ))
                 f.write(("%s: %s\n" % (tag, v, )))
 
-        link_url = ("https://lore.kernel.org/r/%s" % (self.message_id, ))
+        if self.message_id:
+            link_url = ("https://lore.kernel.org/r/%s" % (self.message_id, ))
+        elif od['Link']:
+            link_url = od['Link'][0]
+            warn("Using Link URL from patch itself: %s" % (link_url, ))
+            self.message_id = link_url
 
         try:
             get = requests.get(link_url)
@@ -979,9 +989,10 @@ class Patch:
         except requests.exceptions.RequestException as e:
             err("Exception %s while trying to get URL: %s" % (e, link_url, ))
 
-        # slap the Link at the end
-        info(("Link: %s\n" % (link_url, )))
-        f.write(("Link: %s\n" % (link_url, )))
+        # slap the Link at the end only if no Link present
+        if not od['Link']:
+            info(("Link: %s\n" % (link_url, )))
+            f.write(("Link: %s\n" % (link_url, )))
 
     def process_patch(self):
         """
@@ -1007,7 +1018,7 @@ class Patch:
         global tmp_dir
 
         if not tmp_dir:
-            warn(1, "Output tmp_dir not set")
+            warn_on(1, "Output tmp_dir not set")
             return
 
         final = ("%s/%02d-%s-new.patch" % (tmp_dir, self.number, self.name, ))
@@ -1122,7 +1133,7 @@ def verify_comment_style(pfile, h):
                 continue
 
         if in_comment:
-            warn(rex_comment.match(l),
+            warn_on(rex_comment.match(l),
                  "Multi-line comment needs to start text on the second line:\n [%s]\n" %
                  (comment_start.strip(), ))
             in_comment = False
@@ -1142,7 +1153,7 @@ def verify_comment_style(pfile, h):
 
         l = str(line)
 
-        warn(rex_tail_comment.match(l), "No tail comments please:\n %s:%d [%s]\n" %
+        warn_on(rex_tail_comment.match(l), "No tail comments please:\n %s:%d [%s]\n" %
              (pfile, line.target_line_no, l.strip(), ))
 
 
@@ -1154,8 +1165,8 @@ def verify_commit_quotation(prev, cur, nxt):
     if not prev and not nxt and cur.startswith("  "):
         return
 
-    warn(1, "line [%s]" % (cur, ))
-    warn(1, "The proper commit quotation format is:\n<newline>\n[  ]<sha1, 12 chars> (\"commit name\")\n<newline>")
+    warn_on(1, "line [%s]" % (cur, ))
+    warn_on(1, "The proper commit quotation format is:\n<newline>\n[  ]<sha1, 12 chars> (\"commit name\")\n<newline>")
 ###
 
 
@@ -1211,7 +1222,7 @@ def parse_config_file():
     try:
         sob = cfg['main']['sob']
     except:
-        warn(1, "No author SOB email configured")
+        warn_on(1, "No author SOB email configured")
 
 def init_parser():
     """ read cmdline args
