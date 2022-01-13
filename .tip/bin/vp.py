@@ -119,11 +119,11 @@ def strip_brackets(w):
 
     return w
 
-# Sanity-check a Fixes: tag
+# Sanity-check a commit reference
 #
-# @s: the Fixes: tag string to check
-def tag_sanity_check_fixes(s):
-    print(("Checking tag [%s]" % (s, )))
+# @s: the commit reference string to check
+def verify_commit_ref(s):
+    print(("Checking commit ref [%s]" % (s, )))
 
     (sha1, name) = s.split(" ", 1)
 
@@ -131,7 +131,7 @@ def tag_sanity_check_fixes(s):
     try:
         int(sha1, 16)
     except ValueError as e:
-        sys.stderr.write("tag_sanity_check_fixes: SHA1 %s\n" % (e, ))
+        sys.stderr.write("verify_commit_ref: SHA1 %s\n" % (e, ))
         sys.exit(1)
 
     # check sha1 is in the repo
@@ -140,14 +140,14 @@ def tag_sanity_check_fixes(s):
     try:
         git.tag('--contains', sha1)
     except Exception as e:
-        sys.stderr.write("tag_sanity_check_fixes: SHA1 not in repo: %s\n" % (e, ))
+        sys.stderr.write("verify_commit_ref: SHA1 not in repo: %s\n" % (e, ))
         sys.exit(1)
 
     # compare the commit names too
     name = name.strip('("")')
     commit_name = git.show('--no-patch', '--pretty=format:%s', sha1)
     if name != commit_name:
-        sys.stderr.write("tag_sanity_check_fixes: commit name mismatch: [%s] vs [%s]\n" % \
+        sys.stderr.write("verify_commit_ref: commit name mismatch: [%s] vs [%s]\n" % \
                          (name, commit_name, ))
         sys.exit(1)
 
@@ -333,7 +333,7 @@ def spellcheck(s, where, flags):
     for line in s.splitlines():
         # see if the line contains a commit reference and check it if so
         if rex_commit_ref.match(line):
-            tag_sanity_check_fixes(line.strip())
+            verify_commit_ref(line.strip())
             continue
 
         # special data in the commit message
@@ -804,7 +804,7 @@ class Patch:
 
             # check Fixes: tag
             if tag.lower() == 'fixes':
-                tag_sanity_check_fixes(name_email)
+                verify_commit_ref(name_email)
 
             info("Adding tag %s: %s" % (tag, name_email, ))
             # prepend tag because we're scanning the tag list backwards
