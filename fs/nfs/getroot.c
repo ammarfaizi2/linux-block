@@ -127,7 +127,8 @@ int nfs_get_root(struct super_block *s, struct fs_context *fc)
 	if (server->caps & NFS_CAP_SECURITY_LABEL)
 		kflags |= SECURITY_LSM_NATIVE_LABELS;
 	if (ctx->clone_data.sb) {
-		if (d_inode(fc->root)->i_fop != &nfs_dir_operations) {
+		if (d_inode(fc->root)->i_fop !=
+		    server->nfs_client->rpc_ops->dir_ops) {
 			error = -ESTALE;
 			goto error_splat_root;
 		}

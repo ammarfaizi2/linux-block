@@ -717,6 +717,7 @@ const struct nfs_rpc_ops nfs_v2_clientops = {
 	.dir_inode_ops	= &nfs_dir_inode_operations,
 	.file_inode_ops	= &nfs_file_inode_operations,
 	.file_ops	= &nfs_file_operations,
+	.dir_ops	= &nfs_dir_operations,
 	.getroot	= nfs_proc_get_root,
 	.submount	= nfs_submount,
 	.try_get_tree	= nfs_try_get_tree,
