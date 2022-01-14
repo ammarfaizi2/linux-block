@@ -20,33 +20,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __UMC_V6_7_H__
-#define __UMC_V6_7_H__
+#ifndef __LEGACY_DPM_H__
+#define __LEGACY_DPM_H__
 
-#include "soc15_common.h"
-#include "amdgpu.h"
-
-/* EccErrCnt max value */
-#define UMC_V6_7_CE_CNT_MAX		0xffff
-/* umc ce interrupt threshold */
-#define UMC_V6_7_CE_INT_THRESHOLD	0xffff
-/* umc ce count initial value */
-#define UMC_V6_7_CE_CNT_INIT	(UMC_V6_7_CE_CNT_MAX - UMC_V6_7_CE_INT_THRESHOLD)
-
-#define UMC_V6_7_INST_DIST	0x40000
-
-/* number of umc channel instance with memory map register access */
-#define UMC_V6_7_UMC_INSTANCE_NUM		4
-/* number of umc instance with memory map register access */
-#define UMC_V6_7_CHANNEL_INSTANCE_NUM		8
-/* total channel instances in one umc block */
-#define UMC_V6_7_TOTAL_CHANNEL_NUM	(UMC_V6_7_CHANNEL_INSTANCE_NUM * UMC_V6_7_UMC_INSTANCE_NUM)
-/* UMC regiser per channel offset */
-#define UMC_V6_7_PER_CHANNEL_OFFSET		0x400
-extern struct amdgpu_umc_ras umc_v6_7_ras;
-extern const uint32_t
-	umc_v6_7_channel_idx_tbl_second[UMC_V6_7_UMC_INSTANCE_NUM][UMC_V6_7_CHANNEL_INSTANCE_NUM];
-extern const uint32_t
-	umc_v6_7_channel_idx_tbl_first[UMC_V6_7_UMC_INSTANCE_NUM][UMC_V6_7_CHANNEL_INSTANCE_NUM];
-
+void amdgpu_dpm_print_class_info(u32 class, u32 class2);
+void amdgpu_dpm_print_cap_info(u32 caps);
+void amdgpu_dpm_print_ps_status(struct amdgpu_device *adev,
+				struct amdgpu_ps *rps);
+int amdgpu_get_platform_caps(struct amdgpu_device *adev);
+int amdgpu_parse_extended_power_table(struct amdgpu_device *adev);
+void amdgpu_free_extended_power_table(struct amdgpu_device *adev);
+void amdgpu_add_thermal_controller(struct amdgpu_device *adev);
+struct amd_vce_state* amdgpu_get_vce_clock_state(void *handle, u32 idx);
+void amdgpu_pm_print_power_states(struct amdgpu_device *adev);
+void amdgpu_legacy_dpm_compute_clocks(void *handle);
+void amdgpu_dpm_thermal_work_handler(struct work_struct *work);
 #endif

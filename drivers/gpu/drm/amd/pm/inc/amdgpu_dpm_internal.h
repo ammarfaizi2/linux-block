@@ -20,33 +20,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __UMC_V6_7_H__
-#define __UMC_V6_7_H__
+#ifndef __AMDGPU_DPM_INTERNAL_H__
+#define __AMDGPU_DPM_INTERNAL_H__
 
-#include "soc15_common.h"
-#include "amdgpu.h"
+void amdgpu_dpm_get_active_displays(struct amdgpu_device *adev);
 
-/* EccErrCnt max value */
-#define UMC_V6_7_CE_CNT_MAX		0xffff
-/* umc ce interrupt threshold */
-#define UMC_V6_7_CE_INT_THRESHOLD	0xffff
-/* umc ce count initial value */
-#define UMC_V6_7_CE_CNT_INIT	(UMC_V6_7_CE_CNT_MAX - UMC_V6_7_CE_INT_THRESHOLD)
+u32 amdgpu_dpm_get_vblank_time(struct amdgpu_device *adev);
 
-#define UMC_V6_7_INST_DIST	0x40000
-
-/* number of umc channel instance with memory map register access */
-#define UMC_V6_7_UMC_INSTANCE_NUM		4
-/* number of umc instance with memory map register access */
-#define UMC_V6_7_CHANNEL_INSTANCE_NUM		8
-/* total channel instances in one umc block */
-#define UMC_V6_7_TOTAL_CHANNEL_NUM	(UMC_V6_7_CHANNEL_INSTANCE_NUM * UMC_V6_7_UMC_INSTANCE_NUM)
-/* UMC regiser per channel offset */
-#define UMC_V6_7_PER_CHANNEL_OFFSET		0x400
-extern struct amdgpu_umc_ras umc_v6_7_ras;
-extern const uint32_t
-	umc_v6_7_channel_idx_tbl_second[UMC_V6_7_UMC_INSTANCE_NUM][UMC_V6_7_CHANNEL_INSTANCE_NUM];
-extern const uint32_t
-	umc_v6_7_channel_idx_tbl_first[UMC_V6_7_UMC_INSTANCE_NUM][UMC_V6_7_CHANNEL_INSTANCE_NUM];
+u32 amdgpu_dpm_get_vrefresh(struct amdgpu_device *adev);
 
 #endif
