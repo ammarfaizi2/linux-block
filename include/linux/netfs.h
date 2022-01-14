@@ -176,6 +176,7 @@ enum netfs_io_origin {
 	NETFS_READAHEAD,		/* This read was triggered by readahead */
 	NETFS_READPAGE,			/* This read is a synchronous read */
 	NETFS_READ_FOR_WRITE,		/* This read is to prepare a write */
+	NETFS_DIO_READ,			/* This read is a direct I/O read */
 } __mode(byte);
 
 enum netfs_buffering {
@@ -197,6 +198,7 @@ struct netfs_io_request {
 	};
 	struct inode		*inode;		/* The file being accessed */
 	struct address_space	*mapping;	/* The mapping being accessed */
+	struct kiocb		*iocb;		/* AIO completion vector */
 	struct netfs_cache_resources cache_resources;
 	struct list_head	proc_link;	/* Link in netfs_iorequests */
 	struct list_head	subrequests;	/* Contributory I/O operations */
@@ -206,12 +208,14 @@ struct netfs_io_request {
 	struct iov_iter		direct_iter;	/* Iterator for direct I/O */
 	void			*netfs_priv;	/* Private data for the netfs */
 	unsigned int		direct_bv_count; /* Number of elements in bv[] */
+	unsigned int		direct_bv_mode;	/* Mode by which direct_bv[] must be freed */
 	unsigned int		debug_id;
 	unsigned int		rsize;		/* Maximum read size (0 for none) */
 	atomic_t		nr_outstanding;	/* Number of ops in progress */
 	atomic_t		nr_copy_ops;	/* Number of copy-to-cache ops in progress */
 	size_t			submitted;	/* Amount submitted for I/O so far */
 	size_t			len;		/* Length of the request */
+	size_t			transferred;	/* Amount to be indicated as transferred */
 	short			error;		/* 0 or error that occurred */
 	enum netfs_io_origin	origin;		/* Origin of the request */
 	enum netfs_buffering	buffering;	/* Method of buffering */
@@ -327,6 +331,7 @@ ssize_t netfs_extract_user_iter(struct iov_iter *orig, size_t orig_len,
 struct sg_table;
 ssize_t netfs_extract_iter_to_sg(struct iov_iter *iter, size_t len,
 				 struct sg_table *sgtable, unsigned int sg_max);
+ssize_t netfs_direct_read_iter(struct kiocb *iocb, struct iov_iter *iter);
 
 /**
  * netfs_inode - Get the netfs inode context from the inode
