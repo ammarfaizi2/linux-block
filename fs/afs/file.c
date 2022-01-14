@@ -47,6 +47,7 @@ const struct inode_operations afs_file_inode_operations = {
 };
 
 const struct address_space_operations afs_file_aops = {
+	.direct_IO	= noop_direct_IO,
 	.readpage	= netfs_readpage,
 	.readahead	= netfs_readahead,
 	.set_page_dirty	= afs_set_page_dirty,
@@ -466,6 +467,9 @@ static ssize_t afs_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 	ret = afs_validate(vnode, af->key);
 	if (ret < 0)
 		return ret;
+
+	if (iocb->ki_flags & IOCB_DIRECT)
+		return netfs_direct_read_iter(iocb, iter);
 
 	return generic_file_read_iter(iocb, iter);
 }

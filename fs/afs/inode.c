@@ -61,6 +61,7 @@ static void afs_set_netfs_context(struct afs_vnode *vnode)
 	struct netfs_i_context *ctx = netfs_i_context(&vnode->vfs_inode);
 
 	netfs_i_context_init(&vnode->vfs_inode, &afs_req_ops);
+	ctx->rsize = 4*1024*1024;
 	ctx->wsize = 16*1024*1024; // 0x33333;
 	//ctx->min_bshift = ilog2(0x10000);
 	//ctx->obj_bshift = ilog2(0x40000);

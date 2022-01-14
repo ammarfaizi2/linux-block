@@ -30,7 +30,7 @@ MODULE_PARM_DESC(netfs_debug, "Netfs support debugging mask");
 static void netfs_rreq_work(struct work_struct *);
 static void netfs_rreq_clear_buffer(struct netfs_read_request *);
 
-static struct netfs_read_request *netfs_alloc_read_request(
+struct netfs_read_request *netfs_alloc_read_request(
 	struct address_space *mapping,
 	struct file *file,
 	loff_t start, size_t len,
@@ -73,7 +73,7 @@ static struct netfs_read_request *netfs_alloc_read_request(
 	return rreq;
 }
 
-static void netfs_get_read_request(struct netfs_read_request *rreq)
+void netfs_get_read_request(struct netfs_read_request *rreq)
 {
 	refcount_inc(&rreq->usage);
 }
@@ -122,7 +122,7 @@ void netfs_put_read_request(struct netfs_read_request *rreq, bool was_async)
 /*
  * Allocate and partially initialise an I/O request structure.
  */
-static struct netfs_read_subrequest *netfs_alloc_subrequest(
+struct netfs_read_subrequest *netfs_alloc_subrequest(
 	struct netfs_read_request *rreq)
 {
 	struct netfs_read_subrequest *subreq;
@@ -147,8 +147,15 @@ static void netfs_get_read_subrequest(struct netfs_read_subrequest *subreq)
 void __netfs_put_subrequest(struct netfs_read_subrequest *subreq, bool was_async)
 {
 	struct netfs_read_request *rreq = subreq->rreq;
+	unsigned int i;
 
 	trace_netfs_sreq(subreq, netfs_sreq_trace_free);
+	if (subreq->bv) {
+		for (i = 0; i < subreq->bv_count; i++)
+			if (subreq->bv[i].bv_page)
+				put_page(subreq->bv[i].bv_page);
+		kvfree(subreq->bv);
+	}
 	kfree(subreq);
 	netfs_stat_d(&netfs_n_rh_sreq);
 	netfs_put_read_request(rreq, was_async);
@@ -159,12 +166,7 @@ void __netfs_put_subrequest(struct netfs_read_subrequest *subreq, bool was_async
  */
 static void netfs_clear_unread(struct netfs_read_subrequest *subreq)
 {
-	struct iov_iter iter;
-
-	iov_iter_xarray(&iter, READ, &subreq->rreq->buffer,
-			subreq->start + subreq->transferred,
-			subreq->len   - subreq->transferred);
-	iov_iter_zero(iov_iter_count(&iter), &iter);
+	iov_iter_zero(iov_iter_count(&subreq->iter), &subreq->iter);
 }
 
 static void netfs_cache_read_terminated(void *priv, ssize_t transferred_or_error,
@@ -186,10 +188,6 @@ static void netfs_read_from_cache(struct netfs_read_request *rreq,
 	struct netfs_cache_resources *cres = &rreq->cache_resources;
 
 	netfs_stat(&netfs_n_rh_read);
-	iov_iter_xarray(&subreq->iter, READ, &rreq->buffer,
-			subreq->start + subreq->transferred,
-			subreq->len   - subreq->transferred);
-
 	cres->ops->read(cres, subreq->start, &subreq->iter, read_hole,
 			netfs_cache_read_terminated, subreq);
 }
@@ -225,10 +223,12 @@ static void netfs_read_from_server(struct netfs_read_request *rreq,
 				   struct netfs_read_subrequest *subreq)
 {
 	netfs_stat(&netfs_n_rh_download);
-	iov_iter_xarray(&subreq->iter, READ, &rreq->buffer,
-			subreq->start + subreq->transferred,
-			subreq->len   - subreq->transferred);
 
+	if (iov_iter_count(&subreq->iter) != subreq->len - subreq->transferred)
+		pr_warn("R=%08x[%u] ITER PRE-MISMATCH %zx != %zx-%zx %lx\n",
+			rreq->debug_id, subreq->debug_index,
+			iov_iter_count(&subreq->iter), subreq->len, subreq->transferred,
+			subreq->flags);
 	rreq->netfs_ops->issue_op(subreq);
 }
 
@@ -542,12 +542,44 @@ static void netfs_rreq_is_still_valid(struct netfs_read_request *rreq)
 }
 
 /*
+ * Determine how much we can admit to having read from a DIO read.
+ */
+static void netfs_rreq_assess_dio(struct netfs_read_request *rreq)
+{
+	struct netfs_read_subrequest *subreq;
+	unsigned int i;
+	size_t transferred = 0;
+
+	list_for_each_entry(subreq, &rreq->subrequests, rreq_link) {
+		if (subreq->error || subreq->transferred == 0)
+			break;
+		for (i = 0; i < subreq->bv_count; i++)
+			flush_dcache_page(subreq->bv[i].bv_page);
+		transferred += subreq->transferred;
+		if (subreq->transferred < subreq->len)
+			break;
+	}
+
+	rreq->transferred = transferred;
+	task_io_account_read(transferred);
+
+	if (rreq->iocb) {
+		rreq->iocb->ki_pos += transferred;
+		if (rreq->iocb->ki_complete)
+			rreq->iocb->ki_complete(
+				rreq->iocb, rreq->error ? rreq->error : transferred);
+	}
+	if (rreq->netfs_ops->done)
+		rreq->netfs_ops->done(rreq);
+}
+
+/*
  * Assess the state of a read request and decide what to do next.
  *
  * Note that we could be in an ordinary kernel thread, on a workqueue or in
  * softirq context at this point.  We inherit a ref from the caller.
  */
-static void netfs_rreq_assess(struct netfs_read_request *rreq, bool was_async)
+void netfs_rreq_assess(struct netfs_read_request *rreq, bool was_async)
 {
 	trace_netfs_rreq(rreq, netfs_rreq_trace_assess);
 
@@ -561,7 +593,10 @@ again:
 		return;
 	}
 
-	netfs_rreq_unlock(rreq);
+	if (rreq->origin != NETFS_DIO_READ)
+		netfs_rreq_unlock(rreq);
+	else
+		netfs_rreq_assess_dio(rreq);
 
 	clear_bit_unlock(NETFS_RREQ_IN_PROGRESS, &rreq->flags);
 	wake_up_bit(&rreq->flags, NETFS_RREQ_IN_PROGRESS);
@@ -650,6 +685,13 @@ void netfs_subreq_terminated(struct netfs_read_subrequest *subreq,
 
 	subreq->error = 0;
 	subreq->transferred += transferred_or_error;
+
+	if (iov_iter_count(&subreq->iter) != subreq->len - subreq->transferred)
+		pr_warn("R=%08x[%u] ITER POST-MISMATCH %zx != %zx-%zx %x\n",
+			rreq->debug_id, subreq->debug_index,
+			iov_iter_count(&subreq->iter), subreq->len, subreq->transferred,
+			subreq->iter.iter_type);
+
 	if (subreq->transferred < subreq->len)
 		goto incomplete;
 
@@ -749,8 +791,12 @@ netfs_rreq_prepare_read(struct netfs_read_request *rreq,
 		}
 	}
 
-	if (WARN_ON(subreq->len == 0))
+	if (WARN_ON(subreq->len == 0)) {
 		source = NETFS_INVALID_READ;
+		goto out;
+	}
+
+	iov_iter_xarray(&subreq->iter, READ, &rreq->buffer, subreq->start, subreq->len);
 
 out:
 	subreq->source = source;

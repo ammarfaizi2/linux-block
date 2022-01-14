@@ -25,9 +25,16 @@ int netfs_sanity_check_ictx(struct address_space *mapping);
  */
 extern unsigned int netfs_debug;
 
+struct netfs_read_request *netfs_alloc_read_request(struct address_space *mapping,
+						    struct file *file,
+						    loff_t start, size_t len,
+						    enum netfs_read_origin origin);
+struct netfs_read_subrequest *netfs_alloc_subrequest(struct netfs_read_request *rreq);
 void __netfs_put_subrequest(struct netfs_read_subrequest *subreq, bool was_async);
+void netfs_get_read_request(struct netfs_read_request *rreq);
 void netfs_put_read_request(struct netfs_read_request *rreq, bool was_async);
 void netfs_rreq_completed(struct netfs_read_request *rreq, bool was_async);
+void netfs_rreq_assess(struct netfs_read_request *rreq, bool was_async);
 int netfs_prefetch_for_write(struct file *file, struct folio *folio,
 			     loff_t pos, size_t len, bool always_fill);
 
@@ -42,6 +49,7 @@ static inline void netfs_put_subrequest(struct netfs_read_subrequest *subreq,
  * stats.c
  */
 #ifdef CONFIG_NETFS_STATS
+extern atomic_t netfs_n_rh_dio_read;
 extern atomic_t netfs_n_rh_readahead;
 extern atomic_t netfs_n_rh_readpage;
 extern atomic_t netfs_n_rh_rreq;

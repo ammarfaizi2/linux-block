@@ -155,10 +155,12 @@ struct netfs_read_subrequest {
 	struct netfs_read_request *rreq;	/* Supervising read request */
 	struct list_head	rreq_link;	/* Link in rreq->subrequests */
 	struct iov_iter		iter;		/* Iterator for this subrequest */
+	struct bio_vec		*bv;		/* DIO buffer list */
 	loff_t			start;		/* Where to start the I/O */
 	size_t			len;		/* Size of the I/O */
 	size_t			transferred;	/* Amount of data transferred */
 	refcount_t		usage;
+	unsigned int		bv_count;	/* Number of elements in bv[] */
 	short			error;		/* 0 or error that occurred */
 	unsigned short		debug_index;	/* Index in list (for debugging output) */
 	enum netfs_read_source	source;		/* Where to read from */
@@ -174,6 +176,7 @@ enum netfs_read_origin {
 	NETFS_READAHEAD,		/* This read was triggered by readahead */
 	NETFS_SYNC_READ,		/* This read is a synchronous read */
 	NETFS_READ_FOR_WRITE,		/* This read is to prepare a write */
+	NETFS_DIO_READ,			/* This read is a direct I/O read */
 } __mode(byte);
 
 /*
@@ -184,6 +187,7 @@ struct netfs_read_request {
 	struct work_struct	work;
 	struct inode		*inode;		/* The file being accessed */
 	struct address_space	*mapping;	/* The mapping being accessed */
+	struct kiocb		*iocb;		/* AIO completion vector */
 	struct netfs_cache_resources cache_resources;
 	struct list_head	subrequests;	/* Requests to fetch I/O from disk or net */
 	struct xarray		buffer;		/* Decryption/decompression buffer */
@@ -193,6 +197,7 @@ struct netfs_read_request {
 	atomic_t		nr_wr_ops;	/* Number of write ops in progress */
 	size_t			submitted;	/* Amount submitted for I/O so far */
 	size_t			len;		/* Length of the request */
+	size_t			transferred;	/* Amount to be indicated as transferred */
 	short			error;		/* 0 or error that occurred */
 	enum netfs_read_origin	origin;		/* Origin of the read */
 	loff_t			i_size;		/* Size of the file */
@@ -285,6 +290,7 @@ extern int netfs_releasepage(struct page *page, gfp_t gfp_flags);
 
 extern void netfs_subreq_terminated(struct netfs_read_subrequest *, ssize_t, bool);
 extern void netfs_stats_show(struct seq_file *);
+extern ssize_t netfs_direct_read_iter(struct kiocb *, struct iov_iter *);
 
 /**
  * netfs_i_context - Get the netfs inode context from the inode

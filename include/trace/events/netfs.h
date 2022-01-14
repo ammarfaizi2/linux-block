@@ -19,6 +19,7 @@
 #define __NETFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
 
 enum netfs_read_trace {
+	netfs_read_trace_dio_read,
 	netfs_read_trace_expanded,
 	netfs_read_trace_readahead,
 	netfs_read_trace_readpage,
@@ -59,6 +60,7 @@ enum netfs_failure {
 #endif
 
 #define netfs_read_traces					\
+	EM(netfs_read_trace_dio_read,		"DIO-READ ")	\
 	EM(netfs_read_trace_expanded,		"EXPANDED ")	\
 	EM(netfs_read_trace_readahead,		"READAHEAD")	\
 	EM(netfs_read_trace_readpage,		"READPAGE ")	\
