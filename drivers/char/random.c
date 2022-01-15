@@ -324,43 +324,16 @@ static void mix_pool_bytes(const void *in, size_t nbytes)
 }
 
 struct fast_pool {
+	union {
+		u32 pool32[4];
+		u64 pool64[2];
+	};
 	struct work_struct mix;
 	unsigned long last;
-	u32 pool[4];
 	unsigned int count;
 	u16 reg_idx;
 };
 #define FAST_POOL_MIX_INFLIGHT (1U << 31)
-
-/*
- * This is a fast mixing routine used by the interrupt randomness
- * collector.  It's hardcoded for an 128 bit pool and assumes that any
- * locks that might be needed are taken by the caller.
- */
-static void fast_mix(struct fast_pool *f)
-{
-	u32 a = f->pool[0],	b = f->pool[1];
-	u32 c = f->pool[2],	d = f->pool[3];
-
-	a += b;			c += d;
-	b = rol32(b, 6);	d = rol32(d, 27);
-	d ^= a;			b ^= c;
-
-	a += b;			c += d;
-	b = rol32(b, 16);	d = rol32(d, 14);
-	d ^= a;			b ^= c;
-
-	a += b;			c += d;
-	b = rol32(b, 6);	d = rol32(d, 27);
-	d ^= a;			b ^= c;
-
-	a += b;			c += d;
-	b = rol32(b, 16);	d = rol32(d, 14);
-	d ^= a;			b ^= c;
-
-	f->pool[0] = a;  f->pool[1] = b;
-	f->pool[2] = c;  f->pool[3] = d;
-}
 
 static void process_random_ready_list(void)
 {
@@ -845,15 +818,19 @@ static u32 get_reg(struct fast_pool *f, struct pt_regs *regs)
 static void mix_interrupt_randomness(struct work_struct *work)
 {
 	struct fast_pool *fast_pool = container_of(work, struct fast_pool, mix);
-	u32 pool[ARRAY_SIZE(fast_pool->pool)];
+	u32 pool[ARRAY_SIZE(fast_pool->pool32)];
 
 	/*
 	 * Since this is the result of a trip through the scheduler, xor in
 	 * a cycle counter. It can't hurt, and might help.
 	 */
-	fast_pool->pool[3] ^= random_get_entropy();
+	if (sizeof(unsigned long) == 8)
+		fast_pool->pool64[1] = ror32(fast_pool->pool64[1], 19) ^ random_get_entropy();
+	else
+		fast_pool->pool32[3] = ror32(fast_pool->pool32[3], 7) ^ random_get_entropy();
+
 	/* Copy the pool to the stack so that the mixer always has a consistent view. */
-	memcpy(pool, fast_pool->pool, sizeof(pool));
+	memcpy(pool, fast_pool->pool32, sizeof(pool));
 	/* We take care to zero out the count only after we're done reading the pool. */
 	WRITE_ONCE(fast_pool->count, 0);
 	fast_pool->last = jiffies;
@@ -870,27 +847,37 @@ void add_interrupt_randomness(int irq)
 	unsigned long now = jiffies;
 	cycles_t cycles = random_get_entropy();
 	unsigned int new_count;
-	u32 c_high, j_high;
-	u64 ip;
 
 	if (cycles == 0)
 		cycles = get_reg(fast_pool, regs);
-	c_high = (sizeof(cycles) > 4) ? cycles >> 32 : 0;
-	j_high = (sizeof(now) > 4) ? now >> 32 : 0;
-	fast_pool->pool[0] ^= cycles ^ j_high ^ irq;
-	fast_pool->pool[1] ^= now ^ c_high;
-	ip = regs ? instruction_pointer(regs) : _RET_IP_;
-	fast_pool->pool[2] ^= ip;
-	fast_pool->pool[3] ^=
-		(sizeof(ip) > 4) ? ip >> 32 : get_reg(fast_pool, regs);
 
-	fast_mix(fast_pool);
+	/*
+	 * This rotate-xor pattern and choice of constants 7 and 19 is the
+	 * suggestion of <https://eprint.iacr.org/2021/523>, where its
+	 * ability to accumulate entropy is analyzed.
+	 */
+	if (sizeof(unsigned long) == 8) {
+		fast_pool->pool64[0] = ror64(fast_pool->pool64[0], 19) ^
+				       cycles ^ now ^ irq;
+		fast_pool->pool64[1] = ror64(fast_pool->pool64[1], 19) ^
+				       (regs ? instruction_pointer(regs) : _RET_IP_);
+	} else {
+		fast_pool->pool32[0] = ror32(fast_pool->pool32[0], 7) ^
+				       cycles ^ irq;
+		fast_pool->pool32[1] = ror32(fast_pool->pool32[1], 7) ^
+				       now;
+		fast_pool->pool32[2] = ror32(fast_pool->pool32[2], 7) ^
+				       (regs ? instruction_pointer(regs) : _RET_IP_);
+		fast_pool->pool32[3] = ror32(fast_pool->pool32[3], 7) ^
+				       get_reg(fast_pool, regs);
+	}
+
 	add_interrupt_bench(cycles);
 	new_count = ++fast_pool->count;
 
 	if (unlikely(crng_init == 0)) {
 		if (new_count >= 64 &&
-		    crng_fast_load(fast_pool->pool, sizeof(fast_pool->pool)) > 0) {
+		    crng_fast_load(fast_pool->pool32, sizeof(fast_pool->pool32)) > 0) {
 			fast_pool->count = 0;
 			fast_pool->last = now;
 
@@ -899,7 +886,7 @@ void add_interrupt_randomness(int irq)
 			 * However, this only happens during boot, and then never
 			 * again, so we live with it.
 			 */
-			mix_pool_bytes(&fast_pool->pool, sizeof(fast_pool->pool));
+			mix_pool_bytes(&fast_pool->pool32, sizeof(fast_pool->pool32));
 		}
 		return;
 	}
