@@ -186,7 +186,7 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'fpstate', 'kobj_type', 'kptr_restrict', 'pt_regs', 'sme_me_mask',
+known_vars = [ '__BOOT_DS', 'fpstate', 'kobj_type', 'kptr_restrict', 'pt_regs', 'setup_data', 'sme_me_mask',
                'sysctl_perf_event_paranoid', 'xfeatures' ]
 
 
@@ -195,7 +195,7 @@ def load_spellchecker():
        rex_x86_traps, rex_gpr, rex_kcmdline, rex_version, rex_c_keywords, rex_sections, rex_errval,\
        rex_opts, rex_bla_adj, rex_word_bla, rex_reg_field, rex_misc_num, rex_sent_end, rex_word_split, \
        regexes, regexes_pats, rex_brackets, rex_ballanced_br, rex_c_macro, rex_kdoc_cmt, rex_comment, \
-       rex_comment_end, rex_non_alpha
+       rex_comment_end, rex_non_alpha, rex_struct_mem
 
     dc = enchant.Dict("en_US")
 
@@ -227,6 +227,7 @@ def load_spellchecker():
     rex_reg_field   = re.compile(r'\w+\[\d+(:\d+)?\]', re.I)
     rex_sections    = re.compile(r'(\.bss|\.data|\.head\.text)')
     rex_sent_end    = re.compile(r'\.(\s?([A-Z]|$))')
+    rex_struct_mem  = re.compile(r'\w+->\w+')
     rex_sha1        = re.compile(r'[a-f0-9]{12,40}', re.I)
     rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9a-f]+(K|Mb))$', re.I)
     rex_url         = re.compile(r'https?://[a-z0-9:/.-]+')
@@ -252,6 +253,10 @@ def spellcheck_func_name(w, prev_word):
             # all caps - likely a macro name
             if rex_c_macro.match(w):
                 dbg("Skip macro name: [%s]" % (w, ))
+                return True
+
+            if rex_struct_mem.match(w):
+                dbg("Skip struct member: [%s]" % (w, ))
                 return True
 
             return False
@@ -799,7 +804,7 @@ class Patch:
             if tag.lower() == "cc":
                 m = rex_cc_stable.match(name_email)
                 if not m:
-                    warn_on(1, ("Skipping Cc: %s" % (name_email, )))
+                    info(("Skipping Cc: %s" % (name_email, )))
                     continue
 
             # check Fixes: tag
@@ -808,7 +813,11 @@ class Patch:
 
             info("Adding tag %s: %s" % (tag, name_email, ))
             # prepend tag because we're scanning the tag list backwards
-            self.od[tag].insert(0, name_email)
+            try:
+                self.od[tag].insert(0, name_email)
+            except KeyError:
+                warn("Unknown tag: [%s: %s], ignoring it... " % (tag, name_email, ))
+                continue
 
         # add global sob
         if sob:
@@ -947,7 +956,12 @@ class Patch:
             warn_on(rex_this_patch.match(l),   ("Commit message has 'this patch':\n [%s]" % (l, )))
 
             if rex_sha1.search(l):
-                verify_commit_quotation(lines[i - 1], lines[i], lines[i + 1])
+                try:
+                    nxt = lines[i + 1]
+                except IndexError:
+                    nxt = ""
+
+                verify_commit_quotation(i, lines[i - 1], lines[i], nxt)
 
         flags = { 'check_func': True }
         spellcheck(self.commit_msg, "commit message", flags)
@@ -1157,7 +1171,7 @@ def verify_comment_style(pfile, h):
              (pfile, line.target_line_no, l.strip(), ))
 
 
-def verify_commit_quotation(prev, cur, nxt):
+def verify_commit_quotation(linenum, prev, cur, nxt):
     """
     Verify if a commit is quoted properly. Args are the three lines surrounding the sha1
     """
@@ -1165,7 +1179,7 @@ def verify_commit_quotation(prev, cur, nxt):
     if not prev and not nxt and cur.startswith("  "):
         return
 
-    warn_on(1, "line [%s]" % (cur, ))
+    warn_on(1, "line %d: [%s]" % (linenum, cur, ))
     warn_on(1, "The proper commit quotation format is:\n<newline>\n[  ]<sha1, 12 chars> (\"commit name\")\n<newline>")
 ###
 
