@@ -157,7 +157,7 @@ dc = None
 dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          # that's some stupid dictionary
          "amongst",
-          "API", "APM", "APU", "arm64", "asm",
+         "AMX", "API", "APM", "APU", "arm64", "asm",
          "binutils", "bitmask", "bitfield", "cmdline", "config", "CPPC", "CPUID",
          "DMA", "DIMM", "e.g.", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
          "GHCB", "GHCI", "GPR", "GUID", "HLT", "hugepage",
@@ -765,11 +765,17 @@ class Patch:
                 verify_binutils_version(f, hunk)
                 verify_comment_style(f, hunk)
 
+    def __insert_tag(self, tag, name):
+        try:
+            self.od[tag].insert(0, name)
+        except KeyError:
+            warn("Unknown tag: [%s: %s], ignoring it... " % (tag, name, ))
+
     def add_tag(self, line):
         m = re.search(r'^(.*):\s*(.*)$', line)
         if m.group(1) and m.group(2):
             info("Adding tag [%s]" % (line, ))
-            self.od[m.group(1)] += m.group(2)
+            self.__insert_tag(m.group(1), m.group(2))
         else:
             warn_on(1, "add_tag: Cannot match tag properly\n")
 
@@ -815,12 +821,7 @@ class Patch:
                     verify_commit_ref(m.group('sha1'), m.group('commit_title'))
 
             info("Adding tag %s: %s" % (tag, name_email, ))
-            # prepend tag because we're scanning the tag list backwards
-            try:
-                self.od[tag].insert(0, name_email)
-            except KeyError:
-                warn("Unknown tag: [%s: %s], ignoring it... " % (tag, name_email, ))
-                continue
+            self.__insert_tag(tag, name_email)
 
         # add global sob
         if sob:
