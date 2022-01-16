@@ -122,10 +122,8 @@ def strip_brackets(w):
 # Sanity-check a commit reference
 #
 # @s: the commit reference string to check
-def verify_commit_ref(s):
-    print(("Checking commit ref [%s]" % (s, )))
-
-    (sha1, name) = s.split(" ", 1)
+def verify_commit_ref(sha1, name):
+    print(("Checking commit ref [%s %s]" % (sha1, name, )))
 
     # check sha1 is all hex
     try:
@@ -144,14 +142,12 @@ def verify_commit_ref(s):
         sys.exit(1)
 
     # compare the commit names too
-    name = name.strip('("")')
+    name = name.removeprefix('("').removesuffix('")')
     commit_name = git.show('--no-patch', '--pretty=format:%s', sha1)
     if name != commit_name:
         sys.stderr.write("verify_commit_ref: commit name mismatch: [%s] vs [%s]\n" % \
                          (name, commit_name, ))
         sys.exit(1)
-
-    return s
 
 #
 ### spellchecker stuff
@@ -213,7 +209,11 @@ def load_spellchecker():
     rex_c_macro     = re.compile(r'^[A-Z0-9_]+$')
     rex_comment     = re.compile(r'^\+\s+\*\s+.*$', re.I)
     rex_comment_end = re.compile(r'^\+\s+\*\/')
-    rex_commit_ref  = re.compile(r'^.*(?P<sha1>[a-f0-9]{7,})\s?\(\".*\"\).*')
+
+    # a commit ref is either preceded by some uninteresting chars and a space or it begins on a
+    # newline
+    rex_commit_ref  = re.compile(r'^(.*\s)?(?P<sha1>[a-f0-9]{7,})\s(?P<commit_title>\(\".*\"\)).*')
+
     rex_decimal     = re.compile(r'^[0-9]+$')
     rex_errval      = re.compile(r'-E(EINVAL|EXIST|OPNOTSUPP)')
     rex_fnames      = re.compile(r'\s?/?(\w+/)*\w+\.[chS]')
@@ -337,8 +337,9 @@ def spellcheck(s, where, flags):
 
     for line in s.splitlines():
         # see if the line contains a commit reference and check it if so
-        if rex_commit_ref.match(line):
-            verify_commit_ref(line.strip())
+        m = rex_commit_ref.match(line)
+        if m:
+            verify_commit_ref(m.group('sha1'), m.group('commit_title'))
             continue
 
         # special data in the commit message
@@ -809,7 +810,9 @@ class Patch:
 
             # check Fixes: tag
             if tag.lower() == 'fixes':
-                verify_commit_ref(name_email)
+                m = rex_commit_ref.match(name_email)
+                if m:
+                    verify_commit_ref(m.group('sha1'), m.group('commit_title'))
 
             info("Adding tag %s: %s" % (tag, name_email, ))
             # prepend tag because we're scanning the tag list backwards
