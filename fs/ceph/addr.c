@@ -199,7 +199,6 @@ static void finish_netfs_read(struct ceph_osd_request *req)
 	struct ceph_fs_client *fsc = ceph_inode_to_client(req->r_inode);
 	struct ceph_osd_data *osd_data = osd_req_op_extent_osd_data(req, 0);
 	struct netfs_io_subrequest *subreq = req->r_priv;
-	int num_pages;
 	int err = req->r_result;
 
 	ceph_update_read_metrics(&fsc->mdsc->metric, req->r_start_latency,
@@ -214,14 +213,12 @@ static void finish_netfs_read(struct ceph_osd_request *req)
 	else if (err == -EBLOCKLISTED)
 		fsc->blocklisted = true;
 
-	if (err >= 0 && err < subreq->len)
+	if (err >= 0) {
 		__set_bit(NETFS_SREQ_CLEAR_TAIL, &subreq->flags);
+		iov_iter_advance(&subreq->iter, err);
+	}
 
 	netfs_subreq_terminated(subreq, err, true);
-
-	num_pages = calc_pages_for(osd_data->alignment, osd_data->length);
-	ceph_put_page_vector(osd_data->pages, num_pages, false);
-	iput(req->r_inode);
 }
 
 static bool ceph_netfs_issue_op_inline(struct netfs_io_subrequest *subreq)
@@ -284,9 +281,7 @@ static void ceph_netfs_issue_read(struct netfs_io_subrequest *subreq)
 	struct ceph_fs_client *fsc = ceph_inode_to_client(inode);
 	struct ceph_osd_request *req;
 	struct ceph_vino vino = ceph_vino(inode);
-	struct page **pages;
-	size_t page_off;
-	int err = 0;
+	int err;
 	u64 len = subreq->len;
 
 	if (ci->i_inline_version != CEPH_INLINE_NONE &&
@@ -305,28 +300,14 @@ static void ceph_netfs_issue_read(struct netfs_io_subrequest *subreq)
 
 	dout("%s: pos=%llu orig_len=%zu len=%llu\n", __func__, subreq->start, subreq->len, len);
 
-	err = iov_iter_get_pages_alloc(&subreq->iter, &pages, len, &page_off);
-	if (err < 0) {
-		dout("%s: iov_ter_get_pages_alloc returned %d\n", __func__, err);
-		goto out;
-	}
-
-	/* should always give us a page-aligned read */
-#warning This is not true for a DIO read
-	WARN_ON_ONCE(page_off);
-	len = err;
-
-	osd_req_op_extent_osd_data_pages(req, 0, pages, len, 0, false, false);
+	osd_req_op_extent_osd_iter(req, 0, &subreq->iter);
 	req->r_callback = finish_netfs_read;
 	req->r_priv = subreq;
 	req->r_inode = inode;
-	ihold(inode);
 
 	err = ceph_osdc_start_request(req->r_osdc, req, false);
-	if (err)
-		iput(inode);
-out:
 	ceph_osdc_put_request(req);
+out:
 	if (err)
 		netfs_subreq_terminated(subreq, err, false);
 	dout("%s: result %d\n", __func__, err);
