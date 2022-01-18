@@ -252,7 +252,10 @@ void v9fs_free_inode(struct inode *inode)
  */
 static void v9fs_set_netfs_context(struct inode *inode)
 {
+	struct v9fs_inode *v9inode = V9FS_I(inode);
+
 	netfs_i_context_init(inode, &v9fs_req_ops);
+	v9inode->netfs_ctx.rsize = 1024 * 1024;
 }
 
 int v9fs_init_inode(struct v9fs_session_info *v9ses,
