@@ -63,14 +63,31 @@ void brcmf_of_probe(struct device *dev, enum brcmf_bus_type bus_type,
 {
 	struct brcmfmac_sdio_pd *sdio = &settings->bus.sdio;
 	struct device_node *root, *np = dev->of_node;
+	const char *prop;
 	int irq;
 	int err;
 	u32 irqf;
 	u32 val;
 
+	/* Apple ARM64 platforms have their own idea of board type, passed in
+	 * via the device tree. They also have an antenna SKU parameter
+	 */
+	if (!of_property_read_string(np, "brcm,board-type", &prop))
+		settings->board_type = prop;
+
+	if (!of_property_read_string(np, "apple,antenna-sku", &prop))
+		settings->antenna_sku = prop;
+
+	/* The WLAN calibration blob is normally stored in SROM, but Apple
+	 * ARM64 platforms pass it via the DT instead.
+	 */
+	prop = of_get_property(np, "brcm,cal-blob", &settings->cal_size);
+	if (prop && settings->cal_size)
+		settings->cal_blob = prop;
+
 	/* Set board-type to the first string of the machine compatible prop */
 	root = of_find_node_by_path("/");
-	if (root) {
+	if (root && !settings->board_type) {
 		int i, len;
 		char *board_type;
 		const char *tmp;
@@ -79,8 +96,12 @@ void brcmf_of_probe(struct device *dev, enum brcmf_bus_type bus_type,
 
 		/* get rid of '/' in the compatible string to be able to find the FW */
 		len = strlen(tmp) + 1;
-		board_type = devm_kzalloc(dev, len, GFP_KERNEL);
-		strscpy(board_type, tmp, len);
+		board_type = devm_kstrdup(dev, tmp, GFP_KERNEL);
+		if (!board_type) {
+			brcmf_err("out of memory allocating board_type\n");
+			of_node_put(root);
+			return;
+		}
 		for (i = 0; i < board_type[i]; i++) {
 			if (board_type[i] == '/')
 				board_type[i] = '-';

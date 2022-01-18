@@ -141,6 +141,50 @@ static const struct apple_key_translation apple_fn_keys[] = {
 	{ }
 };
 
+static const struct apple_key_translation apple_fn_keys_spi[] = {
+	{ KEY_BACKSPACE, KEY_DELETE },
+	{ KEY_ENTER,	KEY_INSERT },
+	{ KEY_F1,	KEY_BRIGHTNESSDOWN, APPLE_FLAG_FKEY },
+	{ KEY_F2,	KEY_BRIGHTNESSUP,   APPLE_FLAG_FKEY },
+	{ KEY_F3,	KEY_SCALE,          APPLE_FLAG_FKEY },
+	{ KEY_F4,	KEY_SEARCH,         APPLE_FLAG_FKEY },
+	{ KEY_F5,	KEY_RECORD,         APPLE_FLAG_FKEY },
+	{ KEY_F6,	KEY_SLEEP,          APPLE_FLAG_FKEY },
+	{ KEY_F7,	KEY_PREVIOUSSONG,   APPLE_FLAG_FKEY },
+	{ KEY_F8,	KEY_PLAYPAUSE,      APPLE_FLAG_FKEY },
+	{ KEY_F9,	KEY_NEXTSONG,       APPLE_FLAG_FKEY },
+	{ KEY_F10,	KEY_MUTE,           APPLE_FLAG_FKEY },
+	{ KEY_F11,	KEY_VOLUMEDOWN,     APPLE_FLAG_FKEY },
+	{ KEY_F12,	KEY_VOLUMEUP,       APPLE_FLAG_FKEY },
+	{ KEY_UP,	KEY_PAGEUP },
+	{ KEY_DOWN,	KEY_PAGEDOWN },
+	{ KEY_LEFT,	KEY_HOME },
+	{ KEY_RIGHT,	KEY_END },
+	{ }
+};
+
+static const struct apple_key_translation apple_fn_keys_mbp13[] = {
+	{ KEY_BACKSPACE, KEY_DELETE },
+	{ KEY_ENTER,	KEY_INSERT },
+	{ KEY_UP,	KEY_PAGEUP },
+	{ KEY_DOWN,	KEY_PAGEDOWN },
+	{ KEY_LEFT,	KEY_HOME },
+	{ KEY_RIGHT,	KEY_END },
+	{ KEY_1,	KEY_F1 },
+	{ KEY_2,	KEY_F2 },
+	{ KEY_3,	KEY_F3 },
+	{ KEY_4,	KEY_F4 },
+	{ KEY_5,	KEY_F5 },
+	{ KEY_6,	KEY_F6 },
+	{ KEY_7,	KEY_F7 },
+	{ KEY_8,	KEY_F8 },
+	{ KEY_9,	KEY_F9 },
+	{ KEY_0,	KEY_F10 },
+	{ KEY_MINUS,	KEY_F11 },
+	{ KEY_EQUAL,	KEY_F12 },
+	{ }
+};
+
 static const struct apple_key_translation powerbook_fn_keys[] = {
 	{ KEY_BACKSPACE, KEY_DELETE },
 	{ KEY_F1,	KEY_BRIGHTNESSDOWN,     APPLE_FLAG_FKEY },
@@ -249,6 +293,11 @@ static int hidinput_apple_event(struct hid_device *hid, struct input_dev *input,
 		else if (hid->product >= USB_DEVICE_ID_APPLE_WELLSPRING4_ANSI &&
 				hid->product <= USB_DEVICE_ID_APPLE_WELLSPRING4A_JIS)
 			table = macbookair_fn_keys;
+		else if (hid->vendor == SPI_VENDOR_ID_APPLE &&
+			hid->product == SPI_DEVICE_ID_APPLE_MACBOOK_PRO13_2020)
+			table = apple_fn_keys_mbp13;
+		else if (hid->vendor == SPI_VENDOR_ID_APPLE)
+			table = apple_fn_keys_spi;
 		else if (hid->product < 0x21d || hid->product >= 0x300)
 			table = powerbook_fn_keys;
 		else
@@ -460,6 +509,12 @@ static void apple_setup_input(struct input_dev *input)
 	for (trans = apple_fn_keys; trans->from; trans++)
 		set_bit(trans->to, input->keybit);
 
+	for (trans = apple_fn_keys_spi; trans->from; trans++)
+		set_bit(trans->to, input->keybit);
+
+	for (trans = apple_fn_keys_mbp13; trans->from; trans++)
+		set_bit(trans->to, input->keybit);
+
 	for (trans = powerbook_fn_keys; trans->from; trans++)
 		set_bit(trans->to, input->keybit);
 
@@ -536,6 +591,10 @@ static int apple_probe(struct hid_device *hdev,
 	unsigned long quirks = id->driver_data;
 	struct apple_sc *asc;
 	int ret;
+
+	if (id->bus == BUS_SPI && id->vendor == SPI_VENDOR_ID_APPLE &&
+	    hdev->type != HID_TYPE_SPI_KEYBOARD)
+		return -ENODEV;
 
 	asc = devm_kzalloc(&hdev->dev, sizeof(*asc), GFP_KERNEL);
 	if (asc == NULL) {
@@ -759,6 +818,8 @@ static const struct hid_device_id apple_devices[] = {
 		.driver_data = APPLE_HAS_FN | APPLE_ISO_TILDE_QUIRK },
 	{ HID_BLUETOOTH_DEVICE(BT_VENDOR_ID_APPLE, USB_DEVICE_ID_APPLE_MAGIC_KEYBOARD_NUMPAD_2021),
 		.driver_data = APPLE_HAS_FN | APPLE_ISO_TILDE_QUIRK },
+	{ HID_SPI_DEVICE(SPI_VENDOR_ID_APPLE, HID_ANY_ID),
+		.driver_data = APPLE_HAS_FN },
 
 	{ }
 };

@@ -395,6 +395,15 @@ config COMMON_CLK_K210
 	help
 	  Support for the Canaan Kendryte K210 RISC-V SoC clocks.
 
+config COMMON_CLK_APPLE_NCO
+	bool "Clock driver for Apple SoC NCOs"
+	depends on ARCH_APPLE || COMPILE_TEST
+	default ARCH_APPLE
+	help
+	  This driver supports NCO (Numerically Controlled Oscillator) blocks
+	  found on Apple SoCs such as t8103 (M1). The blocks are typically
+	  generators of audio clocks.
+
 source "drivers/clk/actions/Kconfig"
 source "drivers/clk/analogbits/Kconfig"
 source "drivers/clk/baikal-t1/Kconfig"

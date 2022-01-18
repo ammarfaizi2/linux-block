@@ -50,6 +50,9 @@ struct brcmf_mp_device {
 	bool		ignore_probe_fail;
 	struct brcmfmac_pd_cc *country_codes;
 	const char	*board_type;
+	const char	*antenna_sku;
+	const void	*cal_blob;
+	int		cal_size;
 	union {
 		struct brcmfmac_sdio_pd sdio;
 	} bus;
@@ -70,6 +73,15 @@ void brcmf_dmi_probe(struct brcmf_mp_device *settings, u32 chip, u32 chiprev);
 #else
 static inline void
 brcmf_dmi_probe(struct brcmf_mp_device *settings, u32 chip, u32 chiprev) {}
+#endif
+
+#ifdef CONFIG_ACPI
+void brcmf_acpi_probe(struct device *dev, enum brcmf_bus_type bus_type,
+		      struct brcmf_mp_device *settings);
+#else
+static inline void brcmf_acpi_probe(struct device *dev,
+				    enum brcmf_bus_type bus_type,
+				    struct brcmf_mp_device *settings) {}
 #endif
 
 u8 brcmf_map_prio_to_prec(void *cfg, u8 prio);

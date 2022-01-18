@@ -104,6 +104,13 @@
 		clock-output-names = "clkref";
 	};
 
+	clk_120m: clock-120m {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <120000000>;
+		clock-output-names = "clk_120m";
+	};
+
 	soc {
 		compatible = "simple-bus";
 		#address-cells = <2>;
@@ -177,6 +184,20 @@
 			#size-cells = <0x0>;
 			power-domains = <&ps_i2c4>;
 			status = "disabled"; /* only used in J293 */
+		};
+
+		spi3: spi@23510c000 {
+			compatible = "apple,t8103-spi", "apple,spi";
+			reg = <0x2 0x3510c000 0x0 0x4000>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 617 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&clk_120m>;
+			pinctrl-0 = <&spi3_pins>;
+			pinctrl-names = "default";
+			power-domains = <&ps_spi3>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled"; /* only used in J293/J313 */
 		};
 
 		serial0: serial@235200000 {
@@ -268,6 +289,13 @@
 					 <APPLE_PINMUX(134, 1)>;
 			};
 
+			spi3_pins: spi3-pins {
+				pinmux = <APPLE_PINMUX(46, 1)>,
+					<APPLE_PINMUX(47, 1)>,
+					<APPLE_PINMUX(48, 1)>,
+					<APPLE_PINMUX(49, 1)>;
+			};
+
 			pcie_pins: pcie-pins {
 				pinmux = <APPLE_PINMUX(150, 1)>,
 					 <APPLE_PINMUX(151, 1)>,
@@ -352,6 +380,99 @@
 				     <AIC_IRQ 272 IRQ_TYPE_LEVEL_HIGH>,
 				     <AIC_IRQ 273 IRQ_TYPE_LEVEL_HIGH>,
 				     <AIC_IRQ 274 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
+		ans_mbox: mbox@277408000 {
+			compatible = "apple,t8103-asc-mailbox", "apple,asc-mailbox-v4";
+			reg = <0x2 0x77408000 0x0 0x4000>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 583 IRQ_TYPE_LEVEL_HIGH>,
+				<AIC_IRQ 584 IRQ_TYPE_LEVEL_HIGH>,
+				<AIC_IRQ 585 IRQ_TYPE_LEVEL_HIGH>,
+				<AIC_IRQ 586 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "send-empty", "send-not-empty",
+				"recv-empty", "recv-not-empty";
+			#mbox-cells = <0>;
+			power-domains = <&ps_ans2>;
+		};
+
+		sart: sart@27bc50000 {
+			compatible = "apple,t8103-sart", "apple,sart2";
+			reg = <0x2 0x7bc50000 0x0 0x10000>;
+			power-domains = <&ps_ans2>;
+		};
+
+		nvme@27bcc0000 {
+			compatible = "apple,t8103-nvme-ans2", "apple,nvme-ans2";
+			reg = <0x2 0x7bcc0000 0x0 0x40000>,
+				<0x2 0x77400000 0x0 0x4000>;
+			reg-names = "nvme", "ans";
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 590 IRQ_TYPE_LEVEL_HIGH>;
+			mboxes = <&ans_mbox>;
+			apple,sart = <&sart>;
+			power-domains = <&ps_ans2>;
+			resets = <&ps_ans2>;
+		};
+
+		dwc3_0: usb@382280000 {
+			compatible = "apple,t8103-dwc3", "apple,dwc3", "snps,dwc3";
+			reg = <0x3 0x82280000 0x0 0x100000>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 777 IRQ_TYPE_LEVEL_HIGH>;
+			dr_mode = "otg";
+			usb-role-switch;
+			role-switch-default-mode = "host";
+			iommus = <&dwc3_0_dart_0 0>, <&dwc3_0_dart_1 1>;
+			power-domains = <&ps_atc0_usb>;
+		};
+
+		dwc3_0_dart_0: iommu@382f00000 {
+			compatible = "apple,t8103-dart";
+			reg = <0x3 0x82f00000 0x0 0x4000>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 781 IRQ_TYPE_LEVEL_HIGH>;
+			#iommu-cells = <1>;
+			power-domains = <&ps_atc0_usb>;
+		};
+
+		dwc3_0_dart_1: iommu@382f80000 {
+			compatible = "apple,t8103-dart";
+			reg = <0x3 0x82f80000 0x0 0x4000>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 781 IRQ_TYPE_LEVEL_HIGH>;
+			#iommu-cells = <1>;
+			power-domains = <&ps_atc0_usb>;
+		};
+
+		dwc3_1: usb@502280000 {
+			compatible = "apple,t8103-dwc3", "apple,dwc3", "snps,dwc3";
+			reg = <0x5 0x02280000 0x0 0x100000>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 857 IRQ_TYPE_LEVEL_HIGH>;
+			dr_mode = "otg";
+			usb-role-switch;
+			role-switch-default-mode = "host";
+			iommus = <&dwc3_1_dart_0 0>, <&dwc3_1_dart_1 1>;
+			power-domains = <&ps_atc1_usb>;
+		};
+
+		dwc3_1_dart_0: iommu@502f00000 {
+			compatible = "apple,t8103-dart";
+			reg = <0x5 0x02f00000 0x0 0x4000>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 861 IRQ_TYPE_LEVEL_HIGH>;
+			#iommu-cells = <1>;
+			power-domains = <&ps_atc1_usb>;
+		};
+
+		dwc3_1_dart_1: iommu@502f80000 {
+			compatible = "apple,t8103-dart";
+			reg = <0x5 0x02f80000 0x0 0x4000>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 861 IRQ_TYPE_LEVEL_HIGH>;
+			#iommu-cells = <1>;
+			power-domains = <&ps_atc1_usb>;
 		};
 
 		pcie0_dart_0: dart@681008000 {
@@ -472,6 +593,71 @@
 						<0 0 0 2 &port02 0 0 0 1>,
 						<0 0 0 3 &port02 0 0 0 2>,
 						<0 0 0 4 &port02 0 0 0 3>;
+			};
+		};
+
+		dart_sio: iommu@235004000 {
+			compatible = "apple,t8103-dart", "apple,dart";
+			reg = <0x2 0x35004000 0x0 0x4000>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 635 IRQ_TYPE_LEVEL_HIGH>;
+			#iommu-cells = <1>;
+			power-domains = <&ps_sio_cpu>;
+		};
+
+		nco_inp: clock-ref {
+			compatible = "fixed-factor-clock";
+			clocks = <&clkref>;
+			#clock-cells = <0>;
+			clock-mult = <75>;
+			clock-div = <2>; // 24 MHz * (75/2) = 900 MHz
+			clock-output-names = "nco_inp";
+		};
+
+		nco: nco@23b044000 {
+			compatible = "apple,t8103-nco", "apple,nco";
+			reg = <0x2 0x3b044000 0x0 0x14000>;
+			clocks = <&nco_inp>;
+			#clock-cells = <1>;
+			apple,nchannels = <5>;
+		};
+
+		admac: dma-controller@238200000 {
+			compatible = "apple,t8103-admac", "apple,admac";
+			reg = <0x2 0x38200000 0x0 0x34000>;
+			dma-channels = <12>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 626 IRQ_TYPE_LEVEL_HIGH>;
+			#dma-cells = <1>;
+			iommus = <&dart_sio 2>;
+			power-domains = <&ps_sio_adma>;
+		};
+
+		mca: mca {
+			compatible = "apple,t8103-mca", "apple,mca";
+			reg = <0x2 0x38400000 0x0 0x18000>,
+				<0x2 0x38300000 0x0 0x30000>;
+			reg-names = "clusters", "switch";
+			clocks = <&nco 0>, <&nco 1>, <&nco 2>, <&nco 3>;
+			power-domains = <&ps_mca0>; //, <&ps_mca1>, <&ps_mca2>, <&ps_mca3>, <&ps_mca4>, <&ps_mca5>;
+			resets = <&ps_mca0>, <&ps_mca1>, <&ps_mca2>, <&ps_mca3>, <&ps_mca4>, <&ps_mca5>;
+
+			#sound-dai-cells = <1>;
+			apple,nclusters = <6>;
+			apple,mclk-range = <2600000 25000000>;
+
+			route {
+				dmas = <&admac 2>;
+				dma-names = "tx";
+				apple,serdes = <1>;
+				sound-dai = <&mca 0>;
+			};
+
+			route2 {
+				dmas = <&admac 6>;
+				dma-names = "tx";
+				apple,serdes = <3>;
+				sound-dai = <&mca 2>;
 			};
 		};
 	};
