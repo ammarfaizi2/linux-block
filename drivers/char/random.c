@@ -443,17 +443,23 @@ static DEFINE_SPINLOCK(random_ready_list_lock);
 static LIST_HEAD(random_ready_list);
 
 struct crng_state {
-	u32 state[16];
+	union {
+		u32 state[CHACHA_STATE_WORDS];
+		struct {
+			u32 constants[4];
+			u32 key[CHACHA_KEY_SIZE / sizeof(u32)];
+			u32 counter[2];
+			u64 nonce;
+		};
+	};
 	unsigned long init_time;
 	spinlock_t lock;
 };
 
 static struct crng_state primary_crng = {
 	.lock = __SPIN_LOCK_UNLOCKED(primary_crng.lock),
-	.state[0] = CHACHA_CONSTANT_EXPA,
-	.state[1] = CHACHA_CONSTANT_ND_3,
-	.state[2] = CHACHA_CONSTANT_2_BY,
-	.state[3] = CHACHA_CONSTANT_TE_K,
+	.constants = { CHACHA_CONSTANT_EXPA, CHACHA_CONSTANT_ND_3,
+		       CHACHA_CONSTANT_2_BY, CHACHA_CONSTANT_TE_K }
 };
 
 /*
@@ -750,13 +756,13 @@ static bool crng_init_try_arch(struct crng_state *crng)
 	bool arch_init = true;
 	unsigned long rv;
 
-	for (i = 4; i < 16; i++) {
+	for (i = 0; i < ARRAY_SIZE(crng->key); i++) {
 		if (!arch_get_random_seed_long(&rv) &&
 		    !arch_get_random_long(&rv)) {
 			rv = random_get_entropy();
 			arch_init = false;
 		}
-		crng->state[i] ^= rv;
+		crng->key[i] ^= rv;
 	}
 
 	return arch_init;
@@ -768,13 +774,13 @@ static bool __init crng_init_try_arch_early(struct crng_state *crng)
 	bool arch_init = true;
 	unsigned long rv;
 
-	for (i = 4; i < 16; i++) {
+	for (i = 0; i < ARRAY_SIZE(crng->key); i++) {
 		if (!arch_get_random_seed_long_early(&rv) &&
 		    !arch_get_random_long_early(&rv)) {
 			rv = random_get_entropy();
 			arch_init = false;
 		}
-		crng->state[i] ^= rv;
+		crng->key[i] ^= rv;
 	}
 
 	return arch_init;
@@ -783,14 +789,14 @@ static bool __init crng_init_try_arch_early(struct crng_state *crng)
 static void crng_initialize_secondary(struct crng_state *crng)
 {
 	chacha_init_consts(crng->state);
-	_get_random_bytes(&crng->state[4], sizeof(u32) * 12);
+	_get_random_bytes(&crng->key, sizeof(crng->key));
 	crng_init_try_arch(crng);
 	crng->init_time = jiffies - CRNG_RESEED_INTERVAL - 1;
 }
 
 static void __init crng_initialize_primary(struct crng_state *crng)
 {
-	_extract_entropy(&crng->state[4], sizeof(u32) * 12);
+	_extract_entropy(&crng->key, sizeof(crng->key));
 	if (crng_init_try_arch_early(crng) && trust_cpu && crng_init < 2) {
 		invalidate_batched_entropy();
 		numa_crng_init();
@@ -892,7 +898,7 @@ static size_t crng_fast_load(const u8 *cp, size_t len)
 		spin_unlock_irqrestore(&primary_crng.lock, flags);
 		return 0;
 	}
-	p = (u8 *)&primary_crng.state[4];
+	p = (u8 *)primary_crng.key;
 	while (len > 0 && crng_init_cnt < CRNG_INIT_CNT_THRESH) {
 		p[crng_init_cnt % CHACHA_KEY_SIZE] ^= *cp;
 		cp++; crng_init_cnt++; len--; ret++;
@@ -927,7 +933,7 @@ static int crng_slow_load(const u8 *cp, size_t len)
 	u8 tmp;
 	unsigned int i, max = CHACHA_KEY_SIZE;
 	const u8 *src_buf = cp;
-	u8 *dest_buf = (u8 *)&primary_crng.state[4];
+	u8 *dest_buf = (u8 *)primary_crng.key;
 
 	if (!spin_trylock_irqsave(&primary_crng.lock, flags))
 		return 0;
@@ -970,12 +976,12 @@ static void crng_reseed(struct crng_state *crng, bool use_input_pool)
 					CHACHA_KEY_SIZE);
 	}
 	spin_lock_irqsave(&crng->lock, flags);
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < ARRAY_SIZE(crng->key); i++) {
 		unsigned long rv;
 		if (!arch_get_random_seed_long(&rv) &&
 		    !arch_get_random_long(&rv))
 			rv = random_get_entropy();
-		crng->state[i + 4] ^= buf.key[i] ^ rv;
+		crng->key[i] ^= buf.key[i] ^ rv;
 	}
 	memzero_explicit(&buf, sizeof(buf));
 	WRITE_ONCE(crng->init_time, jiffies);
@@ -994,9 +1000,9 @@ static void _extract_crng(struct crng_state *crng, u8 out[CHACHA_BLOCK_SIZE])
 			crng_reseed(crng, crng == &primary_crng);
 	}
 	spin_lock_irqsave(&crng->lock, flags);
-	chacha20_block(&crng->state[0], out);
-	if (crng->state[12] == 0)
-		crng->state[13]++;
+	chacha20_block(crng->state, out);
+	if (unlikely(!crng->counter[0] && !++crng->counter[1]))
+		++crng->nonce;
 	spin_unlock_irqrestore(&crng->lock, flags);
 }
 
@@ -1013,7 +1019,7 @@ static void _crng_backtrack_protect(struct crng_state *crng,
 				    u8 tmp[CHACHA_BLOCK_SIZE], int used)
 {
 	unsigned long flags;
-	u32 *s, *d;
+	u32 *s;
 	int i;
 
 	used = round_up(used, sizeof(u32));
@@ -1023,9 +1029,8 @@ static void _crng_backtrack_protect(struct crng_state *crng,
 	}
 	spin_lock_irqsave(&crng->lock, flags);
 	s = (u32 *)&tmp[used];
-	d = &crng->state[4];
-	for (i = 0; i < 8; i++)
-		*d++ ^= *s++;
+	for (i = 0; i < ARRAY_SIZE(crng->key); i++)
+		crng->key[i] ^= s[i];
 	spin_unlock_irqrestore(&crng->lock, flags);
 }
 
