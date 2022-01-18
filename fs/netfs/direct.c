@@ -158,6 +158,9 @@ ssize_t netfs_direct_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 			break;
 		if (!netfs_dio_rreq_submit_slice(rreq, iter, &debug_index))
 			break;
+		if (test_bit(NETFS_RREQ_BLOCKED, &rreq->flags) &&
+		    test_bit(NETFS_RREQ_NONBLOCK, &rreq->flags))
+			break;
 
 	} while (rreq->submitted < rreq->len);
 

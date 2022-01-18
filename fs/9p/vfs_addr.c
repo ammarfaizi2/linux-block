@@ -35,20 +35,34 @@ static void v9fs_req_issue_op(struct netfs_read_subrequest *subreq)
 {
 	struct netfs_read_request *rreq = subreq->rreq;
 	struct p9_fid *fid = rreq->netfs_priv;
-	struct iov_iter to;
 	loff_t pos = subreq->start + subreq->transferred;
-	size_t len = subreq->len   - subreq->transferred;
 	int total, err;
 
-	iov_iter_xarray(&to, READ, &rreq->mapping->i_pages, pos, len);
-
-	total = p9_client_read(fid, pos, &to, &err);
+	total = p9_client_read(fid, pos, &subreq->iter, &err);
+	set_bit(NETFS_RREQ_BLOCKED, &rreq->flags);
 
 	/* if we just extended the file size, any portion not in
 	 * cache won't be on server and is zeroes */
 	__set_bit(NETFS_SREQ_CLEAR_TAIL, &subreq->flags);
 
 	netfs_subreq_terminated(subreq, err ?: total, false);
+}
+
+/*
+ * Clamp the size of a read subrequest.
+ */
+static bool v9fs_clamp_length(struct netfs_read_subrequest *subreq)
+{
+	struct netfs_read_request *rreq = subreq->rreq;
+	struct p9_fid *fid = rreq->netfs_priv;
+	struct p9_client *clnt = fid->clnt;
+	int rsize = fid->iounit;
+
+	if (!rsize || rsize > clnt->msize - P9_IOHDRSZ)
+		rsize = clnt->msize - P9_IOHDRSZ;
+	if (subreq->len > rsize)
+		subreq->len = rsize;
+	return true;
 }
 
 /**
@@ -62,6 +76,8 @@ static int v9fs_init_rreq(struct netfs_read_request *rreq, struct file *file)
 
 	refcount_inc(&fid->count);
 	rreq->netfs_priv = fid;
+	if (file->f_flags & O_NONBLOCK)
+		__set_bit(NETFS_RREQ_NONBLOCK, &rreq->flags);
 	return 0;
 }
 
@@ -79,6 +95,7 @@ static void v9fs_req_cleanup(struct address_space *mapping, void *priv)
 
 const struct netfs_request_ops v9fs_req_ops = {
 	.init_rreq		= v9fs_init_rreq,
+	.clamp_length		= v9fs_clamp_length,
 	.issue_op		= v9fs_req_issue_op,
 	.cleanup		= v9fs_req_cleanup,
 };
@@ -204,17 +221,16 @@ v9fs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
 	ssize_t n;
 	int err = 0;
 
-	if (iov_iter_rw(iter) == WRITE) {
-		n = p9_client_write(file->private_data, pos, iter, &err);
-		if (n) {
-			struct inode *inode = file_inode(file);
-			loff_t i_size = i_size_read(inode);
+	if (iov_iter_rw(iter) == READ)
+		return -EINVAL;
 
-			if (pos + n > i_size)
-				inode_add_bytes(inode, pos + n - i_size);
-		}
-	} else {
-		n = p9_client_read(file->private_data, pos, iter, &err);
+	n = p9_client_write(file->private_data, pos, iter, &err);
+	if (n) {
+		struct inode *inode = file_inode(file);
+		loff_t i_size = i_size_read(inode);
+
+		if (pos + n > i_size)
+			inode_add_bytes(inode, pos + n - i_size);
 	}
 	return n ? n : err;
 }
