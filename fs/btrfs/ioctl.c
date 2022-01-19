@@ -387,6 +387,7 @@ bool btrfs_exclop_start(struct btrfs_fs_info *fs_info,
  *
  * Compatibility:
  * - the same type is already running
+ * - when trying to add a device and balance has been paused
  * - not BTRFS_EXCLOP_NONE - this is intentionally incompatible and the caller
  *   must check the condition first that would allow none -> @type
  */
@@ -394,7 +395,9 @@ bool btrfs_exclop_start_try_lock(struct btrfs_fs_info *fs_info,
 				 enum btrfs_exclusive_operation type)
 {
 	spin_lock(&fs_info->super_lock);
-	if (fs_info->exclusive_operation == type)
+	if (fs_info->exclusive_operation == type ||
+	    (fs_info->exclusive_operation == BTRFS_EXCLOP_BALANCE_PAUSED &&
+	     type == BTRFS_EXCLOP_DEV_ADD))
 		return true;
 
 	spin_unlock(&fs_info->super_lock);
@@ -412,6 +415,29 @@ void btrfs_exclop_finish(struct btrfs_fs_info *fs_info)
 	WRITE_ONCE(fs_info->exclusive_operation, BTRFS_EXCLOP_NONE);
 	spin_unlock(&fs_info->super_lock);
 	sysfs_notify(&fs_info->fs_devices->fsid_kobj, NULL, "exclusive_operation");
+}
+
+void btrfs_exclop_balance(struct btrfs_fs_info *fs_info,
+			  enum btrfs_exclusive_operation op)
+{
+	switch (op) {
+	case BTRFS_EXCLOP_BALANCE_PAUSED:
+		spin_lock(&fs_info->super_lock);
+		ASSERT(fs_info->exclusive_operation == BTRFS_EXCLOP_BALANCE ||
+		       fs_info->exclusive_operation == BTRFS_EXCLOP_DEV_ADD);
+		fs_info->exclusive_operation = BTRFS_EXCLOP_BALANCE_PAUSED;
+		spin_unlock(&fs_info->super_lock);
+		break;
+	case BTRFS_EXCLOP_BALANCE:
+		spin_lock(&fs_info->super_lock);
+		ASSERT(fs_info->exclusive_operation == BTRFS_EXCLOP_BALANCE_PAUSED);
+		fs_info->exclusive_operation = BTRFS_EXCLOP_BALANCE;
+		spin_unlock(&fs_info->super_lock);
+		break;
+	default:
+		btrfs_warn(fs_info,
+			"invalid exclop balance operation %d requested", op);
+	}
 }
 
 static int btrfs_ioctl_getversion(struct file *file, int __user *arg)
@@ -518,7 +544,6 @@ static noinline int create_subvol(struct user_namespace *mnt_userns,
 	struct timespec64 cur_time = current_time(dir);
 	struct inode *inode;
 	int ret;
-	int err;
 	dev_t anon_dev = 0;
 	u64 objectid;
 	u64 index = 0;
@@ -698,9 +723,10 @@ fail:
 	trans->bytes_reserved = 0;
 	btrfs_subvolume_release_metadata(root, &block_rsv);
 
-	err = btrfs_commit_transaction(trans);
-	if (err && !ret)
-		ret = err;
+	if (ret)
+		btrfs_end_transaction(trans);
+	else
+		ret = btrfs_commit_transaction(trans);
 
 	if (!ret) {
 		inode = btrfs_lookup_dentry(dir, dentry);
@@ -1416,9 +1442,11 @@ static int defrag_one_cluster(struct btrfs_inode *inode,
 	list_for_each_entry(entry, &target_list, list) {
 		u32 range_len = entry->len;
 
-		/* Reached the limit */
-		if (max_sectors && max_sectors == *sectors_defragged)
+		/* Reached or beyond the limit */
+		if (max_sectors && *sectors_defragged >= max_sectors) {
+			ret = 1;
 			break;
+		}
 
 		if (max_sectors)
 			range_len = min_t(u32, range_len,
@@ -1439,7 +1467,8 @@ static int defrag_one_cluster(struct btrfs_inode *inode,
 				       extent_thresh, newer_than, do_compress);
 		if (ret < 0)
 			break;
-		*sectors_defragged += range_len;
+		*sectors_defragged += range_len >>
+				      inode->root->fs_info->sectorsize_bits;
 	}
 out:
 	list_for_each_entry_safe(entry, tmp, &target_list, list) {
@@ -1458,6 +1487,12 @@ out:
  * @newer_than:	   minimum transid to defrag
  * @max_to_defrag: max number of sectors to be defragged, if 0, the whole inode
  *		   will be defragged.
+ *
+ * Return <0 for error.
+ * Return >=0 for the number of sectors defragged, and range->start will be updated
+ * to indicate the file offset where next defrag should be started at.
+ * (Mostly for autodefrag, which sets @max_to_defrag thus we may exit early without
+ *  defragging all the range).
  */
 int btrfs_defrag_file(struct inode *inode, struct file_ra_state *ra,
 		      struct btrfs_ioctl_defrag_range_args *range,
@@ -1492,11 +1527,15 @@ int btrfs_defrag_file(struct inode *inode, struct file_ra_state *ra,
 
 	if (range->start + range->len > range->start) {
 		/* Got a specific range */
-		last_byte = min(isize, range->start + range->len) - 1;
+		last_byte = min(isize, range->start + range->len);
 	} else {
 		/* Defrag until file end */
-		last_byte = isize - 1;
+		last_byte = isize;
 	}
+
+	/* Align the range */
+	cur = round_down(range->start, fs_info->sectorsize);
+	last_byte = round_up(last_byte, fs_info->sectorsize) - 1;
 
 	/*
 	 * If we were not given a ra, allocate a readahead context. As
@@ -1510,15 +1549,16 @@ int btrfs_defrag_file(struct inode *inode, struct file_ra_state *ra,
 			file_ra_state_init(ra, inode->i_mapping);
 	}
 
-	/* Align the range */
-	cur = round_down(range->start, fs_info->sectorsize);
-	last_byte = round_up(last_byte, fs_info->sectorsize) - 1;
-
 	while (cur < last_byte) {
 		u64 cluster_end;
 
 		/* The cluster size 256K should always be page aligned */
 		BUILD_BUG_ON(!IS_ALIGNED(CLUSTER_SIZE, PAGE_SIZE));
+
+		if (btrfs_defrag_cancelled(fs_info)) {
+			ret = -EAGAIN;
+			break;
+		}
 
 		/* We want the cluster end at page boundary when possible */
 		cluster_end = (((cur >> PAGE_SHIFT) +
@@ -1545,10 +1585,19 @@ int btrfs_defrag_file(struct inode *inode, struct file_ra_state *ra,
 		if (ret < 0)
 			break;
 		cur = cluster_end + 1;
+		if (ret > 0) {
+			ret = 0;
+			break;
+		}
 	}
 
 	if (ra_allocated)
 		kfree(ra);
+	/*
+	 * Update range.start for autodefrag, this will indicate where to start
+	 * in next run.
+	 */
+	range->start = cur;
 	if (sectors_defragged) {
 		/*
 		 * We have defragged some sectors, for compression case they
@@ -2084,7 +2133,7 @@ static noinline int copy_to_sk(struct btrfs_path *path,
 
 	for (i = slot; i < nritems; i++) {
 		item_off = btrfs_item_ptr_offset(leaf, i);
-		item_len = btrfs_item_size_nr(leaf, i);
+		item_len = btrfs_item_size(leaf, i);
 
 		btrfs_item_key_to_cpu(leaf, key, i);
 		if (!key_in_sk(key, sk))
@@ -2538,7 +2587,7 @@ static int btrfs_search_path_in_tree_user(struct user_namespace *mnt_userns,
 	btrfs_item_key_to_cpu(leaf, &key, slot);
 
 	item_off = btrfs_item_ptr_offset(leaf, slot);
-	item_len = btrfs_item_size_nr(leaf, slot);
+	item_len = btrfs_item_size(leaf, slot);
 	/* Check if dirid in ROOT_REF corresponds to passed dirid */
 	rref = btrfs_item_ptr(leaf, slot, struct btrfs_root_ref);
 	if (args->dirid != btrfs_root_ref_dirid(leaf, rref)) {
@@ -2740,7 +2789,7 @@ static int btrfs_ioctl_get_subvol_info(struct file *file, void __user *argp)
 
 			item_off = btrfs_item_ptr_offset(leaf, slot)
 					+ sizeof(struct btrfs_root_ref);
-			item_len = btrfs_item_size_nr(leaf, slot)
+			item_len = btrfs_item_size(leaf, slot)
 					- sizeof(struct btrfs_root_ref);
 			read_extent_buffer(leaf, subvol_info->name,
 					   item_off, item_len);
@@ -3148,13 +3197,25 @@ out:
 static long btrfs_ioctl_add_dev(struct btrfs_fs_info *fs_info, void __user *arg)
 {
 	struct btrfs_ioctl_vol_args *vol_args;
+	bool restore_op = false;
 	int ret;
 
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
-	if (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_DEV_ADD))
-		return BTRFS_ERROR_DEV_EXCL_RUN_IN_PROGRESS;
+	if (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_DEV_ADD)) {
+		if (!btrfs_exclop_start_try_lock(fs_info, BTRFS_EXCLOP_DEV_ADD))
+			return BTRFS_ERROR_DEV_EXCL_RUN_IN_PROGRESS;
+
+		/*
+		 * We can do the device add because we have a paused balanced,
+		 * change the exclusive op type and remember we should bring
+		 * back the paused balance
+		 */
+		fs_info->exclusive_operation = BTRFS_EXCLOP_DEV_ADD;
+		btrfs_exclop_start_unlock(fs_info);
+		restore_op = true;
+	}
 
 	vol_args = memdup_user(arg, sizeof(*vol_args));
 	if (IS_ERR(vol_args)) {
@@ -3170,7 +3231,10 @@ static long btrfs_ioctl_add_dev(struct btrfs_fs_info *fs_info, void __user *arg)
 
 	kfree(vol_args);
 out:
-	btrfs_exclop_finish(fs_info);
+	if (restore_op)
+		btrfs_exclop_balance(fs_info, BTRFS_EXCLOP_BALANCE_PAUSED);
+	else
+		btrfs_exclop_finish(fs_info);
 	return ret;
 }
 
@@ -3622,7 +3686,6 @@ static noinline long btrfs_ioctl_start_sync(struct btrfs_root *root,
 {
 	struct btrfs_trans_handle *trans;
 	u64 transid;
-	int ret;
 
 	trans = btrfs_attach_transaction_barrier(root);
 	if (IS_ERR(trans)) {
@@ -3634,11 +3697,7 @@ static noinline long btrfs_ioctl_start_sync(struct btrfs_root *root,
 		goto out;
 	}
 	transid = trans->transid;
-	ret = btrfs_commit_transaction_async(trans);
-	if (ret) {
-		btrfs_end_transaction(trans);
-		return ret;
-	}
+	btrfs_commit_transaction_async(trans);
 out:
 	if (argp)
 		if (copy_to_user(argp, &transid, sizeof(transid)))
@@ -4061,6 +4120,7 @@ locked:
 			spin_lock(&fs_info->balance_lock);
 			bctl->flags |= BTRFS_BALANCE_RESUME;
 			spin_unlock(&fs_info->balance_lock);
+			btrfs_exclop_balance(fs_info, BTRFS_EXCLOP_BALANCE);
 
 			goto do_balance;
 		}
