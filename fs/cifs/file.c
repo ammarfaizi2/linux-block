@@ -653,13 +653,9 @@ use_cache:
 			   file->f_mode & FMODE_WRITE);
 	if (file->f_flags & O_DIRECT &&
 	    (!((file->f_flags & O_ACCMODE) != O_RDONLY) ||
-	     file->f_flags & O_APPEND)) {
-		struct cifs_fscache_inode_coherency_data cd;
-		cifs_fscache_fill_coherency(file_inode(file), &cd);
-		fscache_invalidate(cifs_inode_cookie(file_inode(file)),
-				   &cd, i_size_read(file_inode(file)),
-				   FSCACHE_INVAL_DIO_WRITE);
-	}
+	     file->f_flags & O_APPEND))
+		cifs_invalidate_cache(file_inode(file),
+				      FSCACHE_INVAL_DIO_WRITE);
 
 out:
 	free_dentry_path(page);

@@ -65,6 +65,8 @@ bool is_ses_using_iface(struct cifs_ses *ses, struct cifs_server_iface *iface)
 	return false;
 }
 
+/* channel helper functions. assumed that chan_lock is held by caller. */
+
 unsigned int
 cifs_ses_get_chan_index(struct cifs_ses *ses,
 			struct TCP_Server_Info *server)
@@ -134,10 +136,10 @@ int cifs_try_adding_channels(struct cifs_sb_info *cifs_sb, struct cifs_ses *ses)
 	left = ses->chan_max - ses->chan_count;
 
 	if (left <= 0) {
+		spin_unlock(&ses->chan_lock);
 		cifs_dbg(FYI,
 			 "ses already at max_channels (%zu), nothing to open\n",
 			 ses->chan_max);
-		spin_unlock(&ses->chan_lock);
 		return 0;
 	}
 
@@ -362,19 +364,6 @@ out:
 		cifs_put_tcp_session(chan->server, 0);
 
 	return rc;
-}
-
-/* Mark all session channels for reconnect */
-void cifs_ses_mark_for_reconnect(struct cifs_ses *ses)
-{
-	int i;
-
-	for (i = 0; i < ses->chan_count; i++) {
-		spin_lock(&cifs_tcp_ses_lock);
-		if (ses->chans[i].server->tcpStatus != CifsExiting)
-			ses->chans[i].server->tcpStatus = CifsNeedReconnect;
-		spin_unlock(&cifs_tcp_ses_lock);
-	}
 }
 
 static __u32 cifs_ssetup_hdr(struct cifs_ses *ses,
@@ -1048,16 +1037,6 @@ sess_establish_session(struct sess_data *sess_data)
 	mutex_unlock(&server->srv_mutex);
 
 	cifs_dbg(FYI, "CIFS session established successfully\n");
-	spin_lock(&ses->chan_lock);
-	cifs_chan_clear_need_reconnect(ses, server);
-	spin_unlock(&ses->chan_lock);
-
-	/* Even if one channel is active, session is in good state */
-	spin_lock(&cifs_tcp_ses_lock);
-	server->tcpStatus = CifsGood;
-	ses->status = CifsGood;
-	spin_unlock(&cifs_tcp_ses_lock);
-
 	return 0;
 }
 
@@ -1413,7 +1392,7 @@ sess_auth_rawntlmssp_negotiate(struct sess_data *sess_data)
 				     &blob_len, ses, server,
 				     sess_data->nls_cp);
 	if (rc)
-		goto out;
+		goto out_free_ntlmsspblob;
 
 	sess_data->iov[1].iov_len = blob_len;
 	sess_data->iov[1].iov_base = ntlmsspblob;
@@ -1421,7 +1400,7 @@ sess_auth_rawntlmssp_negotiate(struct sess_data *sess_data)
 
 	rc = _sess_auth_rawntlmssp_assemble_req(sess_data);
 	if (rc)
-		goto out;
+		goto out_free_ntlmsspblob;
 
 	rc = sess_sendreceive(sess_data);
 
@@ -1435,14 +1414,14 @@ sess_auth_rawntlmssp_negotiate(struct sess_data *sess_data)
 		rc = 0;
 
 	if (rc)
-		goto out;
+		goto out_free_ntlmsspblob;
 
 	cifs_dbg(FYI, "rawntlmssp session setup challenge phase\n");
 
 	if (smb_buf->WordCount != 4) {
 		rc = -EIO;
 		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
-		goto out;
+		goto out_free_ntlmsspblob;
 	}
 
 	ses->Suid = smb_buf->Uid;   /* UID left in wire format (le) */
@@ -1456,10 +1435,13 @@ sess_auth_rawntlmssp_negotiate(struct sess_data *sess_data)
 		cifs_dbg(VFS, "bad security blob length %d\n",
 				blob_len);
 		rc = -EINVAL;
-		goto out;
+		goto out_free_ntlmsspblob;
 	}
 
 	rc = decode_ntlmssp_challenge(bcc_ptr, blob_len, ses);
+
+out_free_ntlmsspblob:
+	kfree(ntlmsspblob);
 out:
 	sess_free_buffer(sess_data);
 
@@ -1574,7 +1556,7 @@ out_free_ntlmsspblob:
 out:
 	sess_free_buffer(sess_data);
 
-	 if (!rc)
+	if (!rc)
 		rc = sess_establish_session(sess_data);
 
 	/* Cleanup */
