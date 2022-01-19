@@ -162,16 +162,16 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          "DMA", "DIMM", "e.g.", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
          "GHCB", "GHCI", "GPR", "GUID", "HLT", "hugepage",
          "hypercall", "HV", "I/O", "initializer", "initrd", "IRQ", "JMP", "kallsyms",
-         "KASAN", "kdump", "kprobe", "KVM", "livepatch", "lvalue",
+         "KASAN", "kdump", "KVM", "livepatch", "lvalue",
          "MCA", "MCE", "memmove",
          "memtype", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
-         "NX", "offlining", "PASID", "PCI", "pdf", "percpu", "preemptible",
+         "NX", "offlining", "PASID", "PCI", "pdf", "percpu", "perf", "preemptible",
          "PTE",
          "PV", "PVALIDATE", "RDMSR", "rFLAGS", "RMP", "RMPADJUST", "Ryzen", "SEV", "SEV-ES",
          "SEV-SNP", "SIGSEGV", "Skylake", "SME", "SNP", "STI", "strtab", "struct", "swiotlb",
          "symtab", "syscall",
          "TDCALL", "TDGETVEINFO",
-         "TDVMCALL", "TDX", "TLB",
+         "TDVMCALL", "TLB", "TODO",
          "UMC", "UML",
          # too late for that one to enforce even as the dictionary says it is wrong
          "untrusted",
@@ -205,7 +205,7 @@ def load_spellchecker():
     rex_ballanced_br = re.compile(r'^(^.*)\((.+)\)(.*)$')
     rex_brackets    = re.compile(r'^.*[()\[\]]+.*$')
     rex_bla_adj     = re.compile(r'([\w-]+)-(active|capable|controlled|related|specific|validated)')
-    rex_c_keywords  = re.compile(r'#ifdef')
+    rex_c_keywords  = re.compile(r'#(ifdef|include)')
     rex_c_macro     = re.compile(r'^[A-Z0-9_]+$')
     rex_comment     = re.compile(r'^\+\s+\*\s+.*$', re.I)
     rex_comment_end = re.compile(r'^\+\s+\*\/')
@@ -216,7 +216,7 @@ def load_spellchecker():
 
     rex_decimal     = re.compile(r'^[0-9]+$')
     rex_errval      = re.compile(r'-E(EINVAL|EXIST|OPNOTSUPP)')
-    rex_fnames      = re.compile(r'\s?/?(\w+/)*\w+\.[chS]')
+    rex_fnames      = re.compile(r'\s?/?([\w-]+/)*[\w-]+\.[chS]')
     rex_gpr         = re.compile(r'([re]?[abcd]x|r([89]|1[0-5]))', re.I)
     rex_kcmdline    = re.compile(r'^\w+=([\w,]+)?$')
     rex_kdoc_arg    = re.compile(r'^@\w+:?$')
@@ -229,7 +229,7 @@ def load_spellchecker():
     rex_sent_end    = re.compile(r'\.(\s?([A-Z]|$))')
     rex_struct_mem  = re.compile(r'\w+->\w+')
     rex_sha1        = re.compile(r'[a-f0-9]{12,40}', re.I)
-    rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9a-f]+(K|Mb))$', re.I)
+    rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9a-f]+(K|Mb))$')
     rex_url         = re.compile(r'https?://[a-z0-9:/.-]+')
     rex_version     = re.compile(r'v\d+$', re.I)
     rex_word_bla    = re.compile(r'non-(\w+)')
@@ -268,9 +268,9 @@ def spellcheck_func_name(w, prev_word):
 
 # known words as regexes to avoid duplication in the list above
 regexes_pats = [ r'BIOS(e[sn])?', r'boot(loader|params?|up)', r'default_(attrs|groups)', r'DDR[1-5]',
-            r'I[DS]T', r'MOVSB?', r'params?',
+            r'I[DS]T', r'[ku]probes?', r'MOVSB?', r'params?',
             r'(para)?virt(ualiz(ed?|ing))?$', r'PS[CP]',
-            r'sev_(features|status)', r'VMPL[0-3]', r'XSAVE[CS]?' ]
+            r'sev_(features|status)', r'T[DS]X', r'VMPL[0-3]', r'XSAVE[CS]?' ]
 regexes = []
 
 def spellcheck_regexes(w):
@@ -428,8 +428,9 @@ def spellcheck(s, where, flags):
                 continue
 
             # number: hex, units, ...
-            if rex_units.match(w):
-                dbg("Skip hex number/unit [%s]" % (w, ))
+            m = rex_units.match(w)
+            if m:
+                dbg("Skip hex number/unit [%s], match [%s]" % (w, m.group(0)))
                 continue
 
             # x86 trap names
