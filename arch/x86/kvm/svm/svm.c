@@ -192,10 +192,6 @@ module_param(vgif, int, 0444);
 static int lbrv = true;
 module_param(lbrv, int, 0444);
 
-/* enable/disable PMU virtualization */
-bool pmu = true;
-module_param(pmu, bool, 0444);
-
 static int tsc_scaling = true;
 module_param(tsc_scaling, int, 0444);
 
@@ -957,7 +953,7 @@ static __init void svm_set_cpu_caps(void)
 		kvm_cpu_cap_set(X86_FEATURE_VIRT_SSBD);
 
 	/* AMD PMU PERFCTR_CORE CPUID */
-	if (pmu && boot_cpu_has(X86_FEATURE_PERFCTR_CORE))
+	if (enable_pmu && boot_cpu_has(X86_FEATURE_PERFCTR_CORE))
 		kvm_cpu_cap_set(X86_FEATURE_PERFCTR_CORE);
 
 	/* CPUID 0x8000001F (SME/SEV features) */
@@ -1093,7 +1089,7 @@ static __init int svm_hardware_setup(void)
 			pr_info("LBR virtualization supported\n");
 	}
 
-	if (!pmu)
+	if (!enable_pmu)
 		pr_info("PMU virtualization is disabled\n");
 
 	svm_set_cpu_caps();
@@ -3833,6 +3829,11 @@ static void svm_cancel_injection(struct kvm_vcpu *vcpu)
 	svm_complete_interrupts(vcpu);
 }
 
+static int svm_vcpu_pre_run(struct kvm_vcpu *vcpu)
+{
+	return 1;
+}
+
 static fastpath_t svm_exit_handlers_fastpath(struct kvm_vcpu *vcpu)
 {
 	if (to_svm(vcpu)->vmcb->control.exit_code == SVM_EXIT_MSR &&
@@ -4662,6 +4663,7 @@ static struct kvm_x86_ops svm_x86_ops __initdata = {
 	.tlb_flush_gva = svm_flush_tlb_gva,
 	.tlb_flush_guest = svm_flush_tlb,
 
+	.vcpu_pre_run = svm_vcpu_pre_run,
 	.run = svm_vcpu_run,
 	.handle_exit = handle_exit,
 	.skip_emulated_instruction = skip_emulated_instruction,
