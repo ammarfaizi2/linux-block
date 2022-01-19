@@ -182,8 +182,8 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'fpstate', 'kobj_type', 'kptr_restrict', 'pt_regs', 'setup_data', 'sme_me_mask',
-               'sysctl_perf_event_paranoid', 'xfeatures' ]
+known_vars = [ '__BOOT_DS', 'fpstate', 'kobj_type', 'kptr_restrict', 'pt_regs', 'set_lvt_off', 'setup_data',
+           'sme_me_mask', 'sysctl_perf_event_paranoid', 'threshold_banks', 'xfeatures' ]
 
 
 def load_spellchecker():
@@ -245,23 +245,26 @@ def spellcheck_func_name(w, prev_word):
     Check a function's name
 
     """
+
     if w.endswith('()'):
         dbg("Skip function name: [%s]" % (w, ))
         return True
-    else:
-        if '_' in w and prev_word != "struct":
-            # all caps - likely a macro name
-            if rex_c_macro.match(w):
-                dbg("Skip macro name: [%s]" % (w, ))
-                return True
 
-            if rex_struct_mem.match(w):
-                dbg("Skip struct member: [%s]" % (w, ))
-                return True
-
-            return False
-
+    # it is only heuristics anyway
+    if '_' not in w or prev_word == "struct":
         return True
+
+    # all caps - likely a macro name
+    if rex_c_macro.match(w):
+        dbg("Skip macro name: [%s]" % (w, ))
+        return True
+
+    if rex_struct_mem.match(w):
+        dbg("Skip struct member: [%s]" % (w, ))
+        return True
+
+    return False
+
 
 # known words as regexes to avoid duplication in the list above
 regexes_pats = [ r'BIOS(e[sn])?', r'boot(loader|params?|up)', r'default_(attrs|groups)', r'DDR[1-5]',
@@ -412,8 +415,6 @@ def spellcheck(s, where, flags):
                 if not ret:
                     warn_on(1, ("Function name doesn't end with (): [%s]" % (w, )))
                     print(" [%s]" % (line, ))
-                    continue
-                else:
                     continue
 
             # kernel-doc arguments
