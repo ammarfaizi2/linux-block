@@ -40,27 +40,36 @@ static struct netfs_read_request *netfs_alloc_read_request(
 	struct inode *inode = file ? file_inode(file) : mapping->host;
 	struct netfs_i_context *ctx = netfs_i_context(inode);
 	struct netfs_read_request *rreq;
+	int ret;
 
 	rreq = kzalloc(sizeof(struct netfs_read_request), GFP_KERNEL);
-	if (rreq) {
-		rreq->start	= start;
-		rreq->len	= len;
-		rreq->mapping	= mapping;
-		rreq->inode	= inode;
-		rreq->origin	= origin;
-		rreq->netfs_ops	= ctx->ops;
-		rreq->i_size	= i_size_read(inode);
-		rreq->debug_id	= atomic_inc_return(&debug_ids);
-		xa_init(&rreq->buffer);
-		INIT_LIST_HEAD(&rreq->subrequests);
-		INIT_WORK(&rreq->work, netfs_rreq_work);
-		refcount_set(&rreq->usage, 1);
-		__set_bit(NETFS_RREQ_IN_PROGRESS, &rreq->flags);
-		if (ctx->ops->init_rreq)
-			ctx->ops->init_rreq(rreq, file);
-		netfs_stat(&netfs_n_rh_rreq);
+	if (!rreq)
+		return ERR_PTR(-ENOMEM);
+
+	rreq->start	= start;
+	rreq->len	= len;
+	rreq->mapping	= mapping;
+	rreq->inode	= inode;
+	rreq->origin	= origin;
+	rreq->netfs_ops	= ctx->ops;
+	rreq->i_size	= i_size_read(inode);
+	rreq->debug_id	= atomic_inc_return(&debug_ids);
+	xa_init(&rreq->buffer);
+	INIT_LIST_HEAD(&rreq->subrequests);
+	INIT_WORK(&rreq->work, netfs_rreq_work);
+	refcount_set(&rreq->usage, 1);
+	__set_bit(NETFS_RREQ_IN_PROGRESS, &rreq->flags);
+
+	if (ctx->ops->init_rreq) {
+		ret = ctx->ops->init_rreq(rreq, file);
+		if (ret < 0) {
+			xa_destroy(&rreq->buffer);
+			kfree(rreq);
+			return ERR_PTR(ret);
+		}
 	}
 
+	netfs_stat(&netfs_n_rh_rreq);
 	return rreq;
 }
 
@@ -1035,7 +1044,7 @@ void netfs_readahead(struct readahead_control *ractl)
 					readahead_pos(ractl),
 					readahead_length(ractl),
 					NETFS_READAHEAD);
-	if (!rreq)
+	if (IS_ERR(rreq))
 		return;
 
 	ret = netfs_begin_cache_operation(rreq, ctx);
@@ -1099,8 +1108,8 @@ int netfs_readpage(struct file *file, struct page *subpage)
 
 	rreq = netfs_alloc_read_request(mapping, file, folio_file_pos(folio),
 					folio_size(folio), NETFS_SYNC_READ);
-	if (!rreq)
-		goto nomem;
+	if (IS_ERR(rreq))
+		goto alloc_error;
 
 	ret = netfs_begin_cache_operation(rreq, ctx);
 	if (ret == -ENOMEM || ret == -EINTR || ret == -ERESTARTSYS) {
@@ -1143,9 +1152,9 @@ int netfs_readpage(struct file *file, struct page *subpage)
 out:
 	netfs_put_read_request(rreq, false);
 	return ret;
-nomem:
+alloc_error:
 	folio_unlock(folio);
-	return -ENOMEM;
+	return PTR_ERR(rreq);
 }
 EXPORT_SYMBOL(netfs_readpage);
 
@@ -1276,11 +1285,12 @@ retry:
 		goto have_folio_no_wait;
 	}
 
-	ret = -ENOMEM;
 	rreq = netfs_alloc_read_request(mapping, file, folio_file_pos(folio),
 					folio_size(folio), NETFS_READ_FOR_WRITE);
-	if (!rreq)
+	if (IS_ERR(rreq)) {
+		ret = PTR_ERR(rreq);
 		goto error;
+	}
 	rreq->start		= folio_file_pos(folio);
 	rreq->len		= folio_size(folio);
 	rreq->no_unlock_folio	= folio_index(folio);
