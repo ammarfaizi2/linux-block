@@ -143,21 +143,12 @@ static int mca_dai_trigger(struct snd_pcm_substream *substream, int cmd,
 {
 	struct mca_data *mca = snd_soc_dai_get_drvdata(dai);
 	struct mca_route *route = mca_find_route_for_dai(mca, dai);
-	int ret;
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		if (!route->clk_parent_enabled) {
-			ret = clk_enable(route->clk_parent);
-			if (ret) {
-				dev_err(mca->dev, "%s: unable to enable parent clock: %d\n",
-					dai->name, ret);
-				return ret;
-			}
-			route->clk_parent_enabled = true;
-		}
+
 
 		mca_modify(mca, route->serdes,
 			CLUSTER_TXA_OFF + REG_SERDES_STATUS,
@@ -183,16 +174,54 @@ static int mca_dai_trigger(struct snd_pcm_substream *substream, int cmd,
 			CLUSTER_TXA_OFF + REG_SERDES_STATUS,
 			SERDES_STATUS_EN, 0);
 
-		if (route->clk_parent_enabled) {
-			clk_disable(route->clk_parent);
-			route->clk_parent_enabled = false;
-		}
-
 		dev_dbg(mca->dev, "trigger stop\n");
 		break;
 	default:
 		return -EINVAL;
 	}
+	return 0;
+}
+
+static int mca_dai_prepare(struct snd_pcm_substream *substream,
+				struct snd_soc_dai *dai)
+{
+	struct mca_data *mca = snd_soc_dai_get_drvdata(dai);
+	struct mca_route *route = mca_find_route_for_dai(mca, dai);
+	int ret;
+
+	if (!route->clk_parent_enabled) {
+		ret = clk_prepare_enable(route->clk_parent);
+		if (ret) {
+			dev_err(mca->dev, "%s: unable to enable parent clock: %d\n",
+				dai->name, ret);
+			return ret;
+		}
+		route->clk_parent_enabled = true;
+	}
+
+
+	mca_modify(mca, route->clock,
+		REG_STATUS,
+		STATUS_MCLK_EN, STATUS_MCLK_EN);
+
+	return 0;
+}
+
+static int mca_dai_hw_free(struct snd_pcm_substream *substream,
+				struct snd_soc_dai *dai)
+{
+	struct mca_data *mca = snd_soc_dai_get_drvdata(dai);
+	struct mca_route *route = mca_find_route_for_dai(mca, dai);
+
+	mca_modify(mca, route->clock,
+		REG_STATUS,
+		STATUS_MCLK_EN, 0);
+
+	if (route->clk_parent_enabled) {
+		clk_disable_unprepare(route->clk_parent);
+		route->clk_parent_enabled = false;
+	}
+
 	return 0;
 }
 
@@ -330,15 +359,9 @@ static int mca_dai_hw_params(struct snd_pcm_substream *substream,
 	writel_relaxed(regval,
 			mca->switch_regs + REG_DMA_ADAPTER(route->serdes));
 
-	mca_modify(mca, route->clock,
-		REG_STATUS,
-		STATUS_MCLK_EN, 0);
 	mca_poke(mca, route->clock,
 		REG_MCLK_CONF,
 		FIELD_PREP(MCLK_CONF_DIV, 0x1));
-	mca_modify(mca, route->clock,
-		REG_STATUS,
-		STATUS_MCLK_EN, STATUS_MCLK_EN);
 
 	ret = clk_set_rate(route->clk_parent, bclk_ratio * samp_rate);
 	if (ret) {
@@ -374,24 +397,16 @@ static int mca_dai_startup(struct snd_pcm_substream *substream,
 			SERDES_CONF_SYNC_SEL, FIELD_PREP(SERDES_CONF_SYNC_SEL,
 						route->syncgen + 1));
 
-	if (route->clk_parent) {
-		dev_dbg(mca->dev, "%s: clk prepare\n", dai->name);
-		clk_prepare(route->clk_parent);
-	}
-
 	return 0;
 }
 
 static void mca_dai_shutdown(struct snd_pcm_substream *substream,
 					struct snd_soc_dai *dai)
 {
+#if 0
 	struct mca_data *mca = snd_soc_dai_get_drvdata(dai);
 	struct mca_route *route = mca_find_route_for_dai(mca, dai);
-
-	if (route->clk_parent) {
-		dev_dbg(mca->dev, "%s: clk unprepare\n", dai->name);
-		clk_unprepare(route->clk_parent);
-	}
+#endif
 }
 
 static int mca_dai_probe(struct snd_soc_dai *dai)
@@ -502,6 +517,8 @@ static const struct snd_soc_dai_ops mca_dai_ops = {
 	.set_fmt = mca_dai_set_fmt,
 	.set_sysclk = mca_dai_set_sysclk,
 	.set_tdm_slot = mca_dai_set_tdm_slot,
+	.prepare = mca_dai_prepare,
+	.hw_free = mca_dai_hw_free,
 };
 
 struct mca_route *mca_find_route_for_dai(struct mca_data *mca, struct snd_soc_dai *dai)
