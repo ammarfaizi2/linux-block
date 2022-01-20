@@ -40,9 +40,9 @@ struct cifs_fscache_inode_coherency_data {
 extern int cifs_fscache_get_super_cookie(struct cifs_tcon *);
 extern void cifs_fscache_release_super_cookie(struct cifs_tcon *);
 
-extern void cifs_fscache_get_inode_cookie(struct inode *);
+extern void cifs_fscache_get_inode_cookie(struct inode *inode);
 extern void cifs_fscache_release_inode_cookie(struct inode *);
-extern void cifs_fscache_unuse_inode_cookie(struct inode *, bool);
+extern void cifs_fscache_unuse_inode_cookie(struct inode *inode, bool update);
 
 static inline
 void cifs_fscache_fill_coherency(struct inode *inode,
@@ -69,6 +69,15 @@ extern void __cifs_readpage_to_fscache(struct inode *, struct page *);
 static inline struct fscache_cookie *cifs_inode_cookie(struct inode *inode)
 {
 	return CIFS_I(inode)->fscache;
+}
+
+static inline void cifs_invalidate_cache(struct inode *inode, unsigned int flags)
+{
+	struct cifs_fscache_inode_coherency_data cd;
+
+	cifs_fscache_fill_coherency(inode, &cd);
+	fscache_invalidate(cifs_inode_cookie(inode), &cd,
+			   i_size_read(inode), flags);
 }
 
 static inline int cifs_readpage_from_fscache(struct inode *inode,
@@ -112,6 +121,7 @@ static inline void cifs_fscache_get_inode_cookie(struct inode *inode) {}
 static inline void cifs_fscache_release_inode_cookie(struct inode *inode) {}
 static inline void cifs_fscache_unuse_inode_cookie(struct inode *inode, bool update) {}
 static inline struct fscache_cookie *cifs_inode_cookie(struct inode *inode) { return NULL; }
+static inline void cifs_invalidate_cache(struct inode *inode, unsigned int flags) {}
 
 static inline int
 cifs_readpage_from_fscache(struct inode *inode, struct page *page)
