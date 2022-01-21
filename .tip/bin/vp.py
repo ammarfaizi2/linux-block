@@ -109,6 +109,10 @@ def strip_brackets(w):
     elif ')' not in w:
         w = w.strip('(')
 
+    # leave array postscript for checking later
+    if w.endswith('[]'):
+        return w
+
     # remove ballanced brackets:
     while '[' in w and ']' in w:
         w = w.replace('[', '', 1).replace(']', '', 1)
@@ -158,18 +162,18 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          # that's some stupid dictionary
          "amongst",
          "AMX", "API", "APM", "APU", "arm64", "asm",
-         "binutils", "bitmask", "bitfield", "cmdline", "config", "CPPC", "CPUID",
-         "DMA", "DIMM", "e.g.", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
-         "GHCB", "GHCI", "GPR", "GUID", "HLT", "hugepage",
+         "binutils", "bitmask", "bitfield", "CMCI", "cmdline", "config", "CPPC", "CPUID",
+         "DMA", "DIMM", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
+         "FRU", "GHCB", "GHCI", "GPR", "GUID", "HLT", "hugepage",
          "hypercall", "HV", "I/O", "initializer", "initrd", "IRQ", "JMP", "kallsyms",
          "KASAN", "kdump", "KVM", "livepatch", "lvalue",
          "MCA", "MCE", "memmove",
          "memtype", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
-         "NX", "offlining", "PASID", "PCI", "pdf", "percpu", "perf", "preemptible",
-         "PTE",
+         "NX", "OEM", "offlining", "PASID", "PCI", "pdf", "percpu", "perf", "preemptible",
+         "PTE", "PPIN",
          "PV", "PVALIDATE", "RDMSR", "rFLAGS", "RMP", "RMPADJUST", "Ryzen", "SEV", "SEV-ES",
          "SEV-SNP", "SIGSEGV", "Skylake", "SME", "SNP", "STI", "strtab", "struct", "swiotlb",
-         "symtab", "syscall",
+         "symtab", "syscall", "sysfs", 
          "TDCALL", "TDGETVEINFO",
          "TDVMCALL", "TLB", "TODO",
          "UMC", "UML",
@@ -181,13 +185,14 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
 
 dc_non_words = [ "E820", "X86" ]
 
-# prominent kernel vars which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'fpstate', 'kobj_type', 'kptr_restrict', 'pt_regs', 'set_lvt_off', 'setup_data',
+# prominent kernel vars, etc which get mentioned often in commit messages and comments
+known_vars = [ '__BOOT_DS', 'cpuinfo_x86', 'fpstate', 'kobj_type', 'kptr_restrict', 'pt_regs',
+           'set_lvt_off', 'setup_data',
            'sme_me_mask', 'sysctl_perf_event_paranoid', 'threshold_banks', 'xfeatures' ]
 
 
 def load_spellchecker():
-    global dc, rex_commit_ref, rex_fnames, rex_url, rex_sha1, rex_kdoc_arg, rex_decimal, rex_units, \
+    global dc, rex_commit_ref, rex_fnames, rex_fpaths, rex_url, rex_sha1, rex_kdoc_arg, rex_decimal, rex_units, \
        rex_x86_traps, rex_gpr, rex_kcmdline, rex_version, rex_c_keywords, rex_sections, rex_errval,\
        rex_opts, rex_bla_adj, rex_word_bla, rex_reg_field, rex_misc_num, rex_sent_end, rex_word_split, \
        regexes, regexes_pats, rex_brackets, rex_ballanced_br, rex_c_macro, rex_kdoc_cmt, rex_comment, \
@@ -217,6 +222,7 @@ def load_spellchecker():
     rex_decimal     = re.compile(r'^[0-9]+$')
     rex_errval      = re.compile(r'-E(EINVAL|EXIST|OPNOTSUPP)')
     rex_fnames      = re.compile(r'\s?/?([\w-]+/)*[\w-]+\.[chS]')
+    rex_fpaths      = re.compile(r'\s?/?([\w-]*/)+([\w-]+/?)?')
     rex_gpr         = re.compile(r'([re]?[abcd]x|r([89]|1[0-5]))', re.I)
     rex_kcmdline    = re.compile(r'^\w+=([\w,]+)?$')
     rex_kdoc_arg    = re.compile(r'^@\w+:?$')
@@ -250,6 +256,10 @@ def spellcheck_func_name(w, prev_word):
         dbg("Skip function name: [%s]" % (w, ))
         return True
 
+    if w.endswith('[]'):
+        dbg("Skip array name: [%s]" % (w, ))
+        return True
+
     # it is only heuristics anyway
     if '_' not in w or prev_word == "struct":
         return True
@@ -267,8 +277,9 @@ def spellcheck_func_name(w, prev_word):
 
 
 # known words as regexes to avoid duplication in the list above
-regexes_pats = [ r'BIOS(e[sn])?', r'boot(loader|params?|up)', r'default_(attrs|groups)', r'DDR[1-5]',
-            r'I[DS]T', r'[ku]probes?', r'MOVSB?', r'params?',
+regexes_pats = [ r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
+             r'default_(attrs|groups)', r'^DDR([1-5])?$', r'^[Ee].g.$', r'^E?VEX$',
+            r'I[DS]T', r'[ku]probes?', r'MOVSB?', r'^param(s)?$',
             r'(para)?virt(ualiz(ed?|ing))?$', r'PS[CP]',
             r'sev_(features|status)', r'T[DS]X', r'VMPL[0-3]', r'XSAVE[CS]?' ]
 regexes = []
@@ -352,8 +363,11 @@ def spellcheck(s, where, flags):
         # URLs - ignore them
         line = rex_url.sub('', line)
 
-        # filenames and -paths, ditto
+        # filenames, ditto
         line = rex_fnames.sub('', line)
+
+        # filepaths, ditto
+        line = rex_fpaths.sub('', line)
 
         # remove fullstops ending a sentence - not other dots, as in "i.e." for example.
         line = rex_sent_end.sub(r' \1', line)
