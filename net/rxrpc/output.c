@@ -16,6 +16,8 @@
 #include <net/udp.h>
 #include "ar-internal.h"
 
+static const char rxrpc_keepalive_string[] = "";
+
 extern int udpv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len);
 
 static ssize_t do_udp_sendmsg(struct socket *sk, struct msghdr *msg, size_t len)
@@ -29,12 +31,80 @@ static ssize_t do_udp_sendmsg(struct socket *sk, struct msghdr *msg, size_t len)
 	return udp_sendmsg(sk->sk, msg, len);
 }
 
+/*
+ * Schedule a message for zerocopy transmission.  We have to save the buffer on
+ * to an ordered queue as the UDP socket just sends us an error report message
+ * telling us how many messages it has finished with.  It's up to us to map
+ * that to buffers that need releasing.
+ *
+ * Note that we can't use kernel_sendmsg() as you can't do zerocopy from a
+ * kvec-class iterator.
+ */
+static int rxrpc_zcopy_sendmsg(struct rxrpc_local *local, struct rxrpc_txbuf *txb,
+			       struct msghdr *msg, bool *_queued)
+{
+	ssize_t ret;
+
+	spin_lock(&local->tx_lock);
+	txb->zcopy_seq = local->zcopy_seq;
+	if (list_empty(&txb->cleanup_link))
+		*_queued = true;
+	list_move_tail(&txb->cleanup_link, &local->zcopy_cleanup_queue);
+	spin_unlock(&local->tx_lock);
+
+	ret = do_udp_sendmsg(local->socket, msg, sizeof(txb->wire) + txb->len);
+	if (ret < 0) {
+		/* We got an error.  Leave the buffer on the queue, but with a
+		 * sequence number one less than the current seq so that it
+		 * gets cleaned up when the cleanup counter reaches it.  We
+		 * can't just dequeue it as it may be pending cleanup from a
+		 * previous transmission.
+		 */
+		txb->zcopy_seq--;
+		return ret;
+	}
+
+	local->zcopy_seq++;
+	return 0;
+}
+
+/*
+ * Clean up the Tx queue post-zerocopy.
+ */
+bool rxrpc_zcopy_cleanup(struct rxrpc_local *local)
+{
+	struct rxrpc_txbuf *txb;
+	struct rxrpc_call *call;
+	unsigned int seq;
+	bool again = false;
+
+	_enter("%x,%x,%x",
+	       local->zcopy_seq, local->zcopy_done_seq, local->zcopy_cleaned_seq);
+	for (;;) {
+		spin_lock(&local->tx_lock);
+		txb = list_first_entry_or_null(&local->zcopy_cleanup_queue,
+					       struct rxrpc_txbuf, cleanup_link);
+		if (txb && before(local->zcopy_done_seq, txb->zcopy_seq))
+			txb = NULL;
+		if (txb)
+			list_del_init(&txb->cleanup_link);
+		spin_unlock(&local->tx_lock);
+		if (!txb)
+			return again;
+
+		seq = txb->seq;
+		call = txb->call;
+		rxrpc_put_txbuf(txb, rxrpc_txbuf_put_zcopy);
+		rxrpc_put_call(call, rxrpc_call_put_tx);
+		local->zcopy_cleaned_seq = seq;
+		again = true;
+	}
+}
+
 struct rxrpc_abort_buffer {
 	struct rxrpc_wire_header whdr;
 	__be32 abort_code;
 };
-
-static const char rxrpc_keepalive_string[] = "";
 
 /*
  * Increase Tx backoff on transmission failure and clear it on success.
@@ -287,7 +357,7 @@ static void rxrpc_ack_transmitter(struct rxrpc_local *local)
 			break;
 		}
 
-		list_del(&txb->tx_link);
+		list_del_init(&txb->tx_link);
 		rxrpc_put_call(txb->call, rxrpc_call_put);
 		rxrpc_put_txbuf(txb, rxrpc_txbuf_put_trans);
 	}
@@ -360,12 +430,13 @@ int rxrpc_send_abort_packet(struct rxrpc_call *call)
 /*
  * send a packet through the transport endpoint
  */
-static int rxrpc_send_data_packet(struct rxrpc_call *call, struct rxrpc_txbuf *txb)
+static int rxrpc_send_data_packet(struct rxrpc_call *call, struct rxrpc_txbuf *txb,
+				  bool *_queued)
 {
 	enum rxrpc_req_ack_trace why;
 	struct rxrpc_connection *conn = call->conn;
+	struct bio_vec bv[1];
 	struct msghdr msg;
-	struct kvec iov[1];
 	rxrpc_serial_t serial;
 	size_t len;
 	int ret, rtt_slot = -1;
@@ -386,16 +457,17 @@ static int rxrpc_send_data_packet(struct rxrpc_call *call, struct rxrpc_txbuf *t
 	    txb->seq == 1)
 		txb->wire.userStatus = RXRPC_USERSTATUS_SERVICE_UPGRADE;
 
-	iov[0].iov_base = &txb->wire;
-	iov[0].iov_len = sizeof(txb->wire) + txb->len;
-	len = iov[0].iov_len;
+	len = sizeof(txb->wire) + txb->len;
+	bv[0].bv_page	= virt_to_page(&txb->wire);
+	bv[0].bv_offset	= (unsigned long)&txb->wire & ~PAGE_MASK;
+	bv[0].bv_len	= len;
 
 	msg.msg_name = &call->peer->srx.transport;
 	msg.msg_namelen = call->peer->srx.transport_len;
 	msg.msg_control = NULL;
 	msg.msg_controllen = 0;
-	msg.msg_flags = 0;
-	iov_iter_kvec(&msg.msg_iter, WRITE, iov, 1, len);
+	msg.msg_flags = MSG_ZEROCOPY;
+	iov_iter_bvec(&msg.msg_iter, WRITE, bv, 1, len);
 
 	/* If our RTT cache needs working on, request an ACK.  Also request
 	 * ACKs if a DATA packet appears to have been lost.
@@ -460,7 +532,7 @@ dont_set_request_ack:
 	 *   - in which case, we'll have processed the ICMP error
 	 *     message and update the peer record
 	 */
-	ret = do_udp_sendmsg(conn->params.local->socket, &msg, len);
+	ret = rxrpc_zcopy_sendmsg(conn->params.local, txb, &msg, _queued);
 	conn->params.peer->last_tx_at = ktime_get_seconds();
 
 	up_read(&conn->params.local->defrag_sem);
@@ -533,7 +605,7 @@ send_fragmentable:
 	case AF_INET:
 		ip_sock_set_mtu_discover(conn->params.local->socket->sk,
 					 IP_PMTUDISC_DONT);
-		ret = do_udp_sendmsg(conn->params.local->socket, &msg, len);
+		ret = rxrpc_zcopy_sendmsg(conn->params.local, txb, &msg, _queued);
 		conn->params.peer->last_tx_at = ktime_get_seconds();
 
 		ip_sock_set_mtu_discover(conn->params.local->socket->sk,
@@ -704,11 +776,12 @@ static inline void rxrpc_instant_resend(struct rxrpc_call *call,
  */
 static void rxrpc_transmit_one(struct rxrpc_local *local,
 			       struct rxrpc_call *call,
-			       struct rxrpc_txbuf *txb)
+			       struct rxrpc_txbuf *txb,
+			       bool *_queued)
 {
 	int ret;
 
-	ret = rxrpc_send_data_packet(call, txb);
+	ret = rxrpc_send_data_packet(call, txb, _queued);
 
 	/* Track what we've attempted to transmit at least once so that the
 	 * retransmission algorithm doesn't try to resend what we haven't sent
@@ -749,6 +822,7 @@ int rxrpc_transmitter(void *data)
 	struct rxrpc_local *local = data;
 	struct rxrpc_txbuf *txb;
 	struct rxrpc_call *call;
+	bool queued;
 
 	set_user_nice(current, MIN_NICE);
 
@@ -764,10 +838,13 @@ int rxrpc_transmitter(void *data)
 			list_del_init(&txb->tx_link);
 			spin_unlock(&local->tx_lock);
 
-			rxrpc_transmit_one(local, call, txb);
+			queued = false;
+			rxrpc_transmit_one(local, call, txb, &queued);
 
-			rxrpc_put_txbuf(txb, rxrpc_txbuf_put_trans);
-			rxrpc_put_call(call, rxrpc_call_put_tx);
+			if (!queued) {
+				rxrpc_put_txbuf(txb, rxrpc_txbuf_put_trans);
+				rxrpc_put_call(call, rxrpc_call_put_tx);
+			}
 			continue;
 		}
 		spin_unlock(&local->tx_lock);

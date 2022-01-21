@@ -280,12 +280,16 @@ struct rxrpc_local {
 	struct sk_buff_head	reject_queue;	/* packets awaiting rejection */
 	struct sk_buff_head	event_queue;	/* endpoint event packets awaiting processing */
 	struct list_head	tx_queue;	/* Transmission queue */
+	struct list_head	zcopy_cleanup_queue; /* Tx bufs pending zerocopy completion */
 	struct rb_root		client_bundles;	/* Client connection bundles by socket params */
 	spinlock_t		client_bundles_lock; /* Lock for client_bundles */
 	spinlock_t		lock;		/* access lock */
 	spinlock_t		tx_lock;	/* Transmission queue lock */
 	rwlock_t		services_lock;	/* lock for services list */
 	int			debug_id;	/* debug ID for printks */
+	unsigned int		zcopy_seq;	/* Zerocopy Tx pending sequence counter */
+	unsigned int		zcopy_done_seq; /* Zerocopy UDP-done sequence counter */
+	unsigned int		zcopy_cleaned_seq; /* Zerocopy cleaned-up sequence counter */
 	bool			dead;
 	bool			service_closed;	/* Service socket closed */
 	struct sockaddr_rxrpc	srx;		/* local address */
@@ -740,11 +744,13 @@ struct rxrpc_txbuf {
 	struct rcu_head		rcu;
 	struct list_head	call_link;	/* Link in call->tx_queue */
 	struct list_head	tx_link;	/* Link in live Enc queue or Tx queue */
+	struct list_head	cleanup_link;	/* Link in local->zcopy_cleanup_queue */
 	struct rxrpc_call	*call;		/* Call to which belongs */
 	ktime_t			last_sent;	/* Time at which last transmitted */
 	refcount_t		ref;
 	rxrpc_seq_t		seq;		/* Sequence number of this packet */
 	unsigned int		call_debug_id;
+	unsigned int		zcopy_seq;	/* Zerocopy sequence counter */
 	unsigned int		len;		/* Amount of data in buffer */
 	unsigned int		space;		/* Remaining data space */
 	unsigned int		offset;		/* Offset of fill point */
@@ -1008,6 +1014,7 @@ static inline struct rxrpc_net *rxrpc_net(struct net *net)
 /*
  * output.c
  */
+bool rxrpc_zcopy_cleanup(struct rxrpc_local *local);
 int rxrpc_send_abort_packet(struct rxrpc_call *);
 void rxrpc_reject_packets(struct rxrpc_local *);
 void rxrpc_send_keepalive(struct rxrpc_peer *);

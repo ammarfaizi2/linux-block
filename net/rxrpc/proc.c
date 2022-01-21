@@ -340,7 +340,7 @@ static int rxrpc_local_seq_show(struct seq_file *seq, void *v)
 	if (v == SEQ_START_TOKEN) {
 		seq_printf(seq,
 			   "Proto Local                                          "
-			   " Use Act (txb=%d)\n",
+			   " Use Act Zerocopy (txb=%d)\n",
 			   atomic_read(&rxrpc_nr_txbuf));
 		return 0;
 	}
@@ -350,10 +350,13 @@ static int rxrpc_local_seq_show(struct seq_file *seq, void *v)
 	sprintf(lbuff, "%pISpc", &local->srx.transport);
 
 	seq_printf(seq,
-		   "UDP   %-47.47s %3u %3u\n",
+		   "UDP   %-47.47s %3u %3u %04x/%04x/%04x\n",
 		   lbuff,
 		   refcount_read(&local->ref),
-		   atomic_read(&local->active_users));
+		   atomic_read(&local->active_users),
+		   local->zcopy_seq & 65535,
+		   local->zcopy_done_seq & 65535,
+		   local->zcopy_cleaned_seq & 65535);
 
 	return 0;
 }

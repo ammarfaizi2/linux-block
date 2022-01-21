@@ -179,6 +179,19 @@ void rxrpc_error_report(struct sock *sk)
 		return;
 	}
 
+	if (!skb->len && serr->ee.ee_origin == SO_EE_ORIGIN_ZEROCOPY) {
+		_debug("zerocopy %x %x %x %x",
+		       local->zcopy_done_seq, local->zcopy_seq,
+		       serr->ee.ee_info,
+		       serr->ee.ee_data);
+		local->zcopy_done_seq = serr->ee.ee_data;
+		rxrpc_get_local(local);
+		rxrpc_queue_local(local);
+		rcu_read_unlock();
+		rxrpc_free_skb(skb, rxrpc_skb_freed);
+		return;
+	}
+
 	peer = rxrpc_lookup_peer_icmp_rcu(local, skb, &srx);
 	if (peer && !rxrpc_get_peer_maybe(peer))
 		peer = NULL;

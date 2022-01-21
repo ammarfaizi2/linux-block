@@ -313,6 +313,7 @@ void rxrpc_shrink_call_tx_queue(struct rxrpc_call *call)
 	}
 
 	spin_unlock(&call->tx_lock);
+	rxrpc_zcopy_cleanup(call->peer->local);
 }
 
 /*

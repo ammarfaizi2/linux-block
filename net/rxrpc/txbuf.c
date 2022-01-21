@@ -23,6 +23,7 @@ struct rxrpc_txbuf *rxrpc_alloc_txbuf(struct rxrpc_call *call, gfp_t gfp)
 	if (txb) {
 		INIT_LIST_HEAD(&txb->call_link);
 		INIT_LIST_HEAD(&txb->tx_link);
+		INIT_LIST_HEAD(&txb->cleanup_link);
 		refcount_set(&txb->ref, 1);
 		txb->call		= call;
 		txb->call_debug_id	= call->debug_id;
