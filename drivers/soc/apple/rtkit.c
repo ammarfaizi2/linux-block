@@ -513,7 +513,11 @@ static int apple_rtkit_worker(void *data)
 
 	while (!kthread_should_stop()) {
 		wait_event_interruptible(rtk->wq,
-					 kfifo_len(&rtk->work_fifo) > 0);
+					 kfifo_len(&rtk->work_fifo) > 0 ||
+					 kthread_should_stop());
+
+		if (kthread_should_stop())
+			break;
 
 		while (kfifo_out_spinlocked(&rtk->work_fifo, &work, 1,
 					    &rtk->work_lock) == 1) {
