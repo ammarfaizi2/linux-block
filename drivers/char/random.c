@@ -509,10 +509,6 @@ static ssize_t _extract_entropy(void *buf, size_t nbytes);
 
 static void crng_reseed(struct crng_state *crng, bool use_input_pool);
 
-static const u32 twist_table[8] = {
-	0x00000000, 0x3b6e20c8, 0x76dc4190, 0x4db26158,
-	0xedb88320, 0xd6d6a3e8, 0x9b64c2b0, 0xa00ae278 };
-
 /*
  * This function adds bytes into the entropy "pool".  It does not
  * update the entropy estimate.  The caller should call
@@ -525,7 +521,7 @@ static const u32 twist_table[8] = {
  */
 static void _mix_pool_bytes(const void *in, int nbytes)
 {
-	unsigned long i;
+	unsigned long i, j;
 	int input_rotate;
 	const u8 *bytes = in;
 	u32 w;
@@ -547,7 +543,9 @@ static void _mix_pool_bytes(const void *in, int nbytes)
 		w ^= input_pool_data[(i + POOL_TAP5) & POOL_WORDMASK];
 
 		/* Mix the result back in with a twist */
-		input_pool_data[i] = (w >> 3) ^ twist_table[w & 7];
+		for (j = 0; j < 3; ++j)
+			w = (w >> 1) ^ (0xedb88320 & -(w & 1));
+		input_pool_data[i] = w;
 
 		/*
 		 * Normally, we add 7 bits of rotation to the pool.
