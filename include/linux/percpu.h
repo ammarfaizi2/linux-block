@@ -2,12 +2,8 @@
 #ifndef __LINUX_PERCPU_H
 #define __LINUX_PERCPU_H
 
-#include <linux/mmdebug.h>
-#include <linux/preempt.h>
-#include <linux/smp.h>
-#include <linux/cpumask.h>
 #include <linux/pfn.h>
-#include <linux/init.h>
+#include <linux/smp.h>
 
 #include <asm/percpu.h>
 
@@ -97,24 +93,22 @@ extern enum pcpu_fc pcpu_chosen_fc;
 typedef int (pcpu_fc_cpu_to_node_fn_t)(int cpu);
 typedef int (pcpu_fc_cpu_distance_fn_t)(unsigned int from, unsigned int to);
 
-extern struct pcpu_alloc_info * __init pcpu_alloc_alloc_info(int nr_groups,
-							     int nr_units);
-extern void __init pcpu_free_alloc_info(struct pcpu_alloc_info *ai);
+extern struct pcpu_alloc_info * pcpu_alloc_alloc_info(int nr_groups, int nr_units);
+extern void pcpu_free_alloc_info(struct pcpu_alloc_info *ai);
 
-extern void __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
-					 void *base_addr);
+extern void pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai, void *base_addr);
 
 #ifdef CONFIG_NEED_PER_CPU_EMBED_FIRST_CHUNK
-extern int __init pcpu_embed_first_chunk(size_t reserved_size, size_t dyn_size,
-				size_t atom_size,
-				pcpu_fc_cpu_distance_fn_t cpu_distance_fn,
-				pcpu_fc_cpu_to_node_fn_t cpu_to_nd_fn);
+extern int pcpu_embed_first_chunk(size_t reserved_size, size_t dyn_size,
+				  size_t atom_size,
+				  pcpu_fc_cpu_distance_fn_t cpu_distance_fn,
+				  pcpu_fc_cpu_to_node_fn_t cpu_to_nd_fn);
 #endif
 
 #ifdef CONFIG_NEED_PER_CPU_PAGE_FIRST_CHUNK
-void __init pcpu_populate_pte(unsigned long addr);
-extern int __init pcpu_page_first_chunk(size_t reserved_size,
-				pcpu_fc_cpu_to_node_fn_t cpu_to_nd_fn);
+void pcpu_populate_pte(unsigned long addr);
+extern int pcpu_page_first_chunk(size_t reserved_size,
+				 pcpu_fc_cpu_to_node_fn_t cpu_to_nd_fn);
 #endif
 
 extern void __percpu *__alloc_reserved_percpu(size_t size, size_t align) __alloc_size(1);
@@ -122,7 +116,7 @@ extern bool __is_kernel_percpu_address(unsigned long addr, unsigned long *can_ad
 extern bool is_kernel_percpu_address(unsigned long addr);
 
 #if !defined(CONFIG_SMP) || !defined(CONFIG_HAVE_SETUP_PER_CPU_AREA)
-extern void __init setup_per_cpu_areas(void);
+extern void setup_per_cpu_areas(void);
 #endif
 
 extern void __percpu *__alloc_percpu_gfp(size_t size, size_t align, gfp_t gfp) __alloc_size(1);

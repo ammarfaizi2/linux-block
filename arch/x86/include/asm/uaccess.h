@@ -14,6 +14,7 @@
 
 #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
 static inline bool pagefault_disabled(void);
+#include <linux/preempt.h>
 # define WARN_ON_IN_IRQ()	\
 	WARN_ON_ONCE(!in_task() && !pagefault_disabled())
 #else
