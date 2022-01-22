@@ -107,4 +107,4 @@ $(obj)/%.hdrtest: $(obj)/%.h FORCE
 
 # Since GNU Make 4.3, $(patsubst $(obj)/%/,%,$(wildcard $(obj)/*/)) works.
 # To support older Make versions, use a somewhat tedious way.
-clean-files += $(filter-out Makefile headers_check.pl, $(notdir $(wildcard $(obj)/*)))
+clean-files += $(filter-out Makefile headers_check.pl uapi, $(notdir $(wildcard $(obj)/*)))
