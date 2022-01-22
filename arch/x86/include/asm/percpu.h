@@ -24,8 +24,11 @@
 
 #else /* ...!ASSEMBLY */
 
-#include <linux/kernel.h>
+#include <linux/types.h>
 #include <linux/stringify.h>
+
+#include <asm/bitsperlong.h>
+#include <asm/asm.h>
 
 #ifdef CONFIG_SMP
 #define __percpu_prefix		"%%"__stringify(__percpu_seg)":"

@@ -15,6 +15,10 @@
 #include <linux/types.h>
 #include <linux/gfp.h>
 
+#ifndef CONFIG_SMP
+# include <linux/preempt.h>
+#endif
+
 #ifdef CONFIG_SMP
 
 struct percpu_counter {
