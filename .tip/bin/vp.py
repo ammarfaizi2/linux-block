@@ -181,7 +181,7 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          "untrusted",
          "userspace", "vCPU",
          "VM", "VMM", "VMCALL", "VMCB", "VMEXIT",
-         "VMGEXIT", "VMLAUNCH", "VMSA", "vTOM", "WBINVD", "WRMSR", "x86", "XCR0", "Xen", "Xeon", "XSS" ]
+         "VMGEXIT", "VMLAUNCH", "VMSA", "vTOM", "WBINVD", "WRMSR", "XCR0", "Xen", "Xeon", "XSS" ]
 
 dc_non_words = [ "E820", "X86" ]
 
@@ -192,7 +192,8 @@ known_vars = [ '__BOOT_DS', 'cpuinfo_x86', 'fpstate', 'kobj_type', 'kptr_restric
 
 
 def load_spellchecker():
-    global dc, rex_commit_ref, rex_fnames, rex_fpaths, rex_url, rex_sha1, rex_kdoc_arg, rex_decimal, rex_units, \
+    global dc, rex_asm_dir, \
+       rex_commit_ref, rex_fnames, rex_fpaths, rex_url, rex_sha1, rex_kdoc_arg, rex_decimal, rex_units, \
        rex_x86_traps, rex_gpr, rex_kcmdline, rex_version, rex_c_keywords, rex_sections, rex_errval,\
        rex_opts, rex_bla_adj, rex_word_bla, rex_reg_field, rex_misc_num, rex_sent_end, rex_word_split, \
        regexes, regexes_pats, rex_brackets, rex_ballanced_br, rex_c_macro, rex_kdoc_cmt, rex_comment, \
@@ -207,6 +208,7 @@ def load_spellchecker():
         dc.remove(w)
 
     # compile all regexes
+    rex_asm_dir     = re.compile(r'^\.(align|org)$')
     rex_ballanced_br = re.compile(r'^(^.*)\((.+)\)(.*)$')
     rex_brackets    = re.compile(r'^.*[()\[\]]+.*$')
     rex_bla_adj     = re.compile(r'([\w-]+)-(active|capable|controlled|related|specific|validated)')
@@ -231,7 +233,7 @@ def load_spellchecker():
     rex_non_alpha   = re.compile(r'^[-]*$')
     rex_opts        = re.compile(r'-[\w\d=-]+$', re.I)
     rex_reg_field   = re.compile(r'\w+\[\d+(:\d+)?\]', re.I)
-    rex_sections    = re.compile(r'(\.bss|\.data|\.head\.text)')
+    rex_sections    = re.compile(r'\.(bss|data|head(\.text)?|text)')
     rex_sent_end    = re.compile(r'\.(\s?([A-Z]|$))')
     rex_struct_mem  = re.compile(r'\w+->\w+')
     rex_sha1        = re.compile(r'[a-f0-9]{12,40}', re.I)
@@ -281,7 +283,7 @@ regexes_pats = [ r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|
              r'default_(attrs|groups)', r'^DDR([1-5])?$', r'^[Ee].g.$', r'^E?VEX$',
             r'I[DS]T', r'[ku]probes?', r'MOVSB?', r'^param(s)?$',
             r'(para)?virt(ualiz(ed?|ing))?$', r'PS[CP]',
-            r'sev_(features|status)', r'T[DS]X', r'VMPL[0-3]', r'XSAVE[CS]?' ]
+            r'sev_(features|status)', r'T[DS]X', r'VMPL[0-3]', r'x86(-(32|64))?', r'XSAVE[CS]?' ]
 regexes = []
 
 def spellcheck_regexes(w):
@@ -412,7 +414,7 @@ def spellcheck(s, where, flags):
                 dbg("Skip SHA: [%s]" % (w, ))
                 continue
 
-            if w.startswith("CONFIG_"):
+            if w.startswith("CONFIG_") or w.startswith("ARCH_"):
                 dbg("Skip CONFIG_ item: [%s]" % (w, ))
                 continue
 
@@ -470,6 +472,11 @@ def spellcheck(s, where, flags):
             # C keywords
             if rex_c_keywords.match(w):
                 dbg("Skip C keyword: [%s]" % (w, ))
+                continue
+
+            # asm directives
+            if rex_asm_dir.match(w):
+                dbg("Skip asm directive: [%s]" % (w, ))
                 continue
 
             # sections
@@ -654,7 +661,7 @@ class Patch:
 
         if s != new_subj:
             print("Massaged subject:")
-            print(" [%s]\n [%s]" % (s, new_subj, ))
+            print(" [%s]\n [%s]\n" % (s, new_subj, ))
 
         # set new subject
         self.subject = new_subj
@@ -972,8 +979,8 @@ class Patch:
         rex_this_patch   = re.compile(r'(.*this\s+patch.*)', re.I)
 
         for i, l in enumerate(lines):
-            warn_on(rex_pers_pronoun.match(l), ("Commit message has 'we':\n [%s]" % (l, )))
-            warn_on(rex_this_patch.match(l),   ("Commit message has 'this patch':\n [%s]" % (l, )))
+            warn_on(rex_pers_pronoun.search(l), ("Commit message has 'we':\n [%s]\n" % (l, )))
+            warn_on(rex_this_patch.search(l),   ("Commit message has 'this patch':\n [%s]\n" % (l, )))
 
             if rex_sha1.search(l):
                 try:
