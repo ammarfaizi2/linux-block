@@ -240,29 +240,32 @@ static int apple_rtkit_common_rx_get_buffer(struct apple_rtkit *rtk,
 	size_t size = n_4kpages << 12;
 	dma_addr_t iova = FIELD_GET(APPLE_RTKIT_BUFFER_REQUEST_IOVA, msg);
 	u64 reply;
+	int err;
 
 	rtk_dbg("buffer request for 0x%zx bytes at 0x%llx\n", size, iova);
 
-	if (rtk->ops->flags & APPLE_RTKIT_SHMEM_OWNER_RTKIT)
-		buffer->iomem = rtk->ops->shmem_map(rtk->cookie, iova, size);
-	else if (rtk->ops->shmem_alloc)
-		buffer->buffer = rtk->ops->shmem_alloc(rtk->cookie, size, &iova,
-						       GFP_KERNEL);
-	else
+	if (iova && (!rtk->ops->shmem_setup || !rtk->ops->shmem_destroy))
+		return -EINVAL;
+
+	if (rtk->ops->shmem_setup) {
+		err = rtk->ops->shmem_setup(rtk->cookie, buffer, iova, size);
+		if (err < 0)
+			return err;
+	} else {
 		buffer->buffer =
 			dma_alloc_coherent(rtk->dev, size, &iova, GFP_KERNEL);
+		if (!buffer->buffer)
+			return -ENOMEM;
 
-	if (!buffer->buffer && !buffer->iomem)
-		return -ENOMEM;
+		buffer->size = size;
+		buffer->iova = iova;
+	}
 
-	buffer->size = size;
-	buffer->iova = iova;
-
-	if (rtk->ops->flags & APPLE_RTKIT_SHMEM_OWNER_LINUX) {
+	if (!buffer->is_mapped) {
 		reply = FIELD_PREP(APPLE_RTKIT_SYSLOG_TYPE,
 				   APPLE_RTKIT_BUFFER_REQUEST);
 		reply |= FIELD_PREP(APPLE_RTKIT_BUFFER_REQUEST_SIZE, n_4kpages);
-		reply |= FIELD_PREP(APPLE_RTKIT_BUFFER_REQUEST_IOVA, iova);
+		reply |= FIELD_PREP(APPLE_RTKIT_BUFFER_REQUEST_IOVA, buffer->iova);
 		apple_rtkit_send_message(rtk, ep, reply);
 	}
 
@@ -272,16 +275,12 @@ static int apple_rtkit_common_rx_get_buffer(struct apple_rtkit *rtk,
 static void apple_rtkit_free_buffer(struct apple_rtkit *rtk,
 				    struct apple_rtkit_shmem *bfr)
 {
-	if (!bfr->buffer)
+	if (bfr->size == 0)
 		return;
 
-	if (rtk->ops->flags & APPLE_RTKIT_SHMEM_OWNER_RTKIT) {
-		rtk->ops->shmem_unmap(rtk->cookie, bfr->iomem, bfr->iova,
-				      bfr->size);
-	} else if (rtk->ops->shmem_free) {
-		rtk->ops->shmem_free(rtk->cookie, bfr->size, bfr->buffer,
-				     bfr->iova);
-	} else {
+	if (rtk->ops->shmem_destroy) {
+		rtk->ops->shmem_destroy(rtk->cookie, bfr);
+	} else if (bfr->buffer) {
 		dma_free_coherent(rtk->dev, bfr->size, bfr->buffer, bfr->iova);
 	}
 
@@ -289,13 +288,14 @@ static void apple_rtkit_free_buffer(struct apple_rtkit *rtk,
 	bfr->iomem = NULL;
 	bfr->iova = 0;
 	bfr->size = 0;
+	bfr->is_mapped = false;
 }
 
 static void apple_rtkit_memcpy(struct apple_rtkit *rtk, void *dst,
 			       struct apple_rtkit_shmem *bfr, size_t offset,
 			       size_t len)
 {
-	if (rtk->ops->flags & APPLE_RTKIT_SHMEM_OWNER_RTKIT)
+	if (bfr->iomem)
 		memcpy_fromio(dst, bfr->iomem + offset, len);
 	else
 		memcpy(dst, bfr->buffer + offset, len);
@@ -380,16 +380,9 @@ static void apple_rtkit_syslog_rx_log(struct apple_rtkit *rtk, u64 msg)
 			"received syslog message but syslog_buffer.size is zero");
 		goto done;
 	}
-	if (rtk->ops->flags & APPLE_RTKIT_SHMEM_OWNER_LINUX &&
-	    !rtk->syslog_buffer.buffer) {
-		rtk_warn(
-			"received syslog message but have no syslog_buffer.buffer");
-		goto done;
-	}
-	if (rtk->ops->flags & APPLE_RTKIT_SHMEM_OWNER_RTKIT &&
-	    !rtk->syslog_buffer.iomem) {
-		rtk_warn(
-			"received syslog message but have no syslog_buffer.iomem");
+	if (!rtk->syslog_buffer.buffer && !rtk->syslog_buffer.iomem) {
+		rtk_warn("received syslog message but have no "
+			 "syslog_buffer.buffer or syslog_buffer.iomem");
 		goto done;
 	}
 	if (idx > rtk->syslog_n_entries) {
@@ -606,10 +599,6 @@ struct apple_rtkit *apple_rtkit_init(struct device *dev, void *cookie,
 	int ret;
 
 	if (!ops)
-		return ERR_PTR(-EINVAL);
-
-	if (!(ops->flags & APPLE_RTKIT_SHMEM_OWNER_LINUX) &&
-	    !(ops->flags & APPLE_RTKIT_SHMEM_OWNER_RTKIT))
 		return ERR_PTR(-EINVAL);
 
 	rtk = kzalloc(sizeof(*rtk), GFP_KERNEL);

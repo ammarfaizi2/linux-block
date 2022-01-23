@@ -24,13 +24,6 @@
 #define APPLE_RTKIT_APP_ENDPOINT_START 0x20
 #define APPLE_RTKIT_MAX_ENDPOINTS 0x100
 
-struct apple_rtkit_shmem {
-	void *buffer;
-	void __iomem *iomem;
-	size_t size;
-	dma_addr_t iova;
-};
-
 struct apple_rtkit_work {
 	unsigned type;
 	struct apple_mbox_msg msg;

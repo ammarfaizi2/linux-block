@@ -16,49 +16,43 @@
 #include <linux/mailbox_client.h>
 
 /*
- * APPLE_RTKIT_SHMEM_OWNER_LINUX - shared memory buffers are allocated and
- *                                 managed by Linux. ops->shmem_alloc and
- *                                 ops->shmem_free can be used to override
- *                                 dma_alloc/free_coherent.
- * APPLE_RTKIT_SHMEM_OWNER_RTKIT - shared memory buffers are allocated and
- *                                 managed by RTKit. ops->shmem_map and
- *                                 ops->shmem_unmap must be defined.
+ * Struct to represent implementation-specific RTKit operations.
+ *
+ * @buffer:   Shared memory buffer allocated by Linux.
+ * @iomem:    Shared memory buffer controlled by the co-processor.
+ * @size:     Size of the shared memory buffer.
+ * iova:      Device VA of shared memory buffer.
+ * is_mapped: Shared memory buffer is managed by the co-processor.
  */
-#define APPLE_RTKIT_SHMEM_OWNER_LINUX BIT(0)
-#define APPLE_RTKIT_SHMEM_OWNER_RTKIT BIT(1)
+
+struct apple_rtkit_shmem {
+	void *buffer;
+	void __iomem *iomem;
+	size_t size;
+	dma_addr_t iova;
+	bool is_mapped;
+};
 
 /*
  * Struct to represent implementation-specific RTKit operations.
  *
- * @flags:        Combination of flags defined above. Exactly one of
- *                APPLE_RTKIT_SHMEM_OWNER_RTKIT or APPLE_RTKIT_SHMEM_OWNER_LINUX
- *                must be set.
- * @crashed:      Called when the co-processor has crashed.
- * @recv_message: Function called when a message from RTKit is recevied
- *                on a non-system endpoint. Called from a worker thread unless
- *                APPLE_RTKIT_RECV_ATOMIC is set.
- * @shmem_map:    Used with APPLE_RTKIT_SHMEM_OWNER_RTKIT to map an
- *                addressed returned by the co-processor into the kernel.
- * @shmem_unmap:  Used with APPLE_RTKIT_SHMEM_OWNER_RTKIT to unmap a previous
- *                mapping created with shmem_map again.
- * @shmem_alloc:  Used with APPLE_RTKIT_SHMEM_OWNER_LINUX to allocate a shared
- *                memory buffer for the co-processor. If not specified
- *                dma_alloc_coherent is used.
- * @shmem_free:   Used with APPLE_RTKIT_SHMEM_OWNER_LINUX to free a shared
- *                memory buffer previously allocated with shmem_alloc. If not
- *                specified dma_free_coherent is used.
+ * @crashed:       Called when the co-processor has crashed.
+ * @recv_message:  Function called when a message from RTKit is recevied
+ *                 on a non-system endpoint. Called from a worker thread unless
+ *                 APPLE_RTKIT_RECV_ATOMIC is set.
+ * @shmem_setup:   Setup shared memory buffer. If bfr.is_iomem is true the
+ *                 buffer is managed by the co-processor and needs to be mapped.
+ *                 Otherwise the buffer is managed by Linux and needs to be
+ *                 allocated. If not specified dma_alloc_coherent is used.
+ * @shmem_destroy: Undo the shared memory buffer setup in shmem_setup. If not
+ *                 specified dma_free_coherent is used if is_iomem is false.
  */
 struct apple_rtkit_ops {
-	unsigned int flags;
 	void (*crashed)(void *cookie);
 	void (*recv_message)(void *cookie, u8 endpoint, u64 message);
-	void __iomem *(*shmem_map)(void *cookie, dma_addr_t addr, size_t len);
-	void (*shmem_unmap)(void *cookie, void __iomem *ptr, dma_addr_t addr,
-			    size_t len);
-	void *(*shmem_alloc)(void *cookie, size_t size, dma_addr_t *dma_handle,
-			     gfp_t flag);
-	void (*shmem_free)(void *cookie, size_t size, void *cpu_addr,
-			   dma_addr_t dma_handle);
+	int (*shmem_setup)(void *cookie, struct apple_rtkit_shmem *bfr,
+			   dma_addr_t addr, size_t len);
+	void (*shmem_destroy)(void *cookie, struct apple_rtkit_shmem *bfr);
 };
 
 struct apple_rtkit;
