@@ -912,7 +912,7 @@ static int putreg32(struct task_struct *child, unsigned regno, u32 value)
 		 */
 		regs->orig_ax = value;
 		if (syscall_get_nr(child, regs) != -1)
-			child->thread_info.status |= TS_I386_REGS_POKED;
+			task_thread_info(child)->status |= TS_I386_REGS_POKED;
 		break;
 
 	case offsetof(struct user32, regs.eflags):

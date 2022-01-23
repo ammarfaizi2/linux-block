@@ -11,7 +11,7 @@
 #define _ASM_X86_SYSCALL_H
 
 #include <uapi/linux/audit.h>
-#include <linux/sched.h>
+#include <linux/sched/thread_info_api.h>
 #include <linux/err.h>
 #include <asm/thread_info.h>	/* for TS_COMPAT */
 #include <asm/unistd.h>
@@ -55,7 +55,7 @@ static inline long syscall_get_error(struct task_struct *task,
 	 * TS_COMPAT is set for 32-bit syscall entries and then
 	 * remains set until we return to user mode.
 	 */
-	if (task->thread_info.status & (TS_COMPAT|TS_I386_REGS_POKED))
+	if (task_thread_info(task)->status & (TS_COMPAT|TS_I386_REGS_POKED))
 		/*
 		 * Sign-extend the value so (int)-EFOO becomes (long)-EFOO
 		 * and will match correctly in comparisons.
@@ -99,7 +99,7 @@ static inline void syscall_get_arguments(struct task_struct *task,
 					 unsigned long *args)
 {
 # ifdef CONFIG_IA32_EMULATION
-	if (task->thread_info.status & TS_COMPAT) {
+	if (task_thread_info(task)->status & TS_COMPAT) {
 		*args++ = regs->bx;
 		*args++ = regs->cx;
 		*args++ = regs->dx;
@@ -122,7 +122,7 @@ static inline int syscall_get_arch(struct task_struct *task)
 {
 	/* x32 tasks should be considered AUDIT_ARCH_X86_64. */
 	return (IS_ENABLED(CONFIG_IA32_EMULATION) &&
-		task->thread_info.status & TS_COMPAT)
+		task_thread_info(task)->status & TS_COMPAT)
 		? AUDIT_ARCH_I386 : AUDIT_ARCH_X86_64;
 }
 
