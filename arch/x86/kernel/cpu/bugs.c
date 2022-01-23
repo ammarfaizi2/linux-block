@@ -1346,10 +1346,10 @@ static int l1d_flush_prctl_set(struct task_struct *task, unsigned long ctrl)
 
 	switch (ctrl) {
 	case PR_SPEC_ENABLE:
-		set_ti_thread_flag(&task->thread_info, TIF_SPEC_L1D_FLUSH);
+		set_ti_thread_flag(task_thread_info(task), TIF_SPEC_L1D_FLUSH);
 		return 0;
 	case PR_SPEC_DISABLE:
-		clear_ti_thread_flag(&task->thread_info, TIF_SPEC_L1D_FLUSH);
+		clear_ti_thread_flag(task_thread_info(task), TIF_SPEC_L1D_FLUSH);
 		return 0;
 	default:
 		return -ERANGE;
@@ -1488,7 +1488,7 @@ static int l1d_flush_prctl_get(struct task_struct *task)
 	if (!static_branch_unlikely(&switch_mm_cond_l1d_flush))
 		return PR_SPEC_FORCE_DISABLE;
 
-	if (test_ti_thread_flag(&task->thread_info, TIF_SPEC_L1D_FLUSH))
+	if (test_ti_thread_flag(task_thread_info(task), TIF_SPEC_L1D_FLUSH))
 		return PR_SPEC_PRCTL | PR_SPEC_ENABLE;
 	else
 		return PR_SPEC_PRCTL | PR_SPEC_DISABLE;
