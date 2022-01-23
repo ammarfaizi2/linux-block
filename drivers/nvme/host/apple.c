@@ -239,41 +239,45 @@ static void apple_nvme_rtkit_recv(void *cookie, u8 endpoint, u64 message)
 		 endpoint, message);
 }
 
-static void *apple_nvme_sart_dma_alloc(void *cookie, size_t size,
-				       dma_addr_t *dma_handle, gfp_t flag)
+static int apple_nvme_sart_dma_setup(void *cookie, struct apple_rtkit_shmem *bfr,
+				     dma_addr_t iova, size_t size)
 {
 	struct apple_nvme *anv = cookie;
-	void *bfr;
 	int ret;
 
-	bfr = dma_alloc_coherent(anv->dev, size, dma_handle, flag);
-	if (!bfr)
-		return bfr;
+	if (iova)
+		return -EINVAL;
 
-	ret = apple_sart_add_allowed_region(anv->sart, *dma_handle, size);
+	bfr->buffer = dma_alloc_coherent(anv->dev, size, &iova, GFP_KERNEL);
+	if (!bfr->buffer)
+		return -ENOMEM;
+
+	ret = apple_sart_add_allowed_region(anv->sart, iova, size);
 	if (ret) {
-		dma_free_coherent(anv->dev, size, bfr, *dma_handle);
-		return NULL;
+		dma_free_coherent(anv->dev, size, bfr->buffer, iova);
+		bfr->buffer = NULL;
+		return -ENOMEM;
 	}
 
-	return bfr;
+	bfr->size = size;
+	bfr->iova = iova;
+
+	return 0;
 }
 
-static void apple_nvme_sart_dma_free(void *cookie, size_t size, void *cpu_addr,
-				     dma_addr_t dma_handle)
+static void apple_nvme_sart_dma_destroy(void *cookie, struct apple_rtkit_shmem *bfr)
 {
 	struct apple_nvme *anv = cookie;
 
-	apple_sart_remove_allowed_region(anv->sart, dma_handle, size);
-	dma_free_coherent(anv->dev, size, cpu_addr, dma_handle);
+	apple_sart_remove_allowed_region(anv->sart, bfr->iova, bfr->size);
+	dma_free_coherent(anv->dev, bfr->size, bfr->buffer, bfr->iova);
 }
 
 static const struct apple_rtkit_ops apple_nvme_rtkit_ops = {
-	.flags = APPLE_RTKIT_SHMEM_OWNER_LINUX,
 	.crashed = apple_nvme_rtkit_crashed,
 	.recv_message = apple_nvme_rtkit_recv,
-	.shmem_alloc = apple_nvme_sart_dma_alloc,
-	.shmem_free = apple_nvme_sart_dma_free,
+	.shmem_setup = apple_nvme_sart_dma_setup,
+	.shmem_destroy = apple_nvme_sart_dma_destroy,
 };
 
 static void apple_nvmmu_inval(struct apple_nvme_queue *q, unsigned tag)
