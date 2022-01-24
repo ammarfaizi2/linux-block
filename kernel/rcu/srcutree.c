@@ -627,18 +627,19 @@ static void srcu_funnel_exp_start(struct srcu_struct *ssp, struct srcu_node *snp
 {
 	unsigned long flags;
 
-	for (; snp != NULL; snp = snp->srcu_parent) {
-		if (rcu_seq_done(&ssp->srcu_gp_seq, s) ||
-		    ULONG_CMP_GE(READ_ONCE(snp->srcu_gp_seq_needed_exp), s))
-			return;
-		spin_lock_irqsave_rcu_node(snp, flags);
-		if (ULONG_CMP_GE(snp->srcu_gp_seq_needed_exp, s)) {
+	if (snp)
+		for (; snp != NULL; snp = snp->srcu_parent) {
+			if (rcu_seq_done(&ssp->srcu_gp_seq, s) ||
+			    ULONG_CMP_GE(READ_ONCE(snp->srcu_gp_seq_needed_exp), s))
+				return;
+			spin_lock_irqsave_rcu_node(snp, flags);
+			if (ULONG_CMP_GE(snp->srcu_gp_seq_needed_exp, s)) {
+				spin_unlock_irqrestore_rcu_node(snp, flags);
+				return;
+			}
+			WRITE_ONCE(snp->srcu_gp_seq_needed_exp, s);
 			spin_unlock_irqrestore_rcu_node(snp, flags);
-			return;
 		}
-		WRITE_ONCE(snp->srcu_gp_seq_needed_exp, s);
-		spin_unlock_irqrestore_rcu_node(snp, flags);
-	}
 	spin_lock_irqsave_rcu_node(ssp, flags);
 	if (ULONG_CMP_LT(ssp->srcu_gp_seq_needed_exp, s))
 		WRITE_ONCE(ssp->srcu_gp_seq_needed_exp, s);
@@ -661,36 +662,37 @@ static void srcu_funnel_gp_start(struct srcu_struct *ssp, struct srcu_data *sdp,
 	unsigned long flags;
 	int idx = rcu_seq_ctr(s) % ARRAY_SIZE(sdp->mynode->srcu_have_cbs);
 	struct srcu_node *snp;
-	struct srcu_node *snp_leaf = sdp->mynode;
+	struct srcu_node *snp_leaf = smp_load_acquire(&sdp->mynode);
 	unsigned long snp_seq;
 
-	/* Each pass through the loop does one level of the srcu_node tree. */
-	for (snp = snp_leaf; snp != NULL; snp = snp->srcu_parent) {
-		if (rcu_seq_done(&ssp->srcu_gp_seq, s) && snp != snp_leaf)
-			return; /* GP already done and CBs recorded. */
-		spin_lock_irqsave_rcu_node(snp, flags);
-		if (ULONG_CMP_GE(snp->srcu_have_cbs[idx], s)) {
-			snp_seq = snp->srcu_have_cbs[idx];
-			if (snp == snp_leaf && snp_seq == s)
-				snp->srcu_data_have_cbs[idx] |= sdp->grpmask;
-			spin_unlock_irqrestore_rcu_node(snp, flags);
-			if (snp == snp_leaf && snp_seq != s) {
-				srcu_schedule_cbs_sdp(sdp, do_norm
-							   ? SRCU_INTERVAL
-							   : 0);
+	if (snp_leaf)
+		/* Each pass through the loop does one level of the srcu_node tree. */
+		for (snp = snp_leaf; snp != NULL; snp = snp->srcu_parent) {
+			if (rcu_seq_done(&ssp->srcu_gp_seq, s) && snp != snp_leaf)
+				return; /* GP already done and CBs recorded. */
+			spin_lock_irqsave_rcu_node(snp, flags);
+			if (ULONG_CMP_GE(snp->srcu_have_cbs[idx], s)) {
+				snp_seq = snp->srcu_have_cbs[idx];
+				if (snp == snp_leaf && snp_seq == s)
+					snp->srcu_data_have_cbs[idx] |= sdp->grpmask;
+				spin_unlock_irqrestore_rcu_node(snp, flags);
+				if (snp == snp_leaf && snp_seq != s) {
+					srcu_schedule_cbs_sdp(sdp, do_norm
+								   ? SRCU_INTERVAL
+								   : 0);
+					return;
+				}
+				if (!do_norm)
+					srcu_funnel_exp_start(ssp, snp, s);
 				return;
 			}
-			if (!do_norm)
-				srcu_funnel_exp_start(ssp, snp, s);
-			return;
+			snp->srcu_have_cbs[idx] = s;
+			if (snp == snp_leaf)
+				snp->srcu_data_have_cbs[idx] |= sdp->grpmask;
+			if (!do_norm && ULONG_CMP_LT(snp->srcu_gp_seq_needed_exp, s))
+				WRITE_ONCE(snp->srcu_gp_seq_needed_exp, s);
+			spin_unlock_irqrestore_rcu_node(snp, flags);
 		}
-		snp->srcu_have_cbs[idx] = s;
-		if (snp == snp_leaf)
-			snp->srcu_data_have_cbs[idx] |= sdp->grpmask;
-		if (!do_norm && ULONG_CMP_LT(snp->srcu_gp_seq_needed_exp, s))
-			WRITE_ONCE(snp->srcu_gp_seq_needed_exp, s);
-		spin_unlock_irqrestore_rcu_node(snp, flags);
-	}
 
 	/* Top of tree, must ensure the grace period will be started. */
 	spin_lock_irqsave_rcu_node(ssp, flags);
@@ -868,7 +870,7 @@ static unsigned long srcu_gp_start_if_needed(struct srcu_struct *ssp,
 	if (needgp)
 		srcu_funnel_gp_start(ssp, sdp, s, do_norm);
 	else if (needexp)
-		srcu_funnel_exp_start(ssp, sdp->mynode, s);
+		srcu_funnel_exp_start(ssp, smp_load_acquire(&sdp->mynode), s);
 	srcu_read_unlock(ssp, idx);
 	return s;
 }
