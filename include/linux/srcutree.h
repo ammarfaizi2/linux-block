@@ -87,12 +87,13 @@ struct srcu_struct {
 /* Values for size state variable (->srcu_size_state). */
 #define SRCU_SIZE_SMALL		0
 #define SRCU_SIZE_ALLOC		1
-#define SRCU_SIZE_WAIT_GP	2
-#define SRCU_SIZE_WAIT_CBS1	3
-#define SRCU_SIZE_WAIT_CBS2	4
-#define SRCU_SIZE_WAIT_CBS3	5
-#define SRCU_SIZE_WAIT_CBS4	6
-#define SRCU_SIZE_BIG		7
+#define SRCU_SIZE_WAIT_BARRIER	2
+#define SRCU_SIZE_WAIT_CALL	3
+#define SRCU_SIZE_WAIT_CBS1	4
+#define SRCU_SIZE_WAIT_CBS2	5
+#define SRCU_SIZE_WAIT_CBS3	6
+#define SRCU_SIZE_WAIT_CBS4	7
+#define SRCU_SIZE_BIG		8
 
 /* Values for state variable (bottom bits of ->srcu_gp_seq). */
 #define SRCU_STATE_IDLE		0
