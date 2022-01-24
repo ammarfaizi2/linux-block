@@ -814,6 +814,11 @@ class Patch:
 
         dbg("")
 
+        # zap any trailing empty lines
+        while not clines[-1]:
+            ret_lines += 1
+            clines.pop()
+
         rex_cc_stable = re.compile(r'^\s*<stable@vger.kernel.org>\s*.*$', re.I)
 
         for line in reversed(clines):
@@ -851,7 +856,7 @@ class Patch:
             self.od['Signed-off-by'].append(sob)
 
         dbg(self.od)
-        dbg("done")
+        dbg("done, ate %d lines" % (ret_lines, ))
 
         return ret_lines
 
@@ -908,8 +913,8 @@ class Patch:
             dbg(" -> [%s]" % (line, ))
 
             # take only the first "---" split line. Subsequent ones can contain
-            # changelog history which git ignores
-            if line == "---" and not self.commit_msg:
+            # changelog history which git ignores.
+            if (line == "---" or line.startswith("--- a")) and not self.commit_msg:
                 tag_lines = self.process_tags(plines[0:i])
 
                 dbg("--> Commit message")
@@ -918,8 +923,15 @@ class Patch:
                 dbg("End of Commit message")
 
                 # got commit message and tags, remove it from plines and start afresh
+
                 # i+1 in order to skip "---" too
-                plines = plines[i+1:]
+                # i if it is the beginning of the first hunk
+                if line == "---":
+                    cutoff_idx = i+1
+                else:
+                    cutoff_idx = i
+
+                plines = plines[cutoff_idx:]
                 break
 
             i += 1
@@ -979,6 +991,11 @@ class Patch:
         rex_this_patch   = re.compile(r'(.*this\s+patch.*)', re.I)
 
         for i, l in enumerate(lines):
+
+            # skip committer notes
+            if l.startswith("  [ bp:"):
+                continue
+
             warn_on(rex_pers_pronoun.search(l), ("Commit message has 'we':\n [%s]\n" % (l, )))
             warn_on(rex_this_patch.search(l),   ("Commit message has 'this patch':\n [%s]\n" % (l, )))
 
