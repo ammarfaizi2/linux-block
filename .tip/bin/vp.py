@@ -97,29 +97,35 @@ def rfc2822_now():
     # formatdate wants a float in seconds since the beginning of the epoch
     return utils.formatdate(time.mktime(now_tuple))
 
-# remove brackets which are left overs from splitting a line into words
+# remove brackets which are left overs from splitting a line into words,
+# but leave ballanced ones which denote an array or a function name
+# inspired by 
+# https://stackoverflow.com/questions/56450268/how-to-check-unbalanced-brackets-in-python-3
 def strip_brackets(w):
     if not rex_brackets.match(w):
         return w
 
-    dbg("\t[%s]" % (w, ))
+    dbg("\t|%s|" % (w, ))
 
-    if '(' not in w:
-        w = w.strip(')')
-    elif ')' not in w:
-        w = w.strip('(')
+    pairs = {"{": "}", "(": ")", "[": "]"}
+    stack = []
 
-    # leave array postscript for checking later
-    if w.endswith('[]'):
-        return w
+    # XXX: this needs more thought. It would fudge a case with arguments:
+    # function_name(arg1, arg2, arg3, ...)
+    # I need to think about what to do here.
+    for c in w:
+        if c in "{([":
+            stack.append(c)
+        elif stack and c == pairs[stack[-1]]:
+            stack.pop()
+        # unballanced closing bracket, zap it
+        elif c in "])}":
+            w = w.replace(c, '', 1)
+        # unballanced opening bracket, zap it
+        elif stack:
+            w = w.replace(stack.pop(), '', 1)
 
-    # remove ballanced brackets:
-    while '[' in w and ']' in w:
-        w = w.replace('[', '', 1).replace(']', '', 1)
-
-    w = rex_ballanced_br.sub(r'\1\2\3', w)
-
-    dbg("-->\t[%s]" % (w, ))
+    dbg("-->\t|%s|" % (w, ))
 
     return w
 
@@ -196,7 +202,7 @@ def load_spellchecker():
        rex_commit_ref, rex_fnames, rex_fpaths, rex_url, rex_sha1, rex_kdoc_arg, rex_decimal, rex_units, \
        rex_x86_traps, rex_gpr, rex_kcmdline, rex_version, rex_c_keywords, rex_sections, rex_errval,\
        rex_opts, rex_bla_adj, rex_word_bla, rex_reg_field, rex_misc_num, rex_sent_end, rex_word_split, \
-       regexes, regexes_pats, rex_brackets, rex_ballanced_br, rex_c_macro, rex_kdoc_cmt, rex_comment, \
+       regexes, regexes_pats, rex_brackets, rex_c_macro, rex_kdoc_cmt, rex_comment, \
        rex_comment_end, rex_non_alpha, rex_struct_mem
 
     dc = enchant.Dict("en_US")
@@ -209,7 +215,6 @@ def load_spellchecker():
 
     # compile all regexes
     rex_asm_dir     = re.compile(r'^\.(align|org)$')
-    rex_ballanced_br = re.compile(r'^(^.*)\((.+)\)(.*)$')
     rex_brackets    = re.compile(r'^.*[()\[\]]+.*$')
     rex_bla_adj     = re.compile(r'([\w-]+)-(active|capable|controlled|related|specific|validated)')
     rex_c_keywords  = re.compile(r'#(ifdef|include)')
