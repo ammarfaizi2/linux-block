@@ -866,7 +866,7 @@ static unsigned long srcu_gp_start_if_needed(struct srcu_struct *ssp,
 
 	check_init_srcu_struct(ssp);
 	idx = srcu_read_lock(ssp);
-	if (!smp_load_acquire(&ssp->srcu_size_state)) {
+	if (smp_load_acquire(&ssp->srcu_size_state) < SRCU_SIZE_WAIT_CALL) {
 		sdp = per_cpu_ptr(ssp->sda, 0);
 	} else {
 		sdp = raw_cpu_ptr(ssp->sda);
