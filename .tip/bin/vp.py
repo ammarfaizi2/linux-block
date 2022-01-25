@@ -193,13 +193,13 @@ dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars, etc which get mentioned often in commit messages and comments
 known_vars = [ '__BOOT_DS', 'cpuinfo_x86', 'fpstate', 'kobj_type', 'kptr_restrict', 'pt_regs',
-           'set_lvt_off', 'setup_data',
+           'ptr', 'set_lvt_off', 'setup_data',
            'sme_me_mask', 'sysctl_perf_event_paranoid', 'threshold_banks', 'xfeatures' ]
 
 
 def load_spellchecker():
     global dc, rex_asm_dir, \
-       rex_commit_ref, rex_fnames, rex_fpaths, rex_url, rex_sha1, rex_kdoc_arg, rex_decimal, rex_units, \
+       rex_commit_ref, rex_fnames, rex_url, rex_sha1, rex_kdoc_arg, rex_decimal, rex_units, \
        rex_x86_traps, rex_gpr, rex_kcmdline, rex_version, rex_c_keywords, rex_sections, rex_errval,\
        rex_opts, rex_bla_adj, rex_word_bla, rex_reg_field, rex_misc_num, rex_sent_end, rex_word_split, \
        regexes, regexes_pats, rex_brackets, rex_c_macro, rex_kdoc_cmt, rex_comment, \
@@ -229,7 +229,6 @@ def load_spellchecker():
     rex_decimal     = re.compile(r'^[0-9]+$')
     rex_errval      = re.compile(r'-E(EINVAL|EXIST|OPNOTSUPP)')
     rex_fnames      = re.compile(r'\s?/?([\w-]+/)*[\w-]+\.[chS]')
-    rex_fpaths      = re.compile(r'\s?/?([\w-]*/)+([\w-]+/?)?')
     rex_gpr         = re.compile(r'([re]?[abcd]x|r([89]|1[0-5]))', re.I)
     rex_kcmdline    = re.compile(r'^\w+=([\w,]+)?$')
     rex_kdoc_arg    = re.compile(r'^@\w+:?$')
@@ -259,6 +258,9 @@ def spellcheck_func_name(w, prev_word):
 
     """
 
+    # remove crap from previous word
+    prev = prev_word.strip('`\',*+:;!|<>"=')
+
     if w.endswith('()'):
         dbg("Skip function name: [%s]" % (w, ))
         return True
@@ -268,7 +270,7 @@ def spellcheck_func_name(w, prev_word):
         return True
 
     # it is only heuristics anyway
-    if '_' not in w or prev_word == "struct":
+    if '_' not in w or prev == "struct":
         return True
 
     # all caps - likely a macro name
@@ -286,7 +288,7 @@ def spellcheck_func_name(w, prev_word):
 # known words as regexes to avoid duplication in the list above
 regexes_pats = [ r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
              r'default_(attrs|groups)', r'^DDR([1-5])?$', r'^[Ee].g.$', r'^E?VEX$',
-            r'I[DS]T', r'[ku]probes?', r'MOVSB?', r'^param(s)?$',
+            r'^Icelake(-D)?$', r'I[DS]T', r'[ku]probes?', r'MOVSB?', r'^param(s)?$',
             r'(para)?virt(ualiz(ed?|ing))?$', r'PS[CP]',
             r'sev_(features|status)', r'T[DS]X', r'VMPL[0-3]', r'x86(-(32|64))?', r'XSAVE[CS]?' ]
 regexes = []
@@ -372,9 +374,6 @@ def spellcheck(s, where, flags):
 
         # filenames, ditto
         line = rex_fnames.sub('', line)
-
-        # filepaths, ditto
-        line = rex_fpaths.sub('', line)
 
         # remove fullstops ending a sentence - not other dots, as in "i.e." for example.
         line = rex_sent_end.sub(r' \1', line)
