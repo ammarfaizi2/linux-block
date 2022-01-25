@@ -177,7 +177,7 @@ static bool init_srcu_struct_nodes(struct srcu_struct *ssp)
 		}
 		sdp->grpmask = 1 << (cpu - sdp->mynode->grplo);
 	}
-	smp_store_release(&ssp->srcu_size_state, SRCU_SIZE_BIG);
+	smp_store_release(&ssp->srcu_size_state, SRCU_SIZE_WAIT_BARRIER);
 	return true;
 }
 
@@ -467,10 +467,10 @@ static void srcu_gp_start(struct srcu_struct *ssp)
 	int ss_state;
 	int state;
 
-	if (smp_load_acquire(&ssp->srcu_size_state))
-		sdp = this_cpu_ptr(ssp->sda);
-	else
+	if (smp_load_acquire(&ssp->srcu_size_state) < SRCU_SIZE_WAIT_BARRIER)
 		sdp = per_cpu_ptr(ssp->sda, 0);
+	else
+		sdp = this_cpu_ptr(ssp->sda);
 	lockdep_assert_held(&ACCESS_PRIVATE(ssp, lock));
 	WARN_ON_ONCE(ULONG_CMP_GE(ssp->srcu_gp_seq, ssp->srcu_gp_seq_needed));
 	spin_lock_rcu_node(sdp);  /* Interrupts already disabled. */
@@ -581,7 +581,7 @@ static void srcu_gp_end(struct srcu_struct *ssp)
 	/* A new grace period can start at this point.  But only one. */
 
 	/* Initiate callback invocation as needed. */
-	if (smp_load_acquire(&ssp->srcu_size_state) == SRCU_SIZE_SMALL) {
+	if (smp_load_acquire(&ssp->srcu_size_state) < SRCU_SIZE_WAIT_BARRIER) {
 		srcu_schedule_cbs_sdp(per_cpu_ptr(ssp->sda, 0), cbdelay);
 	} else {
 		idx = rcu_seq_ctr(gpseq) % ARRAY_SIZE(snp->srcu_have_cbs);
@@ -1191,7 +1191,7 @@ void srcu_barrier(struct srcu_struct *ssp)
 	/* Initial count prevents reaching zero until all CBs are posted. */
 	atomic_set(&ssp->srcu_barrier_cpu_cnt, 1);
 
-	if (!smp_load_acquire(&ssp->srcu_size_state)) {
+	if (smp_load_acquire(&ssp->srcu_size_state) < SRCU_SIZE_WAIT_BARRIER) {
 		srcu_barrier_one_cpu(ssp, per_cpu_ptr(ssp->sda, 0));
 	} else {
 
