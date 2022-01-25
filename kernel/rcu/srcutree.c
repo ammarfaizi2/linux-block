@@ -1454,7 +1454,6 @@ void srcu_torture_stats_print(struct srcu_struct *ssp, char *tt, char *tf)
 		s1 += c1;
 	}
 	pr_cont(" T(%ld,%ld)\n", s0, s1);
-	smp_store_release(&ssp->srcu_size_state, SRCU_SIZE_ALLOC); // @@@
 }
 EXPORT_SYMBOL_GPL(srcu_torture_stats_print);
 
