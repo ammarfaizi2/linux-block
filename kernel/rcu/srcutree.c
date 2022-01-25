@@ -418,6 +418,9 @@ void cleanup_srcu_struct(struct srcu_struct *ssp)
 	}
 	free_percpu(ssp->sda);
 	ssp->sda = NULL;
+	kfree(ssp->node);
+	ssp->node = NULL;
+	ssp->srcu_size_state = SRCU_SIZE_SMALL;
 }
 EXPORT_SYMBOL_GPL(cleanup_srcu_struct);
 
