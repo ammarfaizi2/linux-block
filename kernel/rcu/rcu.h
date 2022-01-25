@@ -316,6 +316,9 @@ extern void rcu_init_geometry(void);
 /* Is this rcu_node a leaf? */
 #define rcu_is_leaf_node(rnp) ((rnp)->level == rcu_num_lvls - 1)
 
+/* Is this srcu_node a leaf? */
+#define srcu_is_leaf_node(ssp, snp) ((snp) >= (ssp)->level[rcu_num_lvls - 1])
+
 /* Is this rcu_node the last leaf? */
 #define rcu_is_last_leaf_node(rnp) ((rnp) == &rcu_state.node[rcu_num_nodes - 1])
 
@@ -347,6 +350,11 @@ extern void rcu_init_geometry(void);
 	for (WARN_ON_ONCE(!rcu_is_leaf_node(rnp)), \
 	     (cpu) = cpumask_next((rnp)->grplo - 1, cpu_possible_mask); \
 	     (cpu) <= rnp->grphi; \
+	     (cpu) = cpumask_next((cpu), cpu_possible_mask))
+#define srcu_for_each_leaf_node_possible_cpu(ssp, snp, cpu) \
+	for (WARN_ON_ONCE(!srcu_is_leaf_node(ssp, snp)), \
+	     (cpu) = cpumask_next((snp)->grplo - 1, cpu_possible_mask); \
+	     (cpu) <= snp->grphi; \
 	     (cpu) = cpumask_next((cpu), cpu_possible_mask))
 
 /*
