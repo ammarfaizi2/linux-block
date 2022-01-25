@@ -1154,8 +1154,12 @@ static void srcu_barrier_cb(struct rcu_head *rhp)
 }
 
 /*
- * If needed, enqueue an srcu_barrier() callback on the specified
- * srcu_data structure's ->cblist.
+ * Enqueue an srcu_barrier() callback on the specified srcu_data
+ * structure's ->cblist.  but only if that ->cblist already has at least one
+ * callback enqueued.  Note that if a CPU already has callbacks enqueue,
+ * it must have already registered the need for a future grace period,
+ * so all we need do is enqueue a callback that will use the same grace
+ * period as the last callback already in the queue.
  */
 static void srcu_barrier_one_cpu(struct srcu_struct *ssp, struct srcu_data *sdp)
 {
@@ -1178,7 +1182,6 @@ static void srcu_barrier_one_cpu(struct srcu_struct *ssp, struct srcu_data *sdp)
 void srcu_barrier(struct srcu_struct *ssp)
 {
 	int cpu;
-	struct srcu_data *sdp;
 	unsigned long s = rcu_seq_snap(&ssp->srcu_barrier_seq);
 
 	check_init_srcu_struct(ssp);
@@ -1194,23 +1197,11 @@ void srcu_barrier(struct srcu_struct *ssp)
 	/* Initial count prevents reaching zero until all CBs are posted. */
 	atomic_set(&ssp->srcu_barrier_cpu_cnt, 1);
 
-	if (smp_load_acquire(&ssp->srcu_size_state) < SRCU_SIZE_WAIT_BARRIER) {
+	if (smp_load_acquire(&ssp->srcu_size_state) < SRCU_SIZE_WAIT_BARRIER)
 		srcu_barrier_one_cpu(ssp, per_cpu_ptr(ssp->sda, 0));
-	} else {
-
-		/*
-		 * Each pass through this loop enqueues a callback, but only
-		 * on CPUs already having callbacks enqueued.  Note that if
-		 * a CPU already has callbacks enqueue, it must have already
-		 * registered the need for a future grace period, so all we
-		 * need do is enqueue a callback that will use the same
-		 * grace period as the last callback already in the queue.
-		 */
-		for_each_possible_cpu(cpu) {
-			sdp = per_cpu_ptr(ssp->sda, cpu);
+	else
+		for_each_possible_cpu(cpu)
 			srcu_barrier_one_cpu(ssp, per_cpu_ptr(ssp->sda, cpu));
-		}
-	}
 
 	/* Remove the initial count, at which point reaching zero can happen. */
 	if (atomic_dec_and_test(&ssp->srcu_barrier_cpu_cnt))
@@ -1463,6 +1454,7 @@ void srcu_torture_stats_print(struct srcu_struct *ssp, char *tt, char *tf)
 		s1 += c1;
 	}
 	pr_cont(" T(%ld,%ld)\n", s0, s1);
+	smp_store_release(&ssp->srcu_size_state, SRCU_SIZE_ALLOC); // @@@
 }
 EXPORT_SYMBOL_GPL(srcu_torture_stats_print);
 
