@@ -1443,7 +1443,7 @@ void srcu_torture_stats_print(struct srcu_struct *ssp, char *tt, char *tf)
 
 	idx = ssp->srcu_idx & 0x1;
 	if (ss_state < 0 || ss_state >= ARRAY_SIZE(srcu_size_state_name))
-		ss_state_idx = ARRAY_SIZE(srcu_size_state_name);
+		ss_state_idx = ARRAY_SIZE(srcu_size_state_name) - 1;
 	pr_alert("%s%s Tree SRCU g%ld state %d (%s) per-CPU(idx=%d):",
 		 tt, tf, rcu_seq_current(&ssp->srcu_gp_seq), ss_state,
 		 srcu_size_state_name[ss_state_idx], idx);
