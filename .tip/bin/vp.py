@@ -214,6 +214,7 @@ def load_spellchecker():
         dc.remove(w)
 
     # compile all regexes
+    # Use /usr/share/doc/pythonX.X/examples/demo/redemo.py for checking
     rex_asm_dir     = re.compile(r'^\.(align|org)$')
     rex_brackets    = re.compile(r'^.*[()\[\]]+.*$')
     rex_bla_adj     = re.compile(r'([\w-]+)-(active|capable|controlled|related|specific|validated)')
@@ -229,7 +230,13 @@ def load_spellchecker():
     rex_decimal     = re.compile(r'^[0-9]+$')
     rex_errval      = re.compile(r'-E(EINVAL|EXIST|OPNOTSUPP)')
     rex_fnames      = re.compile(r'\s?/?([\w-]+/)*[\w-]+\.[chS]')
-    rex_gpr         = re.compile(r'([re]?[abcd]x|r([89]|1[0-5]))', re.I)
+
+    rex_gpr         = re.compile(r"""([re]?[abcd]x|     # the first 4
+                                       r([89]|1[0-5])|  # the extended ones
+                                       [re][ds]i|       # the other 2
+                                       [re][bs]p)       # the last 2
+                                        """, re.I | re.X)
+
     rex_kcmdline    = re.compile(r'^\w+=([\w,]+)?$')
     rex_kdoc_arg    = re.compile(r'^@\w+:?$')
     rex_kdoc_cmt    = re.compile(r'\+\s*/\*\*\s*')
@@ -238,7 +245,13 @@ def load_spellchecker():
     rex_opts        = re.compile(r'-[\w\d=-]+$', re.I)
     rex_reg_field   = re.compile(r'\w+\[\d+(:\d+)?\]', re.I)
     rex_sections    = re.compile(r'\.(bss|data|head(\.text)?|text)')
-    rex_sent_end    = re.compile(r'\.(\s?([A-Z]|$))')
+
+    rex_sent_end    = re.compile(r"""\.((\s+)?      # catch all spaces after the end of the sentence
+                                                    # as some formatters add more than one for block
+                                                    # formatting
+                                  ([A-Z][a-z]+|$))  # Either another sentence starts here or EOL.
+                                  """, re.VERBOSE)
+
     rex_struct_mem  = re.compile(r'\w+->\w+')
     rex_sha1        = re.compile(r'[a-f0-9]{12,40}', re.I)
     rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9a-f]+(K|Mb))$')
@@ -365,7 +378,7 @@ def spellcheck(s, where, flags):
             verify_commit_ref(m.group('sha1'), m.group('commit_title'))
             continue
 
-        # special data in the commit message
+        # specially formatted text (cmdline output, etc) in the commit message, do not check
         if where == "commit message" and line.startswith("  "):
             continue
 
