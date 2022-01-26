@@ -486,7 +486,6 @@ EXPORT_SYMBOL_GPL(__srcu_read_unlock);
 static void srcu_gp_start(struct srcu_struct *ssp)
 {
 	struct srcu_data *sdp = this_cpu_ptr(ssp->sda);
-	int ss_state;
 	int state;
 
 	if (smp_load_acquire(&ssp->srcu_size_state) < SRCU_SIZE_WAIT_BARRIER)
@@ -502,16 +501,6 @@ static void srcu_gp_start(struct srcu_struct *ssp)
 				       rcu_seq_snap(&ssp->srcu_gp_seq));
 	spin_unlock_rcu_node(sdp);  /* Interrupts remain disabled. */
 	smp_mb(); /* Order prior store to ->srcu_gp_seq_needed vs. GP start. */
-
-	/* Transition to big if needed. */
-	ss_state = smp_load_acquire(&ssp->srcu_size_state);
-	if (ss_state && ss_state != SRCU_SIZE_BIG) {
-		if (ss_state == SRCU_SIZE_ALLOC)
-			init_srcu_struct_nodes(ssp, GFP_KERNEL);
-		else
-			smp_store_release(&ssp->srcu_size_state, ss_state + 1);
-	}
-
 	rcu_seq_start(&ssp->srcu_gp_seq);
 	state = rcu_seq_state(ssp->srcu_gp_seq);
 	WARN_ON_ONCE(state != SRCU_STATE_SCAN1);
@@ -584,6 +573,7 @@ static void srcu_gp_end(struct srcu_struct *ssp)
 	unsigned long mask;
 	struct srcu_data *sdp;
 	struct srcu_node *snp;
+	int ss_state;
 
 	/* Prevent more than one additional grace period. */
 	mutex_lock(&ssp->srcu_cb_mutex);
@@ -650,6 +640,15 @@ static void srcu_gp_end(struct srcu_struct *ssp)
 		srcu_reschedule(ssp, 0);
 	} else {
 		spin_unlock_irq_rcu_node(ssp);
+	}
+
+	/* Transition to big if needed. */
+	ss_state = smp_load_acquire(&ssp->srcu_size_state);
+	if (ss_state && ss_state != SRCU_SIZE_BIG) {
+		if (ss_state == SRCU_SIZE_ALLOC)
+			init_srcu_struct_nodes(ssp, GFP_KERNEL);
+		else
+			smp_store_release(&ssp->srcu_size_state, ss_state + 1);
 	}
 }
 
