@@ -170,12 +170,13 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          "AMX", "API", "APM", "APU", "arm64", "asm",
          "binutils", "bitmask", "bitfield", "CMCI", "cmdline", "config", "CPPC", "CPUID",
          "DMA", "DIMM", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
-         "FRU", "GHCB", "GHCI", "GPR", "GUID", "HLT", "hugepage",
-         "hypercall", "HV", "I/O", "initializer", "initrd", "IRQ", "JMP", "kallsyms",
-         "KASAN", "kdump", "KVM", "livepatch", "lvalue",
+         "FRU", "GHCB", "GHCI", "GPR", "GUID", "HLT", "hugepage", "Hygon", 
+         "hypercall", "HV", "I/O", "IBT", "initializer", "initrd", "IRQ", "JMP", "kallsyms",
+         "KASAN", "kdump", "KVM", "LFENCE", "livepatch", "lvalue",
          "MCA", "MCE", "memmove",
          "memtype", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
          "NX", "OEM", "offlining", "PASID", "PCI", "pdf", "percpu", "perf", "preemptible",
+         "prepend", # derived from append, not in the dictionaries
          "PTE", "PPIN",
          "PV", "PVALIDATE", "RDMSR", "rFLAGS", "RMP", "RMPADJUST", "Ryzen", "SEV", "SEV-ES",
          "SEV-SNP", "SIGSEGV", "Skylake", "SME", "SNP", "STI", "strtab", "struct", "swiotlb",
@@ -198,12 +199,14 @@ known_vars = [ '__BOOT_DS', 'cpuinfo_x86', 'fpstate', 'kobj_type', 'kptr_restric
 
 
 def load_spellchecker():
-    global dc, rex_asm_dir, \
-       rex_commit_ref, rex_fnames, rex_url, rex_sha1, rex_kdoc_arg, rex_decimal, rex_units, \
-       rex_x86_traps, rex_gpr, rex_kcmdline, rex_version, rex_c_keywords, rex_sections, rex_errval,\
-       rex_opts, rex_bla_adj, rex_word_bla, rex_reg_field, rex_misc_num, rex_sent_end, rex_word_split, \
-       regexes, regexes_pats, rex_brackets, rex_c_macro, rex_kdoc_cmt, rex_comment, \
-       rex_comment_end, rex_non_alpha, rex_struct_mem
+    global dc, regexes, regexes_pats, rex_asm_dir, rex_bla_adj, rex_brackets, \
+rex_c_keywords, rex_c_macro, rex_comment, rex_comment_end, \
+rex_commit_ref, rex_decimal, rex_errval, rex_fnames, rex_gpr, \
+rex_kcmdline, rex_kdoc_arg, rex_kdoc_cmt, rex_misc_num, rex_non_alpha, \
+rex_opts, rex_paths, rex_reg_field, rex_sections, rex_sent_end, rex_sha1, \
+rex_struct_mem, rex_units, rex_url, rex_version, rex_word_bla, \
+rex_word_split, rex_x86_traps
+
 
     dc = enchant.Dict("en_US")
 
@@ -243,6 +246,7 @@ def load_spellchecker():
     rex_misc_num    = re.compile(r'^#\d+$')
     rex_non_alpha   = re.compile(r'^[-]*$')
     rex_opts        = re.compile(r'-[\w\d=-]+$', re.I)
+    rex_paths       = re.compile(r'\s/[\w/_-]+\s')
     rex_reg_field   = re.compile(r'\w+\[\d+(:\d+)?\]', re.I)
     rex_sections    = re.compile(r'\.(bss|data|head(\.text)?|text)')
 
@@ -388,6 +392,9 @@ def spellcheck(s, where, flags):
         # filenames, ditto
         line = rex_fnames.sub('', line)
 
+        # paths... replace with a single \s because the regex is eating it
+        line = rex_paths.sub(' ', line)
+
         # remove fullstops ending a sentence - not other dots, as in "i.e." for example.
         line = rex_sent_end.sub(r' \1', line)
 
@@ -442,6 +449,11 @@ def spellcheck(s, where, flags):
             if spellcheck_regexes(w):
                 continue
 
+            # kernel cmdline params
+            if rex_kcmdline.match(w):
+                dbg("Skip cmdline param: [%s]" % (w, ))
+                continue
+
             # Check function names
             if flags and flags['check_func']:
                 ret = spellcheck_func_name(w, words[i - 1])
@@ -474,11 +486,6 @@ def spellcheck(s, where, flags):
             # x86 registers
             if rex_gpr.match(w):
                 dbg("Skip x86 register: [%s]" % (w, ))
-                continue
-
-            # kernel cmdline params
-            if rex_kcmdline.match(w):
-                dbg("Skip cmdline param: [%s]" % (w, ))
                 continue
 
             # versions...
@@ -913,7 +920,7 @@ class Patch:
         self.diffstat = "\n".join(dfst[:])
 
         dbg("\n" + self.diffstat)
-        dbg("EOF diffstat")
+        dbg("EOF diffstat, lines: %d" % (ret, ))
 
         return ret
 
@@ -965,6 +972,8 @@ class Patch:
             if line.startswith("diff") or line.startswith("---"):
                 break
             i += 1
+
+        dbg("i: %d" % (i, ))
 
         # plines contains the actual diff now, save it.
         self.diff = "\n".join(plines[i:])
@@ -1027,7 +1036,7 @@ class Patch:
         flags = { 'check_func': True }
         spellcheck(self.commit_msg, "commit message", flags)
 
-    def format_tags(self, f):
+    def format_tags(self, f, link_check=True):
         """
         @f: Write into this file stream
         """
@@ -1057,12 +1066,13 @@ class Patch:
             warn("Using Link URL from patch itself: %s" % (link_url, ))
             self.message_id = link_url
 
-        try:
-            get = requests.get(link_url)
-            if get.status_code != 200:
-                err("Link URL %s not reachable, status_code: %d" % (link_url, get.status_code, ))
-        except requests.exceptions.RequestException as e:
-            err("Exception %s while trying to get URL: %s" % (e, link_url, ))
+        if link_check:
+            try:
+                get = requests.get(link_url)
+                if get.status_code != 200:
+                    err("Link URL %s not reachable, status_code: %d" % (link_url, get.status_code, ))
+            except requests.exceptions.RequestException as e:
+                err("Exception %s while trying to get URL: %s" % (e, link_url, ))
 
         # slap the Link at the end only if no Link present
         if not od['Link']:
@@ -1085,9 +1095,11 @@ class Patch:
         self.verify_commit_message()
         self.verify_diff()
 
-    def format_patch(self):
+    def format_patch(self, link_check):
         """
         Write patch to tmp_dir after having processed it properly
+
+        @link_check: Check Link URL, pass to format_tags()
         """
 
         global tmp_dir
@@ -1119,7 +1131,7 @@ class Patch:
         f_out.write(("%s\n" % (self.commit_msg, )))
 
         info(" | tags:")
-        self.format_tags(f_out)
+        self.format_tags(f_out, link_check)
 
         f_out.write("---\n")
 
@@ -1217,7 +1229,7 @@ def verify_comment_style(pfile, h):
     if not pfile.endswith(('.c', '.h')): return
 
     # exceptions to the rule
-    if pfile == "arch/x86/include/asm/cpufeatures.h": return
+    if "arch/x86/include/asm/cpufeatures.h" in pfile: return
 
     rex_tail_comment = re.compile(r'^.*[;)]\s*/\*.*$')
 
@@ -1281,7 +1293,7 @@ def main(args):
 
     print(p)
 
-    p.format_patch()
+    p.format_patch(not args.no_link_check)
 
 def parse_config_file():
     global tmp_dir, sob
@@ -1322,6 +1334,11 @@ def init_parser():
                         help="Force patch writeout")
 
     parser.add_argument('infile', nargs=1)
+
+    parser.add_argument("--no-link-check",
+                        action="store_true",
+                        default=False,
+                        help="Do not check whether the Link tag URL is accessible")
 
     parser.add_argument("-v", "--verbose",
                         action="count",
