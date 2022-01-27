@@ -771,7 +771,6 @@ static struct rcu_torture_ops tasks_ops = {
 	.call		= call_rcu_tasks,
 	.cb_barrier	= rcu_barrier_tasks,
 	.gp_kthread_dbg	= show_rcu_tasks_classic_gp_kthread,
-	.cbflood_max	= 50000,
 	.fqs		= NULL,
 	.stats		= NULL,
 	.irq_capable	= 1,
