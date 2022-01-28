@@ -1046,7 +1046,7 @@ SYSCALL_DEFINE3(swapcontext, struct ucontext __user *, old_ctx,
 		if (!user_write_access_begin(old_ctx, ctx_size))
 			return -EFAULT;
 		unsafe_save_user_regs(regs, mctx, NULL, ctx_has_vsx_region, failed);
-		unsafe_put_sigset_t(&old_ctx->uc_sigmask, &current->blocked, failed);
+		unsafe_put_sigset_t(&old_ctx->uc_sigmask, &per_task(current, blocked), failed);
 		unsafe_put_user(to_user_ptr(mctx), &old_ctx->uc_regs, failed);
 		user_write_access_end();
 	}

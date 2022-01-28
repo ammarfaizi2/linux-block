@@ -199,7 +199,7 @@ mISDNStackd(void *data)
 #endif
 	int err = 0;
 
-	sigfillset(&current->blocked);
+	sigfillset(&per_task(current, blocked));
 	if (*debug & DEBUG_MSG_THREAD)
 		printk(KERN_DEBUG "mISDNStackd %s started\n",
 		       dev_name(&st->dev->dev));

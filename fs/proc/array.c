@@ -274,7 +274,7 @@ static inline void task_sig(struct seq_file *m, struct task_struct *p)
 	if (lock_task_sighand(p, &flags)) {
 		pending = p->pending.signal;
 		shpending = p->signal->shared_pending.signal;
-		blocked = p->blocked;
+		blocked = per_task(p, blocked);
 		collect_sigign_sigcatch(p, &ignored, &caught);
 		num_threads = get_nr_threads(p);
 		rcu_read_lock();  /* FIXME: is this correct? */
@@ -603,7 +603,8 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 	 * Use /proc/#/status for real-time signals.
 	 */
 	seq_put_decimal_ull(m, " ", task->pending.signal.sig[0] & 0x7fffffffUL);
-	seq_put_decimal_ull(m, " ", task->blocked.sig[0] & 0x7fffffffUL);
+	seq_put_decimal_ull(m, " ",
+			    per_task(task, blocked).sig[0] & 0x7fffffffUL);
 	seq_put_decimal_ull(m, " ", sigign.sig[0] & 0x7fffffffUL);
 	seq_put_decimal_ull(m, " ", sigcatch.sig[0] & 0x7fffffffUL);
 

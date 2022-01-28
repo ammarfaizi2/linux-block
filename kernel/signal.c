@@ -49,6 +49,9 @@
 
 DEFINE_PER_TASK(struct restart_block, restart_block);
 
+DEFINE_PER_TASK(sigset_t, blocked);
+
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/signal.h>
 
@@ -108,7 +111,7 @@ static bool sig_ignored(struct task_struct *t, int sig, bool force)
 	 * signal handler may change by the time it is
 	 * unblocked.
 	 */
-	if (sigismember(&t->blocked, sig) || sigismember(&t->real_blocked, sig))
+	if (sigismember(&per_task(t, blocked), sig) || sigismember(&t->real_blocked, sig))
 		return false;
 
 	/*
@@ -157,8 +160,8 @@ static inline bool has_pending_signals(sigset_t *signal, sigset_t *blocked)
 static bool recalc_sigpending_tsk(struct task_struct *t)
 {
 	if ((t->jobctl & (JOBCTL_PENDING_MASK | JOBCTL_TRAP_FREEZE)) ||
-	    PENDING(&t->pending, &t->blocked) ||
-	    PENDING(&t->signal->shared_pending, &t->blocked) ||
+	    PENDING(&t->pending, &per_task(t, blocked)) ||
+	    PENDING(&t->signal->shared_pending, &per_task(t, blocked)) ||
 	    cgroup_task_frozen(t)) {
 		set_tsk_thread_flag(t, TIF_SIGPENDING);
 		return true;
@@ -719,7 +722,7 @@ static int dequeue_synchronous_signal(kernel_siginfo_t *info)
 	/*
 	 * Might a synchronous signal be in the queue?
 	 */
-	if (!((pending->signal.sig[0] & ~tsk->blocked.sig[0]) & SYNCHRONOUS_MASK))
+	if (!((pending->signal.sig[0] & ~per_task(tsk, blocked).sig[0]) & SYNCHRONOUS_MASK))
 		return 0;
 
 	/*
@@ -978,7 +981,7 @@ static bool prepare_signal(int sig, struct task_struct *p, bool force)
  */
 static inline bool wants_signal(int sig, struct task_struct *p)
 {
-	if (sigismember(&p->blocked, sig))
+	if (sigismember(&per_task(p, blocked), sig))
 		return false;
 
 	if (p->flags & PF_EXITING)
@@ -1333,13 +1336,13 @@ force_sig_info_to_task(struct kernel_siginfo *info, struct task_struct *t,
 	spin_lock_irqsave(&t->sighand->siglock, flags);
 	action = &t->sighand->action[sig-1];
 	ignored = action->sa.sa_handler == SIG_IGN;
-	blocked = sigismember(&t->blocked, sig);
+	blocked = sigismember(&per_task(t, blocked), sig);
 	if (blocked || ignored || (handler != HANDLER_CURRENT)) {
 		action->sa.sa_handler = SIG_DFL;
 		if (handler == HANDLER_EXIT)
 			action->sa.sa_flags |= SA_IMMUTABLE;
 		if (blocked) {
-			sigdelset(&t->blocked, sig);
+			sigdelset(&per_task(t, blocked), sig);
 			recalc_sigpending_and_wake(t);
 		}
 	}
@@ -2593,7 +2596,7 @@ static int ptrace_signal(int signr, kernel_siginfo_t *info, enum pid_type type)
 	}
 
 	/* If the (new) signal is now blocked, requeue it.  */
-	if (sigismember(&current->blocked, signr) ||
+	if (sigismember(&per_task(current, blocked), signr) ||
 	    fatal_signal_pending(current)) {
 		send_signal(signr, info, current, type);
 		signr = 0;
@@ -2743,7 +2746,7 @@ relock:
 		type = PIDTYPE_PID;
 		signr = dequeue_synchronous_signal(&ksig->info);
 		if (!signr)
-			signr = dequeue_signal(current, &current->blocked,
+			signr = dequeue_signal(current, &per_task(current, blocked),
 					       &ksig->info, &type);
 
 		if (!signr)
@@ -2896,7 +2899,7 @@ static void signal_delivered(struct ksignal *ksig, int stepping)
 	   simply clear the restore sigmask flag.  */
 	clear_restore_sigmask();
 
-	sigorsets(&blocked, &current->blocked, &ksig->ka.sa.sa_mask);
+	sigorsets(&blocked, &per_task(current, blocked), &ksig->ka.sa.sa_mask);
 	if (!(ksig->ka.sa.sa_flags & SA_NODEFER))
 		sigaddset(&blocked, ksig->sig);
 	set_current_blocked(&blocked);
@@ -2932,10 +2935,10 @@ static void retarget_shared_pending(struct task_struct *tsk, sigset_t *which)
 		if (t->flags & PF_EXITING)
 			continue;
 
-		if (!has_pending_signals(&retarget, &t->blocked))
+		if (!has_pending_signals(&retarget, &per_task(t, blocked)))
 			continue;
 		/* Remove the signals this thread can handle. */
-		sigandsets(&retarget, &retarget, &t->blocked);
+		sigandsets(&retarget, &retarget, &per_task(t, blocked));
 
 		if (!task_sigpending(t))
 			signal_wake_up(t, 0);
@@ -2974,7 +2977,7 @@ void exit_signals(struct task_struct *tsk)
 	if (!task_sigpending(tsk))
 		goto out;
 
-	unblocked = tsk->blocked;
+	unblocked = per_task(tsk, blocked);
 	signotset(&unblocked);
 	retarget_shared_pending(tsk, &unblocked);
 
@@ -3018,10 +3021,10 @@ static void __set_task_blocked(struct task_struct *tsk, const sigset_t *newset)
 	if (task_sigpending(tsk) && !thread_group_empty(tsk)) {
 		sigset_t newblocked;
 		/* A set of now blocked but previously unblocked signals. */
-		sigandnsets(&newblocked, newset, &current->blocked);
+		sigandnsets(&newblocked, newset, &per_task(current, blocked));
 		retarget_shared_pending(tsk, &newblocked);
 	}
-	tsk->blocked = *newset;
+	per_task(tsk, blocked) = *newset;
 	recalc_sigpending();
 }
 
@@ -3046,7 +3049,7 @@ void __set_current_blocked(const sigset_t *newset)
 	 * In case the signal mask hasn't changed, there is nothing we need
 	 * to do. The current->blocked shouldn't be modified by other task.
 	 */
-	if (sigequalsets(&tsk->blocked, newset))
+	if (sigequalsets(&per_task(tsk, blocked), newset))
 		return;
 
 	spin_lock_irq(&tsk->sighand->siglock);
@@ -3069,14 +3072,14 @@ int sigprocmask(int how, sigset_t *set, sigset_t *oldset)
 
 	/* Lockless, only current can change ->blocked, never from irq */
 	if (oldset)
-		*oldset = tsk->blocked;
+		*oldset = per_task(tsk, blocked);
 
 	switch (how) {
 	case SIG_BLOCK:
-		sigorsets(&newset, &tsk->blocked, set);
+		sigorsets(&newset, &per_task(tsk, blocked), set);
 		break;
 	case SIG_UNBLOCK:
-		sigandnsets(&newset, &tsk->blocked, set);
+		sigandnsets(&newset, &per_task(tsk, blocked), set);
 		break;
 	case SIG_SETMASK:
 		newset = *set;
@@ -3111,7 +3114,7 @@ int set_user_sigmask(const sigset_t __user *umask, size_t sigsetsize)
 		return -EFAULT;
 
 	set_restore_sigmask();
-	current->saved_sigmask = current->blocked;
+	current->saved_sigmask = per_task(current, blocked);
 	set_current_blocked(&kmask);
 
 	return 0;
@@ -3131,7 +3134,7 @@ int set_compat_user_sigmask(const compat_sigset_t __user *umask,
 		return -EFAULT;
 
 	set_restore_sigmask();
-	current->saved_sigmask = current->blocked;
+	current->saved_sigmask = per_task(current, blocked);
 	set_current_blocked(&kmask);
 
 	return 0;
@@ -3155,7 +3158,7 @@ SYSCALL_DEFINE4(rt_sigprocmask, int, how, sigset_t __user *, nset,
 	if (sigsetsize != sizeof(sigset_t))
 		return -EINVAL;
 
-	old_set = current->blocked;
+	old_set = per_task(current, blocked);
 
 	if (nset) {
 		if (copy_from_user(&new_set, nset, sizeof(sigset_t)))
@@ -3179,7 +3182,7 @@ SYSCALL_DEFINE4(rt_sigprocmask, int, how, sigset_t __user *, nset,
 COMPAT_SYSCALL_DEFINE4(rt_sigprocmask, int, how, compat_sigset_t __user *, nset,
 		compat_sigset_t __user *, oset, compat_size_t, sigsetsize)
 {
-	sigset_t old_set = current->blocked;
+	sigset_t old_set = per_task(current, blocked);
 
 	/* XXX: Don't preclude handling different sized sigset_t's.  */
 	if (sigsetsize != sizeof(sigset_t))
@@ -3208,7 +3211,7 @@ static void do_sigpending(sigset_t *set)
 	spin_unlock_irq(&current->sighand->siglock);
 
 	/* Outside the lock because only this thread touches it.  */
-	sigandsets(set, &current->blocked, set);
+	sigandsets(set, &per_task(current, blocked), set);
 }
 
 /**
@@ -3601,8 +3604,9 @@ static int do_sigtimedwait(const sigset_t *which, kernel_siginfo_t *info,
 		 * they arrive. Unblocking is always fine, we can avoid
 		 * set_current_blocked().
 		 */
-		tsk->real_blocked = tsk->blocked;
-		sigandsets(&tsk->blocked, &tsk->blocked, &mask);
+		tsk->real_blocked = per_task(tsk, blocked);
+		sigandsets(&per_task(tsk, blocked), &per_task(tsk, blocked),
+			   &mask);
 		recalc_sigpending();
 		spin_unlock_irq(&tsk->sighand->siglock);
 
@@ -4370,13 +4374,13 @@ SYSCALL_DEFINE3(sigprocmask, int, how, old_sigset_t __user *, nset,
 	old_sigset_t old_set, new_set;
 	sigset_t new_blocked;
 
-	old_set = current->blocked.sig[0];
+	old_set = per_task(current, blocked).sig[0];
 
 	if (nset) {
 		if (copy_from_user(&new_set, nset, sizeof(*nset)))
 			return -EFAULT;
 
-		new_blocked = current->blocked;
+		new_blocked = per_task(current, blocked);
 
 		switch (how) {
 		case SIG_BLOCK:
@@ -4569,12 +4573,12 @@ COMPAT_SYSCALL_DEFINE3(sigaction, int, sig,
 SYSCALL_DEFINE0(sgetmask)
 {
 	/* SMP safe */
-	return current->blocked.sig[0];
+	return per_task(current, blocked).sig[0];
 }
 
 SYSCALL_DEFINE1(ssetmask, int, newmask)
 {
-	int old = current->blocked.sig[0];
+	int old = per_task(current, blocked).sig[0];
 	sigset_t newset;
 
 	siginitset(&newset, newmask);
@@ -4618,7 +4622,7 @@ SYSCALL_DEFINE0(pause)
 
 static int sigsuspend(sigset_t *set)
 {
-	current->saved_sigmask = current->blocked;
+	current->saved_sigmask = per_task(current, blocked);
 	set_current_blocked(set);
 
 	while (!signal_pending(current)) {

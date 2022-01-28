@@ -616,12 +616,12 @@ int venus_access_intent(struct super_block *sb, struct CodaFid *fid,
 static void coda_block_signals(sigset_t *old)
 {
 	spin_lock_irq(&current->sighand->siglock);
-	*old = current->blocked;
+	*old = per_task(current, blocked);
 
-	sigfillset(&current->blocked);
-	sigdelset(&current->blocked, SIGKILL);
-	sigdelset(&current->blocked, SIGSTOP);
-	sigdelset(&current->blocked, SIGINT);
+	sigfillset(&per_task(current, blocked));
+	sigdelset(&per_task(current, blocked), SIGKILL);
+	sigdelset(&per_task(current, blocked), SIGSTOP);
+	sigdelset(&per_task(current, blocked), SIGINT);
 
 	recalc_sigpending();
 	spin_unlock_irq(&current->sighand->siglock);
@@ -630,7 +630,7 @@ static void coda_block_signals(sigset_t *old)
 static void coda_unblock_signals(sigset_t *old)
 {
 	spin_lock_irq(&current->sighand->siglock);
-	current->blocked = *old;
+	per_task(current, blocked) = *old;
 	recalc_sigpending();
 	spin_unlock_irq(&current->sighand->siglock);
 }

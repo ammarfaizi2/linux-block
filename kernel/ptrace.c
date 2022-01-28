@@ -1084,7 +1084,7 @@ int ptrace_request(struct task_struct *child, long request,
 		if (test_tsk_restore_sigmask(child))
 			mask = &child->saved_sigmask;
 		else
-			mask = &child->blocked;
+			mask = &per_task(child, blocked);
 
 		if (copy_to_user(datavp, mask, sizeof(sigset_t)))
 			ret = -EFAULT;
@@ -1115,7 +1115,7 @@ int ptrace_request(struct task_struct *child, long request,
 		 * called here.
 		 */
 		spin_lock_irq(&child->sighand->siglock);
-		child->blocked = new_set;
+		per_task(child, blocked) = new_set;
 		spin_unlock_irq(&child->sighand->siglock);
 
 		clear_tsk_restore_sigmask(child);

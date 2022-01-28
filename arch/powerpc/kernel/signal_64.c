@@ -681,7 +681,8 @@ SYSCALL_DEFINE3(swapcontext, struct ucontext __user *, old_ctx,
 
 		unsafe_setup_sigcontext(&old_ctx->uc_mcontext, current, 0, NULL,
 					0, ctx_has_vsx_region, efault_out);
-		unsafe_copy_to_user(&old_ctx->uc_sigmask, &current->blocked,
+		unsafe_copy_to_user(&old_ctx->uc_sigmask,
+				    &per_task(current, blocked),
 				    sizeof(sigset_t), efault_out);
 
 		user_write_access_end();

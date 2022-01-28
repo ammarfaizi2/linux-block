@@ -15,6 +15,7 @@
 #include <asm/ptrace.h>
 
 DECLARE_PER_TASK(struct restart_block, restart_block);
+DECLARE_PER_TASK(sigset_t, blocked);
 
 /*
  * Types defining task->signal and task->sighand and APIs using them:
@@ -288,7 +289,7 @@ static inline int kernel_dequeue_signal(void)
 	int ret;
 
 	spin_lock_irq(&task->sighand->siglock);
-	ret = dequeue_signal(task, &task->blocked, &__info, &__type);
+	ret = dequeue_signal(task, &per_task(task, blocked), &__info, &__type);
 	spin_unlock_irq(&task->sighand->siglock);
 
 	return ret;
@@ -526,7 +527,7 @@ static inline void restore_saved_sigmask_unless(bool interrupted)
 
 static inline sigset_t *sigmask_to_save(void)
 {
-	sigset_t *res = &current->blocked;
+	sigset_t *res = &per_task(current, blocked);
 	if (unlikely(test_restore_sigmask()))
 		res = &current->saved_sigmask;
 	return res;
