@@ -99,10 +99,6 @@ struct task_struct init_task
 	.signal		= &init_signals,
 	.sighand	= &init_sighand,
 	.nsproxy	= &init_nsproxy,
-	.pending	= {
-		.list = LIST_HEAD_INIT(init_task.pending.list),
-		.signal = {{0}}
-	},
 	.alloc_lock	= __SPIN_LOCK_UNLOCKED(init_task.alloc_lock),
 	.journal_info	= NULL,
 	.pi_lock	= __RAW_SPIN_LOCK_UNLOCKED(init_task.pi_lock),
