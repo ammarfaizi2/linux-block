@@ -864,9 +864,6 @@ struct task_struct {
 #endif
 
 #ifdef CONFIG_KCSAN
-#ifdef CONFIG_TRACE_IRQFLAGS
-	struct irqtrace_events		kcsan_save_irqtrace;
-#endif
 #ifdef CONFIG_KCSAN_WEAK_MEMORY
 	int				kcsan_stack_depth;
 #endif
