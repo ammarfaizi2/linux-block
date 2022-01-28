@@ -97,6 +97,7 @@ DEFINE_PER_TASK(int,					on_rq);
 
 DEFINE_PER_TASK(struct sched_rt_entity,			rt);
 DEFINE_PER_TASK(const struct sched_class *,		sched_class);
+DEFINE_PER_TASK(struct sched_entity,			se);
 
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
@@ -1289,7 +1290,7 @@ int tg_nop(struct task_group *tg, void *data)
 static void set_load_weight(struct task_struct *p, bool update_load)
 {
 	int prio = p->static_prio - MAX_RT_PRIO;
-	struct load_weight *load = &p->se.load;
+	struct load_weight *load = &per_task(p, se).load;
 
 	/*
 	 * SCHED_IDLE tasks get minimal weight:
@@ -3142,7 +3143,7 @@ void set_task_cpu(struct task_struct *p, unsigned int new_cpu)
 	if (task_cpu(p) != new_cpu) {
 		if (per_task(p, sched_class)->migrate_task_rq)
 			per_task(p, sched_class)->migrate_task_rq(p, new_cpu);
-		p->se.nr_migrations++;
+		per_task(p, se).nr_migrations++;
 		rseq_migrate(p);
 		perf_event_task_migrate(p);
 	}
@@ -4315,16 +4316,16 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 {
 	per_task(p, on_rq)			= 0;
 
-	p->se.on_rq			= 0;
-	p->se.exec_start		= 0;
-	p->se.sum_exec_runtime		= 0;
-	p->se.prev_sum_exec_runtime	= 0;
-	p->se.nr_migrations		= 0;
-	p->se.vruntime			= 0;
-	INIT_LIST_HEAD(&p->se.group_node);
+	per_task(p, se).on_rq			= 0;
+	per_task(p, se).exec_start		= 0;
+	per_task(p, se).sum_exec_runtime		= 0;
+	per_task(p, se).prev_sum_exec_runtime	= 0;
+	per_task(p, se).nr_migrations		= 0;
+	per_task(p, se).vruntime			= 0;
+	INIT_LIST_HEAD(&per_task(p, se).group_node);
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
-	p->se.cfs_rq			= NULL;
+	per_task(p, se).cfs_rq			= NULL;
 #endif
 
 #ifdef CONFIG_SCHEDSTATS
@@ -4504,7 +4505,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 	else
 		per_task(p, sched_class) = &fair_sched_class;
 
-	init_entity_runnable_average(&p->se);
+	init_entity_runnable_average(&per_task(p, se));
 
 
 #ifdef CONFIG_SCHED_INFO
@@ -5223,7 +5224,7 @@ EXPORT_PER_CPU_SYMBOL(kernel_cpustat);
 static inline void prefetch_curr_exec_start(struct task_struct *p)
 {
 #ifdef CONFIG_FAIR_GROUP_SCHED
-	struct sched_entity *curr = (&p->se)->cfs_rq->curr;
+	struct sched_entity *curr = (&per_task(p, se))->cfs_rq->curr;
 #else
 	struct sched_entity *curr = (&task_rq(p)->cfs)->curr;
 #endif
@@ -5255,7 +5256,7 @@ unsigned long long task_sched_runtime(struct task_struct *p)
 	 * been accounted, so we're correct here as well.
 	 */
 	if (!p->on_cpu || !task_on_rq_queued(p))
-		return p->se.sum_exec_runtime;
+		return per_task(p, se).sum_exec_runtime;
 #endif
 
 	rq = task_rq_lock(p, &rf);
@@ -5269,7 +5270,7 @@ unsigned long long task_sched_runtime(struct task_struct *p)
 		update_rq_clock(rq);
 		per_task(p, sched_class)->update_curr(rq);
 	}
-	ns = p->se.sum_exec_runtime;
+	ns = per_task(p, se).sum_exec_runtime;
 	task_rq_unlock(rq, p, &rf);
 
 	return ns;
@@ -5434,7 +5435,7 @@ static void sched_tick_remote(struct work_struct *work)
 		 * Make sure the next tick runs within a reasonable
 		 * amount of time.
 		 */
-		delta = rq_clock_task(rq) - curr->se.exec_start;
+		delta = rq_clock_task(rq) - per_task(curr, se).exec_start;
 		WARN_ON_ONCE(delta > (u64)NSEC_PER_SEC * 3);
 	}
 	per_task(curr, sched_class)->task_tick(rq, curr, 0);
@@ -8815,7 +8816,7 @@ void __init init_idle(struct task_struct *idle, int cpu)
 	raw_spin_rq_lock(rq);
 
 	idle->__state = TASK_RUNNING;
-	idle->se.exec_start = sched_clock();
+	per_task(idle, se).exec_start = sched_clock();
 	/*
 	 * PF_KTHREAD should already be set at this point; regardless, make it
 	 * look like a proper per-CPU kthread.
@@ -9852,7 +9853,7 @@ void normalize_rt_tasks(void)
 		if (p->flags & PF_KTHREAD)
 			continue;
 
-		p->se.exec_start = 0;
+		per_task(p, se).exec_start = 0;
 		schedstat_set(p->stats.wait_start,  0);
 		schedstat_set(p->stats.sleep_start, 0);
 		schedstat_set(p->stats.block_start, 0);

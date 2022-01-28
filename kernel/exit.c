@@ -69,6 +69,8 @@
 #include <asm/unistd.h>
 #include <asm/mmu_context.h>
 
+#include "sched/sched.h"
+
 static void __unhash_process(struct task_struct *p, bool group_dead)
 {
 	nr_threads--;
@@ -122,7 +124,7 @@ static void __exit_signal(struct task_struct *tsk)
 			sig->curr_target = next_thread(tsk);
 	}
 
-	add_device_randomness((const void*) &tsk->se.sum_exec_runtime,
+	add_device_randomness((const void*) &per_task(tsk, se).sum_exec_runtime,
 			      sizeof(unsigned long long));
 
 	/*
@@ -143,7 +145,7 @@ static void __exit_signal(struct task_struct *tsk)
 	sig->inblock += task_io_get_inblock(tsk);
 	sig->oublock += task_io_get_oublock(tsk);
 	task_io_accounting_add(&sig->ioac, &tsk->ioac);
-	sig->sum_sched_runtime += tsk->se.sum_exec_runtime;
+	sig->sum_sched_runtime += per_task(tsk, se).sum_exec_runtime;
 	sig->nr_threads--;
 	__unhash_process(tsk, group_dead);
 	write_sequnlock(&sig->stats_lock);

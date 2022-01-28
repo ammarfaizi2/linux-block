@@ -219,7 +219,7 @@ static void task_sample_cputime(struct task_struct *p, u64 *samples)
 	u64 stime, utime;
 
 	task_cputime(p, &utime, &stime);
-	store_samples(samples, stime, utime, p->se.sum_exec_runtime);
+	store_samples(samples, stime, utime, per_task(p, se).sum_exec_runtime);
 }
 
 static void proc_sample_cputime_atomic(struct task_cputime_atomic *at,

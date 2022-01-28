@@ -819,7 +819,7 @@ static void attach_entity_cfs_rq(struct sched_entity *se);
  */
 void post_init_entity_util_avg(struct task_struct *p)
 {
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 	struct cfs_rq *cfs_rq = cfs_rq_of(se);
 	struct sched_avg *sa = &se->avg;
 	long cpu_scale = arch_scale_cpu_capacity(cpu_of(rq_of(cfs_rq)));
@@ -914,7 +914,7 @@ static void update_curr(struct cfs_rq *cfs_rq)
 
 static void update_curr_fair(struct rq *rq)
 {
-	update_curr(cfs_rq_of(&rq->curr->se));
+	update_curr(cfs_rq_of(&per_task(rq->curr, se)));
 }
 
 static inline void
@@ -2232,8 +2232,8 @@ static u64 numa_get_avg_runtime(struct task_struct *p, u64 *period)
 {
 	u64 runtime, delta, now;
 	/* Use the start of this time slice to avoid calculations. */
-	now = p->se.exec_start;
-	runtime = p->se.sum_exec_runtime;
+	now = per_task(p, se).exec_start;
+	runtime = per_task(p, se).sum_exec_runtime;
 
 	if (p->last_task_numa_placement) {
 		delta = runtime - p->last_sum_exec_runtime;
@@ -2243,7 +2243,7 @@ static u64 numa_get_avg_runtime(struct task_struct *p, u64 *period)
 		if (unlikely((s64)*period < 0))
 			*period = 0;
 	} else {
-		delta = p->se.avg.load_sum;
+		delta = per_task(p, se).avg.load_sum;
 		*period = LOAD_AVG_MAX;
 	}
 
@@ -2720,7 +2720,7 @@ static void task_numa_work(struct callback_head *work)
 	unsigned long migrate, next_scan, now = jiffies;
 	struct task_struct *p = current;
 	struct mm_struct *mm = p->mm;
-	u64 runtime = p->se.sum_exec_runtime;
+	u64 runtime = per_task(p, se).sum_exec_runtime;
 	struct vm_area_struct *vma;
 	unsigned long start, end;
 	unsigned long nr_pte_updates = 0;
@@ -2851,8 +2851,8 @@ out:
 	 * Usually update_task_scan_period slows down scanning enough; on an
 	 * overloaded system we need to limit overhead on a per task basis.
 	 */
-	if (unlikely(p->se.sum_exec_runtime != runtime)) {
-		u64 diff = p->se.sum_exec_runtime - runtime;
+	if (unlikely(per_task(p, se).sum_exec_runtime != runtime)) {
+		u64 diff = per_task(p, se).sum_exec_runtime - runtime;
 		p->node_stamp += 32 * diff;
 	}
 }
@@ -2923,7 +2923,7 @@ static void task_tick_numa(struct rq *rq, struct task_struct *curr)
 	 * task needs to have done some actual work before we bother with
 	 * NUMA placement.
 	 */
-	now = curr->se.sum_exec_runtime;
+	now = per_task(curr, se).sum_exec_runtime;
 	period = (u64)curr->numa_scan_period * NSEC_PER_MSEC;
 
 	if (now > curr->node_stamp + period) {
@@ -3122,7 +3122,7 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
 
 void reweight_task(struct task_struct *p, int prio)
 {
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 	struct cfs_rq *cfs_rq = cfs_rq_of(se);
 	struct load_weight *load = &se->load;
 	unsigned long weight = scale_load(sched_prio_to_weight[prio]);
@@ -3993,12 +3993,12 @@ static int newidle_balance(struct rq *this_rq, struct rq_flags *rf);
 
 static inline unsigned long task_util(struct task_struct *p)
 {
-	return READ_ONCE(p->se.avg.util_avg);
+	return READ_ONCE(per_task(p, se).avg.util_avg);
 }
 
 static inline unsigned long _task_util_est(struct task_struct *p)
 {
-	struct util_est ue = READ_ONCE(p->se.avg.util_est);
+	struct util_est ue = READ_ONCE(per_task(p, se).avg.util_est);
 
 	return max(ue.ewma, (ue.enqueued & ~UTIL_AVG_UNCHANGED));
 }
@@ -4090,7 +4090,7 @@ static inline void util_est_update(struct cfs_rq *cfs_rq,
 	 * If the PELT values haven't changed since enqueue time,
 	 * skip the util_est update.
 	 */
-	ue = p->se.avg.util_est;
+	ue = per_task(p, se).avg.util_est;
 	if (ue.enqueued & UTIL_AVG_UNCHANGED)
 		return;
 
@@ -4150,9 +4150,9 @@ static inline void util_est_update(struct cfs_rq *cfs_rq,
 	ue.ewma >>= UTIL_EST_WEIGHT_SHIFT;
 done:
 	ue.enqueued |= UTIL_AVG_UNCHANGED;
-	WRITE_ONCE(p->se.avg.util_est, ue);
+	WRITE_ONCE(per_task(p, se).avg.util_est, ue);
 
-	trace_sched_util_est_se_tp(&p->se);
+	trace_sched_util_est_se_tp(&per_task(p, se));
 }
 
 static inline int task_fits_capacity(struct task_struct *p,
@@ -5549,7 +5549,7 @@ static inline void unthrottle_offline_cfs_rqs(struct rq *rq) {}
 #ifdef CONFIG_SCHED_HRTICK
 static void hrtick_start_fair(struct rq *rq, struct task_struct *p)
 {
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 	struct cfs_rq *cfs_rq = cfs_rq_of(se);
 
 	SCHED_WARN_ON(task_rq(p) != rq);
@@ -5580,7 +5580,7 @@ static void hrtick_update(struct rq *rq)
 	if (!hrtick_enabled_fair(rq) || per_task(curr, sched_class) != &fair_sched_class)
 		return;
 
-	if (cfs_rq_of(&curr->se)->nr_running < sched_nr_latency)
+	if (cfs_rq_of(&per_task(curr, se))->nr_running < sched_nr_latency)
 		hrtick_start_fair(rq, curr);
 }
 #else /* !CONFIG_SCHED_HRTICK */
@@ -5645,7 +5645,7 @@ static void
 enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 {
 	struct cfs_rq *cfs_rq;
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 	int idle_h_nr_running = task_has_idle_policy(p);
 	int task_new = !(flags & ENQUEUE_WAKEUP);
 
@@ -5760,7 +5760,7 @@ static void set_next_buddy(struct sched_entity *se);
 static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 {
 	struct cfs_rq *cfs_rq;
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 	int task_sleep = flags & DEQUEUE_SLEEP;
 	int idle_h_nr_running = task_has_idle_policy(p);
 	bool was_sched_idle = sched_idle_rq(rq);
@@ -5870,7 +5870,7 @@ static unsigned long cpu_load_without(struct rq *rq, struct task_struct *p)
 	unsigned int load;
 
 	/* Task has no contribution or is new */
-	if (cpu_of(rq) != task_cpu(p) || !READ_ONCE(p->se.avg.last_update_time))
+	if (cpu_of(rq) != task_cpu(p) || !READ_ONCE(per_task(p, se).avg.last_update_time))
 		return cpu_load(rq);
 
 	cfs_rq = &rq->cfs;
@@ -5893,14 +5893,14 @@ static unsigned long cpu_runnable_without(struct rq *rq, struct task_struct *p)
 	unsigned int runnable;
 
 	/* Task has no contribution or is new */
-	if (cpu_of(rq) != task_cpu(p) || !READ_ONCE(p->se.avg.last_update_time))
+	if (cpu_of(rq) != task_cpu(p) || !READ_ONCE(per_task(p, se).avg.last_update_time))
 		return cpu_runnable(rq);
 
 	cfs_rq = &rq->cfs;
 	runnable = READ_ONCE(cfs_rq->avg.runnable_avg);
 
 	/* Discount task's runnable from CPU's runnable */
-	lsub_positive(&runnable, p->se.avg.runnable_avg);
+	lsub_positive(&runnable, per_task(p, se).avg.runnable_avg);
 
 	return runnable;
 }
@@ -6135,7 +6135,7 @@ static inline int find_idlest_cpu(struct sched_domain *sd, struct task_struct *p
 	 * prev_cpu's last_update_time.
 	 */
 	if (!(sd_flag & SD_BALANCE_FORK))
-		sync_entity_load_avg(&p->se);
+		sync_entity_load_avg(&per_task(p, se));
 
 	while (sd) {
 		struct sched_group *group;
@@ -6452,7 +6452,7 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
 	 * that the task fits with cpu's capacity.
 	 */
 	if (static_branch_unlikely(&sched_asym_cpucapacity)) {
-		sync_entity_load_avg(&p->se);
+		sync_entity_load_avg(&per_task(p, se));
 		task_util = uclamp_task_util(p);
 	}
 
@@ -6561,7 +6561,7 @@ static unsigned long cpu_util_without(int cpu, struct task_struct *p)
 	unsigned int util;
 
 	/* Task has no contribution or is new */
-	if (cpu != task_cpu(p) || !READ_ONCE(p->se.avg.last_update_time))
+	if (cpu != task_cpu(p) || !READ_ONCE(per_task(p, se).avg.last_update_time))
 		return cpu_util_cfs(cpu);
 
 	cfs_rq = &cpu_rq(cpu)->cfs;
@@ -6807,7 +6807,7 @@ static int find_energy_efficient_cpu(struct task_struct *p, int prev_cpu)
 
 	target = prev_cpu;
 
-	sync_entity_load_avg(&p->se);
+	sync_entity_load_avg(&per_task(p, se));
 	if (!task_util_est(p))
 		goto unlock;
 
@@ -6988,7 +6988,7 @@ static void migrate_task_rq_fair(struct task_struct *p, int new_cpu)
 	 * the task on the new runqueue.
 	 */
 	if (READ_ONCE(p->__state) == TASK_WAKING) {
-		struct sched_entity *se = &p->se;
+		struct sched_entity *se = &per_task(p, se);
 		struct cfs_rq *cfs_rq = cfs_rq_of(se);
 		u64 min_vruntime;
 
@@ -7013,7 +7013,7 @@ static void migrate_task_rq_fair(struct task_struct *p, int new_cpu)
 		 * rq->lock and can modify state directly.
 		 */
 		lockdep_assert_rq_held(task_rq(p));
-		detach_entity_cfs_rq(&p->se);
+		detach_entity_cfs_rq(&per_task(p, se));
 
 	} else {
 		/*
@@ -7024,21 +7024,21 @@ static void migrate_task_rq_fair(struct task_struct *p, int new_cpu)
 		 * wakee task is less decayed, but giving the wakee more load
 		 * sounds not bad.
 		 */
-		remove_entity_load_avg(&p->se);
+		remove_entity_load_avg(&per_task(p, se));
 	}
 
 	/* Tell new CPU we are migrated */
-	p->se.avg.last_update_time = 0;
+	per_task(p, se).avg.last_update_time = 0;
 
 	/* We have migrated, no longer consider this task hot */
-	p->se.exec_start = 0;
+	per_task(p, se).exec_start = 0;
 
 	update_scan_period(p, new_cpu);
 }
 
 static void task_dead_fair(struct task_struct *p)
 {
-	remove_entity_load_avg(&p->se);
+	remove_entity_load_avg(&per_task(p, se));
 }
 
 static int
@@ -7134,7 +7134,7 @@ static void set_skip_buddy(struct sched_entity *se)
 static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_flags)
 {
 	struct task_struct *curr = rq->curr;
-	struct sched_entity *se = &curr->se, *pse = &p->se;
+	struct sched_entity *se = &per_task(curr, se), *pse = &per_task(p, se);
 	struct cfs_rq *cfs_rq = task_cfs_rq(curr);
 	int scale = cfs_rq->nr_running >= sched_nr_latency;
 	int next_buddy_marked = 0;
@@ -7328,7 +7328,7 @@ again:
 	 * least amount of cfs_rqs.
 	 */
 	if (prev != p) {
-		struct sched_entity *pse = &prev->se;
+		struct sched_entity *pse = &per_task(prev, se);
 
 		while (!(cfs_rq = is_same_group(se, pse))) {
 			int se_depth = se->depth;
@@ -7369,7 +7369,7 @@ done: __maybe_unused;
 	 * the list, so our cfs_tasks list becomes MRU
 	 * one.
 	 */
-	list_move(&p->se.group_node, &rq->cfs_tasks);
+	list_move(&per_task(p, se).group_node, &rq->cfs_tasks);
 #endif
 
 	if (hrtick_enabled_fair(rq))
@@ -7415,7 +7415,7 @@ static struct task_struct *__pick_next_task_fair(struct rq *rq)
  */
 static void put_prev_task_fair(struct rq *rq, struct task_struct *prev)
 {
-	struct sched_entity *se = &prev->se;
+	struct sched_entity *se = &per_task(prev, se);
 	struct cfs_rq *cfs_rq;
 
 	for_each_sched_entity(se) {
@@ -7433,7 +7433,7 @@ static void yield_task_fair(struct rq *rq)
 {
 	struct task_struct *curr = rq->curr;
 	struct cfs_rq *cfs_rq = task_cfs_rq(curr);
-	struct sched_entity *se = &curr->se;
+	struct sched_entity *se = &per_task(curr, se);
 
 	/*
 	 * Are we the only task in the tree?
@@ -7462,7 +7462,7 @@ static void yield_task_fair(struct rq *rq)
 
 static bool yield_to_task_fair(struct rq *rq, struct task_struct *p)
 {
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 
 	/* throttled hierarchies are not runnable */
 	if (!se->on_rq || throttled_hierarchy(cfs_rq_of(se)))
@@ -7700,8 +7700,8 @@ static int task_hot(struct task_struct *p, struct lb_env *env)
 	 * Buddy candidates are cache hot:
 	 */
 	if (sched_feat(CACHE_HOT_BUDDY) && env->dst_rq->nr_running &&
-			(&p->se == cfs_rq_of(&p->se)->next ||
-			 &p->se == cfs_rq_of(&p->se)->last))
+			(&per_task(p, se) == cfs_rq_of(&per_task(p, se))->next ||
+			 &per_task(p, se) == cfs_rq_of(&per_task(p, se))->last))
 		return 1;
 
 	if (sysctl_sched_migration_cost == -1)
@@ -7717,7 +7717,7 @@ static int task_hot(struct task_struct *p, struct lb_env *env)
 	if (sysctl_sched_migration_cost == 0)
 		return 0;
 
-	delta = rq_clock_task(env->src_rq) - p->se.exec_start;
+	delta = rq_clock_task(env->src_rq) - per_task(p, se).exec_start;
 
 	return delta < (s64)sysctl_sched_migration_cost;
 }
@@ -7894,11 +7894,15 @@ static void detach_task(struct task_struct *p, struct lb_env *env)
 static struct task_struct *detach_one_task(struct lb_env *env)
 {
 	struct task_struct *p;
+	struct list_head *pos;
 
 	lockdep_assert_rq_held(env->src_rq);
 
-	list_for_each_entry_reverse(p,
-			&env->src_rq->cfs_tasks, se.group_node) {
+	list_for_each_reverse(pos, &env->src_rq->cfs_tasks) {
+		struct sched_entity *se = container_of(pos, struct sched_entity, group_node);
+
+		p = per_task_container_of(se, se);
+
 		if (!can_migrate_task(p, env))
 			continue;
 
@@ -7946,6 +7950,7 @@ static int detach_tasks(struct lb_env *env)
 		return 0;
 
 	while (!list_empty(tasks)) {
+		struct sched_entity *se;
 		/*
 		 * We don't want to steal all, otherwise we may be treated likewise,
 		 * which could at worst lead to a livelock crash.
@@ -7953,7 +7958,8 @@ static int detach_tasks(struct lb_env *env)
 		if (env->idle != CPU_NOT_IDLE && env->src_rq->nr_running <= 1)
 			break;
 
-		p = list_last_entry(tasks, struct task_struct, se.group_node);
+		se = container_of(tasks->prev, struct sched_entity, group_node);
+		p = per_task_container_of(se, se);
 
 		env->loop++;
 		/* We've more or less seen every task there is, call it quits */
@@ -8020,7 +8026,7 @@ static int detach_tasks(struct lb_env *env)
 		}
 
 		detach_task(p, env);
-		list_add(&p->se.group_node, &env->tasks);
+		list_add(&per_task(p, se).group_node, &env->tasks);
 
 		detached++;
 
@@ -8043,7 +8049,7 @@ static int detach_tasks(struct lb_env *env)
 
 		continue;
 next:
-		list_move(&p->se.group_node, tasks);
+		list_move(&per_task(p, se).group_node, tasks);
 	}
 
 	/*
@@ -8096,8 +8102,10 @@ static void attach_tasks(struct lb_env *env)
 	update_rq_clock(env->dst_rq);
 
 	while (!list_empty(tasks)) {
-		p = list_first_entry(tasks, struct task_struct, se.group_node);
-		list_del_init(&p->se.group_node);
+		struct sched_entity *se = container_of(tasks->next, struct sched_entity, group_node);
+
+		p = per_task_container_of(se, se);
+		list_del_init(&per_task(p, se).group_node);
 
 		attach_task(env->dst_rq, p);
 	}
@@ -8264,7 +8272,7 @@ static unsigned long task_h_load(struct task_struct *p)
 	struct cfs_rq *cfs_rq = task_cfs_rq(p);
 
 	update_cfs_rq_h_load(cfs_rq);
-	return div64_ul(p->se.avg.load_avg * cfs_rq->h_load,
+	return div64_ul(per_task(p, se).avg.load_avg * cfs_rq->h_load,
 			cfs_rq_load_avg(cfs_rq) + 1);
 }
 #else
@@ -8282,7 +8290,7 @@ static bool __update_blocked_fair(struct rq *rq, bool *done)
 
 static unsigned long task_h_load(struct task_struct *p)
 {
-	return p->se.avg.load_avg;
+	return per_task(p, se).avg.load_avg;
 }
 #endif
 
@@ -8940,7 +8948,7 @@ struct sg_lb_stats;
 static unsigned int task_running_on_cpu(int cpu, struct task_struct *p)
 {
 	/* Task has no contribution or is new */
-	if (cpu != task_cpu(p) || !READ_ONCE(p->se.avg.last_update_time))
+	if (cpu != task_cpu(p) || !READ_ONCE(per_task(p, se).avg.last_update_time))
 		return 0;
 
 	if (task_on_rq_queued(p))
@@ -11111,7 +11119,7 @@ static inline void task_tick_core(struct rq *rq, struct task_struct *curr)
 	 * if we need to give up the CPU.
 	 */
 	if (rq->core->core_forceidle_count && rq->cfs.nr_running == 1 &&
-	    __entity_slice_used(&curr->se, MIN_NR_TASKS_DURING_FORCEIDLE))
+	    __entity_slice_used(&per_task(curr, se), MIN_NR_TASKS_DURING_FORCEIDLE))
 		resched_curr(rq);
 }
 
@@ -11135,7 +11143,7 @@ static void se_fi_update(struct sched_entity *se, unsigned int fi_seq, bool forc
 
 void task_vruntime_update(struct rq *rq, struct task_struct *p, bool in_fi)
 {
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 
 	if (per_task(p, sched_class) != &fair_sched_class)
 		return;
@@ -11146,8 +11154,8 @@ void task_vruntime_update(struct rq *rq, struct task_struct *p, bool in_fi)
 bool cfs_prio_less(struct task_struct *a, struct task_struct *b, bool in_fi)
 {
 	struct rq *rq = task_rq(a);
-	struct sched_entity *sea = &a->se;
-	struct sched_entity *seb = &b->se;
+	struct sched_entity *sea = &per_task(a, se);
+	struct sched_entity *seb = &per_task(b, se);
 	struct cfs_rq *cfs_rqa;
 	struct cfs_rq *cfs_rqb;
 	s64 delta;
@@ -11204,7 +11212,7 @@ static inline void task_tick_core(struct rq *rq, struct task_struct *curr) {}
 static void task_tick_fair(struct rq *rq, struct task_struct *curr, int queued)
 {
 	struct cfs_rq *cfs_rq;
-	struct sched_entity *se = &curr->se;
+	struct sched_entity *se = &per_task(curr, se);
 
 	for_each_sched_entity(se) {
 		cfs_rq = cfs_rq_of(se);
@@ -11228,7 +11236,7 @@ static void task_tick_fair(struct rq *rq, struct task_struct *curr, int queued)
 static void task_fork_fair(struct task_struct *p)
 {
 	struct cfs_rq *cfs_rq;
-	struct sched_entity *se = &p->se, *curr;
+	struct sched_entity *se = &per_task(p, se), *curr;
 	struct rq *rq = this_rq();
 	struct rq_flags rf;
 
@@ -11283,7 +11291,7 @@ prio_changed_fair(struct rq *rq, struct task_struct *p, int oldprio)
 
 static inline bool vruntime_normalized(struct task_struct *p)
 {
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 
 	/*
 	 * In both the TASK_ON_RQ_QUEUED and TASK_ON_RQ_MIGRATING cases,
@@ -11372,7 +11380,7 @@ static void attach_entity_cfs_rq(struct sched_entity *se)
 
 static void detach_task_cfs_rq(struct task_struct *p)
 {
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 	struct cfs_rq *cfs_rq = cfs_rq_of(se);
 
 	if (!vruntime_normalized(p)) {
@@ -11389,7 +11397,7 @@ static void detach_task_cfs_rq(struct task_struct *p)
 
 static void attach_task_cfs_rq(struct task_struct *p)
 {
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 	struct cfs_rq *cfs_rq = cfs_rq_of(se);
 
 	attach_entity_cfs_rq(se);
@@ -11427,7 +11435,7 @@ static void switched_to_fair(struct rq *rq, struct task_struct *p)
  */
 static void set_next_task_fair(struct rq *rq, struct task_struct *p, bool first)
 {
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 
 #ifdef CONFIG_SMP
 	if (task_on_rq_queued(p)) {
@@ -11463,7 +11471,7 @@ void init_cfs_rq(struct cfs_rq *cfs_rq)
 #ifdef CONFIG_FAIR_GROUP_SCHED
 static void task_set_group_fair(struct task_struct *p)
 {
-	struct sched_entity *se = &p->se;
+	struct sched_entity *se = &per_task(p, se);
 
 	set_task_rq(p, task_cpu(p));
 	se->depth = se->parent ? se->parent->depth + 1 : 0;
@@ -11476,7 +11484,7 @@ static void task_move_group_fair(struct task_struct *p)
 
 #ifdef CONFIG_SMP
 	/* Tell se's cfs_rq has been changed -- migrated */
-	p->se.avg.last_update_time = 0;
+	per_task(p, se).avg.last_update_time = 0;
 #endif
 	attach_task_cfs_rq(p);
 }
@@ -11769,7 +11777,7 @@ void unregister_fair_sched_group(struct task_group *tg) { }
 
 static unsigned int get_rr_interval_fair(struct rq *rq, struct task_struct *task)
 {
-	struct sched_entity *se = &task->se;
+	struct sched_entity *se = &per_task(task, se);
 	unsigned int rr_interval = 0;
 
 	/*
