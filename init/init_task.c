@@ -129,11 +129,6 @@ struct task_struct init_task
 #if defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)
 	.kasan_depth	= 1,
 #endif
-#ifdef CONFIG_KCSAN
-	.kcsan_ctx = {
-		.scoped_accesses	= {LIST_POISON1, NULL},
-	},
-#endif
 #ifdef CONFIG_TRACE_IRQFLAGS
 	.softirqs_enabled = 1,
 #endif

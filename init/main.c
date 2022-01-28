@@ -946,6 +946,9 @@ void __init init_per_task_early(void)
 #endif
 	spin_lock_init(&per_task(&init_task, alloc_lock));
 	raw_spin_lock_init(&per_task(&init_task, pi_lock));
+#ifdef CONFIG_KCSAN
+	INIT_LIST_HEAD(&per_task(&init_task, kcsan_ctx).scoped_accesses);
+#endif
 }
 
 static void __init print_unknown_bootoptions(void)

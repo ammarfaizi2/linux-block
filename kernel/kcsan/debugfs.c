@@ -62,12 +62,13 @@ static DEFINE_SPINLOCK(report_filterlist_lock);
  */
 static noinline void microbenchmark(unsigned long iters)
 {
-	const struct kcsan_ctx ctx_save = current->kcsan_ctx;
+	const struct kcsan_ctx ctx_save = per_task(current, kcsan_ctx);
 	const bool was_enabled = READ_ONCE(kcsan_enabled);
 	u64 cycles;
 
 	/* We may have been called from an atomic region; reset context. */
-	memset(&current->kcsan_ctx, 0, sizeof(current->kcsan_ctx));
+	memset(&per_task(current, kcsan_ctx), 0,
+	       sizeof(per_task(current, kcsan_ctx)));
 	/*
 	 * Disable to benchmark fast-path for all accesses, and (expected
 	 * negligible) call into slow-path, but never set up watchpoints.
@@ -89,7 +90,7 @@ static noinline void microbenchmark(unsigned long iters)
 
 	WRITE_ONCE(kcsan_enabled, was_enabled);
 	/* restore context */
-	current->kcsan_ctx = ctx_save;
+	per_task(current, kcsan_ctx) = ctx_save;
 }
 
 static int cmp_filterlist_addrs(const void *rhs, const void *lhs)

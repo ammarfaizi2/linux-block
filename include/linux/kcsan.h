@@ -12,8 +12,11 @@
 
 #include <linux/kcsan-checks.h>
 #include <linux/types.h>
+#include <linux/sched/per_task.h>
 
 #ifdef CONFIG_KCSAN
+
+DECLARE_PER_TASK(struct kcsan_ctx, kcsan_ctx);
 
 /*
  * Context for each thread of execution: for tasks, this is stored in
