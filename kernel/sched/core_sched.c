@@ -108,7 +108,7 @@ static unsigned long sched_core_clone_cookie(struct task_struct *p)
 
 void sched_core_fork(struct task_struct *p)
 {
-	RB_CLEAR_NODE(&p->core_node);
+	RB_CLEAR_NODE(&per_task(p, core_node));
 	p->core_cookie = sched_core_clone_cookie(current);
 }
 

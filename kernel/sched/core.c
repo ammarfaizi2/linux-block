@@ -131,6 +131,10 @@ DEFINE_PER_TASK(int,					wake_cpu);
 DEFINE_PER_TASK(struct task_group *,			sched_task_group);
 #endif
 
+#ifdef CONFIG_SCHED_CORE
+DEFINE_PER_TASK(struct rb_node,				core_node);
+#endif
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.
@@ -255,7 +259,7 @@ static inline bool __sched_core_less(struct task_struct *a, struct task_struct *
 	return false;
 }
 
-#define __node_2_sc(node) rb_entry((node), struct task_struct, core_node)
+#define __node_2_sc(node) per_task_container_of((node), core_node)
 
 static inline bool rb_sched_core_less(struct rb_node *a, const struct rb_node *b)
 {
@@ -283,7 +287,7 @@ void sched_core_enqueue(struct rq *rq, struct task_struct *p)
 	if (!p->core_cookie)
 		return;
 
-	rb_add(&p->core_node, &rq->core_tree, rb_sched_core_less);
+	rb_add(&per_task(p, core_node), &rq->core_tree, rb_sched_core_less);
 }
 
 void sched_core_dequeue(struct rq *rq, struct task_struct *p, int flags)
@@ -291,8 +295,8 @@ void sched_core_dequeue(struct rq *rq, struct task_struct *p, int flags)
 	rq->core->core_task_seq++;
 
 	if (sched_core_enqueued(p)) {
-		rb_erase(&p->core_node, &rq->core_tree);
-		RB_CLEAR_NODE(&p->core_node);
+		rb_erase(&per_task(p, core_node), &rq->core_tree);
+		RB_CLEAR_NODE(&per_task(p, core_node));
 	}
 
 	/*
@@ -324,13 +328,13 @@ static struct task_struct *sched_core_find(struct rq *rq, unsigned long cookie)
 
 static struct task_struct *sched_core_next(struct task_struct *p, unsigned long cookie)
 {
-	struct rb_node *node = &p->core_node;
+	struct rb_node *node = &per_task(p, core_node);
 
 	node = rb_next(node);
 	if (!node)
 		return NULL;
 
-	p = container_of(node, struct task_struct, core_node);
+	p = per_task_container_of(node, core_node);
 	if (p->core_cookie != cookie)
 		return NULL;
 

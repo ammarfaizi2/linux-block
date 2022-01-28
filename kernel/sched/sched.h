@@ -115,6 +115,10 @@ DECLARE_PER_TASK(int,					wake_cpu);
 DECLARE_PER_TASK(struct task_group *,			sched_task_group);
 #endif
 
+#ifdef CONFIG_SCHED_CORE
+DECLARE_PER_TASK(struct rb_node,			core_node);
+#endif
+
 struct rq;
 struct cpuidle_state;
 
@@ -1253,7 +1257,7 @@ static inline bool sched_group_cookie_match(struct rq *rq,
 
 static inline bool sched_core_enqueued(struct task_struct *p)
 {
-	return !RB_EMPTY_NODE(&p->core_node);
+	return !RB_EMPTY_NODE(&per_task(p, core_node));
 }
 
 extern void sched_core_enqueue(struct rq *rq, struct task_struct *p);
