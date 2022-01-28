@@ -2,10 +2,13 @@
 #ifndef _LINUX_FUTEX_H
 #define _LINUX_FUTEX_H
 
+#include <linux/sched/per_task.h>
 #include <linux/sched.h>
 #include <linux/ktime.h>
 
 #include <uapi/linux/futex.h>
+
+DECLARE_PER_TASK(struct mutex, futex_exit_mutex);
 
 struct inode;
 struct mm_struct;
@@ -68,7 +71,7 @@ static inline void futex_init_task(struct task_struct *tsk)
 	INIT_LIST_HEAD(&tsk->pi_state_list);
 	tsk->pi_state_cache = NULL;
 	tsk->futex_state = FUTEX_STATE_OK;
-	mutex_init(&tsk->futex_exit_mutex);
+	mutex_init(&per_task(tsk, futex_exit_mutex));
 }
 
 void futex_exit_recursive(struct task_struct *tsk);
