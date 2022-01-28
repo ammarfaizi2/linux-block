@@ -113,6 +113,10 @@ DEFINE_PER_TASK(refcount_t,				stack_refcount);
 DEFINE_PER_TASK(struct vm_struct *,			stack_vm_area);
 #endif
 
+#ifdef CONFIG_SMP
+DEFINE_PER_TASK(int,					on_cpu);
+#endif
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.
@@ -2590,7 +2594,7 @@ __do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask, u32
 	 * XXX do further audits, this smells like something putrid.
 	 */
 	if (flags & SCA_MIGRATE_DISABLE)
-		SCHED_WARN_ON(!p->on_cpu);
+		SCHED_WARN_ON(!per_task(p, on_cpu));
 	else
 		lockdep_assert_held(&p->pi_lock);
 
@@ -3777,8 +3781,8 @@ void sched_ttwu_pending(void *arg)
 	update_rq_clock(rq);
 
 	llist_for_each_entry_safe(p, t, llist, wake_entry.llist) {
-		if (WARN_ON_ONCE(p->on_cpu))
-			smp_cond_load_acquire(&p->on_cpu, !VAL);
+		if (WARN_ON_ONCE(per_task(p, on_cpu)))
+			smp_cond_load_acquire(&per_task(p, on_cpu), !VAL);
 
 		if (WARN_ON_ONCE(task_cpu(p) != cpu_of(rq)))
 			set_task_cpu(p, cpu_of(rq));
@@ -4197,7 +4201,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	 * to ensure we observe the correct CPU on which the task is currently
 	 * scheduling.
 	 */
-	if (smp_load_acquire(&p->on_cpu) &&
+	if (smp_load_acquire(&per_task(p, on_cpu)) &&
 	    ttwu_queue_wakelist(p, task_cpu(p), wake_flags | WF_ON_CPU))
 		goto unlock;
 
@@ -4210,7 +4214,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	 * This ensures that tasks getting woken will be fully ordered against
 	 * their previous state and preserve Program Order.
 	 */
-	smp_cond_load_acquire(&p->on_cpu, !VAL);
+	smp_cond_load_acquire(&per_task(p, on_cpu), !VAL);
 
 	cpu = select_task_rq(p, p->wake_cpu, wake_flags | WF_TTWU);
 	if (task_cpu(p) != cpu) {
@@ -4527,7 +4531,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 		memset(&p->sched_info, 0, sizeof(p->sched_info));
 #endif
 #if defined(CONFIG_SMP)
-	p->on_cpu = 0;
+	per_task(p, on_cpu) = 0;
 #endif
 	init_task_preempt_count(p);
 #ifdef CONFIG_SMP
@@ -4731,7 +4735,7 @@ static inline void prepare_task(struct task_struct *next)
 	 *
 	 * See the ttwu() WF_ON_CPU case and its ordering comment.
 	 */
-	WRITE_ONCE(next->on_cpu, 1);
+	WRITE_ONCE(per_task(next, on_cpu), 1);
 #endif
 }
 
@@ -4749,7 +4753,7 @@ static inline void finish_task(struct task_struct *prev)
 	 *
 	 * Pairs with the smp_cond_load_acquire() in try_to_wake_up().
 	 */
-	smp_store_release(&prev->on_cpu, 0);
+	smp_store_release(&per_task(prev, on_cpu), 0);
 #endif
 }
 
@@ -5269,7 +5273,7 @@ unsigned long long task_sched_runtime(struct task_struct *p)
 	 * If we see ->on_cpu without ->on_rq, the task is leaving, and has
 	 * been accounted, so we're correct here as well.
 	 */
-	if (!p->on_cpu || !task_on_rq_queued(p))
+	if (!per_task(p, on_cpu) || !task_on_rq_queued(p))
 		return per_task(p, se).sum_exec_runtime;
 #endif
 
@@ -8865,7 +8869,7 @@ void __init init_idle(struct task_struct *idle, int cpu)
 	rcu_assign_pointer(rq->curr, idle);
 	per_task(idle, on_rq) = TASK_ON_RQ_QUEUED;
 #ifdef CONFIG_SMP
-	idle->on_cpu = 1;
+	per_task(idle, on_cpu) = 1;
 #endif
 	raw_spin_rq_unlock(rq);
 	raw_spin_unlock_irqrestore(&idle->pi_lock, flags);

@@ -2031,7 +2031,7 @@ static inline int task_current(struct rq *rq, struct task_struct *p)
 static inline int task_running(struct rq *rq, struct task_struct *p)
 {
 #ifdef CONFIG_SMP
-	return p->on_cpu;
+	return per_task(p, on_cpu);
 #else
 	return task_current(rq, p);
 #endif
