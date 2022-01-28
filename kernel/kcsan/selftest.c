@@ -117,7 +117,7 @@ static DEFINE_SPINLOCK(test_spinlock);
 static bool __init test_barrier(void)
 {
 #ifdef CONFIG_KCSAN_WEAK_MEMORY
-	struct kcsan_scoped_access *reorder_access = &current->kcsan_ctx.reorder_access;
+	struct kcsan_scoped_access *reorder_access = &per_task(current, kcsan_ctx).reorder_access;
 #else
 	struct kcsan_scoped_access *reorder_access = NULL;
 #endif

@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) "kcsan_test: " fmt
 
+#include <linux/kcsan.h>
 #include <kunit/test.h>
 #include <linux/atomic.h>
 #include <linux/bitops.h>
@@ -520,7 +521,7 @@ TEST_KERNEL_LOCKED(atomic_builtin_wrong_memorder,
 static void test_barrier_nothreads(struct kunit *test)
 {
 #ifdef CONFIG_KCSAN_WEAK_MEMORY
-	struct kcsan_scoped_access *reorder_access = &current->kcsan_ctx.reorder_access;
+	struct kcsan_scoped_access *reorder_access = &per_task(current, kcsan_ctx).reorder_access;
 #else
 	struct kcsan_scoped_access *reorder_access = NULL;
 #endif

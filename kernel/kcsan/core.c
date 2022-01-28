@@ -24,6 +24,8 @@
 #include "kcsan.h"
 #include "permissive.h"
 
+DEFINE_PER_TASK(struct kcsan_ctx, kcsan_ctx);
+
 static bool kcsan_early_enable = IS_ENABLED(CONFIG_KCSAN_EARLY_ENABLE);
 unsigned int kcsan_udelay_task = CONFIG_KCSAN_UDELAY_TASK;
 unsigned int kcsan_udelay_interrupt = CONFIG_KCSAN_UDELAY_INTERRUPT;
@@ -201,7 +203,7 @@ static __always_inline struct kcsan_ctx *get_ctx(void)
 	 * In interrupts, use raw_cpu_ptr to avoid unnecessary checks, that would
 	 * also result in calls that generate warnings in uaccess regions.
 	 */
-	return in_task() ? &current->kcsan_ctx : raw_cpu_ptr(&kcsan_cpu_ctx);
+	return in_task() ? &per_task(current, kcsan_ctx) : raw_cpu_ptr(&kcsan_cpu_ctx);
 }
 
 static __always_inline void
