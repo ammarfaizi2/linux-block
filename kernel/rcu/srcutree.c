@@ -310,7 +310,7 @@ static void srcu_transition_to_big(struct srcu_struct *ssp)
  * to SRCU_SIZE_BIG.  But only if the srcutree.convert_to_big module
  * parameter permits this.
  */
-void spin_lock_irqsave_ssp_contention(struct srcu_struct *ssp, unsigned long *flags)
+static void spin_lock_irqsave_ssp_contention(struct srcu_struct *ssp, unsigned long *flags)
 {
 	unsigned long j;
 
