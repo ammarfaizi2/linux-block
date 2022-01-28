@@ -172,10 +172,11 @@ asmlinkage void sparc64_get_context(struct pt_regs *regs)
 	}
 	err = 0;
 	if (_NSIG_WORDS == 1)
-		err |= __put_user(current->blocked.sig[0],
+		err |= __put_user(per_task(current, blocked).sig[0],
 				  (unsigned long __user *)&ucp->uc_sigmask);
 	else
-		err |= __copy_to_user(&ucp->uc_sigmask, &current->blocked,
+		err |= __copy_to_user(&ucp->uc_sigmask,
+				      &per_task(current, blocked),
 				      sizeof(sigset_t));
 
 	err |= __put_user(regs->tstate, &((*grp)[MC_TSTATE]));

@@ -45,14 +45,14 @@ COMPAT_SYSCALL_DEFINE3(sigprocmask, int, how,
 	old_sigset_t old_set, new_set;
 	sigset_t new_blocked;
 
-	old_set = current->blocked.sig[0];
+	old_set = per_task(current, blocked).sig[0];
 
 	if (nset) {
 		if (get_user(new_set, nset))
 			return -EFAULT;
 		new_set &= ~(sigmask(SIGKILL) | sigmask(SIGSTOP));
 
-		new_blocked = current->blocked;
+		new_blocked = per_task(current, blocked);
 
 		switch (how) {
 		case SIG_BLOCK:
