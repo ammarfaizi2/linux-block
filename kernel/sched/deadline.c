@@ -1287,7 +1287,7 @@ static void update_curr_dl(struct rq *rq)
 	 * approach need further study.
 	 */
 	now = rq_clock_task(rq);
-	delta_exec = now - curr->se.exec_start;
+	delta_exec = now - per_task(curr, se).exec_start;
 	if (unlikely((s64)delta_exec <= 0)) {
 		if (unlikely(dl_se->dl_yielded))
 			goto throttle;
@@ -1299,10 +1299,10 @@ static void update_curr_dl(struct rq *rq)
 
 	trace_sched_stat_runtime(curr, delta_exec, 0);
 
-	curr->se.sum_exec_runtime += delta_exec;
+	per_task(curr, se).sum_exec_runtime += delta_exec;
 	account_group_exec_runtime(curr, delta_exec);
 
-	curr->se.exec_start = now;
+	per_task(curr, se).exec_start = now;
 	cgroup_account_cputime(curr, delta_exec);
 
 	if (dl_entity_is_special(dl_se))
@@ -1940,7 +1940,7 @@ static void set_next_task_dl(struct rq *rq, struct task_struct *p, bool first)
 	struct sched_dl_entity *dl_se = &per_task(p, dl);
 	struct dl_rq *dl_rq = &rq->dl;
 
-	p->se.exec_start = rq_clock_task(rq);
+	per_task(p, se).exec_start = rq_clock_task(rq);
 	if (on_dl_rq(&per_task(p, dl)))
 		update_stats_wait_end_dl(dl_rq, dl_se);
 

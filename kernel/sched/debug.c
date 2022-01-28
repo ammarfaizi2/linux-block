@@ -536,13 +536,13 @@ print_task(struct seq_file *m, struct rq *rq, struct task_struct *p)
 
 	SEQ_printf(m, " %15s %5d %9Ld.%06ld %9Ld %5d ",
 		p->comm, task_pid_nr(p),
-		SPLIT_NS(p->se.vruntime),
+		SPLIT_NS(per_task(p, se).vruntime),
 		(long long)(p->nvcsw + p->nivcsw),
 		p->prio);
 
 	SEQ_printf(m, "%9lld.%06ld %9lld.%06ld %9lld.%06ld %9lld.%06ld",
 		SPLIT_NS(schedstat_val_or_zero(p->stats.wait_sum)),
-		SPLIT_NS(p->se.sum_exec_runtime),
+		SPLIT_NS(per_task(p, se).sum_exec_runtime),
 		SPLIT_NS(schedstat_val_or_zero(p->stats.sum_sleep_runtime)),
 		SPLIT_NS(schedstat_val_or_zero(p->stats.sum_block_runtime)));
 
@@ -915,6 +915,9 @@ static const struct seq_operations sched_debug_sops = {
 #define __PN(F) __PSN(#F, F)
 #define   PN(F) __PSN(#F, p->F)
 
+#define   SE_P(F) __PS(#F, se->F)
+#define   SE_PN(F) __PSN(#F, se->F)
+#define   SE_PM(F, M) __PSN(#F, se->F & (M))
 
 #ifdef CONFIG_NUMA_BALANCING
 void print_numa_stats(struct seq_file *m, int node, unsigned long tsf,
@@ -946,6 +949,7 @@ void proc_sched_show_task(struct task_struct *p, struct pid_namespace *ns,
 						  struct seq_file *m)
 {
 	unsigned long nr_switches;
+	struct sched_entity *se = &per_task(p, se);
 
 	SEQ_printf(m, "%s (%d, #threads: %d)\n", p->comm, task_pid_nr_ns(p, ns),
 						get_nr_threads(p));
@@ -956,13 +960,16 @@ void proc_sched_show_task(struct task_struct *p, struct pid_namespace *ns,
 #define P_SCHEDSTAT(F)  __PS(#F, schedstat_val(p->stats.F))
 #define PN_SCHEDSTAT(F) __PSN(#F, schedstat_val(p->stats.F))
 
-	PN(se.exec_start);
-	PN(se.vruntime);
-	PN(se.sum_exec_runtime);
+#define SE_P_SCHEDSTAT(F)  __PS(#F, schedstat_val(se->F))
+#define SE_PN_SCHEDSTAT(F) __PSN(#F, schedstat_val(se->F))
+
+	SE_PN(exec_start);
+	SE_PN(vruntime);
+	SE_PN(sum_exec_runtime);
 
 	nr_switches = p->nvcsw + p->nivcsw;
 
-	P(se.nr_migrations);
+	SE_P(nr_migrations);
 
 	if (schedstat_enabled()) {
 		u64 avg_atom, avg_per_cpu;
@@ -996,16 +1003,16 @@ void proc_sched_show_task(struct task_struct *p, struct pid_namespace *ns,
 		P_SCHEDSTAT(nr_wakeups_passive);
 		P_SCHEDSTAT(nr_wakeups_idle);
 
-		avg_atom = p->se.sum_exec_runtime;
+		avg_atom = per_task(p, se).sum_exec_runtime;
 		if (nr_switches)
 			avg_atom = div64_ul(avg_atom, nr_switches);
 		else
 			avg_atom = -1LL;
 
-		avg_per_cpu = p->se.sum_exec_runtime;
-		if (p->se.nr_migrations) {
+		avg_per_cpu = per_task(p, se).sum_exec_runtime;
+		if (per_task(p, se).nr_migrations) {
 			avg_per_cpu = div64_u64(avg_per_cpu,
-						p->se.nr_migrations);
+						per_task(p, se).nr_migrations);
 		} else {
 			avg_per_cpu = -1LL;
 		}
@@ -1022,21 +1029,22 @@ void proc_sched_show_task(struct task_struct *p, struct pid_namespace *ns,
 	__PS("nr_voluntary_switches", p->nvcsw);
 	__PS("nr_involuntary_switches", p->nivcsw);
 
-	P(se.load.weight);
+	SE_P(load.weight);
 #ifdef CONFIG_SMP
-	P(se.avg.load_sum);
-	P(se.avg.runnable_sum);
-	P(se.avg.util_sum);
-	P(se.avg.load_avg);
-	P(se.avg.runnable_avg);
-	P(se.avg.util_avg);
-	P(se.avg.last_update_time);
-	P(se.avg.util_est.ewma);
-	PM(se.avg.util_est.enqueued, ~UTIL_AVG_UNCHANGED);
+	SE_P(avg.load_sum);
+	SE_P(avg.runnable_sum);
+	SE_P(avg.util_sum);
+	SE_P(avg.load_avg);
+	SE_P(avg.runnable_avg);
+	SE_P(avg.util_avg);
+	SE_P(avg.last_update_time);
+	SE_P(avg.util_est.ewma);
+	SE_P(avg.util_est.enqueued);
+	SE_PM(avg.util_est.enqueued, ~UTIL_AVG_UNCHANGED);
 #endif
 #ifdef CONFIG_UCLAMP_TASK
-	__PS("uclamp.min", p->uclamp_req[UCLAMP_MIN].value);
-	__PS("uclamp.max", p->uclamp_req[UCLAMP_MAX].value);
+	__PS("uclamp.min", per_task(p, uclamp_req)[UCLAMP_MIN].value);
+	__PS("uclamp.max", per_task(p, uclamp_req)[UCLAMP_MAX].value);
 	__PS("effective uclamp.min", uclamp_eff_value(p, UCLAMP_MIN));
 	__PS("effective uclamp.max", uclamp_eff_value(p, UCLAMP_MAX));
 #endif

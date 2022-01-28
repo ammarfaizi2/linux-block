@@ -14,6 +14,8 @@
 #include <linux/delayacct.h>
 #include <linux/module.h>
 
+#include "sched/sched.h"
+
 DEFINE_STATIC_KEY_FALSE(delayacct_key);
 int delayacct_on __read_mostly;	/* Delay accounting turned on/off */
 struct kmem_cache *delayacct_cache;
@@ -130,7 +132,7 @@ int delayacct_add_tsk(struct taskstats *d, struct task_struct *tsk)
 	 */
 	t1 = tsk->sched_info.pcount;
 	t2 = tsk->sched_info.run_delay;
-	t3 = tsk->se.sum_exec_runtime;
+	t3 = per_task(tsk, se).sum_exec_runtime;
 
 	d->cpu_count += t1;
 

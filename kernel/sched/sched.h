@@ -104,6 +104,7 @@ DECLARE_PER_TASK(struct sched_dl_entity,		dl);
 DECLARE_PER_TASK(int,					on_rq);
 DECLARE_PER_TASK(struct sched_rt_entity,		rt);
 DECLARE_PER_TASK(const struct sched_class *,		sched_class);
+DECLARE_PER_TASK(struct sched_entity,			se);
 
 struct rq;
 struct cpuidle_state;
@@ -1362,12 +1363,12 @@ DECLARE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 static inline struct task_struct *task_of(struct sched_entity *se)
 {
 	SCHED_WARN_ON(!entity_is_task(se));
-	return container_of(se, struct task_struct, se);
+	return per_task_container_of(se, se);
 }
 
 static inline struct cfs_rq *task_cfs_rq(struct task_struct *p)
 {
-	return p->se.cfs_rq;
+	return per_task(p, se).cfs_rq;
 }
 
 /* runqueue on which this entity is (to be) queued */
@@ -1386,7 +1387,7 @@ static inline struct cfs_rq *group_cfs_rq(struct sched_entity *grp)
 
 static inline struct task_struct *task_of(struct sched_entity *se)
 {
-	return container_of(se, struct task_struct, se);
+	return per_task_container_of(se, se);
 }
 
 static inline struct cfs_rq *task_cfs_rq(struct task_struct *p)
@@ -1899,9 +1900,10 @@ static inline void set_task_rq(struct task_struct *p, unsigned int cpu)
 #endif
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
-	set_task_rq_fair(&p->se, p->se.cfs_rq, tg->cfs_rq[cpu]);
-	p->se.cfs_rq = tg->cfs_rq[cpu];
-	p->se.parent = tg->se[cpu];
+	set_task_rq_fair(&per_task(p, se), per_task(p, se).cfs_rq,
+			 tg->cfs_rq[cpu]);
+	per_task(p, se).cfs_rq = tg->cfs_rq[cpu];
+	per_task(p, se).parent = tg->se[cpu];
 #endif
 
 #ifdef CONFIG_RT_GROUP_SCHED

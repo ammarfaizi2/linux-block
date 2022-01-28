@@ -273,7 +273,7 @@ static inline u64 account_other_time(u64 max)
 #ifdef CONFIG_64BIT
 static inline u64 read_sum_exec_runtime(struct task_struct *t)
 {
-	return t->se.sum_exec_runtime;
+	return per_task(t, se).sum_exec_runtime;
 }
 #else
 static u64 read_sum_exec_runtime(struct task_struct *t)
@@ -283,7 +283,7 @@ static u64 read_sum_exec_runtime(struct task_struct *t)
 	struct rq *rq;
 
 	rq = task_rq_lock(t, &rf);
-	ns = t->se.sum_exec_runtime;
+	ns = per_task(t, se).sum_exec_runtime;
 	task_rq_unlock(rq, t, &rf);
 
 	return ns;
@@ -615,7 +615,7 @@ out:
 void task_cputime_adjusted(struct task_struct *p, u64 *ut, u64 *st)
 {
 	struct task_cputime cputime = {
-		.sum_exec_runtime = p->se.sum_exec_runtime,
+		.sum_exec_runtime = per_task(p, se).sum_exec_runtime,
 	};
 
 	if (task_cputime(p, &cputime.utime, &cputime.stime))

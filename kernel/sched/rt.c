@@ -119,7 +119,7 @@ static inline struct task_struct *rt_task_of(struct sched_rt_entity *rt_se)
 #ifdef CONFIG_SCHED_DEBUG
 	WARN_ON_ONCE(!rt_entity_is_task(rt_se));
 #endif
-	return container_of(rt_se, struct task_struct, rt);
+	return per_task_container_of(rt_se, rt);
 }
 
 static inline struct rq *rq_of_rt_rq(struct rt_rq *rt_rq)
@@ -1002,7 +1002,7 @@ static void update_curr_rt(struct rq *rq)
 		return;
 
 	now = rq_clock_task(rq);
-	delta_exec = now - curr->se.exec_start;
+	delta_exec = now - per_task(curr, se).exec_start;
 	if (unlikely((s64)delta_exec <= 0))
 		return;
 
@@ -1011,10 +1011,10 @@ static void update_curr_rt(struct rq *rq)
 
 	trace_sched_stat_runtime(curr, delta_exec, 0);
 
-	curr->se.sum_exec_runtime += delta_exec;
+	per_task(curr, se).sum_exec_runtime += delta_exec;
 	account_group_exec_runtime(curr, delta_exec);
 
-	curr->se.exec_start = now;
+	per_task(curr, se).exec_start = now;
 	cgroup_account_cputime(curr, delta_exec);
 
 	if (!rt_bandwidth_enabled())
@@ -1695,7 +1695,7 @@ static inline void set_next_task_rt(struct rq *rq, struct task_struct *p, bool f
 	struct sched_rt_entity *rt_se = &per_task(p, rt);
 	struct rt_rq *rt_rq = &rq->rt;
 
-	p->se.exec_start = rq_clock_task(rq);
+	per_task(p, se).exec_start = rq_clock_task(rq);
 	if (on_rt_rq(&per_task(p, rt)))
 		update_stats_wait_end_rt(rt_rq, rt_se);
 
@@ -2563,7 +2563,7 @@ static void watchdog(struct rq *rq, struct task_struct *p)
 		next = DIV_ROUND_UP(min(soft, hard), USEC_PER_SEC/HZ);
 		if (per_task(p, rt).timeout > next) {
 			posix_cputimers_rt_watchdog(&per_task(p, posix_cputimers),
-						    p->se.sum_exec_runtime);
+						    per_task(p, se).sum_exec_runtime);
 		}
 	}
 }
