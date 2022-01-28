@@ -51,6 +51,7 @@ DEFINE_PER_TASK(struct restart_block, restart_block);
 
 DEFINE_PER_TASK(sigset_t, blocked);
 
+DEFINE_PER_TASK(sigset_t, real_blocked);
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/signal.h>
@@ -111,7 +112,7 @@ static bool sig_ignored(struct task_struct *t, int sig, bool force)
 	 * signal handler may change by the time it is
 	 * unblocked.
 	 */
-	if (sigismember(&per_task(t, blocked), sig) || sigismember(&t->real_blocked, sig))
+	if (sigismember(&per_task(t, blocked), sig) || sigismember(&per_task(t, real_blocked), sig))
 		return false;
 
 	/*
@@ -1039,7 +1040,7 @@ static void complete_signal(int sig, struct task_struct *p, enum pid_type type)
 	 */
 	if (sig_fatal(p, sig) &&
 	    (signal->core_state || !(signal->flags & SIGNAL_GROUP_EXIT)) &&
-	    !sigismember(&t->real_blocked, sig) &&
+	    !sigismember(&per_task(t, real_blocked), sig) &&
 	    (sig == SIGKILL || !p->ptrace)) {
 		/*
 		 * This signal will be fatal to the whole group.
@@ -3604,7 +3605,7 @@ static int do_sigtimedwait(const sigset_t *which, kernel_siginfo_t *info,
 		 * they arrive. Unblocking is always fine, we can avoid
 		 * set_current_blocked().
 		 */
-		tsk->real_blocked = per_task(tsk, blocked);
+		per_task(tsk, real_blocked) = per_task(tsk, blocked);
 		sigandsets(&per_task(tsk, blocked), &per_task(tsk, blocked),
 			   &mask);
 		recalc_sigpending();
@@ -3614,8 +3615,8 @@ static int do_sigtimedwait(const sigset_t *which, kernel_siginfo_t *info,
 		ret = freezable_schedule_hrtimeout_range(to, tsk->timer_slack_ns,
 							 HRTIMER_MODE_REL);
 		spin_lock_irq(&tsk->sighand->siglock);
-		__set_task_blocked(tsk, &tsk->real_blocked);
-		sigemptyset(&tsk->real_blocked);
+		__set_task_blocked(tsk, &per_task(tsk, real_blocked));
+		sigemptyset(&per_task(tsk, real_blocked));
 		sig = dequeue_signal(tsk, &mask, info, &type);
 	}
 	spin_unlock_irq(&tsk->sighand->siglock);

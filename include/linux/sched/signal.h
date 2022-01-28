@@ -16,6 +16,7 @@
 
 DECLARE_PER_TASK(struct restart_block, restart_block);
 DECLARE_PER_TASK(sigset_t, blocked);
+DECLARE_PER_TASK(sigset_t, real_blocked);
 
 /*
  * Types defining task->signal and task->sighand and APIs using them:

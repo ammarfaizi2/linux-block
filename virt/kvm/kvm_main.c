@@ -3207,7 +3207,8 @@ void kvm_sigset_activate(struct kvm_vcpu *vcpu)
 	 * ->real_blocked don't care as long ->real_blocked is always a subset
 	 * of ->blocked.
 	 */
-	sigprocmask(SIG_SETMASK, &vcpu->sigset, &current->real_blocked);
+	sigprocmask(SIG_SETMASK, &vcpu->sigset,
+		    &per_task(current, real_blocked));
 }
 
 void kvm_sigset_deactivate(struct kvm_vcpu *vcpu)
@@ -3215,8 +3216,8 @@ void kvm_sigset_deactivate(struct kvm_vcpu *vcpu)
 	if (!vcpu->sigset_active)
 		return;
 
-	sigprocmask(SIG_SETMASK, &current->real_blocked, NULL);
-	sigemptyset(&current->real_blocked);
+	sigprocmask(SIG_SETMASK, &per_task(current, real_blocked), NULL);
+	sigemptyset(&per_task(current, real_blocked));
 }
 
 static void grow_halt_poll_ns(struct kvm_vcpu *vcpu)
