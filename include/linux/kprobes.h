@@ -28,6 +28,7 @@
 #include <linux/ftrace.h>
 #include <linux/refcount.h>
 #include <linux/freelist.h>
+#include <linux/sched/per_task.h>
 #include <asm/kprobes.h>
 
 #ifdef CONFIG_KPROBES
@@ -45,6 +46,10 @@ struct arch_specific_insn {
 	int dummy;
 };
 #endif /* CONFIG_KPROBES */
+
+#ifdef CONFIG_KRETPROBES
+DECLARE_PER_TASK(struct llist_head, kretprobe_instances);
+#endif
 
 struct kprobe;
 struct pt_regs;

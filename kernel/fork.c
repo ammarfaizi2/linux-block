@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/kprobes.h>
 #include <linux/blktrace_api.h>
 #include <linux/cpuset.h>
 #include <linux/sched/rseq_api.h>
@@ -2280,7 +2281,7 @@ static __latent_entropy struct task_struct *copy_process(
 	clear_posix_cputimers_work(p);
 
 #ifdef CONFIG_KRETPROBES
-	p->kretprobe_instances.first = NULL;
+	per_task(p, kretprobe_instances).first = NULL;
 #endif
 
 	/*
