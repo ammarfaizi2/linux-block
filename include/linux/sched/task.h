@@ -14,6 +14,10 @@
 
 DECLARE_PER_TASK(refcount_t, usage);
 
+#ifdef CONFIG_SMP
+DECLARE_PER_TASK(int, on_cpu);
+#endif
+
 struct task_struct;
 struct rusage;
 union thread_union;
@@ -156,7 +160,7 @@ static inline void task_unlock(struct task_struct *p)
 static inline bool task_on_another_cpu(struct task_struct *task)
 {
 #ifdef CONFIG_SMP
-	return task != current && task->on_cpu;
+	return task != current && per_task(task, on_cpu);
 #else
 	return false;
 #endif
