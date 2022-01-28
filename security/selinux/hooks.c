@@ -2537,7 +2537,7 @@ static void selinux_bprm_committed_creds(struct linux_binprm *bprm)
 
 		spin_lock_irq(&current->sighand->siglock);
 		if (!fatal_signal_pending(current)) {
-			flush_sigqueue(&current->pending);
+			flush_sigqueue(&per_task(current, pending));
 			flush_sigqueue(&current->signal->shared_pending);
 			flush_signal_handlers(current, 1);
 			sigemptyset(&per_task(current, blocked));

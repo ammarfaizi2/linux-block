@@ -272,7 +272,7 @@ static inline void task_sig(struct seq_file *m, struct task_struct *p)
 	sigemptyset(&caught);
 
 	if (lock_task_sighand(p, &flags)) {
-		pending = p->pending.signal;
+		pending = per_task(p, pending).signal;
 		shpending = p->signal->shared_pending.signal;
 		blocked = per_task(p, blocked);
 		collect_sigign_sigcatch(p, &ignored, &caught);
@@ -602,7 +602,8 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 	 * It must be decimal for Linux 2.0 compatibility.
 	 * Use /proc/#/status for real-time signals.
 	 */
-	seq_put_decimal_ull(m, " ", task->pending.signal.sig[0] & 0x7fffffffUL);
+	seq_put_decimal_ull(m, " ",
+			    per_task(task, pending).signal.sig[0] & 0x7fffffffUL);
 	seq_put_decimal_ull(m, " ",
 			    per_task(task, blocked).sig[0] & 0x7fffffffUL);
 	seq_put_decimal_ull(m, " ", sigign.sig[0] & 0x7fffffffUL);

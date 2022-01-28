@@ -742,7 +742,7 @@ static int ptrace_peek_siginfo(struct task_struct *child,
 	if (arg.flags & PTRACE_PEEKSIGINFO_SHARED)
 		pending = &child->signal->shared_pending;
 	else
-		pending = &child->pending;
+		pending = &per_task(child, pending);
 
 	for (i = 0; i < arg.nr; ) {
 		kernel_siginfo_t info;

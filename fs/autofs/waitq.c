@@ -49,7 +49,7 @@ static int autofs_write(struct autofs_sb_info *sbi,
 	const char *data = (const char *)addr;
 	ssize_t wr = 0;
 
-	sigpipe = sigismember(&current->pending.signal, SIGPIPE);
+	sigpipe = sigismember(&per_task(current, pending).signal, SIGPIPE);
 
 	mutex_lock(&sbi->pipe_mutex);
 	while (bytes) {
@@ -66,7 +66,7 @@ static int autofs_write(struct autofs_sb_info *sbi,
 	 */
 	if (wr == -EPIPE && !sigpipe) {
 		spin_lock_irqsave(&current->sighand->siglock, flags);
-		sigdelset(&current->pending.signal, SIGPIPE);
+		sigdelset(&per_task(current, pending).signal, SIGPIPE);
 		recalc_sigpending();
 		spin_unlock_irqrestore(&current->sighand->siglock, flags);
 	}

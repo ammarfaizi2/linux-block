@@ -156,7 +156,7 @@ static void __exit_signal(struct task_struct *tsk)
 	 * Do this under ->siglock, we can race with another thread
 	 * doing sigqueue_free() if we have SIGQUEUE_PREALLOC signals.
 	 */
-	flush_sigqueue(&tsk->pending);
+	flush_sigqueue(&per_task(tsk, pending));
 	tsk->sighand = NULL;
 	spin_unlock(&sighand->siglock);
 

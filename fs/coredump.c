@@ -360,7 +360,7 @@ static int zap_process(struct task_struct *start, int exit_code)
 	for_each_thread(start, t) {
 		task_clear_jobctl_pending(t, JOBCTL_PENDING_MASK);
 		if (t != current && !(t->flags & PF_POSTCOREDUMP)) {
-			sigaddset(&t->pending.signal, SIGKILL);
+			sigaddset(&per_task(t, pending).signal, SIGKILL);
 			signal_wake_up(t, 1);
 			nr++;
 		}

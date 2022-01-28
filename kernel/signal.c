@@ -55,6 +55,9 @@ DEFINE_PER_TASK(sigset_t, real_blocked);
 
 DEFINE_PER_TASK(sigset_t, saved_sigmask);
 
+/* Restored if set_restore_sigmask() was used: */
+DEFINE_PER_TASK(struct sigpending, pending);
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/signal.h>
 
@@ -163,7 +166,7 @@ static inline bool has_pending_signals(sigset_t *signal, sigset_t *blocked)
 static bool recalc_sigpending_tsk(struct task_struct *t)
 {
 	if ((t->jobctl & (JOBCTL_PENDING_MASK | JOBCTL_TRAP_FREEZE)) ||
-	    PENDING(&t->pending, &per_task(t, blocked)) ||
+	    PENDING(&per_task(t, pending), &per_task(t, blocked)) ||
 	    PENDING(&t->signal->shared_pending, &per_task(t, blocked)) ||
 	    cgroup_task_frozen(t)) {
 		set_tsk_thread_flag(t, TIF_SIGPENDING);
@@ -488,7 +491,7 @@ void flush_signals(struct task_struct *t)
 
 	spin_lock_irqsave(&t->sighand->siglock, flags);
 	clear_tsk_thread_flag(t, TIF_SIGPENDING);
-	flush_sigqueue(&t->pending);
+	flush_sigqueue(&per_task(t, pending));
 	flush_sigqueue(&t->signal->shared_pending);
 	spin_unlock_irqrestore(&t->sighand->siglock, flags);
 }
@@ -524,7 +527,7 @@ void flush_itimer_signals(void)
 	unsigned long flags;
 
 	spin_lock_irqsave(&tsk->sighand->siglock, flags);
-	__flush_itimer_signals(&tsk->pending);
+	__flush_itimer_signals(&per_task(tsk, pending));
 	__flush_itimer_signals(&tsk->signal->shared_pending);
 	spin_unlock_irqrestore(&tsk->sighand->siglock, flags);
 }
@@ -645,7 +648,7 @@ int dequeue_signal(struct task_struct *tsk, sigset_t *mask,
 	 * signalfd steal them
 	 */
 	*type = PIDTYPE_PID;
-	signr = __dequeue_signal(&tsk->pending, mask, info, &resched_timer);
+	signr = __dequeue_signal(&per_task(tsk, pending), mask, info, &resched_timer);
 	if (!signr) {
 		*type = PIDTYPE_TGID;
 		signr = __dequeue_signal(&tsk->signal->shared_pending,
@@ -719,7 +722,7 @@ EXPORT_SYMBOL_GPL(dequeue_signal);
 static int dequeue_synchronous_signal(kernel_siginfo_t *info)
 {
 	struct task_struct *tsk = current;
-	struct sigpending *pending = &tsk->pending;
+	struct sigpending *pending = &per_task(tsk, pending);
 	struct sigqueue *q, *sync = NULL;
 
 	/*
@@ -928,7 +931,7 @@ static bool prepare_signal(int sig, struct task_struct *p, bool force)
 		siginitset(&flush, sigmask(SIGCONT));
 		flush_sigqueue_mask(&flush, &signal->shared_pending);
 		for_each_thread(p, t)
-			flush_sigqueue_mask(&flush, &t->pending);
+			flush_sigqueue_mask(&flush, &per_task(t, pending));
 	} else if (sig == SIGCONT) {
 		unsigned int why;
 		/*
@@ -937,7 +940,7 @@ static bool prepare_signal(int sig, struct task_struct *p, bool force)
 		siginitset(&flush, SIG_KERNEL_STOP_MASK);
 		flush_sigqueue_mask(&flush, &signal->shared_pending);
 		for_each_thread(p, t) {
-			flush_sigqueue_mask(&flush, &t->pending);
+			flush_sigqueue_mask(&flush, &per_task(t, pending));
 			task_clear_jobctl_pending(t, JOBCTL_STOP_PENDING);
 			if (likely(!(t->ptrace & PT_SEIZED)))
 				wake_up_state(t, __TASK_STOPPED);
@@ -1060,7 +1063,8 @@ static void complete_signal(int sig, struct task_struct *p, enum pid_type type)
 			t = p;
 			do {
 				task_clear_jobctl_pending(t, JOBCTL_PENDING_MASK);
-				sigaddset(&t->pending.signal, SIGKILL);
+				sigaddset(&per_task(t, pending).signal,
+					  SIGKILL);
 				signal_wake_up(t, 1);
 			} while_each_thread(p, t);
 			return;
@@ -1094,7 +1098,8 @@ static int __send_signal(int sig, struct kernel_siginfo *info, struct task_struc
 	if (!prepare_signal(sig, t, force))
 		goto ret;
 
-	pending = (type != PIDTYPE_PID) ? &t->signal->shared_pending : &t->pending;
+	pending = (type != PIDTYPE_PID) ? &t->signal->shared_pending : &per_task(t,
+										 pending);
 	/*
 	 * Short-circuit ignored signals and support queuing
 	 * exactly one non-rt signal, so that we can get more
@@ -1384,7 +1389,7 @@ int zap_other_threads(struct task_struct *p)
 		/* Don't bother with already dead threads */
 		if (t->exit_state)
 			continue;
-		sigaddset(&t->pending.signal, SIGKILL);
+		sigaddset(&per_task(t, pending).signal, SIGKILL);
 		signal_wake_up(t, 1);
 	}
 
@@ -1992,7 +1997,8 @@ int send_sigqueue(struct sigqueue *q, struct pid *pid, enum pid_type type)
 	q->info.si_overrun = 0;
 
 	signalfd_notify(t, sig);
-	pending = (type != PIDTYPE_PID) ? &t->signal->shared_pending : &t->pending;
+	pending = (type != PIDTYPE_PID) ? &t->signal->shared_pending : &per_task(t,
+										 pending);
 	list_add_tail(&q->list, &pending->list);
 	sigaddset(&pending->signal, sig);
 	complete_signal(sig, t, type);
@@ -2708,7 +2714,7 @@ relock:
 		if ((signal->flags & SIGNAL_GROUP_EXIT) ||
 		     signal->group_exec_task) {
 			ksig->info.si_signo = signr = SIGKILL;
-			sigdelset(&current->pending.signal, SIGKILL);
+			sigdelset(&per_task(current, pending).signal, SIGKILL);
 			trace_signal_deliver(SIGKILL, SEND_SIG_NOINFO,
 				&sighand->action[SIGKILL - 1]);
 			recalc_sigpending();
@@ -3209,7 +3215,7 @@ COMPAT_SYSCALL_DEFINE4(rt_sigprocmask, int, how, compat_sigset_t __user *, nset,
 static void do_sigpending(sigset_t *set)
 {
 	spin_lock_irq(&current->sighand->siglock);
-	sigorsets(set, &current->pending.signal,
+	sigorsets(set, &per_task(current, pending).signal,
 		  &current->signal->shared_pending.signal);
 	spin_unlock_irq(&current->sighand->siglock);
 
@@ -4084,7 +4090,7 @@ void kernel_sigaction(int sig, __sighandler_t action)
 		sigaddset(&mask, sig);
 
 		flush_sigqueue_mask(&mask, &current->signal->shared_pending);
-		flush_sigqueue_mask(&mask, &current->pending);
+		flush_sigqueue_mask(&mask, &per_task(current, pending));
 		recalc_sigpending();
 	}
 	spin_unlock_irq(&current->sighand->siglock);
@@ -4153,7 +4159,8 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 			sigaddset(&mask, sig);
 			flush_sigqueue_mask(&mask, &p->signal->shared_pending);
 			for_each_thread(p, t)
-				flush_sigqueue_mask(&mask, &t->pending);
+				flush_sigqueue_mask(&mask,
+						    &per_task(t, pending));
 		}
 	}
 

@@ -18,6 +18,7 @@ DECLARE_PER_TASK(struct restart_block, restart_block);
 DECLARE_PER_TASK(sigset_t, blocked);
 DECLARE_PER_TASK(sigset_t, real_blocked);
 DECLARE_PER_TASK(sigset_t, saved_sigmask);
+DECLARE_PER_TASK(struct sigpending, pending);
 
 /*
  * Types defining task->signal and task->sighand and APIs using them:
@@ -380,7 +381,7 @@ static inline int signal_pending(struct task_struct *p)
 
 static inline int __fatal_signal_pending(struct task_struct *p)
 {
-	return unlikely(sigismember(&p->pending.signal, SIGKILL));
+	return unlikely(sigismember(&per_task(p, pending).signal, SIGKILL));
 }
 
 static inline int fatal_signal_pending(struct task_struct *p)

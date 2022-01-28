@@ -1527,7 +1527,7 @@ static void fill_prstatus(struct elf_prstatus_common *prstatus,
 		struct task_struct *p, long signr)
 {
 	prstatus->pr_info.si_signo = prstatus->pr_cursig = signr;
-	prstatus->pr_sigpend = p->pending.signal.sig[0];
+	prstatus->pr_sigpend = per_task(p, pending).signal.sig[0];
 	prstatus->pr_sighold = per_task(p, blocked).sig[0];
 	rcu_read_lock();
 	prstatus->pr_ppid = task_pid_vnr(rcu_dereference(p->real_parent));

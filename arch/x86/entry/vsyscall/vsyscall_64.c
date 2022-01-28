@@ -274,8 +274,8 @@ check_fault:
 		 * If we failed to generate a signal for any reason,
 		 * generate one here.  (This should be impossible.)
 		 */
-		if (WARN_ON_ONCE(!sigismember(&tsk->pending.signal, SIGBUS) &&
-				 !sigismember(&tsk->pending.signal, SIGSEGV)))
+		if (WARN_ON_ONCE(!sigismember(&per_task(tsk, pending).signal, SIGBUS) &&
+				 !sigismember(&per_task(tsk, pending).signal, SIGSEGV)))
 			goto sigsegv;
 
 		return true;  /* Don't emulate the ret. */

@@ -2084,7 +2084,7 @@ static __latent_entropy struct task_struct *copy_process(
 	p->vfork_done = NULL;
 	spin_lock_init(&p->alloc_lock);
 
-	init_sigpending(&p->pending);
+	init_sigpending(&per_task(p, pending));
 
 	p->utime = p->stime = p->gtime = 0;
 #ifdef CONFIG_ARCH_HAS_SCALED_CPUTIME

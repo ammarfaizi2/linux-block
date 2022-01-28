@@ -56,7 +56,7 @@ static __poll_t signalfd_poll(struct file *file, poll_table *wait)
 	poll_wait(file, &current->sighand->signalfd_wqh, wait);
 
 	spin_lock_irq(&current->sighand->siglock);
-	if (next_signal(&current->pending, &ctx->sigmask) ||
+	if (next_signal(&per_task(current, pending), &ctx->sigmask) ||
 	    next_signal(&current->signal->shared_pending,
 			&ctx->sigmask))
 		events |= EPOLLIN;
