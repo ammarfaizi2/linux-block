@@ -41,12 +41,23 @@ module_param(counter_wrap_check, ulong, 0444);
 
 /*
  * Control conversion to SRCU_SIZE_BIG:
+ *   -1: Decide at boot time based on system shape.
  *    0: Don't convert at all (default).
  *    1: Convert at init_srcu_struct() time.
  *    2: Convert when rcutorture invokes srcu_torture_stats_print().
  * 0x1x: Convert when excessive contention encountered.
  */
-static int convert_to_big;
+#define SRCU_SIZING_AUTO	-1
+#define SRCU_SIZING_NONE	0
+#define SRCU_SIZING_INIT	1
+#define SRCU_SIZING_TORTURE	2
+#define SRCU_SIZING_CONTEND	0x10
+#define SRCU_SIZING_IS(x) (convert_to_big >= 0 && (convert_to_big & ~SRCU_SIZING_CONTEND) == x)
+#define SRCU_SIZING_IS_NONE() (SRCU_SIZING_IS(SRCU_SIZING_NONE))
+#define SRCU_SIZING_IS_INIT() (SRCU_SIZING_IS(SRCU_SIZING_INIT))
+#define SRCU_SIZING_IS_TORTURE() (SRCU_SIZING_IS(SRCU_SIZING_TORTURE))
+#define SRCU_SIZING_IS_CONTEND() (convert_to_big >= 0 && (convert_to_big & SRCU_SIZING_CONTEND))
+static int convert_to_big = SRCU_SIZING_AUTO;
 module_param(convert_to_big, int, 0444);
 
 /* Contention events per jiffy to initiate transition to big. */
@@ -230,7 +241,7 @@ static int init_srcu_struct_fields(struct srcu_struct *ssp, bool is_static)
 	init_srcu_struct_data(ssp);
 	ssp->srcu_gp_seq_needed_exp = 0;
 	ssp->srcu_last_gp_end = ktime_get_mono_fast_ns();
-	if (READ_ONCE(ssp->srcu_size_state) == SRCU_SIZE_SMALL && convert_to_big == 1) {
+	if (READ_ONCE(ssp->srcu_size_state) == SRCU_SIZE_SMALL && SRCU_SIZING_IS_INIT()) {
 		if (!init_srcu_struct_nodes(ssp, GFP_ATOMIC)) {
 			if (ssp->sda_is_static) {
 				free_percpu(ssp->sda);
@@ -317,7 +328,7 @@ static void spin_lock_irqsave_ssp_contention(struct srcu_struct *ssp, unsigned l
 	if (spin_trylock_irqsave_rcu_node(ssp, *flags))
 		return;
 	spin_lock_irqsave_rcu_node(ssp, *flags);
-	if (!(convert_to_big & 0x10) || ssp->srcu_size_state)
+	if (!SRCU_SIZING_IS_CONTEND() || ssp->srcu_size_state)
 		return;
 	j = jiffies;
 	if (ssp->srcu_size_jiffies != j) {
@@ -1563,7 +1574,7 @@ void srcu_torture_stats_print(struct srcu_struct *ssp, char *tt, char *tf)
 		}
 		pr_cont(" T(%ld,%ld)\n", s0, s1);
 	}
-	if (convert_to_big == 2)
+	if (SRCU_SIZING_IS_TORTURE())
 		srcu_transition_to_big(ssp);
 }
 EXPORT_SYMBOL_GPL(srcu_torture_stats_print);
