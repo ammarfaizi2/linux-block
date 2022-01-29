@@ -57,7 +57,7 @@ module_param(counter_wrap_check, ulong, 0444);
 #define SRCU_SIZING_IS_INIT() (SRCU_SIZING_IS(SRCU_SIZING_INIT))
 #define SRCU_SIZING_IS_TORTURE() (SRCU_SIZING_IS(SRCU_SIZING_TORTURE))
 #define SRCU_SIZING_IS_CONTEND() (convert_to_big >= 0 && (convert_to_big & SRCU_SIZING_CONTEND))
-static int convert_to_big = SRCU_SIZING_AUTO;
+static int convert_to_big = SRCU_SIZING_NONE;
 module_param(convert_to_big, int, 0444);
 
 /* Contention events per jiffy to initiate transition to big. */
