@@ -135,6 +135,9 @@ def strip_brackets(w):
 def verify_commit_ref(sha1, name):
     print(("Checking commit ref [%s %s]" % (sha1, name, )))
 
+    repo = Repo(".")
+    git = repo.git
+
     # check sha1 is all hex
     try:
         int(sha1, 16)
@@ -142,9 +145,15 @@ def verify_commit_ref(sha1, name):
         sys.stderr.write("verify_commit_ref: SHA1 %s\n" % (e, ))
         sys.exit(1)
 
+    # min 12 of length
+    if len(sha1) < 12:
+        sys.stderr.write("Commit sha1 (%s) needs to be at least 12 chars long:\n" % (sha1, ))
+        try:
+            print(git.show('-s', '--pretty=format:%h (\"%s\")', sha1))
+        except Exception as e:
+            sys.stderr.write("verify_commit_ref: SHA1 len exception %s\n" % (e, ))
+
     # check sha1 is in the repo
-    repo = Repo(".")
-    git = repo.git
     try:
         git.tag('--contains', sha1)
     except Exception as e:
@@ -170,8 +179,8 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          "AMX", "API", "APM", "APU", "arm64", "asm",
          "binutils", "bitmask", "bitfield", "CMCI", "cmdline", "config", "CPPC", "CPUID",
          "DMA", "DIMM", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
-         "FRU", "GHCB", "GHCI", "GPR", "GUID", "HLT", "hugepage", "Hygon", 
-         "hypercall", "HV", "I/O", "IBT", "initializer", "initrd", "IRQ", "JMP", "kallsyms",
+         "FRU", "GPR", "GUID", "HLT", "hugepage", "Hygon", 
+         "hypercall", "HV", "I/O", "IBT", "initializer", "initrd", "IRET", "IRQ", "JMP", "kallsyms",
          "KASAN", "kdump", "KVM", "LFENCE", "livepatch", "lvalue",
          "MCA", "MCE", "memmove",
          "memtype", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
@@ -231,7 +240,7 @@ rex_word_split, rex_x86_traps
     rex_commit_ref  = re.compile(r'^(.*\s)?(?P<sha1>[a-f0-9]{7,})\s(?P<commit_title>\(\".*\"\)).*')
 
     rex_decimal     = re.compile(r'^[0-9]+$')
-    rex_errval      = re.compile(r'-E(EINVAL|EXIST|OPNOTSUPP)')
+    rex_errval      = re.compile(r'-E(EINVAL|EXIST|NODEV|OPNOTSUPP|PROBE_DEFER)')
     rex_fnames      = re.compile(r'\s?/?([\w-]+/)*[\w-]+\.[chS]')
 
     rex_gpr         = re.compile(r"""([re]?[abcd]x|     # the first 4
@@ -245,7 +254,7 @@ rex_word_split, rex_x86_traps
     rex_kdoc_cmt    = re.compile(r'\+\s*/\*\*\s*')
     rex_misc_num    = re.compile(r'^#\d+$')
     rex_non_alpha   = re.compile(r'^[-]*$')
-    rex_opts        = re.compile(r'-[\w\d=-]+$', re.I)
+    rex_opts        = re.compile(r'^-[\w\d=-]+$')    # assumption: tool options are lowercase
     rex_paths       = re.compile(r'\s/[\w/_-]+\s')
     rex_reg_field   = re.compile(r'\w+\[\d+(:\d+)?\]', re.I)
     rex_sections    = re.compile(r'\.(bss|data|head(\.text)?|text)')
@@ -305,9 +314,10 @@ def spellcheck_func_name(w, prev_word):
 # known words as regexes to avoid duplication in the list above
 regexes_pats = [ r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
              r'default_(attrs|groups)', r'^DDR([1-5])?$', r'^[Ee].g.$', r'^E?VEX$',
-            r'^Icelake(-D)?$', r'I[DS]T', r'[ku]probes?', r'MOVSB?', r'^param(s)?$',
+            r'^GHC(B|I)$', r'^Icelake(-D)?$', r'I[DS]T', r'^[ku]probes?$', r'MOVSB?', r'^param(s)?$',
             r'(para)?virt(ualiz(ed?|ing))?$', r'PS[CP]',
-            r'sev_(features|status)', r'T[DS]X', r'VMPL[0-3]', r'x86(-(32|64))?', r'XSAVE[CS]?' ]
+            r'sev_(features|status)', r'T[DS]X', r'^VMPL([0-3])?$', r'^x86(-(32|64))?$',
+            r'^XSAVE[CS]?$' ]
 regexes = []
 
 def spellcheck_regexes(w):
@@ -454,6 +464,11 @@ def spellcheck(s, where, flags):
                 dbg("Skip cmdline param: [%s]" % (w, ))
                 continue
 
+            # error value defines
+            if rex_errval.match(w):
+                dbg("Skip error define: [%s]" % (w, ))
+                continue
+
             # Check function names
             if flags and flags['check_func']:
                 ret = spellcheck_func_name(w, words[i - 1])
@@ -506,11 +521,6 @@ def spellcheck(s, where, flags):
             # sections
             if rex_sections.match(w):
                 dbg("Skip section name: [%s]" % (w, ))
-                continue
-
-            # error value defines
-            if rex_errval.match(w):
-                dbg("Skip error define: [%s]" % (w, ))
                 continue
 
             # tool options
