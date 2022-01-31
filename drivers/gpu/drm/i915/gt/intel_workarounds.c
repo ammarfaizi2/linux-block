@@ -1509,6 +1509,12 @@ dg2_gt_workarounds_init(struct intel_gt *gt, struct i915_wa_list *wal)
 	 */
 	wa_write_or(wal, XEHP_L3SCQREG7, BLEND_FILL_CACHING_OPT_DIS);
 	wa_write_or(wal, GEN12_SQCM, EN_32B_ACCESS);
+
+	/* Wa_18018781329:dg2 */
+	wa_write_or(wal, RENDER_MOD_CTRL, FORCE_MISS_FTLB);
+	wa_write_or(wal, COMP_MOD_CTRL, FORCE_MISS_FTLB);
+	wa_write_or(wal, VDBX_MOD_CTRL, FORCE_MISS_FTLB);
+	wa_write_or(wal, VEBX_MOD_CTRL, FORCE_MISS_FTLB);
 }
 
 static void
@@ -2038,6 +2044,11 @@ static void
 rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 {
 	struct drm_i915_private *i915 = engine->i915;
+
+	if (IS_DG2(engine->i915)) {
+		/* Wa_14015227452:dg2 */
+		wa_masked_en(wal, GEN9_ROW_CHICKEN4, XEHP_DIS_BBL_SYSPIPE);
+	}
 
 	if (IS_DG2_GRAPHICS_STEP(engine->i915, G11, STEP_A0, STEP_B0)) {
 		/* Wa_14013392000:dg2_g11 */
