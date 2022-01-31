@@ -3033,6 +3033,43 @@ void tcf_exts_destroy(struct tcf_exts *exts)
 }
 EXPORT_SYMBOL(tcf_exts_destroy);
 
+#ifdef CONFIG_NET_CLS_ACT
+extern void
+tcf_exts_hw_stats_update(const struct tcf_exts *exts,
+			 u64 bytes, u64 packets, u64 drops, u64 lastuse,
+			 u8 used_hw_stats, bool used_hw_stats_valid)
+{
+	int i;
+
+	for (i = 0; i < exts->nr_actions; i++) {
+		struct tc_action *a = exts->actions[i];
+
+		/* if stats from hw, just skip */
+		if (tcf_action_update_hw_stats(a)) {
+			preempt_disable();
+			tcf_action_stats_update(a, bytes, packets, drops,
+						lastuse, true);
+			preempt_enable();
+
+			a->used_hw_stats = used_hw_stats;
+			a->used_hw_stats_valid = used_hw_stats_valid;
+		}
+	}
+}
+EXPORT_SYMBOL(tcf_exts_hw_stats_update);
+#endif
+
+int
+tcf_exts_exec(struct sk_buff *skb, struct tcf_exts *exts,
+	      struct tcf_result *res)
+{
+#ifdef CONFIG_NET_CLS_ACT
+	return tcf_action_exec(skb, exts->actions, exts->nr_actions, res);
+#endif
+	return TC_ACT_OK;
+}
+EXPORT_SYMBOL(tcf_exts_exec);
+
 int tcf_exts_validate_ex(struct net *net, struct tcf_proto *tp, struct nlattr **tb,
 			 struct nlattr *rate_tlv, struct tcf_exts *exts,
 			 u32 flags, u32 fl_flags, struct netlink_ext_ack *extack)
