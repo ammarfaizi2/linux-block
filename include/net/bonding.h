@@ -346,7 +346,7 @@ static inline bool bond_uses_primary(struct bonding *bond)
 
 static inline struct net_device *bond_option_active_slave_get_rcu(struct bonding *bond)
 {
-	struct slave *slave = rcu_dereference(bond->curr_active_slave);
+	struct slave *slave = rcu_dereference_rtnl(bond->curr_active_slave);
 
 	return bond_uses_primary(bond) && slave ? slave->dev : NULL;
 }
@@ -692,20 +692,6 @@ static inline struct slave *bond_slave_has_mac(struct bonding *bond,
 	struct slave *tmp;
 
 	bond_for_each_slave(bond, tmp, iter)
-		if (ether_addr_equal_64bits(mac, tmp->dev->dev_addr))
-			return tmp;
-
-	return NULL;
-}
-
-/* Caller must hold rcu_read_lock() for read */
-static inline struct slave *bond_slave_has_mac_rcu(struct bonding *bond,
-					       const u8 *mac)
-{
-	struct list_head *iter;
-	struct slave *tmp;
-
-	bond_for_each_slave_rcu(bond, tmp, iter)
 		if (ether_addr_equal_64bits(mac, tmp->dev->dev_addr))
 			return tmp;
 
