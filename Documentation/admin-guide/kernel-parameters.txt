@@ -5532,9 +5532,9 @@
 			srcu_struct structure will be converted to big
 			form, that is, with an rcu_node tree:
 
-				   0:  Never.
-				   1:  At init_srcu_struct() time.
-				   2:  When rcutorture decides to.
+				   1:  Never.
+				   2:  At init_srcu_struct() time.
+				   3:  When rcutorture decides to.
 				0x1X:  Above plus if high contention.
 
 			Either way, the srcu_node tree will be sized based

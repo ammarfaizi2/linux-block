@@ -41,22 +41,22 @@ module_param(counter_wrap_check, ulong, 0444);
 
 /*
  * Control conversion to SRCU_SIZE_BIG:
- *   -1: Decide at boot time based on system shape.
- *    0: Don't convert at all (default).
- *    1: Convert at init_srcu_struct() time.
- *    2: Convert when rcutorture invokes srcu_torture_stats_print().
+ *    0: Decide at boot time based on system shape.
+ *    1: Don't convert at all (default).
+ *    2: Convert at init_srcu_struct() time.
+ *    3: Convert when rcutorture invokes srcu_torture_stats_print().
  * 0x1x: Convert when excessive contention encountered.
  */
-#define SRCU_SIZING_AUTO	-1
-#define SRCU_SIZING_NONE	0
-#define SRCU_SIZING_INIT	1
-#define SRCU_SIZING_TORTURE	2
+#define SRCU_SIZING_AUTO	0
+#define SRCU_SIZING_NONE	1
+#define SRCU_SIZING_INIT	2
+#define SRCU_SIZING_TORTURE	3
 #define SRCU_SIZING_CONTEND	0x10
-#define SRCU_SIZING_IS(x) (convert_to_big >= 0 && (convert_to_big & ~SRCU_SIZING_CONTEND) == x)
+#define SRCU_SIZING_IS(x) ((convert_to_big & ~SRCU_SIZING_CONTEND) == x)
 #define SRCU_SIZING_IS_NONE() (SRCU_SIZING_IS(SRCU_SIZING_NONE))
 #define SRCU_SIZING_IS_INIT() (SRCU_SIZING_IS(SRCU_SIZING_INIT))
 #define SRCU_SIZING_IS_TORTURE() (SRCU_SIZING_IS(SRCU_SIZING_TORTURE))
-#define SRCU_SIZING_IS_CONTEND() (convert_to_big >= 0 && (convert_to_big & SRCU_SIZING_CONTEND))
+#define SRCU_SIZING_IS_CONTEND() (convert_to_big & SRCU_SIZING_CONTEND)
 static int convert_to_big = SRCU_SIZING_NONE;
 module_param(convert_to_big, int, 0444);
 
