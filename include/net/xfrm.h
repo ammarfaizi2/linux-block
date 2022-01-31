@@ -1910,18 +1910,6 @@ static inline void xfrm_dev_state_delete(struct xfrm_state *x)
 		xso->dev->xfrmdev_ops->xdo_dev_state_delete(x);
 }
 
-static inline void xfrm_dev_state_free(struct xfrm_state *x)
-{
-	struct xfrm_state_offload *xso = &x->xso;
-	struct net_device *dev = xso->dev;
-
-	if (dev && dev->xfrmdev_ops) {
-		if (dev->xfrmdev_ops->xdo_dev_state_free)
-			dev->xfrmdev_ops->xdo_dev_state_free(x);
-		xso->dev = NULL;
-		dev_put_track(dev, &xso->dev_tracker);
-	}
-}
 #else
 static inline void xfrm_dev_resume(struct sk_buff *skb)
 {
@@ -1942,10 +1930,6 @@ static inline int xfrm_dev_state_add(struct net *net, struct xfrm_state *x, stru
 }
 
 static inline void xfrm_dev_state_delete(struct xfrm_state *x)
-{
-}
-
-static inline void xfrm_dev_state_free(struct xfrm_state *x)
 {
 }
 
