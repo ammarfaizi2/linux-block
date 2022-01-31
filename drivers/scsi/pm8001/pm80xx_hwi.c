@@ -37,11 +37,11 @@
  * POSSIBILITY OF SUCH DAMAGES.
  *
  */
- #include <linux/slab.h>
- #include "pm8001_sas.h"
- #include "pm80xx_hwi.h"
- #include "pm8001_chips.h"
- #include "pm8001_ctl.h"
+#include <linux/slab.h>
+#include "pm8001_sas.h"
+#include "pm80xx_hwi.h"
+#include "pm8001_chips.h"
+#include "pm8001_ctl.h"
 #include "pm80xx_tracepoints.h"
 
 #define SMP_DIRECT 1
