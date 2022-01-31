@@ -3070,6 +3070,28 @@ tcf_exts_exec(struct sk_buff *skb, struct tcf_exts *exts,
 }
 EXPORT_SYMBOL(tcf_exts_exec);
 
+int
+tcf_change_indev(struct net *net, struct nlattr *indev_tlv,
+		 struct netlink_ext_ack *extack)
+{
+	char indev[IFNAMSIZ];
+	struct net_device *dev;
+
+	if (nla_strscpy(indev, indev_tlv, IFNAMSIZ) < 0) {
+		NL_SET_ERR_MSG_ATTR(extack, indev_tlv,
+				    "Interface name too long");
+		return -EINVAL;
+	}
+	dev = __dev_get_by_name(net, indev);
+	if (!dev) {
+		NL_SET_ERR_MSG_ATTR(extack, indev_tlv,
+				    "Network device not found");
+		return -ENODEV;
+	}
+	return dev->ifindex;
+}
+EXPORT_SYMBOL(tcf_change_indev);
+
 int tcf_exts_validate_ex(struct net *net, struct tcf_proto *tp, struct nlattr **tb,
 			 struct nlattr *rate_tlv, struct tcf_exts *exts,
 			 u32 flags, u32 fl_flags, struct netlink_ext_ack *extack)

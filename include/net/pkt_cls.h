@@ -487,26 +487,9 @@ static inline int tcf_valid_offset(const struct sk_buff *skb,
 		      (ptr <= (ptr + len)));
 }
 
-static inline int
+int
 tcf_change_indev(struct net *net, struct nlattr *indev_tlv,
-		 struct netlink_ext_ack *extack)
-{
-	char indev[IFNAMSIZ];
-	struct net_device *dev;
-
-	if (nla_strscpy(indev, indev_tlv, IFNAMSIZ) < 0) {
-		NL_SET_ERR_MSG_ATTR(extack, indev_tlv,
-				    "Interface name too long");
-		return -EINVAL;
-	}
-	dev = __dev_get_by_name(net, indev);
-	if (!dev) {
-		NL_SET_ERR_MSG_ATTR(extack, indev_tlv,
-				    "Network device not found");
-		return -ENODEV;
-	}
-	return dev->ifindex;
-}
+		 struct netlink_ext_ack *extack);
 
 static inline bool
 tcf_match_indev(struct sk_buff *skb, int ifindex)
