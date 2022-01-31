@@ -1625,10 +1625,13 @@ void __init srcu_init(void)
 
 	/* Decide on srcu_struct-size strategy. */
 	if (SRCU_SIZING_IS(SRCU_SIZING_AUTO)) {
-		if (nr_cpu_ids >= big_cpu_lim)
+		if (nr_cpu_ids >= big_cpu_lim) {
 			convert_to_big = SRCU_SIZING_INIT; // Don't bother waiting for contention.
-		else
+			pr_info("%s: Setting srcu_struct sizes to big.\n", __func__);
+		} else {
 			convert_to_big = SRCU_SIZING_NONE | SRCU_SIZING_CONTEND;
+			pr_info("%s: Setting srcu_struct sizes based on contention.\n", __func__);
+		}
 	}
 
 	/*
