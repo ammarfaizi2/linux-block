@@ -3901,54 +3901,7 @@ static inline void *skb_metadata_end(const struct sk_buff *skb)
 	return skb_mac_header(skb);
 }
 
-static inline bool __skb_metadata_differs(const struct sk_buff *skb_a,
-					  const struct sk_buff *skb_b,
-					  u8 meta_len)
-{
-	const void *a = skb_metadata_end(skb_a);
-	const void *b = skb_metadata_end(skb_b);
-	/* Using more efficient varaiant than plain call to memcmp(). */
-#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
-	u64 diffs = 0;
-
-	switch (meta_len) {
-#define __it(x, op) (x -= sizeof(u##op))
-#define __it_diff(a, b, op) (*(u##op *)__it(a, op)) ^ (*(u##op *)__it(b, op))
-	case 32: diffs |= __it_diff(a, b, 64);
-		fallthrough;
-	case 24: diffs |= __it_diff(a, b, 64);
-		fallthrough;
-	case 16: diffs |= __it_diff(a, b, 64);
-		fallthrough;
-	case  8: diffs |= __it_diff(a, b, 64);
-		break;
-	case 28: diffs |= __it_diff(a, b, 64);
-		fallthrough;
-	case 20: diffs |= __it_diff(a, b, 64);
-		fallthrough;
-	case 12: diffs |= __it_diff(a, b, 64);
-		fallthrough;
-	case  4: diffs |= __it_diff(a, b, 32);
-		break;
-	}
-	return diffs;
-#else
-	return memcmp(a - meta_len, b - meta_len, meta_len);
-#endif
-}
-
-static inline bool skb_metadata_differs(const struct sk_buff *skb_a,
-					const struct sk_buff *skb_b)
-{
-	u8 len_a = skb_metadata_len(skb_a);
-	u8 len_b = skb_metadata_len(skb_b);
-
-	if (!(len_a | len_b))
-		return false;
-
-	return len_a != len_b ?
-	       true : __skb_metadata_differs(skb_a, skb_b, len_a);
-}
+extern bool skb_metadata_differs(const struct sk_buff *skb_a, const struct sk_buff *skb_b);
 
 static inline void skb_metadata_set(struct sk_buff *skb, u8 meta_len)
 {
