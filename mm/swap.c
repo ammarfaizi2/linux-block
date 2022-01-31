@@ -112,7 +112,7 @@ static void __put_compound_page(struct page *page)
 	destroy_compound_page(page);
 }
 
-void __put_page(struct page *page)
+inline void __put_page(struct page *page)
 {
 	if (is_zone_device_page(page)) {
 		put_dev_pagemap(page->pgmap);
@@ -130,6 +130,25 @@ void __put_page(struct page *page)
 		__put_single_page(page);
 }
 EXPORT_SYMBOL(__put_page);
+
+void put_page(struct page *page)
+{
+	struct folio *folio = page_folio(page);
+
+	/*
+	 * For devmap managed pages we need to catch refcount transition from
+	 * 2 to 1, when refcount reach one it means the page is free and we
+	 * need to inform the device driver through callback. See
+	 * include/linux/memremap.h and HMM for details.
+	 */
+	if (page_is_devmap_managed(&folio->page)) {
+		put_devmap_managed_page(&folio->page);
+		return;
+	}
+
+	folio_put(folio);
+}
+EXPORT_SYMBOL(put_page);
 
 /**
  * put_pages_list() - release a list of pages

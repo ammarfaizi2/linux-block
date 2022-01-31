@@ -1211,23 +1211,7 @@ static inline void folio_put_refs(struct folio *folio, int refs)
 		__put_page(&folio->page);
 }
 
-static inline void put_page(struct page *page)
-{
-	struct folio *folio = page_folio(page);
-
-	/*
-	 * For devmap managed pages we need to catch refcount transition from
-	 * 2 to 1, when refcount reach one it means the page is free and we
-	 * need to inform the device driver through callback. See
-	 * include/linux/memremap.h and HMM for details.
-	 */
-	if (page_is_devmap_managed(&folio->page)) {
-		put_devmap_managed_page(&folio->page);
-		return;
-	}
-
-	folio_put(folio);
-}
+void put_page(struct page *page);
 
 /*
  * GUP_PIN_COUNTING_BIAS, and the associated functions that use it, overload
