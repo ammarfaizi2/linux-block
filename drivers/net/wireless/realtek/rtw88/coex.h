@@ -5,6 +5,8 @@
 #ifndef __RTW_COEX_H__
 #define __RTW_COEX_H__
 
+#include <linux/types.h>
+
 #define COEX_CCK_2	0x1
 #define COEX_RESP_ACK_BY_WL_FW	0x1
 #define COEX_REQUEST_TIMEOUT	msecs_to_jiffies(10)

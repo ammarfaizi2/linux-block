@@ -23,6 +23,8 @@
 #ifndef _H_LPFC_DEBUG_FS
 #define _H_LPFC_DEBUG_FS
 
+#include <linux/types.h>
+
 #ifdef CONFIG_SCSI_LPFC_DEBUG_FS
 
 /* size of output line, for discovery_trace and slow_ring_trace */

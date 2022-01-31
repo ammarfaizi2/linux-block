@@ -8,6 +8,11 @@
  * Copyright (C) 1996, 1998, 1999, 2002 by Ralf Baechle
  * Copyright (C) 1999 Silicon Graphics, Inc.
  * Copyright (C) 2014 Imagination Technologies Ltd.
+ */
+
+#include <linux/types.h>
+
+/*
  *
  * This file contains exception handler for address error exception with the
  * special capability to execute faulting instructions in software.  The

@@ -2,6 +2,8 @@
 #ifndef _BCACHE_SYSFS_H_
 #define _BCACHE_SYSFS_H_
 
+#include <linux/types.h>
+
 #define KTYPE(type)							\
 struct kobj_type type ## _ktype = {					\
 	.release	= type ## _release,				\

@@ -6,6 +6,8 @@
 
 #ifndef	PEGASUS_DEV
 
+#include <linux/types.h>
+
 #define	PEGASUS_II		0x80000000
 #define	HAS_HOME_PNA		0x40000000
 

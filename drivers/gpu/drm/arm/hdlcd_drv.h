@@ -6,6 +6,8 @@
 #ifndef __HDLCD_DRV_H__
 #define __HDLCD_DRV_H__
 
+#include <linux/types.h>
+
 struct hdlcd_drm_private {
 	void __iomem			*mmio;
 	struct clk			*clk;

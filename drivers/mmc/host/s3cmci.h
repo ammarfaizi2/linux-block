@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2004-2006 Thomas Kleffel, All Rights Reserved.
  */
+#include <linux/types.h>
 
 enum s3cmci_waitfor {
 	COMPLETION_NONE,

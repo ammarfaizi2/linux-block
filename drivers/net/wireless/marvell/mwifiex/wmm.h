@@ -20,6 +20,8 @@
 #ifndef _MWIFIEX_WMM_H_
 #define _MWIFIEX_WMM_H_
 
+#include <linux/types.h>
+
 enum ieee_types_wmm_aciaifsn_bitmasks {
 	MWIFIEX_AIFSN = (BIT(0) | BIT(1) | BIT(2) | BIT(3)),
 	MWIFIEX_ACM = BIT(4),

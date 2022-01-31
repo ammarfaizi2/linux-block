@@ -8,6 +8,8 @@
 #ifndef _WMI_OPS_H_
 #define _WMI_OPS_H_
 
+#include <linux/types.h>
+
 struct ath10k;
 struct sk_buff;
 

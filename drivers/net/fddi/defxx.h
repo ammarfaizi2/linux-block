@@ -33,6 +33,8 @@
 #ifndef _DEFXX_H_
 #define _DEFXX_H_
 
+#include <linux/types.h>
+
 /* Define basic types for unsigned chars, shorts, longs */
 
 typedef u8	PI_UINT8;

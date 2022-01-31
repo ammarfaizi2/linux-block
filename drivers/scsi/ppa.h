@@ -11,6 +11,8 @@
 #ifndef _PPA_H
 #define _PPA_H
 
+#include <linux/types.h>
+
 #define   PPA_VERSION   "2.07 (for Linux 2.4.x)"
 
 /* 

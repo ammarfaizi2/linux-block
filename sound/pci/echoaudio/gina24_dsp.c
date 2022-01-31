@@ -28,6 +28,7 @@
 
 ****************************************************************************/
 
+#include <linux/types.h>
 
 static int write_control_reg(struct echoaudio *chip, u32 value, char force);
 static int set_input_clock(struct echoaudio *chip, u16 clock);

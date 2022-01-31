@@ -2,6 +2,8 @@
 #ifndef _AHA152X_H
 #define _AHA152X_H
 
+#include <linux/types.h>
+
 /*
  * $Id: aha152x.h,v 2.7 2004/01/24 11:39:03 fischer Exp $
  */

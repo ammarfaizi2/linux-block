@@ -43,6 +43,8 @@
 #ifndef _HE_H_
 #define _HE_H_
 
+#include <linux/types.h>
+
 #define DEV_LABEL       "he"
 
 #define CONFIG_DEFAULT_VCIBITS	12

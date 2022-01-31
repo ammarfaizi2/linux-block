@@ -6,6 +6,8 @@
 #ifndef IOSM_IPC_TASK_QUEUE_H
 #define IOSM_IPC_TASK_QUEUE_H
 
+#include <linux/types.h>
+
 /* Number of available element for the input message queue of the IPC
  * ipc_task
  */

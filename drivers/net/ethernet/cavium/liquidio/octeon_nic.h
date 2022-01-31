@@ -25,6 +25,8 @@
 #ifndef __OCTEON_NIC_H__
 #define  __OCTEON_NIC_H__
 
+#include <linux/types.h>
+
 /* Maximum number of 8-byte words can be sent in a NIC control message.
  */
 #define  MAX_NCTRL_UDD  32

@@ -5,6 +5,8 @@
  * Common inline functions needed for truncate support
  */
 
+#include <linux/types.h>
+
 /*
  * Truncate blocks that were not used by write. We have to truncate the
  * pagecache as well so that corresponding buffers get properly unmapped.

@@ -8,6 +8,8 @@
  * This file is licenced under GPL
  */
 
+#include <linux/types.h>
+
 /*-------------------------------------------------------------------------*/
 
 /*

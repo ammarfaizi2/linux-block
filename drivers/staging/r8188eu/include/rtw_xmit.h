@@ -4,6 +4,8 @@
 #ifndef _RTW_XMIT_H_
 #define _RTW_XMIT_H_
 
+#include <linux/types.h>
+
 #include "osdep_service.h"
 #include "drv_types.h"
 

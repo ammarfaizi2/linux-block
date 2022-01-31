@@ -6,6 +6,7 @@
  * Mainly take from usbnet's cdc-ether part
  *
  */
+#include <linux/types.h>
 
 /*
  * CMSPAR, some architectures can't have space and mark parity.

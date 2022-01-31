@@ -5,6 +5,8 @@
 #ifndef	_H_JFS_DMAP
 #define _H_JFS_DMAP
 
+#include <linux/types.h>
+
 #include "jfs_txnmgr.h"
 
 #define BMAPVERSION	1	/* version number */

@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2006-2011 Freescale Semiconductor, Inc.
  */
+#include <linux/types.h>
 
 #define TALITOS_TIMEOUT 100000
 #define TALITOS1_MAX_DATA_LEN 32768

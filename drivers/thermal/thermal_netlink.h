@@ -4,6 +4,8 @@
  *  Author: Daniel Lezcano <daniel.lezcano@linaro.org>
  */
 
+#include <linux/types.h>
+
 /* Netlink notification function */
 #ifdef CONFIG_THERMAL_NETLINK
 int __init thermal_netlink_init(void);

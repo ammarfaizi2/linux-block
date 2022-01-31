@@ -18,6 +18,8 @@
 #ifndef LSI_MEGARAID_SAS_H
 #define LSI_MEGARAID_SAS_H
 
+#include <linux/types.h>
+
 /*
  * MegaRAID SAS Driver meta data
  */

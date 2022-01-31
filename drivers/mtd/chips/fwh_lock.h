@@ -2,6 +2,7 @@
 #ifndef FWH_LOCK_H
 #define FWH_LOCK_H
 
+#include <linux/types.h>
 
 enum fwh_lock_state {
         FWH_UNLOCKED   = 0,

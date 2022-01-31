@@ -8,6 +8,8 @@
 #ifndef __LINUX_MFD_IQS62X_H
 #define __LINUX_MFD_IQS62X_H
 
+#include <linux/types.h>
+
 #define IQS620_PROD_NUM				0x41
 #define IQS621_PROD_NUM				0x46
 #define IQS622_PROD_NUM				0x42

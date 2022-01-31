@@ -9,6 +9,8 @@
  * Copyright (C) 2004 David Brownell
  */
 
+#include <linux/types.h>
+
 /* us of 1ms frame */
 #define  MAX_LOAD_LIMIT		850
 

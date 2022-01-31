@@ -10,6 +10,8 @@
 #ifndef MDEV_PRIVATE_H
 #define MDEV_PRIVATE_H
 
+#include <linux/types.h>
+
 int  mdev_bus_register(void);
 void mdev_bus_unregister(void);
 

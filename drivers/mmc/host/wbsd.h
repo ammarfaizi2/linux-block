@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2004-2007 Pierre Ossman, All Rights Reserved.
  */
+#include <linux/types.h>
 
 #define LOCK_CODE		0xAA
 

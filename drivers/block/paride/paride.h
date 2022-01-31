@@ -1,6 +1,8 @@
 #ifndef __DRIVERS_PARIDE_H__
 #define __DRIVERS_PARIDE_H__
 
+#include <linux/types.h>
+
 /* 
 	paride.h	(c) 1997-8  Grant R. Guenther <grant@torque.net>
    		                    Under the terms of the GPL.

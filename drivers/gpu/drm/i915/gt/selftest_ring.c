@@ -3,6 +3,8 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/types.h>
+
 static struct intel_ring *mock_ring(unsigned long sz)
 {
 	struct intel_ring *ring;

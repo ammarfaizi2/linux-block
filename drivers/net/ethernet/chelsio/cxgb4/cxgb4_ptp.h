@@ -35,6 +35,8 @@
 #ifndef __CXGB4_PTP_H__
 #define __CXGB4_PTP_H__
 
+#include <linux/types.h>
+
 /* Maximum parts-per-billion adjustment that is acceptable */
 #define MAX_PTP_FREQ_ADJ		1000000
 #define PTP_CLOCK_MAX_ADJTIME		10000000 /* 10 ms */

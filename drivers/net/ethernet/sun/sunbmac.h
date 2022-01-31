@@ -8,6 +8,8 @@
 #ifndef _SUNBMAC_H
 #define _SUNBMAC_H
 
+#include <linux/types.h>
+
 /* QEC global registers. */
 #define GLOB_CTRL	0x00UL	/* Control                  */
 #define GLOB_STAT	0x04UL	/* Status                   */

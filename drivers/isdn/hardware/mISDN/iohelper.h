@@ -13,6 +13,8 @@
 #ifndef _IOHELPER_H
 #define _IOHELPER_H
 
+#include <linux/types.h>
+
 typedef u8 (read_reg_func)(void *hwp, u8 offset);
 typedef void (write_reg_func)(void *hwp, u8 offset, u8 value);
 typedef void (fifo_func)(void *hwp, u8 offset, u8 *datap, int size);

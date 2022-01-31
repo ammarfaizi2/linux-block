@@ -6,6 +6,8 @@
 #ifndef INTEL_RPS_H
 #define INTEL_RPS_H
 
+#include <linux/types.h>
+
 #include "intel_rps_types.h"
 
 struct i915_request;

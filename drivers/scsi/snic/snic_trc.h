@@ -18,6 +18,8 @@
 #ifndef __SNIC_TRC_H
 #define __SNIC_TRC_H
 
+#include <linux/types.h>
+
 #ifdef CONFIG_SCSI_SNIC_DEBUG_FS
 
 extern ssize_t simple_read_from_buffer(void __user *to,

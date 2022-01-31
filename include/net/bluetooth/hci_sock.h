@@ -25,6 +25,8 @@
 #ifndef __HCI_SOCK_H
 #define __HCI_SOCK_H
 
+#include <linux/types.h>
+
 /* Socket options */
 #define HCI_DATA_DIR	1
 #define HCI_FILTER	2

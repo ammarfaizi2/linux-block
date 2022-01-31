@@ -18,6 +18,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/types.h>
+
 #define AR5523_FLAG_PRE_FIRMWARE	(1 << 0)
 #define AR5523_FLAG_ABG			(1 << 1)
 

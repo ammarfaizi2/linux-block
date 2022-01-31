@@ -47,6 +47,8 @@
 #ifndef _3W_9XXX_H
 #define _3W_9XXX_H
 
+#include <linux/types.h>
+
 /* AEN string type */
 typedef struct TAG_twa_message_type {
 	unsigned int   code;

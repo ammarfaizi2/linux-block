@@ -40,6 +40,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include <linux/types.h>
 
 #define FSL_RE_MAX_CHANS		4
 #define FSL_RE_DPAA_MODE		BIT(30)

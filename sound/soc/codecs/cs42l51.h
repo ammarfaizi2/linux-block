@@ -9,6 +9,8 @@
 #ifndef _CS42L51_H
 #define _CS42L51_H
 
+#include <linux/types.h>
+
 struct device;
 
 extern const struct regmap_config cs42l51_regmap;

@@ -4,6 +4,8 @@
 #ifndef __RTL8188E_RECV_H__
 #define __RTL8188E_RECV_H__
 
+#include <linux/types.h>
+
 #define TX_RPT1_PKT_LEN 8
 
 #define RECV_BLK_SZ 512

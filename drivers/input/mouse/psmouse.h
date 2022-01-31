@@ -2,6 +2,8 @@
 #ifndef _PSMOUSE_H
 #define _PSMOUSE_H
 
+#include <linux/types.h>
+
 #define PSMOUSE_OOB_NONE	0x00
 #define PSMOUSE_OOB_EXTRA_BTNS	0x01
 

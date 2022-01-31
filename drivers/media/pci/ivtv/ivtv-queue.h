@@ -10,6 +10,8 @@
 #ifndef IVTV_QUEUE_H
 #define IVTV_QUEUE_H
 
+#include <linux/types.h>
+
 #define IVTV_DMA_UNMAPPED	((u32) -1)
 #define SLICED_VBI_PIO 0
 

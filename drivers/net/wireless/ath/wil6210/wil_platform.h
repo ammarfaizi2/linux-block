@@ -6,6 +6,8 @@
 #ifndef __WIL_PLATFORM_H__
 #define __WIL_PLATFORM_H__
 
+#include <linux/types.h>
+
 struct device;
 
 enum wil_platform_event {

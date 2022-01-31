@@ -13,6 +13,8 @@
 #ifndef __U_ETHER_CONFIGFS_H
 #define __U_ETHER_CONFIGFS_H
 
+#include <linux/types.h>
+
 #define USB_ETHERNET_CONFIGFS_ITEM(_f_)					\
 	static void _f_##_attr_release(struct config_item *item)	\
 	{								\

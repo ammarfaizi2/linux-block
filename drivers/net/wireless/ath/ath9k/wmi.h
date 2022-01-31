@@ -17,6 +17,8 @@
 #ifndef WMI_H
 #define WMI_H
 
+#include <linux/types.h>
+
 struct wmi_event_txrate {
 	__be32 txrate;
 	struct {

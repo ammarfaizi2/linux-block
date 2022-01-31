@@ -14,6 +14,8 @@
 #ifndef _ASM_X86_MACH_DEFAULT_MACH_TIMER_H
 #define _ASM_X86_MACH_DEFAULT_MACH_TIMER_H
 
+#include <linux/types.h>
+
 #define CALIBRATE_TIME_MSEC 30 /* 30 msecs */
 #define CALIBRATE_LATCH	\
 	((PIT_TICK_RATE * CALIBRATE_TIME_MSEC + 1000/2)/1000)

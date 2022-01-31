@@ -40,6 +40,8 @@
 #ifndef __LINUX_USB_CDC_NCM_H
 #define __LINUX_USB_CDC_NCM_H
 
+#include <linux/types.h>
+
 #define CDC_NCM_COMM_ALTSETTING_NCM		0
 #define CDC_NCM_COMM_ALTSETTING_MBIM		1
 

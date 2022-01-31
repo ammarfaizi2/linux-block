@@ -9,6 +9,8 @@
 #ifndef STA_H_INCLUDED
 #define STA_H_INCLUDED
 
+#include <linux/types.h>
+
 /* ******************************************************************** */
 /* mac80211 API								*/
 

@@ -7,6 +7,8 @@
  * lockdep subsystem internal functions and variables.
  */
 
+#include <linux/types.h>
+
 /*
  * Lock-class usage-state bits:
  */

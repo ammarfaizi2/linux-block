@@ -6,6 +6,8 @@
 #ifndef __CHTLS_CM_H__
 #define __CHTLS_CM_H__
 
+#include <linux/types.h>
+
 /*
  * TCB settings
  */

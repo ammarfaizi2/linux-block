@@ -24,6 +24,8 @@
 #ifndef __OCTEON_DROQ_H__
 #define __OCTEON_DROQ_H__
 
+#include <linux/types.h>
+
 /* Default number of packets that will be processed in one iteration. */
 #define MAX_PACKET_BUDGET 0xFFFFFFFF
 

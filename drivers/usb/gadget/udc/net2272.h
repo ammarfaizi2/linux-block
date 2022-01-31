@@ -9,6 +9,8 @@
 #ifndef __NET2272_H__
 #define __NET2272_H__
 
+#include <linux/types.h>
+
 /* Main Registers */
 #define REGADDRPTR			0x00
 #define REGDATA				0x01

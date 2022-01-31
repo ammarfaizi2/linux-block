@@ -7,6 +7,8 @@
 #ifndef RXE_LOC_H
 #define RXE_LOC_H
 
+#include <linux/types.h>
+
 /* rxe_av.c */
 void rxe_init_av(struct rdma_ah_attr *attr, struct rxe_av *av);
 

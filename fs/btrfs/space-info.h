@@ -3,6 +3,8 @@
 #ifndef BTRFS_SPACE_INFO_H
 #define BTRFS_SPACE_INFO_H
 
+#include <linux/types.h>
+
 struct btrfs_space_info {
 	spinlock_t lock;
 

@@ -4,6 +4,8 @@
 #ifndef __RTL92D_PHY_H__
 #define __RTL92D_PHY_H__
 
+#include <linux/types.h>
+
 #define MAX_PRECMD_CNT				16
 #define MAX_RFDEPENDCMD_CNT			16
 #define MAX_POSTCMD_CNT				16

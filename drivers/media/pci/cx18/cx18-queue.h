@@ -8,6 +8,8 @@
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/types.h>
+
 #define CX18_DMA_UNMAPPED	((u32) -1)
 
 /* cx18_buffer utility functions */

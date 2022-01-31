@@ -7,6 +7,8 @@
 #ifndef RXE_TASK_H
 #define RXE_TASK_H
 
+#include <linux/types.h>
+
 enum {
 	TASK_STATE_START	= 0,
 	TASK_STATE_BUSY		= 1,

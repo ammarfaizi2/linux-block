@@ -43,6 +43,8 @@
  * WITH YOU.
  ***********************license end**************************************/
 
+#include <linux/types.h>
+
 #include "common.h"
 #include "zip_crypto.h"
 

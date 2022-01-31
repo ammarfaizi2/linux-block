@@ -14,6 +14,8 @@
 #ifndef __FSL_QE_UDC_H
 #define __FSL_QE_UDC_H
 
+#include <linux/types.h>
+
 /* SoC type */
 #define PORT_CPM	0
 #define PORT_QE		1

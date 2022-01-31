@@ -6,6 +6,8 @@
 #ifndef __XFS_TRANS_PRIV_H__
 #define	__XFS_TRANS_PRIV_H__
 
+#include <linux/types.h>
+
 struct xfs_log_item;
 struct xfs_mount;
 struct xfs_trans;

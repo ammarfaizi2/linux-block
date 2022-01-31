@@ -11,6 +11,8 @@
 #ifndef __LOCK_DOT_H__
 #define __LOCK_DOT_H__
 
+#include <linux/types.h>
+
 void dlm_dump_rsb(struct dlm_rsb *r);
 void dlm_dump_rsb_name(struct dlm_ls *ls, char *name, int len);
 void dlm_print_lkb(struct dlm_lkb *lkb);

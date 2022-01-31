@@ -4,6 +4,8 @@
 #ifndef __RTL8188E_XMIT_H__
 #define __RTL8188E_XMIT_H__
 
+#include <linux/types.h>
+
 #define		MAX_TX_AGG_PACKET_NUMBER	0xFF
 /*  */
 /*  Queue Select Value in TxDesc */

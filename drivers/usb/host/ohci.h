@@ -8,6 +8,8 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/types.h>
+
 /*
  * __hc32 and __hc16 are "Host Controller" types, they may be equivalent to
  * __leXX (normally) or __beXX (given OHCI_BIG_ENDIAN), depending on the

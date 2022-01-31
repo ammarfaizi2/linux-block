@@ -5,6 +5,8 @@
 # error "please don't include this file directly"
 #endif
 
+#include <linux/types.h>
+
 /*
  * rwlock related methods
  *

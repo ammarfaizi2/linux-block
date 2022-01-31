@@ -8,6 +8,8 @@
 #ifndef FS_9P_V9FS_VFS_H
 #define FS_9P_V9FS_VFS_H
 
+#include <linux/types.h>
+
 /* plan9 semantics are that created files are implicitly opened.
  * But linux semantics are that you call create, then open.
  * the plan9 approach is superior as it provides an atomic

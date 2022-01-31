@@ -25,6 +25,8 @@
 #ifndef __HCI_H
 #define __HCI_H
 
+#include <linux/types.h>
+
 #define HCI_MAX_ACL_SIZE	1024
 #define HCI_MAX_SCO_SIZE	255
 #define HCI_MAX_ISO_SIZE	251

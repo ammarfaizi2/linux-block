@@ -8,6 +8,8 @@
 #ifndef _LOLA_H
 #define _LOLA_H
 
+#include <linux/types.h>
+
 #define DRVNAME	"snd-lola"
 #define SFX	DRVNAME ": "
 

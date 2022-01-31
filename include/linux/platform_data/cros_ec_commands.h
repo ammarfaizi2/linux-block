@@ -14,6 +14,7 @@
 #define __CROS_EC_COMMANDS_H
 
 
+#include <linux/types.h>
 
 
 #define BUILD_ASSERT(_cond)

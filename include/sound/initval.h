@@ -2,6 +2,8 @@
 #ifndef __SOUND_INITVAL_H
 #define __SOUND_INITVAL_H
 
+#include <linux/types.h>
+
 /*
  *  Init values for soundcard modules
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>

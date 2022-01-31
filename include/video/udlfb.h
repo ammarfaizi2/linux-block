@@ -2,6 +2,8 @@
 #ifndef UDLFB_H
 #define UDLFB_H
 
+#include <linux/types.h>
+
 /*
  * TODO: Propose standard fb.h ioctl for reporting damage,
  * using _IOWR() and one of the existing area structs from fb.h

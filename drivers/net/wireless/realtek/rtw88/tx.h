@@ -5,6 +5,8 @@
 #ifndef __RTW_TX_H_
 #define __RTW_TX_H_
 
+#include <linux/types.h>
+
 #define RTK_TX_MAX_AGG_NUM_MASK		0x1f
 
 #define RTW_TX_PROBE_TIMEOUT		msecs_to_jiffies(500)

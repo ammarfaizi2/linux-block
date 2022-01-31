@@ -8,6 +8,8 @@
 #ifndef _DMA_FIFO_H_
 #define _DMA_FIFO_H_
 
+#include <linux/types.h>
+
 /**
  * The design basis for the DMA FIFO is to provide an output side that
  * complies with the streaming DMA API design that can be DMA'd from directly

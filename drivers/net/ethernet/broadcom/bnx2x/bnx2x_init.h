@@ -17,6 +17,8 @@
 #ifndef BNX2X_INIT_H
 #define BNX2X_INIT_H
 
+#include <linux/types.h>
+
 /* Init operation types and structures */
 enum {
 	OP_RD = 0x1,	/* read a single register */

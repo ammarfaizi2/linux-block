@@ -13,6 +13,8 @@
  * (C) Copyright 2004 Alan Stern, stern@rowland.harvard.edu
  */
 
+#include <linux/types.h>
+
 static const __u8 root_hub_hub_des[] =
 {
 	0x09,			/*  __u8  bLength; */

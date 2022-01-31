@@ -6,6 +6,8 @@
 #ifndef __ETNAVIV_MMU_H__
 #define __ETNAVIV_MMU_H__
 
+#include <linux/types.h>
+
 #define ETNAVIV_PROT_READ	(1 << 0)
 #define ETNAVIV_PROT_WRITE	(1 << 1)
 

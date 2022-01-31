@@ -14,7 +14,7 @@
  *	Andi Kleen	Make it work with multiple hosts.
  *			More RFC compliance.
  *
- *      Horst von Brand Add missing #include <linux/string.h>
+ *      Horst von Brand Add missing include <linux/string.h>
  *	Alexey Kuznetsov	SMP races, threading, cleanup.
  *	Patrick McHardy		LRU queue of frag heads for evictor.
  *	Mitsuru KANDA @USAGI	Register inet6_protocol{}.

@@ -10,6 +10,8 @@
 #ifndef __LINUX_V3020_H
 #define __LINUX_V3020_H
 
+#include <linux/types.h>
+
 /* The v3020 has only one data pin but which one
  * is used depends on the board. */
 struct v3020_platform_data {

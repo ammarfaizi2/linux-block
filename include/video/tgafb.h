@@ -13,6 +13,8 @@
 #ifndef TGAFB_H
 #define TGAFB_H
 
+#include <linux/types.h>
+
 /*
  * TGA hardware description (minimal)
  */

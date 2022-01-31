@@ -9,6 +9,8 @@
 #ifndef __NAU8824_H__
 #define __NAU8824_H__
 
+#include <linux/types.h>
+
 #define NAU8824_REG_RESET			0x00
 #define NAU8824_REG_ENA_CTRL			0x01
 #define NAU8824_REG_CLK_GATING_ENA		0x02

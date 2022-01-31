@@ -12,6 +12,8 @@
 #include "desc.h"
 #include "regs.h"
 
+#include <linux/types.h>
+
 #define IMMEDIATE (1 << 23)
 #define CAAM_CMD_SZ sizeof(u32)
 #define CAAM_PTR_SZ caam_ptr_sz

@@ -13,6 +13,8 @@
  * Copyright (C) 2012, 2013  MIPS Technologies, Inc.  All rights reserved.
  */
 
+#include <linux/types.h>
+
 enum fields {
 	RS = 0x001,
 	RT = 0x002,

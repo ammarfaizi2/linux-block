@@ -2,6 +2,7 @@
 #ifndef _I8042_H
 #define _I8042_H
 
+#include <linux/types.h>
 
 /*
  *  Copyright (c) 1999-2002 Vojtech Pavlik

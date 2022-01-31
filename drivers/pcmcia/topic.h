@@ -31,6 +31,8 @@
 #ifndef _LINUX_TOPIC_H
 #define _LINUX_TOPIC_H
 
+#include <linux/types.h>
+
 /* Register definitions for Toshiba ToPIC95/97/100 controllers */
 
 #define TOPIC_SOCKET_CONTROL		0x0090	/* 32 bit */

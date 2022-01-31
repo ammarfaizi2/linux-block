@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /* Copyright (C) 2004 Texas Instruments */
 
+#include <linux/types.h>
+
 /*
  * This OTG and Embedded Host list is "Targeted Peripheral List".
  * It should mostly use of USB_DEVICE() or USB_DEVICE_VER() entries..

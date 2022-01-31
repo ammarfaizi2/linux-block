@@ -25,6 +25,8 @@
 
 #include "amdgpu_ring.h"
 
+#include <linux/types.h>
+
 struct drm_device;
 struct drm_file;
 struct amdgpu_fpriv;

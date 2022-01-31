@@ -4,6 +4,8 @@
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
+#include <linux/types.h>
+
 int xudma_navss_psil_pair(struct udma_dev *ud, u32 src_thread, u32 dst_thread)
 {
 	return navss_psil_pair(ud, src_thread, dst_thread);

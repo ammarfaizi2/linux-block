@@ -9,6 +9,8 @@ Debug macro translation.
 
 ************************************************************************/
 
+#include <linux/types.h>
+
 #include "hpi_internal.h"
 #include "hpidebug.h"
 

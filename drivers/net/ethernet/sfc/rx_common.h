@@ -11,6 +11,8 @@
 #ifndef EFX_RX_COMMON_H
 #define EFX_RX_COMMON_H
 
+#include <linux/types.h>
+
 /* Preferred number of descriptors to fill at once */
 #define EFX_RX_PREFERRED_BATCH 8U
 

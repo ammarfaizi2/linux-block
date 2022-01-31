@@ -2,6 +2,8 @@
 #ifndef ADM8211_H
 #define ADM8211_H
 
+#include <linux/types.h>
+
 /* ADM8211 Registers */
 
 /* CR32 (SIG) signature */

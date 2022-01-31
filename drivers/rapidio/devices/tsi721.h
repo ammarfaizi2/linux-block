@@ -8,6 +8,8 @@
 #ifndef __TSI721_H
 #define __TSI721_H
 
+#include <linux/types.h>
+
 /* Debug output filtering masks */
 enum {
 	DBG_NONE	= 0,

@@ -4,6 +4,8 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/types.h>
+
 /* Algorithmic part of the firmware download.
  * To be included in the container file providing framework
  */

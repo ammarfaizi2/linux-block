@@ -29,6 +29,8 @@
 
 #ifndef	CONFIG_NUMA
 
+#include <linux/types.h>
+
 /* Other architectures wishing to use this simple topology API should fill
    in the below functions as appropriate in their own <asm/topology.h> file. */
 #ifndef cpu_to_node

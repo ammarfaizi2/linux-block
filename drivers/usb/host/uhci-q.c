@@ -17,6 +17,7 @@
  * (C) Copyright 2004-2007 Alan Stern, stern@rowland.harvard.edu
  */
 
+#include <linux/types.h>
 
 /*
  * Technically, updating td->status here is a race, but it's not really a

@@ -33,6 +33,8 @@
 #ifndef __LIB_CLOCK_H__
 #define __LIB_CLOCK_H__
 
+#include <linux/types.h>
+
 static inline bool mlx5_is_real_time_rq(struct mlx5_core_dev *mdev)
 {
 	u8 rq_ts_format_cap = MLX5_CAP_GEN(mdev, rq_ts_format);

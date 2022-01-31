@@ -4,6 +4,8 @@
  * Copyright (c) 2019, Tessares SA.
  */
 
+#include <linux/types.h>
+
 #ifdef CONFIG_SYSCTL
 #include <linux/sysctl.h>
 #endif

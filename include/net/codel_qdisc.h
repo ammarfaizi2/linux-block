@@ -1,6 +1,8 @@
 #ifndef __NET_SCHED_CODEL_QDISC_H
 #define __NET_SCHED_CODEL_QDISC_H
 
+#include <linux/types.h>
+
 /*
  * Codel - The Controlled-Delay Active Queue Management algorithm
  *

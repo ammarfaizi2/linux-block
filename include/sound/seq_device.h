@@ -2,6 +2,8 @@
 #ifndef __SOUND_SEQ_DEVICE_H
 #define __SOUND_SEQ_DEVICE_H
 
+#include <linux/types.h>
+
 /*
  *  ALSA sequencer device management
  *  Copyright (c) 1999 by Takashi Iwai <tiwai@suse.de>

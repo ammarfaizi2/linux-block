@@ -10,6 +10,8 @@
 #ifndef CMD_H
 #define CMD_H
 
+#include <linux/types.h>
+
 /*
  * Those bits are common to all descriptor formats and
  * may be manipulated by the core code.

@@ -10,6 +10,8 @@
 #ifndef BNXT_VFR_H
 #define BNXT_VFR_H
 
+#include <linux/types.h>
+
 #ifdef CONFIG_BNXT_SRIOV
 
 #define	MAX_CFA_CODE			65536

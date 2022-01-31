@@ -4,6 +4,8 @@
 #ifndef _IGC_REGS_H_
 #define _IGC_REGS_H_
 
+#include <linux/types.h>
+
 /* General Register Descriptions */
 #define IGC_CTRL		0x00000  /* Device Control - RW */
 #define IGC_STATUS		0x00008  /* Device Status - RO */

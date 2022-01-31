@@ -11,6 +11,8 @@
 #ifndef __SIGNAL_COMMON_H
 #define __SIGNAL_COMMON_H
 
+#include <linux/types.h>
+
 /* #define DEBUG_SIG */
 
 #ifdef DEBUG_SIG
