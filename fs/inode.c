@@ -2407,3 +2407,43 @@ struct timespec64 current_time(struct inode *inode)
 	return timestamp_truncate(now, inode);
 }
 EXPORT_SYMBOL(current_time);
+
+/**
+ * mapped_fsuid - return caller's fsuid mapped up into a mnt_userns
+ * @mnt_userns: the mount's idmapping
+ * @fs_userns: the filesystem's idmapping
+ *
+ * Use this helper to initialize a new vfs or filesystem object based on
+ * the caller's fsuid. A common example is initializing the i_uid field of
+ * a newly allocated inode triggered by a creation event such as mkdir or
+ * O_CREAT. Other examples include the allocation of quotas for a specific
+ * user.
+ *
+ * Return: the caller's current fsuid mapped up according to @mnt_userns.
+ */
+kuid_t mapped_fsuid(struct user_namespace *mnt_userns,
+		    struct user_namespace *fs_userns)
+{
+	return mapped_kuid_user(mnt_userns, fs_userns, current_fsuid());
+}
+EXPORT_SYMBOL(mapped_fsuid);
+
+/**
+ * mapped_fsgid - return caller's fsgid mapped up into a mnt_userns
+ * @mnt_userns: the mount's idmapping
+ * @fs_userns: the filesystem's idmapping
+ *
+ * Use this helper to initialize a new vfs or filesystem object based on
+ * the caller's fsgid. A common example is initializing the i_gid field of
+ * a newly allocated inode triggered by a creation event such as mkdir or
+ * O_CREAT. Other examples include the allocation of quotas for a specific
+ * user.
+ *
+ * Return: the caller's current fsgid mapped up according to @mnt_userns.
+ */
+kgid_t mapped_fsgid(struct user_namespace *mnt_userns,
+		    struct user_namespace *fs_userns)
+{
+	return mapped_kgid_user(mnt_userns, fs_userns, current_fsgid());
+}
+EXPORT_SYMBOL(mapped_fsgid);
