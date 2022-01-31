@@ -37,12 +37,12 @@
  * POSSIBILITY OF SUCH DAMAGES.
  *
  */
- #include <linux/slab.h>
- #include "pm8001_sas.h"
- #include "pm8001_hwi.h"
- #include "pm8001_chips.h"
- #include "pm8001_ctl.h"
- #include "pm80xx_tracepoints.h"
+#include <linux/slab.h>
+#include "pm8001_sas.h"
+#include "pm8001_hwi.h"
+#include "pm8001_chips.h"
+#include "pm8001_ctl.h"
+#include "pm80xx_tracepoints.h"
 
 /**
  * read_main_config_table - read the configure table and save it.
