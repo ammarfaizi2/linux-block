@@ -1762,29 +1762,54 @@ char *fourcc_string(char *buf, char *end, const u32 *fourcc,
 	char output[sizeof("0123 little-endian (0x01234567)")];
 	char *p = output;
 	unsigned int i;
-	u32 val;
+	bool pix_fmt = false;
+	u32 val = *fourcc;
+	u32 cval = *fourcc;
 
-	if (fmt[1] != 'c' || fmt[2] != 'c')
+	if (fmt[1] != 'c')
 		return error_string(buf, end, "(%p4?)", spec);
 
 	if (check_pointer(&buf, end, fourcc, spec))
 		return buf;
 
-	val = *fourcc & ~BIT(31);
+	switch (fmt[2]) {
+	case 'h':
+		cval = val = *fourcc;
+		break;
+	case 'r':
+		cval = val = swab32(*fourcc);
+		break;
+	case 'l':
+		cval = val = le32_to_cpu(*fourcc);
+		break;
+	case 'b':
+		cval = val = be32_to_cpu(*fourcc);
+		break;
+	case 'c':
+		val = *fourcc & ~BIT(31);
+		/* Pixel formats are printed LSB-first */
+		cval = swab32(val);
+		pix_fmt = true;
+		break;
+	default:
+		return error_string(buf, end, "(%p4?)", spec);
+	}
 
 	for (i = 0; i < sizeof(*fourcc); i++) {
-		unsigned char c = val >> (i * 8);
+		unsigned char c = cval >> ((3 - i) * 8);
 
 		/* Print non-control ASCII characters as-is, dot otherwise */
 		*p++ = isascii(c) && isprint(c) ? c : '.';
 	}
 
-	strcpy(p, *fourcc & BIT(31) ? " big-endian" : " little-endian");
-	p += strlen(p);
+	if (pix_fmt) {
+		strcpy(p, *fourcc & BIT(31) ? " big-endian" : " little-endian");
+		p += strlen(p);
+	}
 
 	*p++ = ' ';
 	*p++ = '(';
-	p = special_hex_number(p, output + sizeof(output) - 2, *fourcc, sizeof(u32));
+	p = special_hex_number(p, output + sizeof(output) - 2, val, sizeof(u32));
 	*p++ = ')';
 	*p = '\0';
 
