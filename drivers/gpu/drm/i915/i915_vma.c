@@ -448,6 +448,8 @@ int i915_vma_bind(struct i915_vma *vma,
 		work->pinned = i915_gem_object_get(vma->obj);
 	} else {
 		if (vma->obj) {
+			int ret;
+
 			ret = i915_gem_object_wait_moving_fence(vma->obj, true);
 			if (ret)
 				return ret;
