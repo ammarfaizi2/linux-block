@@ -3866,7 +3866,8 @@ EXPORT_SYMBOL_GPL(start_poll_synchronize_rcu);
  */
 bool poll_state_synchronize_rcu(unsigned long oldstate)
 {
-	if (rcu_seq_done(&rcu_state.gp_seq, oldstate)) {
+	if (rcu_seq_done(&rcu_state.gp_seq, oldstate) &&
+	    !WARN_ON_ONCE(oldstate & RCU_GET_STATE_BAD_FOR_NORMAL)) {
 		smp_mb(); /* Ensure GP ends before subsequent accesses. */
 		return true;
 	}
@@ -3895,7 +3896,8 @@ EXPORT_SYMBOL_GPL(poll_state_synchronize_rcu);
  */
 void cond_synchronize_rcu(unsigned long oldstate)
 {
-	if (!poll_state_synchronize_rcu(oldstate))
+	if (!poll_state_synchronize_rcu(oldstate) &&
+	    !WARN_ON_ONCE(oldstate & RCU_GET_STATE_BAD_FOR_NORMAL))
 		synchronize_rcu();
 }
 EXPORT_SYMBOL_GPL(cond_synchronize_rcu);
@@ -4588,6 +4590,9 @@ static void __init rcu_init_one(void)
 			init_waitqueue_head(&rnp->exp_wq[3]);
 			spin_lock_init(&rnp->exp_lock);
 			mutex_init(&rnp->boost_kthread_mutex);
+			raw_spin_lock_init(&rnp->exp_poll_lock);
+			rnp->exp_seq_poll_rq = 0x1;
+			INIT_WORK(&rnp->exp_poll_wq, sync_rcu_do_polled_gp);
 		}
 	}
 
