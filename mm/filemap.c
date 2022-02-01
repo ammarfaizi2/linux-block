@@ -3931,6 +3931,23 @@ ssize_t generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 }
 EXPORT_SYMBOL(generic_file_write_iter);
 
+void __mapping_set_error(struct address_space *mapping, int error)
+{
+	/* Record in wb_err for checkers using errseq_t based tracking */
+	__filemap_set_wb_err(mapping, error);
+
+	/* Record it in superblock */
+	if (mapping->host)
+		errseq_set(&mapping->host->i_sb->s_wb_err, error);
+
+	/* Record it in flags for now, for legacy callers */
+	if (error == -ENOSPC)
+		set_bit(AS_ENOSPC, &mapping->flags);
+	else
+		set_bit(AS_EIO, &mapping->flags);
+}
+EXPORT_SYMBOL(__mapping_set_error);
+
 /**
  * filemap_release_folio() - Release fs-specific metadata on a folio.
  * @folio: The folio which the kernel is trying to free.

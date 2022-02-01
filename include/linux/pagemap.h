@@ -87,6 +87,8 @@ enum mapping_flags {
 	AS_LARGE_FOLIO_SUPPORT = 6,
 };
 
+extern void __mapping_set_error(struct address_space *mapping, int error);
+
 /**
  * mapping_set_error - record a writeback error in the address_space
  * @mapping: the mapping in which an error should be set
@@ -105,19 +107,7 @@ static inline void mapping_set_error(struct address_space *mapping, int error)
 {
 	if (likely(!error))
 		return;
-
-	/* Record in wb_err for checkers using errseq_t based tracking */
-	__filemap_set_wb_err(mapping, error);
-
-	/* Record it in superblock */
-	if (mapping->host)
-		errseq_set(&mapping->host->i_sb->s_wb_err, error);
-
-	/* Record it in flags for now, for legacy callers */
-	if (error == -ENOSPC)
-		set_bit(AS_ENOSPC, &mapping->flags);
-	else
-		set_bit(AS_EIO, &mapping->flags);
+	__mapping_set_error(mapping, error);
 }
 
 static inline void mapping_set_unevictable(struct address_space *mapping)
