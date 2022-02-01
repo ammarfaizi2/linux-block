@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+config ATH12K
+	tristate "Qualcomm Technologies 802.11be chipset support"
+	depends on MAC80211 && HAS_DMA && PCI
+	depends on CRYPTO_MICHAEL_MIC
+	select ATH_COMMON
+	select QCOM_QMI_HELPERS
+	select MHI_BUS
+	select QRTR
+	select QRTR_MHI
+	help
+	  This module adds support for Qualcomm Technologies 802.11be family of
+	  chipsets.
+
+	  If you choose to build a module, it'll be called ath12k.
+
+config ATH12K_DEBUG
+	bool "QCA ath12k debugging"
+	depends on ATH12K
+	help
+	  Enables debug support
+
+	  If unsure, say Y to make it easier to debug problems.
+
+config ATH12K_DEBUGFS
+	bool "QCA ath12k debugfs support"
+	depends on ATH12K && DEBUG_FS && MAC80211_DEBUGFS
+	help
+	  Enable ath12k debugfs support
+
+	  If unsure, say Y to make it easier to debug problems.
+
+config ATH12K_TRACING
+	bool "ath12k tracing support"
+	depends on ATH12K && EVENT_TRACING
+	help
+	  Select this to use ath12k tracing infrastructure.
+
+config ATH12K_SPECTRAL
+	bool "QCA ath12k spectral scan support"
+	depends on ATH12K_DEBUGFS
+	depends on RELAY
+	help
+	  Enable ath12k spectral scan support
+
+	  Say Y to enable access to the FFT/spectral data via debugfs.
