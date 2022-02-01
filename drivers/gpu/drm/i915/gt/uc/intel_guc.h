@@ -9,7 +9,7 @@
 #include <linux/xarray.h>
 #include <linux/delay.h>
 
-#include "intel_uncore.h"
+#include "../../intel_uncore.h"
 #include "intel_guc_fw.h"
 #include "intel_guc_fwif.h"
 #include "intel_guc_ct.h"
@@ -17,8 +17,8 @@
 #include "intel_guc_reg.h"
 #include "intel_guc_slpc_types.h"
 #include "intel_uc_fw.h"
-#include "i915_utils.h"
-#include "i915_vma.h"
+#include "../../i915_utils.h"
+#include "../../i915_vma.h"
 
 struct __guc_ads_blob;
 

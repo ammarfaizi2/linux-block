@@ -13,8 +13,8 @@
 #include <drm/ttm/ttm_bo_api.h>
 #include <uapi/drm/i915_drm.h>
 
-#include "i915_active.h"
-#include "i915_selftest.h"
+#include "../i915_active.h"
+#include "../i915_selftest.h"
 
 struct drm_i915_gem_object;
 struct intel_fronbuffer;

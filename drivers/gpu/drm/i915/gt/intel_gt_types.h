@@ -17,7 +17,7 @@
 
 #include "uc/intel_uc.h"
 
-#include "i915_vma.h"
+#include "../i915_vma.h"
 #include "intel_engine_types.h"
 #include "intel_gt_buffer_pool_types.h"
 #include "intel_llc_types.h"
@@ -25,8 +25,8 @@
 #include "intel_rc6_types.h"
 #include "intel_rps_types.h"
 #include "intel_migrate_types.h"
-#include "intel_wakeref.h"
-#include "pxp/intel_pxp_types.h"
+#include "../intel_wakeref.h"
+#include "../pxp/intel_pxp_types.h"
 
 struct drm_i915_private;
 struct i915_ggtt;

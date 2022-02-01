@@ -25,9 +25,9 @@
 
 #include <drm/drm_mm.h>
 
-#include "gt/intel_reset.h"
-#include "i915_selftest.h"
-#include "i915_vma_types.h"
+#include "../gt/intel_reset.h"
+#include "../i915_selftest.h"
+#include "../i915_vma_types.h"
 
 #define I915_GFP_ALLOW_FAIL (GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN)
 

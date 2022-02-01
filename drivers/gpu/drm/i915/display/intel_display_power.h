@@ -6,8 +6,8 @@
 #ifndef __INTEL_DISPLAY_POWER_H__
 #define __INTEL_DISPLAY_POWER_H__
 
-#include "intel_runtime_pm.h"
-#include "i915_reg.h"
+#include "../intel_runtime_pm.h"
+#include "../i915_reg.h"
 
 enum dpio_channel;
 enum dpio_phy;

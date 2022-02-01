@@ -9,7 +9,7 @@
 #include <linux/list.h>
 #include <linux/types.h>
 
-#include "i915_active.h"
+#include "../i915_active.h"
 
 struct drm_i915_gem_object;
 struct i915_ggtt;

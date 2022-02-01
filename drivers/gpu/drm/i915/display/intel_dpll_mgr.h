@@ -27,7 +27,7 @@
 
 #include <linux/types.h>
 
-#include "intel_wakeref.h"
+#include "../intel_wakeref.h"
 
 /*FIXME: Move this to a more appropriate place. */
 #define abs_diff(a, b) ({			\

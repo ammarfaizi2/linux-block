@@ -12,7 +12,7 @@
 #include <linux/rcupdate.h>
 #include <linux/types.h>
 
-#include "i915_active_types.h"
+#include "../i915_active_types.h"
 
 struct i915_vma;
 struct i915_syncmap;

@@ -9,7 +9,7 @@
 #include <linux/bits.h>
 #include <linux/compiler.h>
 #include <linux/types.h>
-#include "gt/intel_engine_types.h"
+#include "../../gt/intel_engine_types.h"
 
 #include "abi/guc_actions_abi.h"
 #include "abi/guc_actions_slpc_abi.h"

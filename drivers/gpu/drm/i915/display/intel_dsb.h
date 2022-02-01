@@ -8,7 +8,7 @@
 
 #include <linux/types.h>
 
-#include "i915_reg.h"
+#include "../i915_reg.h"
 
 struct intel_crtc_state;
 struct i915_vma;

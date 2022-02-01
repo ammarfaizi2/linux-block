@@ -11,7 +11,7 @@
 #include <linux/workqueue.h>
 
 #include "intel_guc_fwif.h"
-#include "i915_gem.h"
+#include "../../i915_gem.h"
 
 struct intel_guc;
 

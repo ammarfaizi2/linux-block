@@ -8,9 +8,9 @@
 
 #include <linux/types.h>
 #include "intel_uc_fw_abi.h"
-#include "intel_device_info.h"
-#include "i915_gem.h"
-#include "i915_vma.h"
+#include "../../intel_device_info.h"
+#include "../../i915_gem.h"
+#include "../../i915_vma.h"
 
 struct drm_printer;
 struct drm_i915_private;

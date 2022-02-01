@@ -17,10 +17,10 @@
 #include <linux/rcupdate.h>
 #include <linux/types.h>
 
-#include "gt/intel_context_types.h"
+#include "../gt/intel_context_types.h"
 
-#include "i915_scheduler.h"
-#include "i915_sw_fence.h"
+#include "../i915_scheduler.h"
+#include "../i915_sw_fence.h"
 
 struct pid;
 

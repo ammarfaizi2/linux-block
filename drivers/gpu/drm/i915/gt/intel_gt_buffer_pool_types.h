@@ -10,8 +10,8 @@
 #include <linux/spinlock.h>
 #include <linux/workqueue.h>
 
-#include "gem/i915_gem_object_types.h"
-#include "i915_active_types.h"
+#include "../gem/i915_gem_object_types.h"
+#include "../i915_active_types.h"
 
 struct intel_gt_buffer_pool {
 	spinlock_t lock;

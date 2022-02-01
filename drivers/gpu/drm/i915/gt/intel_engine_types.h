@@ -17,14 +17,14 @@
 #include <linux/types.h>
 #include <linux/workqueue.h>
 
-#include "i915_gem.h"
-#include "i915_pmu.h"
-#include "i915_priolist_types.h"
-#include "i915_selftest.h"
+#include "../i915_gem.h"
+#include "../i915_pmu.h"
+#include "../i915_priolist_types.h"
+#include "../i915_selftest.h"
 #include "intel_sseu.h"
 #include "intel_timeline_types.h"
-#include "intel_uncore.h"
-#include "intel_wakeref.h"
+#include "../intel_uncore.h"
+#include "../intel_wakeref.h"
 #include "intel_workarounds_types.h"
 
 /* HW Engine class + instance */

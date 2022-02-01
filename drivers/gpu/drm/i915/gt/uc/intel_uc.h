@@ -11,7 +11,7 @@
 #include "intel_guc_submission.h"
 #include "intel_guc_slpc.h"
 #include "intel_huc.h"
-#include "i915_params.h"
+#include "../../i915_params.h"
 
 struct intel_uc;
 

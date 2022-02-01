@@ -6,8 +6,8 @@
 #ifndef __INTEL_DMC_H__
 #define __INTEL_DMC_H__
 
-#include "i915_reg.h"
-#include "intel_wakeref.h"
+#include "../i915_reg.h"
+#include "../intel_wakeref.h"
 #include <linux/workqueue.h>
 
 struct drm_i915_private;

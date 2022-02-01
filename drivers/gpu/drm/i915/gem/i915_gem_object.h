@@ -11,12 +11,12 @@
 #include <drm/drm_file.h>
 #include <drm/drm_device.h>
 
-#include "display/intel_frontbuffer.h"
-#include "intel_memory_region.h"
+#include "../display/intel_frontbuffer.h"
+#include "../intel_memory_region.h"
 #include "i915_gem_object_types.h"
-#include "i915_gem_gtt.h"
-#include "i915_gem_ww.h"
-#include "i915_vma_types.h"
+#include "../i915_gem_gtt.h"
+#include "../i915_gem_ww.h"
+#include "../i915_vma_types.h"
 
 enum intel_region_id;
 

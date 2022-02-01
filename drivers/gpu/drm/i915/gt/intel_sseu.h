@@ -9,7 +9,7 @@
 #include <linux/types.h>
 #include <linux/kernel.h>
 
-#include "i915_gem.h"
+#include "../i915_gem.h"
 
 struct drm_i915_private;
 struct intel_gt;
