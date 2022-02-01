@@ -237,6 +237,8 @@ enum sec_def_flags {
 	SEC_SLOPPY_PFX = 16,
 	/* BPF program support non-linear XDP buffer */
 	SEC_XDP_FRAGS = 32,
+	/* deprecated sec definitions not supposed to be used */
+	SEC_DEPRECATED = 64,
 };
 
 struct bpf_sec_def {
@@ -6575,6 +6577,10 @@ static int libbpf_preload_prog(struct bpf_program *prog,
 	if (prog->type == BPF_PROG_TYPE_XDP && (def & SEC_XDP_FRAGS))
 		opts->prog_flags |= BPF_F_XDP_HAS_FRAGS;
 
+	if (def & SEC_DEPRECATED)
+		pr_warn("SEC(\"%s\") is deprecated, please see https://github.com/libbpf/libbpf/wiki/Libbpf-1.0-migration-guide#bpf-program-sec-annotation-deprecations for details\n",
+			prog->sec_name);
+
 	if ((prog->type == BPF_PROG_TYPE_TRACING ||
 	     prog->type == BPF_PROG_TYPE_LSM ||
 	     prog->type == BPF_PROG_TYPE_EXT) && !prog->attach_btf_id) {
@@ -7896,10 +7902,8 @@ int bpf_map__set_pin_path(struct bpf_map *map, const char *path)
 	return 0;
 }
 
-const char *bpf_map__get_pin_path(const struct bpf_map *map)
-{
-	return map->pin_path;
-}
+__alias(bpf_map__pin_path)
+const char *bpf_map__get_pin_path(const struct bpf_map *map);
 
 const char *bpf_map__pin_path(const struct bpf_map *map)
 {
@@ -8464,7 +8468,10 @@ static int bpf_program_nth_fd(const struct bpf_program *prog, int n)
 	return fd;
 }
 
-enum bpf_prog_type bpf_program__get_type(const struct bpf_program *prog)
+__alias(bpf_program__type)
+enum bpf_prog_type bpf_program__get_type(const struct bpf_program *prog);
+
+enum bpf_prog_type bpf_program__type(const struct bpf_program *prog)
 {
 	return prog->type;
 }
@@ -8508,8 +8515,10 @@ BPF_PROG_TYPE_FNS(struct_ops, BPF_PROG_TYPE_STRUCT_OPS);
 BPF_PROG_TYPE_FNS(extension, BPF_PROG_TYPE_EXT);
 BPF_PROG_TYPE_FNS(sk_lookup, BPF_PROG_TYPE_SK_LOOKUP);
 
-enum bpf_attach_type
-bpf_program__get_expected_attach_type(const struct bpf_program *prog)
+__alias(bpf_program__expected_attach_type)
+enum bpf_attach_type bpf_program__get_expected_attach_type(const struct bpf_program *prog);
+
+enum bpf_attach_type bpf_program__expected_attach_type(const struct bpf_program *prog)
 {
 	return prog->expected_attach_type;
 }
@@ -8593,7 +8602,7 @@ static const struct bpf_sec_def section_defs[] = {
 	SEC_DEF("kretprobe/",		KPROBE, 0, SEC_NONE, attach_kprobe),
 	SEC_DEF("uretprobe/",		KPROBE, 0, SEC_NONE),
 	SEC_DEF("tc",			SCHED_CLS, 0, SEC_NONE),
-	SEC_DEF("classifier",		SCHED_CLS, 0, SEC_NONE | SEC_SLOPPY_PFX),
+	SEC_DEF("classifier",		SCHED_CLS, 0, SEC_NONE | SEC_SLOPPY_PFX | SEC_DEPRECATED),
 	SEC_DEF("action",		SCHED_ACT, 0, SEC_NONE | SEC_SLOPPY_PFX),
 	SEC_DEF("tracepoint/",		TRACEPOINT, 0, SEC_NONE, attach_tp),
 	SEC_DEF("tp/",			TRACEPOINT, 0, SEC_NONE, attach_tp),
@@ -8612,11 +8621,14 @@ static const struct bpf_sec_def section_defs[] = {
 	SEC_DEF("lsm/",			LSM, BPF_LSM_MAC, SEC_ATTACH_BTF, attach_lsm),
 	SEC_DEF("lsm.s/",		LSM, BPF_LSM_MAC, SEC_ATTACH_BTF | SEC_SLEEPABLE, attach_lsm),
 	SEC_DEF("iter/",		TRACING, BPF_TRACE_ITER, SEC_ATTACH_BTF, attach_iter),
+	SEC_DEF("iter.s/",		TRACING, BPF_TRACE_ITER, SEC_ATTACH_BTF | SEC_SLEEPABLE, attach_iter),
 	SEC_DEF("syscall",		SYSCALL, 0, SEC_SLEEPABLE),
 	SEC_DEF("xdp.frags/devmap",	XDP, BPF_XDP_DEVMAP, SEC_XDP_FRAGS),
-	SEC_DEF("xdp_devmap/",		XDP, BPF_XDP_DEVMAP, SEC_ATTACHABLE),
+	SEC_DEF("xdp/devmap",		XDP, BPF_XDP_DEVMAP, SEC_ATTACHABLE),
+	SEC_DEF("xdp_devmap/",		XDP, BPF_XDP_DEVMAP, SEC_ATTACHABLE | SEC_DEPRECATED),
 	SEC_DEF("xdp.frags/cpumap",	XDP, BPF_XDP_CPUMAP, SEC_XDP_FRAGS),
-	SEC_DEF("xdp_cpumap/",		XDP, BPF_XDP_CPUMAP, SEC_ATTACHABLE),
+	SEC_DEF("xdp/cpumap",		XDP, BPF_XDP_CPUMAP, SEC_ATTACHABLE),
+	SEC_DEF("xdp_cpumap/",		XDP, BPF_XDP_CPUMAP, SEC_ATTACHABLE | SEC_DEPRECATED),
 	SEC_DEF("xdp.frags",		XDP, BPF_XDP, SEC_XDP_FRAGS),
 	SEC_DEF("xdp",			XDP, BPF_XDP, SEC_ATTACHABLE_OPT | SEC_SLOPPY_PFX),
 	SEC_DEF("perf_event",		PERF_EVENT, 0, SEC_NONE | SEC_SLOPPY_PFX),
@@ -9459,7 +9471,7 @@ static int bpf_prog_load_xattr2(const struct bpf_prog_load_attr *attr,
 	open_attr.file = attr->file;
 	open_attr.prog_type = attr->prog_type;
 
-	obj = bpf_object__open_xattr(&open_attr);
+	obj = __bpf_object__open_xattr(&open_attr, 0);
 	err = libbpf_get_error(obj);
 	if (err)
 		return libbpf_err(-ENOENT);
@@ -9476,7 +9488,7 @@ static int bpf_prog_load_xattr2(const struct bpf_prog_load_attr *attr,
 			bpf_program__set_expected_attach_type(prog,
 							      attach_type);
 		}
-		if (bpf_program__get_type(prog) == BPF_PROG_TYPE_UNSPEC) {
+		if (bpf_program__type(prog) == BPF_PROG_TYPE_UNSPEC) {
 			/*
 			 * we haven't guessed from section name and user
 			 * didn't provide a fallback type, too bad...
@@ -10527,7 +10539,7 @@ bpf_program__attach_fd(const struct bpf_program *prog, int target_fd, int btf_id
 		return libbpf_err_ptr(-ENOMEM);
 	link->detach = &bpf_link__detach_fd;
 
-	attach_type = bpf_program__get_expected_attach_type(prog);
+	attach_type = bpf_program__expected_attach_type(prog);
 	link_fd = bpf_link_create(prog_fd, target_fd, attach_type, &opts);
 	if (link_fd < 0) {
 		link_fd = -errno;
