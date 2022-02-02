@@ -882,8 +882,8 @@ EXPORT_SYMBOL_GPL(synchronize_rcu_expedited);
 unsigned long get_state_synchronize_rcu_expedited(void)
 {
 	if (rcu_gp_is_normal())
-	return get_state_synchronize_rcu() |
-	       RCU_GET_STATE_FROM_EXPEDITED | RCU_GET_STATE_USE_NORMAL;
+		return get_state_synchronize_rcu() |
+		       RCU_GET_STATE_FROM_EXPEDITED | RCU_GET_STATE_USE_NORMAL;
 
 	// Any prior manipulation of RCU-protected data must happen
 	// before the load from ->expedited_sequence.
