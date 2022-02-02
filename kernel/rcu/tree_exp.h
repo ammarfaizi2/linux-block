@@ -886,8 +886,8 @@ unsigned long get_state_synchronize_rcu_expedited(void)
 		       RCU_GET_STATE_FROM_EXPEDITED | RCU_GET_STATE_USE_NORMAL;
 
 	// Any prior manipulation of RCU-protected data must happen
-	// before the load from ->expedited_sequence.
-	smp_mb();  /* ^^^ */
+	// before the load from ->expedited_sequence, and this ordering is
+	// provided by rcu_exp_gp_seq_snap().
 	return rcu_exp_gp_seq_snap() | RCU_GET_STATE_FROM_EXPEDITED;
 }
 EXPORT_SYMBOL_GPL(get_state_synchronize_rcu_expedited);
@@ -937,7 +937,7 @@ unsigned long start_poll_synchronize_rcu_expedited(void)
 	unsigned long s;
 
 	if (rcu_gp_is_normal())
-		return start_poll_synchronize_rcu_expedited() |
+		return start_poll_synchronize_rcu() |
 		       RCU_GET_STATE_FROM_EXPEDITED | RCU_GET_STATE_USE_NORMAL;
 
 	s = rcu_exp_gp_seq_snap();
@@ -1017,8 +1017,8 @@ void cond_synchronize_rcu_expedited(unsigned long oldstate)
 	if (poll_state_synchronize_rcu_expedited(oldstate))
 		return;
 	if (oldstate & RCU_GET_STATE_USE_NORMAL)
-		synchronize_rcu_expedited();
-	else
 		synchronize_rcu();
+	else
+		synchronize_rcu_expedited();
 }
 EXPORT_SYMBOL_GPL(cond_synchronize_rcu_expedited);

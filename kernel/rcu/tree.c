@@ -3901,8 +3901,8 @@ EXPORT_SYMBOL_GPL(poll_state_synchronize_rcu);
  */
 void cond_synchronize_rcu(unsigned long oldstate)
 {
-	if (!poll_state_synchronize_rcu(oldstate) &&
-	    !WARN_ON_ONCE(oldstate & RCU_GET_STATE_BAD_FOR_NORMAL))
+	if (!poll_state_synchronize_rcu(oldstate) ||
+	    WARN_ON_ONCE(oldstate & RCU_GET_STATE_BAD_FOR_NORMAL))
 		synchronize_rcu();
 }
 EXPORT_SYMBOL_GPL(cond_synchronize_rcu);
