@@ -2091,6 +2091,7 @@ unsigned find_get_entries(struct address_space *mapping, pgoff_t start,
 
 	return folio_batch_count(fbatch);
 }
+EXPORT_SYMBOL(find_get_entries);
 
 /**
  * find_lock_entries - Find a batch of pagecache entries.
