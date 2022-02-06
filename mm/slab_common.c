@@ -332,6 +332,12 @@ kmem_cache_create_usercopy(const char *name,
 		goto out_unlock;
 	}
 
+	/* References to typesafe memory survives free/alloc. */
+	if ((flags & (SLAB_TYPESAFE_BY_RCU | __GFP_ZERO)) == (SLAB_TYPESAFE_BY_RCU | __GFP_ZERO)) {
+		err = -EINVAL;
+		goto out_unlock;
+	}
+
 	/*
 	 * Some allocators will constraint the set of valid flags to a subset
 	 * of all flags. We expect them to define CACHE_CREATE_MASK in this
