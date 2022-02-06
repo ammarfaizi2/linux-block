@@ -518,6 +518,16 @@ static int apple_pcie_probe_port(struct device_node *np)
 	}
 
 	gpiod_put(gd);
+
+	gd = gpiod_get_from_of_node(np, "pwren-gpios", 0,
+				    GPIOD_OUT_LOW, "PWREN");
+	if (IS_ERR(gd)) {
+		if (PTR_ERR(gd) != -ENOENT)
+			return PTR_ERR(gd);
+	} else {
+		gpiod_put(gd);
+	}
+
 	return 0;
 }
 
@@ -526,7 +536,7 @@ static int apple_pcie_setup_port(struct apple_pcie *pcie,
 {
 	struct platform_device *platform = to_platform_device(pcie->dev);
 	struct apple_pcie_port *port;
-	struct gpio_desc *reset;
+	struct gpio_desc *reset, *pwren = NULL;
 	u32 stat, idx;
 	int ret, i;
 
@@ -534,6 +544,15 @@ static int apple_pcie_setup_port(struct apple_pcie *pcie,
 					    GPIOD_OUT_LOW, "PERST#");
 	if (IS_ERR(reset))
 		return PTR_ERR(reset);
+
+	pwren = devm_gpiod_get_from_of_node(pcie->dev, np, "pwren-gpios", 0,
+					    GPIOD_OUT_LOW, "PWREN");
+	if (IS_ERR(pwren)) {
+		if (PTR_ERR(pwren) == -ENOENT)
+			pwren = NULL;
+		else
+			return PTR_ERR(pwren);
+	}
 
 	port = devm_kzalloc(pcie->dev, sizeof(*port), GFP_KERNEL);
 	if (!port)
@@ -557,12 +576,22 @@ static int apple_pcie_setup_port(struct apple_pcie *pcie,
 	/* Assert PERST# before setting up the clock */
 	gpiod_set_value_cansleep(reset, 1);
 
+	/* Power on the device if required */
+	if (pwren)
+		gpiod_set_value_cansleep(pwren, 1);
+
 	ret = apple_pcie_setup_refclk(pcie, port);
 	if (ret < 0)
 		return ret;
 
-	/* The minimal Tperst-clk value is 100us (PCIe CEM r5.0, 2.9.2) */
-	usleep_range(100, 200);
+	/*
+	 * The minimal Tperst-clk value is 100us (PCIe CEM r5.0, 2.9.2)
+	 * If powering up, the minimal Tpvperl is 100ms
+	 */
+	if (pwren)
+		msleep(100);
+	else
+		usleep_range(100, 200);
 
 	/* Deassert PERST# */
 	rmw_set(PORT_PERST_OFF, port->base + PORT_PERST);
