@@ -507,6 +507,20 @@ static u32 apple_pcie_rid2sid_write(struct apple_pcie_port *port,
 	return readl_relaxed(port->base + PORT_RID2SID(idx));
 }
 
+static int apple_pcie_probe_port(struct device_node *np)
+{
+	struct gpio_desc *gd;
+
+	gd = gpiod_get_from_of_node(np, "reset-gpios", 0,
+				    GPIOD_OUT_LOW, "PERST#");
+	if (IS_ERR(gd)) {
+		return PTR_ERR(gd);
+	}
+
+	gpiod_put(gd);
+	return 0;
+}
+
 static int apple_pcie_setup_port(struct apple_pcie *pcie,
 				 struct device_node *np)
 {
@@ -797,7 +811,17 @@ static int apple_pcie_init(struct pci_config_window *cfg)
 
 static int apple_pcie_probe(struct platform_device *pdev)
 {
+	struct device *dev = &pdev->dev;
+	struct device_node *of_port;
 	int ret;
+
+	/* Check for probe dependencies for all ports first */
+	for_each_child_of_node(dev->of_node, of_port) {
+		ret = apple_pcie_probe_port(of_port);
+		of_node_put(of_port);
+		if (ret)
+			return dev_err_probe(dev, ret, "Port %pOF probe fail\n", of_port);
+	}
 
 	ret = bus_register_notifier(&pci_bus_type, &apple_pcie_nb);
 	if (ret)
