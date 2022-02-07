@@ -133,6 +133,8 @@ typedef void (*netfs_io_terminated_t)(void *priv, ssize_t transferred_or_error,
 struct netfs_inode {
 	struct inode		inode;		/* The VFS inode */
 	const struct netfs_request_ops *ops;
+	struct list_head	dirty_regions;	/* List of dirty regions in the pagecache */
+	spinlock_t		dirty_lock;	/* Lock for dirty_regions */
 #if IS_ENABLED(CONFIG_FSCACHE)
 	struct fscache_cookie	*cache;
 #endif
@@ -227,6 +229,7 @@ struct netfs_io_request {
 	struct kiocb		*iocb;		/* AIO completion vector */
 	struct netfs_cache_resources cache_resources;
 	struct list_head	proc_link;	/* Link in netfs_iorequests */
+	struct list_head	regions;	/* List of regions to be uploaded */
 	struct list_head	subrequests;	/* Contributory I/O operations */
 	struct xarray		buffer;		/* Buffer to hold raw data */
 	struct xarray		bounce;		/* Bounce buffer (eg. for crypto/compression) */
@@ -268,6 +271,28 @@ struct netfs_io_request {
 	void (*cleanup)(struct netfs_io_request *req);
 };
 
+enum netfs_region_type {
+	NETFS_MODIFIED_REGION,
+} __mode(byte);
+
+/*
+ * Descriptor for a dirty region that has a common set of parameters and can
+ * feasibly be written back in one go.  These are held in an ordered list.
+ *
+ * Regions are not allowed to overlap, though they may be merged.
+ */
+struct netfs_dirty_region {
+	struct list_head	dirty_link;	/* Link in netfs_i_context::dirty_regions */
+	void			*netfs_priv;	/* Private data for the netfs */
+	pgoff_t			first;		/* First page index in region */
+	pgoff_t			last;		/* Last page index in region */
+	unsigned long long	from;		/* File position of start of modified part */
+	unsigned long long	to;		/* File position of end of modified part */
+	unsigned int		debug_id;
+	enum netfs_region_type	type;
+	refcount_t		ref;
+};
+
 /*
  * Operations the network filesystem can/must provide to the helpers.
  */
@@ -297,6 +322,10 @@ struct netfs_request_ops {
 	int (*decrypt_block)(struct netfs_io_request *rreq, loff_t pos, size_t len,
 			     struct scatterlist *source_sg, unsigned int n_source,
 			     struct scatterlist *dest_sg, unsigned int n_dest);
+
+	/* Dirty region handling */
+	void (*init_dirty_region)(struct netfs_dirty_region *region, struct file *file);
+	void (*free_dirty_region)(struct netfs_dirty_region *region);
 };
 
 /*
@@ -406,6 +435,8 @@ static inline void netfs_inode_init(struct netfs_inode *ctx,
 	ctx->ops = ops;
 	ctx->remote_i_size = i_size_read(&ctx->inode);
 	ctx->zero_point = ctx->remote_i_size;
+	INIT_LIST_HEAD(&ctx->dirty_regions);
+	spin_lock_init(&ctx->dirty_lock);
 #if IS_ENABLED(CONFIG_FSCACHE)
 	ctx->cache = NULL;
 #endif

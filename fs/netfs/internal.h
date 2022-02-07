@@ -83,6 +83,8 @@ void netfs_clear_buffer(struct xarray *buffer);
 /*
  * objects.c
  */
+extern atomic_t netfs_region_debug_ids;
+
 struct netfs_io_request *netfs_alloc_request(struct address_space *mapping,
 					     struct file *file,
 					     loff_t start, size_t len,
@@ -92,6 +94,14 @@ void netfs_clear_subrequests(struct netfs_io_request *rreq, bool was_async);
 void netfs_put_request(struct netfs_io_request *rreq, bool was_async,
 		       enum netfs_rreq_ref_trace what);
 struct netfs_io_subrequest *netfs_alloc_subrequest(struct netfs_io_request *rreq);
+struct netfs_dirty_region *netfs_alloc_dirty_region(void);
+struct netfs_dirty_region *netfs_get_dirty_region(struct netfs_inode *ctx,
+						  struct netfs_dirty_region *region,
+						  enum netfs_region_trace what);
+void netfs_free_dirty_region(struct netfs_inode *ctx, struct netfs_dirty_region *region);
+void netfs_put_dirty_region(struct netfs_inode *ctx,
+			    struct netfs_dirty_region *region,
+			    enum netfs_region_trace what);
 
 static inline void netfs_see_request(struct netfs_io_request *rreq,
 				     enum netfs_rreq_ref_trace what)
@@ -127,6 +137,7 @@ extern atomic_t netfs_n_rh_write_begin;
 extern atomic_t netfs_n_rh_write_done;
 extern atomic_t netfs_n_rh_write_failed;
 extern atomic_t netfs_n_rh_write_zskip;
+extern atomic_t netfs_n_wh_region;
 extern atomic_t netfs_n_wh_upload;
 extern atomic_t netfs_n_wh_upload_done;
 extern atomic_t netfs_n_wh_upload_failed;
@@ -180,6 +191,22 @@ static inline bool netfs_is_crypto_aligned(struct netfs_io_request *rreq,
 		return true;
 	align = iov_iter_alignment(iter);
 	return (align & mask) == 0;
+}
+
+static inline struct netfs_dirty_region *netfs_prev_region(struct netfs_inode *ctx,
+							   struct netfs_dirty_region *region)
+{
+	if (list_is_first(&region->dirty_link, &ctx->dirty_regions))
+		return NULL;
+	return list_prev_entry(region, dirty_link);
+}
+
+static inline struct netfs_dirty_region *netfs_next_region(struct netfs_inode *ctx,
+							   struct netfs_dirty_region *region)
+{
+	if (list_is_last(&region->dirty_link, &ctx->dirty_regions))
+		return NULL;
+	return list_next_entry(region, dirty_link);
 }
 
 /*****************************************************************************/

@@ -8,6 +8,8 @@
 #include <linux/slab.h>
 #include "internal.h"
 
+atomic_t netfs_region_debug_ids;
+
 /*
  * Allocate an I/O request and initialise it.
  */
@@ -40,6 +42,7 @@ struct netfs_io_request *netfs_alloc_request(struct address_space *mapping,
 	xa_init(&rreq->buffer);
 	xa_init(&rreq->bounce);
 	INIT_LIST_HEAD(&rreq->subrequests);
+	INIT_LIST_HEAD(&rreq->regions);
 	refcount_set(&rreq->ref, 1);
 
 	__set_bit(NETFS_RREQ_IN_PROGRESS, &rreq->flags);
@@ -86,6 +89,18 @@ void netfs_clear_subrequests(struct netfs_io_request *rreq, bool was_async)
 	}
 }
 
+static void netfs_clear_regions(struct netfs_io_request *rreq)
+{
+	struct netfs_dirty_region *region;
+	struct netfs_inode *ctx = netfs_inode(rreq->inode);
+
+	while ((region = list_first_entry_or_null(
+			&rreq->regions, struct netfs_dirty_region, dirty_link))) {
+		list_del_init(&region->dirty_link);
+		netfs_put_dirty_region(ctx, region, netfs_region_trace_put_clear);
+	}
+}
+
 static void netfs_free_request(struct work_struct *work)
 {
 	struct netfs_io_request *rreq =
@@ -95,6 +110,8 @@ static void netfs_free_request(struct work_struct *work)
 	trace_netfs_rreq(rreq, netfs_rreq_trace_free);
 	netfs_proc_del_rreq(rreq);
 	netfs_clear_subrequests(rreq, false);
+	netfs_clear_regions(rreq);
+
 	if (rreq->netfs_ops->free_request)
 		rreq->netfs_ops->free_request(rreq);
 	if (rreq->cache_resources.ops)
@@ -188,3 +205,57 @@ void netfs_put_subrequest(struct netfs_io_subrequest *subreq, bool was_async,
 		netfs_free_subrequest(subreq, was_async);
 }
 EXPORT_SYMBOL(netfs_put_subrequest);
+
+/*
+ * Allocate a dirty region record.
+ */
+struct netfs_dirty_region *netfs_alloc_dirty_region(void)
+{
+	struct netfs_dirty_region *region;
+
+	region = kzalloc(sizeof(struct netfs_dirty_region), GFP_KERNEL);
+	if (region) {
+		refcount_set(&region->ref, 1);
+		INIT_LIST_HEAD(&region->dirty_link);
+		netfs_stat(&netfs_n_wh_region);
+	}
+	return region;
+}
+
+struct netfs_dirty_region *netfs_get_dirty_region(struct netfs_inode *ctx,
+						  struct netfs_dirty_region *region,
+						  enum netfs_region_trace what)
+{
+	int ref;
+
+	__refcount_inc(&region->ref, &ref);
+	trace_netfs_ref_region(region->debug_id, ref + 1, what);
+	return region;
+}
+
+void netfs_free_dirty_region(struct netfs_inode *ctx,
+			     struct netfs_dirty_region *region)
+{
+	if (region) {
+		trace_netfs_ref_region(region->debug_id, 0, netfs_region_trace_free);
+		if (ctx->ops->free_dirty_region)
+			ctx->ops->free_dirty_region(region);
+		netfs_stat_d(&netfs_n_wh_region);
+		kfree(region);
+	}
+}
+
+void netfs_put_dirty_region(struct netfs_inode *ctx,
+			    struct netfs_dirty_region *region,
+			    enum netfs_region_trace what)
+{
+	bool dead;
+	int ref;
+
+	if (!region)
+		return;
+	dead = __refcount_dec_and_test(&region->ref, &ref);
+	trace_netfs_ref_region(region->debug_id, ref - 1, what);
+	if (dead)
+		netfs_free_dirty_region(ctx, region);
+}
