@@ -138,6 +138,15 @@ static int macsmc_battery_get_property(struct power_supply *psy,
 		ret = apple_smc_read_s64(power->smc, SMC_KEY(BAAC), &vs64);
 		val->intval = vs64;
 		break;
+	case POWER_SUPPLY_PROP_CYCLE_COUNT:
+		ret = apple_smc_read_u16(power->smc, SMC_KEY(B0CT), &vu16);
+		val->intval = vu16;
+		break;
+	case POWER_SUPPLY_PROP_HEALTH:
+		ret = apple_smc_read_flag(power->smc, SMC_KEY(BBAD));
+		val->intval = ret == 1 ? POWER_SUPPLY_HEALTH_DEAD : POWER_SUPPLY_HEALTH_GOOD;
+		ret = ret < 0 ? ret : 0;
+		break;
 	case POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = power->model_name;
 		break;
@@ -169,6 +178,8 @@ static enum power_supply_property macsmc_battery_props[] = {
 	POWER_SUPPLY_PROP_CHARGE_NOW,
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_CHARGE_COUNTER,
+	POWER_SUPPLY_PROP_CYCLE_COUNT,
+	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_SERIAL_NUMBER,
 };
