@@ -7,8 +7,11 @@ vp.py - Patch verifier and massager tool
 
 # TODO (and potential ideas):
 #
-# a8: switch to logging module maybe:
-# https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
+# - add a check against hunks with file paths arch/x86/boot/(compressed/)? which #include <linux/*>
+# headers and warn if so.
+# 
+# - a8: switch to logging module maybe:
+#   https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
 
 import re
 import sys
@@ -107,6 +110,11 @@ def strip_brackets(w):
 
     dbg("\t|%s|" % (w, ))
 
+    # skip register field specifications
+    if rex_reg_field.match(w):
+        dbg("regf: |%s|" % (w, ))
+        return w
+
     pairs = {"{": "}", "(": ")", "[": "]"}
     stack = []
 
@@ -179,16 +187,16 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          "AMX", "API", "APM", "APU", "arm64", "asm",
          "binutils", "bitmask", "bitfield", "CMCI", "cmdline", "config", "CPPC", "CPUID",
          "DMA", "DIMM", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
-         "FRU", "GPR", "GUID", "HLT", "hugepage", "Hygon", 
+         "FRU", "GPR", "GUID", "HLT", "hotplug", "hugepage", "Hygon",
          "hypercall", "HV", "I/O", "IBT", "initializer", "initrd", "IRET", "IRQ", "JMP", "kallsyms",
-         "KASAN", "kdump", "KVM", "LFENCE", "livepatch", "lvalue",
+         "KASAN", "kdump", "kexec", "KVM", "LFENCE", "livepatch", "lvalue",
          "MCA", "MCE", "memmove",
          "memtype", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
-         "NX", "OEM", "offlining", "PASID", "PCI", "pdf", "percpu", "perf", "preemptible",
+         "NX", "OEM", "offlining", "ok", "PASID", "PCI", "pdf", "percpu", "perf", "preemptible",
          "prepend", # derived from append, not in the dictionaries
          "PTE", "PPIN",
-         "PV", "PVALIDATE", "RDMSR", "rFLAGS", "RMP", "RMPADJUST", "Ryzen", "SEV", "SEV-ES",
-         "SEV-SNP", "SIGSEGV", "Skylake", "SME", "SNP", "STI", "strtab", "struct", "swiotlb",
+         "PV", "PVALIDATE", "RDMSR", "retpoline", "rFLAGS", "RMP", "RMPADJUST", "Ryzen",
+         "SIGSEGV", "Skylake", "SME", "SNP", "Spectre", "STI", "strtab", "struct", "swiotlb",
          "symtab", "syscall", "sysfs", 
          "TDCALL", "TDGETVEINFO",
          "TDVMCALL", "TLB", "TODO",
@@ -202,15 +210,23 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars, etc which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'cpuinfo_x86', 'fpstate', 'kobj_type', 'kptr_restrict', 'pt_regs',
+known_vars = [ '__BOOT_DS', 'boot_params', 'cpuinfo_x86', 'earlyprintk', 'fpstate', 'kobj_type',
+           'kptr_restrict', 'pt_regs',
            'ptr', 'set_lvt_off', 'setup_data',
            'sme_me_mask', 'sysctl_perf_event_paranoid', 'threshold_banks', 'xfeatures' ]
 
+# known words as regexes to avoid duplication in the list above
+regexes_pats = [ r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
+             r'default_(attrs|groups)', r'^DDR([1-5])?$', r'^[Ee].g.$', r'^[eE]?IBRS$', r'^E?VEX$',
+            r'^GHC(B|I)$', r'^Icelake(-D)?$', r'I[DS]T', r'^[ku]probes?$', r'MOVSB?', r'^param(s)?$',
+            r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$', r'PS[CP]',
+            r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'T[DS]X', r'^VMPL([0-3])?$', r'^x86(-(32|64))?$',
+            r'^XSAVE[CS]?$' ]
 
 def load_spellchecker():
-    global dc, regexes, regexes_pats, rex_asm_dir, rex_bla_adj, rex_brackets, \
+    global dc, regexes, regexes_pats, rex_asm_dir, rex_brackets, \
 rex_c_keywords, rex_c_macro, rex_comment, rex_comment_end, \
-rex_commit_ref, rex_decimal, rex_errval, rex_fnames, rex_gpr, \
+rex_commit_ref, rex_decimal, rex_errval, rex_fnames, rex_gpr, rex_hyphenated, \
 rex_kcmdline, rex_kdoc_arg, rex_kdoc_cmt, rex_misc_num, rex_non_alpha, \
 rex_opts, rex_paths, rex_reg_field, rex_sections, rex_sent_end, rex_sha1, \
 rex_struct_mem, rex_units, rex_url, rex_version, rex_word_bla, \
@@ -229,7 +245,6 @@ rex_word_split, rex_x86_traps
     # Use /usr/share/doc/pythonX.X/examples/demo/redemo.py for checking
     rex_asm_dir     = re.compile(r'^\.(align|org)$')
     rex_brackets    = re.compile(r'^.*[()\[\]]+.*$')
-    rex_bla_adj     = re.compile(r'([\w-]+)-(active|capable|controlled|related|specific|validated)')
     rex_c_keywords  = re.compile(r'#(ifdef|include)')
     rex_c_macro     = re.compile(r'^[A-Z0-9_]+$')
     rex_comment     = re.compile(r'^\+\s+\*\s+.*$', re.I)
@@ -240,7 +255,7 @@ rex_word_split, rex_x86_traps
     rex_commit_ref  = re.compile(r'^(.*\s)?(?P<sha1>[a-f0-9]{7,})\s(?P<commit_title>\(\".*\"\)).*')
 
     rex_decimal     = re.compile(r'^[0-9]+$')
-    rex_errval      = re.compile(r'-E(EINVAL|EXIST|NODEV|OPNOTSUPP|PROBE_DEFER)')
+    rex_errval      = re.compile(r'-E(EINVAL|EXIST|NODEV|NOMEM|OPNOTSUPP|PROBE_DEFER)')
     rex_fnames      = re.compile(r'\s?/?([\w-]+/)*[\w-]+\.[chS]')
 
     rex_gpr         = re.compile(r"""([re]?[abcd]x|     # the first 4
@@ -249,13 +264,15 @@ rex_word_split, rex_x86_traps
                                        [re][bs]p)       # the last 2
                                         """, re.I | re.X)
 
+    rex_hyphenated  = re.compile(r'([\w#-]+)-([\w#-]+)')
     rex_kcmdline    = re.compile(r'^\w+=([\w,]+)?$')
     rex_kdoc_arg    = re.compile(r'^@\w+:?$')
     rex_kdoc_cmt    = re.compile(r'\+\s*/\*\*\s*')
     rex_misc_num    = re.compile(r'^#\d+$')
     rex_non_alpha   = re.compile(r'^[-]*$')
     rex_opts        = re.compile(r'^-[\w\d=-]+$')    # assumption: tool options are lowercase
-    rex_paths       = re.compile(r'\s/[\w/_-]+\s')
+    # path spec can begin on a new line
+    rex_paths       = re.compile(r'(^|\s)/[\w/_\*-]+\s')
     rex_reg_field   = re.compile(r'\w+\[\d+(:\d+)?\]', re.I)
     rex_sections    = re.compile(r'\.(bss|data|head(\.text)?|text)')
 
@@ -272,7 +289,7 @@ rex_word_split, rex_x86_traps
     rex_version     = re.compile(r'v\d+$', re.I)
     rex_word_bla    = re.compile(r'non-(\w+)')
     rex_word_split  = re.compile(r'(\w+)\/(\w+)')
-    rex_x86_traps   = re.compile(r'^\#[A-ZA-Z]')
+    rex_x86_traps   = re.compile(r'^#[A-Z]{2,2}$')
 
     # precompile all regexes
     for pat in regexes_pats:
@@ -295,7 +312,11 @@ def spellcheck_func_name(w, prev_word):
         dbg("Skip array name: [%s]" % (w, ))
         return True
 
-    # it is only heuristics anyway
+    # linker range defines, heuristic only
+    if w.startswith('__start_') or w.startswith('__end_'):
+           return True
+
+    # it is only a heuristic anyway
     if '_' not in w or prev == "struct":
         return True
 
@@ -311,13 +332,6 @@ def spellcheck_func_name(w, prev_word):
     return False
 
 
-# known words as regexes to avoid duplication in the list above
-regexes_pats = [ r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
-             r'default_(attrs|groups)', r'^DDR([1-5])?$', r'^[Ee].g.$', r'^E?VEX$',
-            r'^GHC(B|I)$', r'^Icelake(-D)?$', r'I[DS]T', r'^[ku]probes?$', r'MOVSB?', r'^param(s)?$',
-            r'(para)?virt(ualiz(ed?|ing))?$', r'PS[CP]',
-            r'sev_(features|status)', r'T[DS]X', r'^VMPL([0-3])?$', r'^x86(-(32|64))?$',
-            r'^XSAVE[CS]?$' ]
 regexes = []
 
 def spellcheck_regexes(w):
@@ -373,7 +387,7 @@ def spellcheck_hunk(pfile, hunk):
         # end of comment?
         m = rex_comment_end.match(line)
         if m:
-            flags['check_func'] = False
+            flags['check_func'] = True
 
 def spellcheck(s, where, flags):
     """
@@ -472,10 +486,11 @@ def spellcheck(s, where, flags):
             # Check function names
             if flags and flags['check_func']:
                 ret = spellcheck_func_name(w, words[i - 1])
-                if not ret:
-                    warn_on(1, ("Function name doesn't end with (): [%s]" % (w, )))
-                    print(" [%s]" % (line, ))
+                if ret:
                     continue
+
+                warn_on(1, ("Function name doesn't end with (): [%s]" % (w, )))
+                print(" [%s]" % (line, ))
 
             # kernel-doc arguments
             if rex_kdoc_arg.match(w):
@@ -528,11 +543,14 @@ def spellcheck(s, where, flags):
                 dbg("Skip tool option: [%s]" % (w, ))
                 continue
 
-            # BLA-<adjective>
-            m = rex_bla_adj.match(w)
+            # hyphenated words
+            m = rex_hyphenated.match(w)
             if m:
                 if dc.check(m.group(1)):
-                    dbg("Skip BLA-<adjective>: [%s]" % (w, ))
+                    dbg("Skip hyphenated: [%s]-%s" % (m.group(1), m.group(2), ))
+
+                if dc.check(m.group(2)):
+                    dbg("Skip hyphenated: %s-[%s]" % (m.group(1), m.group(2), ))
                     continue
 
             # <word>-BLA
@@ -1069,6 +1087,7 @@ class Patch:
                 info("%s: %s" % (tag, v, ))
                 f.write(("%s: %s\n" % (tag, v, )))
 
+        link_url = ""
         if self.message_id:
             link_url = ("https://lore.kernel.org/r/%s" % (self.message_id, ))
         elif od['Link']:
@@ -1076,7 +1095,7 @@ class Patch:
             warn("Using Link URL from patch itself: %s" % (link_url, ))
             self.message_id = link_url
 
-        if link_check:
+        if link_check and link_url:
             try:
                 get = requests.get(link_url)
                 if get.status_code != 200:
