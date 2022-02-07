@@ -304,6 +304,8 @@ def spellcheck_func_name(w, prev_word):
     # remove crap from previous word
     prev = prev_word.strip('`\',*+:;!|<>"=')
 
+    dbg("%s" % (w, ))
+
     if w.endswith('()'):
         dbg("Skip function name: [%s]" % (w, ))
         return True
@@ -315,10 +317,6 @@ def spellcheck_func_name(w, prev_word):
     # linker range defines, heuristic only
     if w.startswith('__start_') or w.startswith('__end_'):
            return True
-
-    # it is only a heuristic anyway
-    if '_' not in w or prev == "struct":
-        return True
 
     # all caps - likely a macro name
     if rex_c_macro.match(w):
@@ -485,12 +483,15 @@ def spellcheck(s, where, flags):
 
             # Check function names
             if flags and flags['check_func']:
-                ret = spellcheck_func_name(w, words[i - 1])
-                if ret:
-                    continue
 
-                warn_on(1, ("Function name doesn't end with (): [%s]" % (w, )))
-                print(" [%s]" % (line, ))
+                # it is only a heuristic anyway
+                if '_' in w and words[i - 1] != "struct":
+                    ret = spellcheck_func_name(w, words[i - 1])
+                    if ret:
+                        continue
+
+                    warn_on(1, ("Function name doesn't end with (): [%s]" % (w, )))
+                    print(" [%s]" % (line, ))
 
             # kernel-doc arguments
             if rex_kdoc_arg.match(w):
@@ -841,6 +842,10 @@ class Patch:
                 verify_comment_style(f, hunk)
 
     def __insert_tag(self, tag, name):
+        if name in self.od[tag]:
+            dbg("%s already present for tag %s, skipping" % (name, tag, ))
+            return
+
         try:
             self.od[tag].insert(0, name)
         except KeyError:
@@ -904,7 +909,7 @@ class Patch:
             self.__insert_tag(tag, name_email)
 
         # add global sob
-        if sob:
+        if sob and sob not in self.od['Signed-off-by']:
             self.od['Signed-off-by'].append(sob)
 
         dbg(self.od)
