@@ -100,6 +100,10 @@ bool netfs_are_regions_mergeable(struct netfs_inode *ctx,
 	if (b->from > a->to &&
 	    b->from < ctx->zero_point)
 		return false;
+	if (b->group != a->group) {
+		kdebug("different groups %px %px", b->group, a->group);
+		return false;
+	}
 	if (ctx->ops->are_regions_mergeable)
 		return ctx->ops->are_regions_mergeable(ctx, a, b);
 	return true;
@@ -111,6 +115,19 @@ static bool netfs_can_merge(struct netfs_inode *ctx,
 			    struct file *file)
 {
 	return netfs_are_regions_mergeable(ctx, onto, x);
+}
+
+static void netfs_region_absorbed(struct netfs_inode *ctx,
+				  struct netfs_dirty_region *into,
+				  struct netfs_dirty_region *absorbed,
+				  struct list_head *discards,
+				  enum netfs_dirty_trace why)
+{
+	absorbed->absorbed_by =
+		netfs_get_dirty_region(ctx, into, netfs_region_trace_get_absorbed_by);
+	list_del_init(&absorbed->flush_link);
+	list_move(&absorbed->dirty_link, discards);
+	trace_netfs_dirty(ctx, into, absorbed, why);
 }
 
 /*
@@ -134,8 +151,8 @@ again:
 	if (netfs_are_regions_mergeable(ctx, target, next)) {
 		target->to = next->to;
 		target->last = next->last;
-		list_move(&next->dirty_link, discards);
-		trace_netfs_dirty(ctx, target, next, netfs_dirty_trace_bridged);
+		netfs_region_absorbed(ctx, target, next, discards,
+				      netfs_dirty_trace_bridged);
 		goto out;
 	}
 
@@ -148,9 +165,8 @@ again:
 
 	if (target->last >= next->last) {
 		/* Next entry is superseded in its entirety. */
-		list_move(&next->dirty_link, discards);
-		trace_netfs_dirty(ctx, target, next,
-				  netfs_dirty_trace_supersede_all);
+		netfs_region_absorbed(ctx, target, next, discards,
+				      netfs_dirty_trace_supersede_all);
 		if (target->last > next->last)
 			goto again;
 		goto out;
@@ -173,7 +189,8 @@ static bool netfs_continue_modification(struct netfs_inode *ctx,
 					struct list_head *discards)
 {
 	if (proposal->from != target->to ||
-	    proposal->type != target->type)
+	    proposal->type != target->type ||
+	    proposal->group != target->group)
 		return false;
 	if (proposal->type != NETFS_COPY_TO_CACHE &&
 	    ctx->ops->are_regions_mergeable &&
@@ -227,6 +244,71 @@ static bool netfs_merge_with_next(struct netfs_inode *ctx,
 }
 
 /*
+ * Set the flush group on a dirty region.
+ */
+static void netfs_set_flush_group(struct netfs_inode *ctx,
+				  struct netfs_dirty_region *insertion,
+				  struct netfs_dirty_region *insert_point,
+				  enum netfs_dirty_trace how)
+{
+	struct netfs_dirty_region *r;
+	struct netfs_flush_group *group;
+	struct list_head *p;
+
+	if (list_empty(&ctx->flush_groups)) {
+		insertion->group = NULL;
+		return;
+	}
+
+	group = list_last_entry(&ctx->flush_groups,
+				struct netfs_flush_group, group_link);
+
+	insertion->group = netfs_get_flush_group(group);
+	atomic_inc(&group->nr_regions);
+
+	switch (how) {
+	case netfs_dirty_trace_insert_only:
+		smp_mb();
+		list_add_tail(&insertion->flush_link, &group->region_list);
+		return;
+
+	case netfs_dirty_trace_insert_before:
+	case netfs_dirty_trace_supersede_front:
+		smp_mb();
+		if (group == insert_point->group) {
+			list_add_tail(&insertion->flush_link,
+				      &insert_point->flush_link);
+			return;
+		}
+		break;
+
+	case netfs_dirty_trace_insert_after:
+	case netfs_dirty_trace_supersede_back:
+		smp_mb();
+		if (group == insert_point->group) {
+			list_add(&insertion->flush_link,
+				 &insert_point->flush_link);
+			return;
+		}
+		break;
+
+	default:
+		BUG_ON(1);
+	}
+
+	/* We need to search through the flush group's region list and
+	 * insert into the right place.
+	 */
+	list_for_each(p, &group->region_list) {
+		r = list_entry(p, struct netfs_dirty_region, flush_link);
+		if (r->from > insertion->from)
+			break;
+	}
+
+	list_add_tail(&insertion->flush_link, p);
+}
+
+/*
  * Insert a new region at the specified point, initialising it from the
  * proposed region.
  */
@@ -243,6 +325,8 @@ static void netfs_insert_new(struct netfs_inode *ctx,
 	insertion->to    = proposal->to;
 	insertion->type  = proposal->type;
 	netfs_init_dirty_region(ctx, insertion, file);
+	netfs_set_flush_group(ctx, insertion, insert_point, how);
+
 	switch (how) {
 	case netfs_dirty_trace_insert_only:
 		list_add_tail(&insertion->dirty_link, &ctx->dirty_regions);
@@ -280,6 +364,7 @@ void netfs_split_off_front(struct netfs_inode *ctx,
 
 	front->debug_id = atomic_inc_return(&netfs_region_debug_ids);
 	front->type	= back->type;
+	front->group	= netfs_get_flush_group(back->group);
 	front->first	= back->first;
 	front->last	= front_last;
 	back->first	= front->last + 1;
@@ -293,6 +378,10 @@ void netfs_split_off_front(struct netfs_inode *ctx,
 
 	list_move_tail(&front->dirty_link, &back->dirty_link);
 	list_add(&front->proc_link,  &back->proc_link);
+	if (front->group) {
+		atomic_inc(&front->group->nr_regions);
+		list_add_tail(&front->flush_link, &back->flush_link);
+	}
 
 	trace_netfs_dirty(ctx, front, back, why);
 }
@@ -323,20 +412,20 @@ static void netfs_supersede_cache_copy(struct netfs_inode *ctx,
 		if (merge_prev && !merge_next) {
 			prev->to   = proposal->from;
 			prev->last = proposal->last;
-			list_move_tail(&target->dirty_link, discards);
-			trace_netfs_dirty(ctx, prev, target, netfs_dirty_trace_merged_prev_super);
+			netfs_region_absorbed(ctx, prev, target, discards,
+					      netfs_dirty_trace_merged_prev_super);
 		} else if (merge_next && !merge_prev) {
 			next->from  = proposal->from;
 			next->first = proposal->first;
-			list_move_tail(&target->dirty_link, discards);
-			trace_netfs_dirty(ctx, prev, target, netfs_dirty_trace_merged_next_super);
+			netfs_region_absorbed(ctx, next, target, discards,
+					      netfs_dirty_trace_merged_next_super);
 		} else if (merge_next && merge_prev) {
 			prev->to   = next->to;
 			prev->last = next->last;
-			list_move_tail(&target->dirty_link, discards);
-			trace_netfs_dirty(ctx, prev, target, netfs_dirty_trace_merged_next_super);
-			list_move_tail(&next->dirty_link, discards);
-			trace_netfs_dirty(ctx, prev, next, netfs_dirty_trace_merged_next);
+			netfs_region_absorbed(ctx, prev, target, discards,
+					      netfs_dirty_trace_merged_next_super);
+			netfs_region_absorbed(ctx, prev, next, discards,
+					      netfs_dirty_trace_merged_next);
 		} else if (!merge_prev && !merge_next) {
 			target->from = proposal->from;
 			target->to   = proposal->to;
@@ -453,6 +542,9 @@ static void netfs_commit_region(struct netfs_inode *ctx, struct file *file,
 
 	spin_lock(&ctx->dirty_lock);
 
+	if (!list_empty(&ctx->flush_groups))
+		proposal->group = list_last_entry(&ctx->flush_groups,
+						  struct netfs_flush_group, group_link);
 	target = netfs_find_region(ctx, proposal->first, proposal->last);
 
 	/* If there aren't any other regions, just insert and be done. */
@@ -604,6 +696,7 @@ void netfs_discard_regions(struct netfs_inode *ctx,
 	while ((p = list_first_entry_or_null(discards,
 					     struct netfs_dirty_region, dirty_link))) {
 		list_del(&p->dirty_link);
+		BUG_ON(!list_empty(&p->flush_link));
 		netfs_put_dirty_region(ctx, p, why);
 	}
 }
@@ -839,6 +932,14 @@ ssize_t netfs_file_write_iter_locked(struct kiocb *iocb, struct iov_iter *from)
 	ret = file_update_time(file);
 	if (ret)
 		goto error;
+
+	{
+#warning TRIGGER NEW FLUSH GROUP FOR TESTING
+		static atomic_t jump;
+		ret = netfs_require_flush_group(inode, (atomic_inc_return(&jump) & 3) == 3);
+		if (ret < 0)
+			goto error;
+	}
 
 	ret = netfs_flush_conflicting_writes(ctx, file, iocb->ki_pos,
 					     iov_iter_count(from), NULL);

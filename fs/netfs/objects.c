@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/export.h>
 #include <linux/slab.h>
 #include "internal.h"
 
@@ -262,17 +263,31 @@ struct netfs_dirty_region *netfs_get_dirty_region(struct netfs_inode *ctx,
 	return region;
 }
 
-void netfs_free_dirty_region(struct netfs_inode *ctx,
-			     struct netfs_dirty_region *region)
+static void netfs_free_dirty_region(struct netfs_inode *ctx,
+				    struct netfs_dirty_region *region,
+				    enum netfs_region_trace what)
 {
+	struct netfs_dirty_region *absorbed_by;
+
 	if (region) {
 		trace_netfs_ref_region(region->debug_id, 0, netfs_region_trace_free);
 		if (!list_empty(&region->proc_link))
 			netfs_proc_del_region(region);
 		if (ctx->ops->free_dirty_region)
 			ctx->ops->free_dirty_region(region);
+		BUG_ON(!list_empty(&region->flush_link));
+		if (region->group) {
+			int nr = atomic_dec_return(&region->group->nr_regions);
+
+			if (nr == 0)
+				wake_up_var(&region->group->nr_regions);
+			netfs_put_flush_group(ctx, region->group);
+		}
 		netfs_stat_d(&netfs_n_wh_region);
+		absorbed_by = region->absorbed_by;
 		kfree(region);
+		netfs_put_dirty_region(ctx, absorbed_by,
+				       netfs_region_trace_put_absorbed_by);
 	}
 }
 
@@ -289,6 +304,68 @@ void netfs_put_dirty_region(struct netfs_inode *ctx,
 	trace_netfs_ref_region(region->debug_id, ref - 1, what);
 	if (dead) {
 		netfs_return_write_credit(region);
-		netfs_free_dirty_region(ctx, region);
+		netfs_free_dirty_region(ctx, region, what);
+	}
+}
+
+/**
+ * netfs_new_flush_group - Create a new write flush group
+ * @inode: The inode for which this is a flush group.
+ * @netfs_priv: Netfs private data to include in the new group
+ *
+ * Create a new flush group and add it to the top of the inode's group list.
+ * Flush groups are used to control the order in which dirty data is written
+ * back to the server.
+ */
+struct netfs_flush_group *netfs_new_flush_group(struct inode *inode, void *netfs_priv)
+{
+	struct netfs_flush_group *group, *prev;
+	struct netfs_inode *ctx = netfs_inode(inode);
+
+	group = kzalloc(sizeof(*group), GFP_KERNEL);
+	if (group) {
+		group->netfs_priv = netfs_priv;
+		INIT_LIST_HEAD(&group->region_list);
+		refcount_set(&group->ref, 1);
+		netfs_stat(&netfs_n_wh_flush_group);
+
+		spin_lock(&ctx->dirty_lock);
+		group->flush_id = ++ctx->flush_counter;
+
+		/* We drop the region count on the old top group so that
+		 * writeback can get rid of it.
+		 */
+		if (!list_empty(&ctx->flush_groups)) {
+			prev = list_last_entry(&ctx->flush_groups,
+					       struct netfs_flush_group, group_link);
+			if (atomic_dec_and_test(&prev->nr_regions))
+				wake_up_var(&prev->nr_regions);
+		}
+
+		/* We keep the region count elevated on the new group to
+		 * prevent wakeups whilst this is the top group.
+		 */
+		atomic_set(&group->nr_regions, 1);
+		list_add_tail(&group->group_link, &ctx->flush_groups);
+
+		spin_unlock(&ctx->dirty_lock);
+	}
+	return group;
+}
+EXPORT_SYMBOL(netfs_new_flush_group);
+
+struct netfs_flush_group *netfs_get_flush_group(struct netfs_flush_group *group)
+{
+	refcount_inc(&group->ref);
+	return group;
+}
+
+void netfs_put_flush_group(struct netfs_inode *ctx, struct netfs_flush_group *group)
+{
+	if (group && refcount_dec_and_test(&group->ref)) {
+		netfs_stat_d(&netfs_n_wh_flush_group);
+		if (ctx->ops->free_flush_group)
+			ctx->ops->free_flush_group(ctx, group);
+		kfree(group);
 	}
 }

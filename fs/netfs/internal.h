@@ -18,6 +18,7 @@
 /*
  * buffered_flush.c
  */
+int netfs_require_flush_group(struct inode *inode, bool force);
 void netfs_check_dirty_list(char c, const struct list_head *list,
 			    const struct netfs_dirty_region *star);
 int netfs_flush_conflicting_writes(struct netfs_inode *ctx, struct file *file,
@@ -153,10 +154,11 @@ struct netfs_dirty_region *netfs_alloc_dirty_region(gfp_t gfp);
 struct netfs_dirty_region *netfs_get_dirty_region(struct netfs_inode *ctx,
 						  struct netfs_dirty_region *region,
 						  enum netfs_region_trace what);
-void netfs_free_dirty_region(struct netfs_inode *ctx, struct netfs_dirty_region *region);
 void netfs_put_dirty_region(struct netfs_inode *ctx,
 			    struct netfs_dirty_region *region,
 			    enum netfs_region_trace what);
+struct netfs_flush_group *netfs_get_flush_group(struct netfs_flush_group *group);
+void netfs_put_flush_group(struct netfs_inode *ctx, struct netfs_flush_group *group);
 
 static inline void netfs_see_request(struct netfs_io_request *rreq,
 				     enum netfs_rreq_ref_trace what)
@@ -196,6 +198,7 @@ extern atomic_t netfs_n_wh_upload_failed;
 extern atomic_t netfs_n_wh_write;
 extern atomic_t netfs_n_wh_write_done;
 extern atomic_t netfs_n_wh_write_failed;
+extern atomic_t netfs_n_wh_flush_group;
 
 
 static inline void netfs_stat(atomic_t *stat)

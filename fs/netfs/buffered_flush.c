@@ -301,6 +301,10 @@ static bool netfs_check_for_conflicting_regions(struct netfs_inode *ctx,
 			break;
 		_debug("confl? [D=%x] %lx-%lx", r->debug_id, r->first, r->last);
 
+		if (r->group != list_first_entry_or_null(&ctx->flush_groups,
+							 struct netfs_flush_group,
+							 group_link))
+			goto conflict;
 		if (ctx->ops->is_write_compatible &&
 		    !ctx->ops->is_write_compatible(ctx, file, r))
 			goto conflict;
@@ -328,7 +332,8 @@ int netfs_flush_conflicting_writes(struct netfs_inode *ctx,
 	spin_unlock(&ctx->dirty_lock);
 
 	if (check) {
-		folio_unlock(unlock_this);
+		if (unlock_this)
+			folio_unlock(unlock_this);
 		pr_warn("NEED TO FLUSH CONFLICTING REGIONS\n");
 		return -EAGAIN;
 	}
@@ -365,6 +370,8 @@ void netfs_check_dirty_list(char c, const struct list_head *list,
 	const struct list_head *p;
 	int i = 0;
 
+	if (c == 'W')
+		goto failed;
 	return;
 
 	if (list->next == list) {
@@ -423,6 +430,9 @@ static void netfs_split_out_regions(struct netfs_io_request *wreq,
 
 	spin_lock(&ctx->dirty_lock);
 
+	while (region->absorbed_by)
+		region = region->absorbed_by;
+
 	netfs_check_dirty_list('S', &ctx->dirty_regions, region);
 
 	if (wreq->first != region->first) {
@@ -460,6 +470,9 @@ excise:
 		BUG_ON(ctx->dirty_regions.prev != &ctx->dirty_regions);
 	else
 		BUG_ON(ctx->dirty_regions.prev == &ctx->dirty_regions);
+	list_for_each_entry_from(region, &wreq->regions, dirty_link) {
+		list_del_init(&region->flush_link);
+	}
 	spin_unlock(&ctx->dirty_lock);
 
 	list_for_each_entry(p, &wreq->regions, dirty_link) {
@@ -521,8 +534,64 @@ static void netfs_wait_for_writeback(struct netfs_io_request *wreq,
 }
 
 /*
- * Extend the region to be written back to include subsequent contiguously
- * dirty pages if possible, but don't sleep while doing so.
+ * Advance to the next dirty region covering the writeback that we're
+ * extending.
+ */
+static bool netfs_extend_to_next_region(struct netfs_inode *ctx,
+					struct netfs_dirty_region *start_region,
+					struct netfs_dirty_region **_region,
+					pgoff_t index)
+{
+	struct netfs_dirty_region *region = *_region, *old = NULL;
+
+	spin_lock(&ctx->dirty_lock);
+
+	/* The dirty list may have been altered whilst we were working, so
+	 * allow for the region we were focussing on to have been absorbed,
+	 * split and/or superseded.
+	 */
+	while (region->absorbed_by)
+		region = region->absorbed_by;
+
+	if (index <= region->last)
+		goto cont;
+
+	while (index < region->first)
+		region = netfs_next_region(ctx, region);
+	if (index <= region->last)
+		goto cont;
+
+	region = netfs_next_region(ctx, region);
+	if (!region)
+		goto stop;
+
+	if (region->group != (*_region)->group)
+		goto stop;
+
+	// TODO: Allow discontiguity
+	if (region->first > index)
+		goto stop;
+
+cont:
+	if (region != *_region) {
+		netfs_get_dirty_region(ctx, region, netfs_region_trace_get_wback);
+		old = *_region;
+		*_region = region;
+	}
+
+	spin_unlock(&ctx->dirty_lock);
+	if (old && old != start_region)
+		netfs_put_dirty_region(ctx, old, netfs_region_trace_put_wback);
+	return true;
+
+stop:
+	spin_unlock(&ctx->dirty_lock);
+	return false;
+}
+
+/*
+ * Extend the span to be written back to include subsequent contiguously dirty
+ * pages if possible, but don't sleep while doing so.
  *
  * If this page holds new content, then we can include filler zeros in the
  * writeback.
@@ -530,8 +599,9 @@ static void netfs_wait_for_writeback(struct netfs_io_request *wreq,
 static void netfs_extend_writeback(struct netfs_io_request *wreq,
 				   struct writeback_control *wbc,
 				   struct netfs_inode *ctx,
-				   struct netfs_dirty_region *region)
+				   struct netfs_dirty_region *start_region)
 {
+	struct netfs_dirty_region *region = start_region;
 	struct folio_batch fbatch;
 	struct folio *folio;
 	unsigned int i;
@@ -599,9 +669,15 @@ static void netfs_extend_writeback(struct netfs_io_request *wreq,
 		 * there if any of those folios are mapped.
 		 */
 		folio_batch_init(&fbatch);
-		_debug("extend %lx %lx", index, xas.xa_index);
-		rcu_read_lock();
 
+		if (index > region->last &&
+		    !netfs_extend_to_next_region(ctx, start_region, &region, index)) {
+			kdebug("stop!");
+			goto stop;
+		}
+
+		kdebug("extend D=%x %lx %lx", region->debug_id, index, xas.xa_index);
+		rcu_read_lock();
 		xas_for_each(&xas, folio, ULONG_MAX) {
 			stop = true;
 			if (xas_retry(&xas, folio))
@@ -640,6 +716,8 @@ static void netfs_extend_writeback(struct netfs_io_request *wreq,
 			if (!folio_batch_add(&fbatch, folio))
 				break;
 			if (stop)
+				break;
+			if (index > region->last)
 				break;
 		}
 
@@ -681,6 +759,9 @@ static void netfs_extend_writeback(struct netfs_io_request *wreq,
 	} while (!stop);
 
 	_leave(" ok [%zx]", wreq->last);
+stop:
+	if (region != start_region)
+		netfs_put_dirty_region(ctx, region, netfs_region_trace_put_wback);
 	return;
 
 nomem_cancel_wb:
@@ -693,6 +774,7 @@ nomem_redirty:
 		folio_put(folio);
 	}
 	_leave(" cancel [%zx]", wreq->last);
+	goto stop;
 }
 
 /*
@@ -824,6 +906,61 @@ skip:
 }
 
 /*
+ * Make sure there's a flush group.
+ */
+int netfs_require_flush_group(struct inode *inode, bool force)
+{
+	struct netfs_flush_group *group;
+	struct netfs_inode *ctx = netfs_inode(inode);
+
+	if (list_empty(&ctx->flush_groups) || force) {
+		kdebug("new flush group");
+		group = netfs_new_flush_group(inode, NULL);
+		if (!group)
+			return -ENOMEM;
+	}
+	return 0;
+}
+
+/*
+ * Select a region from an old flush group to write back instead of a region
+ * from the currently live flush group.
+ */
+static struct netfs_dirty_region *netfs_select_from_flush_group(
+	struct writeback_control *wbc,
+	struct netfs_inode *ctx,
+	struct netfs_flush_group *group)
+{
+	struct netfs_dirty_region *region;
+
+	region = list_first_entry_or_null(&group->region_list,
+					  struct netfs_dirty_region, flush_link);
+	if (region) {
+		kleave(" = D=%x", region->debug_id);
+		return region;
+	}
+
+	if (atomic_read(&group->nr_regions) == 0) {
+		list_del_init(&group->group_link);
+		spin_unlock(&ctx->dirty_lock);
+		goto again;
+	}
+
+	netfs_get_flush_group(group);
+	spin_unlock(&ctx->dirty_lock);
+
+	mutex_unlock(&ctx->wb_mutex);
+	kdebug("wait for flush");
+	wait_var_event(&group->nr_regions, atomic_read(&group->nr_regions) == 0);
+	kdebug("waited for flush");
+	mutex_lock(&ctx->wb_mutex);
+
+again:
+	netfs_put_flush_group(ctx, group);
+	return ERR_PTR(-EAGAIN);
+}
+
+/*
  * Flush some of the dirty queue, transforming a part of a sequence of dirty
  * regions into a block we can flush.
  *
@@ -846,8 +983,10 @@ static int netfs_select_dirty(struct netfs_io_request *wreq,
 			      pgoff_t *_first, pgoff_t last)
 {
 	struct netfs_dirty_region *region;
+	struct netfs_flush_group *group;
 	pgoff_t first = *_first;
 	pgoff_t csize = 1UL << ctx->cache_order;
+	bool advance = true;
 	int ret;
 
 	/* Round out the range we're looking through to accommodate whole cache
@@ -870,11 +1009,31 @@ static int netfs_select_dirty(struct netfs_io_request *wreq,
 
 	/* Find the first dirty region that overlaps the requested range */
 	spin_lock(&ctx->dirty_lock);
+
 	region = netfs_scan_for_region(ctx, first, last);
-	if (region) {
-		_debug("scan got R=%08x", region->debug_id);
-		//netfs_get_dirty_region(ctx, region, netfs_region_trace_get_wback);
+	if (region)
+		kdebug("scan got D=%08x", region->debug_id);
+
+	/* If the region selected is not in the bottommost flush group, we need
+	 * to flush prerequisites first.
+	 */
+	if (region && region->group) {
+		group = list_first_entry(&ctx->flush_groups,
+					 struct netfs_flush_group, group_link);
+		if (region->group != group) {
+			kdebug("flush prereq");
+			region = netfs_select_from_flush_group(wbc, ctx, group);
+			if (IS_ERR(region)) {
+				ret = PTR_ERR(region);
+				goto unlock;
+			}
+			advance = false;
+		}
 	}
+
+	if (region)
+		netfs_get_dirty_region(ctx, region, netfs_region_trace_get_wback);
+
 	spin_unlock(&ctx->dirty_lock);
 	if (!region) {
 		_debug("scan failed");
@@ -888,12 +1047,14 @@ static int netfs_select_dirty(struct netfs_io_request *wreq,
 	 */
 	if (*_first < region->first)
 		*_first = region->first;
+
 	ret = netfs_find_writeback_start(wreq, wbc, region, _first, last);
 	if (ret <= 0)
-		goto unlock;
+		goto put_region;
 
 	netfs_extend_writeback(wreq, wbc, ctx, region);
-	*_first = wreq->last + 1;
+	if (advance)
+		*_first = wreq->last + 1;
 
 	netfs_split_out_regions(wreq, ctx, region);
 
@@ -903,6 +1064,8 @@ static int netfs_select_dirty(struct netfs_io_request *wreq,
 	netfs_add_wback_to_list(ctx, wreq);
 	ret = 1;
 
+put_region:
+	netfs_put_dirty_region(ctx, region, netfs_region_trace_put_wback);
 unlock:
 	mutex_unlock(&ctx->wb_mutex);
 	_leave(" = %d [%lx]", ret, *_first);
@@ -946,6 +1109,7 @@ retry:
 	ret = netfs_select_dirty(wreq, wbc, ctx, _first, last);
 	switch (ret) {
 	case -EAGAIN:
+		kdebug("retry");
 		goto retry;
 	default:
 		goto out_unlocked;

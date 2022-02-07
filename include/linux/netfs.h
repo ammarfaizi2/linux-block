@@ -136,6 +136,7 @@ struct netfs_inode {
 	struct inode		inode;		/* The VFS inode */
 	const struct netfs_request_ops *ops;
 	struct mutex		wb_mutex;	/* Mutex controlling writeback setup */
+	struct list_head	flush_groups;	/* FIFO of flushable groups */
 	struct list_head	writebacks;	/* List of writebacks in progress */
 	struct list_head	dirty_regions;	/* List of dirty regions in the pagecache */
 	spinlock_t		dirty_lock;	/* Lock for dirty_regions & writebacks */
@@ -149,6 +150,7 @@ struct netfs_inode {
 #define NETFS_ICTX_ENCRYPTED	0		/* The file contents are encrypted */
 #define NETFS_ICTX_DO_RMW	1		/* Set if RMW required (no write streaming) */
 #define NETFS_ICTX_ODIRECT	2		/* Set if inode in direct I/O mode */
+	unsigned int		flush_counter;	/* Flush group ID counter */
 	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
 	unsigned char		obj_bshift;	/* log2 storage object shift (ceph/pnfs) or 0 */
 	unsigned char		crypto_bshift;	/* log2 of crypto block size */
@@ -327,6 +329,9 @@ enum netfs_region_type {
 struct netfs_dirty_region {
 	struct list_head	dirty_link;	/* Link in netfs_inode::dirty_regions */
 	struct list_head	proc_link;	/* Link in /proc/fs/netfs/regions */
+	struct list_head	flush_link;	/* Link in netfs_io_request::regions */
+	struct netfs_flush_group *group;	/* Flush group this region is part of */
+	struct netfs_dirty_region *absorbed_by;	/* Region that superseded/absorbed this one */
 	void			*netfs_priv;	/* Private data for the netfs */
 	size_t			credit;		/* Amount of credit used */
 	pgoff_t			first;		/* First page index in region */
@@ -336,6 +341,26 @@ struct netfs_dirty_region {
 	unsigned int		debug_id;
 	enum netfs_region_type	type;
 	refcount_t		ref;
+};
+
+/*
+ * Descriptor for a set of writes that will need to be flushed together.
+ *
+ * These are maintained as a FIFO.  The frontmost group in the FIFO is the only
+ * one that can be written from; the rearmost group in the FIFO is the only one
+ * that can be modified.
+ *
+ * When a prospective write collides with a dirty region in an earlier group,
+ * that group and all those in front of it have to be written out, in order,
+ * before the modification can take place.
+ */
+struct netfs_flush_group {
+	struct list_head	group_link;	/* Link in netfs_inode::flush_groups */
+	struct list_head	region_list;	/* List of regions in this group */
+	void			*netfs_priv;
+	refcount_t		ref;
+	atomic_t		nr_regions;	/* Number of regions in the group */
+	unsigned int		flush_id;
 };
 
 /*
@@ -385,6 +410,10 @@ struct netfs_request_ops {
 	bool (*is_write_compatible)(struct netfs_inode *ctx,
 				    struct file *file,
 				    const struct netfs_dirty_region *front);
+
+	/* Flush group handling */
+	void (*free_flush_group)(struct netfs_inode *ctx,
+				 struct netfs_flush_group *group);
 };
 
 /*
@@ -476,6 +505,7 @@ extern struct netfs_io_request *netfs_prepare_to_truncate(struct dentry *dentry,
 							  struct iattr *attr);
 extern void netfs_truncate(struct netfs_io_request *treq);
 extern void netfs_clear_inode(struct netfs_inode *ctx);
+extern struct netfs_flush_group *netfs_new_flush_group(struct inode *, void *);
 
 /**
  * netfs_inode - Get the netfs inode context from the inode
@@ -503,6 +533,7 @@ static inline void netfs_inode_init(struct netfs_inode *ctx,
 	ctx->ops = ops;
 	ctx->remote_i_size = i_size_read(&ctx->inode);
 	ctx->zero_point = ctx->remote_i_size;
+	INIT_LIST_HEAD(&ctx->flush_groups);
 	INIT_LIST_HEAD(&ctx->writebacks);
 	INIT_LIST_HEAD(&ctx->dirty_regions);
 	spin_lock_init(&ctx->dirty_lock);

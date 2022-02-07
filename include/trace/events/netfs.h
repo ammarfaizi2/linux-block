@@ -113,11 +113,14 @@
 
 #define netfs_region_traces					\
 	EM(netfs_region_trace_free,		"FREE       ")	\
+	EM(netfs_region_trace_get_absorbed_by,	"GET ABSB-BY")	\
 	EM(netfs_region_trace_get_wback,	"GET WBACK  ")	\
 	EM(netfs_region_trace_new,		"NEW        ")	\
+	EM(netfs_region_trace_put_absorbed_by,	"PUT ABSB-BY")	\
 	EM(netfs_region_trace_put_clear,	"PUT CLEAR  ")	\
 	EM(netfs_region_trace_put_merged,	"PUT MERGED ")	\
 	EM(netfs_region_trace_put_truncated,	"PUT TRUNC  ")	\
+	EM(netfs_region_trace_put_wback,	"PUT WBACK  ")	\
 	E_(netfs_region_trace_put_written,	"PUT WRITTEN")
 
 #define netfs_dirty_traces					\
@@ -521,6 +524,7 @@ TRACE_EVENT(netfs_dirty,
 		    __field(unsigned int,		debug_id	)
 		    __field(unsigned int,		debug_id2	)
 		    __field(unsigned int,		ref		)
+		    __field(unsigned int,		flush_id	)
 		    __field(enum netfs_dirty_trace,	why		)
 			     ),
 
@@ -531,17 +535,19 @@ TRACE_EVENT(netfs_dirty,
 		    __entry->last	= region->last;
 		    __entry->from	= region->from;
 		    __entry->to		= region->to;
+		    __entry->flush_id	= region->group ? region->group->flush_id : 0;
 		    __entry->debug_id	= region->debug_id;
 		    __entry->debug_id2	= region2 ? region2->debug_id : 0;
 			   ),
 
-	    TP_printk("i=%lx D=%x %s pg=%04lx-%04lx dt=%llx-%llx XD=%x",
+	    TP_printk("i=%lx D=%x %s pg=%04lx-%04lx dt=%llx-%llx F=%x XD=%x",
 		      __entry->ino, __entry->debug_id,
 		      __print_symbolic(__entry->why, netfs_dirty_traces),
 		      __entry->first,
 		      __entry->last,
 		      __entry->from,
 		      __entry->to - 1,
+		      __entry->flush_id,
 		      __entry->debug_id2
 		      )
 	    );

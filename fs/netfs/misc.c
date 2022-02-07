@@ -244,6 +244,7 @@ int netfs_wait_for_credit(struct writeback_control *wbc)
 void netfs_clear_inode(struct netfs_inode *ctx)
 {
 	struct netfs_dirty_region *region;
+	struct netfs_flush_group *group;
 
 	trace_netfs_clear_inode(ctx);
 
@@ -252,6 +253,13 @@ void netfs_clear_inode(struct netfs_inode *ctx)
 						  dirty_link))) {
 		list_del_init(&region->dirty_link);
 		netfs_put_dirty_region(ctx, region, netfs_region_trace_put_clear);
+	}
+
+	while ((group = list_first_entry_or_null(&ctx->flush_groups,
+						 struct netfs_flush_group,
+						 group_link))) {
+		list_del_init(&group->group_link);
+		netfs_put_flush_group(ctx, group);
 	}
 
 	clear_inode(&ctx->inode);
