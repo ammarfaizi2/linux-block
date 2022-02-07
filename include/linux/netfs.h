@@ -224,6 +224,7 @@ struct netfs_io_request {
 	struct kiocb		*iocb;		/* AIO completion vector */
 	struct netfs_cache_resources cache_resources;
 	struct list_head	proc_link;	/* Link in netfs_iorequests */
+	struct list_head	regions;	/* List of regions to be uploaded */
 	struct list_head	subrequests;	/* Contributory I/O operations */
 	struct xarray		buffer;		/* Buffer to hold raw data */
 	struct xarray		bounce;		/* Bounce buffer (eg. for crypto/compression) */
@@ -266,6 +267,22 @@ struct netfs_io_request {
 };
 
 /*
+ * Descriptor for a dirty region that has a common set of parameters and can
+ * feasibly be written back in one go.  These are held in an ordered list.
+ *
+ * Regions are not allowed to overlap, though they may be merged.
+ */
+struct netfs_dirty_region {
+	struct list_head	flush_link;	/* Link in netfs_io_request::regions */
+	struct netfs_dirty_region *waiting_on_wb; /* Overlayed writeback to wait for */
+	void			*netfs_priv;	/* Private data for the netfs */
+	unsigned long long	from;		/* File position of start of modified part */
+	unsigned long long	to;		/* File position of end of modified part */
+	unsigned int		debug_id;
+	refcount_t		ref;
+};
+
+/*
  * Operations the network filesystem can/must provide to the helpers.
  */
 struct netfs_request_ops {
@@ -295,6 +312,10 @@ struct netfs_request_ops {
 	int (*decrypt_block)(struct netfs_io_request *rreq, loff_t pos, size_t len,
 			     struct scatterlist *source_sg, unsigned int n_source,
 			     struct scatterlist *dest_sg, unsigned int n_dest);
+
+	/* Dirty region handling */
+	void (*init_dirty_region)(struct netfs_dirty_region *region, struct file *file);
+	void (*free_dirty_region)(struct netfs_dirty_region *region);
 };
 
 /*

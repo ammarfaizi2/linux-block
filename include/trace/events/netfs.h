@@ -105,6 +105,10 @@
 	EM(netfs_sreq_trace_put_work,		"PUT WORK   ")	\
 	E_(netfs_sreq_trace_put_terminated,	"PUT TERM   ")
 
+#define netfs_region_traces					\
+	EM(netfs_region_trace_free,		"FREE       ")	\
+	E_(netfs_region_trace_put_clear,	"PUT CLEAR  ")
+
 #ifndef __NETFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
 #define __NETFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
 
@@ -119,6 +123,7 @@ enum netfs_sreq_trace { netfs_sreq_traces } __mode(byte);
 enum netfs_failure { netfs_failures } __mode(byte);
 enum netfs_rreq_ref_trace { netfs_rreq_ref_traces } __mode(byte);
 enum netfs_sreq_ref_trace { netfs_sreq_ref_traces } __mode(byte);
+enum netfs_region_trace { netfs_region_traces } __mode(byte);
 
 #endif
 
@@ -138,6 +143,7 @@ netfs_sreq_traces;
 netfs_failures;
 netfs_rreq_ref_traces;
 netfs_sreq_ref_traces;
+netfs_region_traces;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -355,9 +361,12 @@ TRACE_EVENT(netfs_wback,
 
 	    TP_fast_assign(
 		    struct fscache_cookie *__cookie = netfs_i_cookie(wreq->inode);
+		    struct netfs_dirty_region *__region =
+		    list_first_entry_or_null(&wreq->regions,
+					     struct netfs_dirty_region, flush_link);
 		    __entry->wreq	= wreq->debug_id;
 		    __entry->cookie	= __cookie ? __cookie->debug_id : 0;
-		    __entry->region	= 0;
+		    __entry->region	= __region ? __region->debug_id : 0;
 		    __entry->start	= wreq->start;
 		    __entry->len	= wreq->len;
 		    __entry->first	= wreq->first;
@@ -370,6 +379,30 @@ TRACE_EVENT(netfs_wback,
 		      __entry->region,
 		      __entry->start, __entry->start + __entry->len - 1,
 		      __entry->first, __entry->last)
+	    );
+
+TRACE_EVENT(netfs_ref_region,
+	    TP_PROTO(unsigned int region_debug_id, int ref,
+		     enum netfs_region_trace what),
+
+	    TP_ARGS(region_debug_id, ref, what),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		region		)
+		    __field(int,			ref		)
+		    __field(enum netfs_region_trace,	what		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->region	= region_debug_id;
+		    __entry->ref	= ref;
+		    __entry->what	= what;
+			   ),
+
+	    TP_printk("D=%x %s r=%u",
+		      __entry->region,
+		      __print_symbolic(__entry->what, netfs_region_traces),
+		      __entry->ref)
 	    );
 
 #undef EM
