@@ -14,24 +14,6 @@
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/soc/samsung,exynos-usi.h>
 
-/* TODO: Remove this once corresponding clock bindings are added */
-#ifndef CLK_GOUT_SYSREG_CMGP_PCLK
-/* CMU_TOP */
-#define CLK_DOUT_CLKCMU_APM_BUS		47
-
-/* CMU_CMGP */
-#define CLK_GOUT_CMGP_USI0_IPCLK	11
-#define CLK_GOUT_CMGP_USI0_PCLK		12
-#define CLK_GOUT_CMGP_USI1_IPCLK	13
-#define CLK_GOUT_CMGP_USI1_PCLK		14
-#define CLK_GOUT_SYSREG_CMGP_PCLK	15
-
-/* CMU_APM */
-#define CLK_GOUT_CLKCMU_CMGP_BUS	15
-#define CLK_GOUT_RTC_PCLK		17
-#define CLK_GOUT_PMU_ALIVE_PCLK		23
-#endif
-
 / {
 	/* Also known under engineering name Exynos3830 */
 	compatible = "samsung,exynos850";
