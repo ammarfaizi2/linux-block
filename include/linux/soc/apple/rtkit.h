@@ -38,8 +38,12 @@ struct apple_rtkit_shmem {
  *
  * @crashed:       Called when the co-processor has crashed.
  * @recv_message:  Function called when a message from RTKit is recevied
- *                 on a non-system endpoint. Called from a worker thread unless
- *                 APPLE_RTKIT_RECV_ATOMIC is set.
+ *                 on a non-system endpoint. Called from a worker thread.
+ * @recv_message_early:
+ *                 Like recv_message, but called from atomic context. It
+ *                 should return true if it handled the message. If it
+ *                 returns false, the message will be passed on to the
+ *                 worker thread.
  * @shmem_setup:   Setup shared memory buffer. If bfr.is_iomem is true the
  *                 buffer is managed by the co-processor and needs to be mapped.
  *                 Otherwise the buffer is managed by Linux and needs to be
@@ -50,6 +54,7 @@ struct apple_rtkit_shmem {
 struct apple_rtkit_ops {
 	void (*crashed)(void *cookie);
 	void (*recv_message)(void *cookie, u8 endpoint, u64 message);
+	bool (*recv_message_early)(void *cookie, u8 endpoint, u64 message);
 	int (*shmem_setup)(void *cookie, struct apple_rtkit_shmem *bfr,
 			   dma_addr_t addr, size_t len);
 	void (*shmem_destroy)(void *cookie, struct apple_rtkit_shmem *bfr);
@@ -138,6 +143,11 @@ int apple_rtkit_send_message(struct apple_rtkit *rtk, u8 ep, u64 message);
  */
 int apple_rtkit_send_message_atomic(struct apple_rtkit *rtk, u8 ep, u64 message);
 
+/*
+ * Poll for messages to arrive, without sleeping
+ */
+int apple_rtkit_poll(struct apple_rtkit *rtk);
+
 #else
 
 static inline struct apple_rtkit *
@@ -206,6 +216,11 @@ static inline int apple_rtkit_send_message(struct apple_rtkit *rtk, u8 ep,
 
 static inline int apple_rtkit_send_message_atomic(struct apple_rtkit *rtk,
 						  u8 ep, u64 message)
+{
+	return -ENODEV;
+}
+
+int apple_rtkit_poll(struct apple_rtkit *rtk)
 {
 	return -ENODEV;
 }
