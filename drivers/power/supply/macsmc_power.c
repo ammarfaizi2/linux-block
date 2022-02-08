@@ -74,6 +74,9 @@ static int macsmc_battery_get_property(struct power_supply *psy,
 		val->intval = macsmc_battery_get_status(power);
 		ret = val->intval < 0 ? val->intval : 0;
 		break;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = 1;
+		break;
 	case POWER_SUPPLY_PROP_TIME_TO_EMPTY_NOW:
 		ret = apple_smc_read_u16(power->smc, SMC_KEY(B0TE), &vu16);
 		val->intval = vu16 == 0xffff ? 0 : vu16 * 60;
@@ -162,6 +165,7 @@ static int macsmc_battery_get_property(struct power_supply *psy,
 
 static enum power_supply_property macsmc_battery_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
+	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_TIME_TO_EMPTY_NOW,
 	POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
 	POWER_SUPPLY_PROP_CAPACITY,
