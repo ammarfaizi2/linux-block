@@ -549,8 +549,14 @@ static void apple_rtkit_rx_callback(struct mbox_client *cl, void *mssg)
 	struct apple_rtkit *rtk = container_of(cl, struct apple_rtkit, mbox_cl);
 	struct apple_mbox_msg *msg = mssg;
 	struct apple_rtkit_work work;
+	u8 ep = msg->msg1;
 
 	dma_rmb();
+
+	if (ep >= APPLE_RTKIT_APP_ENDPOINT_START && ep <= 0xff &&
+	    rtk->ops->recv_message_early &&
+	    rtk->ops->recv_message_early(rtk->cookie, ep, msg->msg0))
+		return;
 
 	memcpy(&work.msg, msg, sizeof(*msg));
 	work.type = APPLE_RTKIT_WORK_MSG;
@@ -632,6 +638,12 @@ int apple_rtkit_send_message_atomic(struct apple_rtkit *rtk, u8 ep, u64 message)
 	return ret;
 }
 EXPORT_SYMBOL_GPL(apple_rtkit_send_message_atomic);
+
+int apple_rtkit_poll(struct apple_rtkit *rtk)
+{
+	return mbox_client_peek_data(rtk->mbox_chan);
+}
+EXPORT_SYMBOL_GPL(apple_rtkit_poll);
 
 int apple_rtkit_start_ep(struct apple_rtkit *rtk, u8 endpoint)
 {
