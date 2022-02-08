@@ -75,6 +75,15 @@ enum { APPLE_RTKIT_MGMT_HELLO = 1,
 #define APPLE_RTKIT_MIN_SUPPORTED_VERSION 11
 #define APPLE_RTKIT_MAX_SUPPORTED_VERSION 12
 
+#define APPLE_RTKIT_TX_TIMEOUT 1000
+
+struct apple_rtkit_msg {
+	struct apple_mbox_msg mbmsg;
+	bool complete;
+	bool atomic;
+	struct completion completion;
+};
+
 bool apple_rtkit_is_running(struct apple_rtkit *rtk)
 {
 	if (rtk->crashed)
@@ -550,9 +559,23 @@ static void apple_rtkit_rx_callback(struct mbox_client *cl, void *mssg)
 	wake_up(&rtk->wq);
 }
 
+static void apple_rtkit_tx_done(struct mbox_client *cl, void *mssg, int r)
+{
+	struct apple_rtkit_msg *msg = container_of(mssg, struct apple_rtkit_msg, mbmsg);
+
+	if (r == -ETIME)
+		return;
+
+	BUG_ON(msg->complete);
+	msg->complete = true;
+	if (!msg->atomic)
+		complete(&msg->completion);
+}
+
 int apple_rtkit_send_message(struct apple_rtkit *rtk, u8 ep, u64 message)
 {
-	struct apple_mbox_msg msg;
+	struct apple_rtkit_msg msg;
+	int ret;
 
 	if (rtk->crashed)
 		return -EINVAL;
@@ -560,13 +583,55 @@ int apple_rtkit_send_message(struct apple_rtkit *rtk, u8 ep, u64 message)
 	    !apple_rtkit_is_running(rtk))
 		return -EINVAL;
 
-	msg.msg0 = (u64)message;
-	msg.msg1 = ep;
+	memset(&msg, 0, sizeof(msg));
+	msg.mbmsg.msg0 = (u64)message;
+	msg.mbmsg.msg1 = ep;
+	init_completion(&msg.completion);
 	dma_wmb();
 
-	return mbox_send_message(rtk->mbox_chan, &msg);
+	ret = mbox_send_message(rtk->mbox_chan, &msg.mbmsg);
+	if (ret < 0)
+		return ret;
+
+	ret = wait_for_completion_timeout(&msg.completion,
+					  msecs_to_jiffies(APPLE_RTKIT_TX_TIMEOUT));
+	if (ret == 0)
+		return -ETIME;
+
+	BUG_ON(!msg.complete);
+	return ret;
 }
 EXPORT_SYMBOL_GPL(apple_rtkit_send_message);
+
+int apple_rtkit_send_message_atomic(struct apple_rtkit *rtk, u8 ep, u64 message)
+{
+	struct apple_rtkit_msg msg;
+	int ret;
+
+	if (rtk->crashed)
+		return -EINVAL;
+	if (ep >= APPLE_RTKIT_APP_ENDPOINT_START &&
+	    !apple_rtkit_is_running(rtk))
+		return -EINVAL;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.mbmsg.msg0 = (u64)message;
+	msg.mbmsg.msg1 = ep;
+	msg.atomic = true;
+	dma_wmb();
+
+	ret = mbox_send_message(rtk->mbox_chan, &msg);
+	if (ret < 0)
+		return ret;
+
+	while (!msg.complete) {
+		ret = mbox_flush(rtk->mbox_chan, APPLE_RTKIT_TX_TIMEOUT);
+		if (ret < 0)
+			return ret;
+	}
+	return ret;
+}
+EXPORT_SYMBOL_GPL(apple_rtkit_send_message_atomic);
 
 int apple_rtkit_start_ep(struct apple_rtkit *rtk, u8 endpoint)
 {
@@ -629,8 +694,9 @@ struct apple_rtkit *apple_rtkit_init(struct device *dev, void *cookie,
 		return ERR_PTR(ret);
 
 	rtk->mbox_cl.dev = dev;
-	rtk->mbox_cl.tx_block = true;
+	rtk->mbox_cl.tx_block = false;
 	rtk->mbox_cl.knows_txdone = false;
+	rtk->mbox_cl.tx_done = &apple_rtkit_tx_done;
 	rtk->mbox_cl.rx_callback = &apple_rtkit_rx_callback;
 
 	if (mbox_name)

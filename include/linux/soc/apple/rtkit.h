@@ -133,6 +133,11 @@ int apple_rtkit_start_ep(struct apple_rtkit *rtk, u8 endpoint);
  */
 int apple_rtkit_send_message(struct apple_rtkit *rtk, u8 ep, u64 message);
 
+/*
+ * Send a message to the given endpoint, without sleeping
+ */
+int apple_rtkit_send_message_atomic(struct apple_rtkit *rtk, u8 ep, u64 message);
+
 #else
 
 static inline struct apple_rtkit *
@@ -195,6 +200,12 @@ static inline int apple_rtkit_start_ep(struct apple_rtkit *rtk, u8 endpoint)
 
 static inline int apple_rtkit_send_message(struct apple_rtkit *rtk, u8 ep,
 					   u64 message)
+{
+	return -ENODEV;
+}
+
+static inline int apple_rtkit_send_message_atomic(struct apple_rtkit *rtk,
+						  u8 ep, u64 message)
 {
 	return -ENODEV;
 }
