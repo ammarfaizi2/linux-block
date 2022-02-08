@@ -131,7 +131,7 @@
 };
 
 &spi1 {
-	status = "ok";
+	status = "disabled";
 
 	flash@0 {
 		compatible = "jedec,spi-nor";
