@@ -3240,8 +3240,11 @@ static __always_inline void *slab_alloc(struct kmem_cache *s,
 
 void *kmem_cache_alloc(struct kmem_cache *s, gfp_t gfpflags)
 {
-	void *ret = slab_alloc(s, gfpflags, _RET_IP_, s->object_size);
+	void *ret;
 
+	/* References to typesafe memory survives free/alloc. */
+	WARN_ON_ONCE((gfpflags & __GFP_ZERO) && (s->flags & SLAB_TYPESAFE_BY_RCU));
+	ret = slab_alloc(s, gfpflags, _RET_IP_, s->object_size);
 	trace_kmem_cache_alloc(_RET_IP_, ret, s->object_size,
 				s->size, gfpflags);
 

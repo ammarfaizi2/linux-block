@@ -3496,8 +3496,11 @@ void ___cache_free(struct kmem_cache *cachep, void *objp,
  */
 void *kmem_cache_alloc(struct kmem_cache *cachep, gfp_t flags)
 {
-	void *ret = slab_alloc(cachep, flags, cachep->object_size, _RET_IP_);
+	void *ret;
 
+	/* References to typesafe memory survives free/alloc. */
+	WARN_ON_ONCE((flags & __GFP_ZERO) && (cachep->flags & SLAB_TYPESAFE_BY_RCU));
+	ret = slab_alloc(cachep, flags, cachep->object_size, _RET_IP_);
 	trace_kmem_cache_alloc(_RET_IP_, ret,
 			       cachep->object_size, cachep->size, flags);
 

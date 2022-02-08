@@ -631,6 +631,8 @@ static void *slob_alloc_node(struct kmem_cache *c, gfp_t flags, int node)
 
 void *kmem_cache_alloc(struct kmem_cache *cachep, gfp_t flags)
 {
+	/* References to typesafe memory survives free/alloc. */
+	WARN_ON_ONCE((flags & __GFP_ZERO) && (cachep->flags & SLAB_TYPESAFE_BY_RCU));
 	return slob_alloc_node(cachep, flags, NUMA_NO_NODE);
 }
 EXPORT_SYMBOL(kmem_cache_alloc);
