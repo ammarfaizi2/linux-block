@@ -143,7 +143,7 @@
 };
 
 &spi3 {
-	status = "ok";
+	status = "okay";
 
 	hid-transport@0 {
 		compatible = "apple,spi-hid-transport";
