@@ -1751,11 +1751,13 @@ try_again:
 }
 
 /*
- * Receive data from receive reassembly queue
+ * Receive data from transport
+ * msg: a msghdr point to the buffer, should not be ITER_IOVEC.
+ * return: total bytes read, or -E... on error. SMB Direct will not do partial
+ * read.
+ *
+ * Receives data from receive reassembly queue
  * All the incoming data packets are placed in reassembly queue
- * buf: the buffer to read data into
- * size: the length of data to read
- * return value: actual data read
  * Note: this implementation copies the data from reassebmly queue to receive
  * buffers used by upper layer. This is not the optimal code path. A better way
  * to do it is to not have upper layer allocate its receive buffers but rather
@@ -1763,10 +1765,11 @@ try_again:
  * consumed. But this will require more changes to upper layer code, and also
  * need to consider packet boundaries while they still being reassembled.
  */
-static int smbd_recv_buf(struct smbd_connection *info, char *buf,
-		unsigned int size)
+int smbd_recv(struct smbd_connection *info, struct msghdr *msg)
 {
+	struct iov_iter *to = &msg->msg_iter;
 	int to_copy, to_read, data_read, offset;
+	unsigned size = iov_iter_count(to);
 	int queue_removed = 0;
 	int queue_length;
 	int rc;
@@ -1807,7 +1810,7 @@ static int smbd_recv_buf(struct smbd_connection *info, char *buf,
 	data_read = 0;
 	to_read = size;
 	offset = info->first_entry_offset;
-	while (data_read < size) {
+	while (iov_iter_count(to)) {
 		struct smbd_response *response;
 		struct smbd_data_transfer *data_transfer;
 		u32 data_length, remaining_data_length, data_offset;
@@ -1828,20 +1831,18 @@ static int smbd_recv_buf(struct smbd_connection *info, char *buf,
 		 * transport layer is added
 		 */
 		if (response->first_segment && size == 4) {
-			unsigned int rfc1002_len =
-				data_length + remaining_data_length;
-			*((__be32 *)buf) = cpu_to_be32(rfc1002_len);
+			__be32 rfc1002_len =
+				cpu_to_be32(data_length + remaining_data_length);
+			_copy_to_iter(&rfc1002_len, 4, to);
 			response->first_segment = false;
 			log_read(INFO, "returning rfc1002 length %d\n",
-				rfc1002_len);
+				be32_to_cpu(rfc1002_len));
 			return 4;
 		}
 
 		to_copy = min_t(int, data_length - offset, to_read);
-		memcpy(
-			buf + data_read,
-			(char *)data_transfer + data_offset + offset,
-			to_copy);
+		_copy_to_iter((char *)data_transfer + data_offset + offset,
+			to_copy, to);
 
 		/* move on to the next buffer? */
 		if (to_copy == data_length - offset) {
@@ -1885,89 +1886,6 @@ static int smbd_recv_buf(struct smbd_connection *info, char *buf,
 		 data_read, info->reassembly_data_length,
 		 info->first_entry_offset);
 	return data_read;
-}
-
-/*
- * Receive a page from receive reassembly queue
- * page: the page to read data into
- * to_read: the length of data to read
- * return value: actual data read
- */
-static int smbd_recv_page(struct smbd_connection *info,
-		struct page *page, unsigned int page_offset,
-		unsigned int to_read)
-{
-	int ret;
-	char *to_address;
-	void *page_address;
-
-	/* make sure we have the page ready for read */
-	ret = wait_event_interruptible(
-		info->wait_reassembly_queue,
-		info->reassembly_data_length >= to_read ||
-			info->transport_status != SMBD_CONNECTED);
-	if (ret)
-		return ret;
-
-	/* now we can read from reassembly queue and not sleep */
-	page_address = kmap_atomic(page);
-	to_address = (char *) page_address + page_offset;
-
-	log_read(INFO, "reading from page=%p address=%p to_read=%d\n",
-		page, to_address, to_read);
-
-	ret = smbd_recv_buf(info, to_address, to_read);
-	kunmap_atomic(page_address);
-
-	return ret;
-}
-
-/*
- * Receive data from transport
- * msg: a msghdr point to the buffer, can be ITER_KVEC or ITER_BVEC
- * return: total bytes read, or 0. SMB Direct will not do partial read.
- */
-int smbd_recv(struct smbd_connection *info, struct msghdr *msg)
-{
-	char *buf;
-	struct page *page;
-	unsigned int to_read, page_offset;
-	int rc;
-
-	if (iov_iter_rw(&msg->msg_iter) == WRITE) {
-		/* It's a bug in upper layer to get there */
-		cifs_dbg(VFS, "Invalid msg iter dir %u\n",
-			 iov_iter_rw(&msg->msg_iter));
-		rc = -EINVAL;
-		goto out;
-	}
-
-	switch (iov_iter_type(&msg->msg_iter)) {
-	case ITER_KVEC:
-		buf = msg->msg_iter.kvec->iov_base;
-		to_read = msg->msg_iter.kvec->iov_len;
-		rc = smbd_recv_buf(info, buf, to_read);
-		break;
-
-	case ITER_BVEC:
-		page = msg->msg_iter.bvec->bv_page;
-		page_offset = msg->msg_iter.bvec->bv_offset;
-		to_read = msg->msg_iter.bvec->bv_len;
-		rc = smbd_recv_page(info, page, page_offset, to_read);
-		break;
-
-	default:
-		/* It's a bug in upper layer to get there */
-		cifs_dbg(VFS, "Invalid msg type %d\n",
-			 iov_iter_type(&msg->msg_iter));
-		rc = -EINVAL;
-	}
-
-out:
-	/* SMBDirect will read it all or nothing */
-	if (rc > 0)
-		msg->msg_iter.count = 0;
-	return rc;
 }
 
 /*
