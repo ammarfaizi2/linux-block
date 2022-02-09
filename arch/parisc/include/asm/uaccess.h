@@ -89,7 +89,7 @@ struct exception_table_entry {
 	__asm__("1: " ldx " 0(" sr "%2),%0\n"		\
 		"9:\n"					\
 		ASM_EXCEPTIONTABLE_ENTRY_EFAULT(1b, 9b)	\
-		: "=r"(__gu_val), "=r"(__gu_err)        \
+		: "=&r"(__gu_val), "+r"(__gu_err)        \
 		: "r"(ptr), "1"(__gu_err));		\
 							\
 	(val) = (__force __typeof__(*(ptr))) __gu_val;	\
@@ -123,7 +123,7 @@ struct exception_table_entry {
 		"9:\n"					\
 		ASM_EXCEPTIONTABLE_ENTRY_EFAULT(1b, 9b)	\
 		ASM_EXCEPTIONTABLE_ENTRY_EFAULT(2b, 9b)	\
-		: "=&r"(__gu_tmp.l), "=r"(__gu_err)	\
+		: "=&r"(__gu_tmp.l), "+r"(__gu_err)	\
 		: "r"(ptr), "1"(__gu_err));		\
 							\
 	(val) = __gu_tmp.t;				\
@@ -132,10 +132,9 @@ struct exception_table_entry {
 #endif /* !defined(CONFIG_64BIT) */
 
 
-#define __put_user_internal(sr, x, ptr)				\
+#define __put_user_internal(sr, __x, ptr)			\
 ({								\
 	ASM_EXCEPTIONTABLE_VAR(__pu_err);		      	\
-        __typeof__(*(ptr)) __x = (__typeof__(*(ptr)))(x);	\
 								\
 	switch (sizeof(*(ptr))) {				\
 	case 1: __put_user_asm(sr, "stb", __x, ptr); break;	\
@@ -150,7 +149,9 @@ struct exception_table_entry {
 
 #define __put_user(x, ptr)					\
 ({								\
-	__put_user_internal("%%sr3,", x, ptr);			\
+	 __typeof__(*(ptr)) __x = (__typeof__(*(ptr)))(x);	\
+								\
+	__put_user_internal("%%sr3,", __x, ptr);		\
 })
 
 #define __put_kernel_nofault(dst, src, type, err_label)		\
@@ -180,7 +181,7 @@ struct exception_table_entry {
 		"1: " stx " %2,0(" sr "%1)\n"			\
 		"9:\n"						\
 		ASM_EXCEPTIONTABLE_ENTRY_EFAULT(1b, 9b)		\
-		: "=r"(__pu_err)				\
+		: "+r"(__pu_err)				\
 		: "r"(ptr), "r"(x), "0"(__pu_err))
 
 
@@ -193,7 +194,7 @@ struct exception_table_entry {
 		"9:\n"						\
 		ASM_EXCEPTIONTABLE_ENTRY_EFAULT(1b, 9b)		\
 		ASM_EXCEPTIONTABLE_ENTRY_EFAULT(2b, 9b)		\
-		: "=r"(__pu_err)				\
+		: "+r"(__pu_err)				\
 		: "r"(ptr), "r"(__val), "0"(__pu_err));		\
 } while (0)
 
