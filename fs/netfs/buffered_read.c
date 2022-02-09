@@ -198,6 +198,8 @@ void netfs_readahead(struct readahead_control *ractl)
 
 	/* Set up the output buffer */
 	rreq->buffering = NETFS_BUFFER;
+	rreq->first = readahead_index(ractl);
+	rreq->last  = rreq->first + readahead_count(ractl);
 	ret = netfs_set_up_buffer(&rreq->buffer, rreq->mapping, ractl, NULL,
 				  readahead_index(ractl), readahead_count(ractl));
 	if (ret < 0)
@@ -252,6 +254,8 @@ int netfs_read_folio(struct file *file, struct folio *folio)
 
 	/* Set up the output buffer */
 	rreq->buffering = NETFS_BUFFER;
+	rreq->first = folio->index;
+	rreq->last  = rreq->first + folio_nr_pages(folio) - 1;
 	ret = netfs_set_up_buffer(&rreq->buffer, rreq->mapping, NULL, folio,
 				  folio_index(folio), folio_nr_pages(folio));
 	if (ret < 0)
@@ -417,6 +421,8 @@ retry:
 
 	/* Set up the output buffer */
 	rreq->buffering = NETFS_BUFFER;
+	rreq->first = readahead_index(&ractl);
+	rreq->last  = rreq->first + readahead_count(&ractl) - 1;
 	ret = netfs_set_up_buffer(&rreq->buffer, rreq->mapping, &ractl, folio,
 				  readahead_index(&ractl), readahead_count(&ractl));
 	if (ret < 0) {

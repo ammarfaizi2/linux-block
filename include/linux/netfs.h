@@ -118,6 +118,9 @@ enum netfs_io_source {
 	NETFS_DOWNLOAD_FROM_SERVER,
 	NETFS_READ_FROM_CACHE,
 	NETFS_INVALID_READ,
+	NETFS_UPLOAD_TO_SERVER,
+	NETFS_WRITE_TO_CACHE,
+	NETFS_INVALID_WRITE,
 } __mode(byte);
 
 typedef void (*netfs_io_terminated_t)(void *priv, ssize_t transferred_or_error,
@@ -151,9 +154,14 @@ struct netfs_cache_resources {
 };
 
 /*
- * Descriptor for a single component subrequest.
+ * Descriptor for a single component subrequest.  Each operation represents an
+ * individual read/write from/to a server, a cache, a journal, etc..
+ *
+ * The buffer iterator is persistent for the life of the subrequest struct and
+ * the pages it points to can be relied on to exist for the duration.
  */
 struct netfs_io_subrequest {
+	struct work_struct	work;
 	struct netfs_io_request *rreq;		/* Supervising I/O request */
 	struct list_head	rreq_link;	/* Link in rreq->subrequests */
 	struct iov_iter		iter;		/* Iterator for this subrequest */
@@ -178,7 +186,10 @@ enum netfs_io_origin {
 	NETFS_READAHEAD,		/* This read was triggered by readahead */
 	NETFS_READPAGE,			/* This read is a synchronous read */
 	NETFS_READ_FOR_WRITE,		/* This read is to prepare a write */
+	NETFS_WRITEBACK,		/* This write was triggered by writepages */
 	NETFS_DIO_READ,			/* This read is a direct I/O read */
+	NETFS_DIO_WRITE,		/* This read is a direct I/O write */
+	nr__netfs_io_origin
 } __mode(byte);
 
 enum netfs_buffering {
@@ -213,6 +224,7 @@ struct netfs_io_request {
 	unsigned int		debug_id;
 	unsigned int		rsize;		/* Maximum read size (0 for none) */
 	unsigned int		wsize;		/* Maximum write size (0 for none) */
+	unsigned int		subreq_counter;	/* Next subreq->debug_index */
 	atomic_t		nr_outstanding;	/* Number of ops in progress */
 	atomic_t		nr_copy_ops;	/* Number of copy-to-cache ops in progress */
 	size_t			submitted;	/* Amount submitted for I/O so far */
@@ -223,6 +235,8 @@ struct netfs_io_request {
 	enum netfs_buffering	buffering;	/* Method of buffering */
 	loff_t			i_size;		/* Size of the file */
 	loff_t			start;		/* Start position */
+	pgoff_t			first;		/* First page included */
+	pgoff_t			last;		/* Last page included */
 	pgoff_t			no_unlock_folio; /* Don't unlock this folio after read */
 	refcount_t		ref;
 	unsigned long		flags;
@@ -234,6 +248,8 @@ struct netfs_io_request {
 #define NETFS_RREQ_IN_PROGRESS		5	/* Unlocked when the request completes */
 #define NETFS_RREQ_NONBLOCK		6	/* Don't block if possible (O_NONBLOCK) */
 #define NETFS_RREQ_BLOCKED		7	/* We blocked */
+#define NETFS_RREQ_WRITE_TO_CACHE	8	/* Need to write to the cache */
+#define NETFS_RREQ_UPLOAD_TO_SERVER	9	/* Need to write to the server */
 	const struct netfs_request_ops *netfs_ops;
 };
 
