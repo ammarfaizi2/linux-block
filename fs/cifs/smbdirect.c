@@ -1770,9 +1770,10 @@ static int smbd_recv_buf(struct smbd_connection *info, char *buf,
 	struct smbd_data_transfer *data_transfer;
 	int to_copy, to_read, data_read, offset;
 	u32 data_length, remaining_data_length, data_offset;
+	int queue_removed = 0;
+	int queue_length;
 	int rc;
 
-again:
 	/*
 	 * No need to hold the reassembly queue lock all the time as we are
 	 * the only one reading from the front of the queue. The transport
@@ -1780,117 +1781,113 @@ again:
 	 */
 	log_read(INFO, "size=%d info->reassembly_data_length=%d\n", size,
 		info->reassembly_data_length);
-	if (info->reassembly_data_length >= size) {
-		int queue_length;
-		int queue_removed = 0;
+	if (unlikely(info->reassembly_data_length < size)) {
+		log_read(INFO, "wait_event on more data\n");
+		rc = wait_event_interruptible(
+			info->wait_reassembly_queue,
+			info->reassembly_data_length >= size ||
+				info->transport_status != SMBD_CONNECTED);
+		/* Don't return any data if interrupted */
+		if (rc)
+			return rc;
+		if (info->transport_status != SMBD_CONNECTED) {
+			log_read(ERR, "disconnected\n");
+			return -ECONNABORTED;
+		}
+		log_read(INFO, "size=%d info->reassembly_data_length=%d\n", size,
+			info->reassembly_data_length);
+	}
+
+	/*
+	 * Need to make sure reassembly_data_length is read before
+	 * reading reassembly_queue_length and calling
+	 * _get_first_reassembly. This call is lock free
+	 * as we never read at the end of the queue which are being
+	 * updated in SOFTIRQ as more data is received
+	 */
+	virt_rmb();
+	queue_length = info->reassembly_queue_length;
+	data_read = 0;
+	to_read = size;
+	offset = info->first_entry_offset;
+	while (data_read < size) {
+		response = _get_first_reassembly(info);
+		data_transfer = smbd_response_payload(response);
+		data_length = le32_to_cpu(data_transfer->data_length);
+		remaining_data_length =
+			le32_to_cpu(
+				data_transfer->remaining_data_length);
+		data_offset = le32_to_cpu(data_transfer->data_offset);
 
 		/*
-		 * Need to make sure reassembly_data_length is read before
-		 * reading reassembly_queue_length and calling
-		 * _get_first_reassembly. This call is lock free
-		 * as we never read at the end of the queue which are being
-		 * updated in SOFTIRQ as more data is received
+		 * The upper layer expects RFC1002 length at the
+		 * beginning of the payload. Return it to indicate
+		 * the total length of the packet. This minimize the
+		 * change to upper layer packet processing logic. This
+		 * will be eventually remove when an intermediate
+		 * transport layer is added
 		 */
-		virt_rmb();
-		queue_length = info->reassembly_queue_length;
-		data_read = 0;
-		to_read = size;
-		offset = info->first_entry_offset;
-		while (data_read < size) {
-			response = _get_first_reassembly(info);
-			data_transfer = smbd_response_payload(response);
-			data_length = le32_to_cpu(data_transfer->data_length);
-			remaining_data_length =
-				le32_to_cpu(
-					data_transfer->remaining_data_length);
-			data_offset = le32_to_cpu(data_transfer->data_offset);
-
-			/*
-			 * The upper layer expects RFC1002 length at the
-			 * beginning of the payload. Return it to indicate
-			 * the total length of the packet. This minimize the
-			 * change to upper layer packet processing logic. This
-			 * will be eventually remove when an intermediate
-			 * transport layer is added
-			 */
-			if (response->first_segment && size == 4) {
-				unsigned int rfc1002_len =
-					data_length + remaining_data_length;
-				*((__be32 *)buf) = cpu_to_be32(rfc1002_len);
-				data_read = 4;
-				response->first_segment = false;
-				log_read(INFO, "returning rfc1002 length %d\n",
-					rfc1002_len);
-				goto read_rfc1002_done;
-			}
-
-			to_copy = min_t(int, data_length - offset, to_read);
-			memcpy(
-				buf + data_read,
-				(char *)data_transfer + data_offset + offset,
-				to_copy);
-
-			/* move on to the next buffer? */
-			if (to_copy == data_length - offset) {
-				queue_length--;
-				/*
-				 * No need to lock if we are not at the
-				 * end of the queue
-				 */
-				if (queue_length)
-					list_del(&response->list);
-				else {
-					spin_lock_irq(
-						&info->reassembly_queue_lock);
-					list_del(&response->list);
-					spin_unlock_irq(
-						&info->reassembly_queue_lock);
-				}
-				queue_removed++;
-				info->count_reassembly_queue--;
-				info->count_dequeue_reassembly_queue++;
-				put_receive_buffer(info, response);
-				offset = 0;
-				log_read(INFO, "put_receive_buffer offset=0\n");
-			} else
-				offset += to_copy;
-
-			to_read -= to_copy;
-			data_read += to_copy;
-
-			log_read(INFO, "_get_first_reassembly memcpy %d bytes data_transfer_length-offset=%d after that to_read=%d data_read=%d offset=%d\n",
-				 to_copy, data_length - offset,
-				 to_read, data_read, offset);
+		if (response->first_segment && size == 4) {
+			unsigned int rfc1002_len =
+				data_length + remaining_data_length;
+			*((__be32 *)buf) = cpu_to_be32(rfc1002_len);
+			data_read = 4;
+			response->first_segment = false;
+			log_read(INFO, "returning rfc1002 length %d\n",
+				rfc1002_len);
+			goto read_rfc1002_done;
 		}
 
-		spin_lock_irq(&info->reassembly_queue_lock);
-		info->reassembly_data_length -= data_read;
-		info->reassembly_queue_length -= queue_removed;
-		spin_unlock_irq(&info->reassembly_queue_lock);
+		to_copy = min_t(int, data_length - offset, to_read);
+		memcpy(
+			buf + data_read,
+			(char *)data_transfer + data_offset + offset,
+			to_copy);
 
-		info->first_entry_offset = offset;
-		log_read(INFO, "returning to thread data_read=%d reassembly_data_length=%d first_entry_offset=%d\n",
-			 data_read, info->reassembly_data_length,
-			 info->first_entry_offset);
+		/* move on to the next buffer? */
+		if (to_copy == data_length - offset) {
+			queue_length--;
+			/*
+			 * No need to lock if we are not at the
+			 * end of the queue
+			 */
+			if (queue_length)
+				list_del(&response->list);
+			else {
+				spin_lock_irq(
+					&info->reassembly_queue_lock);
+				list_del(&response->list);
+				spin_unlock_irq(
+					&info->reassembly_queue_lock);
+			}
+			queue_removed++;
+			info->count_reassembly_queue--;
+			info->count_dequeue_reassembly_queue++;
+			put_receive_buffer(info, response);
+			offset = 0;
+			log_read(INFO, "put_receive_buffer offset=0\n");
+		} else
+			offset += to_copy;
+
+		to_read -= to_copy;
+		data_read += to_copy;
+
+		log_read(INFO, "_get_first_reassembly memcpy %d bytes data_transfer_length-offset=%d after that to_read=%d data_read=%d offset=%d\n",
+			 to_copy, data_length - offset,
+			 to_read, data_read, offset);
+	}
+
+	spin_lock_irq(&info->reassembly_queue_lock);
+	info->reassembly_data_length -= data_read;
+	info->reassembly_queue_length -= queue_removed;
+	spin_unlock_irq(&info->reassembly_queue_lock);
+
+	info->first_entry_offset = offset;
+	log_read(INFO, "returning to thread data_read=%d reassembly_data_length=%d first_entry_offset=%d\n",
+		 data_read, info->reassembly_data_length,
+		 info->first_entry_offset);
 read_rfc1002_done:
-		return data_read;
-	}
-
-	log_read(INFO, "wait_event on more data\n");
-	rc = wait_event_interruptible(
-		info->wait_reassembly_queue,
-		info->reassembly_data_length >= size ||
-			info->transport_status != SMBD_CONNECTED);
-	/* Don't return any data if interrupted */
-	if (rc)
-		return rc;
-
-	if (info->transport_status != SMBD_CONNECTED) {
-		log_read(ERR, "disconnected\n");
-		return -ECONNABORTED;
-	}
-
-	goto again;
+	return data_read;
 }
 
 /*
