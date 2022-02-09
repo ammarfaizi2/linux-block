@@ -383,9 +383,9 @@
 
 /* SSP Registers */
 #define SSP_SSC1_OFFSET		0x4
-#define SSP_SET_SCLK_SLAVE	BIT(25)
-#define SSP_SET_SFRM_SLAVE	BIT(24)
-#define SSP_SET_SLAVE		(SSP_SET_SCLK_SLAVE | SSP_SET_SFRM_SLAVE)
+#define SSP_SET_SCLK_CONSUMER	BIT(25)
+#define SSP_SET_SFRM_CONSUMER	BIT(24)
+#define SSP_SET_CBP_CFP		(SSP_SET_SCLK_CONSUMER | SSP_SET_SFRM_CONSUMER)
 
 #define HDA_IDISP_ADDR		2
 #define HDA_IDISP_CODEC(x) ((x) & BIT(HDA_IDISP_ADDR))
@@ -670,7 +670,8 @@ static inline int hda_codec_i915_exit(struct snd_sof_dev *sdev) { return 0; }
 /*
  * Trace Control.
  */
-int hda_dsp_trace_init(struct snd_sof_dev *sdev, u32 *stream_tag);
+int hda_dsp_trace_init(struct snd_sof_dev *sdev,
+		       struct sof_ipc_dma_trace_params_ext *dtrace_params);
 int hda_dsp_trace_release(struct snd_sof_dev *sdev);
 int hda_dsp_trace_trigger(struct snd_sof_dev *sdev, int cmd);
 
