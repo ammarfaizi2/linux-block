@@ -1766,10 +1766,7 @@ try_again:
 static int smbd_recv_buf(struct smbd_connection *info, char *buf,
 		unsigned int size)
 {
-	struct smbd_response *response;
-	struct smbd_data_transfer *data_transfer;
 	int to_copy, to_read, data_read, offset;
-	u32 data_length, remaining_data_length, data_offset;
 	int queue_removed = 0;
 	int queue_length;
 	int rc;
@@ -1811,12 +1808,15 @@ static int smbd_recv_buf(struct smbd_connection *info, char *buf,
 	to_read = size;
 	offset = info->first_entry_offset;
 	while (data_read < size) {
+		struct smbd_response *response;
+		struct smbd_data_transfer *data_transfer;
+		u32 data_length, remaining_data_length, data_offset;
+
 		response = _get_first_reassembly(info);
 		data_transfer = smbd_response_payload(response);
 		data_length = le32_to_cpu(data_transfer->data_length);
 		remaining_data_length =
-			le32_to_cpu(
-				data_transfer->remaining_data_length);
+			le32_to_cpu(data_transfer->remaining_data_length);
 		data_offset = le32_to_cpu(data_transfer->data_offset);
 
 		/*
@@ -1831,11 +1831,10 @@ static int smbd_recv_buf(struct smbd_connection *info, char *buf,
 			unsigned int rfc1002_len =
 				data_length + remaining_data_length;
 			*((__be32 *)buf) = cpu_to_be32(rfc1002_len);
-			data_read = 4;
 			response->first_segment = false;
 			log_read(INFO, "returning rfc1002 length %d\n",
 				rfc1002_len);
-			goto read_rfc1002_done;
+			return 4;
 		}
 
 		to_copy = min_t(int, data_length - offset, to_read);
@@ -1851,14 +1850,12 @@ static int smbd_recv_buf(struct smbd_connection *info, char *buf,
 			 * No need to lock if we are not at the
 			 * end of the queue
 			 */
-			if (queue_length)
+			if (queue_length) {
 				list_del(&response->list);
-			else {
-				spin_lock_irq(
-					&info->reassembly_queue_lock);
+			} else {
+				spin_lock_irq(&info->reassembly_queue_lock);
 				list_del(&response->list);
-				spin_unlock_irq(
-					&info->reassembly_queue_lock);
+				spin_unlock_irq(&info->reassembly_queue_lock);
 			}
 			queue_removed++;
 			info->count_reassembly_queue--;
@@ -1866,8 +1863,9 @@ static int smbd_recv_buf(struct smbd_connection *info, char *buf,
 			put_receive_buffer(info, response);
 			offset = 0;
 			log_read(INFO, "put_receive_buffer offset=0\n");
-		} else
+		} else {
 			offset += to_copy;
+		}
 
 		to_read -= to_copy;
 		data_read += to_copy;
@@ -1886,7 +1884,6 @@ static int smbd_recv_buf(struct smbd_connection *info, char *buf,
 	log_read(INFO, "returning to thread data_read=%d reassembly_data_length=%d first_entry_offset=%d\n",
 		 data_read, info->reassembly_data_length,
 		 info->first_entry_offset);
-read_rfc1002_done:
 	return data_read;
 }
 
