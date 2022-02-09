@@ -40,6 +40,7 @@ int __cpu_disable(void)
 		return ret;
 
 	remove_cpu_topology(cpu);
+	numa_remove_cpu(cpu);
 	set_cpu_online(cpu, false);
 	irq_migrate_all_off_this_cpu();
 
