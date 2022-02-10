@@ -8,6 +8,7 @@
 #ifndef _NFS_FSCACHE_H
 #define _NFS_FSCACHE_H
 
+#include <linux/sched/task_flags.h>
 #include <linux/swap.h>
 #include <linux/nfs_fs.h>
 #include <linux/nfs_mount.h>
