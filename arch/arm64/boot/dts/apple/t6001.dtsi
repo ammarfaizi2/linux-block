@@ -12,6 +12,8 @@
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/pinctrl/apple.h>
 #include <dt-bindings/spmi/spmi.h>
+#include <dt-bindings/leds/common.h>
+#include <dt-bindings/pwm/pwm.h>
 
 / {
 	compatible = "apple,t6001", "apple,arm-platform";
@@ -1048,6 +1050,23 @@
 			iommus = <&dwc3_3_dart_0 0>, <&dwc3_3_dart_1 1>;
 			power-domains = <&ps_atc3_usb>;
 		};
+
+		fpwm0: pwm@39b030000 {
+			compatible = "apple,t6000-fpwm";
+			reg = <0x3 0x9b030000 0x0 0x4000>;
+			clocks = <&clkref>;
+			power-domains = <&ps_fpwm0>;
+			#pwm-cells = <2>;
+		};
+
+        pwmleds {
+            compatible = "pwm-leds";
+            keyboard_backlight: keyboard-backlight {
+                label = "t6001::kbd_backlight";
+                pwms = <&fpwm0 0 25000>;
+                max-brightness = <1023>;
+            };
+        };
 	};
 };
 
