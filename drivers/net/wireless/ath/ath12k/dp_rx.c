@@ -2609,7 +2609,7 @@ static int ath12k_dp_rx_process_msdu(struct ath12k *ar,
 
 	rx_desc = (struct hal_rx_desc *)msdu->data;
 	lrx_desc = (struct hal_rx_desc *)last_buf->data;
-	if (!ath12k_dp_rx_h_msdu_done(rx_desc)) {
+	if (!ath12k_dp_rx_h_msdu_done(lrx_desc)) {
 		ath12k_warn(ab, "msdu_done bit in msdu_end is not set\n");
 		ret = -EIO;
 		goto free_out;
@@ -2617,7 +2617,7 @@ static int ath12k_dp_rx_process_msdu(struct ath12k *ar,
 
 	rxcb = ATH12K_SKB_RXCB(msdu);
 	rxcb->rx_desc = rx_desc;
-	msdu_len = ath12k_dp_rx_h_msdu_len(ab, rx_desc);
+	msdu_len = ath12k_dp_rx_h_msdu_len(ab, lrx_desc);
 	l3_pad_bytes = ath12k_dp_rx_h_l3pad(ab, lrx_desc);
 
 	if (rxcb->is_frag) {
@@ -2722,9 +2722,9 @@ int ath12k_dp_process_rx(struct ath12k_base *ab, int ring_id,
 
 	spin_lock_bh(&srng->lock);
 
+try_again:
 	ath12k_hal_srng_access_begin(ab, srng);
 
-try_again:
 	while ((rx_desc = ath12k_hal_srng_dst_get_next_entry(ab, srng))) {
 		struct hal_reo_dest_ring desc = *(struct hal_reo_dest_ring *)rx_desc;
 		enum hal_reo_dest_ring_push_reason push_reason;
