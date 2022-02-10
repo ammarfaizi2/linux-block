@@ -384,7 +384,9 @@ static int spihid_verify_msg(struct spihid_apple *spihid, u8 *buf, size_t len)
 	crc = crc16(0, buf, len - sizeof(__le16));
 	msg_crc = get_unaligned_le16(buf + len - sizeof(__le16));
 	if (crc != msg_crc) {
+#if 0
 		dev_warn_ratelimited(dev, "Read message crc mismatch\n");
+#endif
 		return 0;
 	}
 	return 1;
@@ -740,7 +742,9 @@ static void spihid_process_read(struct spihid_apple *spihid)
 	crc = crc16(0, spihid->rx_buf,
 		    offsetof(struct spihid_transfer_packet, crc16));
 	if (crc != pkt->crc16) {
+#if 0
 		dev_warn_ratelimited(dev, "Read package crc mismatch\n");
+#endif
 		return;
 	}
 
