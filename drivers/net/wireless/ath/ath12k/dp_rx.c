@@ -3077,7 +3077,7 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 	struct hal_rx_msdu_link *msdu_link;
 	struct hal_rx_msdu_details *msdu0;
 	struct hal_srng *srng;
-	dma_addr_t paddr;
+	dma_addr_t link_paddr, buf_paddr;
 	u32 desc_bank, msdu_info, msdu_ext_info, mpdu_info;
 	u32 cookie, hal_rx_desc_sz;
 	int ret;
@@ -3088,9 +3088,11 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 	link_desc_banks = dp->link_desc_banks;
 	reo_dest_ring = rx_tid->dst_ring_desc;
 
-	ath12k_hal_rx_reo_ent_paddr_get(ab, reo_dest_ring, &paddr, &desc_bank);
+	ath12k_hal_rx_reo_ent_paddr_get(ab, reo_dest_ring, &link_paddr, &cookie);
+	desc_bank = FIELD_GET(DP_LINK_DESC_BANK_MASK, cookie);
+
 	msdu_link = (struct hal_rx_msdu_link *)(link_desc_banks[desc_bank].vaddr +
-			(paddr - link_desc_banks[desc_bank].paddr));
+			(link_paddr - link_desc_banks[desc_bank].paddr));
 	msdu0 = &msdu_link->msdu_link[0];
 	msdu_ext_info = msdu0->rx_msdu_ext_info.info0;
 	dst_ind = FIELD_GET(RX_MSDU_EXT_DESC_INFO0_REO_DEST_IND, msdu_ext_info);
@@ -3110,10 +3112,10 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 	/* change msdu len in hal rx desc */
 	ath12k_dp_rxdesc_set_msdu_len(ab, rx_desc, defrag_skb->len - hal_rx_desc_sz);
 
-	paddr = dma_map_single(ab->dev, defrag_skb->data,
-			       defrag_skb->len + skb_tailroom(defrag_skb),
-			       DMA_FROM_DEVICE);
-	if (dma_mapping_error(ab->dev, paddr))
+	buf_paddr = dma_map_single(ab->dev, defrag_skb->data,
+				   defrag_skb->len + skb_tailroom(defrag_skb),
+				   DMA_FROM_DEVICE);
+	if (dma_mapping_error(ab->dev, buf_paddr))
 		return -ENOMEM;
 
 	spin_lock_bh(&dp->rx_desc_lock);
@@ -3121,6 +3123,7 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 					     struct ath12k_rx_desc_info,
 					     list);
 	if (!desc_info) {
+		ath12k_warn(ab, "failed to find rx desc for reinject\n");
 		ret = -ENOMEM;
 		spin_unlock_bh(&dp->rx_desc_lock);
 		goto err_unmap_dma;
@@ -3128,15 +3131,14 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 
 	desc_info->skb = defrag_skb;
 
-	cookie = desc_info->cookie;
-
 	list_del(&desc_info->list);
 	list_add_tail(&desc_info->list, &dp->rx_desc_used_list);
 	spin_unlock_bh(&dp->rx_desc_lock);
 
-	ATH12K_SKB_RXCB(defrag_skb)->paddr = paddr;
+	ATH12K_SKB_RXCB(defrag_skb)->paddr = buf_paddr;
 
-	ath12k_hal_rx_buf_addr_info_set(msdu0, paddr, cookie, HAL_RX_BUF_RBM_SW3_BM);
+	ath12k_hal_rx_buf_addr_info_set(msdu0, buf_paddr, desc_info->cookie,
+					HAL_RX_BUF_RBM_SW3_BM);
 
 	/* Fill mpdu details into reo entrace ring */
 	srng = &ab->hal.srng_list[dp->reo_reinject_ring.ring_id];
@@ -3150,12 +3152,11 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 		ath12k_hal_srng_access_end(ab, srng);
 		spin_unlock_bh(&srng->lock);
 		ret = -ENOSPC;
-		goto err_free_idr;
+		goto err_free_desc;
 	}
 	memset(reo_ent_ring, 0, sizeof(*reo_ent_ring));
 
-	ath12k_hal_rx_reo_ent_paddr_get(ab, reo_dest_ring, &paddr, &desc_bank);
-	ath12k_hal_rx_buf_addr_info_set(reo_ent_ring, paddr, desc_bank,
+	ath12k_hal_rx_buf_addr_info_set(reo_ent_ring, link_paddr, cookie,
 					HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST);
 
 	mpdu_info = FIELD_PREP(RX_MPDU_DESC_INFO0_MSDU_COUNT, 1) |
@@ -3183,14 +3184,14 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 
 	return 0;
 
-err_free_idr:
+err_free_desc:
 	spin_lock_bh(&dp->rx_desc_lock);
 	list_del(&desc_info->list);
 	list_add_tail(&desc_info->list, &dp->rx_desc_free_list);
 	desc_info->skb = NULL;
 	spin_unlock_bh(&dp->rx_desc_lock);
 err_unmap_dma:
-	dma_unmap_single(ab->dev, paddr, defrag_skb->len + skb_tailroom(defrag_skb),
+	dma_unmap_single(ab->dev, buf_paddr, defrag_skb->len + skb_tailroom(defrag_skb),
 			 DMA_FROM_DEVICE);
 	return ret;
 }

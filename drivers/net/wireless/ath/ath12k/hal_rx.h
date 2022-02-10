@@ -501,7 +501,7 @@ int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab, u32 *rx_desc,
 int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 				  struct hal_rx_wbm_rel_info *rel_info);
 void ath12k_hal_rx_reo_ent_paddr_get(struct ath12k_base *ab, void *desc,
-				     dma_addr_t *paddr, u32 *desc_bank);
+				     dma_addr_t *paddr, u32 *cookie);
 void ath12k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc,
 					 dma_addr_t *paddr, u32 *sw_cookie,
 					 void **pp_buf_addr_info, u8 *rbm,

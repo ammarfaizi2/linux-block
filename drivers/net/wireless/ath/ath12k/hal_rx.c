@@ -325,6 +325,7 @@ int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab, u32 *rx_desc,
 	struct hal_reo_dest_ring *desc = (struct hal_reo_dest_ring *)rx_desc;
 	enum hal_reo_dest_ring_push_reason push_reason;
 	enum hal_reo_dest_ring_error_code err_code;
+	u32 cookie;
 
 	push_reason = FIELD_GET(HAL_REO_DEST_RING_INFO0_PUSH_REASON,
 				desc->info0);
@@ -345,7 +346,8 @@ int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab, u32 *rx_desc,
 		return -EINVAL;
 	}
 
-	ath12k_hal_rx_reo_ent_paddr_get(ab, rx_desc, paddr, desc_bank);
+	ath12k_hal_rx_reo_ent_paddr_get(ab, rx_desc, paddr, &cookie);
+	*desc_bank = FIELD_GET(DP_LINK_DESC_BANK_MASK, cookie);
 
 	return 0;
 }
@@ -428,17 +430,14 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 }
 
 void ath12k_hal_rx_reo_ent_paddr_get(struct ath12k_base *ab, void *desc,
-				     dma_addr_t *paddr, u32 *desc_bank)
+				     dma_addr_t *paddr, u32 *cookie)
 {
 	struct ath12k_buffer_addr *buff_addr = desc;
-	u32 cookie;
 
 	*paddr = ((u64)(FIELD_GET(BUFFER_ADDR_INFO1_ADDR, buff_addr->info1)) << 32) |
 		  FIELD_GET(BUFFER_ADDR_INFO0_ADDR, buff_addr->info0);
 
-	cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE, buff_addr->info1);
-
-	*desc_bank = FIELD_GET(DP_LINK_DESC_BANK_MASK, cookie);
+	*cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE, buff_addr->info1);
 }
 
 void ath12k_hal_rx_msdu_link_desc_set(struct ath12k_base *ab, void *desc,
@@ -832,7 +831,9 @@ void ath12k_hal_reo_hw_setup(struct ath12k_base *ab, u32 ring_hash_map)
 	val &= ~(HAL_REO1_MISC_CTL_FRAG_DST_RING |
 		 HAL_REO1_MISC_CTL_BAR_DST_RING);
 	val |= FIELD_PREP(HAL_REO1_MISC_CTL_FRAG_DST_RING,
-			  HAL_SRNG_RING_ID_REO2SW1);
+			  HAL_SRNG_RING_ID_REO2SW0);
+	val |= FIELD_PREP(HAL_REO1_MISC_CTL_BAR_DST_RING,
+			  HAL_SRNG_RING_ID_REO2SW0);
 	ath12k_hif_write32(ab, reo_base + HAL_REO1_MISC_CTRL_ADDR, val);
 
 	ath12k_hif_write32(ab, reo_base + HAL_REO1_AGING_THRESH_IX_0,
