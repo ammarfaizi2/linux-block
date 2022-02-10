@@ -2,6 +2,7 @@
 #ifndef IOCONTEXT_H
 #define IOCONTEXT_H
 
+#include <linux/sched.h>
 #include <linux/radix-tree.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue.h>
