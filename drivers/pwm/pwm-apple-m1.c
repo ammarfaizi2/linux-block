@@ -146,6 +146,7 @@ static int fpwm_remove(struct platform_device *pdev)
 
 static const struct of_device_id fpwm_of_match[] = {
 	{ .compatible = "apple,t8103-fpwm" },
+	{ .compatible = "apple,t6000-fpwm" },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, fpwm_of_match);
