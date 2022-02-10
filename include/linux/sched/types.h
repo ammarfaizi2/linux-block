@@ -20,4 +20,12 @@ struct task_cputime {
 	unsigned long long		sum_exec_runtime;
 };
 
+/*
+ * Define the task command name length as enum, then it can be visible to
+ * BPF programs.
+ */
+enum {
+	TASK_COMM_LEN = 16,
+};
+
 #endif

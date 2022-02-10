@@ -271,14 +271,6 @@ struct task_group;
 
 #define get_current_state()	READ_ONCE(current->__state)
 
-/*
- * Define the task command name length as enum, then it can be visible to
- * BPF programs.
- */
-enum {
-	TASK_COMM_LEN = 16,
-};
-
 extern void scheduler_tick(void);
 
 #define	MAX_SCHEDULE_TIMEOUT		LONG_MAX
