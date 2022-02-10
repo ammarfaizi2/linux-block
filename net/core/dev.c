@@ -1037,7 +1037,7 @@ static int __dev_alloc_name(struct net *net, const char *name, char *buf)
 				/*  avoid cases where sscanf is not exact inverse of printf */
 				snprintf(buf, IFNAMSIZ, name, i);
 				if (!strncmp(buf, name_node->name, IFNAMSIZ))
-					set_bit(i, inuse);
+					__set_bit(i, inuse);
 			}
 			if (!sscanf(d->name, name, &i))
 				continue;
@@ -1047,7 +1047,7 @@ static int __dev_alloc_name(struct net *net, const char *name, char *buf)
 			/*  avoid cases where sscanf is not exact inverse of printf */
 			snprintf(buf, IFNAMSIZ, name, i);
 			if (!strncmp(buf, d->name, IFNAMSIZ))
-				set_bit(i, inuse);
+				__set_bit(i, inuse);
 		}
 
 		i = find_first_zero_bit(inuse, max_netdevices);
@@ -9683,8 +9683,10 @@ int register_netdevice(struct net_device *dev)
 	linkwatch_init_dev(dev);
 
 	dev_init_scheduler(dev);
-	dev_hold(dev);
+
+	dev_hold_track(dev, &dev->dev_registered_tracker, GFP_KERNEL);
 	list_netdevice(dev);
+
 	add_device_randomness(dev->dev_addr, dev->addr_len);
 
 	/* If the device has permanent device address, driver should
@@ -10172,7 +10174,7 @@ struct net_device *alloc_netdev_mqs(int sizeof_priv, const char *name,
 	dev->pcpu_refcnt = alloc_percpu(int);
 	if (!dev->pcpu_refcnt)
 		goto free_dev;
-	dev_hold(dev);
+	__dev_hold(dev);
 #else
 	refcount_set(&dev->dev_refcnt, 1);
 #endif
@@ -10449,7 +10451,7 @@ void unregister_netdevice_many(struct list_head *head)
 	synchronize_net();
 
 	list_for_each_entry(dev, head, unreg_list) {
-		dev_put(dev);
+		dev_put_track(dev, &dev->dev_registered_tracker);
 		net_set_todo(dev);
 	}
 
@@ -10732,8 +10734,7 @@ static int __net_init netdev_init(struct net *net)
 	BUILD_BUG_ON(GRO_HASH_BUCKETS >
 		     8 * sizeof_field(struct napi_struct, gro_bitmask));
 
-	if (net != &init_net)
-		INIT_LIST_HEAD(&net->dev_base_head);
+	INIT_LIST_HEAD(&net->dev_base_head);
 
 	net->dev_name_head = netdev_create_hash();
 	if (net->dev_name_head == NULL)
@@ -10849,14 +10850,14 @@ static struct pernet_operations __net_initdata netdev_net_ops = {
 	.exit = netdev_exit,
 };
 
-static void __net_exit default_device_exit(struct net *net)
+static void __net_exit default_device_exit_net(struct net *net)
 {
 	struct net_device *dev, *aux;
 	/*
 	 * Push all migratable network devices back to the
 	 * initial network namespace
 	 */
-	rtnl_lock();
+	ASSERT_RTNL();
 	for_each_netdev_safe(net, dev, aux) {
 		int err;
 		char fb_name[IFNAMSIZ];
@@ -10880,22 +10881,22 @@ static void __net_exit default_device_exit(struct net *net)
 			BUG();
 		}
 	}
-	rtnl_unlock();
 }
 
 static void __net_exit rtnl_lock_unregistering(struct list_head *net_list)
 {
-	/* Return with the rtnl_lock held when there are no network
+	/* Return (with the rtnl_lock held) when there are no network
 	 * devices unregistering in any network namespace in net_list.
 	 */
-	struct net *net;
-	bool unregistering;
 	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+	bool unregistering;
+	struct net *net;
 
+	ASSERT_RTNL();
 	add_wait_queue(&netdev_unregistering_wq, &wait);
 	for (;;) {
 		unregistering = false;
-		rtnl_lock();
+
 		list_for_each_entry(net, net_list, exit_list) {
 			if (net->dev_unreg_count > 0) {
 				unregistering = true;
@@ -10907,6 +10908,7 @@ static void __net_exit rtnl_lock_unregistering(struct list_head *net_list)
 		__rtnl_unlock();
 
 		wait_woken(&wait, TASK_UNINTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
+		rtnl_lock();
 	}
 	remove_wait_queue(&netdev_unregistering_wq, &wait);
 }
@@ -10922,6 +10924,11 @@ static void __net_exit default_device_exit_batch(struct list_head *net_list)
 	struct net *net;
 	LIST_HEAD(dev_kill_list);
 
+	rtnl_lock();
+	list_for_each_entry(net, net_list, exit_list) {
+		default_device_exit_net(net);
+		cond_resched();
+	}
 	/* To prevent network device cleanup code from dereferencing
 	 * loopback devices or network devices that have been freed
 	 * wait here for all pending unregistrations to complete,
@@ -10934,6 +10941,7 @@ static void __net_exit default_device_exit_batch(struct list_head *net_list)
 	 * default_device_exit_batch.
 	 */
 	rtnl_lock_unregistering(net_list);
+
 	list_for_each_entry(net, net_list, exit_list) {
 		for_each_netdev_reverse(net, dev) {
 			if (dev->rtnl_link_ops && dev->rtnl_link_ops->dellink)
@@ -10947,7 +10955,6 @@ static void __net_exit default_device_exit_batch(struct list_head *net_list)
 }
 
 static struct pernet_operations __net_initdata default_device_ops = {
-	.exit = default_device_exit,
 	.exit_batch = default_device_exit_batch,
 };
 
