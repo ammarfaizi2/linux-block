@@ -3,46 +3,24 @@
 #define _LINUX_FS_H
 
 #include <linux/rwsem_api.h>
-#include <linux/linkage.h>
 #include <linux/wait_bit.h>
 #include <linux/kdev_t.h>
 #include <linux/dcache.h>
 #include <linux/path.h>
-#include <linux/stat.h>
-#include <linux/cache.h>
-#include <linux/list.h>
 #include <linux/list_lru.h>
-#include <linux/llist.h>
-#include <linux/radix-tree.h>
 #include <linux/xarray.h>
-#include <linux/rbtree.h>
-#include <linux/init.h>
-#include <linux/pid.h>
-#include <linux/bug.h>
-#include <linux/mutex.h>
-#include <linux/rwsem.h>
-#include <linux/mm_types.h>
-#include <linux/capability.h>
+#include <linux/pid_types.h>
 #include <linux/fcntl.h>
 #include <linux/atomic.h>
-#include <linux/shrinker.h>
 #include <linux/migrate_mode.h>
-#include <linux/uidgid.h>
-#include <linux/lockdep.h>
 #include <linux/percpu_rwsem.h>
-#include <linux/workqueue.h>
-#include <linux/delayed_call.h>
 #include <linux/uuid.h>
 #include <linux/errseq.h>
 #include <linux/fs_entry_types.h>
-#include <linux/build_bug.h>
-#include <linux/stddef.h>
 #include <linux/mount.h>
-#include <linux/cred.h>
 #include <linux/mnt_idmapping.h>
 #include <linux/slab.h>
 
-#include <asm/byteorder.h>
 #include <uapi/linux/fs.h>
 
 struct backing_dev_info;
@@ -72,6 +50,7 @@ struct fsverity_operations;
 struct fs_context;
 struct fs_parameter_spec;
 struct fileattr;
+struct delayed_call;
 
 extern void __init inode_init(void);
 extern void __init inode_init_early(void);

@@ -36,6 +36,7 @@ struct anon_vma_chain;
 struct user_struct;
 struct pt_regs;
 struct task_struct;
+struct ucounts;
 
 extern int sysctl_page_lock_unfairness;
 
