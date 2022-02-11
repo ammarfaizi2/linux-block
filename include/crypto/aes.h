@@ -8,6 +8,7 @@
 
 #include <linux/types.h>
 #include <linux/crypto.h>
+#include <linux/cache.h>
 
 #define AES_MIN_KEY_SIZE	16
 #define AES_MAX_KEY_SIZE	32
