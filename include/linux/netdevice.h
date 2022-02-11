@@ -22,18 +22,14 @@
 #define _LINUX_NETDEVICE_H
 
 #include <linux/skbuff.h>
-
 #include <linux/dynamic_queue_limits.h>
 #include <linux/hashtable.h>
-#include <linux/delay.h>
-#include <linux/capability.h>
 #include <linux/hrtimer.h>
 #include <linux/kobject_types.h>
-#include <linux/netdev_features.h>
 #include <linux/device.h>
 #include <linux/rbtree.h>
 
-#include <net/net_namespace.h>
+#include <net/net_namespace_types.h>
 #include <net/net_trackers.h>
 
 #include <uapi/linux/netdevice.h>
