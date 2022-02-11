@@ -10,18 +10,15 @@
 #ifndef _LINUX_SKBUFF_TYPES_H
 #define _LINUX_SKBUFF_TYPES_H
 
+#include <linux/ktime_api.h>
 #include <linux/bvec.h>
-#include <linux/socket.h>
-
-#include <net/checksum.h>
-#include <linux/dma-mapping.h>
-#include <linux/netdev_features.h>
-#include <net/flow_dissector.h>
 #include <linux/llist.h>
-#include <linux/if_packet.h>
-#if IS_ENABLED(CONFIG_NF_CONNTRACK)
-#include <linux/netfilter/nf_conntrack_common.h>
-#endif
+#include <linux/ktime.h>
+#include <linux/refcount.h>
+#include <linux/rbtree_types.h>
+#include <linux/spinlock_types.h>
+
+#include <uapi/linux/in6.h>
 
 /* The interface for checksum offload between the stack and networking drivers
  * is as follows...
