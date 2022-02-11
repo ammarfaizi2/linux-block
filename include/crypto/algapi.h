@@ -12,6 +12,7 @@
 #include <linux/kconfig.h>
 #include <linux/list.h>
 #include <linux/types.h>
+#include <linux/align.h>
 
 #include <asm/unaligned.h>
 

@@ -19,6 +19,7 @@
 #include <linux/refcount.h>
 #include <linux/slab.h>
 #include <linux/completion.h>
+#include <linux/err.h>
 
 /*
  * Autoloaded crypto modules should only use a prefixed name to avoid allowing

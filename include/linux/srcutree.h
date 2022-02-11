@@ -13,6 +13,7 @@
 
 #include <linux/rcu_node_tree.h>
 #include <linux/completion.h>
+#include <linux/cache.h>
 
 struct srcu_node;
 struct srcu_struct;
