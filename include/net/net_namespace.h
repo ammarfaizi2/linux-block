@@ -7,43 +7,6 @@
 
 #include <net/net_namespace_types.h>
 
-#include <linux/atomic.h>
-#include <linux/refcount.h>
-#include <linux/workqueue.h>
-#include <linux/list.h>
-#include <linux/sysctl.h>
-#include <linux/uidgid.h>
-
-#include <net/flow.h>
-#include <net/netns/core.h>
-#include <net/netns/mib.h>
-#include <net/netns/unix.h>
-#include <net/netns/packet.h>
-#include <net/netns/ipv4.h>
-#include <net/netns/ipv6.h>
-#include <net/netns/nexthop.h>
-#include <net/netns/ieee802154_6lowpan.h>
-#include <net/netns/sctp.h>
-#include <net/netns/netfilter.h>
-#if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
-#include <net/netns/conntrack.h>
-#endif
-#include <net/netns/nftables.h>
-#include <net/netns/xfrm.h>
-#include <net/netns/mpls.h>
-#include <net/netns/can.h>
-#include <net/netns/xdp.h>
-#include <net/netns/smc.h>
-#include <net/netns/bpf.h>
-#include <net/netns/mctp.h>
-#include <net/net_trackers.h>
-#include <linux/ns_common.h>
-#include <linux/idr.h>
-#include <linux/skbuff.h>
-#include <linux/notifier.h>
-
-#include <linux/seq_file_net.h>
-
 #ifndef CONFIG_NET_NS
 #include <linux/sched.h>
 #include <linux/nsproxy.h>

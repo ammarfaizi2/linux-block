@@ -5,14 +5,11 @@
 #ifndef __NET_NET_NAMESPACE_TYPES_H
 #define __NET_NET_NAMESPACE_TYPES_H
 
-#include <linux/atomic.h>
 #include <linux/refcount.h>
-#include <linux/workqueue.h>
-#include <linux/list.h>
 #include <linux/sysctl.h>
-#include <linux/uidgid.h>
 
-#include <net/flow.h>
+#include <uapi/linux/in6.h>
+
 #include <net/netns/core.h>
 #include <net/netns/mib.h>
 #include <net/netns/unix.h>
@@ -35,17 +32,10 @@
 #include <net/netns/bpf.h>
 #include <net/netns/mctp.h>
 #include <net/net_trackers.h>
+
 #include <linux/ns_common.h>
 #include <linux/idr.h>
-#include <linux/skbuff.h>
-#include <linux/notifier.h>
-
-#include <linux/seq_file_net.h>
-
-#ifndef CONFIG_NET_NS
-#include <linux/sched.h>
-#include <linux/nsproxy.h>
-#endif
+#include <linux/skbuff_types.h>
 
 struct user_namespace;
 struct proc_dir_entry;
