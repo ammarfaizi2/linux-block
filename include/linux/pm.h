@@ -10,11 +10,8 @@
 
 #include <linux/mutex.h>
 #include <linux/export.h>
-#include <linux/list.h>
 #include <linux/workqueue.h>
-#include <linux/spinlock.h>
-#include <linux/wait.h>
-#include <linux/timer.h>
+#include <linux/wait_types.h>
 #include <linux/hrtimer.h>
 #include <linux/completion.h>
 
