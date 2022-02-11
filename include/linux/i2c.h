@@ -10,8 +10,8 @@
 #ifndef _LINUX_I2C_H
 #define _LINUX_I2C_H
 
+#include <linux/property.h>
 #include <linux/device/driver.h>
-#include <linux/acpi.h>		/* for acpi_handle */
 #include <linux/bits.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device.h>	/* for struct device */
@@ -19,9 +19,7 @@
 #include <linux/mutex.h>
 #include <linux/regulator/consumer.h>
 #include <linux/rtmutex.h>
-#include <linux/irqdomain.h>		/* for Host Notify IRQ */
-#include <linux/of.h>		/* for struct device_node */
-#include <linux/swab.h>		/* for swab16 */
+
 #include <uapi/linux/i2c.h>
 
 extern struct bus_type i2c_bus_type;
@@ -1016,6 +1014,7 @@ static inline int of_i2c_get_board_info(struct device *dev,
 
 struct acpi_resource;
 struct acpi_resource_i2c_serialbus;
+struct acpi_device;
 
 #if IS_ENABLED(CONFIG_ACPI)
 bool i2c_acpi_get_i2c_resource(struct acpi_resource *ares,
@@ -1025,7 +1024,7 @@ u32 i2c_acpi_find_bus_speed(struct device *dev);
 struct i2c_client *i2c_acpi_new_device_by_fwnode(struct fwnode_handle *fwnode,
 						 int index,
 						 struct i2c_board_info *info);
-struct i2c_adapter *i2c_acpi_find_adapter_by_handle(acpi_handle handle);
+struct i2c_adapter *i2c_acpi_find_adapter_by_handle(void *handle);
 bool i2c_acpi_waive_d0_probe(struct device *dev);
 #else
 static inline bool i2c_acpi_get_i2c_resource(struct acpi_resource *ares,
@@ -1047,7 +1046,7 @@ static inline struct i2c_client *i2c_acpi_new_device_by_fwnode(
 {
 	return ERR_PTR(-ENODEV);
 }
-static inline struct i2c_adapter *i2c_acpi_find_adapter_by_handle(acpi_handle handle)
+static inline struct i2c_adapter *i2c_acpi_find_adapter_by_handle(void *acpi_handle)
 {
 	return NULL;
 }
