@@ -3,6 +3,7 @@
 #define _LINUX_SOCKET_H
 
 #include <linux/socket_types.h>
+#include <linux/time64.h>
 
 #include <linux/time64.h>
 #include <asm/socket.h>			/* arch-dependent defines	*/
@@ -359,7 +360,6 @@ struct ucred {
 extern int move_addr_to_kernel(void __user *uaddr, int ulen, struct sockaddr_storage *kaddr);
 extern int put_cmsg(struct msghdr*, int level, int type, int len, void *data);
 
-struct timespec64;
 struct __kernel_timespec;
 struct old_timespec32;
 
