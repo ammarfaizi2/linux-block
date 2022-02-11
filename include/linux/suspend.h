@@ -4,6 +4,12 @@
 
 #include <linux/pm.h>
 #include <linux/linkage.h>
+#include <linux/init.h>
+#include <linux/cache.h>
+#include <linux/string.h>
+#include <linux/bits.h>
+
+struct page;
 
 #ifdef CONFIG_VT
 extern void pm_set_vt_switch(int);
