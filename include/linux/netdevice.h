@@ -34,11 +34,9 @@
 #include <linux/rbtree.h>
 
 #include <net/net_namespace.h>
-#include <net/xdp.h>
+#include <net/net_trackers.h>
 
 #include <uapi/linux/netdevice.h>
-#include <uapi/linux/if_bonding.h>
-#include <net/net_trackers.h>
 
 struct netpoll_info;
 struct device;
@@ -50,6 +48,8 @@ struct macsec_context;
 struct macsec_ops;
 struct ndmsg;
 struct netlink_callback;
+struct xdp_frame;
+struct netdev_rx_queue;
 
 struct sfp_bus;
 /* 802.11 specific */

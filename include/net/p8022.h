@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _NET_P8022_H
 #define _NET_P8022_H
+
+struct packet_type;
+
 struct datalink_proto *
 register_8022_client(unsigned char type,
 		     int (*func)(struct sk_buff *skb,
