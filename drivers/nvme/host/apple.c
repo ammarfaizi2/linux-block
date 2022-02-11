@@ -78,7 +78,7 @@
  * The controller also doesn't support async event such that no space must
  * be reserved for NVME_NR_AEN_COMMANDS.
  */
-#define APPLE_NVME_AQ_DEPTH	   8
+#define APPLE_NVME_AQ_DEPTH	   2
 #define APPLE_NVME_AQ_MQ_TAG_DEPTH (APPLE_NVME_AQ_DEPTH - 1)
 
 /*
