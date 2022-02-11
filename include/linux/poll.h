@@ -8,10 +8,11 @@
 #include <linux/ktime.h>
 #include <linux/wait.h>
 #include <linux/string.h>
-#include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <uapi/linux/poll.h>
 #include <uapi/linux/eventpoll.h>
+
+struct file;
 
 /* ~832 bytes of stack space used max in sys_select/sys_poll before allocating
    additional memory. */
