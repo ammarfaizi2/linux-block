@@ -1195,44 +1195,33 @@ void add_bootloader_randomness(const void *buf, size_t size)
 EXPORT_SYMBOL_GPL(add_bootloader_randomness);
 
 struct fast_pool {
-	union {
-		u32 pool32[4];
-		u64 pool64[2];
-	};
 	struct work_struct mix;
 	unsigned long last;
 	unsigned int count;
+	u32 pool[4];
 	u16 reg_idx;
 };
 
 /*
- * This is a fast mixing routine used by the interrupt randomness
- * collector. It's hardcoded for an 128 bit pool and assumes that any
- * locks that might be needed are taken by the caller.
+ * This is a max-period LFSR, mixing 128 bits into the 128-bit pool.
+ * It assumes that its inputs are non-malicious. It is designed to
+ * be much faster than computing a cryptographic hash function, yet
+ * still accumulate entropy, though it has no security on its own.
  */
-static void fast_mix(u32 pool[4])
+static void fast_mix(u32 h[4], const u32 v[4])
 {
-	u32 a = pool[0],	b = pool[1];
-	u32 c = pool[2],	d = pool[3];
+	size_t i;
 
-	a += b;			c += d;
-	b = rol32(b, 6);	d = rol32(d, 27);
-	d ^= a;			b ^= c;
-
-	a += b;			c += d;
-	b = rol32(b, 16);	d = rol32(d, 14);
-	d ^= a;			b ^= c;
-
-	a += b;			c += d;
-	b = rol32(b, 6);	d = rol32(d, 27);
-	d ^= a;			b ^= c;
-
-	a += b;			c += d;
-	b = rol32(b, 16);	d = rol32(d, 14);
-	d ^= a;			b ^= c;
-
-	pool[0] = a;  pool[1] = b;
-	pool[2] = c;  pool[3] = d;
+	for (i = 0; i < 4; ++i) {
+		u32 w = h[0] ^ h[1] ^ v[i] ^ h[3];
+		w ^= w << 17;
+		w ^= w >> 6;
+		w ^= w >> 9;
+		h[0] = h[1];
+		h[1] = h[2];
+		h[2] = h[3];
+		h[3] = w;
+	}
 }
 
 static DEFINE_PER_CPU(struct fast_pool, irq_randomness);
@@ -1291,7 +1280,7 @@ static void mix_interrupt_randomness(struct work_struct *work)
 	 * Copy the pool to the stack so that the mixer always has a
 	 * consistent view, before we reenable irqs again.
 	 */
-	memcpy(pool, fast_pool->pool32, sizeof(pool));
+	memcpy(pool, fast_pool->pool, sizeof(pool));
 	fast_pool->count = 0;
 	fast_pool->last = jiffies;
 	local_irq_enable();
@@ -1309,35 +1298,39 @@ void add_interrupt_randomness(int irq)
 	unsigned long now = jiffies;
 	cycles_t cycles = random_get_entropy();
 	unsigned int new_count;
+	union {
+		u32 u32[4];
+		u64 u64[2];
+	} irq_data;
 
 	if (cycles == 0)
 		cycles = get_reg(fast_pool, regs);
 
 	if (sizeof(cycles) == 8)
-		fast_pool->pool64[0] ^= cycles ^ rol64(now, 32) ^ irq;
+		irq_data.u64[0] = cycles ^ rol64(now, 32) ^ irq;
 	else {
-		fast_pool->pool32[0] ^= cycles ^ irq;
-		fast_pool->pool32[1] ^= now;
+		irq_data.u32[0] = cycles ^ irq;
+		irq_data.u32[1] = now;
 	}
 
 	if (sizeof(unsigned long) == 8)
-		fast_pool->pool64[1] ^= regs ? instruction_pointer(regs) : _RET_IP_;
+		irq_data.u64[1] = regs ? instruction_pointer(regs) : _RET_IP_;
 	else {
-		fast_pool->pool32[2] ^= regs ? instruction_pointer(regs) : _RET_IP_;
-		fast_pool->pool32[3] ^= get_reg(fast_pool, regs);
+		irq_data.u32[2] = regs ? instruction_pointer(regs) : _RET_IP_;
+		irq_data.u32[3] = get_reg(fast_pool, regs);
 	}
 
-	fast_mix(fast_pool->pool32);
+	fast_mix(fast_pool->pool, irq_data.u32);
 	new_count = ++fast_pool->count;
 
 	if (unlikely(crng_init == 0)) {
 		if (new_count >= 64 &&
-		    crng_pre_init_inject(fast_pool->pool32, sizeof(fast_pool->pool32),
+		    crng_pre_init_inject(fast_pool->pool, sizeof(fast_pool->pool),
 					 true, true) > 0) {
 			fast_pool->count = 0;
 			fast_pool->last = now;
 			if (spin_trylock(&input_pool.lock)) {
-				_mix_pool_bytes(&fast_pool->pool32, sizeof(fast_pool->pool32));
+				_mix_pool_bytes(&fast_pool->pool, sizeof(fast_pool->pool));
 				spin_unlock(&input_pool.lock);
 			}
 		}
