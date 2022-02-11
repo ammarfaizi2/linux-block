@@ -2,7 +2,7 @@
 #ifndef __SEQ_FILE_NET_H__
 #define __SEQ_FILE_NET_H__
 
-#include <net/net_namespace.h>
+#include <net/net_namespace_types.h>
 #include <linux/seq_file.h>
 
 struct net;
