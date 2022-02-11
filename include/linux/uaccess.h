@@ -7,6 +7,7 @@
 #include <linux/fault-inject-usercopy.h>
 #include <linux/instrumented.h>
 #include <linux/minmax.h>
+#include <linux/check_size.h>
 #include <linux/thread_info.h>
 
 #include <asm/uaccess.h>
