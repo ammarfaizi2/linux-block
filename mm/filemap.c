@@ -2627,6 +2627,12 @@ err:
 	return err;
 }
 
+static inline size_t copy_folio_to_iter(struct folio *folio, size_t offset,
+		size_t bytes, struct iov_iter *i)
+{
+	return copy_page_to_iter(&folio->page, offset, bytes, i);
+}
+
 /**
  * filemap_read - Read data from the page cache.
  * @iocb: The iocb to read.
