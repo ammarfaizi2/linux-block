@@ -6674,7 +6674,7 @@ int cgroup_parse_float(const char *input, unsigned dec_shift, s64 *v)
 
 /*
  * sock->sk_cgrp_data handling.  For more info, see sock_cgroup_data
- * definition in cgroup-defs.h.
+ * definition in cgroup_types.h.
  */
 #ifdef CONFIG_SOCK_CGROUP_DATA
 

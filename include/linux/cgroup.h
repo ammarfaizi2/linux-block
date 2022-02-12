@@ -26,7 +26,7 @@
 #include <linux/refcount.h>
 #include <linux/kernel_stat.h>
 
-#include <linux/cgroup-defs.h>
+#include <linux/cgroup_types.h>
 
 struct kernel_clone_args;
 
@@ -823,7 +823,7 @@ static inline void cgroup_account_cputime_field(struct task_struct *task,
 
 /*
  * sock->sk_cgrp_data handling.  For more info, see sock_cgroup_data
- * definition in cgroup-defs.h.
+ * definition in cgroup_types.h.
  */
 #ifdef CONFIG_SOCK_CGROUP_DATA
 
