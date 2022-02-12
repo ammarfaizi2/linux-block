@@ -2,6 +2,8 @@
 #ifndef _BPF_CGROUP_TYPES_H
 #define _BPF_CGROUP_TYPES_H
 
+#include <linux/bpf-cgroup-defs.h>
+
 #include <linux/bpf.h>
 
 #include <uapi/linux/bpf.h>
