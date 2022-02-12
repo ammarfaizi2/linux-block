@@ -222,12 +222,6 @@ int overcommit_policy_handler(struct ctl_table *, int, void *, size_t *,
 #define folio_page_idx(folio, p)	((p) - &(folio)->page)
 #endif
 
-/* to align the pointer to the (next) page boundary */
-#define PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE)
-
-/* test whether an address (unsigned long or pointer) is aligned to PAGE_SIZE */
-#define PAGE_ALIGNED(addr)	IS_ALIGNED((unsigned long)(addr), PAGE_SIZE)
-
 #define lru_to_page(head) (list_entry((head)->prev, struct page, lru))
 static inline struct folio *lru_to_folio(struct list_head *head)
 {
