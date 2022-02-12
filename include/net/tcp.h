@@ -48,7 +48,7 @@
 
 #include <linux/seq_file.h>
 #include <linux/memcontrol.h>
-#include <linux/bpf-cgroup.h>
+#include <linux/bpf-cgroup-types.h>
 #include <linux/siphash.h>
 
 extern struct inet_hashinfo tcp_hashinfo;
