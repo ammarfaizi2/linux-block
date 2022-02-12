@@ -6,6 +6,8 @@
 #include <linux/types.h>
 #include <linux/kref.h>
 #include <linux/wait.h>
+#include <linux/mutex.h>
+#include <linux/cache.h>
 
 #ifdef CONFIG_PSI
 

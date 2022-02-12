@@ -4,7 +4,7 @@
 
 #include <linux/bpf-cgroup-defs.h>
 
-#include <linux/bpf.h>
+#include <linux/bpf_defs.h>
 
 #include <uapi/linux/bpf.h>
 
