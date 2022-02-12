@@ -8,21 +8,11 @@
 #ifndef _LINUX_CGROUP_TYPES_H
 #define _LINUX_CGROUP_TYPES_H
 
-#include <linux/limits.h>
-#include <linux/list.h>
 #include <linux/idr.h>
-#include <linux/wait.h>
-#include <linux/mutex.h>
-#include <linux/rcupdate.h>
-#include <linux/refcount.h>
-#include <linux/percpu-refcount.h>
-#include <linux/percpu_rwsem.h>
 #include <linux/u64_stats_sync.h>
-#include <linux/workqueue.h>
-#include <linux/bpf-cgroup-defs.h>
+#include <linux/bpf-cgroup-types.h>
 #include <linux/psi_types.h>
 #include <linux/kernel_stat.h>
-#include <linux/sched/types.h>
 
 #include <asm/signal.h>
 
