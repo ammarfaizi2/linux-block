@@ -21,7 +21,6 @@
 
 #include <linux/types.h>
 #include <linux/poll.h>
-#include <linux/fs.h>
 #include <linux/list.h>
 #include <media/media-device.h>
 

@@ -9,13 +9,6 @@
 #define _MEDIA_CEC_H
 
 #include <linux/ktime_api.h>
-#include <linux/poll.h>
-#include <linux/fs.h>
-#include <linux/debugfs.h>
-#include <linux/device.h>
-#include <linux/cdev.h>
-#include <linux/kthread.h>
-#include <linux/timer.h>
 #include <linux/cec-funcs.h>
 #include <media/rc-core.h>
 

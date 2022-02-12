@@ -13,11 +13,12 @@
 #ifndef V4L2_FH_H
 #define V4L2_FH_H
 
-#include <linux/fs.h>
-#include <linux/kconfig.h>
-#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/wait_types.h>
+
 #include <linux/videodev2.h>
 
+struct file;
 struct video_device;
 struct v4l2_ctrl_handler;
 
@@ -153,9 +154,6 @@ int v4l2_fh_is_singular(struct v4l2_fh *fh);
  *
  * If filp->private_data is %NULL, then it will return 0.
  */
-static inline int v4l2_fh_is_singular_file(struct file *filp)
-{
-	return v4l2_fh_is_singular(filp->private_data);
-}
+#define v4l2_fh_is_singular_file(filp) v4l2_fh_is_singular((filp)->private_data)
 
 #endif /* V4L2_EVENT_H */
