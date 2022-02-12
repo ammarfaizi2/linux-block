@@ -1,0 +1,61 @@
+Subject: [GIT PULL] random number generator updates for 5.18-rc1
+
+Hi Linus,
+
+Please pull the following updates for 5.18-rc1. Since 5.17, there have been a
+few important changes to the RNG's crypto, but the intent for 5.18 has been to
+shore up the existing design as much as possible, rather than changing
+anything fundamental to it. So it's still the same old RNG at its core as
+before: it still counts entropy bits, and collects from the various sources
+with the same heuristics as before, and so forth. However, the cryptographic
+algorithms that transform that entropic data into safe random numbers have
+been modernized.
+
+Just as important, if not more, is that the code has been cleaned up and
+re-documented. As one of the first drivers in Linux, going back to 1.3.30, its
+general style and organization was showing its age and becoming both a
+maintenance burden and an auditability impediment. Hopefully this provides a
+more solid foundation to build on for the future.
+
+Here's a summary of the various patches in this pull:
+
+  1) The input pool's LFSR has been replaced with a cryptographically secure
+     hash function, which has security and performance benefits alike.
+
+  2) As a consequence of moving to the random oracle model of (1), entropy
+     is now linearly additive.
+
+  3) Fixes and cleanups for numerous integer type problems, locking issues,
+     and general code quality concerns.
+
+  4) We now make all additions of RDRAND and RDSEED go through the input
+     pool's hash function, to mitigate ridiculous hypothetical CPU backdoors,
+     but also to have a more consistent interface for ingesting entropy.
+
+  5) The pre-init slow loading now uses a real hash function rather than
+     (yet another) LFSR.
+
+  6) The crng now works on per-cpu data, while being closer in form to the
+     original "fast key erasure" RNG description from Dan Bernstein. This
+     allows us to fix several boot-time race complications associated with the
+     older dynamically allocated model, and makes our backtrack protection more
+     robust.
+
+  7) The interrupt handler no longer needs to take any locks at all, as we
+     punt the synchronized/expensive operations to a workqueue. This is
+     especially nice for PREEMPT_RT, where taking spinlocks in irq context is
+     problematic.  It also makes the handler faster for the rest of us.
+
+  8) The documentation in the file has been updated considerably, and with
+     it the general order and grouping of functions, so that random.c is
+     finally almost readable by mortals again.
+
+  9) Batched entropy now erases doled out values so that it's backtrack
+     resistant.
+
+  10) ...
+
+Please pull!
+
+Thanks,
+Jason
