@@ -16,10 +16,8 @@
 #ifndef _MEDIA_DEVNODE_H
 #define _MEDIA_DEVNODE_H
 
-#include <linux/poll.h>
-#include <linux/fs.h>
-#include <linux/device.h>
 #include <linux/cdev.h>
+#include <linux/device.h>
 
 struct media_device;
 struct poll_table_struct;
@@ -145,10 +143,7 @@ void media_devnode_unregister(struct media_devnode *devnode);
  *
  * @filp: pointer to struct &file
  */
-static inline struct media_devnode *media_devnode_data(struct file *filp)
-{
-	return filp->private_data;
-}
+#define media_devnode_data(filp) ((filp)->private_data)
 
 /**
  * media_devnode_is_registered - returns true if &media_devnode is registered;
