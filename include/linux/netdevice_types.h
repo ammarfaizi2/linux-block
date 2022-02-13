@@ -28,9 +28,10 @@
 #include <linux/kobject_types.h>
 #include <linux/device.h>
 #include <linux/rbtree.h>
+#include <linux/seqlock.h>
 
-#include <net/net_namespace_types.h>
 #include <net/net_trackers.h>
+#include <net/net_namespace_types_possible.h>
 
 #include <uapi/linux/netdevice.h>
 
