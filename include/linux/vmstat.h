@@ -1,18 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/preempt.h>
-#include <linux/cpumask_api.h>
-#include <linux/mm.h>
-
 #ifndef _LINUX_VMSTAT_H
 #define _LINUX_VMSTAT_H
 
-#include <linux/types.h>
-#include <linux/percpu.h>
-#include <linux/mmzone.h>
+#include <linux/preempt.h>
+#include <linux/cpumask_api.h>
+#include <linux/mm_api.h>
 #include <linux/vm_event_item.h>
-#include <linux/atomic.h>
-#include <linux/static_key.h>
-#include <linux/mmdebug.h>
 
 extern int sysctl_stat_interval;
 
