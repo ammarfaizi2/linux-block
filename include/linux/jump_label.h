@@ -259,7 +259,7 @@ extern void static_key_disable_cpuslocked(struct static_key *key);
 
 #else  /* !CONFIG_JUMP_LABEL */
 
-#include <linux/atomic.h>
+#include <linux/atomic_api.h>
 #include <linux/bug.h>
 
 static inline int static_key_count(struct static_key *key)

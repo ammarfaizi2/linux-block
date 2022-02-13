@@ -6,6 +6,8 @@
 
 #include <linux/sched.h>
 
+#include <linux/mmzone_api.h>
+#include <linux/mm_api.h>
 #include <linux/pid.h>
 #include <linux/sem.h>
 #include <linux/shm.h>

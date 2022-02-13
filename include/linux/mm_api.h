@@ -1577,11 +1577,6 @@ static inline int arch_make_folio_accessible(struct folio *folio)
 }
 #endif
 
-/*
- * Some inline functions in vmstat.h depend on page_zone()
- */
-#include <linux/vmstat.h>
-
 static inline void *folio_address(const struct folio *folio)
 {
 	return page_address(&folio->page);
