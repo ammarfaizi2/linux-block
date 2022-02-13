@@ -10,13 +10,14 @@
 #ifndef _LINUX_SKBUFF_TYPES_H
 #define _LINUX_SKBUFF_TYPES_H
 
-#include <linux/ktime_api.h>
+#include <linux/ktime_types.h>
 #include <linux/bvec.h>
 #include <linux/llist.h>
-#include <linux/ktime.h>
 #include <linux/refcount.h>
 #include <linux/rbtree_types.h>
 #include <linux/spinlock_types.h>
+
+#include <asm/page.h>
 
 #include <uapi/linux/in6.h>
 
