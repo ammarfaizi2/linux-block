@@ -4,7 +4,7 @@
 #include <linux/lockdep_api.h>
 #include <linux/types.h>
 
-#ifndef __LINUX_SPINLOCK_H
+#ifndef __LINUX_SPINLOCK_API_H
 # error "please don't include this file directly"
 #endif
 
