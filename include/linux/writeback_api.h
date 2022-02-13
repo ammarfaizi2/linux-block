@@ -5,13 +5,12 @@
 #ifndef WRITEBACK_API_H
 #define WRITEBACK_API_H
 
-#include <linux/writeback.h>
+#include <linux/writeback_types.h>
 
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/workqueue.h>
 #include <linux/fs.h>
-#include <linux/flex_proportions.h>
 #include <linux/backing-dev-api.h>
 #include <linux/blk_types.h>
 #include <linux/blk-cgroup.h>
