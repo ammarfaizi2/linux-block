@@ -11,6 +11,7 @@
 #include <linux/mmdebug.h>
 #ifndef __GENERATING_BOUNDS_H
 #include <linux/mm_types.h>
+#include <linux/mm_api.h>
 #include <generated/bounds.h>
 #endif /* !__GENERATING_BOUNDS_H */
 

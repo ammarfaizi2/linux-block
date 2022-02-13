@@ -281,16 +281,6 @@ static inline atomic_t *folio_mapcount_ptr(struct folio *folio)
 	return &tail->compound_mapcount;
 }
 
-static inline atomic_t *compound_mapcount_ptr(struct page *page)
-{
-	return &page[1].compound_mapcount;
-}
-
-static inline atomic_t *compound_pincount_ptr(struct page *page)
-{
-	return &page[2].hpage_pinned_refcount;
-}
-
 /*
  * Used for sizing the vmemmap region on some architectures
  */
@@ -308,13 +298,6 @@ static inline atomic_t *compound_pincount_ptr(struct page *page)
  * should be used for data that's ancillary to the head page (eg attaching
  * buffer heads to tail pages after attaching buffer heads to the head page)
  */
-#define page_private(page)		((page)->private)
-
-static inline void set_page_private(struct page *page, unsigned long private)
-{
-	page->private = private;
-}
-
 static inline void *folio_get_private(struct folio *folio)
 {
 	return folio->private;
@@ -652,21 +635,6 @@ struct mm_struct {
 	unsigned long cpu_bitmap[];
 };
 
-extern struct mm_struct init_mm;
-
-extern void mm_init_cpumask(struct mm_struct *mm);
-
-/* Future-safe accessor for struct mm_struct's cpu_vm_mask. */
-static inline cpumask_t *mm_cpumask(struct mm_struct *mm)
-{
-	return (struct cpumask *)&mm->cpu_bitmap;
-}
-
-struct mmu_gather;
-extern void tlb_gather_mmu(struct mmu_gather *tlb, struct mm_struct *mm);
-extern void tlb_gather_mmu_fullmm(struct mmu_gather *tlb, struct mm_struct *mm);
-extern void tlb_finish_mmu(struct mmu_gather *tlb);
-
 struct vm_fault;
 
 /**
@@ -825,12 +793,6 @@ enum fault_flag {
 	FAULT_FLAG_INSTRUCTION =	1 << 8,
 	FAULT_FLAG_INTERRUPTIBLE =	1 << 9,
 };
-
-/* to align the pointer to the (next) page boundary */
-#define PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE)
-
-/* test whether an address (unsigned long or pointer) is aligned to PAGE_SIZE */
-#define PAGE_ALIGNED(addr)	IS_ALIGNED((unsigned long)(addr), PAGE_SIZE)
 
 #endif
 
