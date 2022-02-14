@@ -32,6 +32,8 @@ void on_each_cpu_cond_mask(smp_cond_func_t cond_func, smp_call_func_t func,
 
 int smp_call_function_single_async(int cpu, struct __call_single_data *csd);
 
+struct pt_regs;
+
 /*
  * Cpus stopping functions in panic. All have default weak definitions.
  * Architecture-dependent code may override them.

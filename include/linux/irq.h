@@ -25,6 +25,10 @@
 #include <asm/ptrace.h>
 #include <asm/irq_regs.h>
 
+#ifdef CONFIG_GENERIC_IRQ_EFFECTIVE_AFF_MASK
+# include <linux/cpumask_api.h>
+#endif
+
 struct seq_file;
 struct module;
 struct msi_msg;

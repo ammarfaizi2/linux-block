@@ -8,6 +8,7 @@
 #ifndef _LINUX_CPUFREQ_H
 #define _LINUX_CPUFREQ_H
 
+#include <linux/cpumask_api.h>
 #include <linux/minmax.h>
 #include <linux/clk.h>
 #include <linux/cpu.h>
