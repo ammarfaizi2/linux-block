@@ -21,7 +21,7 @@
 #ifndef _LINUX_NETDEVICE_API_H
 #define _LINUX_NETDEVICE_API_H
 
-#include <linux/netdevice.h>
+#include <linux/netdevice_types.h>
 
 #include <linux/prefetch.h>
 #include <linux/cpumask_api.h>
@@ -380,21 +380,6 @@ static inline void netdev_set_ml_priv(struct net_device *dev,
 	dev->ml_priv_type = type;
 }
 
-/*
- * Net namespace inlines
- */
-static inline
-struct net *dev_net(const struct net_device *dev)
-{
-	return read_pnet(&dev->nd_net);
-}
-
-static inline
-void dev_net_set(struct net_device *dev, struct net *net)
-{
-	write_pnet(&dev->nd_net, net);
-}
-
 /**
  *	netdev_priv - access network device private data
  *	@dev: network device
@@ -476,55 +461,6 @@ static inline void netif_napi_del(struct napi_struct *napi)
 	__netif_napi_del(napi);
 	synchronize_net();
 }
-
-struct packet_type {
-	__be16			type;	/* This is really htons(ether_type). */
-	bool			ignore_outgoing;
-	struct net_device	*dev;	/* NULL is wildcarded here	     */
-	netdevice_tracker	dev_tracker;
-	int			(*func) (struct sk_buff *,
-					 struct net_device *,
-					 struct packet_type *,
-					 struct net_device *);
-	void			(*list_func) (struct list_head *,
-					      struct packet_type *,
-					      struct net_device *);
-	bool			(*id_match)(struct packet_type *ptype,
-					    struct sock *sk);
-	struct net		*af_packet_net;
-	void			*af_packet_priv;
-	struct list_head	list;
-};
-
-struct offload_callbacks {
-	struct sk_buff		*(*gso_segment)(struct sk_buff *skb,
-						netdev_features_t features);
-	struct sk_buff		*(*gro_receive)(struct list_head *head,
-						struct sk_buff *skb);
-	int			(*gro_complete)(struct sk_buff *skb, int nhoff);
-};
-
-struct packet_offload {
-	__be16			 type;	/* This is really htons(ether_type). */
-	u16			 priority;
-	struct offload_callbacks callbacks;
-	struct list_head	 list;
-};
-
-/* often modified stats are per-CPU, other are shared (netdev->stats) */
-struct pcpu_sw_netstats {
-	u64     rx_packets;
-	u64     rx_bytes;
-	u64     tx_packets;
-	u64     tx_bytes;
-	struct u64_stats_sync   syncp;
-} __aligned(4 * sizeof(u64));
-
-struct pcpu_lstats {
-	u64_stats_t packets;
-	u64_stats_t bytes;
-	struct u64_stats_sync syncp;
-} __aligned(2 * sizeof(u64));
 
 void dev_lstats_read(struct net_device *dev, u64 *packets, u64 *bytes);
 
@@ -2758,111 +2694,6 @@ static inline void skb_gso_error_unwind(struct sk_buff *skb, __be16 protocol,
 	skb->mac_header = mac_offset;
 	skb->network_header = skb->mac_header + mac_len;
 	skb->mac_len = mac_len;
-}
-
-static inline bool netif_is_macsec(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_MACSEC;
-}
-
-static inline bool netif_is_macvlan(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_MACVLAN;
-}
-
-static inline bool netif_is_macvlan_port(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_MACVLAN_PORT;
-}
-
-static inline bool netif_is_bond_master(const struct net_device *dev)
-{
-	return dev->flags & IFF_MASTER && dev->priv_flags & IFF_BONDING;
-}
-
-static inline bool netif_is_bond_slave(const struct net_device *dev)
-{
-	return dev->flags & IFF_SLAVE && dev->priv_flags & IFF_BONDING;
-}
-
-static inline bool netif_supports_nofcs(struct net_device *dev)
-{
-	return dev->priv_flags & IFF_SUPP_NOFCS;
-}
-
-static inline bool netif_has_l3_rx_handler(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_L3MDEV_RX_HANDLER;
-}
-
-static inline bool netif_is_l3_master(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_L3MDEV_MASTER;
-}
-
-static inline bool netif_is_l3_slave(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_L3MDEV_SLAVE;
-}
-
-static inline bool netif_is_bridge_master(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_EBRIDGE;
-}
-
-static inline bool netif_is_bridge_port(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_BRIDGE_PORT;
-}
-
-static inline bool netif_is_ovs_master(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_OPENVSWITCH;
-}
-
-static inline bool netif_is_ovs_port(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_OVS_DATAPATH;
-}
-
-static inline bool netif_is_any_bridge_port(const struct net_device *dev)
-{
-	return netif_is_bridge_port(dev) || netif_is_ovs_port(dev);
-}
-
-static inline bool netif_is_team_master(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_TEAM;
-}
-
-static inline bool netif_is_team_port(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_TEAM_PORT;
-}
-
-static inline bool netif_is_lag_master(const struct net_device *dev)
-{
-	return netif_is_bond_master(dev) || netif_is_team_master(dev);
-}
-
-static inline bool netif_is_lag_port(const struct net_device *dev)
-{
-	return netif_is_bond_slave(dev) || netif_is_team_port(dev);
-}
-
-static inline bool netif_is_rxfh_configured(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_RXFH_CONFIGURED;
-}
-
-static inline bool netif_is_failover(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_FAILOVER;
-}
-
-static inline bool netif_is_failover_slave(const struct net_device *dev)
-{
-	return dev->priv_flags & IFF_FAILOVER_SLAVE;
 }
 
 /* This device needs to keep skb dst for qdisc enqueue or ndo_start_xmit() */
