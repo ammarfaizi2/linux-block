@@ -8,11 +8,11 @@
 #ifndef _LINUX_PM_H
 #define _LINUX_PM_H
 
-#include <linux/mutex.h>
 #include <linux/export.h>
-#include <linux/workqueue.h>
+#include <linux/mutex_types.h>
+#include <linux/workqueue_types.h>
 #include <linux/wait_types.h>
-#include <linux/hrtimer.h>
+#include <linux/hrtimer_types.h>
 #include <linux/completion.h>
 
 /*
