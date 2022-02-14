@@ -147,7 +147,6 @@ static inline int check_net(const struct net *net)
 #define net_drop_ns NULL
 #endif
 
-
 static inline void netns_tracker_alloc(struct net *net,
 				       netns_tracker *tracker, gfp_t gfp)
 {
