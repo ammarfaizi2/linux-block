@@ -415,6 +415,10 @@ static int macsmc_power_probe(struct platform_device *pdev)
 	apple_smc_read(smc, SMC_KEY(BMSN), power->serial_number, sizeof(power->serial_number) - 1);
 	apple_smc_read(smc, SMC_KEY(BMDT), power->mfg_date, sizeof(power->mfg_date) - 1);
 
+	/* Turn off the "optimized battery charging" flags, in case macOS left them on */
+	apple_smc_write_u8(power->smc, SMC_KEY(CH0K), 0);
+	apple_smc_write_u8(power->smc, SMC_KEY(CH0B), 0);
+
 	psy_cfg.drv_data = power;
 	power->psy = devm_power_supply_register(&pdev->dev, &macsmc_battery_desc, &psy_cfg);
 	if (IS_ERR(power->psy)) {
