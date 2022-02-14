@@ -27,6 +27,8 @@
 #include "export.h"
 #include "stats.h"
 
+struct tree_descr;
+
 #undef ifdebug
 #ifdef CONFIG_SUNRPC_DEBUG
 # define ifdebug(flag)		if (nfsd_debug & NFSDDBG_##flag)

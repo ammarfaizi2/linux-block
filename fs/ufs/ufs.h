@@ -103,6 +103,9 @@ extern struct ufs_cg_private_info * ufs_load_cylinder (struct super_block *, uns
 extern void ufs_put_cylinder (struct super_block *, unsigned);
 
 /* dir.c */
+
+struct qstr;
+
 extern const struct inode_operations ufs_dir_inode_operations;
 extern int ufs_add_link (struct dentry *, struct inode *);
 extern ino_t ufs_inode_by_name(struct inode *, const struct qstr *);

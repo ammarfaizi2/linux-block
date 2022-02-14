@@ -46,6 +46,7 @@ struct audit_watch;
 struct audit_fsnotify_mark;
 struct audit_tree;
 struct audit_chunk;
+struct qstr;
 
 struct audit_entry {
 	struct list_head	list;

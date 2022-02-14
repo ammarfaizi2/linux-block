@@ -100,7 +100,7 @@ int fsverity_hash_page(const struct merkle_tree_params *params,
 		       struct ahash_request *req, struct page *page, u8 *out);
 int fsverity_hash_buffer(struct fsverity_hash_alg *alg,
 			 const void *data, size_t size, u8 *out);
-void __init fsverity_check_hash_algs(void);
+void fsverity_check_hash_algs(void);
 
 /* init.c */
 
@@ -133,8 +133,8 @@ int fsverity_get_descriptor(struct inode *inode,
 			    struct fsverity_descriptor **desc_ret,
 			    size_t *desc_size_ret);
 
-int __init fsverity_init_info_cache(void);
-void __init fsverity_exit_info_cache(void);
+int fsverity_init_info_cache(void);
+void fsverity_exit_info_cache(void);
 
 /* signature.c */
 
@@ -142,7 +142,7 @@ void __init fsverity_exit_info_cache(void);
 int fsverity_verify_signature(const struct fsverity_info *vi,
 			      const u8 *signature, size_t sig_size);
 
-int __init fsverity_init_signature(void);
+int fsverity_init_signature(void);
 #else /* !CONFIG_FS_VERITY_BUILTIN_SIGNATURES */
 static inline int
 fsverity_verify_signature(const struct fsverity_info *vi,
@@ -159,7 +159,7 @@ static inline int fsverity_init_signature(void)
 
 /* verify.c */
 
-int __init fsverity_init_workqueue(void);
-void __init fsverity_exit_workqueue(void);
+int fsverity_init_workqueue(void);
+void fsverity_exit_workqueue(void);
 
 #endif /* _FSVERITY_PRIVATE_H */

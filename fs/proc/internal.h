@@ -131,6 +131,7 @@ static inline struct task_struct *get_proc_task(const struct inode *inode)
 void task_dump_owner(struct task_struct *task, umode_t mode,
 		     kuid_t *ruid, kgid_t *rgid);
 
+struct qstr;
 unsigned name_to_int(const struct qstr *qstr);
 /*
  * Offset of the first process in the /proc root directory..
