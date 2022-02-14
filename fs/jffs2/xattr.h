@@ -15,6 +15,8 @@
 #include <linux/xattr.h>
 #include <linux/list.h>
 
+struct qstr;
+
 #define JFFS2_XFLAGS_HOT	(0x01)	/* This datum is HOT */
 #define JFFS2_XFLAGS_BIND	(0x02)	/* This datum is not reclaimed */
 #define JFFS2_XFLAGS_DEAD	(0x40)	/* This datum is already dead */

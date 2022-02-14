@@ -17,6 +17,8 @@ struct fs_context;
 struct user_namespace;
 struct pipe_inode_info;
 struct folio;
+struct qstr;
+struct statx;
 
 /*
  * block/bdev.c

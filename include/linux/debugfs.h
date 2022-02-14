@@ -12,7 +12,6 @@
 #ifndef _DEBUGFS_H_
 #define _DEBUGFS_H_
 
-#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/seq_file.h>
 

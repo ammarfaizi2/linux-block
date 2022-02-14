@@ -172,10 +172,7 @@ struct gendisk {
 	u64 diskseq;
 };
 
-static inline bool disk_live(struct gendisk *disk)
-{
-	return !inode_unhashed(disk->part0->bd_inode);
-}
+#define disk_live(disk) ({ !inode_unhashed((disk)->part0->bd_inode); })
 
 /*
  * The gendisk is refcounted by the part0 block_device, and the bd_device

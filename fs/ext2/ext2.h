@@ -729,6 +729,9 @@ extern void ext2_init_block_alloc_info(struct inode *);
 extern void ext2_rsv_window_add(struct super_block *sb, struct ext2_reserve_window_node *rsv);
 
 /* dir.c */
+
+struct qstr;
+
 extern int ext2_add_link (struct dentry *, struct inode *);
 extern int ext2_inode_by_name(struct inode *dir,
 			      const struct qstr *child, ino_t *ino);

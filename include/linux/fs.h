@@ -3,6 +3,5 @@
 #define _LINUX_FS_H
 
 #include <linux/fs_types.h>
-#include <linux/fs_api.h>
 
 #endif /* _LINUX_FS_H */
