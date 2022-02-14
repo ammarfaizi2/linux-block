@@ -107,4 +107,9 @@ struct kobj_attribute {
 			 const char *buf, size_t count);
 };
 
+static inline const char *kobject_name(const struct kobject *kobj)
+{
+	return kobj->name;
+}
+
 #endif /* _KOBJECT_TYPES_H_ */
