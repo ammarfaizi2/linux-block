@@ -202,6 +202,8 @@ void x25_destroy_socket_from_timer(struct sock *);
 int x25_rx_call_request(struct sk_buff *, struct x25_neigh *, unsigned int);
 void x25_kill_by_neigh(struct x25_neigh *);
 
+struct packet_type;
+
 /* x25_dev.c */
 void x25_send_frame(struct sk_buff *, struct x25_neigh *);
 int x25_lapb_receive_frame(struct sk_buff *, struct net_device *,

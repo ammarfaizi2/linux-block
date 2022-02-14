@@ -35,41 +35,23 @@
 #ifndef _SOCK_TYPES_H
 #define _SOCK_TYPES_H
 
-#include <linux/ratelimit.h>
-#include <linux/hardirq.h>
-#include <linux/kernel.h>
+#include <linux/atomic_types.h>
+#include <linux/skbuff_types_head.h>
 #include <linux/list.h>
 #include <linux/list_nulls.h>
 #include <linux/timer.h>
-#include <linux/cache.h>
-#include <linux/bitops.h>
-#include <linux/lockdep.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>	/* struct sk_buff */
-#include <linux/mm.h>
-#include <linux/debug_locks.h>
-#include <linux/security.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/page_counter.h>
-#include <linux/static_key.h>
+#include <linux/netdevice_types.h>
 #include <linux/wait_types.h>
 #include <linux/cgroup_types.h>
-#include <linux/rbtree.h>
-#include <linux/prandom.h>
-#include <linux/rculist_nulls.h>
-#include <linux/sockptr.h>
-#include <linux/indirect_call_wrapper.h>
-#include <linux/atomic.h>
-#include <linux/refcount.h>
 #include <linux/llist.h>
-#include <net/dst.h>
-#include <net/checksum.h>
+
 #include <net/tcp_states.h>
-#include <linux/percpu_counter.h>
-#include <linux/net_tstamp.h>
-#include <net/l3mdev.h>
+#include <net/net_namespace_types_possible.h>
+
 #include <uapi/linux/socket.h>
+#include <uapi/linux/in6.h>
+
+#include <asm/page_types.h>
 
 struct page_frag {
 	struct page *page;
@@ -81,8 +63,6 @@ struct page_frag {
 	__u16 size;
 #endif
 };
-
-DECLARE_PER_TASK(struct page_frag, task_frag);
 
 /*
  * This structure really needs to be cleaned up.
@@ -575,6 +555,8 @@ struct raw_hashinfo;
 struct smc_hashinfo;
 struct module;
 struct sk_psock;
+struct sockptr_struct;
+struct msghdr;
 
 /* Networking protocol blocks we attach to sockets.
  * socket layer -> transport layer interface
@@ -599,7 +581,7 @@ struct proto {
 	void			(*destroy)(struct sock *sk);
 	void			(*shutdown)(struct sock *sk, int how);
 	int			(*setsockopt)(struct sock *sk, int level,
-					int optname, sockptr_t optval,
+					int optname, struct sockptr_struct optval,
 					unsigned int optlen);
 	int			(*getsockopt)(struct sock *sk, int level,
 					int optname, char __user *optval,

@@ -34,6 +34,8 @@ struct cn_callback_id {
 	struct cb_id id;
 };
 
+struct netlink_skb_parms;
+
 struct cn_callback_entry {
 	struct list_head callback_entry;
 	refcount_t refcnt;
