@@ -3,6 +3,5 @@
 #define __NET_RTNETLINK_H
 
 #include <net/rtnetlink_types.h>
-#include <net/rtnetlink_api.h>
 
 #endif

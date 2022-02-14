@@ -6,6 +6,8 @@
 #include <linux/skbuff_api.h>
 #include <linux/pkt_cls.h>
 #include <linux/workqueue.h>
+
+#include <net/rtnetlink_api.h>
 #include <net/sch_generic.h>
 #include <net/act_api.h>
 #include <net/net_namespace.h>

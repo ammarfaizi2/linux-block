@@ -8,7 +8,7 @@
 #include <linux/fib_rules.h>
 #include <linux/refcount.h>
 #include <net/flow.h>
-#include <net/rtnetlink.h>
+#include <net/rtnetlink_api.h>
 #include <net/fib_notifier.h>
 #include <linux/indirect_call_wrapper.h>
 

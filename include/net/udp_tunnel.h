@@ -3,6 +3,7 @@
 #define __NET_UDP_TUNNEL_H
 
 #include <net/ip_tunnels.h>
+#include <net/rtnetlink_api.h>
 #include <net/udp.h>
 
 #if IS_ENABLED(CONFIG_IPV6)
