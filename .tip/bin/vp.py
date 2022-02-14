@@ -7,6 +7,8 @@ vp.py - Patch verifier and massager tool
 
 # TODO (and potential ideas):
 #
+# - warn for EXPORT_SYMBOL
+#
 # - add a check against hunks with file paths arch/x86/boot/(compressed/)? which #include <linux/*>
 # headers and warn if so.
 # 
@@ -184,22 +186,20 @@ dc = None
 dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          # that's some stupid dictionary
          "amongst",
-         "AMX", "API", "APM", "APU", "arm64", "asm",
-         "binutils", "bitmask", "bitfield", "CMCI", "cmdline", "config", "CPPC", "CPUID",
-         "DMA", "DIMM", "e820", "EAX", "EDAC", "EFI", "EHCI", "ENQCMD", "EPT", "fixup",
-         "FRU", "GPR", "GUID", "HLT", "hotplug", "hugepage", "Hygon",
+         "AMX", "API", "APM", "APU", "arm64", "asm", "BHB",
+         "binutils", "bitmask", "bitfield", "BSP", "CMCI", "cmdline", "config", "CPPC", "CPUID",
+         "DMA", "DIMM", "e820", "EAX", "EDAC", "EFI", "EHCI", "enablement", "ENQCMD", "EPT", "fixup",
+         "FRU", "gcc", "GPR", "GUID", "HLT", "hotplug", "hugepage", "Hygon",
          "hypercall", "HV", "I/O", "IBT", "initializer", "initrd", "IRET", "IRQ", "JMP", "kallsyms",
          "KASAN", "kdump", "kexec", "KVM", "LFENCE", "livepatch", "lvalue",
          "MCA", "MCE", "memmove",
          "memtype", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
-         "NX", "OEM", "offlining", "ok", "PASID", "PCI", "pdf", "percpu", "perf", "preemptible",
+         "NX", "OEM", "ok", "oneliner", "PASID", "PCI", "pdf", "percpu", "perf", "preemptible",
          "prepend", # derived from append, not in the dictionaries
          "PTE", "PPIN",
-         "PV", "PVALIDATE", "RDMSR", "retpoline", "rFLAGS", "RMP", "RMPADJUST", "Ryzen",
-         "SIGSEGV", "Skylake", "SME", "SNP", "Spectre", "STI", "strtab", "struct", "swiotlb",
-         "symtab", "syscall", "sysfs", 
-         "TDCALL", "TDGETVEINFO",
-         "TDVMCALL", "TLB", "TODO",
+         "PV", "PVALIDATE", "RDMSR", "repurposing", "RET", "retpoline", "rFLAGS", "RMP", "RMPADJUST", "Ryzen",
+         "SIGSEGV", "Skylake", "SME", "SNP", "STI", "STLF", "strtab", "struct", "swiotlb",
+         "symtab", "sysfs", "TDCALL", "TDGETVEINFO", "TDVMCALL", "TLB", "TODO", "tracepoint",
          "UMC", "UML",
          # too late for that one to enforce even as the dictionary says it is wrong
          "untrusted",
@@ -210,18 +210,22 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars, etc which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'boot_params', 'cpuinfo_x86', 'earlyprintk', 'fpstate', 'kobj_type',
-           'kptr_restrict', 'pt_regs',
+known_vars = [ '__BOOT_DS', 'boot_params', 'cpuinfo_x86', 'cpumask', 'earlyprintk',
+           'fpstate', 'i915', 'kobj_type',
+           'kptr_restrict', 'pt_regs', 'memremap',
            'ptr', 'set_lvt_off', 'setup_data',
-           'sme_me_mask', 'sysctl_perf_event_paranoid', 'threshold_banks', 'xfeatures' ]
+           'sme_me_mask', 'sysctl_perf_event_paranoid', 'threshold_banks', 'vfio', 'virtio_gpu',
+           'vmlinux', 'xfeatures' ]
 
 # known words as regexes to avoid duplication in the list above
-regexes_pats = [ r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
+regexes_pats = [ r'^all(mod|yes)config$', r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
              r'default_(attrs|groups)', r'^DDR([1-5])?$', r'^[Ee].g.$', r'^[eE]?IBRS$', r'^E?VEX$',
-            r'^GHC(B|I)$', r'^Icelake(-D)?$', r'I[DS]T', r'^[ku]probes?$', r'MOVSB?', r'^param(s)?$',
+            r'^GHC(B|I)$', r'^Icelake(-D)?$', r'I[DS]T', r'^(in|off)lining$',
+            r'^[ku]probes?$', r'MOVSB?', r'^param(s)?$',
             r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$', r'PS[CP]',
-            r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'T[DS]X', r'^VMPL([0-3])?$', r'^x86(-(32|64))?$',
-            r'^XSAVE[CS]?$' ]
+            r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$',
+            r'T[DS]X', r'^v?syscall$',
+            r'^VMPL([0-3])?$', r'^x86(-(32|64))?$', r'^XSAVE[CS]?$' ]
 
 def load_spellchecker():
     global dc, regexes, regexes_pats, rex_asm_dir, rex_brackets, \
@@ -274,7 +278,7 @@ rex_word_split, rex_x86_traps
     # path spec can begin on a new line
     rex_paths       = re.compile(r'(^|\s)/[\w/_\*-]+\s')
     rex_reg_field   = re.compile(r'\w+\[\d+(:\d+)?\]', re.I)
-    rex_sections    = re.compile(r'\.(bss|data|head(\.text)?|text)')
+    rex_sections    = re.compile(r'\.(bss|data|head|noinstr(\.text)?|text)')
 
     rex_sent_end    = re.compile(r"""\.((\s+)?      # catch all spaces after the end of the sentence
                                                     # as some formatters add more than one for block
@@ -302,7 +306,7 @@ def spellcheck_func_name(w, prev_word):
     """
 
     # remove crap from previous word
-    prev = prev_word.strip('`\',*+:;!|<>"=')
+    prev = prev_word.strip('`\',*+:;!|<>"=?')
 
     dbg("%s" % (w, ))
 
