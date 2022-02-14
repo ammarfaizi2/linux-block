@@ -25,6 +25,7 @@
 #ifndef _ASM_X86_TOPOLOGY_H
 #define _ASM_X86_TOPOLOGY_H
 
+#include <asm/cpufeature.h>
 #include <linux/numa_types.h>
 #include <linux/cache.h>
 
@@ -34,7 +35,6 @@
 DECLARE_PER_CPU_READ_MOSTLY(cpumask_var_t, cpu_sibling_map);
 
 #ifdef CONFIG_NUMA
-#include <asm/mpspec.h>
 
 /* Mappings between logical cpu number and node number */
 DECLARE_EARLY_PER_CPU(int, x86_cpu_to_node_map);

@@ -16,6 +16,7 @@
 #include <linux/refcount_types.h>
 #include <linux/rbtree_types.h>
 #include <linux/spinlock_types.h>
+#include <linux/align.h>
 
 #include <asm/page.h>
 

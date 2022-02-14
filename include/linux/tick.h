@@ -177,6 +177,8 @@ static inline void tick_nohz_idle_stop_tick_protected(void) { }
 #endif /* !CONFIG_NO_HZ_COMMON */
 
 #ifdef CONFIG_NO_HZ_FULL
+#include <linux/cpumask_api.h>
+
 extern bool tick_nohz_full_running;
 extern cpumask_var_t tick_nohz_full_mask;
 

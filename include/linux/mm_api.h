@@ -6,6 +6,7 @@
 
 #include <linux/mm_types.h>
 
+#include <linux/cpumask_api.h>
 #include <linux/topology.h>
 #include <linux/auxvec.h>
 #include <linux/list.h>

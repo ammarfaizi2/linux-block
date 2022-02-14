@@ -2,9 +2,9 @@
 #ifndef _LINUX_SCHED_AFFINITY_H
 #define _LINUX_SCHED_AFFINITY_H
 
+#include <linux/cpumask_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/per_task.h>
-#include <linux/cpumask.h>
 
 DECLARE_PER_TASK(cpumask_t, cpus_mask);
 DECLARE_PER_TASK(const cpumask_t *, cpus_ptr);
