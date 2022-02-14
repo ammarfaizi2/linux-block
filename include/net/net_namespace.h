@@ -147,7 +147,6 @@ static inline int check_net(const struct net *net)
 #define net_drop_ns NULL
 #endif
 
-
 static inline void netns_tracker_alloc(struct net *net,
 				       netns_tracker *tracker, gfp_t gfp)
 {
@@ -176,13 +175,6 @@ static inline void put_net_track(struct net *net, netns_tracker *tracker)
 {
 	netns_tracker_free(net, tracker);
 	put_net(net);
-}
-
-static inline void write_pnet(possible_net_t *pnet, struct net *net)
-{
-#ifdef CONFIG_NET_NS
-	pnet->net = net;
-#endif
 }
 
 /* Protected by net_rwsem */

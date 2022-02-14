@@ -22,4 +22,11 @@ static inline struct net *read_pnet(const possible_net_t *pnet)
 #endif
 }
 
+static inline void write_pnet(possible_net_t *pnet, struct net *net)
+{
+#ifdef CONFIG_NET_NS
+	pnet->net = net;
+#endif
+}
+
 #endif /* __NET_NET_NAMESPACE_TYPES_POSSIBLE_H */
