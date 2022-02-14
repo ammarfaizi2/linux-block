@@ -2756,6 +2756,14 @@ madvise_set_anon_name(struct mm_struct *mm, unsigned long start,
 }
 #endif
 
-#endif /* __ASSEMBLY__ */
+#ifndef __pa_symbol
+#define __pa_symbol(x)  __pa(RELOC_HIDE((unsigned long)(x), 0))
+#endif
+
+#ifndef lm_alias
+#define lm_alias(x)	__va(__pa_symbol(x))
+#endif
+
+#endif /* !__ASSEMBLY__ */
 
 #endif /* _LINUX_MM_API_H */
