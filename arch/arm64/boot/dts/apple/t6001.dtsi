@@ -23,84 +23,267 @@
 		#address-cells = <2>;
 		#size-cells = <0>;
 
-		cpu0: cpu@0 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cpu_e0>;
+				};
+				core1 {
+					cpu = <&cpu_e1>;
+				};
+			};
+
+			cluster1 {
+				core0 {
+					cpu = <&cpu_p00>;
+				};
+				core1 {
+					cpu = <&cpu_p01>;
+				};
+				core2 {
+					cpu = <&cpu_p02>;
+				};
+				core3 {
+					cpu = <&cpu_p03>;
+				};
+			};
+
+			cluster2 {
+				core0 {
+					cpu = <&cpu_p10>;
+				};
+				core1 {
+					cpu = <&cpu_p11>;
+				};
+				core2 {
+					cpu = <&cpu_p12>;
+				};
+				core3 {
+					cpu = <&cpu_p13>;
+				};
+			};
+		};
+
+		cpu_e0: cpu@0 {
 			compatible = "apple,icestorm";
 			device_type = "cpu";
 			reg = <0x0 0x0>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
+			operating-points-v2 = <&icestorm_opp>;
+			capacity-dmips-mhz = <714>;
+			apple,freq-domain = <&cpufreq_hw 0>;
 		};
 
-		cpu1: cpu@1 {
+		cpu_e1: cpu@1 {
 			compatible = "apple,icestorm";
 			device_type = "cpu";
 			reg = <0x0 0x1>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
+			operating-points-v2 = <&icestorm_opp>;
+			capacity-dmips-mhz = <714>;
+			apple,freq-domain = <&cpufreq_hw 0>;
 		};
 
-		cpu2: cpu@10100 {
+		cpu_p00: cpu@10100 {
 			compatible = "apple,firestorm";
 			device_type = "cpu";
 			reg = <0x0 0x10100>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
+			operating-points-v2 = <&firestorm_opp>;
+			capacity-dmips-mhz = <1024>;
+			apple,freq-domain = <&cpufreq_hw 1>;
 		};
 
-		cpu3: cpu@10101 {
+		cpu_p01: cpu@10101 {
 			compatible = "apple,firestorm";
 			device_type = "cpu";
 			reg = <0x0 0x10101>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
+			operating-points-v2 = <&firestorm_opp>;
+			capacity-dmips-mhz = <1024>;
+			apple,freq-domain = <&cpufreq_hw 1>;
 		};
 
-		cpu4: cpu@10102 {
+		cpu_p02: cpu@10102 {
 			compatible = "apple,firestorm";
 			device_type = "cpu";
 			reg = <0x0 0x10102>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
+			operating-points-v2 = <&firestorm_opp>;
+			capacity-dmips-mhz = <1024>;
+			apple,freq-domain = <&cpufreq_hw 1>;
 		};
 
-		cpu5: cpu@10103 {
+		cpu_p03: cpu@10103 {
 			compatible = "apple,firestorm";
 			device_type = "cpu";
 			reg = <0x0 0x10103>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
+			operating-points-v2 = <&firestorm_opp>;
+			capacity-dmips-mhz = <1024>;
+			apple,freq-domain = <&cpufreq_hw 1>;
 		};
 
-		cpu6: cpu@10200 {
+		cpu_p10: cpu@10200 {
 			compatible = "apple,firestorm";
 			device_type = "cpu";
 			reg = <0x0 0x10200>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
+			operating-points-v2 = <&firestorm_opp>;
+			capacity-dmips-mhz = <1024>;
+			apple,freq-domain = <&cpufreq_hw 2>;
 		};
 
-		cpu7: cpu@10201 {
+		cpu_p11: cpu@10201 {
 			compatible = "apple,firestorm";
 			device_type = "cpu";
 			reg = <0x0 0x10201>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
+			operating-points-v2 = <&firestorm_opp>;
+			capacity-dmips-mhz = <1024>;
+			apple,freq-domain = <&cpufreq_hw 2>;
 		};
 
-		cpu8: cpu@10202 {
+		cpu_p12: cpu@10202 {
 			compatible = "apple,firestorm";
 			device_type = "cpu";
 			reg = <0x0 0x10202>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
+			operating-points-v2 = <&firestorm_opp>;
+			capacity-dmips-mhz = <1024>;
+			apple,freq-domain = <&cpufreq_hw 2>;
 		};
 
-		cpu9: cpu@10203 {
+		cpu_p13: cpu@10203 {
 			compatible = "apple,firestorm";
 			device_type = "cpu";
 			reg = <0x0 0x10203>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
+			operating-points-v2 = <&firestorm_opp>;
+			capacity-dmips-mhz = <1024>;
+			apple,freq-domain = <&cpufreq_hw 2>;
+		};
+	};
+
+	icestorm_opp: opp-table-0 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp01 {
+			opp-hz = /bits/ 64 <600000000>;
+			opp-level = <1>;
+			clock-latency-ns = <7500>;
+		};
+		opp02 {
+			opp-hz = /bits/ 64 <972000000>;
+			opp-level = <2>;
+			clock-latency-ns = <23000>;
+		};
+		opp03 {
+			opp-hz = /bits/ 64 <1332000000>;
+			opp-level = <3>;
+			clock-latency-ns = <29000>;
+		};
+		opp04 {
+			opp-hz = /bits/ 64 <1704000000>;
+			opp-level = <4>;
+			clock-latency-ns = <40000>;
+		};
+		opp05 {
+			opp-hz = /bits/ 64 <2064000000>;
+			opp-level = <5>;
+			clock-latency-ns = <50000>;
+		};
+	};
+
+	firestorm_opp: opp-table-1 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp01 {
+			opp-hz = /bits/ 64 <600000000>;
+			opp-level = <1>;
+			clock-latency-ns = <8000>;
+		};
+		opp02 {
+			opp-hz = /bits/ 64 <828000000>;
+			opp-level = <2>;
+			clock-latency-ns = <18000>;
+		};
+		opp03 {
+			opp-hz = /bits/ 64 <1056000000>;
+			opp-level = <3>;
+			clock-latency-ns = <19000>;
+		};
+		opp04 {
+			opp-hz = /bits/ 64 <1296000000>;
+			opp-level = <4>;
+			clock-latency-ns = <23000>;
+		};
+		opp05 {
+			opp-hz = /bits/ 64 <1524000000>;
+			opp-level = <5>;
+			clock-latency-ns = <24000>;
+		};
+		opp06 {
+			opp-hz = /bits/ 64 <1752000000>;
+			opp-level = <6>;
+			clock-latency-ns = <28000>;
+		};
+		opp07 {
+			opp-hz = /bits/ 64 <1980000000>;
+			opp-level = <7>;
+			clock-latency-ns = <31000>;
+		};
+		opp08 {
+			opp-hz = /bits/ 64 <2208000000>;
+			opp-level = <8>;
+			clock-latency-ns = <45000>;
+		};
+		opp09 {
+			opp-hz = /bits/ 64 <2448000000>;
+			opp-level = <9>;
+			clock-latency-ns = <49000>;
+		};
+		opp10 {
+			opp-hz = /bits/ 64 <2676000000>;
+			opp-level = <10>;
+			clock-latency-ns = <53000>;
+		};
+		opp11 {
+			opp-hz = /bits/ 64 <2904000000>;
+			opp-level = <11>;
+			clock-latency-ns = <56000>;
+		};
+		opp12 {
+			opp-hz = /bits/ 64 <3036000000>;
+			opp-level = <12>;
+			clock-latency-ns = <56000>;
+		};
+		opp13 {
+			opp-hz = /bits/ 64 <3132000000>;
+			opp-level = <13>;
+			clock-latency-ns = <56000>;
+		};
+		opp14 {
+			opp-hz = /bits/ 64 <3168000000>;
+			opp-level = <14>;
+			clock-latency-ns = <56000>;
+		};
+		opp15 {
+			opp-hz = /bits/ 64 <3228000000>;
+			opp-level = <15>;
+			clock-latency-ns = <56000>;
 		};
 	};
 
@@ -135,6 +318,16 @@
 
 		ranges;
 		nonposted-mmio;
+
+		cpufreq_hw: cpufreq@210e00000 {
+			compatible = "apple,t6000-cluster-cpufreq", "apple,cluster-cpufreq";
+			reg = <0x2 0x10e20000 0 0x1000>,
+				<0x2 0x11e20000 0 0x1000>,
+				<0x2 0x12e20000 0 0x1000>;
+			reg-names = "cluster0", "cluster1", "cluster2";
+
+			#freq-domain-cells = <1>;
+		};
 
 		pmgr: power-management@28e080000 {
 			compatible = "apple,t6000-pmgr", "apple,pmgr", "syscon", "simple-mfd";
