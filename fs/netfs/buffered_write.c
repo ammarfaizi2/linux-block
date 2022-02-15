@@ -618,3 +618,60 @@ error_unlock:
 	return ret;
 }
 EXPORT_SYMBOL(netfs_file_write_iter);
+
+/*
+ * Notification that a previously read-only page is about to become writable.
+ * Note that the caller indicates a single page of a multipage folio.
+ */
+vm_fault_t netfs_page_mkwrite(struct vm_fault *vmf)
+{
+	struct netfs_dirty_region proposal;
+	struct folio *folio = page_folio(vmf->page);
+	struct file *file = vmf->vma->vm_file;
+	struct inode *inode = file_inode(file);
+	struct netfs_inode *ctx = netfs_inode(inode);
+	vm_fault_t ret = VM_FAULT_RETRY;
+	int err;
+
+	_enter("%lx", folio->index);
+
+	if (ctx->ops->validate_for_write(inode, file) < 0)
+		return VM_FAULT_SIGBUS;
+
+	sb_start_pagefault(inode->i_sb);
+
+	if (folio_wait_writeback_killable(folio))
+		goto out;
+
+	if (folio_lock_killable(folio) < 0)
+		goto out;
+
+	err = netfs_flush_conflicting_writes(ctx, file, folio_pos(folio),
+					     folio_size(folio), folio);
+	switch (err) {
+	case 0:
+		break;
+	case -EAGAIN:
+		ret = VM_FAULT_RETRY;
+		goto out;
+	case -ENOMEM:
+		ret = VM_FAULT_OOM;
+		goto out;
+	default:
+		ret = VM_FAULT_SIGBUS;
+		goto out;
+	}
+
+	proposal.from	= folio_pos(folio);
+	proposal.to	= proposal.from + folio_size(folio);
+	proposal.first	= folio->index;
+	proposal.last	= folio->index + folio_nr_pages(folio) - 1;
+	netfs_commit_region(ctx, file, &proposal);
+	file_update_time(file);
+
+	ret = VM_FAULT_LOCKED;
+out:
+	sb_end_pagefault(inode->i_sb);
+	return ret;
+}
+EXPORT_SYMBOL(netfs_page_mkwrite);
