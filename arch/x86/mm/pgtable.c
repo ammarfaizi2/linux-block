@@ -35,6 +35,51 @@ void paravirt_tlb_remove_table(struct mmu_gather *tlb, void *table)
 }
 #endif
 
+#ifdef CONFIG_X86_64
+
+pte_t native_ptep_get_and_clear(pte_t *xp)
+{
+#ifdef CONFIG_SMP
+	return native_make_pte(xchg(&xp->pte, 0));
+#else
+	/* native_local_ptep_get_and_clear,
+	   but duplicated because of cyclic dependency */
+	pte_t ret = *xp;
+	native_pte_clear(NULL, 0, xp);
+	return ret;
+#endif
+}
+
+pmd_t native_pmdp_get_and_clear(pmd_t *xp)
+{
+#ifdef CONFIG_SMP
+	return native_make_pmd(xchg(&xp->pmd, 0));
+#else
+	/* native_local_pmdp_get_and_clear,
+	   but duplicated because of cyclic dependency */
+	pmd_t ret = *xp;
+	native_pmd_clear(xp);
+	return ret;
+#endif
+}
+
+pud_t native_pudp_get_and_clear(pud_t *xp)
+{
+#ifdef CONFIG_SMP
+	return native_make_pud(xchg(&xp->pud, 0));
+#else
+	/* native_local_pudp_get_and_clear,
+	 * but duplicated because of cyclic dependency
+	 */
+	pud_t ret = *xp;
+
+	native_pud_clear(xp);
+	return ret;
+#endif
+}
+
+#endif /* CONFIG_X86_64 */
+
 gfp_t __userpte_alloc_gfp = GFP_PGTABLE_USER | PGTABLE_HIGHMEM;
 
 pgtable_t pte_alloc_one(struct mm_struct *mm)
