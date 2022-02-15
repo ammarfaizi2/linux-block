@@ -12,18 +12,12 @@
 #ifndef _NET_IP_FIB_TYPES_H
 #define _NET_IP_FIB_TYPES_H
 
+#include <linux/refcount_types.h>
+
 #include <net/net_trackers.h>
-#include <net/net_namespace_types.h>
-#include <linux/skbuff_api.h>
-#include <net/flow.h>
-#include <linux/seq_file.h>
-#include <linux/rcupdate.h>
-#include <net/fib_notifier.h>
-#include <net/fib_rules.h>
-#include <net/inetpeer.h>
-#include <linux/percpu.h>
-#include <linux/notifier.h>
-#include <linux/refcount.h>
+#include <net/netlink_types.h>
+
+#include <uapi/linux/in6.h>
 
 struct fib_config {
 	u8			fc_dst_len;
