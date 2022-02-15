@@ -12,6 +12,8 @@
 #include <linux/writeback.h>
 #include <linux/pagevec.h>
 #include <linux/netfs.h>
+#include <crypto/skcipher.h>
+#include <crypto/sha2.h>
 #include <trace/events/netfs.h>
 #include "internal.h"
 
@@ -209,6 +211,238 @@ void afs_create_write_requests(struct netfs_io_request *wreq)
 		if (subreq)
 			netfs_queue_write_request(subreq);
 	}
+}
+
+static void netfs_dump_sg(const char *prefix, struct scatterlist *sg, unsigned int n_sg)
+{
+	unsigned int i;
+
+	for (i = 0; i < n_sg; i++) {
+		void *p = kmap_local_page(sg_page(sg));
+		unsigned int l = min_t(size_t, sg->length, 16);
+
+		printk("%s[%x] %016lx %04x %04x %*phN",
+		       prefix, i, sg->page_link, sg->offset, sg->length,
+		       l, p + sg->offset);
+		kunmap_local(p);
+		sg++;
+	}
+}
+
+/*
+ * Encrypt part of a write for fscrypt.  The caller reserved an extra
+ * scatterlist element before each of source_sg and dest_sg for our purposes,
+ * should we need them.
+ */
+int afs_encrypt_block(struct netfs_io_request *wreq, loff_t pos, size_t len,
+		      struct scatterlist *source_sg, unsigned int n_source,
+		      struct scatterlist *dest_sg, unsigned int n_dest)
+{
+	struct crypto_sync_skcipher *ci;
+	struct skcipher_request *req;
+	struct crypto_skcipher *tfm;
+	struct sha256_state *sha;
+	void *buf = NULL;
+	__be64 *session_key;
+	u8 *iv, *b0;
+	int ret;
+
+	ci = crypto_alloc_sync_skcipher("cts(cbc(aes))", 0, 0);
+	if (IS_ERR(ci)) {
+		ret = PTR_ERR(ci);
+		pr_err("Can't allocate cipher: %d\n", ret);
+		goto error;
+	}
+	tfm = &ci->base;
+
+	if (crypto_sync_skcipher_ivsize(ci) > 16 &&
+	    crypto_sync_skcipher_blocksize(ci) > 16) {
+		pr_err("iv wrong size: %u\n", crypto_sync_skcipher_ivsize(ci));
+		ret = -EINVAL;
+		goto error_ci;
+	}
+
+	ret = -ENOMEM;
+	buf = kzalloc(4 * 16 + sizeof(*sha), GFP_KERNEL);
+	if (!buf)
+		goto error_ci;
+	b0 = buf;
+	iv = buf + 32;
+	session_key = buf + 48;
+	session_key[0] = cpu_to_be64(pos);
+	session_key[1] = cpu_to_le64(pos);
+	sha = buf + 64;
+
+	*(__be64 *)iv = pos;
+
+	ret = crypto_sync_skcipher_setkey(ci, (u8 *)session_key, 16);
+	if (ret < 0) {
+		pr_err("Setkey failed: %d\n", ret);
+		goto error_ci;
+	}
+
+	ret = -ENOMEM;
+	req = skcipher_request_alloc(tfm, GFP_NOFS);
+	if (!req)
+		goto error_ci;
+
+	skcipher_request_set_sync_tfm(req, ci);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+
+	/* If the length is so short that the CTS algorithm will refuse to
+	 * handle it, prepend a predictable block on the front and discard the
+	 * output.  Since CTS does draw data backwards, we can regenerate the
+	 * encryption on just that block at decryption time.
+	 */
+	if (len < 16) {
+		unsigned int i;
+		u8 *p = buf + 16;
+
+		kdebug("preblock %16phN", iv);
+		sha256_init(sha);
+		sha256_update(sha, iv, 32); /* iv and session key */
+		sha256_final(sha, b0);
+		kdebug("preblock %16phN", b0);
+
+		netfs_dump_sg("SRC", source_sg, n_source);
+		if (sg_copy_to_buffer(source_sg, n_source, p, len) != len) {
+			ret = -EIO;
+			goto error_req;
+		}
+
+		for (i = 0; i < len; i++)
+			p[i] += b0[i];
+
+		if (sg_copy_from_buffer(dest_sg, n_dest, p, len) != len) {
+			ret = -EIO;
+			goto error_req;
+		}
+		netfs_dump_sg("DST", dest_sg, n_dest);
+		ret = 0;
+	} else {
+		netfs_dump_sg("SRC", source_sg, n_source);
+		skcipher_request_set_crypt(req, source_sg, dest_sg, len, iv);
+		ret = crypto_skcipher_encrypt(req);
+		if (ret < 0)
+			pr_err("Encrypt failed: %d\n", ret);
+		netfs_dump_sg("DST", dest_sg, n_dest);
+	}
+
+error_req:
+	skcipher_request_free(req);
+error_ci:
+	kfree(buf);
+	crypto_free_sync_skcipher(ci);
+error:
+	return ret;
+}
+
+/*
+ * Encrypt part of a write for fscrypt.  The caller reserved an extra
+ * scatterlist element before each of source_sg and dest_sg for our purposes,
+ * should we need them.
+ */
+int afs_decrypt_block(struct netfs_io_request *wreq, loff_t pos, size_t len,
+		      struct scatterlist *source_sg, unsigned int n_source,
+		      struct scatterlist *dest_sg, unsigned int n_dest)
+{
+	struct crypto_sync_skcipher *ci;
+	struct skcipher_request *req;
+	struct crypto_skcipher *tfm;
+	struct sha256_state *sha;
+	void *buf = NULL;
+	__be64 *session_key;
+	u8 *iv, *b0;
+	int ret;
+
+	ci = crypto_alloc_sync_skcipher("cts(cbc(aes))", 0, 0);
+	if (IS_ERR(ci)) {
+		ret = PTR_ERR(ci);
+		pr_err("Can't allocate cipher: %d\n", ret);
+		goto error;
+	}
+	tfm = &ci->base;
+
+	if (crypto_sync_skcipher_ivsize(ci) > 16 &&
+	    crypto_sync_skcipher_blocksize(ci) > 16) {
+		pr_err("iv wrong size: %u\n", crypto_sync_skcipher_ivsize(ci));
+		ret = -EINVAL;
+		goto error_ci;
+	}
+
+	ret = -ENOMEM;
+	buf = kzalloc(4 * 16 + sizeof(*sha), GFP_KERNEL);
+	if (!buf)
+		goto error_ci;
+	b0 = buf;
+	iv = buf + 32;
+	session_key = buf + 48;
+	session_key[0] = cpu_to_be64(pos);
+	session_key[1] = cpu_to_le64(pos);
+	sha = buf + 64;
+
+	*(__be64 *)iv = pos;
+
+	ret = crypto_sync_skcipher_setkey(ci, (u8 *)session_key, 16);
+	if (ret < 0) {
+		pr_err("Setkey failed: %d\n", ret);
+		goto error_ci;
+	}
+
+	ret = -ENOMEM;
+	req = skcipher_request_alloc(tfm, GFP_NOFS);
+	if (!req)
+		goto error_ci;
+
+	skcipher_request_set_sync_tfm(req, ci);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+
+	/* If the length is so short that the CTS algorithm will refuse to
+	 * handle it, prepend a predictable block on the front and discard the
+	 * output.  Since CTS does draw data backwards, we can regenerate the
+	 * encryption on just that block at decryption time.
+	 */
+	if (len < 16) {
+		unsigned int i;
+		u8 *p = buf + 32;
+
+		kdebug("preblock %16phN", iv);
+		sha256_init(sha);
+		sha256_update(sha, iv, 32); /* iv and session key */
+		sha256_final(sha, b0);
+		kdebug("preblock %16phN", b0);
+
+		netfs_dump_sg("SRC", source_sg, n_source);
+		if (sg_copy_to_buffer(source_sg, n_source, p, len) != len) {
+			kdebug("scopy");
+			ret = -EIO;
+			goto error_req;
+		}
+
+		for (i = 0; i < len; i++)
+			p[i] -= b0[i];
+
+		if (sg_copy_from_buffer(dest_sg, n_dest, p, len) != len) {
+			kdebug("dcopy");
+			ret = -EIO;
+			goto error_req;
+		}
+		netfs_dump_sg("DST", dest_sg, n_dest);
+		ret = 0;
+	} else {
+		skcipher_request_set_crypt(req, source_sg, dest_sg, len, iv);
+		ret = crypto_skcipher_decrypt(req);
+		if (ret < 0)
+			pr_err("Decrypt failed: %d\n", ret);
+	}
+
+error_req:
+	skcipher_request_free(req);
+error_ci:
+	kfree(buf);
+	crypto_free_sync_skcipher(ci);
+error:
+	return ret;
 }
 
 /*

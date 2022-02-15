@@ -425,6 +425,8 @@ const struct netfs_request_ops afs_req_ops = {
 	.validate_for_write	= afs_validate_for_write,
 	.invalidate_cache	= afs_netfs_invalidate_cache,
 	.create_write_requests	= afs_create_write_requests,
+	.encrypt_block		= afs_encrypt_block,
+	.decrypt_block		= afs_decrypt_block,
 };
 
 int afs_write_inode(struct inode *inode, struct writeback_control *wbc)

@@ -58,9 +58,17 @@ static noinline void dump_vnode(struct afs_vnode *vnode, struct afs_vnode *paren
  */
 static void afs_set_netfs_context(struct afs_vnode *vnode)
 {
+	struct afs_super_info *as = AFS_FS_S(vnode->netfs.inode.i_sb);
+	struct netfs_inode *ctx = &vnode->netfs;
+
 	netfs_inode_init(&vnode->netfs, &afs_req_ops);
 	//ctx->min_bshift = ilog2(0x10000);
 	//ctx->obj_bshift = ilog2(0x40000);
+	if (vnode->status.type == AFS_FTYPE_FILE && as->fscrypt) {
+		ctx->crypto_bshift = ilog2(4096);
+		ctx->min_bshift = ctx->crypto_bshift;
+		__set_bit(NETFS_ICTX_ENCRYPTED, &ctx->flags);
+	}
 }
 
 /*
