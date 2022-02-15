@@ -576,6 +576,7 @@ ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
 	struct file *file = iocb->ki_filp;
 	struct inode *inode = file->f_mapping->host;
+	struct netfs_inode *ctx = netfs_inode(inode);
 	ssize_t ret;
 
 	_enter("%llx,%zx,%llx", iocb->ki_pos, iov_iter_count(from), i_size_read(inode));
@@ -595,6 +596,11 @@ ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 
 	ret = file_update_time(file);
 	if (ret)
+		goto error;
+
+	ret = netfs_flush_conflicting_writes(ctx, file, iocb->ki_pos,
+					     iov_iter_count(from), NULL);
+	if (ret < 0 && ret != -EAGAIN)
 		goto error;
 
 	if (iocb->ki_flags & IOCB_DIRECT)

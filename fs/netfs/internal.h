@@ -16,6 +16,12 @@
 #define pr_fmt(fmt) "netfs: " fmt
 
 /*
+ * buffered_flush.c
+ */
+int netfs_flush_conflicting_writes(struct netfs_inode *ctx, struct file *file,
+				   loff_t start, size_t len, struct folio *unlock_this);
+
+/*
  * buffered_read.c
  */
 void netfs_rreq_unlock_folios(struct netfs_io_request *rreq);
