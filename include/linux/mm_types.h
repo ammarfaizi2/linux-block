@@ -1048,6 +1048,14 @@ enum page_entry_size {
 /* test whether an address (unsigned long or pointer) is aligned to PAGE_SIZE */
 #define PAGE_ALIGNED(addr)	IS_ALIGNED((unsigned long)(addr), PAGE_SIZE)
 
+/* Returns the number of pages in this potentially compound page. */
+static inline unsigned long compound_nr(struct page *page)
+{
+	if (!((1UL << PG_head) & page->flags))
+		return 1;
+	return page[1].compound_nr;
+}
+
 static inline unsigned int compound_order(struct page *page)
 {
 	/* Safe to read the PG_head flag without bitops: */

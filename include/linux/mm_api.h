@@ -602,14 +602,6 @@ static inline void set_compound_order(struct page *page, unsigned int order)
 	page[1].compound_nr = 1U << order;
 }
 
-/* Returns the number of pages in this potentially compound page. */
-static inline unsigned long compound_nr(struct page *page)
-{
-	if (!PageHead(page))
-		return 1;
-	return page[1].compound_nr;
-}
-
 void free_compound_page(struct page *page);
 
 #ifdef CONFIG_MMU
