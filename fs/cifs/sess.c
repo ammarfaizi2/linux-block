@@ -126,7 +126,7 @@ int cifs_try_adding_channels(struct cifs_sb_info *cifs_sb, struct cifs_ses *ses)
 	int tries = 0;
 	struct cifs_server_iface *ifaces = NULL;
 	size_t iface_count;
-
+dump_stack();
 	if (ses->server->dialect < SMB30_PROT_ID) {
 		cifs_dbg(VFS, "multichannel is not supported on this protocol version, use 3.0 or above\n");
 		return 0;
@@ -139,9 +139,9 @@ int cifs_try_adding_channels(struct cifs_sb_info *cifs_sb, struct cifs_ses *ses)
 
 	if (left <= 0) {
 		spin_unlock(&ses->chan_lock);
-		cifs_dbg(FYI,
-			 "ses already at max_channels (%zu), nothing to open\n",
-			 ses->chan_max);
+		cifs_dbg(VFS,
+			 "ses already at max_channels (%zu), nothing to open. chan_max %zu\n",
+			 ses->chan_max, ses->chan_count);
 		return 0;
 	}
 
