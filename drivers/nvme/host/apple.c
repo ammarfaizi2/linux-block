@@ -283,9 +283,7 @@ static const struct apple_rtkit_ops apple_nvme_rtkit_ops = {
 static void apple_nvmmu_inval(struct apple_nvme_queue *q, unsigned tag)
 {
 	struct apple_nvme *anv = queue_to_apple_nvme(q);
-	struct apple_nvmmu_tcb *tcb = &q->tcbs[tag];
 
-	memset(tcb, 0, sizeof(*tcb));
 	writel(tag, anv->mmio_nvme + APPLE_NVMMU_TCB_INVAL);
 	if (readl_relaxed(anv->mmio_nvme + APPLE_NVMMU_TCB_STAT))
 		dev_warn(anv->dev, "NVMMU TCB invalidation failed\n");
@@ -297,12 +295,12 @@ static void apple_nvme_submit_cmd(struct apple_nvme_queue *q,
 	u32 tag = nvme_tag_from_cid(cmd->common.command_id);
 	struct apple_nvmmu_tcb *tcb = &q->tcbs[tag];
 
-	memset(tcb, 0, sizeof(*tcb));
 	tcb->opcode = cmd->common.opcode;
 	tcb->prp1 = cmd->common.dptr.prp1;
 	tcb->prp2 = cmd->common.dptr.prp2;
 	tcb->length = cmd->rw.length;
 	tcb->command_id = tag;
+	tcb->dma_flags = 0;
 
 	if (cmd->common.opcode & NVME_OPCODE_DATA_XFER_HOST_TO_CTRL)
 		tcb->dma_flags |= APPLE_ANS_TCB_DMA_TO_DEVICE;
