@@ -36,6 +36,12 @@ static inline bool netfs_mas_is_valid(const void *mas_entry)
 }
 
 /*
+ * buffered_flush.c
+ */
+int netfs_flush_conflicting_writes(struct netfs_i_context *ctx, struct file *file,
+				   loff_t start, size_t len, struct folio *unlock_this);
+
+/*
  * buffered_read.c
  */
 void netfs_rreq_unlock_folios(struct netfs_io_request *rreq);
