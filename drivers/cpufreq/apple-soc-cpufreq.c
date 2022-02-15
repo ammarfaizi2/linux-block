@@ -68,9 +68,9 @@ static int apple_soc_cpufreq_set_target(struct cpufreq_policy *policy, unsigned 
 	unsigned int pstate = policy->freq_table[index].driver_data;
 	u64 reg;
 
-	if (readq_poll_timeout(priv->reg_base + APPLE_CLUSTER_PSTATE, reg,
-			       !(reg & APPLE_CLUSTER_PSTATE_BUSY), 2,
-			       APPLE_CLUSTER_SWITCH_TIMEOUT)) {
+	if (readq_poll_timeout_atomic(priv->reg_base + APPLE_CLUSTER_PSTATE,
+				reg, !(reg & APPLE_CLUSTER_PSTATE_BUSY), 2,
+				APPLE_CLUSTER_SWITCH_TIMEOUT)) {
 		return -EIO;
 	}
 
