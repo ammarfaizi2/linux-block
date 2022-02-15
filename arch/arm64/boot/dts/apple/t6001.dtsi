@@ -43,9 +43,6 @@
 				core2 {
 					cpu = <&cpu_p02>;
 				};
-				core3 {
-					cpu = <&cpu_p03>;
-				};
 			};
 
 			cluster2 {
@@ -57,9 +54,6 @@
 				};
 				core2 {
 					cpu = <&cpu_p12>;
-				};
-				core3 {
-					cpu = <&cpu_p13>;
 				};
 			};
 		};
@@ -119,17 +113,6 @@
 			apple,freq-domain = <&cpufreq_hw 1>;
 		};
 
-		cpu_p03: cpu@10103 {
-			compatible = "apple,firestorm";
-			device_type = "cpu";
-			reg = <0x0 0x10103>;
-			enable-method = "spin-table";
-			cpu-release-addr = <0 0>; /* To be filled by loader */
-			operating-points-v2 = <&firestorm_opp>;
-			capacity-dmips-mhz = <1024>;
-			apple,freq-domain = <&cpufreq_hw 1>;
-		};
-
 		cpu_p10: cpu@10200 {
 			compatible = "apple,firestorm";
 			device_type = "cpu";
@@ -156,17 +139,6 @@
 			compatible = "apple,firestorm";
 			device_type = "cpu";
 			reg = <0x0 0x10202>;
-			enable-method = "spin-table";
-			cpu-release-addr = <0 0>; /* To be filled by loader */
-			operating-points-v2 = <&firestorm_opp>;
-			capacity-dmips-mhz = <1024>;
-			apple,freq-domain = <&cpufreq_hw 2>;
-		};
-
-		cpu_p13: cpu@10203 {
-			compatible = "apple,firestorm";
-			device_type = "cpu";
-			reg = <0x0 0x10203>;
 			enable-method = "spin-table";
 			cpu-release-addr = <0 0>; /* To be filled by loader */
 			operating-points-v2 = <&firestorm_opp>;
