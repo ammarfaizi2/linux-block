@@ -59,6 +59,8 @@ static noinline void dump_vnode(struct afs_vnode *vnode, struct afs_vnode *paren
 static void afs_set_netfs_context(struct afs_vnode *vnode)
 {
 	netfs_i_context_init(&vnode->vfs_inode, &afs_req_ops);
+	//ctx->min_bshift = ilog2(0x10000);
+	//ctx->obj_bshift = ilog2(0x40000);
 }
 
 /*

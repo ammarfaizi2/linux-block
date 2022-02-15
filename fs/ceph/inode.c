@@ -450,6 +450,7 @@ out_unlock:
  */
 struct inode *ceph_alloc_inode(struct super_block *sb)
 {
+	struct netfs_i_context *ctx;
 	struct ceph_inode_info *ci;
 	int i;
 
@@ -461,6 +462,9 @@ struct inode *ceph_alloc_inode(struct super_block *sb)
 
 	/* Set parameters for the netfs library */
 	netfs_i_context_init(&ci->vfs_inode, &ceph_netfs_ops);
+	ctx = netfs_i_context(&ci->vfs_inode);
+	ctx->min_bshift = ilog2(0x10000);
+	ctx->obj_bshift = ilog2(0x40000);
 
 	spin_lock_init(&ci->i_ceph_lock);
 
