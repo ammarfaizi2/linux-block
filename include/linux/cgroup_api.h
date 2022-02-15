@@ -10,6 +10,7 @@
  */
 
 #include <linux/cgroup_types.h>
+#include <linux/cgroup_types_sock.h>
 
 #include <linux/percpu_rwsem_api.h>
 #include <linux/lockdep_api.h>
