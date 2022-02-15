@@ -4,7 +4,6 @@
 
 #include <linux/mem_encrypt.h>
 #include <linux/mm_types.h>
-#include <linux/mm_api_tlb_flush.h>
 
 #include <asm/page.h>
 #include <asm/pgtable_types.h>
@@ -750,8 +749,8 @@ static inline bool pte_accessible(struct mm_struct *mm, pte_t a)
 	if (pte_flags(a) & _PAGE_PRESENT)
 		return true;
 
-	if ((pte_flags(a) & _PAGE_PROTNONE) &&
-			atomic_read(&mm->tlb_flush_pending))
+	/* Open-coded mm_tlb_flush_pending(mm): */
+	if ((pte_flags(a) & _PAGE_PROTNONE) && mm->tlb_flush_pending.counter)
 		return true;
 
 	return false;
@@ -1154,21 +1153,6 @@ static inline int pud_write(pud_t pud)
 	return pud_flags(pud) & _PAGE_RW;
 }
 
-#ifndef pmdp_establish
-#define pmdp_establish pmdp_establish
-static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
-		unsigned long address, pmd_t *pmdp, pmd_t pmd)
-{
-	page_table_check_pmd_set(vma->vm_mm, address, pmdp, pmd);
-	if (IS_ENABLED(CONFIG_SMP)) {
-		return xchg(pmdp, pmd);
-	} else {
-		pmd_t old = *pmdp;
-		WRITE_ONCE(*pmdp, pmd);
-		return old;
-	}
-}
-#endif
 /*
  * Page table pages are page-aligned.  The lower half of the top
  * level is used for userspace and the top half for the kernel.

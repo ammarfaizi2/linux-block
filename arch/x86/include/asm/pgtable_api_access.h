@@ -2,6 +2,8 @@
 #ifndef _ASM_X86_PGTABLE_API_ACCESS_H
 #define _ASM_X86_PGTABLE_API_ACCESS_H
 
+#include <linux/atomic_api.h>
+
 #include <asm/pgtable.h>
 
 #include <asm/x86_init.h>
@@ -66,5 +68,21 @@ static inline bool pud_access_permitted(pud_t pud, bool write)
 {
 	return __pte_access_permitted(pud_val(pud), write);
 }
+
+#ifndef pmdp_establish
+#define pmdp_establish pmdp_establish
+static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
+		unsigned long address, pmd_t *pmdp, pmd_t pmd)
+{
+	page_table_check_pmd_set(vma->vm_mm, address, pmdp, pmd);
+	if (IS_ENABLED(CONFIG_SMP)) {
+		return xchg(pmdp, pmd);
+	} else {
+		pmd_t old = *pmdp;
+		WRITE_ONCE(*pmdp, pmd);
+		return old;
+	}
+}
+#endif
 
 #endif /* _ASM_X86_PGTABLE_API_ACCESS_H */
