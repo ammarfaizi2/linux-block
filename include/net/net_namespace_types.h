@@ -241,4 +241,14 @@ int net_eq(const struct net *net1, const struct net *net2)
 
 #endif
 
+extern struct list_head net_namespace_list;
+
+/* Protected by net_rwsem */
+#define for_each_net(VAR)				\
+	list_for_each_entry(VAR, &net_namespace_list, list)
+#define for_each_net_continue_reverse(VAR)		\
+	list_for_each_entry_continue_reverse(VAR, &net_namespace_list, list)
+#define for_each_net_rcu(VAR)				\
+	list_for_each_entry_rcu(VAR, &net_namespace_list, list)
+
 #endif /* __NET_NET_NAMESPACE_TYPES_H */
