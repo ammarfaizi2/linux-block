@@ -110,6 +110,7 @@
 	EM(netfs_region_trace_free,		"FREE       ")	\
 	EM(netfs_region_trace_new,		"NEW        ")	\
 	EM(netfs_region_trace_put_clear,	"PUT CLEAR  ")	\
+	EM(netfs_region_trace_put_discard,	"PUT DISCARD")	\
 	E_(netfs_region_trace_put_merged,	"PUT MERGED ")
 
 #define netfs_dirty_traces					\

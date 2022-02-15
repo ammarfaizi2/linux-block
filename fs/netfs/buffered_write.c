@@ -724,3 +724,72 @@ error_unlock:
 	return ret;
 }
 EXPORT_SYMBOL(netfs_file_write_iter);
+
+/*
+ * Notification that a previously read-only page is about to become writable.
+ * Note that the caller indicates a single page of a multipage folio.
+ */
+vm_fault_t netfs_page_mkwrite(struct vm_fault *vmf)
+{
+	struct netfs_dirty_region *spare_region;
+	struct folio *folio = page_folio(vmf->page);
+	struct file *file = vmf->vma->vm_file;
+	struct inode *inode = file_inode(file);
+	struct netfs_i_context *ctx = netfs_i_context(inode);
+	vm_fault_t ret = VM_FAULT_RETRY;
+	int err;
+
+	MA_STATE(mas, &ctx->dirty_regions, vmf->page->index, PAGE_SIZE);
+
+	_enter("%lx", folio->index);
+
+	if (ctx->ops->validate_for_write(inode, file) < 0)
+		return VM_FAULT_SIGBUS;
+
+	sb_start_pagefault(inode->i_sb);
+
+	if (folio_wait_writeback_killable(folio))
+		goto out;
+
+	if (folio_lock_killable(folio) < 0)
+		goto out;
+
+	if (mas_expected_entries(&mas, 2) < 0) {
+		ret = VM_FAULT_OOM;
+		goto out;
+	}
+
+	spare_region = netfs_alloc_dirty_region();
+	if (IS_ERR(spare_region)) {
+		ret = VM_FAULT_OOM;
+		goto out;
+	}
+
+	err = netfs_flush_conflicting_writes(ctx, file, folio_pos(folio),
+					     folio_size(folio), folio);
+	switch (err) {
+	case 0:
+		break;
+	case -EAGAIN:
+		ret = VM_FAULT_RETRY;
+		goto out;
+	case -ENOMEM:
+		ret = VM_FAULT_OOM;
+		goto out;
+	default:
+		ret = VM_FAULT_SIGBUS;
+		goto out;
+	}
+
+	netfs_commit_folio(ctx, file, &spare_region, &mas,
+			   folio, 0, folio_size(folio));
+	netfs_commit_region(ctx, &mas, folio_pos(folio), folio_size(folio));
+	file_update_time(file);
+
+	ret = VM_FAULT_LOCKED;
+out:
+	sb_end_pagefault(inode->i_sb);
+	mas_destroy(&mas);
+	netfs_put_dirty_region(ctx, spare_region, netfs_region_trace_put_discard);
+	return ret;
+}

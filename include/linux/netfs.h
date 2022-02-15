@@ -395,6 +395,7 @@ extern int netfs_write_begin(struct file *, struct address_space *,
 			     loff_t, unsigned int, unsigned int, struct folio **,
 			     void **);
 extern ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from);
+extern vm_fault_t netfs_page_mkwrite(struct vm_fault *vmf);
 extern void netfs_invalidate_folio(struct folio *folio, size_t offset, size_t length);
 extern int netfs_releasepage(struct page *page, gfp_t gfp_flags);
 
