@@ -1699,7 +1699,8 @@ static void collapse_file(struct mm_struct *mm,
 
 	xas_set(&xas, start);
 	for (index = start; index < end; index++) {
-		struct page *page = xas_next(&xas);
+		struct folio *folio = xas_next(&xas);
+		struct page *page = &folio->page;
 
 		VM_BUG_ON(index != xas.xa_index);
 		if (is_shmem) {
@@ -1834,7 +1835,7 @@ static void collapse_file(struct mm_struct *mm,
 		}
 
 		if (page_mapped(page))
-			try_to_unmap(page, TTU_IGNORE_MLOCK | TTU_BATCH_FLUSH);
+			try_to_unmap(folio, TTU_IGNORE_MLOCK | TTU_BATCH_FLUSH);
 
 		xas_lock_irq(&xas);
 		xas_set(&xas, index);
