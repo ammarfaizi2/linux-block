@@ -31,7 +31,7 @@ const struct file_operations afs_file_operations = {
 	.release	= afs_release,
 	.llseek		= generic_file_llseek,
 	.read_iter	= afs_file_read_iter,
-	.write_iter	= afs_file_write,
+	.write_iter	= netfs_file_write_iter,
 	.mmap		= afs_file_mmap,
 	.splice_read	= generic_file_splice_read,
 	.splice_write	= iter_file_splice_write,
@@ -54,9 +54,7 @@ const struct address_space_operations afs_file_aops = {
 	.launder_folio	= afs_launder_folio,
 	.release_folio	= netfs_release_folio,
 	.invalidate_folio = netfs_invalidate_folio,
-	.write_begin	= afs_write_begin,
-	.write_end	= afs_write_end,
-	.writepages	= afs_writepages,
+	.writepages	= netfs_writepages,
 };
 
 const struct address_space_operations afs_symlink_aops = {
@@ -70,7 +68,7 @@ static const struct vm_operations_struct afs_vm_ops = {
 	.close		= afs_vm_close,
 	.fault		= filemap_fault,
 	.map_pages	= afs_vm_map_pages,
-	.page_mkwrite	= afs_page_mkwrite,
+	.page_mkwrite	= netfs_page_mkwrite,
 };
 
 /*
@@ -351,8 +349,10 @@ static int afs_symlink_read_folio(struct file *file, struct folio *folio)
 
 static int afs_init_request(struct netfs_io_request *rreq, struct file *file)
 {
-	rreq->netfs_priv = key_get(afs_file_key(file));
+	if (file)
+		rreq->netfs_priv = key_get(afs_file_key(file));
 	rreq->rsize = 4 * 1024 * 1024;
+	rreq->wsize = 16 * 1024 * 1024; // 0x33333;
 	return 0;
 }
 
@@ -369,12 +369,62 @@ static void afs_free_request(struct netfs_io_request *rreq)
 	key_put(rreq->netfs_priv);
 }
 
+static void afs_init_dirty_region(struct netfs_dirty_region *region, struct file *file)
+{
+	region->netfs_priv = key_get(afs_file_key(file));
+}
+
+static void afs_split_dirty_region(struct netfs_dirty_region *front,
+				   struct netfs_dirty_region *back)
+{
+	front->netfs_priv = key_get(back->netfs_priv);
+}
+
+static void afs_free_dirty_region(struct netfs_dirty_region *region)
+{
+	key_put(region->netfs_priv);
+}
+
+static void afs_update_i_size(struct inode *inode, loff_t new_i_size)
+{
+	struct afs_vnode *vnode = AFS_FS_I(inode);
+	loff_t i_size;
+
+	write_seqlock(&vnode->cb_lock);
+	i_size = i_size_read(&vnode->netfs.inode);
+	if (new_i_size > i_size) {
+		i_size_write(&vnode->netfs.inode, new_i_size);
+		inode_set_bytes(&vnode->netfs.inode, new_i_size);
+	}
+	write_sequnlock(&vnode->cb_lock);
+	fscache_update_cookie(afs_vnode_cache(vnode), NULL, &new_i_size);
+}
+
+static int afs_validate_for_write(struct inode *inode, struct file *file)
+{
+	return afs_validate(AFS_FS_I(inode), afs_file_key(file));
+}
+
+static void afs_netfs_invalidate_cache(struct netfs_io_request *wreq)
+{
+	struct afs_vnode *vnode = AFS_FS_I(wreq->inode);
+
+	afs_invalidate_cache(vnode, 0);
+}
+
 const struct netfs_request_ops afs_req_ops = {
 	.init_request		= afs_init_request,
 	.free_request		= afs_free_request,
 	.begin_cache_operation	= fscache_begin_cache_operation,
 	.check_write_begin	= afs_check_write_begin,
 	.issue_read		= afs_issue_read,
+	.init_dirty_region	= afs_init_dirty_region,
+	.split_dirty_region	= afs_split_dirty_region,
+	.free_dirty_region	= afs_free_dirty_region,
+	.update_i_size		= afs_update_i_size,
+	.validate_for_write	= afs_validate_for_write,
+	.invalidate_cache	= afs_netfs_invalidate_cache,
+	.create_write_requests	= afs_create_write_requests,
 };
 
 int afs_write_inode(struct inode *inode, struct writeback_control *wbc)

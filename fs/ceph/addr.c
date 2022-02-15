@@ -359,6 +359,7 @@ static int ceph_init_request(struct netfs_io_request *rreq, struct file *file)
 	int ret = 0;
 
 	rreq->rsize = 1024 * 1024;
+	rreq->wsize = 1024 * 1024;
 
 	if (rreq->origin != NETFS_READAHEAD)
 		return 0;
