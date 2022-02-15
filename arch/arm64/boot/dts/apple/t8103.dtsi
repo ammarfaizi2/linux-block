@@ -431,34 +431,6 @@
 			status = "disabled"; /* only used in J293/J313 */
 		};
 
-		nub_spmi0: spmi@23d0d9300 {
-			compatible = "apple,t8103-spmi","apple,spmi";
-			reg = <0x2 0x3d0d9300 0x0 0x100>;
-			#address-cells = <2>;
-			#size-cells = <0>;
-
-			pmu@f {
-				compatible = "apple,sera-pmu", "apple,spmi-pmu";
-				reg = <0xf SPMI_USID>;
-				#address-cells = <1>;
-				#size-cells = <1>;
-
-				rtc@d000 {
-					compatible = "apple,sera-pmu-rtc", "apple,spmi-pmu-rtc";
-					reg = <0xd000 0x200>;
-					reg-names = "rtc";
-					apple,rtc-counter = <0xd002>;
-					apple,rtc-offset = <0xd100>;
-				};
-
-				system-pm@9f00 {
-					compatible = "apple,sera-pmu-pm", "apple,spmi-pmu-pm";
-					reg = <0x9f00 0x1000>, <0xd001 0x1>;
-					reg-names = "leg_scrpad", "pm_setting";
-				};
-			};
-		};
-
 		serial0: serial@235200000 {
 			compatible = "apple,s5l-uart";
 			reg = <0x2 0x35200000 0x0 0x1000>;
@@ -622,18 +594,6 @@
 			smc_gpio: gpio {
 				gpio-controller;
 				#gpio-cells = <2>;
-			};
-
-			smc_rtc: rtc {
-				nvmem-cells = <&rtc_offset>;
-				nvmem-cell-names = "rtc_offset";
-			};
-
-			smc_reboot: reboot {
-				nvmem-cells = <&shutdown_flag>, <&boot_stage>,
-					<&boot_error_count>, <&panic_count>, <&pm_setting>;
-				nvmem-cell-names = "shutdown_flag", "boot_stage",
-					"boot_error_count", "panic_count", "pm_setting";
 			};
 		};
 
