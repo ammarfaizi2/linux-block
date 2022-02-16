@@ -21,21 +21,31 @@
 #ifndef _LINUX_NETDEVICE_API_H
 #define _LINUX_NETDEVICE_API_H
 
-#include <linux/rculist.h>
-#include <linux/smp_types.h>
 #include <linux/netdevice_types.h>
 
+#include <linux/preempt.h>
+#include <linux/percpu.h>
+#include <linux/irqflags.h>
+#include <linux/err.h>
+#include <linux/minmax.h>
 #include <linux/dynamic_queue_limits.h>
 #include <linux/netdev_features.h>
+#include <linux/smp_types.h>
 
-#include <net/net_namespace.h>
 #include <net/xdp.h>
 #include <net/net_trackers.h>
 
 #include <uapi/linux/netdevice.h>
 #include <uapi/linux/if_bonding.h>
 
-#include <linux/skbuff_api.h>
+#include <asm/ioctl.h>
+
+#include <linux/skbuff_types.h>
+
+#ifndef CONFIG_PCPU_DEV_REFCNT
+#include <linux/refcount_api.h>
+#include <linux/irqflags.h>
+#endif
 
 /* This structure contains an instance of an RX queue. */
 struct ____cacheline_aligned_in_smp netdev_rx_queue {
@@ -2364,7 +2374,5 @@ extern struct list_head ptype_all __read_mostly;
 extern struct list_head ptype_base[PTYPE_HASH_SIZE] __read_mostly;
 
 extern struct net_device *blackhole_netdev;
-
-#include <linux/netdevice_api_extra.h>
 
 #endif	/* _LINUX_NETDEVICE_API_H */

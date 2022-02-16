@@ -38,6 +38,7 @@
 #endif
 
 struct softnet_data;
+struct xfrm_policy;
 
 #define XFRM_PROTO_ESP		50
 #define XFRM_PROTO_AH		51

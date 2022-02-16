@@ -2,6 +2,7 @@
 #ifndef __LINUX_RTNETLINK_H
 #define __LINUX_RTNETLINK_H
 
+#include <linux/rcupdate.h>
 #include <linux/mutex_types.h>
 #include <linux/netdevice_types.h>
 #include <linux/wait_types.h>

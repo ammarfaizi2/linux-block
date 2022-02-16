@@ -11,6 +11,7 @@
 #ifndef IEEE80211_I_H
 #define IEEE80211_I_H
 
+#include <linux/notifier_api.h>
 #include <linux/tasklet_types.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
