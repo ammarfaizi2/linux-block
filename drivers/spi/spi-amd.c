@@ -19,10 +19,6 @@
 #define AMD_SPI_FIFO_CLEAR	BIT(20)
 #define AMD_SPI_BUSY		BIT(31)
 
-#define AMD_SPI_OPCODE_REG	0x45
-#define AMD_SPI_CMD_TRIGGER_REG	0x47
-#define AMD_SPI_TRIGGER_CMD	BIT(7)
-
 #define AMD_SPI_OPCODE_MASK	0xFF
 
 #define AMD_SPI_ALT_CS_REG	0x1D
@@ -39,15 +35,9 @@
 #define AMD_SPI_XFER_TX		1
 #define AMD_SPI_XFER_RX		2
 
-enum amd_spi_versions {
-	AMD_SPI_V1 = 1,	/* AMDI0061 */
-	AMD_SPI_V2,	/* AMDI0062 */
-};
-
 struct amd_spi {
 	void __iomem *io_remap_addr;
 	unsigned long io_base_addr;
-	enum amd_spi_versions version;
 };
 
 static inline u8 amd_spi_readreg8(struct amd_spi *amd_spi, int idx)
@@ -91,29 +81,14 @@ static void amd_spi_select_chip(struct amd_spi *amd_spi, u8 cs)
 	amd_spi_setclear_reg8(amd_spi, AMD_SPI_ALT_CS_REG, cs, AMD_SPI_ALT_CS_MASK);
 }
 
-static inline void amd_spi_clear_chip(struct amd_spi *amd_spi, u8 chip_select)
-{
-	amd_spi_writereg8(amd_spi, AMD_SPI_ALT_CS_REG, chip_select & ~AMD_SPI_ALT_CS_MASK);
-}
-
 static void amd_spi_clear_fifo_ptr(struct amd_spi *amd_spi)
 {
 	amd_spi_setclear_reg32(amd_spi, AMD_SPI_CTRL0_REG, AMD_SPI_FIFO_CLEAR, AMD_SPI_FIFO_CLEAR);
 }
 
-static int amd_spi_set_opcode(struct amd_spi *amd_spi, u8 cmd_opcode)
+static void amd_spi_set_opcode(struct amd_spi *amd_spi, u8 cmd_opcode)
 {
-	switch (amd_spi->version) {
-	case AMD_SPI_V1:
-		amd_spi_setclear_reg32(amd_spi, AMD_SPI_CTRL0_REG, cmd_opcode,
-				       AMD_SPI_OPCODE_MASK);
-		return 0;
-	case AMD_SPI_V2:
-		amd_spi_writereg8(amd_spi, AMD_SPI_OPCODE_REG, cmd_opcode);
-		return 0;
-	default:
-		return -ENODEV;
-	}
+	amd_spi_setclear_reg32(amd_spi, AMD_SPI_CTRL0_REG, cmd_opcode, AMD_SPI_OPCODE_MASK);
 }
 
 static inline void amd_spi_set_rx_count(struct amd_spi *amd_spi, u8 rx_count)
@@ -129,21 +104,9 @@ static inline void amd_spi_set_tx_count(struct amd_spi *amd_spi, u8 tx_count)
 static int amd_spi_busy_wait(struct amd_spi *amd_spi)
 {
 	u32 val;
-	int reg;
 
-	switch (amd_spi->version) {
-	case AMD_SPI_V1:
-		reg = AMD_SPI_CTRL0_REG;
-		break;
-	case AMD_SPI_V2:
-		reg = AMD_SPI_STATUS_REG;
-		break;
-	default:
-		return -ENODEV;
-	}
-
-	return readl_poll_timeout(amd_spi->io_remap_addr + reg, val,
-				  !(val & AMD_SPI_BUSY), 20, 2000000);
+	return readl_poll_timeout(amd_spi->io_remap_addr + AMD_SPI_CTRL0_REG,
+				  val, !(val & AMD_SPI_BUSY), 20, 2000000);
 }
 
 static int amd_spi_execute_opcode(struct amd_spi *amd_spi)
@@ -154,20 +117,10 @@ static int amd_spi_execute_opcode(struct amd_spi *amd_spi)
 	if (ret)
 		return ret;
 
-	switch (amd_spi->version) {
-	case AMD_SPI_V1:
-		/* Set ExecuteOpCode bit in the CTRL0 register */
-		amd_spi_setclear_reg32(amd_spi, AMD_SPI_CTRL0_REG, AMD_SPI_EXEC_CMD,
-				       AMD_SPI_EXEC_CMD);
-		return 0;
-	case AMD_SPI_V2:
-		/* Trigger the command execution */
-		amd_spi_setclear_reg8(amd_spi, AMD_SPI_CMD_TRIGGER_REG,
-				      AMD_SPI_TRIGGER_CMD, AMD_SPI_TRIGGER_CMD);
-		return 0;
-	default:
-		return -ENODEV;
-	}
+	/* Set ExecuteOpCode bit in the CTRL0 register */
+	amd_spi_setclear_reg32(amd_spi, AMD_SPI_CTRL0_REG, AMD_SPI_EXEC_CMD, AMD_SPI_EXEC_CMD);
+
+	return 0;
 }
 
 static int amd_spi_master_setup(struct spi_device *spi)
@@ -237,17 +190,6 @@ static inline int amd_spi_fifo_xfer(struct amd_spi *amd_spi,
 	message->actual_length = tx_len + rx_len + 1;
 	/* complete the transaction */
 	message->status = 0;
-
-	switch (amd_spi->version) {
-	case AMD_SPI_V1:
-		break;
-	case AMD_SPI_V2:
-		amd_spi_clear_chip(amd_spi, message->spi->chip_select);
-		break;
-	default:
-		return -ENODEV;
-	}
-
 	spi_finalize_current_message(master);
 
 	return 0;
@@ -293,8 +235,6 @@ static int amd_spi_probe(struct platform_device *pdev)
 	}
 	dev_dbg(dev, "io_remap_address: %p\n", amd_spi->io_remap_addr);
 
-	amd_spi->version = (enum amd_spi_versions) device_get_match_data(dev);
-
 	/* Initialize the spi_master fields */
 	master->bus_num = 0;
 	master->num_chipselect = 4;
@@ -320,8 +260,7 @@ err_free_master:
 
 #ifdef CONFIG_ACPI
 static const struct acpi_device_id spi_acpi_match[] = {
-	{ "AMDI0061", AMD_SPI_V1 },
-	{ "AMDI0062", AMD_SPI_V2 },
+	{ "AMDI0061", 0 },
 	{},
 };
 MODULE_DEVICE_TABLE(acpi, spi_acpi_match);
@@ -330,7 +269,7 @@ MODULE_DEVICE_TABLE(acpi, spi_acpi_match);
 static struct platform_driver amd_spi_driver = {
 	.driver = {
 		.name = "amd_spi",
-		.acpi_match_table = spi_acpi_match,
+		.acpi_match_table = ACPI_PTR(spi_acpi_match),
 	},
 	.probe = amd_spi_probe,
 };
