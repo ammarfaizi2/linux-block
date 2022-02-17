@@ -7,6 +7,7 @@
 
 #include <linux/atomic_api.h>
 #include <linux/uio_api.h>
+#include <linux/page-flags.h>
 #include <linux/mm_page_address.h>
 #include <linux/mempool.h>
 /* struct bio, bio_vec and BIO_* flags are defined in blk_types.h */
