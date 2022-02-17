@@ -2618,6 +2618,20 @@ repeat:
 	goto repeat;
 }
 
+static void warn_flush_attempt(struct workqueue_struct *wq)
+{
+	static DEFINE_RATELIMIT_STATE(flush_warn_rs, 600 * HZ, 1);
+
+
+	/* Use ratelimit for now in order not to flood warning messages. */
+	ratelimit_set_flags(&flush_warn_rs, RATELIMIT_MSG_ON_RELEASE);
+	if (!__ratelimit(&flush_warn_rs))
+		return;
+	/* Don't use WARN_ON() for now in order not to break kernel testing. */
+	pr_warn("Please do not flush %s WQ.\n", wq->name);
+	dump_stack();
+}
+
 /**
  * check_flush_dependency - check for flush dependency sanity
  * @target_wq: workqueue being flushed
@@ -2634,6 +2648,9 @@ static void check_flush_dependency(struct workqueue_struct *target_wq,
 {
 	work_func_t target_func = target_work ? target_work->func : NULL;
 	struct worker *worker;
+
+	if (unlikely(target_wq->flags & WQ_WARN_FLUSH_ATTEMPT))
+		warn_flush_attempt(target_wq);
 
 	if (target_wq->flags & WQ_MEM_RECLAIM)
 		return;
@@ -6061,18 +6078,20 @@ void __init workqueue_init_early(void)
 		ordered_wq_attrs[i] = attrs;
 	}
 
-	system_wq = alloc_workqueue("events", 0, 0);
-	system_highpri_wq = alloc_workqueue("events_highpri", WQ_HIGHPRI, 0);
-	system_long_wq = alloc_workqueue("events_long", 0, 0);
-	system_unbound_wq = alloc_workqueue("events_unbound", WQ_UNBOUND,
+	system_wq = alloc_workqueue("events", WQ_WARN_FLUSH_ATTEMPT, 0);
+	system_highpri_wq = alloc_workqueue("events_highpri",
+					    WQ_WARN_FLUSH_ATTEMPT | WQ_HIGHPRI, 0);
+	system_long_wq = alloc_workqueue("events_long", WQ_WARN_FLUSH_ATTEMPT, 0);
+	system_unbound_wq = alloc_workqueue("events_unbound", WQ_WARN_FLUSH_ATTEMPT | WQ_UNBOUND,
 					    WQ_UNBOUND_MAX_ACTIVE);
-	system_freezable_wq = alloc_workqueue("events_freezable",
-					      WQ_FREEZABLE, 0);
-	system_power_efficient_wq = alloc_workqueue("events_power_efficient",
-					      WQ_POWER_EFFICIENT, 0);
-	system_freezable_power_efficient_wq = alloc_workqueue("events_freezable_power_efficient",
-					      WQ_FREEZABLE | WQ_POWER_EFFICIENT,
-					      0);
+	system_freezable_wq =
+		alloc_workqueue("events_freezable", WQ_WARN_FLUSH_ATTEMPT | WQ_FREEZABLE, 0);
+	system_power_efficient_wq =
+		alloc_workqueue("events_power_efficient",
+				WQ_WARN_FLUSH_ATTEMPT | WQ_POWER_EFFICIENT, 0);
+	system_freezable_power_efficient_wq =
+		alloc_workqueue("events_freezable_power_efficient",
+				WQ_WARN_FLUSH_ATTEMPT | WQ_FREEZABLE | WQ_POWER_EFFICIENT, 0);
 	BUG_ON(!system_wq || !system_highpri_wq || !system_long_wq ||
 	       !system_unbound_wq || !system_freezable_wq ||
 	       !system_power_efficient_wq ||
