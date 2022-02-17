@@ -112,7 +112,7 @@ struct pci_bridge_reg_behavior;
 struct pci_bridge_emul {
 	struct pci_bridge_emul_conf conf;
 	struct pci_bridge_emul_pcie_conf pcie_conf;
-	struct pci_bridge_emul_ops *ops;
+	const struct pci_bridge_emul_ops *ops;
 	struct pci_bridge_reg_behavior *pci_regs_behavior;
 	struct pci_bridge_reg_behavior *pcie_cap_regs_behavior;
 	void *data;
@@ -120,7 +120,17 @@ struct pci_bridge_emul {
 };
 
 enum {
-	PCI_BRIDGE_EMUL_NO_PREFETCHABLE_BAR = BIT(0),
+	/*
+	 * PCI bridge does not support forwarding of prefetchable memory
+	 * requests between primary and secondary buses.
+	 */
+	PCI_BRIDGE_EMUL_NO_PREFMEM_FORWARD = BIT(0),
+
+	/*
+	 * PCI bridge does not support forwarding of IO requests between
+	 * primary and secondary buses.
+	 */
+	PCI_BRIDGE_EMUL_NO_IO_FORWARD = BIT(1),
 };
 
 int pci_bridge_emul_init(struct pci_bridge_emul *bridge,

@@ -438,12 +438,6 @@ static int mvebu_pcie_handle_iobase_change(struct mvebu_pcie_port *port)
 		return mvebu_pcie_set_window(port, port->io_target, port->io_attr,
 					     &desired, &port->iowin);
 
-	if (!mvebu_has_ioport(port)) {
-		dev_WARN(&port->pcie->pdev->dev,
-			 "Attempt to set IO when IO is disabled\n");
-		return -EOPNOTSUPP;
-	}
-
 	/*
 	 * We read the PCI-to-PCI bridge emulated registers, and
 	 * calculate the base address and size of the address decoding
@@ -552,15 +546,20 @@ mvebu_pci_bridge_emul_pcie_conf_read(struct pci_bridge_emul *bridge,
 
 	case PCI_EXP_LNKCAP:
 		/*
-		 * PCIe requires the clock power management capability to be
-		 * hard-wired to zero for downstream ports
+		 * PCIe requires that the Clock Power Management capability bit
+		 * is hard-wired to zero for downstream ports but HW returns 1.
+		 * Additionally enable Data Link Layer Link Active Reporting
+		 * Capable bit as DL_Active indication is provided too.
 		 */
-		*value = mvebu_readl(port, PCIE_CAP_PCIEXP + PCI_EXP_LNKCAP) &
-			 ~PCI_EXP_LNKCAP_CLKPM;
+		*value = (mvebu_readl(port, PCIE_CAP_PCIEXP + PCI_EXP_LNKCAP) &
+			  ~PCI_EXP_LNKCAP_CLKPM) | PCI_EXP_LNKCAP_DLLLARC;
 		break;
 
 	case PCI_EXP_LNKCTL:
-		*value = mvebu_readl(port, PCIE_CAP_PCIEXP + PCI_EXP_LNKCTL);
+		/* DL_Active indication is provided via PCIE_STAT_OFF */
+		*value = mvebu_readl(port, PCIE_CAP_PCIEXP + PCI_EXP_LNKCTL) |
+			 (mvebu_pcie_link_up(port) ?
+			  (PCI_EXP_LNKSTA_DLLLA << 16) : 0);
 		break;
 
 	case PCI_EXP_SLTCTL:
@@ -599,24 +598,18 @@ mvebu_pci_bridge_emul_base_conf_write(struct pci_bridge_emul *bridge,
 
 	switch (reg) {
 	case PCI_COMMAND:
-		if (!mvebu_has_ioport(port)) {
-			conf->command = cpu_to_le16(
-				le16_to_cpu(conf->command) & ~PCI_COMMAND_IO);
-			new &= ~PCI_COMMAND_IO;
-		}
-
 		mvebu_writel(port, new, PCIE_CMD_OFF);
 		break;
 
 	case PCI_IO_BASE:
-		if ((mask & 0xffff) && mvebu_pcie_handle_iobase_change(port)) {
+		if ((mask & 0xffff) && mvebu_has_ioport(port) &&
+		    mvebu_pcie_handle_iobase_change(port)) {
 			/* On error disable IO range */
 			conf->iobase &= ~0xf0;
 			conf->iolimit &= ~0xf0;
+			conf->iobase |= 0xf0;
 			conf->iobaseupper = cpu_to_le16(0x0000);
 			conf->iolimitupper = cpu_to_le16(0x0000);
-			if (mvebu_has_ioport(port))
-				conf->iobase |= 0xf0;
 		}
 		break;
 
@@ -630,14 +623,14 @@ mvebu_pci_bridge_emul_base_conf_write(struct pci_bridge_emul *bridge,
 		break;
 
 	case PCI_IO_BASE_UPPER16:
-		if (mvebu_pcie_handle_iobase_change(port)) {
+		if (mvebu_has_ioport(port) &&
+		    mvebu_pcie_handle_iobase_change(port)) {
 			/* On error disable IO range */
 			conf->iobase &= ~0xf0;
 			conf->iolimit &= ~0xf0;
+			conf->iobase |= 0xf0;
 			conf->iobaseupper = cpu_to_le16(0x0000);
 			conf->iolimitupper = cpu_to_le16(0x0000);
-			if (mvebu_has_ioport(port))
-				conf->iobase |= 0xf0;
 		}
 		break;
 
@@ -675,10 +668,9 @@ mvebu_pci_bridge_emul_pcie_conf_write(struct pci_bridge_emul *bridge,
 
 	case PCI_EXP_LNKCTL:
 		/*
-		 * If we don't support CLKREQ, we must ensure that the
-		 * CLKREQ enable bit always reads zero.  Since we haven't
-		 * had this capability, and it's dependent on board wiring,
-		 * disable it for the time being.
+		 * PCIe requires that the Enable Clock Power Management bit
+		 * is hard-wired to zero for downstream ports but HW allows
+		 * to change it.
 		 */
 		new &= ~PCI_EXP_LNKCTL_CLKREQ_EN;
 
@@ -709,7 +701,7 @@ mvebu_pci_bridge_emul_pcie_conf_write(struct pci_bridge_emul *bridge,
 	}
 }
 
-static struct pci_bridge_emul_ops mvebu_pci_bridge_emul_ops = {
+static const struct pci_bridge_emul_ops mvebu_pci_bridge_emul_ops = {
 	.read_base = mvebu_pci_bridge_emul_base_conf_read,
 	.write_base = mvebu_pci_bridge_emul_base_conf_write,
 	.read_pcie = mvebu_pci_bridge_emul_pcie_conf_read,
@@ -722,19 +714,23 @@ static struct pci_bridge_emul_ops mvebu_pci_bridge_emul_ops = {
  */
 static int mvebu_pci_bridge_emul_init(struct mvebu_pcie_port *port)
 {
+	unsigned int bridge_flags = PCI_BRIDGE_EMUL_NO_PREFMEM_FORWARD;
 	struct pci_bridge_emul *bridge = &port->bridge;
+	u32 dev_id = mvebu_readl(port, PCIE_DEV_ID_OFF);
+	u32 dev_rev = mvebu_readl(port, PCIE_DEV_REV_OFF);
 	u32 pcie_cap = mvebu_readl(port, PCIE_CAP_PCIEXP);
 	u8 pcie_cap_ver = ((pcie_cap >> 16) & PCI_EXP_FLAGS_VERS);
 
-	bridge->conf.vendor = PCI_VENDOR_ID_MARVELL;
-	bridge->conf.device = mvebu_readl(port, PCIE_DEV_ID_OFF) >> 16;
-	bridge->conf.class_revision =
-		mvebu_readl(port, PCIE_DEV_REV_OFF) & 0xff;
+	bridge->conf.vendor = cpu_to_le16(dev_id & 0xffff);
+	bridge->conf.device = cpu_to_le16(dev_id >> 16);
+	bridge->conf.class_revision = cpu_to_le32(dev_rev & 0xff);
 
 	if (mvebu_has_ioport(port)) {
 		/* We support 32 bits I/O addressing */
 		bridge->conf.iobase = PCI_IO_RANGE_TYPE_32;
 		bridge->conf.iolimit = PCI_IO_RANGE_TYPE_32;
+	} else {
+		bridge_flags |= PCI_BRIDGE_EMUL_NO_IO_FORWARD;
 	}
 
 	/*
@@ -747,7 +743,7 @@ static int mvebu_pci_bridge_emul_init(struct mvebu_pcie_port *port)
 	bridge->data = port;
 	bridge->ops = &mvebu_pci_bridge_emul_ops;
 
-	return pci_bridge_emul_init(bridge, PCI_BRIDGE_EMUL_NO_PREFETCHABLE_BAR);
+	return pci_bridge_emul_init(bridge, bridge_flags);
 }
 
 static inline struct mvebu_pcie *sys_to_pcie(struct pci_sys_data *sys)
@@ -1331,8 +1327,6 @@ static int mvebu_pcie_probe(struct platform_device *pdev)
 		mvebu_pcie_setup_hw(port);
 		mvebu_pcie_set_local_dev_nr(port, 0);
 	}
-
-	pcie->nports = i;
 
 	bridge->sysdata = pcie;
 	bridge->ops = &mvebu_pcie_ops;

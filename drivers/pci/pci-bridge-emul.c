@@ -377,9 +377,18 @@ int pci_bridge_emul_init(struct pci_bridge_emul *bridge,
 			~(BIT(10) << 16);
 	}
 
-	if (flags & PCI_BRIDGE_EMUL_NO_PREFETCHABLE_BAR) {
+	if (flags & PCI_BRIDGE_EMUL_NO_PREFMEM_FORWARD) {
 		bridge->pci_regs_behavior[PCI_PREF_MEMORY_BASE / 4].ro = ~0;
 		bridge->pci_regs_behavior[PCI_PREF_MEMORY_BASE / 4].rw = 0;
+	}
+
+	if (flags & PCI_BRIDGE_EMUL_NO_IO_FORWARD) {
+		bridge->pci_regs_behavior[PCI_COMMAND / 4].ro |= PCI_COMMAND_IO;
+		bridge->pci_regs_behavior[PCI_COMMAND / 4].rw &= ~PCI_COMMAND_IO;
+		bridge->pci_regs_behavior[PCI_IO_BASE / 4].ro |= GENMASK(15, 0);
+		bridge->pci_regs_behavior[PCI_IO_BASE / 4].rw &= ~GENMASK(15, 0);
+		bridge->pci_regs_behavior[PCI_IO_BASE_UPPER16 / 4].ro = ~0;
+		bridge->pci_regs_behavior[PCI_IO_BASE_UPPER16 / 4].rw = 0;
 	}
 
 	return 0;
