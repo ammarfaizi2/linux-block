@@ -592,8 +592,7 @@ ssize_t ftrace_notrace_write(struct file *file, const char __user *ubuf,
 			     size_t cnt, loff_t *ppos);
 int ftrace_regex_release(struct inode *inode, struct file *file);
 
-void __init
-ftrace_set_early_filter(struct ftrace_ops *ops, char *buf, int enable);
+void ftrace_set_early_filter(struct ftrace_ops *ops, char *buf, int enable);
 
 /* defined in arch */
 extern int ftrace_ip_converted(unsigned long ip);

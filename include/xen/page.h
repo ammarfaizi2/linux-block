@@ -51,7 +51,7 @@ struct xen_memory_region {
 
 #define XEN_EXTRA_MEM_MAX_REGIONS 128 /* == E820_MAX_ENTRIES_ZEROPAGE */
 
-extern __initdata
+extern
 struct xen_memory_region xen_extra_mem[XEN_EXTRA_MEM_MAX_REGIONS];
 
 extern unsigned long xen_released_pages;

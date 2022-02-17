@@ -54,15 +54,15 @@ int nfc_llcp_set_remote_gb(struct nfc_dev *dev, const u8 *gb, u8 gb_len);
 u8 *nfc_llcp_general_bytes(struct nfc_dev *dev, size_t *general_bytes_len);
 int nfc_llcp_data_received(struct nfc_dev *dev, struct sk_buff *skb);
 struct nfc_llcp_local *nfc_llcp_find_local(struct nfc_dev *dev);
-int __init nfc_llcp_init(void);
+int nfc_llcp_init(void);
 void nfc_llcp_exit(void);
 void nfc_llcp_free_sdp_tlv(struct nfc_llcp_sdp_tlv *sdp);
 void nfc_llcp_free_sdp_tlv_list(struct hlist_head *head);
 
-int __init rawsock_init(void);
+int rawsock_init(void);
 void rawsock_exit(void);
 
-int __init af_nfc_init(void);
+int af_nfc_init(void);
 void af_nfc_exit(void);
 int nfc_proto_register(const struct nfc_protocol *nfc_proto);
 void nfc_proto_unregister(const struct nfc_protocol *nfc_proto);
@@ -70,7 +70,7 @@ void nfc_proto_unregister(const struct nfc_protocol *nfc_proto);
 extern int nfc_devlist_generation;
 extern struct mutex nfc_devlist_mutex;
 
-int __init nfc_genl_init(void);
+int nfc_genl_init(void);
 void nfc_genl_exit(void);
 
 void nfc_genl_data_init(struct nfc_genl_data *genl_data);

@@ -1521,8 +1521,8 @@ static inline void mm_dec_nr_ptes(struct mm_struct *mm) {}
 int __pte_alloc(struct mm_struct *mm, pmd_t *pmd);
 int __pte_alloc_kernel(pmd_t *pmd);
 
-extern void __init pagecache_init(void);
-extern void __init free_area_init_memoryless_node(int nid);
+extern void pagecache_init(void);
+extern void free_area_init_memoryless_node(int nid);
 extern void free_initmem(void);
 
 /*
@@ -1608,7 +1608,7 @@ static inline int early_pfn_to_nid(unsigned long pfn)
 }
 #else
 /* please see mm/page_alloc.c */
-extern int __meminit early_pfn_to_nid(unsigned long pfn);
+extern int early_pfn_to_nid(unsigned long pfn);
 #endif
 
 extern void set_dma_reserve(unsigned long new_dma_reserve);
@@ -1617,9 +1617,9 @@ extern void memmap_init_range(unsigned long, int, unsigned long,
 		struct vmem_altmap *, int migratetype);
 extern void setup_per_zone_wmarks(void);
 extern void calculate_min_free_kbytes(void);
-extern int __meminit init_per_zone_wmark_min(void);
+extern int init_per_zone_wmark_min(void);
 extern void mem_init(void);
-extern void __init mmap_init(void);
+extern void mmap_init(void);
 extern void show_mem(unsigned int flags, nodemask_t *nodemask);
 extern long si_mem_available(void);
 extern void si_meminfo(struct sysinfo * val);
@@ -2336,7 +2336,7 @@ static inline bool page_is_guard(struct page *page) { return false; }
 #endif /* CONFIG_DEBUG_PAGEALLOC */
 
 #if MAX_NUMNODES > 1
-void __init setup_nr_node_ids(void);
+void setup_nr_node_ids(void);
 #else
 static inline void setup_nr_node_ids(void) {}
 #endif

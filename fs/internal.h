@@ -24,7 +24,7 @@ struct statx;
  * block/bdev.c
  */
 #ifdef CONFIG_BLOCK
-extern void __init bdev_cache_init(void);
+extern void bdev_cache_init(void);
 
 void emergency_thaw_bdev(struct super_block *sb);
 #else
@@ -46,7 +46,7 @@ int __block_write_begin_int(struct folio *folio, loff_t pos, unsigned len,
 /*
  * char_dev.c
  */
-extern void __init chrdev_init(void);
+extern void chrdev_init(void);
 
 /*
  * fs_context.c
@@ -81,7 +81,7 @@ extern int finish_automount(struct vfsmount *, struct path *);
 
 extern int sb_prepare_remount_readonly(struct super_block *);
 
-extern void __init mnt_init(void);
+extern void mnt_init(void);
 
 extern int __mnt_want_write_file(struct file *);
 extern void __mnt_drop_write_file(struct file *);

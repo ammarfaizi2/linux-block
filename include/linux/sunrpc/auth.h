@@ -144,8 +144,8 @@ struct rpc_credops {
 extern const struct rpc_authops	authunix_ops;
 extern const struct rpc_authops	authnull_ops;
 
-int __init		rpc_init_authunix(void);
-int __init		rpcauth_init_module(void);
+int			rpc_init_authunix(void);
+int			rpcauth_init_module(void);
 void			rpcauth_remove_module(void);
 void 			rpc_destroy_authunix(void);
 

@@ -33,10 +33,10 @@
 
 #include <uapi/linux/fs.h>
 
-extern void __init inode_init(void);
-extern void __init inode_init_early(void);
-extern void __init files_init(void);
-extern void __init files_maxfiles_init(void);
+extern void inode_init(void);
+extern void inode_init_early(void);
+extern void files_init(void);
+extern void files_maxfiles_init(void);
 
 extern unsigned long get_max_files(void);
 /*
@@ -1189,8 +1189,8 @@ extern int finish_open(struct file *file, struct dentry *dentry,
 extern int finish_no_open(struct file *file, struct dentry *dentry);
 
 /* fs/dcache.c */
-extern void __init vfs_caches_init_early(void);
-extern void __init vfs_caches_init(void);
+extern void vfs_caches_init_early(void);
+extern void vfs_caches_init(void);
 
 extern struct kmem_cache *names_cachep;
 
@@ -1977,7 +1977,7 @@ ssize_t simple_attr_write(struct file *file, const char __user *buf,
 			  size_t len, loff_t *ppos);
 
 struct ctl_table;
-int __init list_bdev_fs_names(char *buf, size_t size);
+int list_bdev_fs_names(char *buf, size_t size);
 
 #define __FMODE_EXEC		((__force int) FMODE_EXEC)
 #define __FMODE_NONOTIFY	((__force int) FMODE_NONOTIFY)
