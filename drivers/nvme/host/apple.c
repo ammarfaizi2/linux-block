@@ -168,6 +168,7 @@ struct apple_nvme_iod {
 	int npages; /* In the PRP list. 0 means small pool in use */
 	int nents; /* Used in scatterlist */
 	dma_addr_t first_dma;
+	bool persistent;
 	unsigned int dma_len; /* length of single DMA segment mapping */
 	struct scatterlist *sg;
 };
@@ -370,8 +371,9 @@ static void apple_nvme_unmap_data(struct apple_nvme *anv, struct request *req)
 	struct apple_nvme_iod *iod = blk_mq_rq_to_pdu(req);
 
 	if (iod->dma_len) {
-		dma_unmap_page(anv->dev, iod->first_dma, iod->dma_len,
-			       rq_dma_dir(req));
+		if (!iod->persistent)
+			dma_unmap_page(anv->dev, iod->first_dma, iod->dma_len,
+				       rq_dma_dir(req));
 		return;
 	}
 
@@ -502,9 +504,14 @@ static blk_status_t apple_nvme_setup_prp_simple(struct apple_nvme *anv,
 	unsigned int offset = bv->bv_offset & (NVME_CTRL_PAGE_SIZE - 1);
 	unsigned int first_prp_len = NVME_CTRL_PAGE_SIZE - offset;
 
-	iod->first_dma = dma_map_bvec(anv->dev, bv, rq_dma_dir(req), 0);
-	if (dma_mapping_error(anv->dev, iod->first_dma))
-		return BLK_STS_RESOURCE;
+	if (bv->bv_dma_start) {
+		iod->persistent = true;
+		iod->first_dma = bv->bv_dma_start;
+	} else {
+		iod->first_dma = dma_map_bvec(anv->dev, bv, rq_dma_dir(req), 0);
+		if (dma_mapping_error(anv->dev, iod->first_dma))
+			return BLK_STS_RESOURCE;
+	}
 	iod->dma_len = bv->bv_len;
 
 	cmnd->dptr.prp1 = iod->first_dma;
@@ -771,6 +778,7 @@ static blk_status_t apple_nvme_queue_rq(struct blk_mq_hw_ctx *hctx,
 
 	iod->npages = -1;
 	iod->nents = 0;
+	iod->persistent = false;
 
 	/*
 	 * We should not need to do this, but we're still using this to
@@ -974,6 +982,47 @@ static int apple_nvme_poll(struct blk_mq_hw_ctx *hctx,
 	return found;
 }
 
+#ifdef CONFIG_HAS_DMA
+static int apple_pci_dma_map_bvec(struct apple_nvme *anv, struct bio_vec *bv,
+				  int dma_dir)
+{
+	dma_addr_t dma_addr;
+
+	dma_addr = dma_map_bvec(anv->dev, bv, dma_dir, 0);
+	if (dma_mapping_error(anv->dev, dma_addr))
+		return -EIO;
+
+	bv->bv_dma_start = dma_addr;
+	return 0;
+}
+
+static struct device *apple_pci_dma_map(struct request_queue *q,
+					struct bio_vec *bvec, int nr_vecs,
+					int dma_dir)
+{
+	struct nvme_ns *ns = q->queuedata;
+	struct apple_nvme *anv = container_of(ns->ctrl, struct apple_nvme, ctrl);
+	int i, ret = -EINVAL;
+
+	for (i = 0; i < nr_vecs; i++) {
+		ret = apple_pci_dma_map_bvec(anv, bvec + i, dma_dir);
+		if (ret)
+			goto err;
+	}
+
+	get_device(anv->dev);
+	return anv->dev;
+err:
+	while (--i >= 0) {
+		struct bio_vec *bv = bvec + i;
+
+		dma_unmap_page(anv->dev, bv->bv_dma_start, bv->bv_len, 0);
+	}
+	return ERR_PTR(ret);
+}
+#endif
+
+
 static const struct blk_mq_ops apple_nvme_mq_admin_ops = {
 	.queue_rq = apple_nvme_queue_rq,
 	.complete = apple_nvme_complete_rq,
@@ -989,6 +1038,9 @@ static const struct blk_mq_ops apple_nvme_mq_ops = {
 	.init_request = apple_nvme_init_request,
 	.timeout = apple_nvme_timeout,
 	.poll = apple_nvme_poll,
+#ifdef CONFIG_HAS_DMA
+	.dma_map = apple_pci_dma_map,
+#endif
 };
 
 static void apple_nvme_init_queue(struct apple_nvme_queue *q)
