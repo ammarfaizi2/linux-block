@@ -29,6 +29,10 @@
 #include <linux/local_lock.h>
 #include <asm/page.h>
 
+#ifdef CONFIG_HIGHMEM
+# include <asm/highmem.h>
+#endif
+
 #ifdef CONFIG_CMA
 #  define is_migrate_cma(migratetype) unlikely((migratetype) == MIGRATE_CMA)
 #  define is_migrate_cma_page(_page) (get_pageblock_migratetype(_page) == MIGRATE_CMA)
@@ -166,11 +170,6 @@ int local_memory_node(int node_id);
 static inline int local_memory_node(int node_id) { return node_id; };
 #endif
 
-/*
- * zone_idx() returns 0 for the ZONE_DMA zone, 1 for the ZONE_NORMAL zone, etc.
- */
-#define zone_idx(zone)		((zone) - (zone)->zone_pgdat->node_zones)
-
 #ifdef CONFIG_ZONE_DEVICE
 static inline bool zone_is_zone_device(struct zone *zone)
 {
@@ -219,16 +218,6 @@ static inline int zone_to_nid(struct zone *zone)
 static inline void zone_set_nid(struct zone *zone, int nid) {}
 #endif
 
-static inline int is_highmem_idx(enum zone_type idx)
-{
-#ifdef CONFIG_HIGHMEM
-	return (idx == ZONE_HIGHMEM ||
-		(idx == ZONE_MOVABLE && movable_zone == ZONE_HIGHMEM));
-#else
-	return 0;
-#endif
-}
-
 #ifdef CONFIG_ZONE_DMA
 bool has_managed_dma(void);
 #else
@@ -237,22 +226,6 @@ static inline bool has_managed_dma(void)
 	return false;
 }
 #endif
-
-/**
- * is_highmem - helper function to quickly check if a struct zone is a
- *              highmem zone or not.  This is an attempt to keep references
- *              to ZONE_{DMA/NORMAL/HIGHMEM/etc} in general code to a minimum.
- * @zone: pointer to struct zone variable
- * Return: 1 for a highmem zone, 0 otherwise
- */
-static inline int is_highmem(struct zone *zone)
-{
-#ifdef CONFIG_HIGHMEM
-	return is_highmem_idx(zone_idx(zone));
-#else
-	return 0;
-#endif
-}
 
 /* These two functions are used to setup the per zone pages min values */
 struct ctl_table;

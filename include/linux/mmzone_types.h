@@ -823,6 +823,37 @@ static inline void set_max_mapnr(unsigned long limit)
 static inline void set_max_mapnr(unsigned long limit) { }
 #endif
 
+static inline int is_highmem_idx(enum zone_type idx)
+{
+#ifdef CONFIG_HIGHMEM
+	return (idx == ZONE_HIGHMEM ||
+		(idx == ZONE_MOVABLE && movable_zone == ZONE_HIGHMEM));
+#else
+	return 0;
+#endif
+}
+
+/*
+ * zone_idx() returns 0 for the ZONE_DMA zone, 1 for the ZONE_NORMAL zone, etc.
+ */
+#define zone_idx(zone)		((zone) - (zone)->zone_pgdat->node_zones)
+
+/**
+ * is_highmem - helper function to quickly check if a struct zone is a
+ *              highmem zone or not.  This is an attempt to keep references
+ *              to ZONE_{DMA/NORMAL/HIGHMEM/etc} in general code to a minimum.
+ * @zone: pointer to struct zone variable
+ * Return: 1 for a highmem zone, 0 otherwise
+ */
+static inline int is_highmem(struct zone *zone)
+{
+#ifdef CONFIG_HIGHMEM
+	return is_highmem_idx(zone_idx(zone));
+#else
+	return 0;
+#endif
+}
+
 #endif /* !__GENERATING_BOUNDS.H */
 
 #endif /* _LINUX_MMZONE_TYPES_H */
