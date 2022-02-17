@@ -552,6 +552,9 @@ struct sas_ata_task {
 	u8     stp_affil_pol:1;
 
 	u8     device_control_reg_update:1;
+
+	bool   force_phy;
+	int    force_phy_id;
 };
 
 struct sas_smp_task {
@@ -579,10 +582,6 @@ struct sas_ssp_task {
 struct sas_tmf_task {
 	u8 tmf;
 	u16 tag_of_task_to_be_managed;
-
-	/* Temp */
-	int force_phy;
-	int phy_id;
 };
 
 struct sas_task {
@@ -727,10 +726,13 @@ int sas_clear_task_set(struct domain_device *dev, u8 *lun);
 int sas_lu_reset(struct domain_device *dev, u8 *lun);
 int sas_query_task(struct sas_task *task, u16 tag);
 int sas_abort_task(struct sas_task *task, u16 tag);
+int sas_execute_ata_cmd(struct domain_device *device, u8 *fis,
+			int force_phy_id);
 
 int sas_notify_port_event(struct asd_sas_phy *phy, enum port_event event,
 			  gfp_t gfp_flags);
 int sas_notify_phy_event(struct asd_sas_phy *phy, enum phy_event event,
 			 gfp_t gfp_flags);
+
 
 #endif /* _SASLIB_H_ */
