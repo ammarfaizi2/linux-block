@@ -1298,17 +1298,6 @@ static inline void sk_dst_confirm(struct sock *sk)
 		WRITE_ONCE(sk->sk_dst_pending_confirm, 1);
 }
 
-static inline void sock_confirm_neigh(struct sk_buff *skb, struct neighbour *n)
-{
-	if (skb_get_dst_pending_confirm(skb)) {
-		struct sock *sk = skb->sk;
-
-		if (sk && READ_ONCE(sk->sk_dst_pending_confirm))
-			WRITE_ONCE(sk->sk_dst_pending_confirm, 0);
-		neigh_confirm(n);
-	}
-}
-
 bool sk_mc_loop(struct sock *sk);
 
 #define sk_can_gso(sk) net_gso_ok((sk)->sk_route_caps, (sk)->sk_gso_type)
