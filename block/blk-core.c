@@ -676,7 +676,123 @@ static inline blk_status_t blk_check_zone_append(struct request_queue *q,
 	return BLK_STS_OK;
 }
 
-noinline_for_stack bool submit_bio_checks(struct bio *bio)
+static void __submit_bio(struct bio *bio)
+{
+	struct gendisk *disk = bio->bi_bdev->bd_disk;
+
+	if (unlikely(!blk_crypto_bio_prep(&bio)))
+		return;
+
+	if (!disk->fops->submit_bio) {
+		blk_mq_submit_bio(bio);
+	} else if (likely(bio_queue_enter(bio) == 0)) {
+		disk->fops->submit_bio(bio);
+		blk_queue_exit(disk->queue);
+	}
+}
+
+/*
+ * The loop in this function may be a bit non-obvious, and so deserves some
+ * explanation:
+ *
+ *  - Before entering the loop, bio->bi_next is NULL (as all callers ensure
+ *    that), so we have a list with a single bio.
+ *  - We pretend that we have just taken it off a longer list, so we assign
+ *    bio_list to a pointer to the bio_list_on_stack, thus initialising the
+ *    bio_list of new bios to be added.  ->submit_bio() may indeed add some more
+ *    bios through a recursive call to submit_bio_noacct.  If it did, we find a
+ *    non-NULL value in bio_list and re-enter the loop from the top.
+ *  - In this case we really did just take the bio of the top of the list (no
+ *    pretending) and so remove it from bio_list, and call into ->submit_bio()
+ *    again.
+ *
+ * bio_list_on_stack[0] contains bios submitted by the current ->submit_bio.
+ * bio_list_on_stack[1] contains bios that were submitted before the current
+ *	->submit_bio_bio, but that haven't been processed yet.
+ */
+static void __submit_bio_noacct(struct bio *bio)
+{
+	struct bio_list bio_list_on_stack[2];
+
+	BUG_ON(bio->bi_next);
+
+	bio_list_init(&bio_list_on_stack[0]);
+	current->bio_list = bio_list_on_stack;
+
+	do {
+		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
+		struct bio_list lower, same;
+
+		/*
+		 * Create a fresh bio_list for all subordinate requests.
+		 */
+		bio_list_on_stack[1] = bio_list_on_stack[0];
+		bio_list_init(&bio_list_on_stack[0]);
+
+		__submit_bio(bio);
+
+		/*
+		 * Sort new bios into those for a lower level and those for the
+		 * same level.
+		 */
+		bio_list_init(&lower);
+		bio_list_init(&same);
+		while ((bio = bio_list_pop(&bio_list_on_stack[0])) != NULL)
+			if (q == bdev_get_queue(bio->bi_bdev))
+				bio_list_add(&same, bio);
+			else
+				bio_list_add(&lower, bio);
+
+		/*
+		 * Now assemble so we handle the lowest level first.
+		 */
+		bio_list_merge(&bio_list_on_stack[0], &lower);
+		bio_list_merge(&bio_list_on_stack[0], &same);
+		bio_list_merge(&bio_list_on_stack[0], &bio_list_on_stack[1]);
+	} while ((bio = bio_list_pop(&bio_list_on_stack[0])));
+
+	current->bio_list = NULL;
+}
+
+static void __submit_bio_noacct_mq(struct bio *bio)
+{
+	struct bio_list bio_list[2] = { };
+
+	current->bio_list = bio_list;
+
+	do {
+		__submit_bio(bio);
+	} while ((bio = bio_list_pop(&bio_list[0])));
+
+	current->bio_list = NULL;
+}
+
+void submit_bio_noacct_nocheck(struct bio *bio)
+{
+	/*
+	 * We only want one ->submit_bio to be active at a time, else stack
+	 * usage with stacked devices could be a problem.  Use current->bio_list
+	 * to collect a list of requests submited by a ->submit_bio method while
+	 * it is active, and then process them after it returned.
+	 */
+	if (current->bio_list)
+		bio_list_add(&current->bio_list[0], bio);
+	else if (!bio->bi_bdev->bd_disk->fops->submit_bio)
+		__submit_bio_noacct_mq(bio);
+	else
+		__submit_bio_noacct(bio);
+}
+
+/**
+ * submit_bio_noacct - re-submit a bio to the block device layer for I/O
+ * @bio:  The bio describing the location in memory and on the device.
+ *
+ * This is a version of submit_bio() that shall only be used for I/O that is
+ * resubmitted to lower level drivers by stacking block drivers.  All file
+ * systems and other upper level users of the block layer should use
+ * submit_bio() instead.
+ */
+void submit_bio_noacct(struct bio *bio)
 {
 	struct block_device *bdev = bio->bi_bdev;
 	struct request_queue *q = bdev_get_queue(bdev);
@@ -761,7 +877,7 @@ noinline_for_stack bool submit_bio_checks(struct bio *bio)
 	}
 
 	if (blk_throtl_bio(bio))
-		return false;
+		return;
 
 	blk_cgroup_bio_start(bio);
 	blkcg_bio_issue_init(bio);
@@ -773,138 +889,14 @@ noinline_for_stack bool submit_bio_checks(struct bio *bio)
 		 */
 		bio_set_flag(bio, BIO_TRACE_COMPLETION);
 	}
-	return true;
+	submit_bio_noacct_nocheck(bio);
+	return;
 
 not_supported:
 	status = BLK_STS_NOTSUPP;
 end_io:
 	bio->bi_status = status;
 	bio_endio(bio);
-	return false;
-}
-
-static void __submit_bio_fops(struct gendisk *disk, struct bio *bio)
-{
-	if (blk_crypto_bio_prep(&bio)) {
-		if (likely(bio_queue_enter(bio) == 0)) {
-			disk->fops->submit_bio(bio);
-			blk_queue_exit(disk->queue);
-		}
-	}
-}
-
-static void __submit_bio(struct bio *bio)
-{
-	struct gendisk *disk = bio->bi_bdev->bd_disk;
-
-	if (unlikely(!submit_bio_checks(bio)))
-		return;
-
-	if (!disk->fops->submit_bio)
-		blk_mq_submit_bio(bio);
-	else
-		__submit_bio_fops(disk, bio);
-}
-
-/*
- * The loop in this function may be a bit non-obvious, and so deserves some
- * explanation:
- *
- *  - Before entering the loop, bio->bi_next is NULL (as all callers ensure
- *    that), so we have a list with a single bio.
- *  - We pretend that we have just taken it off a longer list, so we assign
- *    bio_list to a pointer to the bio_list_on_stack, thus initialising the
- *    bio_list of new bios to be added.  ->submit_bio() may indeed add some more
- *    bios through a recursive call to submit_bio_noacct.  If it did, we find a
- *    non-NULL value in bio_list and re-enter the loop from the top.
- *  - In this case we really did just take the bio of the top of the list (no
- *    pretending) and so remove it from bio_list, and call into ->submit_bio()
- *    again.
- *
- * bio_list_on_stack[0] contains bios submitted by the current ->submit_bio.
- * bio_list_on_stack[1] contains bios that were submitted before the current
- *	->submit_bio_bio, but that haven't been processed yet.
- */
-static void __submit_bio_noacct(struct bio *bio)
-{
-	struct bio_list bio_list_on_stack[2];
-
-	BUG_ON(bio->bi_next);
-
-	bio_list_init(&bio_list_on_stack[0]);
-	current->bio_list = bio_list_on_stack;
-
-	do {
-		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
-		struct bio_list lower, same;
-
-		/*
-		 * Create a fresh bio_list for all subordinate requests.
-		 */
-		bio_list_on_stack[1] = bio_list_on_stack[0];
-		bio_list_init(&bio_list_on_stack[0]);
-
-		__submit_bio(bio);
-
-		/*
-		 * Sort new bios into those for a lower level and those for the
-		 * same level.
-		 */
-		bio_list_init(&lower);
-		bio_list_init(&same);
-		while ((bio = bio_list_pop(&bio_list_on_stack[0])) != NULL)
-			if (q == bdev_get_queue(bio->bi_bdev))
-				bio_list_add(&same, bio);
-			else
-				bio_list_add(&lower, bio);
-
-		/*
-		 * Now assemble so we handle the lowest level first.
-		 */
-		bio_list_merge(&bio_list_on_stack[0], &lower);
-		bio_list_merge(&bio_list_on_stack[0], &same);
-		bio_list_merge(&bio_list_on_stack[0], &bio_list_on_stack[1]);
-	} while ((bio = bio_list_pop(&bio_list_on_stack[0])));
-
-	current->bio_list = NULL;
-}
-
-static void __submit_bio_noacct_mq(struct bio *bio)
-{
-	struct bio_list bio_list[2] = { };
-
-	current->bio_list = bio_list;
-
-	do {
-		__submit_bio(bio);
-	} while ((bio = bio_list_pop(&bio_list[0])));
-
-	current->bio_list = NULL;
-}
-
-/**
- * submit_bio_noacct - re-submit a bio to the block device layer for I/O
- * @bio:  The bio describing the location in memory and on the device.
- *
- * This is a version of submit_bio() that shall only be used for I/O that is
- * resubmitted to lower level drivers by stacking block drivers.  All file
- * systems and other upper level users of the block layer should use
- * submit_bio() instead.
- */
-void submit_bio_noacct(struct bio *bio)
-{
-	/*
-	 * We only want one ->submit_bio to be active at a time, else stack
-	 * usage with stacked devices could be a problem.  Use current->bio_list
-	 * to collect a list of requests submited by a ->submit_bio method while
-	 * it is active, and then process them after it returned.
-	 */
-	if (current->bio_list)
-		bio_list_add(&current->bio_list[0], bio);
-	else if (!bio->bi_bdev->bd_disk->fops->submit_bio)
-		__submit_bio_noacct_mq(bio);
-	else
-		__submit_bio_noacct(bio);
 }
 EXPORT_SYMBOL(submit_bio_noacct);
 
