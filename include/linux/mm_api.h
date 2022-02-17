@@ -28,7 +28,7 @@
 
 #include <linux/spinlock_types.h>
 #include <linux/mmdebug.h>
-#include <linux/gfp_api.h>
+#include <linux/gfp_types.h>
 #include <linux/bug.h>
 #include <linux/list.h>
 #include <linux/mmzone.h>
