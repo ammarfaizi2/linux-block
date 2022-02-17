@@ -302,10 +302,9 @@ static void apple_nvmmu_inval(struct apple_nvme_queue *q, unsigned tag)
 		dev_warn(anv->dev, "NVMMU TCB invalidation failed\n");
 }
 
-static void apple_nvme_submit_cmd(struct apple_nvme_queue *q,
-				  struct nvme_command *cmd)
+static void apple_nvme_copy_cmd(struct apple_nvme_queue *q,
+				struct nvme_command *cmd)
 {
-	struct apple_nvme *anv = queue_to_apple_nvme(q);
 	u32 tag = nvme_tag_from_cid(cmd->common.command_id);
 	struct apple_nvmmu_tcb *tcb = &q->tcbs[tag];
 
@@ -322,6 +321,16 @@ static void apple_nvme_submit_cmd(struct apple_nvme_queue *q,
 		tcb->dma_flags |= APPLE_ANS_TCB_DMA_FROM_DEVICE;
 
 	memcpy(&q->sqes[tag], cmd, sizeof(*cmd));
+}
+
+static void apple_nvme_submit_cmd(struct apple_nvme_queue *q,
+				  struct nvme_command *cmd)
+{
+	u32 tag = nvme_tag_from_cid(cmd->common.command_id);
+	struct apple_nvme *anv = queue_to_apple_nvme(q);
+
+	apple_nvme_copy_cmd(q, cmd);
+
 	spin_lock_irq(&anv->lock);
 	writel(tag, q->sq_db);
 	spin_unlock_irq(&anv->lock);
@@ -765,13 +774,10 @@ out:
 	return false;
 }
 
-static blk_status_t apple_nvme_queue_rq(struct blk_mq_hw_ctx *hctx,
-					const struct blk_mq_queue_data *bd)
+static blk_status_t apple_prep_rq(struct apple_nvme *anv, struct request *req)
 {
+	struct blk_mq_hw_ctx *hctx = req->mq_hctx;
 	struct nvme_ns *ns = hctx->queue->queuedata;
-	struct apple_nvme_queue *q = hctx->driver_data;
-	struct apple_nvme *anv = queue_to_apple_nvme(q);
-	struct request *req = bd->rq;
 	struct apple_nvme_iod *iod = blk_mq_rq_to_pdu(req);
 	struct nvme_command *cmnd = &iod->cmd;
 	blk_status_t ret;
@@ -779,16 +785,6 @@ static blk_status_t apple_nvme_queue_rq(struct blk_mq_hw_ctx *hctx,
 	iod->npages = -1;
 	iod->nents = 0;
 	iod->persistent = false;
-
-	/*
-	 * We should not need to do this, but we're still using this to
-	 * ensure we can drain requests on a dying queue.
-	 */
-	if (unlikely(!READ_ONCE(q->enabled)))
-		return BLK_STS_IOERR;
-
-	if (!nvme_check_ready(&anv->ctrl, req, true))
-		return nvme_fail_nonready_command(&anv->ctrl, req);
 
 	ret = nvme_setup_cmd(ns, req);
 	if (ret)
@@ -801,6 +797,36 @@ static blk_status_t apple_nvme_queue_rq(struct blk_mq_hw_ctx *hctx,
 	}
 
 	blk_mq_start_request(req);
+	return BLK_STS_OK;
+out_free_cmd:
+	nvme_cleanup_cmd(req);
+	return ret;
+}
+
+static blk_status_t apple_nvme_queue_rq(struct blk_mq_hw_ctx *hctx,
+					const struct blk_mq_queue_data *bd)
+{
+	struct nvme_ns *ns = hctx->queue->queuedata;
+	struct apple_nvme_queue *q = hctx->driver_data;
+	struct apple_nvme *anv = queue_to_apple_nvme(q);
+	struct request *req = bd->rq;
+	struct apple_nvme_iod *iod = blk_mq_rq_to_pdu(req);
+	struct nvme_command *cmnd = &iod->cmd;
+	blk_status_t ret;
+
+	/*
+	 * We should not need to do this, but we're still using this to
+	 * ensure we can drain requests on a dying queue.
+	 */
+	if (unlikely(!READ_ONCE(q->enabled)))
+		return BLK_STS_IOERR;
+
+	if (!nvme_check_ready(&anv->ctrl, req, true))
+		return nvme_fail_nonready_command(&anv->ctrl, req);
+
+	ret = apple_prep_rq(anv, req);
+	if (unlikely(ret))
+		return ret;
 
 	if (apple_nvme_delayed_flush(anv, ns, req)) {
 		blk_mq_complete_request(req);
@@ -809,10 +835,78 @@ static blk_status_t apple_nvme_queue_rq(struct blk_mq_hw_ctx *hctx,
 
 	apple_nvme_submit_cmd(q, cmnd);
 	return BLK_STS_OK;
+}
 
-out_free_cmd:
-	nvme_cleanup_cmd(req);
-	return ret;
+static bool apple_prep_rq_batch(struct apple_nvme_queue *q, struct request *req)
+{
+	struct apple_nvme *anv = queue_to_apple_nvme(q);
+
+	/*
+	 * We should not need to do this, but we're still using this to
+	 * ensure we can drain requests on a dying queue.
+	 */
+	if (unlikely(!READ_ONCE(q->enabled)))
+		return BLK_STS_IOERR;
+
+	if (!nvme_check_ready(&anv->ctrl, req, true))
+		return nvme_fail_nonready_command(&anv->ctrl, req);
+
+	req->mq_hctx->tags->rqs[req->tag] = req;
+	return apple_prep_rq(anv, req) == BLK_STS_OK;
+}
+
+static void apple_nvme_submit_cmds(struct apple_nvme_queue *q,
+				   struct request **rqlist)
+{
+	struct apple_nvme *anv = queue_to_apple_nvme(q);
+	struct request *req;
+
+	rq_list_for_each(rqlist, req) {
+		struct apple_nvme_iod *iod = blk_mq_rq_to_pdu(req);
+		struct nvme_command *cmd = &iod->cmd;
+
+		apple_nvme_copy_cmd(q, cmd);
+	}
+
+	spin_lock_irq(&anv->lock);
+	rq_list_for_each(rqlist, req) {
+		struct apple_nvme_iod *iod = blk_mq_rq_to_pdu(req);
+		struct nvme_command *cmd = &iod->cmd;
+		u32 tag = nvme_tag_from_cid(cmd->common.command_id);
+
+		writel(tag, q->sq_db);
+	}
+	spin_unlock_irq(&anv->lock);
+}
+
+static void apple_nvme_queue_rqs(struct request **rqlist)
+{
+	struct request *req, *next, *prev = NULL;
+	struct request *requeue_list = NULL;
+
+	rq_list_for_each_safe(rqlist, req, next) {
+		struct apple_nvme_queue *q = req->mq_hctx->driver_data;
+
+		if (!apple_prep_rq_batch(q, req)) {
+			/* detach 'req' and add to remainder list */
+			rq_list_move(rqlist, &requeue_list, req, prev);
+
+			req = prev;
+			if (!req)
+				continue;
+		}
+
+		if (!next || req->mq_hctx != next->mq_hctx) {
+			/* detach rest of list, and submit */
+			req->rq_next = NULL;
+			apple_nvme_submit_cmds(q, rqlist);
+			*rqlist = next;
+			prev = NULL;
+		} else
+			prev = req;
+	}
+
+	*rqlist = requeue_list;
 }
 
 static int apple_nvme_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
@@ -1033,6 +1127,7 @@ static const struct blk_mq_ops apple_nvme_mq_admin_ops = {
 
 static const struct blk_mq_ops apple_nvme_mq_ops = {
 	.queue_rq = apple_nvme_queue_rq,
+	.queue_rqs = apple_nvme_queue_rqs,
 	.complete = apple_nvme_complete_rq,
 	.init_hctx = apple_nvme_init_hctx,
 	.init_request = apple_nvme_init_request,
