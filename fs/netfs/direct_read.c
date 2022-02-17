@@ -96,7 +96,9 @@ int netfs_dio_copy_bounce_to_dest(struct netfs_io_request *rreq)
 
 	_enter("%zx/%zx @%llx %u", rreq->transferred, rreq->len, start, rreq->buffering);
 
-	if (rreq->buffering != NETFS_BOUNCE)
+	if (rreq->buffering != NETFS_BOUNCE &&
+	    rreq->buffering != NETFS_BOUNCE_DEC_COPY &&
+	    rreq->buffering != NETFS_BOUNCE_DEC_COPY_BV)
 		return 0;
 
 	if (start < iocb->ki_pos) {
@@ -124,7 +126,10 @@ int netfs_dio_copy_bounce_to_dest(struct netfs_io_request *rreq)
 ssize_t netfs_direct_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 {
 	struct netfs_io_request *rreq;
-	ssize_t n;
+	struct netfs_inode *ctx;
+	unsigned long long start, end;
+	unsigned int min_bsize;
+	ssize_t n, ret;
 
 	_enter("");
 
@@ -134,14 +139,27 @@ ssize_t netfs_direct_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 	if (IS_ERR(rreq))
 		return PTR_ERR(rreq);
 
+	ctx = netfs_inode(rreq->inode);
 	netfs_stat(&netfs_n_rh_dio_read);
 	trace_netfs_read(rreq, rreq->start, rreq->len, netfs_read_trace_dio_read);
 
-	/* Ideally we'd use NETFS_DIRECT, but iovec-class iterators sometimes
-	 * fault when passed to sock_sendmsg().  Further, we *must* copy the
-	 * iterator if we're going to operate asynchronously.
-	 */
-	rreq->buffering = NETFS_DIRECT_BV;
+	rreq->buffering = NETFS_DIRECT;
+	if (test_bit(NETFS_RREQ_CONTENT_ENCRYPTION, &rreq->flags)) {
+		static const enum netfs_buffering buffering[2][2] = {
+			/* [async][aligned] */
+			[false][false]	= NETFS_BOUNCE_DEC_COPY,
+			[false][true]	= NETFS_BOUNCE_DEC_TO_DIRECT,
+			[true ][false]	= NETFS_BOUNCE_DEC_COPY_BV,
+			[true ][true]	= NETFS_BOUNCE_DEC_TO_DIRECT_BV,
+		};
+		bool aligned = netfs_is_crypto_aligned(rreq, iter);
+		bool async = !is_sync_kiocb(iocb);
+
+		rreq->buffering = buffering[async][aligned];
+	}
+
+	kdebug("remote_i %llx %llx %llx",
+	       ctx->remote_i_size, rreq->i_size, i_size_read(&ctx->inode));
 
 	/* If this is an async op, we have to keep track of the destination
 	 * buffer for ourselves as the caller's iterator will be trashed when
@@ -154,15 +172,19 @@ ssize_t netfs_direct_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 	 */
 	switch (rreq->buffering) {
 	case NETFS_DIRECT:
+	case NETFS_BOUNCE_DEC_TO_DIRECT:
+	case NETFS_BOUNCE_DEC_COPY:
 		rreq->direct_iter = *iter;
 		rreq->len = iov_iter_count(&rreq->direct_iter);
 		break;
 	case NETFS_DIRECT_BV:
+	case NETFS_BOUNCE_DEC_TO_DIRECT_BV:
+	case NETFS_BOUNCE_DEC_COPY_BV:
 		n = extract_iter_to_iter(iter, rreq->len, &rreq->direct_iter,
 					 &rreq->direct_bv);
 		if (n < 0) {
-			netfs_put_request(rreq, false, netfs_rreq_trace_put_discard);
-			return n;
+			ret = n;
+			goto out;
 		}
 		rreq->direct_bv_count = n;
 		rreq->len = iov_iter_count(&rreq->direct_iter);
@@ -171,8 +193,42 @@ ssize_t netfs_direct_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 		BUG();
 	}
 
+	/* If we're going to use a bounce buffer, we need to set it up.  We
+	 * will then need to pad the request out to the minimum block size.
+	 */
+	switch (rreq->buffering) {
+	case NETFS_BOUNCE_DEC_TO_DIRECT:
+	case NETFS_BOUNCE_DEC_COPY:
+	case NETFS_BOUNCE_DEC_TO_DIRECT_BV:
+	case NETFS_BOUNCE_DEC_COPY_BV:
+		min_bsize = 1ULL << ctx->min_bshift;
+		start = round_down(rreq->start, min_bsize);
+		end = min_t(unsigned long long,
+			    round_up(rreq->start + rreq->len, min_bsize),
+			    ctx->remote_i_size);
+
+		rreq->start = start;
+		rreq->len   = end - start;
+		rreq->first = start / PAGE_SIZE;
+		rreq->last  = (end - 1) / PAGE_SIZE;
+		_debug("bounce %llx-%llx %lx-%lx",
+		       rreq->start, end, rreq->first, rreq->last);
+
+		ret = netfs_add_folios_to_buffer(&rreq->bounce, rreq->mapping,
+						 rreq->first, rreq->last, GFP_KERNEL);
+		if (ret < 0)
+			goto out;
+		break;
+	default:
+		break;
+	}
+
 	rreq->iocb = iocb;
 
 	return netfs_begin_read(rreq, is_sync_kiocb(iocb));
+
+out:
+	netfs_put_request(rreq, false, netfs_rreq_trace_put_discard);
+	return ret;
 }
 EXPORT_SYMBOL(netfs_direct_read_iter);
