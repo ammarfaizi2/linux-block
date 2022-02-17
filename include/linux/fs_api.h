@@ -473,120 +473,6 @@ extern void f_delown(struct file *filp);
 extern pid_t f_getown(struct file *filp);
 extern int send_sigurg(struct fown_struct *fown);
 
-static inline struct user_namespace *i_user_ns(const struct inode *inode)
-{
-	return inode->i_sb->s_user_ns;
-}
-
-/* Helper functions so that in most cases filesystems will
- * not need to deal directly with kuid_t and kgid_t and can
- * instead deal with the raw numeric values that are stored
- * in the filesystem.
- */
-static inline uid_t i_uid_read(const struct inode *inode)
-{
-	return from_kuid(i_user_ns(inode), inode->i_uid);
-}
-
-static inline gid_t i_gid_read(const struct inode *inode)
-{
-	return from_kgid(i_user_ns(inode), inode->i_gid);
-}
-
-static inline void i_uid_write(struct inode *inode, uid_t uid)
-{
-	inode->i_uid = make_kuid(i_user_ns(inode), uid);
-}
-
-static inline void i_gid_write(struct inode *inode, gid_t gid)
-{
-	inode->i_gid = make_kgid(i_user_ns(inode), gid);
-}
-
-/**
- * i_uid_into_mnt - map an inode's i_uid down into a mnt_userns
- * @mnt_userns: user namespace of the mount the inode was found from
- * @inode: inode to map
- *
- * Return: the inode's i_uid mapped down according to @mnt_userns.
- * If the inode's i_uid has no mapping INVALID_UID is returned.
- */
-static inline kuid_t i_uid_into_mnt(struct user_namespace *mnt_userns,
-				    const struct inode *inode)
-{
-	return mapped_kuid_fs(mnt_userns, i_user_ns(inode), inode->i_uid);
-}
-
-/**
- * i_gid_into_mnt - map an inode's i_gid down into a mnt_userns
- * @mnt_userns: user namespace of the mount the inode was found from
- * @inode: inode to map
- *
- * Return: the inode's i_gid mapped down according to @mnt_userns.
- * If the inode's i_gid has no mapping INVALID_GID is returned.
- */
-static inline kgid_t i_gid_into_mnt(struct user_namespace *mnt_userns,
-				    const struct inode *inode)
-{
-	return mapped_kgid_fs(mnt_userns, i_user_ns(inode), inode->i_gid);
-}
-
-/**
- * inode_fsuid_set - initialize inode's i_uid field with callers fsuid
- * @inode: inode to initialize
- * @mnt_userns: user namespace of the mount the inode was found from
- *
- * Initialize the i_uid field of @inode. If the inode was found/created via
- * an idmapped mount map the caller's fsuid according to @mnt_users.
- */
-static inline void inode_fsuid_set(struct inode *inode,
-				   struct user_namespace *mnt_userns)
-{
-	inode->i_uid = mapped_fsuid(mnt_userns, i_user_ns(inode));
-}
-
-/**
- * inode_fsgid_set - initialize inode's i_gid field with callers fsgid
- * @inode: inode to initialize
- * @mnt_userns: user namespace of the mount the inode was found from
- *
- * Initialize the i_gid field of @inode. If the inode was found/created via
- * an idmapped mount map the caller's fsgid according to @mnt_users.
- */
-static inline void inode_fsgid_set(struct inode *inode,
-				   struct user_namespace *mnt_userns)
-{
-	inode->i_gid = mapped_fsgid(mnt_userns, i_user_ns(inode));
-}
-
-/**
- * fsuidgid_has_mapping() - check whether caller's fsuid/fsgid is mapped
- * @sb: the superblock we want a mapping in
- * @mnt_userns: user namespace of the relevant mount
- *
- * Check whether the caller's fsuid and fsgid have a valid mapping in the
- * s_user_ns of the superblock @sb. If the caller is on an idmapped mount map
- * the caller's fsuid and fsgid according to the @mnt_userns first.
- *
- * Return: true if fsuid and fsgid is mapped, false if not.
- */
-static inline bool fsuidgid_has_mapping(struct super_block *sb,
-					struct user_namespace *mnt_userns)
-{
-	struct user_namespace *fs_userns = sb->s_user_ns;
-	kuid_t kuid;
-	kgid_t kgid;
-
-	kuid = mapped_fsuid(mnt_userns, fs_userns);
-	if (!uid_valid(kuid))
-		return false;
-	kgid = mapped_fsgid(mnt_userns, fs_userns);
-	if (!gid_valid(kgid))
-		return false;
-	return kuid_has_mapping(fs_userns, kuid) &&
-	       kgid_has_mapping(fs_userns, kgid);
-}
-
 extern struct timespec64 current_time(struct inode *inode);
 
 bool inode_owner_or_capable(struct user_namespace *mnt_userns,
@@ -686,13 +572,6 @@ extern loff_t vfs_dedupe_file_range_one(struct file *src_file, loff_t src_pos,
 					loff_t len, unsigned int remap_flags);
 
 
-static inline bool HAS_UNMAPPED_ID(struct user_namespace *mnt_userns,
-				   struct inode *inode)
-{
-	return !uid_valid(i_uid_into_mnt(mnt_userns, inode)) ||
-	       !gid_valid(i_gid_into_mnt(mnt_userns, inode));
-}
-
 static inline enum rw_hint file_write_hint(struct file *file)
 {
 	if (file->f_write_hint != WRITE_LIFE_NOT_SET)
@@ -700,8 +579,6 @@ static inline enum rw_hint file_write_hint(struct file *file)
 
 	return file_inode(file)->i_write_hint;
 }
-
-static inline int iocb_flags(struct file *file);
 
 static inline u16 ki_hint_validate(enum rw_hint hint)
 {
@@ -949,20 +826,6 @@ static inline struct user_namespace *file_mnt_user_ns(struct file *file)
 	return mnt_user_ns(file->f_path.mnt);
 }
 
-/**
- * is_idmapped_mnt - check whether a mount is mapped
- * @mnt: the mount to check
- *
- * If @mnt has an idmapping attached different from the
- * filesystem's idmapping then @mnt is mapped.
- *
- * Return: true if mount is mapped, false if not.
- */
-static inline bool is_idmapped_mnt(const struct vfsmount *mnt)
-{
-	return mnt_user_ns(mnt) != mnt->mnt_sb->s_user_ns;
-}
-
 extern long vfs_truncate(const struct path *, loff_t);
 int do_truncate(struct user_namespace *, struct dentry *, loff_t start,
 		unsigned int time_attrs, struct file *filp);
@@ -1152,18 +1015,6 @@ static inline int filemap_check_wb_err(struct address_space *mapping,
 static inline errseq_t filemap_sample_wb_err(struct address_space *mapping)
 {
 	return errseq_sample(&mapping->wb_err);
-}
-
-/**
- * file_sample_sb_err - sample the current errseq_t to test for later errors
- * @file: file pointer to be sampled
- *
- * Grab the most current superblock-level errseq_t value for the given
- * struct file.
- */
-static inline errseq_t file_sample_sb_err(struct file *file)
-{
-	return errseq_sample(&file->f_path.dentry->d_sb->s_wb_err);
 }
 
 extern int vfs_fsync_range(struct file *file, loff_t start, loff_t end,
@@ -1534,20 +1385,6 @@ void setattr_copy(struct user_namespace *, struct inode *inode,
 
 extern int file_update_time(struct file *file);
 
-static inline int iocb_flags(struct file *file)
-{
-	int res = 0;
-	if (file->f_flags & O_APPEND)
-		res |= IOCB_APPEND;
-	if (file->f_flags & O_DIRECT)
-		res |= IOCB_DIRECT;
-	if ((file->f_flags & O_DSYNC) || IS_SYNC(file->f_mapping->host))
-		res |= IOCB_DSYNC;
-	if (file->f_flags & __O_SYNC)
-		res |= IOCB_SYNC;
-	return res;
-}
-
 static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
 {
 	int kiocb_flags = 0;
@@ -1664,31 +1501,6 @@ static inline int check_sticky(struct user_namespace *mnt_userns,
 		return 0;
 
 	return __check_sticky(mnt_userns, dir, inode);
-}
-
-static inline void inode_has_no_xattr(struct inode *inode)
-{
-	if (!is_sxid(inode->i_mode) && (inode->i_sb->s_flags & SB_NOSEC))
-		inode->i_flags |= S_NOSEC;
-}
-
-static inline bool is_root_inode(struct inode *inode)
-{
-	return inode == inode->i_sb->s_root->d_inode;
-}
-
-static inline bool dir_relax(struct inode *inode)
-{
-	inode_unlock(inode);
-	inode_lock(inode);
-	return !IS_DEADDIR(inode);
-}
-
-static inline bool dir_relax_shared(struct inode *inode)
-{
-	inode_unlock_shared(inode);
-	inode_lock_shared(inode);
-	return !IS_DEADDIR(inode);
 }
 
 extern bool path_noexec(const struct path *path);
