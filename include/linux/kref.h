@@ -5,3 +5,7 @@
 #include <linux/kref_types.h>
 
 #endif /* __LINUX_KREF_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/kref_api.h>
+#endif

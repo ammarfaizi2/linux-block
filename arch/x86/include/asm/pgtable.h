@@ -1332,3 +1332,22 @@ bool arch_is_platform_page(u64 paddr);
 #endif
 
 #endif /* _ASM_X86_PGTABLE_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <asm/ptrace.h>
+# include <asm/tsc.h>
+# include <asm/fpu/api.h>
+# include <linux/cache.h>
+# include <linux/seqlock.h>
+# include <linux/rcupdate.h>
+# include <linux/mutex.h>
+# include <linux/jiffies.h>
+# include <linux/notifier.h>
+# include <linux/llist.h>
+# include <linux/srcu.h>
+# include <linux/smp.h>
+# include <linux/personality.h>
+# include <linux/restart_block.h>
+# include <linux/rwsem.h>
+# include <linux/timex.h>
+#endif

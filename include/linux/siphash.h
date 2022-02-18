@@ -16,3 +16,7 @@
 #include <linux/siphash_types.h>
 
 #endif /* _LINUX_SIPHASH_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/siphash_api.h>
+#endif

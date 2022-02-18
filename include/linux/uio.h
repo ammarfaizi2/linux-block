@@ -5,3 +5,7 @@
 #include <linux/uio_types.h>
 
 #endif
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/uio_api.h>
+#endif

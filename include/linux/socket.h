@@ -429,3 +429,7 @@ extern int __sys_socketpair(int family, int type, int protocol,
 extern int __sys_shutdown_sock(struct socket *sock, int how);
 extern int __sys_shutdown(int fd, int how);
 #endif /* _LINUX_SOCKET_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/uio.h>
+#endif

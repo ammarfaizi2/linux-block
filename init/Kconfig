@@ -693,6 +693,22 @@ config IKCONFIG
 	  It can also be extracted from a running kernel by reading
 	  /proc/config.gz if enabled (below).
 
+config FAST_HEADERS
+	bool "Fast headers support" if COMPILE_TEST
+	default y
+	help
+	  This option enables the 'fast headers' build feature, which produces
+	  the exact same kernel, but with up to 70%-80% faster build time.
+
+	  Since the new headers have much fewer dependencies, the chance
+	  of build breakage is higher, and some architectures do not work.
+
+	  Disabling this feature on a kernel that builds fine will slow down
+	  the kernel build.
+
+	  If unsure, leave this enabled, otherwise disable this if you see
+	  a build failure with the fast-headers build.
+
 config IKCONFIG_PROC
 	bool "Enable access to .config through /proc/config.gz"
 	depends on IKCONFIG && PROC_FS

@@ -5,3 +5,7 @@
 #include <linux/percpu_rwsem_types.h>
 
 #endif
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/percpu_rwsem_api.h>
+#endif

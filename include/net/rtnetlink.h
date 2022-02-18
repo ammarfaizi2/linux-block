@@ -5,3 +5,7 @@
 #include <net/rtnetlink_types.h>
 
 #endif
+
+#ifndef CONFIG_FAST_HEADERS
+# include <net/rtnetlink_api.h>
+#endif

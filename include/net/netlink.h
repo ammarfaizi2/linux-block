@@ -5,3 +5,7 @@
 #include <net/netlink_types.h>
 
 #endif
+
+#ifndef CONFIG_FAST_HEADERS
+# include <net/netlink_api.h>
+#endif

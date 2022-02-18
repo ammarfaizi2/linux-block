@@ -5,3 +5,7 @@
 #include <linux/smp_types.h>
 
 #endif /* __LINUX_SMP_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/smp_api.h>
+#endif

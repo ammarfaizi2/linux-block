@@ -5,3 +5,6 @@
 #include <asm/local_types.h>
 
 #endif /* _ASM_X86_LOCAL_H */
+#ifndef CONFIG_FAST_HEADERS
+# include <asm/local_api.h>
+#endif

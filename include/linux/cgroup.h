@@ -5,3 +5,7 @@
 #include <linux/cgroup_types.h>
 
 #endif /* _LINUX_CGROUP_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/cgroup_api.h>
+#endif

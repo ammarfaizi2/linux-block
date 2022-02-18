@@ -5,3 +5,7 @@
 #include <linux/etherdevice_types.h>
 
 #endif	/* _LINUX_ETHERDEVICE_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/etherdevice_api.h>
+#endif

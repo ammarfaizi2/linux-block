@@ -224,3 +224,7 @@ void init_freq_invariance_cppc(void);
 #endif
 
 #endif /* _ASM_X86_TOPOLOGY_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <asm/mpspec.h>
+#endif

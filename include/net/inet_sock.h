@@ -5,3 +5,7 @@
 #include <net/inet_sock_types.h>
 
 #endif	/* _INET_SOCK_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <net/inet_sock_api.h>
+#endif

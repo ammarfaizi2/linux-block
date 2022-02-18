@@ -8,3 +8,7 @@
 #include <linux/filter_types.h>
 
 #endif /* __LINUX_FILTER_H__ */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/filter_api.h>
+#endif

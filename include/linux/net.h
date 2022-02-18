@@ -335,3 +335,14 @@ u32 kernel_sock_ip_overhead(struct sock *sk);
 	MODULE_ALIAS("net-pf-" __stringify(pf) "-proto-" __stringify(proto) \
 		     name)
 #endif	/* _LINUX_NET_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/stringify.h>
+# include <linux/wait.h>
+# include <linux/fcntl.h>
+# include <linux/rcupdate.h>
+# include <linux/once.h>
+# include <linux/fs.h>
+# include <linux/mm.h>
+# include <linux/sockptr.h>
+#endif

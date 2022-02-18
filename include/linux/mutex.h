@@ -14,3 +14,7 @@
 #include <linux/mutex_types.h>
 
 #endif /* __LINUX_MUTEX_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/mutex_api.h>
+#endif

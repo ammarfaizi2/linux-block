@@ -1,3 +1,8 @@
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/thread_info.h>
+# include <linux/seccomp.h>
+#endif
+
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _LINUX_SCHED_H
 #define _LINUX_SCHED_H
@@ -1087,4 +1092,40 @@ extern char *__get_task_comm(char *to, size_t len, struct task_struct *tsk);
 extern bool sched_task_on_rq(struct task_struct *p);
 extern unsigned long get_wchan(struct task_struct *p);
 
+#endif
+
+#ifndef CONFIG_FAST_HEADERS
+# include <asm/processor.h>
+# include <asm/ptrace.h>
+# include <linux/sched/thread_info_api.h>
+# include <linux/wait_api.h>
+# include <linux/hrtimer_api.h>
+# include <linux/rcupdate.h>
+# include <linux/sched/cond_resched.h>
+# include <linux/sched/thread.h>
+# include <linux/sched/types.h>
+# include <linux/debugobjects.h>
+# include <linux/timex.h>
+# include <linux/osq_lock.h>
+# include <linux/alarmtimer.h>
+# include <linux/ipc.h>
+# include <linux/sem.h>
+# include <linux/shm.h>
+# include <linux/debug_locks.h>
+# include <linux/apm_bios.h>
+# include <linux/kcsan.h>
+# include <linux/llist.h>
+# include <linux/pid.h>
+# include <linux/resource.h>
+# include <linux/restart_block.h>
+# include <linux/plist.h>
+# include <linux/jiffies.h>
+# include <linux/objtool.h>
+# include <linux/personality.h>
+# include <linux/posix-timers.h>
+# include <linux/task_work.h>
+# include <linux/numa.h>
+# include <linux/nodemask.h>
+# include <linux/smp.h>
+# include <linux/mmdebug.h>
 #endif

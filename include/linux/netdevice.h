@@ -5,3 +5,7 @@
 #include <linux/netdevice_types.h>
 
 #endif	/* _LINUX_NETDEVICE_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/netdevice_api.h>
+#endif

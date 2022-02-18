@@ -13,3 +13,7 @@
 #include <linux/lockdep_types.h>
 
 #endif /* __LINUX_LOCKDEP_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/lockdep_api.h>
+#endif

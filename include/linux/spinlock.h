@@ -5,3 +5,7 @@
 #include <linux/spinlock_types.h>
 
 #endif /* __LINUX_SPINLOCK_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/spinlock_api.h>
+#endif

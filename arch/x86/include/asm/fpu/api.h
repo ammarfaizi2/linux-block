@@ -168,3 +168,14 @@ struct task_struct;
 extern long fpu_xstate_prctl(struct task_struct *tsk, int option, unsigned long arg2);
 
 #endif /* _ASM_X86_FPU_API_H */
+
+
+#ifndef CONFIG_FAST_HEADERS
+#include <asm/mpspec.h>
+#include <asm/nospec-branch.h>
+#include <asm/pkru.h>
+#include <asm/math_emu.h>
+#include <asm/fsgsbase.h>
+#include <asm/vdso.h>
+#include <asm/unwind_hints.h>
+#endif
