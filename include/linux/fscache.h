@@ -16,8 +16,10 @@
 
 #include <linux/radix-tree.h>
 #include <linux/fs.h>
+#include <linux/pagevec.h>
+#include <linux/list_bl.h>
 #include <linux/netfs.h>
-#include <linux/writeback.h>
+#include <linux/writeback_types.h>
 
 #if defined(CONFIG_FSCACHE) || defined(CONFIG_FSCACHE_MODULE)
 #define __fscache_available (1)
