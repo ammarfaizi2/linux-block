@@ -955,8 +955,7 @@
 			reg-names = "clusters", "switch";
 			clocks = <&nco 0>, <&nco 1>, <&nco 2>,
 					<&nco 3>, <&nco 4>, <&nco 4>;
-			power-domains = <&ps_mca0>, <&ps_mca1>, <&ps_mca2>,
-					<&ps_mca3>, <&ps_mca4>, <&ps_mca5>;
+			power-domains = <&ps_mca0>;
 
 			dmas = <&admac 0>, <&admac 1>, <&admac 2>, <&admac 3>,
 				<&admac 4>, <&admac 5>, <&admac 6>, <&admac 7>,

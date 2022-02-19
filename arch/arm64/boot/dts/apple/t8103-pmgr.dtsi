@@ -483,7 +483,7 @@
 		#power-domain-cells = <0>;
 		#reset-cells = <0>;
 		label = "mca0";
-		power-domains = <&ps_audio_p>, <&ps_sio_adma>;
+		power-domains = <&ps_audio_p>, <&ps_sio_adma>, <&ps_mca1>, <&ps_mca2>, <&ps_mca3>, <&ps_mca4>, <&ps_mca5>;
 	};
 
 	ps_mca1: power-controller@2c0 {
