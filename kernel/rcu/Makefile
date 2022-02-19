@@ -13,6 +13,7 @@ obj-$(CONFIG_TINY_SRCU) += srcutiny.o
 obj-$(CONFIG_RCU_TORTURE_TEST) += rcutorture.o
 obj-$(CONFIG_RCU_SCALE_TEST) += rcuscale.o
 obj-$(CONFIG_RCU_REF_SCALE_TEST) += refscale.o
+obj-$(CONFIG_RCU_TYPESAFE_TEST) += typesafe.o
 obj-$(CONFIG_TREE_RCU) += tree.o
 obj-$(CONFIG_TINY_RCU) += tiny.o
 obj-$(CONFIG_RCU_NEED_SEGCBLIST) += rcu_segcblist.o
