@@ -61,3 +61,43 @@
 };
 
 /delete-node/ &port01;
+
+&i2c1 {
+	jack_codec: codec@48 {
+		compatible = "cirrus,cs42l83", "cirrus,cs42l42";
+		reg = <0x48>;
+		reset-gpios = <&pinctrl_nub 11 GPIO_ACTIVE_HIGH>;
+		interrupt-parent = <&pinctrl_ap>;
+		interrupts = <183 IRQ_TYPE_LEVEL_LOW>;
+		#sound-dai-cells = <0>;
+		cirrus,ts-inv = <1>;
+	};
+};
+
+/ {
+	sound {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "iMac integrated audio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		simple-audio-card,dai-link@0 {
+			bitclock-inversion;
+			frame-inversion;
+			reg = <0>;
+			format = "i2s";
+			mclk-fs = <64>;
+			tdm-slot-width = <32>;
+
+			link0_cpu: cpu {
+				sound-dai = <&mca 2>;
+				bitclock-master;
+				frame-master;
+			};
+
+			link0_codec: codec {
+				sound-dai = <&jack_codec>;
+			};
+		};
+	};
+};

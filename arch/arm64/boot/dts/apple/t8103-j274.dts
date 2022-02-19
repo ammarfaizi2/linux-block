@@ -56,6 +56,68 @@
 	};
 };
 
+&i2c1 {
+	speaker_amp: codec@31 {
+		compatible = "ti,tas5770l", "ti,tas2770";
+		reg = <0x31>;
+		reset-gpios = <&pinctrl_ap 181 GPIO_ACTIVE_HIGH>;
+		#sound-dai-cells = <0>;
+	};	
+};
+
 &i2c2 {
 	status = "okay";
+
+	jack_codec: codec@48 {
+		compatible = "cirrus,cs42l83", "cirrus,cs42l42";
+		reg = <0x48>;
+		reset-gpios = <&pinctrl_nub 11 GPIO_ACTIVE_HIGH>;
+		interrupt-parent = <&pinctrl_ap>;
+		interrupts = <183 IRQ_TYPE_LEVEL_LOW>;
+		#sound-dai-cells = <0>;
+		cirrus,ts-inv = <1>;
+	};
+};
+
+/ {
+	sound {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "Mac mini integrated audio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		simple-audio-card,dai-link@0 {
+			reg = <0>;
+			format = "left_j";
+			mclk-fs = <64>;
+
+			link0_cpu: cpu {
+				sound-dai = <&mca 0>;
+				bitclock-master;
+				frame-master;
+			};
+
+			link0_codec: codec {
+				sound-dai = <&speaker_amp>;
+			};
+		};
+
+		simple-audio-card,dai-link@1 {
+			reg = <1>;
+			bitclock-inversion;
+			frame-inversion;
+			format = "i2s";
+			mclk-fs = <64>;
+
+			link1_cpu: cpu {
+				sound-dai = <&mca 2>;
+				bitclock-master;
+				frame-master;
+			};
+
+			link1_codec: codec {
+				sound-dai = <&jack_codec>;
+			};
+		};
+	};
 };
