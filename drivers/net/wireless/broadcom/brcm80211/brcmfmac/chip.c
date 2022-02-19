@@ -212,8 +212,8 @@ struct sbsocramregs {
 #define	ARMCR4_TCBANB_MASK	0xf
 #define	ARMCR4_TCBANB_SHIFT	0
 
-#define	ARMCR4_BSZ_MASK		0x3f
-#define	ARMCR4_BSZ_MULT		8192
+#define	ARMCR4_BSZ_MASK		0x7f
+#define	ARMCR4_BLK_1K_MASK	0x200
 
 struct brcmf_core_priv {
 	struct brcmf_core pub;
@@ -675,7 +675,8 @@ static u32 brcmf_chip_sysmem_ramsize(struct brcmf_core_priv *sysmem)
 }
 
 /** Return the TCM-RAM size of the ARMCR4 core. */
-static u32 brcmf_chip_tcm_ramsize(struct brcmf_core_priv *cr4)
+static u32 brcmf_chip_tcm_ramsize(struct brcmf_chip_priv *ci,
+				  struct brcmf_core_priv *cr4)
 {
 	u32 corecap;
 	u32 memsize = 0;
@@ -683,6 +684,7 @@ static u32 brcmf_chip_tcm_ramsize(struct brcmf_core_priv *cr4)
 	u32 nbb;
 	u32 totb;
 	u32 bxinfo;
+	u32 blksize;
 	u32 idx;
 
 	corecap = brcmf_chip_core_read32(cr4, ARMCR4_CAP);
@@ -694,7 +696,12 @@ static u32 brcmf_chip_tcm_ramsize(struct brcmf_core_priv *cr4)
 	for (idx = 0; idx < totb; idx++) {
 		brcmf_chip_core_write32(cr4, ARMCR4_BANKIDX, idx);
 		bxinfo = brcmf_chip_core_read32(cr4, ARMCR4_BANKINFO);
-		memsize += ((bxinfo & ARMCR4_BSZ_MASK) + 1) * ARMCR4_BSZ_MULT;
+		if (bxinfo & ARMCR4_BLK_1K_MASK)
+			blksize = 1024;
+		else
+			blksize = 8192;
+
+		memsize += ((bxinfo & ARMCR4_BSZ_MASK) + 1) * blksize;
 	}
 
 	return memsize;
@@ -727,11 +734,17 @@ static u32 brcmf_chip_tcm_rambase(struct brcmf_chip_priv *ci)
 		return 0x200000;
 	case BRCM_CC_4359_CHIP_ID:
 		return (ci->pub.chiprev < 9) ? 0x180000 : 0x160000;
+	case BRCM_CC_4355_CHIP_ID:
 	case BRCM_CC_4364_CHIP_ID:
 	case CY_CC_4373_CHIP_ID:
 		return 0x160000;
 	case CY_CC_43752_CHIP_ID:
+	case BRCM_CC_4377_CHIP_ID:
 		return 0x170000;
+	case BRCM_CC_4378_CHIP_ID:
+		return 0x352000;
+	case BRCM_CC_4387_CHIP_ID:
+		return 0x740000;
 	default:
 		brcmf_err("unknown chip: %s\n", ci->pub.name);
 		break;
@@ -749,7 +762,7 @@ int brcmf_chip_get_raminfo(struct brcmf_chip *pub)
 	mem = brcmf_chip_get_core(&ci->pub, BCMA_CORE_ARM_CR4);
 	if (mem) {
 		mem_core = container_of(mem, struct brcmf_core_priv, pub);
-		ci->pub.ramsize = brcmf_chip_tcm_ramsize(mem_core);
+		ci->pub.ramsize = brcmf_chip_tcm_ramsize(ci, mem_core);
 		ci->pub.rambase = brcmf_chip_tcm_rambase(ci);
 		if (ci->pub.rambase == INVALID_RAMBASE) {
 			brcmf_err("RAM base not provided with ARM CR4 core\n");
@@ -1286,15 +1299,18 @@ static bool brcmf_chip_cm3_set_active(struct brcmf_chip_priv *chip)
 static inline void
 brcmf_chip_cr4_set_passive(struct brcmf_chip_priv *chip)
 {
+	int i;
 	struct brcmf_core *core;
 
 	brcmf_chip_disable_arm(chip, BCMA_CORE_ARM_CR4);
 
-	core = brcmf_chip_get_core(&chip->pub, BCMA_CORE_80211);
-	brcmf_chip_resetcore(core, D11_BCMA_IOCTL_PHYRESET |
-				   D11_BCMA_IOCTL_PHYCLOCKEN,
-			     D11_BCMA_IOCTL_PHYCLOCKEN,
-			     D11_BCMA_IOCTL_PHYCLOCKEN);
+	/* Disable the cores only and let the firmware enable them.
+	 * Releasing reset ourselves breaks BCM4387 in weird ways.
+	 */
+	for (i = 0; (core = brcmf_chip_get_d11core(&chip->pub, i)); i++)
+		brcmf_chip_coredisable(core, D11_BCMA_IOCTL_PHYRESET |
+				       D11_BCMA_IOCTL_PHYCLOCKEN,
+				       D11_BCMA_IOCTL_PHYCLOCKEN);
 }
 
 static bool brcmf_chip_cr4_set_active(struct brcmf_chip_priv *chip, u32 rstvec)

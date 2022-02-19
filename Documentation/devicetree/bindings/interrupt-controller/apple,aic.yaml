@@ -18,38 +18,44 @@ description: |
 
   - Level-triggered hardware IRQs wired to SoC blocks
     - Single mask bit per IRQ
-    - Per-IRQ affinity setting
+    - Per-IRQ affinity setting (AICv1 only)
     - Automatic masking on event delivery (auto-ack)
     - Software triggering (ORed with hw line)
   - 2 per-CPU IPIs (meant as "self" and "other", but they are interchangeable
-    if not symmetric)
+    if not symmetric) (AICv1 only)
   - Automatic prioritization (single event/ack register per CPU, lower IRQs =
     higher priority)
   - Automatic masking on ack
-  - Default "this CPU" register view and explicit per-CPU views
+  - Default "this CPU" register view and explicit per-CPU views (AICv1 only)
 
   This device also represents the FIQ interrupt sources on platforms using AIC,
-  which do not go through a discrete interrupt controller.
-
-allOf:
-  - $ref: /schemas/interrupt-controller.yaml#
+  which do not go through a discrete interrupt controller. It also handles
+  FIQ-based Fast IPIs on supported chips.
 
 properties:
   compatible:
-    items:
-      - const: apple,t8103-aic
-      - const: apple,aic
+    oneOf:
+      - items:
+          - const: apple,t8103-aic
+          - const: apple,aic
+      - items:
+          - const: apple,t6000-aic
+          - const: apple,aic2
 
   interrupt-controller: true
 
   '#interrupt-cells':
-    const: 3
+    minimum: 3
+    maximum: 4
     description: |
       The 1st cell contains the interrupt type:
         - 0: Hardware IRQ
         - 1: FIQ
 
-      The 2nd cell contains the interrupt number.
+      The optional 2nd cell contains the die ID (apple,aic2 only).
+      If not present, it defaults to 0.
+
+      The next cell contains the interrupt number.
         - HW IRQs: interrupt number
         - FIQs:
           - 0: physical HV timer
@@ -57,7 +63,7 @@ properties:
           - 2: physical guest timer
           - 3: virtual guest timer
 
-      The 3rd cell contains the interrupt flags. This is normally
+      The last cell contains the interrupt flags. This is normally
       IRQ_TYPE_LEVEL_HIGH (4).
 
   reg:
@@ -68,6 +74,13 @@ properties:
   power-domains:
     maxItems: 1
 
+  apple,event-reg:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    description:
+      Specifies the offset of the event register, which lies after all the
+      implemented die register sets, page aligned. This is not computable from
+      capability register values, so we have to specify it explicitly.
+
 required:
   - compatible
   - '#interrupt-cells'
@@ -75,6 +88,29 @@ required:
   - reg
 
 additionalProperties: false
+
+allOf:
+  - $ref: /schemas/interrupt-controller.yaml#
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - apple,aic
+    then:
+      properties:
+        '#interrupt-cells':
+          const: 3
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - apple,aic2
+    then:
+      required:
+        - apple,event-reg
 
 examples:
   - |
