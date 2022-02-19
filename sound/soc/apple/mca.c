@@ -914,7 +914,7 @@ static int apple_mca_probe(struct platform_device *pdev)
 		mca->clk_parents[i] = clk;
 
 		if (IS_ERR(clk)) {
-			dev_err(&pdev->dev, "unable to obtain clock %s: %d\n",
+			dev_err(&pdev->dev, "unable to obtain clock %s: %ld\n",
 				name, PTR_ERR(clk));
 			ret = PTR_ERR(clk);
 			goto err_release_chans_clocks;
@@ -948,8 +948,8 @@ static int apple_mca_probe(struct platform_device *pdev)
 			chan = of_dma_request_slave_channel(pdev->dev.of_node, name);
 			if (IS_ERR(chan)) {
 				if (PTR_ERR(chan) != -EPROBE_DEFER)
-					dev_err(&pdev->dev, "no %s DMA channel: %d\n",
-						name, route->of_node, PTR_ERR(chan));
+					dev_err(&pdev->dev, "no %s DMA channel: %ld\n",
+						name, PTR_ERR(chan));
 
 				ret = PTR_ERR(chan);
 				goto err_release_chans_clocks;
