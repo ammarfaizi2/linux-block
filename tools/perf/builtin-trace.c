@@ -4899,6 +4899,8 @@ int cmd_trace(int argc, const char **argv)
 	signal(SIGSEGV, sighandler_dump_stack);
 	signal(SIGFPE, sighandler_dump_stack);
 	signal(SIGINT, sighandler_interrupt);
+
+	memset(&sigchld_act, 0, sizeof(sigchld_act));
 	sigchld_act.sa_flags = SA_SIGINFO;
 	sigchld_act.sa_sigaction = sighandler_chld;
 	sigaction(SIGCHLD, &sigchld_act, NULL);
