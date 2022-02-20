@@ -17,6 +17,7 @@ vp.py - Patch verifier and massager tool
 
 import re
 import sys
+import nltk                 # Natural language processing
 import time
 import os.path
 import inspect
@@ -30,6 +31,7 @@ import configparser
 # Import the email modules we'll need
 from email import policy, utils
 from email.parser import BytesParser
+
 
 import enchant              # spell checker
 import unidiff
@@ -188,17 +190,18 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          "amongst",
          "AMX", "API", "APM", "APU", "arm64", "asm", "BHB",
          "binutils", "bitmask", "bitfield", "BSP", "CMCI", "cmdline", "config", "CPPC", "CPUID",
-         "DMA", "DIMM", "e820", "EAX", "EDAC", "EFI", "EHCI", "enablement", "ENQCMD", "EPT", "fixup",
-         "FRU", "gcc", "GPR", "GUID", "HLT", "hotplug", "hugepage", "Hygon",
-         "hypercall", "HV", "I/O", "IBT", "initializer", "initrd", "IRET", "IRQ", "JMP", "kallsyms",
+         "DF", "DMA", "DIMM", "e820", "EAX", "EDAC", "EFI", "EHCI", "enablement", "ENQCMD", "EPT", "fixup",
+         "FRU", "gcc", "goto", "GPR", "GUID", "hotplug", "hugepage", "Hygon",
+         "hypercall", "HV", "i387", "I/O", "IBT", "initializer", "initrd", "IRET", "IRQ", "JMP", "kallsyms",
          "KASAN", "kdump", "kexec", "KVM", "LFENCE", "livepatch", "lvalue",
          "MCA", "MCE", "memmove",
          "memtype", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
-         "NX", "OEM", "ok", "oneliner", "PASID", "PCI", "pdf", "percpu", "perf", "preemptible",
+         "NX", "OEM", "ok", "oneliner", "PCI", "pdf", "percpu", "perf", "PPIN",
+         "preemptible",
          "prepend", # derived from append, not in the dictionaries
-         "PTE", "PPIN",
-         "PV", "PVALIDATE", "RDMSR", "repurposing", "RET", "retpoline", "rFLAGS", "RMP", "RMPADJUST", "Ryzen",
-         "SIGSEGV", "Skylake", "SME", "SNP", "STI", "STLF", "strtab", "struct", "swiotlb",
+         "PTE", "ptrace",
+         "PV", "PVALIDATE", "RDMSR", "repurposing", "RET", "retpoline", "rFLAGS", "RTM", "Ryzen",
+         "SIGSEGV", "Skylake", "SNP", "SRAR", "STI", "STLF", "strtab", "struct", "SVA", "swiotlb",
          "symtab", "sysfs", "TDCALL", "TDGETVEINFO", "TDVMCALL", "TLB", "TODO", "tracepoint",
          "UMC", "UML",
          # too late for that one to enforce even as the dictionary says it is wrong
@@ -210,7 +213,7 @@ dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars, etc which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'boot_params', 'cpuinfo_x86', 'cpumask', 'earlyprintk',
+known_vars = [ '__BOOT_DS', 'boot_params', 'cpumask', 'earlyprintk',
            'fpstate', 'i915', 'kobj_type',
            'kptr_restrict', 'pt_regs', 'memremap',
            'ptr', 'set_lvt_off', 'setup_data',
@@ -219,12 +222,20 @@ known_vars = [ '__BOOT_DS', 'boot_params', 'cpuinfo_x86', 'cpumask', 'earlyprint
 
 # known words as regexes to avoid duplication in the list above
 regexes_pats = [ r'^all(mod|yes)config$', r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
+             r'^cpuinfo(_x86)?$', 
              r'default_(attrs|groups)', r'^DDR([1-5])?$', r'^[Ee].g.$', r'^[eE]?IBRS$', r'^E?VEX$',
-            r'^GHC(B|I)$', r'^Icelake(-D)?$', r'I[DS]T', r'^(in|off)lining$',
-            r'^[ku]probes?$', r'MOVSB?', r'^param(s)?$',
-            r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$', r'PS[CP]',
-            r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$',
-            r'T[DS]X', r'^v?syscall$',
+            r'^GHC(B|I)$',
+            r'^HL[ET]$',
+            r'^Icelake(-D)?$', r'I[DS]T', r'^(in|off)lining$',
+            r'^[ku]probes?$', r'MOVSB?',
+            r'^param(s)?$',
+            r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$',
+            # embedded modifier which goes at the beginning of the regex
+            r'(?i)^pasid$', r'PS[CP]',
+            r'^RMP(ADJUST)?$',
+            r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'^SM[ET]$',
+            r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$',
+            r'T[DS]X', r'^u(16|32|64)$', r'^v?syscall$',
             r'^VMPL([0-3])?$', r'^x86(-(32|64))?$', r'^XSAVE[CS]?$' ]
 
 def load_spellchecker():
@@ -299,14 +310,11 @@ rex_word_split, rex_x86_traps
     for pat in regexes_pats:
         regexes.append(re.compile(pat))
 
-def spellcheck_func_name(w, prev_word):
+def spellcheck_func_name(w):
     """
     Check a function's name
 
     """
-
-    # remove crap from previous word
-    prev = prev_word.strip('`\',*+:;!|<>"=?')
 
     dbg("%s" % (w, ))
 
@@ -331,7 +339,13 @@ def spellcheck_func_name(w, prev_word):
         dbg("Skip struct member: [%s]" % (w, ))
         return True
 
-    return False
+    # heuristic: check if any of the words is a verb
+    for i in nltk.pos_tag(nltk.word_tokenize(w.replace('_', ' ')), tagset='universal'):
+        print(i)
+        if i[1] == 'VERB':
+            return False
+
+    return True
 
 
 regexes = []
@@ -489,8 +503,8 @@ def spellcheck(s, where, flags):
             if flags and flags['check_func']:
 
                 # it is only a heuristic anyway
-                if '_' in w and words[i - 1] != "struct":
-                    ret = spellcheck_func_name(w, words[i - 1])
+                if ('_' in w or w.endswith('()')) and words[i - 1] != "struct":
+                    ret = spellcheck_func_name(w)
                     if ret:
                         continue
 
@@ -1073,6 +1087,7 @@ class Patch:
         flags = { 'check_func': True }
         spellcheck(self.commit_msg, "commit message", flags)
 
+
     def format_tags(self, f, link_check=True):
         """
         @f: Write into this file stream
@@ -1083,6 +1098,10 @@ class Patch:
 
         for tag in od:
             if not od[tag]:
+                continue
+
+            # handled below
+            if tag == "Link":
                 continue
 
             for v in od[tag]:
@@ -1096,26 +1115,34 @@ class Patch:
                 info("%s: %s" % (tag, v, ))
                 f.write(("%s: %s\n" % (tag, v, )))
 
+        # go through Link tags from the patch itself:
+        if od['Link']:
+            for url in od['Link']:
+
+                # skip previous links, add the others like bugzilla, etc refs.
+                if url.startswith("https://lore.kernel.org/r/"):
+                    continue
+
+            info(("Link: %s" % (url, )))
+            f.write(("Link: %s\n" % (url, )))
+
+
         link_url = ""
         if self.message_id:
             link_url = ("https://lore.kernel.org/r/%s" % (self.message_id, ))
-        elif od['Link']:
-            link_url = od['Link'][0]
-            warn("Using Link URL from patch itself: %s" % (link_url, ))
-            self.message_id = link_url
 
-        if link_check and link_url:
-            try:
-                get = requests.get(link_url)
-                if get.status_code != 200:
-                    err("Link URL %s not reachable, status_code: %d" % (link_url, get.status_code, ))
-            except requests.exceptions.RequestException as e:
-                err("Exception %s while trying to get URL: %s" % (e, link_url, ))
+            # check it
+            if link_check:
+                try:
+                    get = requests.get(link_url)
+                    if get.status_code != 200:
+                        err("Link URL %s not reachable, status_code: %d" % (link_url, get.status_code, ))
+                except requests.exceptions.RequestException as e:
+                    err("Exception %s while trying to get URL: %s" % (e, link_url, ))
 
-        # slap the Link at the end only if no Link present
-        if not od['Link']:
             info(("Link: %s\n" % (link_url, )))
             f.write(("Link: %s\n" % (link_url, )))
+
 
     def process_patch(self):
         """
@@ -1390,6 +1417,19 @@ if __name__ == '__main__':
     parse_config_file()
 
     args = init_parser()
+
+    # fetch all NLTK resources: TODO: this should be behind a cmdline option: ./vp.py
+    # --refresh-helper-modules or so
+    dl = nltk.downloader.Downloader()
+
+    if dl.is_stale('punkt'):
+        dl.download('punkt')
+
+    if dl.is_stale('averaged_perceptron_tagger'):
+        dl.download('averaged_perceptron_tagger')
+
+    if dl.is_stale('universal_tagset'):
+        dl.download('universal_tagset')
 
     # check if we're in a git repo
     if not os.path.exists(os.getcwd() + "/.git"):
