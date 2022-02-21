@@ -3328,10 +3328,16 @@ int schedule_on_each_cpu(work_func_t func)
 {
 	int cpu;
 	struct work_struct __percpu *works;
+	struct workqueue_struct *wq;
 
 	works = alloc_percpu(struct work_struct);
 	if (!works)
 		return -ENOMEM;
+	wq = alloc_workqueue("events_sync", 0, 0);
+	if (!wq) {
+		free_percpu(works);
+		return -ENOMEM;
+	}
 
 	cpus_read_lock();
 
@@ -3346,6 +3352,7 @@ int schedule_on_each_cpu(work_func_t func)
 		flush_work(per_cpu_ptr(works, cpu));
 
 	cpus_read_unlock();
+	destroy_workqueue(wq);
 	free_percpu(works);
 	return 0;
 }
