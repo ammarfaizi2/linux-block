@@ -1335,64 +1335,6 @@ static inline pmd_t pmd_swp_clear_uffd_wp(pmd_t pmd)
 }
 #endif /* CONFIG_HAVE_ARCH_USERFAULTFD_WP */
 
-static inline u16 pte_flags_pkey(unsigned long pte_flags)
-{
-#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
-	/* ifdef to avoid doing 59-bit shift on 32-bit values */
-	return (pte_flags & _PAGE_PKEY_MASK) >> _PAGE_BIT_PKEY_BIT0;
-#else
-	return 0;
-#endif
-}
-
-static inline bool __pkru_allows_pkey(u16 pkey, bool write)
-{
-	u32 pkru = read_pkru();
-
-	if (!__pkru_allows_read(pkru, pkey))
-		return false;
-	if (write && !__pkru_allows_write(pkru, pkey))
-		return false;
-
-	return true;
-}
-
-/*
- * 'pteval' can come from a PTE, PMD or PUD.  We only check
- * _PAGE_PRESENT, _PAGE_USER, and _PAGE_RW in here which are the
- * same value on all 3 types.
- */
-static inline bool __pte_access_permitted(unsigned long pteval, bool write)
-{
-	unsigned long need_pte_bits = _PAGE_PRESENT|_PAGE_USER;
-
-	if (write)
-		need_pte_bits |= _PAGE_RW;
-
-	if ((pteval & need_pte_bits) != need_pte_bits)
-		return 0;
-
-	return __pkru_allows_pkey(pte_flags_pkey(pteval), write);
-}
-
-#define pte_access_permitted pte_access_permitted
-static inline bool pte_access_permitted(pte_t pte, bool write)
-{
-	return __pte_access_permitted(pte_val(pte), write);
-}
-
-#define pmd_access_permitted pmd_access_permitted
-static inline bool pmd_access_permitted(pmd_t pmd, bool write)
-{
-	return __pte_access_permitted(pmd_val(pmd), write);
-}
-
-#define pud_access_permitted pud_access_permitted
-static inline bool pud_access_permitted(pud_t pud, bool write)
-{
-	return __pte_access_permitted(pud_val(pud), write);
-}
-
 #define __HAVE_ARCH_PFN_MODIFY_ALLOWED 1
 extern bool pfn_modify_allowed(unsigned long pfn, pgprot_t prot);
 
