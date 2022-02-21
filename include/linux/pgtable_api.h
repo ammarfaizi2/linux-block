@@ -6,6 +6,7 @@
 
 #include <asm/page.h>
 #include <asm/pgtable.h>
+#include <asm/pgtable_api_access.h>
 
 #ifndef __ASSEMBLY__
 #ifdef CONFIG_MMU
@@ -592,31 +593,6 @@ static inline int pte_unused(pte_t pte)
 {
 	return 0;
 }
-#endif
-
-#ifndef pte_access_permitted
-#define pte_access_permitted(pte, write) \
-	(pte_present(pte) && (!(write) || pte_write(pte)))
-#endif
-
-#ifndef pmd_access_permitted
-#define pmd_access_permitted(pmd, write) \
-	(pmd_present(pmd) && (!(write) || pmd_write(pmd)))
-#endif
-
-#ifndef pud_access_permitted
-#define pud_access_permitted(pud, write) \
-	(pud_present(pud) && (!(write) || pud_write(pud)))
-#endif
-
-#ifndef p4d_access_permitted
-#define p4d_access_permitted(p4d, write) \
-	(p4d_present(p4d) && (!(write) || p4d_write(p4d)))
-#endif
-
-#ifndef pgd_access_permitted
-#define pgd_access_permitted(pgd, write) \
-	(pgd_present(pgd) && (!(write) || pgd_write(pgd)))
 #endif
 
 #ifndef __HAVE_ARCH_PMD_SAME
