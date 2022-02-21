@@ -9,6 +9,7 @@
  */
 
 #include <linux/sched/task_flags.h>
+#include <net/sock.h>
 #include <linux/syscalls.h>
 #include <linux/export.h>
 #include <linux/capability.h>
@@ -88,6 +89,16 @@ struct mount_kattr {
 /* /sys/fs */
 struct kobject *fs_kobj;
 EXPORT_SYMBOL_GPL(fs_kobj);
+
+struct user_namespace *sk_user_ns(struct sock *sk)
+{
+	/* Careful only use this in a context where these parameters
+	 * can not change and must all be valid, such as recvmsg from
+	 * userspace.
+	 */
+	return sk->sk_socket->file->f_cred->user_ns;
+}
+EXPORT_SYMBOL_GPL(sk_user_ns);
 
 /*
  * vfsmount lock may be taken for read to prevent changes to the

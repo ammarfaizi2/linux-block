@@ -842,14 +842,7 @@ static inline void sk_add_bind_node(struct sock *sk,
 		({ tpos = (typeof(*tpos) *)((void *)pos - offset); 1;});       \
 	     pos = rcu_dereference(hlist_next_rcu(pos)))
 
-static inline struct user_namespace *sk_user_ns(struct sock *sk)
-{
-	/* Careful only use this in a context where these parameters
-	 * can not change and must all be valid, such as recvmsg from
-	 * userspace.
-	 */
-	return sk->sk_socket->file->f_cred->user_ns;
-}
+extern struct user_namespace *sk_user_ns(struct sock *sk);
 
 /* Sock flags */
 enum sock_flags {
