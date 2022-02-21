@@ -33,6 +33,11 @@ void netfs_decrypt(struct netfs_io_request *rreq);
 int netfs_dio_copy_bounce_to_dest(struct netfs_io_request *rreq);
 
 /*
+ * direct_write.c
+ */
+ssize_t netfs_direct_write_iter(struct kiocb *iocb, struct iov_iter *from);
+
+/*
  * io.c
  */
 ssize_t netfs_begin_read(struct netfs_io_request *rreq, bool sync);
