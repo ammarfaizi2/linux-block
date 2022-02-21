@@ -4,6 +4,7 @@ netfs-y := \
 	buffered_read.o \
 	crypto.o \
 	direct_read.o \
+	direct_write.o \
 	io.o \
 	main.o \
 	misc.o \
