@@ -12,7 +12,6 @@
 #ifndef _LINUX_SLAB_H
 #define	_LINUX_SLAB_H
 
-#include <linux/mm_api_kvmalloc.h>
 #include <linux/numa_types.h>
 #include <linux/gfp_types.h>
 #include <linux/overflow.h>
