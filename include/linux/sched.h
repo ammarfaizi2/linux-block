@@ -704,10 +704,6 @@ struct task_struct {
 
 	struct sched_statistics         stats;
 
-#ifdef CONFIG_BLK_DEV_IO_TRACE
-	unsigned int			btrace_seq;
-#endif
-
 	unsigned int			policy;
 	int				nr_cpus_allowed;
 	const cpumask_t			*cpus_ptr;

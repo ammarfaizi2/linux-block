@@ -7,8 +7,11 @@
 #include <linux/compat.h>
 #include <uapi/linux/blktrace_api.h>
 #include <linux/list.h>
+#include <linux/sched/per_task.h>
 
 #if defined(CONFIG_BLK_DEV_IO_TRACE)
+
+DECLARE_PER_TASK(unsigned int, btrace_seq);
 
 #include <linux/sysfs.h>
 

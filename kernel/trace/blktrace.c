@@ -28,6 +28,8 @@
 
 #ifdef CONFIG_BLK_DEV_IO_TRACE
 
+DEFINE_PER_TASK(unsigned int, btrace_seq);
+
 static unsigned int blktrace_seq __read_mostly = 1;
 
 static struct trace_array *blk_tr;
@@ -120,7 +122,7 @@ static void trace_note_tsk(struct task_struct *tsk)
 	unsigned long flags;
 	struct blk_trace *bt;
 
-	tsk->btrace_seq = blktrace_seq;
+	per_task(tsk, btrace_seq) = blktrace_seq;
 	raw_spin_lock_irqsave(&running_trace_lock, flags);
 	list_for_each_entry(bt, &running_trace_list, running_list) {
 		trace_note(bt, tsk->pid, BLK_TN_PROCESS, tsk->comm,
@@ -263,7 +265,7 @@ static void __blk_add_trace(struct blk_trace *bt, sector_t sector, int bytes,
 		goto record_it;
 	}
 
-	if (unlikely(tsk->btrace_seq != blktrace_seq))
+	if (unlikely(per_task(tsk, btrace_seq) != blktrace_seq))
 		trace_note_tsk(tsk);
 
 	/*
