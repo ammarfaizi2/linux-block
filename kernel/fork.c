@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/blktrace_api.h>
 #include <linux/cpuset.h>
 #include <linux/sched/rseq_api.h>
 #include <linux/shm.h>
@@ -968,7 +969,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 	/* One for the rcu users */
 	refcount_set(&per_task(tsk, usage), 1);
 #ifdef CONFIG_BLK_DEV_IO_TRACE
-	tsk->btrace_seq = 0;
+	per_task(tsk, btrace_seq) = 0;
 #endif
 	tsk->splice_pipe = NULL;
 	tsk->task_frag.page = NULL;
