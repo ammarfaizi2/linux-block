@@ -10,7 +10,7 @@
 #include <linux/sched/task_flags.h>
 #include <linux/wait.h>
 #include <linux/atomic.h>
-#include <linux/hrtimer.h>
+#include <linux/hrtimer_api.h>
 
 #ifdef CONFIG_FREEZER
 extern atomic_t system_freezing_cnt;	/* nr of freezing conds in effect */

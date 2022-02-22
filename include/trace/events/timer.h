@@ -7,7 +7,7 @@
 
 #include <linux/pid.h>
 #include <linux/tracepoint.h>
-#include <linux/hrtimer.h>
+#include <linux/hrtimer_api.h>
 #include <linux/timer.h>
 
 DECLARE_EVENT_CLASS(timer_class,
