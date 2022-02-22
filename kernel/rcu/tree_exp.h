@@ -7,6 +7,7 @@
  * Authors: Paul E. McKenney <paulmck@linux.ibm.com>
  */
 
+#include <linux/swait_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
