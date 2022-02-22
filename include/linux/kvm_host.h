@@ -3,6 +3,7 @@
 #define __KVM_HOST_H
 
 
+#include <linux/hashtable_api.h>
 #include <linux/xarray_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mm_page_address.h>

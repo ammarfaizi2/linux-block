@@ -3,6 +3,5 @@
 #define _LINUX_HASHTABLE_H
 
 #include <linux/hashtable_types.h>
-#include <linux/hashtable_api.h>
 
 #endif
