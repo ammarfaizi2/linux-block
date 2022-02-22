@@ -904,6 +904,48 @@ int dsa_port_vlan_del(struct dsa_port *dp,
 	return dsa_port_notify(dp, DSA_NOTIFIER_VLAN_DEL, &info);
 }
 
+int dsa_port_host_vlan_add(struct dsa_port *dp,
+			   const struct switchdev_obj_port_vlan *vlan,
+			   struct netlink_ext_ack *extack)
+{
+	struct dsa_notifier_vlan_info info = {
+		.sw_index = dp->ds->index,
+		.port = dp->index,
+		.vlan = vlan,
+		.extack = extack,
+	};
+	struct dsa_port *cpu_dp = dp->cpu_dp;
+	int err;
+
+	err = dsa_port_notify(dp, DSA_NOTIFIER_HOST_VLAN_ADD, &info);
+	if (err && err != -EOPNOTSUPP)
+		return err;
+
+	vlan_vid_add(cpu_dp->master, htons(ETH_P_8021Q), vlan->vid);
+
+	return err;
+}
+
+int dsa_port_host_vlan_del(struct dsa_port *dp,
+			   const struct switchdev_obj_port_vlan *vlan)
+{
+	struct dsa_notifier_vlan_info info = {
+		.sw_index = dp->ds->index,
+		.port = dp->index,
+		.vlan = vlan,
+	};
+	struct dsa_port *cpu_dp = dp->cpu_dp;
+	int err;
+
+	err = dsa_port_notify(dp, DSA_NOTIFIER_HOST_VLAN_DEL, &info);
+	if (err && err != -EOPNOTSUPP)
+		return err;
+
+	vlan_vid_del(cpu_dp->master, htons(ETH_P_8021Q), vlan->vid);
+
+	return err;
+}
+
 int dsa_port_mrp_add(const struct dsa_port *dp,
 		     const struct switchdev_obj_mrp *mrp)
 {
@@ -1011,6 +1053,20 @@ static void dsa_port_phylink_mac_pcs_get_state(struct phylink_config *config,
 	}
 }
 
+static struct phylink_pcs *
+dsa_port_phylink_mac_select_pcs(struct phylink_config *config,
+				phy_interface_t interface)
+{
+	struct dsa_port *dp = container_of(config, struct dsa_port, pl_config);
+	struct dsa_switch *ds = dp->ds;
+	struct phylink_pcs *pcs = NULL;
+
+	if (ds->ops->phylink_mac_select_pcs)
+		pcs = ds->ops->phylink_mac_select_pcs(ds, dp->index, interface);
+
+	return pcs;
+}
+
 static void dsa_port_phylink_mac_config(struct phylink_config *config,
 					unsigned int mode,
 					const struct phylink_link_state *state)
@@ -1077,6 +1133,7 @@ static void dsa_port_phylink_mac_link_up(struct phylink_config *config,
 
 static const struct phylink_mac_ops dsa_port_phylink_mac_ops = {
 	.validate = dsa_port_phylink_validate,
+	.mac_select_pcs = dsa_port_phylink_mac_select_pcs,
 	.mac_pcs_get_state = dsa_port_phylink_mac_pcs_get_state,
 	.mac_config = dsa_port_phylink_mac_config,
 	.mac_an_restart = dsa_port_phylink_mac_an_restart,
@@ -1194,7 +1251,6 @@ static int dsa_port_phylink_register(struct dsa_port *dp)
 
 	dp->pl_config.dev = ds->dev;
 	dp->pl_config.type = PHYLINK_DEV;
-	dp->pl_config.pcs_poll = ds->pcs_poll;
 
 	err = dsa_port_phylink_create(dp);
 	if (err)
@@ -1257,63 +1313,6 @@ void dsa_port_link_unregister_of(struct dsa_port *dp)
 	else
 		dsa_port_setup_phy_of(dp, false);
 }
-
-int dsa_port_get_phy_strings(struct dsa_port *dp, uint8_t *data)
-{
-	struct phy_device *phydev;
-	int ret = -EOPNOTSUPP;
-
-	if (of_phy_is_fixed_link(dp->dn))
-		return ret;
-
-	phydev = dsa_port_get_phy_device(dp);
-	if (IS_ERR_OR_NULL(phydev))
-		return ret;
-
-	ret = phy_ethtool_get_strings(phydev, data);
-	put_device(&phydev->mdio.dev);
-
-	return ret;
-}
-EXPORT_SYMBOL_GPL(dsa_port_get_phy_strings);
-
-int dsa_port_get_ethtool_phy_stats(struct dsa_port *dp, uint64_t *data)
-{
-	struct phy_device *phydev;
-	int ret = -EOPNOTSUPP;
-
-	if (of_phy_is_fixed_link(dp->dn))
-		return ret;
-
-	phydev = dsa_port_get_phy_device(dp);
-	if (IS_ERR_OR_NULL(phydev))
-		return ret;
-
-	ret = phy_ethtool_get_stats(phydev, NULL, data);
-	put_device(&phydev->mdio.dev);
-
-	return ret;
-}
-EXPORT_SYMBOL_GPL(dsa_port_get_ethtool_phy_stats);
-
-int dsa_port_get_phy_sset_count(struct dsa_port *dp)
-{
-	struct phy_device *phydev;
-	int ret = -EOPNOTSUPP;
-
-	if (of_phy_is_fixed_link(dp->dn))
-		return ret;
-
-	phydev = dsa_port_get_phy_device(dp);
-	if (IS_ERR_OR_NULL(phydev))
-		return ret;
-
-	ret = phy_ethtool_get_sset_count(phydev);
-	put_device(&phydev->mdio.dev);
-
-	return ret;
-}
-EXPORT_SYMBOL_GPL(dsa_port_get_phy_sset_count);
 
 int dsa_port_hsr_join(struct dsa_port *dp, struct net_device *hsr)
 {
