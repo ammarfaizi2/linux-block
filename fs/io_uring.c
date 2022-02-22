@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/sched/affinity.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/errno.h>

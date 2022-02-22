@@ -15,6 +15,7 @@
  * Peter Zijlstra <peterz@infradead.org>.
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

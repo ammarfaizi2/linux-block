@@ -7,6 +7,7 @@
  * even if we're invoked from userspace (think modprobe, hotplug cpu,
  * etc.).
  */
+#include <linux/sched/affinity.h>
 #include <uapi/linux/sched/types.h>
 #include <linux/mm.h>
 #include <linux/mmu_context.h>

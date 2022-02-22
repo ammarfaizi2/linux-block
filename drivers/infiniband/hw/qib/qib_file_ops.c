@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/pci.h>
 #include <linux/poll.h>
 #include <linux/cdev.h>

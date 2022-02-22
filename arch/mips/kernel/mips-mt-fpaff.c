@@ -3,6 +3,7 @@
  * General MIPS MT support routines, usable in AP/SP and SMVP.
  * Copyright (C) 2005 Mips Technologies, Inc
  */
+#include <linux/sched/affinity.h>
 #include <linux/cpu.h>
 #include <linux/cpuset.h>
 #include <linux/cpumask.h>

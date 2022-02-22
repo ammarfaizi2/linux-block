@@ -9,6 +9,7 @@
  *	i386 and x86_64 integration by Glauber Costa <gcosta@redhat.com>
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/init.h>
 
 #include <linux/mm.h>

@@ -8,6 +8,7 @@
  *  Copyright (C) 2002-2003 Stephen Rothwell, IBM Corporation
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/linkage.h>
 #include <linux/compat.h>
 #include <linux/errno.h>

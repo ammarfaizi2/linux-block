@@ -11,6 +11,7 @@
  * by Greg Banks <gnb@melbourne.sgi.com>
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/linkage.h>
 #include <linux/sched/signal.h>
 #include <linux/errno.h>

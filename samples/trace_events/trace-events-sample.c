@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/sched/affinity.h>
 #include <linux/module.h>
 #include <linux/kthread.h>
 
