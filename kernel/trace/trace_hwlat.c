@@ -37,6 +37,7 @@
  * Includes useful feedback from Clark Williams <williams@redhat.com>
  *
  */
+#include <linux/sched/affinity.h>
 #include <linux/kthread.h>
 #include <linux/tracefs.h>
 #include <linux/uaccess.h>

@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"reboot: " fmt
 
+#include <linux/sched/affinity.h>
 #include <linux/atomic.h>
 #include <linux/ctype.h>
 #include <linux/export.h>

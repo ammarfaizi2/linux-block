@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Jens Axboe
  *
  */
+#include <linux/sched/affinity.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/errno.h>

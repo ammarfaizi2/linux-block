@@ -8,6 +8,7 @@
  *
  * Copyright IBM Corp. 2007-2010 Mel Gorman <mel@csn.ul.ie>
  */
+#include <linux/sched/affinity.h>
 #include <linux/cpu.h>
 #include <linux/swap.h>
 #include <linux/migrate.h>

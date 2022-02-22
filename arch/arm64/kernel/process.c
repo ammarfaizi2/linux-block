@@ -6,6 +6,7 @@
  * Copyright (C) 1996-2000 Russell King - Converted to ARM.
  * Copyright (C) 2012 ARM Ltd.
  */
+#include <linux/sched/affinity.h>
 #include <linux/compat.h>
 #include <linux/efi.h>
 #include <linux/elf.h>

@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2020 Intel Corporation.
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/topology.h>
 #include <linux/cpumask.h>
 #include <linux/module.h>

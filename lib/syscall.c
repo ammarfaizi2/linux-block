@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/sched/affinity.h>
 #include <linux/ptrace.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>

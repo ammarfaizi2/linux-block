@@ -37,6 +37,7 @@
  */
 #define pr_fmt(fmt) "ii_dev: " fmt
 
+#include <linux/sched/affinity.h>
 #include <linux/cpu.h>
 #include <linux/hrtimer.h>
 #include <linux/kthread.h>

@@ -194,6 +194,7 @@
 
 #define pr_fmt(fmt) "apm: " fmt
 
+#include <linux/sched/affinity.h>
 #include <linux/module.h>
 
 #include <linux/poll.h>

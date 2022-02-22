@@ -53,6 +53,7 @@
  *			 :  base.c too.
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/time.h>
