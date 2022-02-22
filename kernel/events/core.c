@@ -58,6 +58,8 @@
 
 #include "internal.h"
 
+#include "../sched/sched.h"
+
 #include <asm/irq_regs.h>
 
 typedef int (*remote_function_f)(void *);
@@ -8824,7 +8826,7 @@ static void perf_event_switch(struct task_struct *task,
 		},
 	};
 
-	if (!sched_in && task->on_rq) {
+	if (!sched_in && per_task(task, on_rq)) {
 		switch_event.event_id.header.misc |=
 				PERF_RECORD_MISC_SWITCH_OUT_PREEMPT;
 	}

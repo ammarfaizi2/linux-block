@@ -62,6 +62,8 @@
 #include "kvm_mm.h"
 #include "vfio.h"
 
+#include "../../kernel/sched/sched.h"
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/kvm.h>
 
@@ -5561,7 +5563,7 @@ static void kvm_sched_out(struct preempt_notifier *pn,
 {
 	struct kvm_vcpu *vcpu = preempt_notifier_to_vcpu(pn);
 
-	if (current->on_rq) {
+	if (per_task(current, on_rq)) {
 		WRITE_ONCE(vcpu->preempted, true);
 		WRITE_ONCE(vcpu->ready, true);
 	}

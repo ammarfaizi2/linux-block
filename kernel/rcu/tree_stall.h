@@ -9,6 +9,8 @@
 
 #include <linux/kvm_para.h>
 
+#include "../sched/sched.h"
+
 //////////////////////////////////////////////////////////////////////////////
 //
 // Controlling CPU stall warnings, including delay calculation.
@@ -481,7 +483,7 @@ static void rcu_check_gp_kthread_expired_fqs_timer(void)
 
 	if (gp_state == RCU_GP_WAIT_FQS &&
 	    time_after(jiffies, jiffies_fqs + RCU_STALL_MIGHT_MIN) &&
-	    gpk && !READ_ONCE(gpk->on_rq)) {
+	    gpk && !READ_ONCE(per_task(gpk, on_rq))) {
 		cpu = task_cpu(gpk);
 		pr_err("%s kthread timer wakeup didn't happen for %ld jiffies! g%ld f%#x %s(%d) ->state=%#x\n",
 		       rcu_state.name, (jiffies - jiffies_fqs),

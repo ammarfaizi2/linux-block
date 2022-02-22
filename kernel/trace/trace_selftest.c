@@ -7,6 +7,8 @@
 #include <linux/delay.h>
 #include <linux/slab.h>
 
+#include "../sched/sched.h"
+
 static inline int trace_valid_entry(struct trace_entry *entry)
 {
 	switch (entry->type) {
@@ -1206,7 +1208,7 @@ trace_selftest_startup_wakeup(struct tracer *trace, struct trace_array *tr)
 	/* reset the max latency */
 	tr->max_latency = 0;
 
-	while (p->on_rq) {
+	while (per_task(p, on_rq)) {
 		/*
 		 * Sleep to make sure the -deadline thread is asleep too.
 		 * On virtual machines we can't rely on timings,

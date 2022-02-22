@@ -100,6 +100,9 @@
 DECLARE_PER_TASK(struct vtime,				vtime);
 #endif
 
+DECLARE_PER_TASK(int, on_rq);
+DECLARE_PER_TASK(struct sched_rt_entity, rt);
+
 struct rq;
 struct cpuidle_state;
 
@@ -2032,12 +2035,12 @@ static inline int task_running(struct rq *rq, struct task_struct *p)
 
 static inline int task_on_rq_queued(struct task_struct *p)
 {
-	return p->on_rq == TASK_ON_RQ_QUEUED;
+	return per_task(p, on_rq) == TASK_ON_RQ_QUEUED;
 }
 
 static inline int task_on_rq_migrating(struct task_struct *p)
 {
-	return READ_ONCE(p->on_rq) == TASK_ON_RQ_MIGRATING;
+	return READ_ONCE(per_task(p, on_rq)) == TASK_ON_RQ_MIGRATING;
 }
 
 /* Wake flags. The first three directly map to some SD flag value */

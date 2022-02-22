@@ -93,6 +93,8 @@
 
 DEFINE_PER_TASK(struct sched_dl_entity, dl);
 
+DEFINE_PER_TASK(int, on_rq);
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.
@@ -2056,7 +2058,7 @@ unsigned long get_wchan(struct task_struct *p)
 	raw_spin_lock_irq(&p->pi_lock);
 	state = READ_ONCE(p->__state);
 	smp_rmb(); /* see try_to_wake_up() */
-	if (state != TASK_RUNNING && state != TASK_WAKING && !p->on_rq)
+	if (state != TASK_RUNNING && state != TASK_WAKING && !per_task(p, on_rq))
 		ip = __get_wchan(p);
 	raw_spin_unlock_irq(&p->pi_lock);
 
@@ -2101,12 +2103,12 @@ void activate_task(struct rq *rq, struct task_struct *p, int flags)
 {
 	enqueue_task(rq, p, flags);
 
-	p->on_rq = TASK_ON_RQ_QUEUED;
+	per_task(p, on_rq) = TASK_ON_RQ_QUEUED;
 }
 
 void deactivate_task(struct rq *rq, struct task_struct *p, int flags)
 {
-	p->on_rq = (flags & DEQUEUE_SLEEP) ? 0 : TASK_ON_RQ_MIGRATING;
+	per_task(p, on_rq) = (flags & DEQUEUE_SLEEP) ? 0 : TASK_ON_RQ_MIGRATING;
 
 	dequeue_task(rq, p, flags);
 }
@@ -3099,7 +3101,7 @@ void set_task_cpu(struct task_struct *p, unsigned int new_cpu)
 	 * We should never call set_task_cpu() on a blocked task,
 	 * ttwu() will sort out the placement.
 	 */
-	WARN_ON_ONCE(state != TASK_RUNNING && state != TASK_WAKING && !p->on_rq);
+	WARN_ON_ONCE(state != TASK_RUNNING && state != TASK_WAKING && !per_task(p, on_rq));
 
 	/*
 	 * Migrating fair class task must have p->on_rq = TASK_ON_RQ_MIGRATING,
@@ -3108,7 +3110,7 @@ void set_task_cpu(struct task_struct *p, unsigned int new_cpu)
 	 */
 	WARN_ON_ONCE(state == TASK_RUNNING &&
 		     p->sched_class == &fair_sched_class &&
-		     (p->on_rq && !task_on_rq_migrating(p)));
+		     (per_task(p, on_rq) && !task_on_rq_migrating(p)));
 
 #ifdef CONFIG_LOCKDEP
 	/*
@@ -4121,7 +4123,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	 * A similar smb_rmb() lives in try_invoke_on_locked_down_task().
 	 */
 	smp_rmb();
-	if (READ_ONCE(p->on_rq) && ttwu_runnable(p, wake_flags))
+	if (READ_ONCE(per_task(p, on_rq)) && ttwu_runnable(p, wake_flags))
 		goto unlock;
 
 #ifdef CONFIG_SMP
@@ -4256,7 +4258,7 @@ int task_call_func(struct task_struct *p, task_call_f func, void *arg)
 	 * the task is blocked. Make sure to check @state since ttwu() can drop
 	 * locks at the end, see ttwu_queue_wakelist().
 	 */
-	if (state == TASK_RUNNING || state == TASK_WAKING || p->on_rq)
+	if (state == TASK_RUNNING || state == TASK_WAKING || per_task(p, on_rq))
 		rq = __task_rq_lock(p, &rf);
 
 	/*
@@ -4308,7 +4310,7 @@ int wake_up_state(struct task_struct *p, unsigned int state)
  */
 static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 {
-	p->on_rq			= 0;
+	per_task(p, on_rq)			= 0;
 
 	p->se.on_rq			= 0;
 	p->se.exec_start		= 0;
@@ -8843,7 +8845,7 @@ void __init init_idle(struct task_struct *idle, int cpu)
 
 	rq->idle = idle;
 	rcu_assign_pointer(rq->curr, idle);
-	idle->on_rq = TASK_ON_RQ_QUEUED;
+	per_task(idle, on_rq) = TASK_ON_RQ_QUEUED;
 #ifdef CONFIG_SMP
 	idle->on_cpu = 1;
 #endif

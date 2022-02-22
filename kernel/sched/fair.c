@@ -7007,7 +7007,7 @@ static void migrate_task_rq_fair(struct task_struct *p, int new_cpu)
 		se->vruntime -= min_vruntime;
 	}
 
-	if (p->on_rq == TASK_ON_RQ_MIGRATING) {
+	if (per_task(p, on_rq) == TASK_ON_RQ_MIGRATING) {
 		/*
 		 * In case of TASK_ON_RQ_MIGRATING we in fact hold the 'old'
 		 * rq->lock and can modify state directly.
@@ -11290,7 +11290,7 @@ static inline bool vruntime_normalized(struct task_struct *p)
 	 * the dequeue_entity(.flags=0) will already have normalized the
 	 * vruntime.
 	 */
-	if (p->on_rq)
+	if (per_task(p, on_rq))
 		return true;
 
 	/*
