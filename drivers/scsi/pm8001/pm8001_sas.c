@@ -336,7 +336,7 @@ static int pm8001_task_prep_ata(struct pm8001_hba_info *pm8001_ha,
   * @tmf: the task management IU
   */
 static int pm8001_task_prep_ssp_tm(struct pm8001_hba_info *pm8001_ha,
-	struct pm8001_ccb_info *ccb, struct pm8001_tmf_task *tmf)
+	struct pm8001_ccb_info *ccb, struct sas_tmf_task *tmf)
 {
 	return PM8001_CHIP_DISP->ssp_tm_req(pm8001_ha, ccb, tmf);
 }
@@ -371,15 +371,14 @@ static int sas_find_local_port_id(struct domain_device *dev)
 
 #define DEV_IS_GONE(pm8001_dev)	\
 	((!pm8001_dev || (pm8001_dev->dev_type == SAS_PHY_UNUSED)))
+
 /**
-  * pm8001_task_exec - queue the task(ssp, smp && ata) to the hardware.
+  * pm8001_queue_command - register for upper layer used, all IO commands sent
+  * to HBA are from this interface.
   * @task: the task to be execute.
-  * @gfp_flags: gfp_flags.
-  * @is_tmf: if it is task management task.
-  * @tmf: the task management IU
+  * @gfp_flags: gfp_flags
   */
-static int pm8001_task_exec(struct sas_task *task,
-	gfp_t gfp_flags, int is_tmf, struct pm8001_tmf_task *tmf)
+int pm8001_queue_command(struct sas_task *task, gfp_t gfp_flags)
 {
 	struct domain_device *dev = task->dev;
 	struct pm8001_hba_info *pm8001_ha;
@@ -390,6 +389,8 @@ static int pm8001_task_exec(struct sas_task *task,
 	u32 tag = 0xdeadbeef, rc = 0, n_elem = 0;
 	unsigned long flags = 0;
 	enum sas_protocol task_proto = t->task_proto;
+	struct sas_tmf_task *tmf = task->tmf;
+	int is_tmf = !!task->tmf;
 
 	if (!dev->port) {
 		struct task_status_struct *tsm = &t->task_status;
@@ -502,17 +503,6 @@ err_out:
 out_done:
 	spin_unlock_irqrestore(&pm8001_ha->lock, flags);
 	return rc;
-}
-
-/**
-  * pm8001_queue_command - register for upper layer used, all IO commands sent
-  * to HBA are from this interface.
-  * @task: the task to be execute.
-  * @gfp_flags: gfp_flags
-  */
-int pm8001_queue_command(struct sas_task *task, gfp_t gfp_flags)
-{
-	return pm8001_task_exec(task, gfp_flags, 0, NULL);
 }
 
 /**
@@ -716,101 +706,6 @@ static void pm8001_tmf_timedout(struct timer_list *t)
 }
 
 #define PM8001_TASK_TIMEOUT 20
-/**
-  * pm8001_exec_internal_tmf_task - execute some task management commands.
-  * @dev: the wanted device.
-  * @tmf: which task management wanted to be take.
-  * @para_len: para_len.
-  * @parameter: ssp task parameter.
-  *
-  * when errors or exception happened, we may want to do something, for example
-  * abort the issued task which result in this exception, it is done by calling
-  * this function, note it is also with the task execute interface.
-  */
-static int pm8001_exec_internal_tmf_task(struct domain_device *dev,
-	void *parameter, u32 para_len, struct pm8001_tmf_task *tmf)
-{
-	int res, retry;
-	struct sas_task *task = NULL;
-	struct pm8001_hba_info *pm8001_ha = pm8001_find_ha_by_dev(dev);
-	struct pm8001_device *pm8001_dev = dev->lldd_dev;
-	DECLARE_COMPLETION_ONSTACK(completion_setstate);
-
-	for (retry = 0; retry < 3; retry++) {
-		task = sas_alloc_slow_task(GFP_KERNEL);
-		if (!task)
-			return -ENOMEM;
-
-		task->dev = dev;
-		task->task_proto = dev->tproto;
-		memcpy(&task->ssp_task, parameter, para_len);
-		task->task_done = pm8001_task_done;
-		task->slow_task->timer.function = pm8001_tmf_timedout;
-		task->slow_task->timer.expires = jiffies + PM8001_TASK_TIMEOUT*HZ;
-		add_timer(&task->slow_task->timer);
-
-		res = pm8001_task_exec(task, GFP_KERNEL, 1, tmf);
-
-		if (res) {
-			del_timer(&task->slow_task->timer);
-			pm8001_dbg(pm8001_ha, FAIL, "Executing internal task failed\n");
-			goto ex_err;
-		}
-		wait_for_completion(&task->slow_task->completion);
-		if (pm8001_ha->chip_id != chip_8001) {
-			pm8001_dev->setds_completion = &completion_setstate;
-			PM8001_CHIP_DISP->set_dev_state_req(pm8001_ha,
-				pm8001_dev, DS_OPERATIONAL);
-			wait_for_completion(&completion_setstate);
-		}
-		res = -TMF_RESP_FUNC_FAILED;
-		/* Even TMF timed out, return direct. */
-		if (task->task_state_flags & SAS_TASK_STATE_ABORTED) {
-			struct pm8001_ccb_info *ccb = task->lldd_task;
-
-			pm8001_dbg(pm8001_ha, FAIL, "TMF task[%x]timeout.\n",
-				   tmf->tmf);
-
-			if (ccb)
-				ccb->task = NULL;
-			goto ex_err;
-		}
-
-		if (task->task_status.resp == SAS_TASK_COMPLETE &&
-			task->task_status.stat == SAS_SAM_STAT_GOOD) {
-			res = TMF_RESP_FUNC_COMPLETE;
-			break;
-		}
-
-		if (task->task_status.resp == SAS_TASK_COMPLETE &&
-		task->task_status.stat == SAS_DATA_UNDERRUN) {
-			/* no error, but return the number of bytes of
-			* underrun */
-			res = task->task_status.residual;
-			break;
-		}
-
-		if (task->task_status.resp == SAS_TASK_COMPLETE &&
-			task->task_status.stat == SAS_DATA_OVERRUN) {
-			pm8001_dbg(pm8001_ha, FAIL, "Blocked task error.\n");
-			res = -EMSGSIZE;
-			break;
-		} else {
-			pm8001_dbg(pm8001_ha, EH,
-				   " Task to dev %016llx response:0x%x status 0x%x\n",
-				   SAS_ADDR(dev->sas_addr),
-				   task->task_status.resp,
-				   task->task_status.stat);
-			sas_free_task(task);
-			task = NULL;
-		}
-	}
-ex_err:
-	BUG_ON(retry == 3 && task != NULL);
-	sas_free_task(task);
-	return res;
-}
-
 static int
 pm8001_exec_internal_task_abort(struct pm8001_hba_info *pm8001_ha,
 	struct pm8001_device *pm8001_dev, struct domain_device *dev, u32 flag,
@@ -916,18 +811,6 @@ static void pm8001_dev_gone_notify(struct domain_device *dev)
 void pm8001_dev_gone(struct domain_device *dev)
 {
 	pm8001_dev_gone_notify(dev);
-}
-
-static int pm8001_issue_ssp_tmf(struct domain_device *dev,
-	u8 *lun, struct pm8001_tmf_task *tmf)
-{
-	struct sas_ssp_task ssp_task;
-	if (!(dev->tproto & SAS_PROTOCOL_SSP))
-		return TMF_RESP_FUNC_ESUPP;
-
-	memcpy((u8 *)&ssp_task.LUN, lun, 8);
-	return pm8001_exec_internal_tmf_task(dev, &ssp_task, sizeof(ssp_task),
-		tmf);
 }
 
 /* retry commands by ha, by task and/or by device */
@@ -1120,7 +1003,6 @@ out:
 int pm8001_lu_reset(struct domain_device *dev, u8 *lun)
 {
 	int rc = TMF_RESP_FUNC_FAILED;
-	struct pm8001_tmf_task tmf_task;
 	struct pm8001_device *pm8001_dev = dev->lldd_dev;
 	struct pm8001_hba_info *pm8001_ha = pm8001_find_ha_by_dev(dev);
 	DECLARE_COMPLETION_ONSTACK(completion_setstate);
@@ -1135,8 +1017,7 @@ int pm8001_lu_reset(struct domain_device *dev, u8 *lun)
 			pm8001_dev, DS_OPERATIONAL);
 		wait_for_completion(&completion_setstate);
 	} else {
-		tmf_task.tmf = TMF_LU_RESET;
-		rc = pm8001_issue_ssp_tmf(dev, lun, &tmf_task);
+		rc = sas_lu_reset(dev, lun);
 	}
 	/* If failed, fall-through I_T_Nexus reset */
 	pm8001_dbg(pm8001_ha, EH, "for device[%x]:rc=%d\n",
@@ -1148,8 +1029,6 @@ int pm8001_lu_reset(struct domain_device *dev, u8 *lun)
 int pm8001_query_task(struct sas_task *task)
 {
 	u32 tag = 0xdeadbeef;
-	struct scsi_lun lun;
-	struct pm8001_tmf_task tmf_task;
 	int rc = TMF_RESP_FUNC_FAILED;
 	if (unlikely(!task || !task->lldd_task || !task->dev))
 		return rc;
@@ -1160,17 +1039,14 @@ int pm8001_query_task(struct sas_task *task)
 		struct pm8001_hba_info *pm8001_ha =
 			pm8001_find_ha_by_dev(dev);
 
-		int_to_scsilun(cmnd->device->lun, &lun);
 		rc = pm8001_find_tag(task, &tag);
 		if (rc == 0) {
 			rc = TMF_RESP_FUNC_FAILED;
 			return rc;
 		}
 		pm8001_dbg(pm8001_ha, EH, "Query:[%16ph]\n", cmnd->cmnd);
-		tmf_task.tmf = 	TMF_QUERY_TASK;
-		tmf_task.tag_of_task_to_be_managed = tag;
 
-		rc = pm8001_issue_ssp_tmf(dev, lun.scsi_lun, &tmf_task);
+		rc = sas_query_task(task, tag);
 		switch (rc) {
 		/* The task is still in Lun, release it then */
 		case TMF_RESP_FUNC_SUCC:
@@ -1196,9 +1072,7 @@ int pm8001_abort_task(struct sas_task *task)
 	u32 tag;
 	struct domain_device *dev ;
 	struct pm8001_hba_info *pm8001_ha;
-	struct scsi_lun lun;
 	struct pm8001_device *pm8001_dev;
-	struct pm8001_tmf_task tmf_task;
 	int rc = TMF_RESP_FUNC_FAILED, ret;
 	u32 phy_id, port_id;
 	struct sas_task_slow slow_task;
@@ -1234,11 +1108,7 @@ int pm8001_abort_task(struct sas_task *task)
 	}
 	spin_unlock_irqrestore(&task->task_state_lock, flags);
 	if (task->task_proto & SAS_PROTOCOL_SSP) {
-		struct scsi_cmnd *cmnd = task->uldd_task;
-		int_to_scsilun(cmnd->device->lun, &lun);
-		tmf_task.tmf = TMF_ABORT_TASK;
-		tmf_task.tag_of_task_to_be_managed = tag;
-		rc = pm8001_issue_ssp_tmf(dev, lun.scsi_lun, &tmf_task);
+		rc = sas_abort_task(task, tag);
 		pm8001_exec_internal_task_abort(pm8001_ha, pm8001_dev,
 			pm8001_dev->sas_device, 0, tag);
 	} else if (task->task_proto & SAS_PROTOCOL_SATA ||
@@ -1350,32 +1220,14 @@ out:
 	return rc;
 }
 
-int pm8001_abort_task_set(struct domain_device *dev, u8 *lun)
-{
-	struct pm8001_tmf_task tmf_task;
-
-	tmf_task.tmf = TMF_ABORT_TASK_SET;
-	return pm8001_issue_ssp_tmf(dev, lun, &tmf_task);
-}
-
-int pm8001_clear_aca(struct domain_device *dev, u8 *lun)
-{
-	struct pm8001_tmf_task tmf_task;
-
-	tmf_task.tmf = TMF_CLEAR_ACA;
-	return pm8001_issue_ssp_tmf(dev, lun, &tmf_task);
-}
-
 int pm8001_clear_task_set(struct domain_device *dev, u8 *lun)
 {
-	struct pm8001_tmf_task tmf_task;
 	struct pm8001_device *pm8001_dev = dev->lldd_dev;
 	struct pm8001_hba_info *pm8001_ha = pm8001_find_ha_by_dev(dev);
 
 	pm8001_dbg(pm8001_ha, EH, "I_T_L_Q clear task set[%x]\n",
 		   pm8001_dev->device_id);
-	tmf_task.tmf = TMF_CLEAR_TASK_SET;
-	return pm8001_issue_ssp_tmf(dev, lun, &tmf_task);
+	return sas_clear_task_set(dev, lun);
 }
 
 void pm8001_port_formed(struct asd_sas_phy *sas_phy)
@@ -1391,4 +1243,26 @@ void pm8001_port_formed(struct asd_sas_phy *sas_phy)
 		return;
 	}
 	sas_port->lldd_port = port;
+}
+
+void pm8001_setds_completion(struct domain_device *dev)
+{
+	struct pm8001_hba_info *pm8001_ha = pm8001_find_ha_by_dev(dev);
+	struct pm8001_device *pm8001_dev = dev->lldd_dev;
+	DECLARE_COMPLETION_ONSTACK(completion_setstate);
+
+	if (pm8001_ha->chip_id != chip_8001) {
+		pm8001_dev->setds_completion = &completion_setstate;
+		PM8001_CHIP_DISP->set_dev_state_req(pm8001_ha,
+			pm8001_dev, DS_OPERATIONAL);
+		wait_for_completion(&completion_setstate);
+	}
+}
+
+void pm8001_tmf_aborted(struct sas_task *task)
+{
+	struct pm8001_ccb_info *ccb = task->lldd_task;
+
+	if (ccb)
+		ccb->task = NULL;
 }
