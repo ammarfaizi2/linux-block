@@ -7,6 +7,7 @@
  */
 #include <linux/wait.h>
 #include <linux/kernel.h>
+#include <linux/bitops.h>
 
 struct wait_bit_key {
 	void			*flags;
@@ -32,7 +33,7 @@ int out_of_line_wait_on_bit(void *word, int, wait_bit_action_f *action, unsigned
 int out_of_line_wait_on_bit_timeout(void *word, int, wait_bit_action_f *action, unsigned int mode, unsigned long timeout);
 int out_of_line_wait_on_bit_lock(void *word, int, wait_bit_action_f *action, unsigned int mode);
 struct wait_queue_head *bit_waitqueue(void *word, int bit);
-extern void __init wait_bit_init(void);
+extern void wait_bit_init(void);
 
 int wake_bit_function(struct wait_queue_entry *wq_entry, unsigned mode, int sync, void *key);
 

@@ -43,6 +43,7 @@ struct drm_device;
 struct drm_driver;
 struct file;
 struct pci_driver;
+struct vm_area_struct;
 
 /*
  * Legacy Support for palateontologic DRM drivers
