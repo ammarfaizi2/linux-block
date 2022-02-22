@@ -44,6 +44,7 @@
  * Rahul Trivedi, Kanika Nema: Codito Technologies 2004
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/signal.h>
 #include <linux/ptrace.h>
 #include <linux/personality.h>

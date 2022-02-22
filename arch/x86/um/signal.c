@@ -5,6 +5,7 @@
  */
 
 
+#include <linux/restart_block_api.h>
 #include <linux/personality.h>
 #include <linux/ptrace.h>
 #include <linux/kernel.h>

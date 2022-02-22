@@ -13,6 +13,7 @@
  *  Linux signals.  Therefore we don't.
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>
 #include <linux/mm.h>

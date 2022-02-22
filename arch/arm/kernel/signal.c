@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2009 Russell King
  */
+#include <linux/restart_block_api.h>
 #include <linux/errno.h>
 #include <linux/random.h>
 #include <linux/signal.h>

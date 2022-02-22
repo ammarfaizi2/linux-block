@@ -15,6 +15,7 @@
  *     of fds to overcome nfds < 16390 descriptors limit (Tigran Aivazian).
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/compat.h>
 #include <linux/kernel.h>

@@ -3,6 +3,7 @@
  * Implement CPU time clocks for the POSIX clock interface.
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/cputime.h>
 #include <linux/posix-timers.h>

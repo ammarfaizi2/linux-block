@@ -8,6 +8,7 @@
  *    1997-11-28  Modified for POSIX.1b signals by Richard Henderson
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/sched.h>
 #include <linux/mm.h>
 #include <linux/smp.h>

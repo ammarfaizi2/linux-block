@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/linkage.h>
 #include <linux/syscalls.h>
 #include <linux/tracehook.h>
