@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "rcu: " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -9,6 +9,7 @@
  * of their respective owners.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/init.h>
 #include <linux/initrd.h>
 #include <linux/module.h>

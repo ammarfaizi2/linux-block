@@ -23,6 +23,7 @@
  * - persistent bitmap code
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/blkdev.h>

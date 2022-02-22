@@ -41,6 +41,7 @@
 #include "addr.h"
 #include "msg.h"
 #include "bearer.h"
+#include <linux/sched/cond_resched.h>
 #include <net/sock.h>
 #include <linux/module.h>
 

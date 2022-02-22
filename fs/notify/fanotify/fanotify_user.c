@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/sched/cond_resched.h>
 #include <linux/fanotify.h>
 #include <linux/fcntl.h>
 #include <linux/fdtable.h>

@@ -19,6 +19,7 @@
 
 ======================================================================*/
 
+#include <linux/sched/cond_resched.h>
 #include <linux/err.h>
 #include <linux/init.h>
 

@@ -4,6 +4,8 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "gt/intel_gt.h"
 #include "gt/intel_gt_requests.h"
 

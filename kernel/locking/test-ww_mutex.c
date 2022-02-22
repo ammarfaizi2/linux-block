@@ -3,6 +3,7 @@
  * Module-based API test facility for ww_mutexes
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 
 #include <linux/completion.h>

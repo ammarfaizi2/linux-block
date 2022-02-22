@@ -9,6 +9,7 @@
  * Copyright © 1999 David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/delay.h>

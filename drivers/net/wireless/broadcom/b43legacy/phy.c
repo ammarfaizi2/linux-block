@@ -16,6 +16,7 @@
 
 */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
 #include <linux/sched.h>

@@ -19,6 +19,7 @@
  * Also see Documentation/locking/mutex-design.rst.
  */
 #include <linux/sched/affinity.h>
+#include <linux/sched/cond_resched.h>
 #include <linux/mutex.h>
 #include <linux/ww_mutex.h>
 #include <linux/sched/signal.h>

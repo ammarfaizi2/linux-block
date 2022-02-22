@@ -5,6 +5,7 @@
 // Copyright (C) 2014 Beniamino Galvani <b.galvani@gmail.com>
 //
 
+#include <linux/sched/cond_resched.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

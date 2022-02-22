@@ -15,6 +15,8 @@
  * putting it all in one file would make that file too big and unreadable.
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "ubifs.h"
 
 /**

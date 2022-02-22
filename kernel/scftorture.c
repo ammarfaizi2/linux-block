@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/affinity.h>
 #include <linux/atomic.h>
 #include <linux/bitops.h>

@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/prime_numbers.h>
 #include <linux/pm_qos.h>
 #include <linux/sort.h>

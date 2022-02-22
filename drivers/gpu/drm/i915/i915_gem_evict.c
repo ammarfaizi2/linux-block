@@ -26,6 +26,8 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "gem/i915_gem_context.h"
 #include "gt/intel_gt.h"
 #include "gt/intel_gt_requests.h"

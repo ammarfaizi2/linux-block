@@ -69,6 +69,7 @@
  *   o Otherwise this is corruption type 2.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/crc32.h>

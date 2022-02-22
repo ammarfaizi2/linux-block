@@ -9,6 +9,7 @@
  *  (C) Copyright 2002 Red Hat Inc, All Rights Reserved
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/pagewalk.h>
 #include <linux/hugetlb.h>
 #include <linux/shm.h>

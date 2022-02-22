@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "damon-pa: " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/mmu_notifier.h>
 #include <linux/page_idle.h>
 #include <linux/pagemap.h>

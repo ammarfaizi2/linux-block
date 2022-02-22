@@ -8,6 +8,7 @@
 
 #include "dm-bio-record.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/compiler.h>
 #include <linux/module.h>
 #include <linux/device-mapper.h>

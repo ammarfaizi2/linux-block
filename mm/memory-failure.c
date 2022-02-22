@@ -33,6 +33,7 @@
  * are rare we hope to get away with this. This avoids impacting the core 
  * VM.
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/page-flags.h>

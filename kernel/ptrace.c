@@ -8,6 +8,7 @@
  * to continually duplicate across every architecture.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/affinity.h>
 #include <linux/capability.h>
 #include <linux/export.h>

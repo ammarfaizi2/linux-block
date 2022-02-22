@@ -7,6 +7,7 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/types.h>
 #include <linux/slab.h>

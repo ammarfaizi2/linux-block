@@ -8,6 +8,7 @@
  * Based on code by Dmitry Chernenkov.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/gfp.h>
 #include <linux/hash.h>
 #include <linux/kernel.h>

@@ -24,6 +24,7 @@
  * Version 2.  See the file COPYING for more details.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/crc32.h>
 #include <linux/module.h>
 #include <linux/sched.h>

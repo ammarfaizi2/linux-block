@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2016-20 Intel Corporation. */
 
+#include <linux/sched/cond_resched.h>
 #include <asm/mman.h>
 #include <asm/sgx.h>
 #include <linux/mman.h>

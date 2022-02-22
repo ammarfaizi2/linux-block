@@ -9,6 +9,7 @@
  * The initial developer of the original code is Zhiyong Cai
  * <caizhiyong@huawei.com>
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/of.h>
 #include <linux/mtd/mtd.h>
 #include <linux/sizes.h>

@@ -11,6 +11,7 @@
  *
  *  Copyright (C) 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/rwsem.h>
 #include <linux/mutex.h>
 #include <linux/ww_mutex.h>

@@ -14,6 +14,7 @@
  * corresponding subsystems, but most of it is here.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	"gcov: " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

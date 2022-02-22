@@ -11,6 +11,7 @@
  * pointer as suggested by Josh Triplett
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/atomic.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

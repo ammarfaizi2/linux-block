@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>
 #include <linux/vmalloc.h>

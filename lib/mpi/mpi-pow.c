@@ -13,6 +13,7 @@
  *	 however I decided to publish this code under the plain GPL.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched.h>
 #include <linux/string.h>
 #include "mpi-internal.h"

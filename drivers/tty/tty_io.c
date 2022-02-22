@@ -65,6 +65,7 @@
  *			 -- Andrew Morton <andrewm@uow.edu.eu> 17Mar01
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/major.h>
 #include <linux/errno.h>

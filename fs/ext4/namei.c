@@ -25,6 +25,7 @@
  *	Theodore Ts'o, 2002
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>
 #include <linux/time.h>

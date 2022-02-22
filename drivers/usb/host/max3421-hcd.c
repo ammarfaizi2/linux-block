@@ -56,6 +56,7 @@
  * single thread (max3421_spi_thread).
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/spi/spi.h>

@@ -40,6 +40,7 @@
  *
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/mm.h>
 #include <linux/debugfs.h>
 #include <linux/bug.h>

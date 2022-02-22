@@ -41,6 +41,7 @@
  * good, and GC takes extra care when moving them.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/slab.h>
 #include <linux/pagemap.h>
 #include <linux/list_sort.h>

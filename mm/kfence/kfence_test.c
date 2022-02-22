@@ -11,6 +11,7 @@
  *         Marco Elver <elver@google.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <kunit/test.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

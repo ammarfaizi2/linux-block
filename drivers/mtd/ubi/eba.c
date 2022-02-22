@@ -28,6 +28,7 @@
  * 64 bits is enough to never overflow.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/slab.h>
 #include <linux/crc32.h>
 #include <linux/err.h>

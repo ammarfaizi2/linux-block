@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/mm.h>
 #include <linux/cpu.h>
 #include <linux/nmi.h>

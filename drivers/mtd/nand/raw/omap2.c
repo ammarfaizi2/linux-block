@@ -5,6 +5,7 @@
  * Copyright © 2004 David Brownell
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/platform_device.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>

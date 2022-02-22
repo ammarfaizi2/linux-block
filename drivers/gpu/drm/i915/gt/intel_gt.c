@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/sched/cond_resched.h>
 #include <drm/intel-gtt.h>
 
 #include "intel_gt_debugfs.h"

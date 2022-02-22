@@ -13,6 +13,7 @@
  *  Copyright © 2009 Alessandro Rubini
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

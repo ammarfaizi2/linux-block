@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include "mt76.h"
 

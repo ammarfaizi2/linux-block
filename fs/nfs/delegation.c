@@ -7,6 +7,7 @@
  * NFS file delegation management
  *
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/completion.h>
 #include <linux/kthread.h>
 #include <linux/module.h>

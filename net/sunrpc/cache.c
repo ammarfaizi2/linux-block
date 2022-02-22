@@ -8,6 +8,7 @@
  * Copyright (C) 2002 Neil Brown <neilb@cse.unsw.edu.au>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/file.h>

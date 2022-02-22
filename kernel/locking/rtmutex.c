@@ -16,6 +16,7 @@
  *
  *  See Documentation/locking/rt-mutex-design.rst for details.
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>
 #include <linux/sched/deadline.h>

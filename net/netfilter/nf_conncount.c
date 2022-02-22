@@ -12,6 +12,7 @@
  *   (C) CC Computer Consultants GmbH, 2007
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/sched/cond_resched.h>
 #include <linux/in.h>
 #include <linux/in6.h>
 #include <linux/ip.h>

@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"DMA-API: " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/task_stack.h>
 #include <linux/scatterlist.h>
 #include <linux/dma-map-ops.h>

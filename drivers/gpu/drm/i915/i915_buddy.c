@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kmemleak.h>
 #include <linux/sizes.h>
 

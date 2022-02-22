@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2016-2018 Mellanox Technologies. All rights reserved */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

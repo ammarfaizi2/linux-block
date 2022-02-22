@@ -7,6 +7,7 @@
  *  Manage the dynamic fd arrays in the process files_struct.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/syscalls.h>
 #include <linux/export.h>
 #include <linux/fs.h>

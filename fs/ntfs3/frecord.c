@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/fiemap.h>
 #include <linux/fs.h>
 #include <linux/vmalloc.h>

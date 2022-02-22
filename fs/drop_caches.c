@@ -3,6 +3,7 @@
  * Implement the manual drop-all-pagecache function
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/pagemap.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

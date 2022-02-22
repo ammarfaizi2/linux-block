@@ -9,6 +9,7 @@
  * Authors:	See the TCP sources
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/jhash.h>
 

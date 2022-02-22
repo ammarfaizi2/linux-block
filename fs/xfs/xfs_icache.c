@@ -24,6 +24,7 @@
 #include "xfs_ialloc.h"
 #include "xfs_ag.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/iversion.h>
 
 /* Radix tree tags for incore inode tree. */

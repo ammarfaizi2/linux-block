@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kthread.h>
 
 #include "gem/i915_gem_context.h"

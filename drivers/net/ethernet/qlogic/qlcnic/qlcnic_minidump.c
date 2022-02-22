@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/sched/cond_resched.h>
 #include <net/ip.h>
 
 #include "qlcnic.h"

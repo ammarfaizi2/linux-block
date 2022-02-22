@@ -8,6 +8,7 @@
 /*
  * The mincore() system call.
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/pagemap.h>
 #include <linux/gfp.h>
 #include <linux/pagewalk.h>

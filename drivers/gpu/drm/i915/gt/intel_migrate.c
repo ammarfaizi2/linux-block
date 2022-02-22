@@ -3,6 +3,8 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "i915_drv.h"
 #include "intel_context.h"
 #include "intel_gpu_commands.h"

@@ -4,6 +4,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>
 #include <linux/device-mapper.h>
 #include <linux/delay.h>

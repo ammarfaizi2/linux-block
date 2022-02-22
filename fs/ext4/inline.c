@@ -4,6 +4,7 @@
  * Written by Tao Ma <boyu.mt@taobao.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/iomap.h>
 #include <linux/fiemap.h>
 #include <linux/iversion.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/pci.h>

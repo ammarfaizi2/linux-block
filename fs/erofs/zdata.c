@@ -5,6 +5,7 @@
  */
 #include "zdata.h"
 #include "compress.h"
+#include <linux/sched/cond_resched.h>
 #include <linux/prefetch.h>
 
 #include <trace/events/erofs.h>

@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/migrate.h>
 #include <linux/export.h>
 #include <linux/swap.h>

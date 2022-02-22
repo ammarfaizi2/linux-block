@@ -13,6 +13,7 @@
  * subsystem.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/crc16.h>
 #include <linux/slab.h>
 #include <linux/random.h>

@@ -9,6 +9,7 @@
  *  Ryan S. Arnold <rsa@us.ibm.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/console.h>
 #include <linux/cpumask.h>
 #include <linux/init.h>

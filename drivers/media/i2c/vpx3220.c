@@ -5,6 +5,7 @@
  * Copyright (C) 2001 Laurent Pinchart <lpinchart@freegates.be>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/delay.h>

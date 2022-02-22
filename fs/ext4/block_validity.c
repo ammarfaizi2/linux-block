@@ -9,6 +9,7 @@
  * should never be used as data blocks by files or directories.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/time.h>
 #include <linux/fs.h>
 #include <linux/namei.h>

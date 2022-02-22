@@ -85,6 +85,7 @@
  * room for future re-works of the WL sub-system.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/slab.h>
 #include <linux/crc32.h>
 #include <linux/freezer.h>

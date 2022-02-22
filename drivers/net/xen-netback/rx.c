@@ -28,6 +28,7 @@
  */
 #include "common.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kthread.h>
 
 #include <xen/xen.h>

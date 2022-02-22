@@ -9,6 +9,7 @@
  * Authors:	Lotsa people, from code originally in tcp
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/random.h>
 #include <linux/sched.h>

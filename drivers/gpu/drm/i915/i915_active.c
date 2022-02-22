@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/debugobjects.h>
 
 #include "gt/intel_context.h"

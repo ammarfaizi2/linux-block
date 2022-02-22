@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/highmem.h>
 #include <linux/module.h>
 #include <linux/errno.h>

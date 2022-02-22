@@ -8,6 +8,7 @@
  *  Improving global KVA allocator, Uladzislau Rezki, Sony, May 2019
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/vmalloc.h>
 #include <linux/mm.h>
 #include <linux/module.h>

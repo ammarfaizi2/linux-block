@@ -10,6 +10,7 @@
  * (C) Copyright 2007, ATRON electronic GmbH,
  *		Jan Nikitenko <jan.nikitenko@gmail.com>
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/sched.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

@@ -4,6 +4,7 @@
  *	Library for filesystems writers.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>
 #include <linux/export.h>
 #include <linux/pagemap.h>

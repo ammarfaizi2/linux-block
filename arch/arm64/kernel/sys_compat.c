@@ -7,6 +7,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/compat.h>
 #include <linux/cpufeature.h>
 #include <linux/personality.h>

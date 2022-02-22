@@ -10,6 +10,7 @@
  *	Safe accesses to vmalloc/direct-mapped discontiguous areas, Kanoj Sarcar <kanoj@sgi.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/crash_core.h>
 #include <linux/mm.h>
 #include <linux/proc_fs.h>

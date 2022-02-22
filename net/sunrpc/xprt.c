@@ -38,6 +38,7 @@
  *  Transport switch API copyright (C) 2005, Chuck Lever <cel@netapp.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 
 #include <linux/types.h>

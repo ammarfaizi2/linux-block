@@ -20,6 +20,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/interrupt.h>
 #include <linux/in.h>
 #include <linux/inet.h>

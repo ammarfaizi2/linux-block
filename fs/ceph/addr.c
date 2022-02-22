@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 #include <linux/ceph/ceph_debug.h>
 
+#include <linux/sched/cond_resched.h>
 #include <linux/backing-dev.h>
 #include <linux/fs.h>
 #include <linux/mm.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2003 by Digigram <alsa@digigram.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
 #include <linux/firmware.h>

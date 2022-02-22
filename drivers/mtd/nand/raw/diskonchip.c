@@ -16,6 +16,7 @@
  * Interface to generic NAND code for M-Systems DiskOnChip devices
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/sched.h>

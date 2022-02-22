@@ -58,6 +58,7 @@
  * they are read from the flash media.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/crc32.h>
 #include <linux/slab.h>
 #include "ubifs.h"

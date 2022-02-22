@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/workqueue.h>
 #include <linux/module.h>
 

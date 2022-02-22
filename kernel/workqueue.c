@@ -25,6 +25,7 @@
  * Please read Documentation/core-api/workqueue.rst for details.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/affinity.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

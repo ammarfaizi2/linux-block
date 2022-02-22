@@ -21,6 +21,7 @@
  */
 
 #include "ubifs.h"
+#include <linux/sched/cond_resched.h>
 #include <linux/list_sort.h>
 #include <crypto/hash.h>
 #include <crypto/algapi.h>

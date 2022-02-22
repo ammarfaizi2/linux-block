@@ -11,6 +11,7 @@
  * Based on m25p80.c
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/mutex.h>

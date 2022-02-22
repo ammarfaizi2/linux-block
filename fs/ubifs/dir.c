@@ -28,6 +28,8 @@
  * write it, but just marks it as dirty.
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "ubifs.h"
 
 /**

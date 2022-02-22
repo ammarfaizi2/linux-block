@@ -16,6 +16,8 @@
  * an empty LEB for the journal, or a very dirty LEB for garbage collection.
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "ubifs.h"
 
 /**

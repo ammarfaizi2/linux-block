@@ -9,6 +9,7 @@
  * Copyright (c) 2016, Western Digital
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/rbtree.h>

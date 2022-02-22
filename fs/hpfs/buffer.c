@@ -6,6 +6,7 @@
  *
  *  general buffer i/o
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/blkdev.h>

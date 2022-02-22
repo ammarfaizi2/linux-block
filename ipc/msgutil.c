@@ -4,6 +4,7 @@
  * Copyright (C) 1999, 2004 Manfred Spraul
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/spinlock.h>
 #include <linux/init.h>
 #include <linux/security.h>

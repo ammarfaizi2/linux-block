@@ -32,6 +32,7 @@
 
 #define pr_fmt(fmt) "X25: " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/capability.h>
 #include <linux/errno.h>

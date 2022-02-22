@@ -42,6 +42,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <asm/ioctls.h>
 #include <net/sock.h>
 #include <net/tcp.h>

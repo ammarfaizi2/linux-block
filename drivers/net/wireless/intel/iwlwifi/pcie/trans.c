@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>
 #include <linux/debugfs.h>

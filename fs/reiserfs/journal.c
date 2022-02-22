@@ -35,6 +35,7 @@
  *		        within kupdate, it will ignore the immediate flag
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/time.h>
 #include <linux/semaphore.h>
 #include <linux/vmalloc.h>

@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/affinity.h>
 #include <linux/stddef.h>
 #include <linux/mm.h>

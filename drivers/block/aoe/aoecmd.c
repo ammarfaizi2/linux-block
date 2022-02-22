@@ -4,6 +4,7 @@
  * Filesystem request handling methods
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/ata.h>
 #include <linux/slab.h>
 #include <linux/hdreg.h>

@@ -19,6 +19,7 @@
  *   <gilles.quillard@bull.net>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/slab.h>

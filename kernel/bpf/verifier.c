@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Facebook
  * Copyright (c) 2018 Covalent IO, Inc. http://covalent.io
  */
+#include <linux/sched/cond_resched.h>
 #include <uapi/linux/btf.h>
 #include <linux/bpf-cgroup.h>
 #include <linux/kernel.h>

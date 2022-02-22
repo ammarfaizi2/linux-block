@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  */
 #include "internal.h"
+#include <linux/sched/cond_resched.h>
 #include <linux/pagevec.h>
 
 struct page *erofs_allocpage(struct page **pagepool, gfp_t gfp)

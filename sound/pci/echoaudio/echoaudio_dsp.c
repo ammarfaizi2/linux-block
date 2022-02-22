@@ -28,6 +28,8 @@
 
 ****************************************************************************/
 
+#include <linux/sched/cond_resched.h>
+
 #if PAGE_SIZE < 4096
 #error PAGE_SIZE is < 4k
 #endif

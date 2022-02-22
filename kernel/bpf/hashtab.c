@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/bpf.h>
 #include <linux/btf.h>
 #include <linux/jhash.h>

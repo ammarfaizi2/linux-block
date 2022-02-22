@@ -15,6 +15,7 @@
  * various local functions of those subsystems.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/debugfs.h>
 #include <linux/math64.h>

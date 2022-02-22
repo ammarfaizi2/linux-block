@@ -46,6 +46,7 @@
 *	First release to the public
 */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/unistd.h>
 #include <linux/delay.h>

@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include <linux/slab.h>

@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/mm.h>
 
 #include "display/intel_frontbuffer.h"

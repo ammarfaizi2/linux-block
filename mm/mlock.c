@@ -6,6 +6,7 @@
  *  (C) Copyright 2002 Christoph Hellwig
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/capability.h>
 #include <linux/mman.h>
 #include <linux/mm.h>

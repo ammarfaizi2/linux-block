@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/mm.h>

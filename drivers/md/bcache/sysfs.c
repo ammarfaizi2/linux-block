@@ -13,6 +13,7 @@
 #include "writeback.h"
 #include "features.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>
 #include <linux/sort.h>
 #include <linux/sched/clock.h>

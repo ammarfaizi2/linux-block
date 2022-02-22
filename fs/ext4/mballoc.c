@@ -11,6 +11,7 @@
 
 #include "ext4_jbd2.h"
 #include "mballoc.h"
+#include <linux/sched/cond_resched.h>
 #include <linux/log2.h>
 #include <linux/module.h>
 #include <linux/slab.h>

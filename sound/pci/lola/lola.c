@@ -5,6 +5,7 @@
  *  Copyright (c) 2011 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

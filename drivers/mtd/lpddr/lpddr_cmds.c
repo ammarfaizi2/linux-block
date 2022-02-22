@@ -11,6 +11,7 @@
  * Implement XIP support
  * Implement OTP support
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/mtd/pfow.h>
 #include <linux/mtd/qinfo.h>
 #include <linux/slab.h>

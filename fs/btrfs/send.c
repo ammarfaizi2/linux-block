@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Alexander Block.  All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/bsearch.h>
 #include <linux/fs.h>
 #include <linux/file.h>

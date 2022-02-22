@@ -12,6 +12,7 @@
 #define MOUSEDEV_MINORS		31
 #define MOUSEDEV_MIX		63
 
+#include <linux/sched/cond_resched.h>
 #include <linux/bitops.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

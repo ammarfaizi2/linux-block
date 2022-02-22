@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched.h>
 #include <linux/pci.h>
 #include <linux/errno.h>

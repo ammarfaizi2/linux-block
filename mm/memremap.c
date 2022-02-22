@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2015 Intel Corporation. All rights reserved. */
+#include <linux/sched/cond_resched.h>
 #include <linux/device.h>
 #include <linux/io.h>
 #include <linux/kasan.h>

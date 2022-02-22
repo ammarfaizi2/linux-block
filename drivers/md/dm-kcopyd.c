@@ -9,6 +9,7 @@
  * completion notification.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/atomic.h>
 #include <linux/blkdev.h>

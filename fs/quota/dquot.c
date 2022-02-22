@@ -54,6 +54,7 @@
  * (C) Copyright 1994 - 1997 Marco van Wieringen
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>

@@ -33,6 +33,7 @@
 
 #define pr_fmt(fmt) "xen-pvscsi: " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/utsname.h>
 #include <linux/interrupt.h>
