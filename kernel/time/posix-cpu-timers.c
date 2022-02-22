@@ -415,7 +415,7 @@ static struct posix_cputimer_base *timer_base(struct k_itimer *timer,
 	int clkidx = CPUCLOCK_WHICH(timer->it_clock);
 
 	if (CPUCLOCK_PERTHREAD(timer->it_clock))
-		return tsk->posix_cputimers.bases + clkidx;
+		return per_task(tsk, posix_cputimers).bases + clkidx;
 	else
 		return tsk->signal->posix_cputimers.bases + clkidx;
 }
@@ -538,7 +538,7 @@ static void cleanup_timers(struct posix_cputimers *pct)
  */
 void posix_cpu_timers_exit(struct task_struct *tsk)
 {
-	cleanup_timers(&tsk->posix_cputimers);
+	cleanup_timers(&per_task(tsk, posix_cputimers));
 }
 void posix_cpu_timers_exit_group(struct task_struct *tsk)
 {
@@ -891,7 +891,7 @@ static bool check_rlimit(u64 time, u64 limit, int signo, bool rt, bool hard)
 static void check_thread_timers(struct task_struct *tsk,
 				struct list_head *firing)
 {
-	struct posix_cputimers *pct = &tsk->posix_cputimers;
+	struct posix_cputimers *pct = &per_task(tsk, posix_cputimers);
 	u64 samples[CPUCLOCK_MAX];
 	unsigned long soft;
 
@@ -1108,7 +1108,7 @@ task_cputimers_expired(const u64 *samples, struct posix_cputimers *pct)
  */
 static inline bool fastpath_timer_check(struct task_struct *tsk)
 {
-	struct posix_cputimers *pct = &tsk->posix_cputimers;
+	struct posix_cputimers *pct = &per_task(tsk, posix_cputimers);
 	struct signal_struct *sig;
 
 	if (!expiry_cache_is_inactive(pct)) {
@@ -1165,15 +1165,15 @@ static void posix_cpu_timers_work(struct callback_head *work)
  */
 void clear_posix_cputimers_work(struct task_struct *p)
 {
+	struct posix_cputimers_work *work = &per_task(p, posix_cputimers_work);
+
 	/*
 	 * A copied work entry from the old task is not meaningful, clear it.
 	 * N.B. init_task_work will not do this.
 	 */
-	memset(&p->posix_cputimers_work.work, 0,
-	       sizeof(p->posix_cputimers_work.work));
-	init_task_work(&p->posix_cputimers_work.work,
-		       posix_cpu_timers_work);
-	p->posix_cputimers_work.scheduled = false;
+	memset(&work->work, 0, sizeof(work->work));
+	init_task_work(&work->work, posix_cpu_timers_work);
+	work->scheduled = false;
 }
 
 /*
@@ -1186,24 +1186,24 @@ void __init posix_cputimers_init_work(void)
 }
 
 /*
- * Note: All operations on tsk->posix_cputimer_work.scheduled happen either
+ * Note: All operations on posix_cputimers_work.scheduled happen either
  * in hard interrupt context or in task context with interrupts
  * disabled. Aside of that the writer/reader interaction is always in the
  * context of the current task, which means they are strict per CPU.
  */
 static inline bool posix_cpu_timers_work_scheduled(struct task_struct *tsk)
 {
-	return tsk->posix_cputimers_work.scheduled;
+	return per_task(tsk, posix_cputimers_work).scheduled;
 }
 
 static inline void __run_posix_cpu_timers(struct task_struct *tsk)
 {
-	if (WARN_ON_ONCE(tsk->posix_cputimers_work.scheduled))
+	if (WARN_ON_ONCE(per_task(tsk, posix_cputimers_work).scheduled))
 		return;
 
 	/* Schedule task work to actually expire the timers */
-	tsk->posix_cputimers_work.scheduled = true;
-	task_work_add(tsk, &tsk->posix_cputimers_work.work, TWA_RESUME);
+	per_task(tsk, posix_cputimers_work).scheduled = true;
+	task_work_add(tsk, &per_task(tsk, posix_cputimers_work).work, TWA_RESUME);
 }
 
 static inline bool posix_cpu_timers_enable_work(struct task_struct *tsk,
@@ -1217,7 +1217,7 @@ static inline bool posix_cpu_timers_enable_work(struct task_struct *tsk,
 	 * reenabled without further checks.
 	 */
 	if (!IS_ENABLED(CONFIG_PREEMPT_RT)) {
-		tsk->posix_cputimers_work.scheduled = false;
+		per_task(tsk, posix_cputimers_work).scheduled = false;
 		return true;
 	}
 
@@ -1238,7 +1238,7 @@ static inline bool posix_cpu_timers_enable_work(struct task_struct *tsk,
 	if (start != jiffies && fastpath_timer_check(tsk))
 		ret = false;
 	else
-		tsk->posix_cputimers_work.scheduled = false;
+		per_task(tsk, posix_cputimers_work).scheduled = false;
 	local_irq_enable();
 
 	return ret;

@@ -15,7 +15,7 @@
 /* Headers: */
 #include <linux/sched/clock.h>
 #include <linux/sched/cputime.h>
-#include <linux/sched/posix-timers.h>
+#include <linux/posix-timers.h>
 #include <linux/sched/rt.h>
 
 #include <linux/cpuidle.h>

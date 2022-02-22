@@ -35,6 +35,12 @@
 #include "timekeeping.h"
 #include "posix-timers.h"
 
+DEFINE_PER_TASK(struct posix_cputimers, posix_cputimers);
+
+#ifdef CONFIG_POSIX_CPU_TIMERS_TASK_WORK
+DEFINE_PER_TASK(struct posix_cputimers_work, posix_cputimers_work);
+#endif
+
 /*
  * Management arrays for POSIX timers. Timers are now kept in static hash table
  * with 512 entries.

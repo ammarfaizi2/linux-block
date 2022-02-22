@@ -7,9 +7,16 @@
 #include <linux/alarmtimer.h>
 #include <linux/timerqueue.h>
 #include <linux/task_work.h>
+#include <linux/sched/per_task.h>
 
 struct kernel_siginfo;
 struct task_struct;
+
+DECLARE_PER_TASK(struct posix_cputimers, posix_cputimers);
+
+#ifdef CONFIG_POSIX_CPU_TIMERS_TASK_WORK
+DECLARE_PER_TASK(struct posix_cputimers_work, posix_cputimers_work);
+#endif
 
 /*
  * Bit fields within a clockid:
@@ -170,10 +177,14 @@ static inline void posix_cputimers_rt_watchdog(struct posix_cputimers *pct,
 	INIT_CPU_TIMERBASE(b[2]),					\
 }
 
-#define INIT_CPU_TIMERS(s)						\
-	.posix_cputimers = {						\
+#define __INIT_CPU_TIMERS(s)						\
+	{								\
 		.bases = INIT_CPU_TIMERBASES(s.posix_cputimers.bases),	\
-	},
+	}
+
+#define INIT_CPU_TIMERS(s)						\
+	.posix_cputimers = __INIT_CPU_TIMERS(s),
+
 #else
 struct posix_cputimers { };
 struct cpu_timer { };
