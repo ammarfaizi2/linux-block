@@ -1292,6 +1292,7 @@ static int amdgpu_discovery_set_psp_ip_blocks(struct amdgpu_device *adev)
 	case IP_VERSION(13, 0, 1):
 	case IP_VERSION(13, 0, 2):
 	case IP_VERSION(13, 0, 3):
+	case IP_VERSION(13, 0, 5):
 	case IP_VERSION(13, 0, 8):
 		amdgpu_device_ip_block_add(adev, &psp_v13_0_ip_block);
 		break;
@@ -1334,6 +1335,7 @@ static int amdgpu_discovery_set_smu_ip_blocks(struct amdgpu_device *adev)
 	case IP_VERSION(13, 0, 1):
 	case IP_VERSION(13, 0, 2):
 	case IP_VERSION(13, 0, 3):
+	case IP_VERSION(13, 0, 5):
 	case IP_VERSION(13, 0, 8):
 		amdgpu_device_ip_block_add(adev, &smu_v13_0_ip_block);
 		break;
@@ -1371,6 +1373,7 @@ static int amdgpu_discovery_set_display_ip_blocks(struct amdgpu_device *adev)
 		case IP_VERSION(3, 0, 1):
 		case IP_VERSION(3, 1, 2):
 		case IP_VERSION(3, 1, 3):
+		case IP_VERSION(3, 1, 5):
 		case IP_VERSION(3, 1, 6):
 			amdgpu_device_ip_block_add(adev, &dm_ip_block);
 			break;
@@ -1458,6 +1461,7 @@ static int amdgpu_discovery_set_sdma_ip_blocks(struct amdgpu_device *adev)
 	case IP_VERSION(5, 2, 2):
 	case IP_VERSION(5, 2, 4):
 	case IP_VERSION(5, 2, 5):
+	case IP_VERSION(5, 2, 6):
 	case IP_VERSION(5, 2, 3):
 	case IP_VERSION(5, 2, 1):
 	case IP_VERSION(5, 2, 7):
@@ -1527,6 +1531,7 @@ static int amdgpu_discovery_set_mm_ip_blocks(struct amdgpu_device *adev)
 		case IP_VERSION(3, 0, 0):
 		case IP_VERSION(3, 0, 16):
 		case IP_VERSION(3, 1, 1):
+		case IP_VERSION(3, 1, 2):
 		case IP_VERSION(3, 0, 2):
 		case IP_VERSION(3, 0, 192):
 			amdgpu_device_ip_block_add(adev, &vcn_v3_0_ip_block);
@@ -1820,6 +1825,7 @@ int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
 		break;
 	case IP_VERSION(7, 2, 0):
 	case IP_VERSION(7, 2, 1):
+	case IP_VERSION(7, 3, 0):
 	case IP_VERSION(7, 5, 0):
 	case IP_VERSION(7, 5, 1):
 		adev->nbio.funcs = &nbio_v7_2_funcs;
@@ -1905,6 +1911,7 @@ int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
 	case IP_VERSION(11, 5, 0):
 	case IP_VERSION(13, 0, 1):
 	case IP_VERSION(13, 0, 9):
+	case IP_VERSION(13, 0, 10):
 		adev->smuio.funcs = &smuio_v11_0_6_funcs;
 		break;
 	case IP_VERSION(13, 0, 2):
