@@ -85,6 +85,4 @@ extern void __init_swait_queue_head(struct swait_queue_head *q, const char *name
 	DECLARE_SWAIT_QUEUE_HEAD(name)
 #endif
 
-#include <linux/swait_api.h>
-
 #endif /* _LINUX_SWAIT_H */
