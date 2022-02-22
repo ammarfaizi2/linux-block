@@ -31,7 +31,6 @@
 #include <linux/refcount.h>
 #include <linux/if_link.h>
 #include <linux/atomic.h>
-#include <linux/mmu_notifier.h>
 #include <linux/uaccess.h>
 #include <linux/cgroup_rdma.h>
 #include <linux/irqflags.h>
