@@ -712,7 +712,6 @@ struct task_struct {
 	int				recent_used_cpu;
 	int				wake_cpu;
 #endif
-	int				on_rq;
 
 	int				prio;
 	int				static_prio;

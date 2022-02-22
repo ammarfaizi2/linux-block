@@ -1682,7 +1682,7 @@ static void enqueue_task_dl(struct rq *rq, struct task_struct *p, int flags)
 	if (!per_task(p, dl).dl_throttled && !dl_is_implicit(&per_task(p, dl)))
 		dl_check_constrained_dl(&per_task(p, dl));
 
-	if (p->on_rq == TASK_ON_RQ_MIGRATING || flags & ENQUEUE_RESTORE) {
+	if (per_task(p, on_rq) == TASK_ON_RQ_MIGRATING || flags & ENQUEUE_RESTORE) {
 		add_rq_bw(&per_task(p, dl), &rq->dl);
 		add_running_bw(&per_task(p, dl), &rq->dl);
 	}
@@ -1727,7 +1727,7 @@ static void dequeue_task_dl(struct rq *rq, struct task_struct *p, int flags)
 	update_curr_dl(rq);
 	__dequeue_task_dl(rq, p, flags);
 
-	if (p->on_rq == TASK_ON_RQ_MIGRATING || flags & DEQUEUE_SAVE) {
+	if (per_task(p, on_rq) == TASK_ON_RQ_MIGRATING || flags & DEQUEUE_SAVE) {
 		sub_running_bw(&per_task(p, dl), &rq->dl);
 		sub_rq_bw(&per_task(p, dl), &rq->dl);
 	}
