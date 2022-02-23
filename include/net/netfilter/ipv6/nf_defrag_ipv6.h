@@ -5,6 +5,8 @@
 #include <linux/skbuff.h>
 #include <linux/types.h>
 
+struct net;
+
 int nf_defrag_ipv6_enable(struct net *net);
 void nf_defrag_ipv6_disable(struct net *net);
 
