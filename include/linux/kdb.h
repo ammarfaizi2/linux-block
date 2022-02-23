@@ -79,7 +79,7 @@ typedef struct _kdbtab {
 
 #ifdef	CONFIG_KGDB_KDB
 #include <linux/init.h>
-#include <linux/sched.h>
+#include <linux/sched/thread_info_api.h>
 #include <linux/atomic.h>
 
 #define KDB_POLL_FUNC_MAX	5

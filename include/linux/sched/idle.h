@@ -2,7 +2,7 @@
 #ifndef _LINUX_SCHED_IDLE_H
 #define _LINUX_SCHED_IDLE_H
 
-#include <linux/sched.h>
+#include <linux/sched/thread_info_api.h>
 
 enum cpu_idle_type {
 	CPU_IDLE,

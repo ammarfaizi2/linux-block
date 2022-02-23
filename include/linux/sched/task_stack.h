@@ -6,6 +6,8 @@
  * task->stack (kernel stack) handling interfaces:
  */
 
+#include <linux/sched/thread_info_api.h>
+#include <asm/page.h>
 #include <linux/sched.h>
 #include <linux/magic.h>
 #include <linux/refcount.h>
@@ -54,7 +56,7 @@ static inline unsigned long *end_of_stack(const struct task_struct *task)
 
 #elif !defined(__HAVE_THREAD_FUNCTIONS)
 
-#define task_stack_page(task)	((void *)(task)->stack)
+#define task_stack_page(task)	((void *)per_task(task, stack))
 
 static inline void setup_thread_stack(struct task_struct *p, struct task_struct *org)
 {
