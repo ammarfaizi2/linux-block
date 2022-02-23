@@ -127,6 +127,10 @@ DEFINE_PER_TASK(int,					recent_used_cpu);
 DEFINE_PER_TASK(int,					wake_cpu);
 #endif
 
+#ifdef CONFIG_CGROUP_SCHED
+DEFINE_PER_TASK(struct task_group *,			sched_task_group);
+#endif
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.
@@ -4568,7 +4572,7 @@ void sched_cgroup_fork(struct task_struct *p, struct kernel_clone_args *kargs)
 		tg = container_of(kargs->cset->subsys[cpu_cgrp_id],
 				  struct task_group, css);
 		tg = autogroup_task_group(p, tg);
-		p->sched_task_group = tg;
+		per_task(p, sched_task_group) = tg;
 	}
 #endif
 	rseq_migrate(p);
@@ -10086,7 +10090,7 @@ static void sched_change_group(struct task_struct *tsk, int type)
 	tg = container_of(task_css_check(tsk, cpu_cgrp_id, true),
 			  struct task_group, css);
 	tg = autogroup_task_group(tsk, tg);
-	tsk->sched_task_group = tg;
+	per_task(tsk, sched_task_group) = tg;
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
 	if (per_task(tsk, sched_class)->task_change_group)

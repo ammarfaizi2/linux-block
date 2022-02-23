@@ -111,6 +111,10 @@ DECLARE_PER_TASK(int,					recent_used_cpu);
 DECLARE_PER_TASK(int,					wake_cpu);
 #endif
 
+#ifdef CONFIG_CGROUP_SCHED
+DECLARE_PER_TASK(struct task_group *,			sched_task_group);
+#endif
+
 struct rq;
 struct cpuidle_state;
 
@@ -1900,7 +1904,7 @@ static inline void sched_core_tick(struct rq *rq) {}
  */
 static inline struct task_group *task_group(struct task_struct *p)
 {
-	return p->sched_task_group;
+	return per_task(p, sched_task_group);
 }
 
 /* Change a task's cfs_rq and parent entity if it moves across CPUs/groups */
