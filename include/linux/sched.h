@@ -708,10 +708,6 @@ struct task_struct {
 	unsigned int			core_occupation;
 #endif
 
-#ifdef CONFIG_CGROUP_SCHED
-	struct task_group		*sched_task_group;
-#endif
-
 #ifdef CONFIG_UCLAMP_TASK
 	/*
 	 * Clamp values requested for a scheduling entity.

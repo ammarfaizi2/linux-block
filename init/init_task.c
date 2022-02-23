@@ -90,9 +90,6 @@ struct task_struct init_task
 #ifdef CONFIG_SMP
 	.pushable_tasks	= PLIST_NODE_INIT(init_task.pushable_tasks, MAX_PRIO),
 #endif
-#ifdef CONFIG_CGROUP_SCHED
-	.sched_task_group = &root_task_group,
-#endif
 	.ptraced	= LIST_HEAD_INIT(init_task.ptraced),
 	.ptrace_entry	= LIST_HEAD_INIT(init_task.ptrace_entry),
 	.real_parent	= &init_task,
