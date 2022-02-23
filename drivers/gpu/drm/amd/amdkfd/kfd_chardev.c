@@ -104,11 +104,6 @@ void kfd_chardev_exit(void)
 	kfd_device = NULL;
 }
 
-struct device *kfd_chardev(void)
-{
-	return kfd_device;
-}
-
 
 static int kfd_open(struct inode *inode, struct file *filep)
 {
@@ -2097,8 +2092,8 @@ static int criu_restore_bos(struct kfd_process *p,
 			    uint64_t *priv_offset,
 			    uint64_t max_priv_data_size)
 {
-	struct kfd_criu_bo_bucket *bo_buckets;
-	struct kfd_criu_bo_priv_data *bo_privs;
+	struct kfd_criu_bo_bucket *bo_buckets = NULL;
+	struct kfd_criu_bo_priv_data *bo_privs = NULL;
 	const bool criu_resume = true;
 	bool flush_tlbs = false;
 	int ret = 0, j = 0;
