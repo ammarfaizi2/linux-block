@@ -5,7 +5,7 @@
 #define FREEZER_H_INCLUDED
 
 #include <linux/debug_locks.h>
-#include <linux/sched.h>
+#include <linux/sched/task_flags.h>
 #include <linux/wait.h>
 #include <linux/atomic.h>
 #include <linux/hrtimer.h>

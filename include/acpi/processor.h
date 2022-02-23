@@ -2,6 +2,7 @@
 #ifndef __ACPI_PROCESSOR_H
 #define __ACPI_PROCESSOR_H
 
+#include <linux/sched/task_flags.h>
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
 #include <linux/pm_qos.h>

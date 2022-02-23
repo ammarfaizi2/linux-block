@@ -11,6 +11,7 @@
 #include <linux/workqueue.h>
 #include <linux/kthread.h>
 #include <linux/preempt.h>
+#include <linux/sched/task_flags.h>
 
 struct worker_pool;
 
