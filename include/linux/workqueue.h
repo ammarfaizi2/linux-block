@@ -335,6 +335,18 @@ enum {
 	 */
 	WQ_POWER_EFFICIENT	= 1 << 7,
 
+	/*
+	 * Since flush operation synchronously waits for completion, flushing
+	 * system-wide workqueues (e.g. system_wq) or a work on a system-wide
+	 * workqueue might introduce possibility of deadlock due to unexpected
+	 * locking dependency.
+	 *
+	 * This flag emits warning if flush operation is attempted. Don't set
+	 * this flag on user-defined workqueues, for destroy_workqueue() will
+	 * involve flush operation.
+	 */
+	WQ_WARN_FLUSH_ATTEMPT   = 1 << 8,
+
 	__WQ_DRAINING		= 1 << 16, /* internal: workqueue is draining */
 	__WQ_ORDERED		= 1 << 17, /* internal: workqueue is ordered */
 	__WQ_LEGACY		= 1 << 18, /* internal: create*_workqueue() */
@@ -569,18 +581,8 @@ static inline bool schedule_work(struct work_struct *work)
  * Forces execution of the kernel-global workqueue and blocks until its
  * completion.
  *
- * Think twice before calling this function!  It's very easy to get into
- * trouble if you don't take great care.  Either of the following situations
- * will lead to deadlock:
- *
- *	One of the work items currently on the workqueue needs to acquire
- *	a lock held by your code or its caller.
- *
- *	Your code is running in the context of a work routine.
- *
- * They will be detected by lockdep when they occur, but the first might not
- * occur very often.  It depends on what work items are on the workqueue and
- * what locks they need, which you have no control over.
+ * Please stop calling this function. If you need to flush, please use your
+ * own workqueue.
  *
  * In most situations flushing the entire workqueue is overkill; you merely
  * need to know that a particular work item isn't queued and isn't running.
