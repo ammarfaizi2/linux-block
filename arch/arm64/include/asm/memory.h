@@ -10,11 +10,12 @@
 #ifndef __ASM_MEMORY_H
 #define __ASM_MEMORY_H
 
+#include <linux/mm_api_kasan.h>
 #include <linux/const.h>
 #include <linux/sizes.h>
-#include <linux/mm_types.h>
 
 #include <asm/page-def.h>
+#include <asm/thread_info.h>
 
 /*
  * Size of the PCI I/O space. This must remain a power of two so that
