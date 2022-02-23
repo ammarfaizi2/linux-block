@@ -74,6 +74,7 @@ struct phylink {
 	struct work_struct resolve;
 
 	bool mac_link_dropped;
+	bool using_mac_select_pcs;
 
 	struct sfp_bus *sfp_bus;
 	bool sfp_may_have_phy;
@@ -131,17 +132,6 @@ void phylink_set_port_modes(unsigned long *mask)
 	phylink_set(mask, Backplane);
 }
 EXPORT_SYMBOL_GPL(phylink_set_port_modes);
-
-void phylink_set_10g_modes(unsigned long *mask)
-{
-	phylink_set(mask, 10000baseT_Full);
-	phylink_set(mask, 10000baseCR_Full);
-	phylink_set(mask, 10000baseSR_Full);
-	phylink_set(mask, 10000baseLR_Full);
-	phylink_set(mask, 10000baseLRM_Full);
-	phylink_set(mask, 10000baseER_Full);
-}
-EXPORT_SYMBOL_GPL(phylink_set_10g_modes);
 
 static int phylink_is_empty_linkmode(const unsigned long *linkmode)
 {
@@ -427,7 +417,7 @@ static int phylink_validate_mac_and_pcs(struct phylink *pl,
 	int ret;
 
 	/* Get the PCS for this interface mode */
-	if (pl->mac_ops->mac_select_pcs) {
+	if (pl->using_mac_select_pcs) {
 		pcs = pl->mac_ops->mac_select_pcs(pl->config, state->interface);
 		if (IS_ERR(pcs))
 			return PTR_ERR(pcs);
@@ -802,7 +792,7 @@ static void phylink_major_config(struct phylink *pl, bool restart,
 
 	phylink_dbg(pl, "major config %s\n", phy_modes(state->interface));
 
-	if (pl->mac_ops->mac_select_pcs) {
+	if (pl->using_mac_select_pcs) {
 		pcs = pl->mac_ops->mac_select_pcs(pl->config, state->interface);
 		if (IS_ERR(pcs)) {
 			phylink_err(pl,
@@ -1216,11 +1206,17 @@ struct phylink *phylink_create(struct phylink_config *config,
 			       phy_interface_t iface,
 			       const struct phylink_mac_ops *mac_ops)
 {
+	bool using_mac_select_pcs = false;
 	struct phylink *pl;
 	int ret;
 
-	/* Validate the supplied configuration */
 	if (mac_ops->mac_select_pcs &&
+	    mac_ops->mac_select_pcs(config, PHY_INTERFACE_MODE_NA) !=
+	      ERR_PTR(-EOPNOTSUPP))
+		using_mac_select_pcs = true;
+
+	/* Validate the supplied configuration */
+	if (using_mac_select_pcs &&
 	    phy_interface_empty(config->supported_interfaces)) {
 		dev_err(config->dev,
 			"phylink: error: empty supported_interfaces but mac_select_pcs() method present\n");
@@ -1244,6 +1240,7 @@ struct phylink *phylink_create(struct phylink_config *config,
 		return ERR_PTR(-EINVAL);
 	}
 
+	pl->using_mac_select_pcs = using_mac_select_pcs;
 	pl->phy_state.interface = iface;
 	pl->link_interface = iface;
 	if (iface == PHY_INTERFACE_MODE_MOCA)
@@ -1311,7 +1308,7 @@ void phylink_set_pcs(struct phylink *pl, struct phylink_pcs *pcs)
 
 	if (!pl->phylink_disable_state &&
 	    pl->cfg_link_an_mode == MLO_AN_INBAND) {
-		if (pl->config->pcs_poll || pcs->poll)
+		if (pcs->poll)
 			mod_timer(&pl->link_poll, jiffies + HZ);
 		else
 			del_timer(&pl->link_poll);
@@ -1684,7 +1681,6 @@ void phylink_start(struct phylink *pl)
 		poll |= pl->config->poll_fixed_state;
 		break;
 	case MLO_AN_INBAND:
-		poll |= pl->config->pcs_poll;
 		if (pl->pcs)
 			poll |= pl->pcs->poll;
 		break;

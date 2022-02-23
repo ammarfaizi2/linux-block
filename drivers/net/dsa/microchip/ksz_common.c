@@ -130,6 +130,10 @@ static void ksz_mib_read_work(struct work_struct *work)
 		}
 		port_r_cnt(dev, i);
 		p->read = false;
+
+		if (dev->dev_ops->r_mib_stat64)
+			dev->dev_ops->r_mib_stat64(dev, i);
+
 		mutex_unlock(&mib->cnt_mutex);
 	}
 
@@ -454,6 +458,12 @@ int ksz_switch_register(struct ksz_device *dev,
 			}
 		dev->synclko_125 = of_property_read_bool(dev->dev->of_node,
 							 "microchip,synclko-125");
+		dev->synclko_disable = of_property_read_bool(dev->dev->of_node,
+							     "microchip,synclko-disable");
+		if (dev->synclko_125 && dev->synclko_disable) {
+			dev_err(dev->dev, "inconsistent synclko settings\n");
+			return -EINVAL;
+		}
 	}
 
 	ret = dsa_register_switch(dev->ds);
@@ -463,7 +473,7 @@ int ksz_switch_register(struct ksz_device *dev,
 	}
 
 	/* Read MIB counters every 30 seconds to avoid overflow. */
-	dev->mib_read_interval = msecs_to_jiffies(30000);
+	dev->mib_read_interval = msecs_to_jiffies(5000);
 
 	/* Start the MIB timer. */
 	schedule_delayed_work(&dev->mib_read, 0);
