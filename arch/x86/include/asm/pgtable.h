@@ -2,11 +2,41 @@
 #ifndef _ASM_X86_PGTABLE_H
 #define _ASM_X86_PGTABLE_H
 
+#include <asm/pgtable_types.h>
+
 #include <linux/mem_encrypt.h>
 #include <linux/mm_types.h>
+#include <linux/mmdebug.h>
+#include <linux/log2.h>
+#include <linux/page_table_check.h>
+
+#include <asm-generic/pgtable_uffd.h>
 
 #include <asm/page.h>
-#include <asm/pgtable_types.h>
+#include <asm/x86_init.h>
+#include <asm/cpufeature.h>
+#include <asm/fixmap.h>
+
+#ifdef CONFIG_PAGE_TABLE_ISOLATION
+pgd_t __pti_set_user_pgtbl(pgd_t *pgdp, pgd_t pgd);
+
+/*
+ * Take a PGD location (pgdp) and a pgd value that needs to be set there.
+ * Populates the user and returns the resulting PGD that must be set in
+ * the kernel copy of the page tables.
+ */
+static inline pgd_t pti_set_user_pgtbl(pgd_t *pgdp, pgd_t pgd)
+{
+	if (!static_cpu_has(X86_FEATURE_PTI))
+		return pgd;
+	return __pti_set_user_pgtbl(pgdp, pgd);
+}
+#else   /* CONFIG_PAGE_TABLE_ISOLATION */
+static inline pgd_t pti_set_user_pgtbl(pgd_t *pgdp, pgd_t pgd)
+{
+	return pgd;
+}
+#endif  /* CONFIG_PAGE_TABLE_ISOLATION */
 
 /*
  * Macro to mark a page protection value as UC-
@@ -22,13 +52,6 @@
  */
 #define pgprot_encrypted(prot)	__pgprot(__sme_set(pgprot_val(prot)))
 #define pgprot_decrypted(prot)	__pgprot(__sme_clr(pgprot_val(prot)))
-
-#ifndef __ASSEMBLY__
-#include <linux/spinlock.h>
-#include <asm/x86_init.h>
-#include <asm/cpufeature.h>
-#include <asm-generic/pgtable_uffd.h>
-#include <linux/page_table_check.h>
 
 extern pgd_t early_top_pgt[PTRS_PER_PGD];
 bool __init __early_make_pgtable(unsigned long address, pmdval_t pmd);
@@ -684,42 +707,6 @@ static inline int is_new_memtype_allowed(u64 paddr, unsigned long size,
 pmd_t *populate_extra_pmd(unsigned long vaddr);
 pte_t *populate_extra_pte(unsigned long vaddr);
 
-#ifdef CONFIG_PAGE_TABLE_ISOLATION
-pgd_t __pti_set_user_pgtbl(pgd_t *pgdp, pgd_t pgd);
-
-/*
- * Take a PGD location (pgdp) and a pgd value that needs to be set there.
- * Populates the user and returns the resulting PGD that must be set in
- * the kernel copy of the page tables.
- */
-static inline pgd_t pti_set_user_pgtbl(pgd_t *pgdp, pgd_t pgd)
-{
-	if (!static_cpu_has(X86_FEATURE_PTI))
-		return pgd;
-	return __pti_set_user_pgtbl(pgdp, pgd);
-}
-#else   /* CONFIG_PAGE_TABLE_ISOLATION */
-static inline pgd_t pti_set_user_pgtbl(pgd_t *pgdp, pgd_t pgd)
-{
-	return pgd;
-}
-#endif  /* CONFIG_PAGE_TABLE_ISOLATION */
-
-#endif	/* __ASSEMBLY__ */
-
-
-#ifdef CONFIG_X86_32
-# include <asm/pgtable_32.h>
-#else
-# include <asm/pgtable_64.h>
-#endif
-
-#ifndef __ASSEMBLY__
-#include <linux/mm_types.h>
-#include <linux/mmdebug.h>
-#include <linux/log2.h>
-#include <asm/fixmap.h>
-
 static inline int pte_none(pte_t pte)
 {
 	return !(pte.pte & ~(_PAGE_KNL_ERRATUM_MASK));
@@ -956,12 +943,19 @@ static inline int pgd_none(pgd_t pgd)
 }
 #endif	/* CONFIG_PGTABLE_LEVELS > 4 */
 
-#endif	/* __ASSEMBLY__ */
-
 #define KERNEL_PGD_BOUNDARY	pgd_index(PAGE_OFFSET)
 #define KERNEL_PGD_PTRS		(PTRS_PER_PGD - KERNEL_PGD_BOUNDARY)
 
-#ifndef __ASSEMBLY__
+/*
+ * These two headers need various definitions from above,
+ * and provide definitions for some of the methods below.
+ * It's a mess:
+ */
+#ifdef CONFIG_X86_32
+# include <asm/pgtable_32.h>
+#else
+# include <asm/pgtable_64.h>
+#endif
 
 extern int direct_gbpages;
 void init_mem_mapping(void);
@@ -1339,7 +1333,5 @@ int arch_memory_failure(unsigned long pfn, int flags);
 bool arch_is_platform_page(u64 paddr);
 #define arch_is_platform_page arch_is_platform_page
 #endif
-
-#endif	/* __ASSEMBLY__ */
 
 #endif /* _ASM_X86_PGTABLE_H */
