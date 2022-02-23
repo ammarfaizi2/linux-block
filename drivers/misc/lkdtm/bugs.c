@@ -18,6 +18,10 @@
 #include <asm/desc.h>
 #endif
 
+#if IS_ENABLED(CONFIG_X86_64) && !IS_ENABLED(CONFIG_UML)
+# include <asm/processor_api.h>
+#endif
+
 struct lkdtm_list {
 	struct list_head node;
 };

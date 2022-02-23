@@ -2,6 +2,8 @@
 #ifndef ARCH_X86_CPU_H
 #define ARCH_X86_CPU_H
 
+struct cpuinfo_x86;
+
 /* attempt to consolidate cpu attributes */
 struct cpu_dev {
 	const char	*c_vendor;
