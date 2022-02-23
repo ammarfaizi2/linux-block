@@ -819,7 +819,6 @@ struct task_struct {
 #endif /* CONFIG_NUMA_BALANCING */
 
 #ifdef CONFIG_RSEQ
-	struct rseq __user *rseq;
 	u32 rseq_sig;
 	/*
 	 * RmW on rseq_event_mask must be performed atomically

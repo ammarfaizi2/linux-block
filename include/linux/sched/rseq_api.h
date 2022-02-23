@@ -12,6 +12,8 @@
 
 #ifdef CONFIG_RSEQ
 
+DECLARE_PER_TASK(struct rseq __user *, rseq);
+
 /*
  * Map the event mask on the user-space ABI enum rseq_cs_flags
  * for direct mask checks.
@@ -30,7 +32,7 @@ enum rseq_event_mask {
 
 static inline void rseq_set_notify_resume(struct task_struct *t)
 {
-	if (t->rseq)
+	if (per_task(t, rseq))
 		set_tsk_thread_flag(t, TIF_NOTIFY_RESUME);
 }
 
@@ -39,7 +41,7 @@ void __rseq_handle_notify_resume(struct ksignal *sig, struct pt_regs *regs);
 static inline void rseq_handle_notify_resume(struct ksignal *ksig,
 					     struct pt_regs *regs)
 {
-	if (current->rseq)
+	if (per_task(current, rseq))
 		__rseq_handle_notify_resume(ksig, regs);
 }
 
@@ -73,11 +75,11 @@ static inline void rseq_migrate(struct task_struct *t)
 static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
 {
 	if (clone_flags & CLONE_VM) {
-		t->rseq = NULL;
+		per_task(t, rseq) = NULL;
 		t->rseq_sig = 0;
 		t->rseq_event_mask = 0;
 	} else {
-		t->rseq = current->rseq;
+		per_task(t, rseq) = per_task(current, rseq);
 		t->rseq_sig = current->rseq_sig;
 		t->rseq_event_mask = current->rseq_event_mask;
 	}
@@ -85,7 +87,7 @@ static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
 
 static inline void rseq_execve(struct task_struct *t)
 {
-	t->rseq = NULL;
+	per_task(t, rseq) = NULL;
 	t->rseq_sig = 0;
 	t->rseq_event_mask = 0;
 }
