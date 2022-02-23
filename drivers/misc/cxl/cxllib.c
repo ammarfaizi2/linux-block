@@ -189,7 +189,7 @@ int cxllib_get_PE_attributes(struct task_struct *task,
 		 */
 		attr->pid = mm->context.id;
 		mmput(mm);
-		attr->tid = task->thread.tidr;
+		attr->tid = task_thread(task).tidr;
 	} else {
 		attr->pid = 0;
 		attr->tid = 0;

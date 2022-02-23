@@ -686,7 +686,7 @@ static int process_element_entry_psl9(struct cxl_context *ctx, u64 wed, u64 amr)
 		rc = set_thread_tidr(current);
 		if (rc)
 			return -ENODEV;
-		ctx->tidr = current->thread.tidr;
+		ctx->tidr = task_thread(current).tidr;
 		pr_devel("%s: current tidr: %d\n", __func__, ctx->tidr);
 	}
 

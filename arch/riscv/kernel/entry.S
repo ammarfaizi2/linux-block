@@ -510,7 +510,7 @@ ENDPROC(ret_from_kernel_thread)
  * arguments are passed to schedule_tail.
  */
 ENTRY(__switch_to)
-	/* Save context into prev->thread */
+	/* Save context into task_thread(prev) */
 	li    a4,  TASK_THREAD_RA
 	add   a3, a0, a4
 	add   a4, a1, a4
@@ -528,7 +528,7 @@ ENTRY(__switch_to)
 	REG_S s9,  TASK_THREAD_S9_RA(a3)
 	REG_S s10, TASK_THREAD_S10_RA(a3)
 	REG_S s11, TASK_THREAD_S11_RA(a3)
-	/* Restore context from next->thread */
+	/* Restore context from task_thread(next) */
 	REG_L ra,  TASK_THREAD_RA_RA(a4)
 	REG_L sp,  TASK_THREAD_SP_RA(a4)
 	REG_L s0,  TASK_THREAD_S0_RA(a4)

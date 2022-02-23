@@ -243,7 +243,7 @@ static void arm64_show_signal(int signo, const char *str)
 	static DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL,
 				      DEFAULT_RATELIMIT_BURST);
 	struct task_struct *tsk = current;
-	unsigned int esr = tsk->thread.fault_code;
+	unsigned int esr = task_thread(tsk).fault_code;
 	struct pt_regs *regs = task_pt_regs(tsk);
 
 	/* Leave if the signal won't be shown */
@@ -292,8 +292,8 @@ void arm64_notify_die(const char *str, struct pt_regs *regs,
 {
 	if (user_mode(regs)) {
 		WARN_ON(regs != current_pt_regs());
-		current->thread.fault_address = 0;
-		current->thread.fault_code = err;
+		task_thread(current).fault_address = 0;
+		task_thread(current).fault_code = err;
 
 		arm64_force_sig_fault(signo, sicode, far, str);
 	} else {
@@ -856,8 +856,8 @@ void bad_el0_sync(struct pt_regs *regs, int reason, unsigned int esr)
 {
 	unsigned long pc = instruction_pointer(regs);
 
-	current->thread.fault_address = 0;
-	current->thread.fault_code = esr;
+	task_thread(current).fault_address = 0;
+	task_thread(current).fault_code = esr;
 
 	arm64_force_sig_fault(SIGILL, ILL_ILLOPC, pc,
 			      "Bad EL0 synchronous exception");

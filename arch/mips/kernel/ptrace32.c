@@ -114,7 +114,7 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 			break;
 		}
 		case FPC_CSR:
-			tmp = child->thread.fpu.fcr31;
+			tmp = task_thread(child).fpu.fcr31;
 			break;
 		case FPC_EIR:
 			/* implementation / version register */
@@ -154,7 +154,7 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 				ret = -EIO;
 				goto out;
 			}
-			tmp = child->thread.dsp.dspcontrol;
+			tmp = task_thread(child).dsp.dspcontrol;
 			break;
 		default:
 			tmp = 0;
@@ -212,9 +212,9 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 
 			if (!tsk_used_math(child)) {
 				/* FP not yet used  */
-				memset(&child->thread.fpu, ~0,
-				       sizeof(child->thread.fpu));
-				child->thread.fpu.fcr31 = 0;
+				memset(&task_thread(child).fpu, ~0,
+				       sizeof(task_thread(child).fpu));
+				task_thread(child).fpu.fcr31 = 0;
 			}
 			if (test_tsk_thread_flag(child, TIF_32BIT_FPREGS)) {
 				/*
@@ -230,7 +230,7 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 			break;
 		}
 		case FPC_CSR:
-			child->thread.fpu.fcr31 = data;
+			task_thread(child).fpu.fcr31 = data;
 			break;
 #endif /* CONFIG_MIPS_FP_SUPPORT */
 		case PC:
@@ -259,7 +259,7 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 				ret = -EIO;
 				break;
 			}
-			child->thread.dsp.dspcontrol = data;
+			task_thread(child).dsp.dspcontrol = data;
 			break;
 		default:
 			/* The rest are not allowed. */

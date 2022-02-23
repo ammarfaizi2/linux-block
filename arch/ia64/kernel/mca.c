@@ -1121,7 +1121,7 @@ ia64_mca_modify_original_stack(struct pt_regs *regs,
 	old_sw->ar_pfs = 0;
 	old_sw->ar_unat = old_unat;
 	old_sw->pr = old_regs->pr | (1UL << PRED_NON_SYSCALL);
-	previous_current->thread.ksp = (u64)p - 16;
+	previous_task_thread(current).ksp = (u64)p - 16;
 
 	/* Finally copy the original stack's registers back to its RBS.
 	 * Registers from ar.bspstore through ar.bsp at the time of the event

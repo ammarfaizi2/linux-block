@@ -19,7 +19,7 @@
 int evr_active(struct task_struct *target, const struct user_regset *regset)
 {
 	flush_spe_to_thread(target);
-	return target->thread.used_spe ? regset->n : 0;
+	return task_thread(target).used_spe ? regset->n : 0;
 }
 
 int evr_get(struct task_struct *target, const struct user_regset *regset,
@@ -27,12 +27,12 @@ int evr_get(struct task_struct *target, const struct user_regset *regset,
 {
 	flush_spe_to_thread(target);
 
-	membuf_write(&to, &target->thread.evr, sizeof(target->thread.evr));
+	membuf_write(&to, &task_thread(target).evr, sizeof(task_thread(target).evr));
 
 	BUILD_BUG_ON(offsetof(struct thread_struct, acc) + sizeof(u64) !=
 		     offsetof(struct thread_struct, spefscr));
 
-	return membuf_write(&to, &target->thread.acc,
+	return membuf_write(&to, &task_thread(target).acc,
 				sizeof(u64) + sizeof(u32));
 }
 
@@ -45,16 +45,16 @@ int evr_set(struct task_struct *target, const struct user_regset *regset,
 	flush_spe_to_thread(target);
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.evr,
-				 0, sizeof(target->thread.evr));
+				 &task_thread(target).evr,
+				 0, sizeof(task_thread(target).evr));
 
 	BUILD_BUG_ON(offsetof(struct thread_struct, acc) + sizeof(u64) !=
 		     offsetof(struct thread_struct, spefscr));
 
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.acc,
-					 sizeof(target->thread.evr), -1);
+					 &task_thread(target).acc,
+					 sizeof(task_thread(target).evr), -1);
 
 	return ret;
 }

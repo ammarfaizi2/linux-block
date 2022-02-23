@@ -75,7 +75,7 @@ void ptrace_triggered(struct perf_event *bp,
 
 static int set_single_step(struct task_struct *tsk, unsigned long addr)
 {
-	struct thread_struct *thread = &tsk->thread;
+	struct thread_struct *thread = &task_thread(tsk);
 	struct perf_event *bp;
 	struct perf_event_attr attr;
 
@@ -175,7 +175,7 @@ static int fpregs_get(struct task_struct *target,
 	if (ret)
 		return ret;
 
-	return membuf_write(&to, target->thread.xstate,
+	return membuf_write(&to, task_thread(target).xstate,
 			    sizeof(struct user_fpu_struct));
 }
 
@@ -194,10 +194,10 @@ static int fpregs_set(struct task_struct *target,
 
 	if ((boot_cpu_data.flags & CPU_HAS_FPU))
 		return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					  &target->thread.xstate->hardfpu, 0, -1);
+					  &task_thread(target).xstate->hardfpu, 0, -1);
 
 	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				  &target->thread.xstate->softfpu, 0, -1);
+				  &task_thread(target).xstate->softfpu, 0, -1);
 }
 
 static int fpregs_active(struct task_struct *target,
@@ -213,7 +213,7 @@ static int dspregs_get(struct task_struct *target,
 		       struct membuf to)
 {
 	const struct pt_dspregs *regs =
-		(struct pt_dspregs *)&target->thread.dsp_status.dsp_regs;
+		(struct pt_dspregs *)&task_thread(target).dsp_status.dsp_regs;
 
 	return membuf_write(&to, regs, sizeof(struct pt_dspregs));
 }
@@ -224,7 +224,7 @@ static int dspregs_set(struct task_struct *target,
 		       const void *kbuf, const void __user *ubuf)
 {
 	struct pt_dspregs *regs =
-		(struct pt_dspregs *)&target->thread.dsp_status.dsp_regs;
+		(struct pt_dspregs *)&task_thread(target).dsp_status.dsp_regs;
 	int ret;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, regs,
@@ -367,7 +367,7 @@ long arch_ptrace(struct task_struct *child, long request,
 				if (ret)
 					break;
 				index = addr - offsetof(struct user, fpu);
-				tmp = ((unsigned long *)child->thread.xstate)
+				tmp = ((unsigned long *)task_thread(child).xstate)
 					[index >> 2];
 			}
 		} else if (addr == offsetof(struct user, u_fpvalid))
@@ -402,7 +402,7 @@ long arch_ptrace(struct task_struct *child, long request,
 				break;
 			index = addr - offsetof(struct user, fpu);
 			set_stopped_child_used_math(child);
-			((unsigned long *)child->thread.xstate)
+			((unsigned long *)task_thread(child).xstate)
 				[index >> 2] = data;
 			ret = 0;
 		} else if (addr == offsetof(struct user, u_fpvalid)) {

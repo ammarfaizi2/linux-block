@@ -91,9 +91,9 @@ static inline void start_thread(struct pt_regs * regs, unsigned long pc,
 
 unsigned long __get_wchan(struct task_struct *);
 
-#define task_pt_regs(tsk) ((tsk)->thread.kregs)
-#define KSTK_EIP(tsk)  ((tsk)->thread.kregs->pc)
-#define KSTK_ESP(tsk)  ((tsk)->thread.kregs->u_regs[UREG_FP])
+#define task_pt_regs(tsk) (task_thread(tsk).kregs)
+#define KSTK_EIP(tsk)  (task_thread(tsk).kregs->pc)
+#define KSTK_ESP(tsk)  (task_thread(tsk).kregs->u_regs[UREG_FP])
 
 #ifdef __KERNEL__
 

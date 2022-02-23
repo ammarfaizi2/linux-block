@@ -59,7 +59,7 @@ struct task_struct;
  * Where about of Task's sp, fp, blink when it was last seen in kernel mode.
  * Look in process.c for details of kernel stack layout
  */
-#define TSK_K_ESP(tsk)		(tsk->thread.ksp)
+#define TSK_K_ESP(tsk)		(task_thread(tsk).ksp)
 
 #define TSK_K_REG(tsk, off)	(*((unsigned long *)(TSK_K_ESP(tsk) + \
 					sizeof(struct callee_regs) + off)))

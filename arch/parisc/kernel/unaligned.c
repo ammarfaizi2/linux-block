@@ -444,11 +444,11 @@ void handle_unaligned(struct pt_regs *regs)
 
 	/* log a message with pacing */
 	if (user_mode(regs)) {
-		if (current->thread.flags & PARISC_UAC_SIGBUS) {
+		if (task_thread(current).flags & PARISC_UAC_SIGBUS) {
 			goto force_sigbus;
 		}
 
-		if (!(current->thread.flags & PARISC_UAC_NOPRINT) &&
+		if (!(task_thread(current).flags & PARISC_UAC_NOPRINT) &&
 			__ratelimit(&ratelimit)) {
 			char buf[256];
 			sprintf(buf, "%s(%d): unaligned access to 0x" RFMT " at ip=0x" RFMT "\n",

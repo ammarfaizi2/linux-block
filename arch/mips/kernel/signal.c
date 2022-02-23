@@ -71,7 +71,7 @@ struct rt_sigframe {
  */
 static int copy_fp_to_sigcontext(void __user *sc)
 {
-	struct mips_abi *abi = current->thread.abi;
+	struct mips_abi *abi = task_thread(current).abi;
 	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
 	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
 	int i;
@@ -80,17 +80,17 @@ static int copy_fp_to_sigcontext(void __user *sc)
 
 	for (i = 0; i < NUM_FPU_REGS; i += inc) {
 		err |=
-		    __put_user(get_fpr64(&current->thread.fpu.fpr[i], 0),
+		    __put_user(get_fpr64(&task_thread(current).fpu.fpr[i], 0),
 			       &fpregs[i]);
 	}
-	err |= __put_user(current->thread.fpu.fcr31, csr);
+	err |= __put_user(task_thread(current).fpu.fcr31, csr);
 
 	return err;
 }
 
 static int copy_fp_from_sigcontext(void __user *sc)
 {
-	struct mips_abi *abi = current->thread.abi;
+	struct mips_abi *abi = task_thread(current).abi;
 	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
 	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
 	int i;
@@ -100,9 +100,9 @@ static int copy_fp_from_sigcontext(void __user *sc)
 
 	for (i = 0; i < NUM_FPU_REGS; i += inc) {
 		err |= __get_user(fpr_val, &fpregs[i]);
-		set_fpr64(&current->thread.fpu.fpr[i], 0, fpr_val);
+		set_fpr64(&task_thread(current).fpu.fpr[i], 0, fpr_val);
 	}
-	err |= __get_user(current->thread.fpu.fcr31, csr);
+	err |= __get_user(task_thread(current).fpu.fcr31, csr);
 
 	return err;
 }
@@ -126,7 +126,7 @@ static int copy_fp_from_sigcontext(void __user *sc)
  */
 static int save_hw_fp_context(void __user *sc)
 {
-	struct mips_abi *abi = current->thread.abi;
+	struct mips_abi *abi = task_thread(current).abi;
 	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
 	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
 
@@ -135,7 +135,7 @@ static int save_hw_fp_context(void __user *sc)
 
 static int restore_hw_fp_context(void __user *sc)
 {
-	struct mips_abi *abi = current->thread.abi;
+	struct mips_abi *abi = task_thread(current).abi;
 	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
 	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
 
@@ -193,10 +193,10 @@ static int save_msa_extcontext(void __user *buf)
 	} else {
 		preempt_enable();
 
-		err = __put_user(current->thread.fpu.msacsr, &msa->csr);
+		err = __put_user(task_thread(current).fpu.msacsr, &msa->csr);
 
 		for (i = 0; i < NUM_FPU_REGS; i++) {
-			val = get_fpr64(&current->thread.fpu.fpr[i], 1);
+			val = get_fpr64(&task_thread(current).fpu.fpr[i], 1);
 			err |= __put_user(val, &msa->wr[i]);
 		}
 	}
@@ -239,11 +239,11 @@ static int restore_msa_extcontext(void __user *buf, unsigned int size)
 	} else {
 		preempt_enable();
 
-		current->thread.fpu.msacsr = csr;
+		task_thread(current).fpu.msacsr = csr;
 
 		for (i = 0; i < NUM_FPU_REGS; i++) {
 			err |= __get_user(val, &msa->wr[i]);
-			set_fpr64(&current->thread.fpu.fpr[i], 1, val);
+			set_fpr64(&task_thread(current).fpu.fpr[i], 1, val);
 		}
 	}
 
@@ -325,7 +325,7 @@ static int restore_extcontext(void __user *buf)
  */
 int protected_save_fp_context(void __user *sc)
 {
-	struct mips_abi *abi = current->thread.abi;
+	struct mips_abi *abi = task_thread(current).abi;
 	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
 	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
 	uint32_t __user *used_math = sc + abi->off_sc_used_math;
@@ -378,7 +378,7 @@ fp_done:
 
 int protected_restore_fp_context(void __user *sc)
 {
-	struct mips_abi *abi = current->thread.abi;
+	struct mips_abi *abi = task_thread(current).abi;
 	uint64_t __user *fpregs = sc + abi->off_sc_fpregs;
 	uint32_t __user *csr = sc + abi->off_sc_fpc_csr;
 	uint32_t __user *used_math = sc + abi->off_sc_used_math;
@@ -818,7 +818,7 @@ static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
 {
 	sigset_t *oldset = sigmask_to_save();
 	int ret;
-	struct mips_abi *abi = current->thread.abi;
+	struct mips_abi *abi = task_thread(current).abi;
 	void *vdso = current->mm->context.vdso;
 
 	/*
@@ -883,7 +883,7 @@ static void do_signal(struct pt_regs *regs)
 			break;
 
 		case ERESTART_RESTARTBLOCK:
-			regs->regs[2] = current->thread.abi->restart;
+			regs->regs[2] = task_thread(current).abi->restart;
 			regs->regs[7] = regs->regs[26];
 			regs->cp0_epc -= 4;
 			break;

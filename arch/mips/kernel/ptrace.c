@@ -139,9 +139,9 @@ int ptrace_get_watch_regs(struct task_struct *child,
 	__put_user(boot_cpu_data.watch_reg_use_cnt,
 		   &addr->WATCH_STYLE.num_valid);
 	for (i = 0; i < boot_cpu_data.watch_reg_use_cnt; i++) {
-		__put_user(child->thread.watch.mips3264.watchlo[i],
+		__put_user(task_thread(child).watch.mips3264.watchlo[i],
 			   &addr->WATCH_STYLE.watchlo[i]);
-		__put_user(child->thread.watch.mips3264.watchhi[i] &
+		__put_user(task_thread(child).watch.mips3264.watchhi[i] &
 				(MIPS_WATCHHI_MASK | MIPS_WATCHHI_IRW),
 			   &addr->WATCH_STYLE.watchhi[i]);
 		__put_user(boot_cpu_data.watch_reg_masks[i],
@@ -191,9 +191,9 @@ int ptrace_set_watch_regs(struct task_struct *child,
 	for (i = 0; i < boot_cpu_data.watch_reg_use_cnt; i++) {
 		if (lt[i] & MIPS_WATCHLO_IRW)
 			watch_active = 1;
-		child->thread.watch.mips3264.watchlo[i] = lt[i];
+		task_thread(child).watch.mips3264.watchlo[i] = lt[i];
 		/* Set the G bit. */
-		child->thread.watch.mips3264.watchhi[i] = ht[i];
+		task_thread(child).watch.mips3264.watchhi[i] = ht[i];
 	}
 
 	if (watch_active)
@@ -345,9 +345,9 @@ static void ptrace_setfcr31(struct task_struct *child, u32 value)
 	u32 fcr31;
 	u32 mask;
 
-	fcr31 = child->thread.fpu.fcr31;
+	fcr31 = task_thread(child).fpu.fcr31;
 	mask = boot_cpu_data.fpu_msk31;
-	child->thread.fpu.fcr31 = (value & ~mask) | (fcr31 & mask);
+	task_thread(child).fpu.fcr31 = (value & ~mask) | (fcr31 & mask);
 }
 
 int ptrace_getfpregs(struct task_struct *child, __u32 __user *data)
@@ -367,7 +367,7 @@ int ptrace_getfpregs(struct task_struct *child, __u32 __user *data)
 			__put_user((__u64) -1, i + (__u64 __user *) data);
 	}
 
-	__put_user(child->thread.fpu.fcr31, data + 64);
+	__put_user(task_thread(child).fpu.fcr31, data + 64);
 	__put_user(boot_cpu_data.fpu_id, data + 65);
 
 	return 0;
@@ -407,7 +407,7 @@ int ptrace_setfpregs(struct task_struct *child, __u32 __user *data)
 static void fpr_get_fpa(struct task_struct *target,
 		       struct membuf *to)
 {
-	membuf_write(to, &target->thread.fpu,
+	membuf_write(to, &task_thread(target).fpu,
 			NUM_FPU_REGS * sizeof(elf_fpreg_t));
 }
 
@@ -423,7 +423,7 @@ static void fpr_get_msa(struct task_struct *target, struct membuf *to)
 
 	BUILD_BUG_ON(sizeof(u64) != sizeof(elf_fpreg_t));
 	for (i = 0; i < NUM_FPU_REGS; i++)
-		membuf_store(to, get_fpr64(&target->thread.fpu.fpr[i], 0));
+		membuf_store(to, get_fpr64(&task_thread(target).fpu.fpr[i], 0));
 }
 
 /*
@@ -435,12 +435,12 @@ static int fpr_get(struct task_struct *target,
 		   const struct user_regset *regset,
 		   struct membuf to)
 {
-	if (sizeof(target->thread.fpu.fpr[0]) == sizeof(elf_fpreg_t))
+	if (sizeof(task_thread(target).fpu.fpr[0]) == sizeof(elf_fpreg_t))
 		fpr_get_fpa(target, &to);
 	else
 		fpr_get_msa(target, &to);
 
-	membuf_write(&to, &target->thread.fpu.fcr31, sizeof(u32));
+	membuf_write(&to, &task_thread(target).fpu.fcr31, sizeof(u32));
 	membuf_write(&to, &boot_cpu_data.fpu_id, sizeof(u32));
 	return 0;
 }
@@ -455,7 +455,7 @@ static int fpr_set_fpa(struct task_struct *target,
 		       const void **kbuf, const void __user **ubuf)
 {
 	return user_regset_copyin(pos, count, kbuf, ubuf,
-				  &target->thread.fpu,
+				  &task_thread(target).fpu,
 				  0, NUM_FPU_REGS * sizeof(elf_fpreg_t));
 }
 
@@ -480,7 +480,7 @@ static int fpr_set_msa(struct task_struct *target,
 					 (i + 1) * sizeof(elf_fpreg_t));
 		if (err)
 			return err;
-		set_fpr64(&target->thread.fpu.fpr[i], 0, fpr_val);
+		set_fpr64(&task_thread(target).fpu.fpr[i], 0, fpr_val);
 	}
 
 	return 0;
@@ -515,7 +515,7 @@ static int fpr_set(struct task_struct *target,
 
 	init_fp_ctx(target);
 
-	if (sizeof(target->thread.fpu.fpr[0]) == sizeof(elf_fpreg_t))
+	if (sizeof(task_thread(target).fpu.fpr[0]) == sizeof(elf_fpreg_t))
 		err = fpr_set_fpa(target, &pos, &count, &kbuf, &ubuf);
 	else
 		err = fpr_set_msa(target, &pos, &count, &kbuf, &ubuf);
@@ -606,7 +606,7 @@ static void copy_pad_fprs(struct task_struct *target,
 	WARN_ON(pad_sz % sizeof(fill));
 
 	for (i = 0; i < NUM_FPU_REGS; i++) {
-		membuf_write(to, &target->thread.fpu.fpr[i], cp_sz);
+		membuf_write(to, &task_thread(target).fpu.fpr[i], cp_sz);
 		for (j = 0; j < (pad_sz / sizeof(fill)); j++)
 			membuf_store(to, fill);
 	}
@@ -619,9 +619,9 @@ static int msa_get(struct task_struct *target,
 	const unsigned int wr_size = NUM_FPU_REGS * regset->size;
 	const struct msa_control_regs ctrl_regs = {
 		.fir = boot_cpu_data.fpu_id,
-		.fcsr = target->thread.fpu.fcr31,
+		.fcsr = task_thread(target).fpu.fcr31,
 		.msair = boot_cpu_data.msa_id,
-		.msacsr = target->thread.fpu.msacsr,
+		.msacsr = task_thread(target).fpu.msacsr,
 	};
 
 	if (!tsk_used_math(target)) {
@@ -630,13 +630,13 @@ static int msa_get(struct task_struct *target,
 	} else if (!test_tsk_thread_flag(target, TIF_MSA_CTX_LIVE)) {
 		/* Copy scalar FP context, fill the rest with 0xff */
 		copy_pad_fprs(target, regset, &to, 8);
-	} else if (sizeof(target->thread.fpu.fpr[0]) == regset->size) {
+	} else if (sizeof(task_thread(target).fpu.fpr[0]) == regset->size) {
 		/* Trivially copy the vector registers */
-		membuf_write(&to, &target->thread.fpu.fpr, wr_size);
+		membuf_write(&to, &task_thread(target).fpu.fpr, wr_size);
 	} else {
 		/* Copy as much context as possible, fill the rest with 0xff */
 		copy_pad_fprs(target, regset, &to,
-				sizeof(target->thread.fpu.fpr[0]));
+				sizeof(task_thread(target).fpu.fpr[0]));
 	}
 
 	return membuf_write(&to, &ctrl_regs, sizeof(ctrl_regs));
@@ -654,20 +654,20 @@ static int msa_set(struct task_struct *target,
 
 	init_fp_ctx(target);
 
-	if (sizeof(target->thread.fpu.fpr[0]) == regset->size) {
+	if (sizeof(task_thread(target).fpu.fpr[0]) == regset->size) {
 		/* Trivially copy the vector registers */
 		err = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.fpu.fpr,
+					 &task_thread(target).fpu.fpr,
 					 0, wr_size);
 	} else {
 		/* Copy as much context as possible */
 		cp_sz = min_t(unsigned int, regset->size,
-			      sizeof(target->thread.fpu.fpr[0]));
+			      sizeof(task_thread(target).fpu.fpr[0]));
 
 		i = start = err = 0;
 		for (; i < NUM_FPU_REGS; i++, start += regset->size) {
 			err |= user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-						  &target->thread.fpu.fpr[i],
+						  &task_thread(target).fpu.fpr[i],
 						  start, start + cp_sz);
 		}
 	}
@@ -676,8 +676,8 @@ static int msa_set(struct task_struct *target,
 		err = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &ctrl_regs,
 					 wr_size, wr_size + sizeof(ctrl_regs));
 	if (!err) {
-		target->thread.fpu.fcr31 = ctrl_regs.fcsr & ~FPU_CSR_ALL_X;
-		target->thread.fpu.msacsr = ctrl_regs.msacsr & ~MSA_CSR_CAUSEF;
+		task_thread(target).fpu.fcr31 = ctrl_regs.fcsr & ~FPU_CSR_ALL_X;
+		task_thread(target).fpu.msacsr = ctrl_regs.msacsr & ~MSA_CSR_CAUSEF;
 	}
 
 	return err;
@@ -703,8 +703,8 @@ static int dsp32_get(struct task_struct *target,
 		return -EIO;
 
 	for (i = 0; i < NUM_DSP_REGS; i++)
-		dspregs[i] = target->thread.dsp.dspr[i];
-	dspregs[NUM_DSP_REGS] = target->thread.dsp.dspcontrol;
+		dspregs[i] = task_thread(target).dsp.dspr[i];
+	dspregs[NUM_DSP_REGS] = task_thread(target).dsp.dspcontrol;
 	return membuf_write(&to, dspregs, sizeof(dspregs));
 }
 
@@ -739,10 +739,10 @@ static int dsp32_set(struct task_struct *target,
 	for (i = start; i < num_regs; i++)
 		switch (i) {
 		case 0 ... NUM_DSP_REGS - 1:
-			target->thread.dsp.dspr[i] = (s32)dspregs[i];
+			task_thread(target).dsp.dspr[i] = (s32)dspregs[i];
 			break;
 		case NUM_DSP_REGS:
-			target->thread.dsp.dspcontrol = (s32)dspregs[i];
+			task_thread(target).dsp.dspcontrol = (s32)dspregs[i];
 			break;
 		}
 
@@ -769,8 +769,8 @@ static int dsp64_get(struct task_struct *target,
 		return -EIO;
 
 	for (i = 0; i < NUM_DSP_REGS; i++)
-		dspregs[i] = target->thread.dsp.dspr[i];
-	dspregs[NUM_DSP_REGS] = target->thread.dsp.dspcontrol;
+		dspregs[i] = task_thread(target).dsp.dspr[i];
+	dspregs[NUM_DSP_REGS] = task_thread(target).dsp.dspcontrol;
 	return membuf_write(&to, dspregs, sizeof(dspregs));
 }
 
@@ -805,10 +805,10 @@ static int dsp64_set(struct task_struct *target,
 	for (i = start; i < num_regs; i++)
 		switch (i) {
 		case 0 ... NUM_DSP_REGS - 1:
-			target->thread.dsp.dspr[i] = dspregs[i];
+			task_thread(target).dsp.dspr[i] = dspregs[i];
 			break;
 		case NUM_DSP_REGS:
-			target->thread.dsp.dspcontrol = dspregs[i];
+			task_thread(target).dsp.dspcontrol = dspregs[i];
 			break;
 		}
 
@@ -1126,7 +1126,7 @@ long arch_ptrace(struct task_struct *child, long request,
 			break;
 		}
 		case FPC_CSR:
-			tmp = child->thread.fpu.fcr31;
+			tmp = task_thread(child).fpu.fcr31;
 			break;
 		case FPC_EIR:
 			/* implementation / version register */
@@ -1171,7 +1171,7 @@ long arch_ptrace(struct task_struct *child, long request,
 				ret = -EIO;
 				goto out;
 			}
-			tmp = child->thread.dsp.dspcontrol;
+			tmp = task_thread(child).dsp.dspcontrol;
 			break;
 		default:
 			tmp = 0;
@@ -1259,7 +1259,7 @@ long arch_ptrace(struct task_struct *child, long request,
 				ret = -EIO;
 				break;
 			}
-			child->thread.dsp.dspcontrol = data;
+			task_thread(child).dsp.dspcontrol = data;
 			break;
 		default:
 			/* The rest are not allowed. */

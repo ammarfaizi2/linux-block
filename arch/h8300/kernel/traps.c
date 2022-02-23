@@ -42,7 +42,7 @@ void __init base_trap_init(void)
 
 asmlinkage void set_esp0(unsigned long ssp)
 {
-	current->thread.esp0 = ssp;
+	task_thread(current).esp0 = ssp;
 }
 
 /*

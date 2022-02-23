@@ -154,14 +154,14 @@ int copy_thread(unsigned long clone_flags, unsigned long stack_start,
 {
 	struct pt_regs *childregs = task_pt_regs(p);
 
-	memset(&p->thread.cpu_context, 0, sizeof(struct cpu_context));
+	memset(&task_thread(p).cpu_context, 0, sizeof(struct cpu_context));
 
 	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
 		memset(childregs, 0, sizeof(struct pt_regs));
 		/* kernel thread fn */
-		p->thread.cpu_context.r6 = stack_start;
+		task_thread(p).cpu_context.r6 = stack_start;
 		/* kernel thread argument */
-		p->thread.cpu_context.r7 = stk_sz;
+		task_thread(p).cpu_context.r7 = stk_sz;
 	} else {
 		*childregs = *current_pt_regs();
 		if (stack_start)
@@ -173,8 +173,8 @@ int copy_thread(unsigned long clone_flags, unsigned long stack_start,
 			childregs->uregs[25] = tls;
 	}
 	/* cpu context switching  */
-	p->thread.cpu_context.pc = (unsigned long)ret_from_fork;
-	p->thread.cpu_context.sp = (unsigned long)childregs;
+	task_thread(p).cpu_context.pc = (unsigned long)ret_from_fork;
+	task_thread(p).cpu_context.sp = (unsigned long)childregs;
 
 #if IS_ENABLED(CONFIG_FPU)
 	if (used_math()) {
@@ -186,7 +186,7 @@ int copy_thread(unsigned long clone_flags, unsigned long stack_start,
 			save_fpu(current);
 		preempt_enable();
 # endif
-		p->thread.fpu = current->thread.fpu;
+		task_thread(p).fpu = task_thread(current).fpu;
 		clear_fpu(task_pt_regs(p));
 		set_stopped_child_used_math(p);
 	}
@@ -225,7 +225,7 @@ int dump_fpu(struct pt_regs *regs, elf_fpregset_t * fpu)
 	fpvalid = tsk_used_math(tsk);
 	if (fpvalid) {
 		lose_fpu();
-		memcpy(fpu, &tsk->thread.fpu, sizeof(*fpu));
+		memcpy(fpu, &task_thread(tsk).fpu, sizeof(*fpu));
 	}
 #endif
 	return fpvalid;

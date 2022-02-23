@@ -452,7 +452,7 @@ DECLARE_PER_CPU(void *, hardirq_stack_ptr);
 DECLARE_PER_CPU(bool, hardirq_stack_inuse);
 extern asmlinkage void ignore_sysret(void);
 
-/* Save actual FS/GS selectors and bases to current->thread */
+/* Save actual FS/GS selectors and bases to task_thread(current) */
 void current_save_fsgs(void);
 #else	/* X86_64 */
 #ifdef CONFIG_STACKPROTECTOR

@@ -50,7 +50,7 @@ do {								\
 	R##_c = FP_CLS_NAN;					\
 } while (0)
 
-#define __FPU_FPCSR	(current->thread.fpu.fpcsr)
+#define __FPU_FPCSR	(task_thread(current).fpu.fpcsr)
 
 /* Obtain the current rounding mode. */
 #define FP_ROUNDMODE                    \

@@ -23,9 +23,9 @@
 
 #define HAVE_ARCH_PICK_MMAP_LAYOUT
 
-#define TASK_SIZE_OF(tsk)       ((tsk)->thread.task_size)
+#define TASK_SIZE_OF(tsk)       (task_thread(tsk).task_size)
 #define TASK_SIZE	        TASK_SIZE_OF(current)
-#define TASK_UNMAPPED_BASE      (current->thread.map_base)
+#define TASK_UNMAPPED_BASE      (task_thread(current).map_base)
 
 #define DEFAULT_TASK_SIZE32	(0xFFF00000UL)
 #define DEFAULT_MAP_BASE32	(0x40000000UL)
@@ -105,7 +105,7 @@ struct thread_struct {
 	unsigned long  flags;
 }; 
 
-#define task_pt_regs(tsk) ((struct pt_regs *)&((tsk)->thread.regs))
+#define task_pt_regs(tsk) ((struct pt_regs *)&(task_thread(tsk).regs))
 
 /* Thread struct flags. */
 #define PARISC_UAC_NOPRINT	(1UL << 0)	/* see prctl and unaligned.c */
@@ -117,7 +117,7 @@ struct thread_struct {
 
 #define SET_UNALIGN_CTL(task,value)                                       \
         ({                                                                \
-        (task)->thread.flags = (((task)->thread.flags & ~PARISC_UAC_MASK) \
+        task_thread(task).flags = ((task_thread(task).flags & ~PARISC_UAC_MASK) \
                                 | (((value) << PARISC_UAC_SHIFT) &        \
                                    PARISC_UAC_MASK));                     \
         0;                                                                \
@@ -125,7 +125,7 @@ struct thread_struct {
 
 #define GET_UNALIGN_CTL(task,addr)                                        \
         ({                                                                \
-        put_user(((task)->thread.flags & PARISC_UAC_MASK)                 \
+        put_user((task_thread(task).flags & PARISC_UAC_MASK)                 \
                  >> PARISC_UAC_SHIFT, (int __user *) (addr));             \
         })
 
@@ -270,8 +270,8 @@ extern void release_thread(struct task_struct *);
 
 extern unsigned long __get_wchan(struct task_struct *p);
 
-#define KSTK_EIP(tsk)	((tsk)->thread.regs.iaoq[0])
-#define KSTK_ESP(tsk)	((tsk)->thread.regs.gr[30])
+#define KSTK_EIP(tsk)	(task_thread(tsk).regs.iaoq[0])
+#define KSTK_ESP(tsk)	(task_thread(tsk).regs.gr[30])
 
 #define cpu_relax()	barrier()
 

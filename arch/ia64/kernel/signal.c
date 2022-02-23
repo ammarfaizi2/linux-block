@@ -91,14 +91,14 @@ restore_sigcontext (struct sigcontext __user *sc, struct sigscratch *scr)
 	if ((flags & IA64_SC_FLAG_FPH_VALID) != 0) {
 		struct ia64_psr *psr = ia64_psr(&scr->pt);
 
-		err |= __copy_from_user(current->thread.fph, &sc->sc_fr[32], 96*16);
+		err |= __copy_from_user(task_thread(current).fph, &sc->sc_fr[32], 96*16);
 		psr->mfh = 0;	/* drop signal handler's fph contents... */
 		preempt_disable();
 		if (psr->dfh)
 			ia64_drop_fpu(current);
 		else {
 			/* We already own the local fph, otherwise psr->dfh wouldn't be 0.  */
-			__ia64_load_fpu(current->thread.fph);
+			__ia64_load_fpu(task_thread(current).fph);
 			ia64_set_local_fpu_owner(current);
 		}
 		preempt_enable();
@@ -178,9 +178,9 @@ setup_sigcontext (struct sigcontext __user *sc, sigset_t *mask, struct sigscratc
 		flags |= IA64_SC_FLAG_IN_SYSCALL;
 	cfm = ifs & ((1UL << 38) - 1);
 	ia64_flush_fph(current);
-	if ((current->thread.flags & IA64_THREAD_FPH_VALID)) {
+	if ((task_thread(current).flags & IA64_THREAD_FPH_VALID)) {
 		flags |= IA64_SC_FLAG_FPH_VALID;
-		err = __copy_to_user(&sc->sc_fr[32], current->thread.fph, 96*16);
+		err = __copy_to_user(&sc->sc_fr[32], task_thread(current).fph, 96*16);
 	}
 
 	nat = ia64_get_scratch_nat_bits(&scr->pt, scr->scratch_unat);

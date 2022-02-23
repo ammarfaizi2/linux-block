@@ -1857,7 +1857,7 @@ void update_mmu_cache(struct vm_area_struct *vma, unsigned long address,
 	 * We also avoid filling the hash if not coming from a fault.
 	 */
 
-	trap = current->thread.regs ? TRAP(current->thread.regs) : 0UL;
+	trap = task_thread(current).regs ? TRAP(task_thread(current).regs) : 0UL;
 	switch (trap) {
 	case 0x300:
 		is_exec = false;
@@ -1883,8 +1883,8 @@ static inline void tm_flush_hash_page(int local)
 	 * kernel uses a page from userspace without unmapping it first, it may
 	 * see the speculated version.
 	 */
-	if (local && cpu_has_feature(CPU_FTR_TM) && current->thread.regs &&
-	    MSR_TM_ACTIVE(current->thread.regs->msr)) {
+	if (local && cpu_has_feature(CPU_FTR_TM) && task_thread(current).regs &&
+	    MSR_TM_ACTIVE(task_thread(current).regs->msr)) {
 		tm_enable();
 		tm_abort(TM_CAUSE_TLBI);
 	}

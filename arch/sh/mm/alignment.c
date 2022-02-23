@@ -69,12 +69,12 @@ unsigned int unaligned_user_action(void)
 {
 	unsigned int action = se_usermode;
 
-	if (current->thread.flags & SH_THREAD_UAC_SIGBUS) {
+	if (task_thread(current).flags & SH_THREAD_UAC_SIGBUS) {
 		action &= ~UM_FIXUP;
 		action |= UM_SIGNAL;
 	}
 
-	if (current->thread.flags & SH_THREAD_UAC_NOPRINT)
+	if (task_thread(current).flags & SH_THREAD_UAC_NOPRINT)
 		action &= ~UM_WARN;
 
 	return action;
@@ -82,13 +82,13 @@ unsigned int unaligned_user_action(void)
 
 int get_unalign_ctl(struct task_struct *tsk, unsigned long addr)
 {
-	return put_user(tsk->thread.flags & SH_THREAD_UAC_MASK,
+	return put_user(task_thread(tsk).flags & SH_THREAD_UAC_MASK,
 			(unsigned int __user *)addr);
 }
 
 int set_unalign_ctl(struct task_struct *tsk, unsigned int val)
 {
-	tsk->thread.flags = (tsk->thread.flags & ~SH_THREAD_UAC_MASK) |
+	task_thread(tsk).flags = (task_thread(tsk).flags & ~SH_THREAD_UAC_MASK) |
 			    (val & SH_THREAD_UAC_MASK);
 	return 0;
 }

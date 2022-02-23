@@ -253,7 +253,7 @@ extern char elf_platform[];
 do {								\
 	set_personality(PER_LINUX |				\
 		(current->personality & (~PER_MASK)));		\
-	current->thread.sys_call_table = sys_call_table;	\
+	task_thread(current).sys_call_table = sys_call_table;	\
 } while (0)
 #else /* CONFIG_COMPAT */
 #define SET_PERSONALITY(ex)					\
@@ -263,11 +263,11 @@ do {								\
 			(current->personality & ~PER_MASK));	\
 	if ((ex).e_ident[EI_CLASS] == ELFCLASS32) {		\
 		set_thread_flag(TIF_31BIT);			\
-		current->thread.sys_call_table =		\
+		task_thread(current).sys_call_table =		\
 			sys_call_table_emu;			\
 	} else {						\
 		clear_thread_flag(TIF_31BIT);			\
-		current->thread.sys_call_table =		\
+		task_thread(current).sys_call_table =		\
 			sys_call_table;				\
 	}							\
 } while (0)

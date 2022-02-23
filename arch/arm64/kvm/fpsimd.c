@@ -22,7 +22,7 @@ void kvm_vcpu_unshare_task_fp(struct kvm_vcpu *vcpu)
 	if (!is_protected_kvm_enabled() || !p)
 		return;
 
-	fpsimd = &p->thread.uw.fpsimd_state;
+	fpsimd = &task_thread(p).uw.fpsimd_state;
 	kvm_unshare_hyp(fpsimd, fpsimd + 1);
 	put_task_struct(p);
 }
@@ -40,7 +40,7 @@ int kvm_arch_vcpu_run_map_fp(struct kvm_vcpu *vcpu)
 {
 	int ret;
 
-	struct user_fpsimd_state *fpsimd = &current->thread.uw.fpsimd_state;
+	struct user_fpsimd_state *fpsimd = &task_thread(current).uw.fpsimd_state;
 
 	kvm_vcpu_unshare_task_fp(vcpu);
 

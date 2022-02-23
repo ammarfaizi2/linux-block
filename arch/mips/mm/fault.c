@@ -59,7 +59,7 @@ static void __kprobes __do_page_fault(struct pt_regs *regs, unsigned long write,
 	 * This is to notify the fault handler of the kprobes.
 	 */
 	if (notify_die(DIE_PAGE_FAULT, "page fault", regs, -1,
-		       current->thread.trap_nr, SIGSEGV) == NOTIFY_STOP)
+		       task_thread(current).trap_nr, SIGSEGV) == NOTIFY_STOP)
 		return;
 #endif
 
@@ -197,8 +197,8 @@ bad_area:
 bad_area_nosemaphore:
 	/* User mode accesses just cause a SIGSEGV */
 	if (user_mode(regs)) {
-		tsk->thread.cp0_badvaddr = address;
-		tsk->thread.error_code = write;
+		task_thread(tsk).cp0_badvaddr = address;
+		task_thread(tsk).error_code = write;
 		if (show_unhandled_signals &&
 		    unhandled_signal(tsk, SIGSEGV) &&
 		    __ratelimit(&ratelimit_state)) {
@@ -215,7 +215,7 @@ bad_area_nosemaphore:
 			print_vma_addr(KERN_CONT " ", regs->regs[31]);
 			pr_cont("\n");
 		}
-		current->thread.trap_nr = (regs->cp0_cause >> 2) & 0x1f;
+		task_thread(current).trap_nr = (regs->cp0_cause >> 2) & 0x1f;
 		force_sig_fault(SIGSEGV, si_code, (void __user *)address);
 		return;
 	}
@@ -223,7 +223,7 @@ bad_area_nosemaphore:
 no_context:
 	/* Are we prepared to handle this kernel fault?	 */
 	if (fixup_exception(regs)) {
-		current->thread.cp0_baduaddr = address;
+		task_thread(current).cp0_baduaddr = address;
 		return;
 	}
 
@@ -270,8 +270,8 @@ do_sigbus:
 	       field, (unsigned long) regs->cp0_epc,
 	       field, (unsigned long) regs->regs[31]);
 #endif
-	current->thread.trap_nr = (regs->cp0_cause >> 2) & 0x1f;
-	tsk->thread.cp0_badvaddr = address;
+	task_thread(current).trap_nr = (regs->cp0_cause >> 2) & 0x1f;
+	task_thread(tsk).cp0_badvaddr = address;
 	force_sig_fault(SIGBUS, BUS_ADRERR, (void __user *)address);
 
 	return;

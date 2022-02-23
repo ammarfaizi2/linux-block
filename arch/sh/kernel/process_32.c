@@ -104,19 +104,19 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 	if (is_dsp_enabled(tsk)) {
 		/* We can use the __save_dsp or just copy the struct:
 		 * __save_dsp(p);
-		 * p->thread.dsp_status.status |= SR_DSP
+		 * task_thread(p).dsp_status.status |= SR_DSP
 		 */
-		p->thread.dsp_status = tsk->thread.dsp_status;
+		task_thread(p).dsp_status = task_thread(tsk).dsp_status;
 	}
 #endif
 
-	memset(p->thread.ptrace_bps, 0, sizeof(p->thread.ptrace_bps));
+	memset(task_thread(p).ptrace_bps, 0, sizeof(task_thread(p).ptrace_bps));
 
 	childregs = task_pt_regs(p);
-	p->thread.sp = (unsigned long) childregs;
+	task_thread(p).sp = (unsigned long) childregs;
 	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
 		memset(childregs, 0, sizeof(struct pt_regs));
-		p->thread.pc = (unsigned long) ret_from_kernel_thread;
+		task_thread(p).pc = (unsigned long) ret_from_kernel_thread;
 		childregs->regs[4] = arg;
 		childregs->regs[5] = usp;
 		childregs->sr = SR_MD;
@@ -125,7 +125,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 #endif
 		ti->addr_limit = KERNEL_DS;
 		ti->status &= ~TS_USEDFPU;
-		p->thread.fpu_counter = 0;
+		task_thread(p).fpu_counter = 0;
 		return 0;
 	}
 	*childregs = *current_pt_regs();
@@ -138,7 +138,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 		childregs->gbr = tls;
 
 	childregs->regs[0] = 0; /* Set return value for child */
-	p->thread.pc = (unsigned long) ret_from_fork;
+	task_thread(p).pc = (unsigned long) ret_from_fork;
 	return 0;
 }
 
@@ -149,7 +149,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 __notrace_funcgraph struct task_struct *
 __switch_to(struct task_struct *prev, struct task_struct *next)
 {
-	struct thread_struct *next_t = &next->thread;
+	struct thread_struct *next_t = &task_thread(next);
 
 #if defined(CONFIG_STACKPROTECTOR) && !defined(CONFIG_SMP)
 	__stack_chk_guard = next->stack_canary;
@@ -158,7 +158,7 @@ __switch_to(struct task_struct *prev, struct task_struct *next)
 	unlazy_fpu(prev, task_pt_regs(prev));
 
 	/* we're going to use this soon, after a few expensive things */
-	if (next->thread.fpu_counter > 5)
+	if (task_thread(next).fpu_counter > 5)
 		prefetch(next_t->xstate);
 
 #ifdef CONFIG_MMU
@@ -176,7 +176,7 @@ __switch_to(struct task_struct *prev, struct task_struct *next)
 	 * restore of the math state immediately to avoid the trap; the
 	 * chances of needing FPU soon are obviously high now
 	 */
-	if (next->thread.fpu_counter > 5)
+	if (task_thread(next).fpu_counter > 5)
 		__fpu_state_restore();
 
 	return prev;
@@ -193,7 +193,7 @@ unsigned long __get_wchan(struct task_struct *p)
 
 #ifdef CONFIG_FRAME_POINTER
 	if (in_sched_functions(pc)) {
-		unsigned long schedule_frame = (unsigned long)p->thread.sp;
+		unsigned long schedule_frame = (unsigned long)task_thread(p).sp;
 		return ((unsigned long *)schedule_frame)[21];
 	}
 #endif

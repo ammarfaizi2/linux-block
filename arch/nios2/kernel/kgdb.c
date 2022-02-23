@@ -97,8 +97,8 @@ int dbg_set_reg(int regno, void *mem, struct pt_regs *regs)
 void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 {
 	memset((char *)gdb_regs, 0, NUMREGBYTES);
-	gdb_regs[GDB_SP] = p->thread.kregs->sp;
-	gdb_regs[GDB_PC] = p->thread.kregs->ea;
+	gdb_regs[GDB_SP] = task_thread(p).kregs->sp;
+	gdb_regs[GDB_PC] = task_thread(p).kregs->ea;
 }
 
 void kgdb_arch_set_pc(struct pt_regs *regs, unsigned long pc)

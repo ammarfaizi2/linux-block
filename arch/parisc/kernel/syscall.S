@@ -337,7 +337,7 @@ tracesys:
 tracesys_next:
 	/* do_syscall_trace_enter either returned the syscallno, or -1L,
 	 *  so we skip restoring the PT_GR20 below, since we pulled it from
-	 *  task->thread.regs.gr[20] above.
+	 *  task_thread(task).regs.gr[20] above.
 	 */
 	copy	%ret0,%r20
 

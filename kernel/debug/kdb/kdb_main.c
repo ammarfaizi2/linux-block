@@ -2309,7 +2309,7 @@ void kdb_ps1(const struct task_struct *p)
 		   (void *)p, p->pid, p->parent->pid,
 		   kdb_task_has_cpu(p), kdb_process_cpu(p),
 		   kdb_task_state_char(p),
-		   (void *)(&p->thread),
+		   (void *)(&task_thread(p)),
 		   p == kdb_curr_task(raw_smp_processor_id()) ? '*' : ' ',
 		   p->comm);
 	if (kdb_task_has_cpu(p)) {

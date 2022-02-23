@@ -94,7 +94,7 @@ asmlinkage void microblaze_kgdb_break(struct pt_regs *regs)
 void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 {
 	unsigned int i;
-	unsigned long *pt_regb = (unsigned long *)(p->thread.regs);
+	unsigned long *pt_regb = (unsigned long *)(task_thread(p).regs);
 
 	/* registers r0 - r31, pc, msr, ear, esr, fsr + do not save pt_mode */
 	for (i = 0; i < (sizeof(struct pt_regs) / 4) - 1; i++)

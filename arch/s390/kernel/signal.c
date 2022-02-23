@@ -109,14 +109,14 @@ struct rt_sigframe
 /* Store registers needed to create the signal frame */
 static void store_sigregs(void)
 {
-	save_access_regs(current->thread.acrs);
+	save_access_regs(task_thread(current).acrs);
 	save_fpu_regs();
 }
 
 /* Load registers after signal return */
 static void load_sigregs(void)
 {
-	restore_access_regs(current->thread.acrs);
+	restore_access_regs(task_thread(current).acrs);
 }
 
 /* Returns non-zero on fault. */
@@ -130,9 +130,9 @@ static int save_sigregs(struct pt_regs *regs, _sigregs __user *sregs)
 		(regs->psw.mask & (PSW_MASK_USER | PSW_MASK_RI));
 	user_sregs.regs.psw.addr = regs->psw.addr;
 	memcpy(&user_sregs.regs.gprs, &regs->gprs, sizeof(sregs->regs.gprs));
-	memcpy(&user_sregs.regs.acrs, current->thread.acrs,
+	memcpy(&user_sregs.regs.acrs, task_thread(current).acrs,
 	       sizeof(user_sregs.regs.acrs));
-	fpregs_store(&user_sregs.fpregs, &current->thread.fpu);
+	fpregs_store(&user_sregs.fpregs, &task_thread(current).fpu);
 	if (__copy_to_user(sregs, &user_sregs, sizeof(_sigregs)))
 		return -EFAULT;
 	return 0;
@@ -167,10 +167,10 @@ static int restore_sigregs(struct pt_regs *regs, _sigregs __user *sregs)
 		regs->psw.mask |= PSW_MASK_BA;
 	regs->psw.addr = user_sregs.regs.psw.addr;
 	memcpy(&regs->gprs, &user_sregs.regs.gprs, sizeof(sregs->regs.gprs));
-	memcpy(&current->thread.acrs, &user_sregs.regs.acrs,
-	       sizeof(current->thread.acrs));
+	memcpy(&task_thread(current).acrs, &user_sregs.regs.acrs,
+	       sizeof(task_thread(current).acrs));
 
-	fpregs_load(&user_sregs.fpregs, &current->thread.fpu);
+	fpregs_load(&user_sregs.fpregs, &task_thread(current).fpu);
 
 	clear_pt_regs_flag(regs, PIF_SYSCALL); /* No longer in a system call */
 	return 0;
@@ -186,11 +186,11 @@ static int save_sigregs_ext(struct pt_regs *regs,
 	/* Save vector registers to signal stack */
 	if (MACHINE_HAS_VX) {
 		for (i = 0; i < __NUM_VXRS_LOW; i++)
-			vxrs[i] = *((__u64 *)(current->thread.fpu.vxrs + i) + 1);
+			vxrs[i] = *((__u64 *)(task_thread(current).fpu.vxrs + i) + 1);
 		if (__copy_to_user(&sregs_ext->vxrs_low, vxrs,
 				   sizeof(sregs_ext->vxrs_low)) ||
 		    __copy_to_user(&sregs_ext->vxrs_high,
-				   current->thread.fpu.vxrs + __NUM_VXRS_LOW,
+				   task_thread(current).fpu.vxrs + __NUM_VXRS_LOW,
 				   sizeof(sregs_ext->vxrs_high)))
 			return -EFAULT;
 	}
@@ -207,12 +207,12 @@ static int restore_sigregs_ext(struct pt_regs *regs,
 	if (MACHINE_HAS_VX) {
 		if (__copy_from_user(vxrs, &sregs_ext->vxrs_low,
 				     sizeof(sregs_ext->vxrs_low)) ||
-		    __copy_from_user(current->thread.fpu.vxrs + __NUM_VXRS_LOW,
+		    __copy_from_user(task_thread(current).fpu.vxrs + __NUM_VXRS_LOW,
 				     &sregs_ext->vxrs_high,
 				     sizeof(sregs_ext->vxrs_high)))
 			return -EFAULT;
 		for (i = 0; i < __NUM_VXRS_LOW; i++)
-			*((__u64 *)(current->thread.fpu.vxrs + i) + 1) = vxrs[i];
+			*((__u64 *)(task_thread(current).fpu.vxrs + i) + 1) = vxrs[i];
 	}
 	return 0;
 }
@@ -359,7 +359,7 @@ static int setup_frame(int sig, struct k_sigaction *ka,
 		/* set extra registers only for synchronous signals */
 		regs->gprs[4] = regs->int_code & 127;
 		regs->gprs[5] = regs->int_parm_long;
-		regs->gprs[6] = current->thread.last_break;
+		regs->gprs[6] = task_thread(current).last_break;
 	}
 	return 0;
 }
@@ -426,7 +426,7 @@ static int setup_rt_frame(struct ksignal *ksig, sigset_t *set,
 	regs->gprs[2] = ksig->sig;
 	regs->gprs[3] = (unsigned long) &frame->info;
 	regs->gprs[4] = (unsigned long) &frame->uc;
-	regs->gprs[5] = current->thread.last_break;
+	regs->gprs[5] = task_thread(current).last_break;
 	return 0;
 }
 
@@ -464,13 +464,13 @@ void arch_do_signal_or_restart(struct pt_regs *regs, bool has_signal)
 	 * the debugger may change all our registers, including the system
 	 * call information.
 	 */
-	current->thread.system_call =
+	task_thread(current).system_call =
 		test_pt_regs_flag(regs, PIF_SYSCALL) ? regs->int_code : 0;
 
 	if (has_signal && get_signal(&ksig)) {
 		/* Whee!  Actually deliver the signal.  */
-		if (current->thread.system_call) {
-			regs->int_code = current->thread.system_call;
+		if (task_thread(current).system_call) {
+			regs->int_code = task_thread(current).system_call;
 			/* Check for system call restarting. */
 			switch (regs->gprs[2]) {
 			case -ERESTART_RESTARTBLOCK:
@@ -504,8 +504,8 @@ void arch_do_signal_or_restart(struct pt_regs *regs, bool has_signal)
 
 	/* No handlers present - check for system call restart */
 	clear_pt_regs_flag(regs, PIF_SYSCALL);
-	if (current->thread.system_call) {
-		regs->int_code = current->thread.system_call;
+	if (task_thread(current).system_call) {
+		regs->int_code = task_thread(current).system_call;
 		switch (regs->gprs[2]) {
 		case -ERESTART_RESTARTBLOCK:
 			/* Restart with sys_restart_syscall */

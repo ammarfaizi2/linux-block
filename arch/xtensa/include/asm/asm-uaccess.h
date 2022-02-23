@@ -33,12 +33,12 @@
 #define USER_DS		1
 
 /*
- * get_fs reads current->thread.current_ds into a register.
+ * get_fs reads task_thread(current).current_ds into a register.
  * On Entry:
  * 	<ad>	anything
  * 	<sp>	stack
  * On Exit:
- * 	<ad>	contains current->thread.current_ds
+ * 	<ad>	contains task_thread(current).current_ds
  */
 	.macro	get_fs	ad, sp
 	GET_CURRENT(\ad,\sp)
@@ -51,7 +51,7 @@
 	.endm
 
 /*
- * set_fs sets current->thread.current_ds to some value.
+ * set_fs sets task_thread(current).current_ds to some value.
  * On Entry:
  *	<at>	anything (temp register)
  *	<av>	value to write
@@ -82,7 +82,7 @@
  * 			fall-through macro on error
  * 	<sp>		stack pointer
  * On Exit:
- * 	<at>		destroyed (actually, current->thread.current_ds)
+ * 	<at>		destroyed (actually, task_thread(current).current_ds)
  */
 
 #if ((KERNEL_DS != 0) || (USER_DS == 0))

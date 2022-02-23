@@ -535,7 +535,7 @@ setfpreg (unsigned long regnum, struct ia64_fpreg *fpval, struct pt_regs *regs)
 	 */
 	if (regnum >= IA64_FIRST_ROTATING_FR) {
 		ia64_sync_fph(current);
-		current->thread.fph[fph_index(regs, regnum)] = *fpval;
+		task_thread(current).fph[fph_index(regs, regnum)] = *fpval;
 	} else {
 		/*
 		 * pt_regs or switch_stack ?
@@ -589,12 +589,12 @@ getfpreg (unsigned long regnum, struct ia64_fpreg *fpval, struct pt_regs *regs)
 	 * enabled.
 	 *
 	 * When regnum > 31, the register is still live and we need to force a save
-	 * to current->thread.fph to get access to it.  See discussion in setfpreg()
+	 * to task_thread(current).fph to get access to it.  See discussion in setfpreg()
 	 * for reasons and other ways of doing this.
 	 */
 	if (regnum >= IA64_FIRST_ROTATING_FR) {
 		ia64_flush_fph(current);
-		*fpval = current->thread.fph[fph_index(regs, regnum)];
+		*fpval = task_thread(current).fph[fph_index(regs, regnum)];
 	} else {
 		/*
 		 * f0 = 0.0, f1= 1.0. Those registers are constant and are thus
@@ -1320,11 +1320,11 @@ ia64_handle_unaligned (unsigned long ifa, struct pt_regs *regs)
 	if (!user_mode(regs))
 		eh = search_exception_tables(regs->cr_iip + ia64_psr(regs)->ri);
 	if (user_mode(regs) || eh) {
-		if ((current->thread.flags & IA64_THREAD_UAC_SIGBUS) != 0)
+		if ((task_thread(current).flags & IA64_THREAD_UAC_SIGBUS) != 0)
 			goto force_sigbus;
 
 		if (!no_unaligned_warning &&
-		    !(current->thread.flags & IA64_THREAD_UAC_NOPRINT) &&
+		    !(task_thread(current).flags & IA64_THREAD_UAC_NOPRINT) &&
 		    __ratelimit(&logging_rate_limit))
 		{
 			char buf[200];	/* comm[] is at most 16 bytes... */

@@ -113,7 +113,7 @@ asmlinkage long mipsmt_sys_sched_setaffinity(pid_t pid, unsigned int len,
 		goto out_unlock;
 
 	/* Record new user-specified CPU set for future reference */
-	cpumask_copy(&p->thread.user_cpus_allowed, new_mask);
+	cpumask_copy(&task_thread(p).user_cpus_allowed, new_mask);
 
  again:
 	/* Compute new global allowed CPU set if necessary */
@@ -178,7 +178,7 @@ asmlinkage long mipsmt_sys_sched_getaffinity(pid_t pid, unsigned int len,
 	if (retval)
 		goto out_unlock;
 
-	cpumask_or(&allowed, &p->thread.user_cpus_allowed, p->cpus_ptr);
+	cpumask_or(&allowed, &task_thread(p).user_cpus_allowed, p->cpus_ptr);
 	cpumask_and(&mask, &allowed, cpu_active_mask);
 
 out_unlock:

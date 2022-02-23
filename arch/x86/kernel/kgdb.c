@@ -150,7 +150,7 @@ void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 	gdb_regs[GDB_DX]	= 0;
 	gdb_regs[GDB_SI]	= 0;
 	gdb_regs[GDB_DI]	= 0;
-	gdb_regs[GDB_BP]	= ((struct inactive_task_frame *)p->thread.sp)->bp;
+	gdb_regs[GDB_BP]	= ((struct inactive_task_frame *)task_thread(p).sp)->bp;
 #ifdef CONFIG_X86_32
 	gdb_regs[GDB_DS]	= __KERNEL_DS;
 	gdb_regs[GDB_ES]	= __KERNEL_DS;
@@ -173,7 +173,7 @@ void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 	gdb_regs[GDB_R15]	= 0;
 #endif
 	gdb_regs[GDB_PC]	= 0;
-	gdb_regs[GDB_SP]	= p->thread.sp;
+	gdb_regs[GDB_SP]	= task_thread(p).sp;
 }
 
 static struct hw_breakpoint {
@@ -631,7 +631,7 @@ static void kgdb_hw_overflow_handler(struct perf_event *event,
 
 	for (i = 0; i < 4; i++) {
 		if (breakinfo[i].enabled)
-			tsk->thread.virtual_dr6 |= (DR_TRAP0 << i);
+			task_thread(tsk).virtual_dr6 |= (DR_TRAP0 << i);
 	}
 }
 

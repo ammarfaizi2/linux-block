@@ -9,7 +9,7 @@
 
 void user_enable_single_step(struct task_struct *task)
 {
-	struct pt_regs *regs = task->thread.regs;
+	struct pt_regs *regs = task_thread(task).regs;
 
 	if (regs != NULL)
 		regs_set_return_msr(regs, (regs->msr & ~MSR_BE) | MSR_SE);
@@ -18,7 +18,7 @@ void user_enable_single_step(struct task_struct *task)
 
 void user_enable_block_step(struct task_struct *task)
 {
-	struct pt_regs *regs = task->thread.regs;
+	struct pt_regs *regs = task_thread(task).regs;
 
 	if (regs != NULL)
 		regs_set_return_msr(regs, (regs->msr & ~MSR_SE) | MSR_BE);
@@ -27,7 +27,7 @@ void user_enable_block_step(struct task_struct *task)
 
 void user_disable_single_step(struct task_struct *task)
 {
-	struct pt_regs *regs = task->thread.regs;
+	struct pt_regs *regs = task_thread(task).regs;
 
 	if (regs != NULL)
 		regs_set_return_msr(regs, regs->msr & ~(MSR_SE | MSR_BE));
@@ -65,8 +65,8 @@ int ptrace_get_debugreg(struct task_struct *child, unsigned long addr,
 	/* We only support one DABR and no IABRS at the moment */
 	if (addr > 0)
 		return -EINVAL;
-	dabr_fake = ((child->thread.hw_brk[0].address & (~HW_BRK_TYPE_DABR)) |
-		     (child->thread.hw_brk[0].type & HW_BRK_TYPE_DABR));
+	dabr_fake = ((task_thread(child).hw_brk[0].address & (~HW_BRK_TYPE_DABR)) |
+		     (task_thread(child).hw_brk[0].type & HW_BRK_TYPE_DABR));
 	return put_user(dabr_fake, datalp);
 }
 
@@ -79,7 +79,7 @@ int ptrace_set_debugreg(struct task_struct *task, unsigned long addr, unsigned l
 {
 #ifdef CONFIG_HAVE_HW_BREAKPOINT
 	int ret;
-	struct thread_struct *thread = &task->thread;
+	struct thread_struct *thread = &task_thread(task);
 	struct perf_event *bp;
 	struct perf_event_attr attr;
 #endif /* CONFIG_HAVE_HW_BREAKPOINT */
@@ -162,7 +162,7 @@ int ptrace_set_debugreg(struct task_struct *task, unsigned long addr, unsigned l
 	if (set_bp && (!ppc_breakpoint_available()))
 		return -ENODEV;
 #endif /* CONFIG_HAVE_HW_BREAKPOINT */
-	task->thread.hw_brk[0] = hw_brk;
+	task_thread(task).hw_brk[0] = hw_brk;
 	return 0;
 }
 
@@ -195,7 +195,7 @@ long ppc_set_hwdebug(struct task_struct *child, struct ppc_hw_breakpoint *bp_inf
 	int i;
 #ifdef CONFIG_HAVE_HW_BREAKPOINT
 	int len = 0;
-	struct thread_struct *thread = &child->thread;
+	struct thread_struct *thread = &task_thread(child);
 	struct perf_event *bp;
 	struct perf_event_attr attr;
 #endif /* CONFIG_HAVE_HW_BREAKPOINT */
@@ -253,14 +253,14 @@ long ppc_set_hwdebug(struct task_struct *child, struct ppc_hw_breakpoint *bp_inf
 	if (bp_info->addr_mode != PPC_BREAKPOINT_MODE_EXACT)
 		return -EINVAL;
 
-	i = find_empty_hw_brk(&child->thread);
+	i = find_empty_hw_brk(&task_thread(child));
 	if (i < 0)
 		return -ENOSPC;
 
 	if (!ppc_breakpoint_available())
 		return -ENODEV;
 
-	child->thread.hw_brk[i] = brk;
+	task_thread(child).hw_brk[i] = brk;
 
 	return i + 1;
 }
@@ -269,7 +269,7 @@ long ppc_del_hwdebug(struct task_struct *child, long data)
 {
 #ifdef CONFIG_HAVE_HW_BREAKPOINT
 	int ret = 0;
-	struct thread_struct *thread = &child->thread;
+	struct thread_struct *thread = &task_thread(child);
 	struct perf_event *bp;
 #endif /* CONFIG_HAVE_HW_BREAKPOINT */
 	if (data < 1 || data > nr_wp_slots())
@@ -285,13 +285,13 @@ long ppc_del_hwdebug(struct task_struct *child, long data)
 	}
 	return ret;
 #else /* CONFIG_HAVE_HW_BREAKPOINT */
-	if (!(child->thread.hw_brk[data - 1].flags & HW_BRK_FLAG_DISABLED) &&
-	    child->thread.hw_brk[data - 1].address == 0)
+	if (!(task_thread(child).hw_brk[data - 1].flags & HW_BRK_FLAG_DISABLED) &&
+	    task_thread(child).hw_brk[data - 1].address == 0)
 		return -ENOENT;
 
-	child->thread.hw_brk[data - 1].address = 0;
-	child->thread.hw_brk[data - 1].type = 0;
-	child->thread.hw_brk[data - 1].flags = 0;
+	task_thread(child).hw_brk[data - 1].address = 0;
+	task_thread(child).hw_brk[data - 1].type = 0;
+	task_thread(child).hw_brk[data - 1].flags = 0;
 #endif /* CONFIG_HAVE_HW_BREAKPOINT */
 
 	return 0;

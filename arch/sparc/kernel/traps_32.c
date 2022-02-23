@@ -168,12 +168,12 @@ void do_fpd_trap(struct pt_regs *regs, unsigned long pc, unsigned long npc,
 	if(last_task_used_math) {
 		/* Other processes fpu state, save away */
 		struct task_struct *fptask = last_task_used_math;
-		fpsave(&fptask->thread.float_regs[0], &fptask->thread.fsr,
-		       &fptask->thread.fpqueue[0], &fptask->thread.fpqdepth);
+		fpsave(&task_thread(fptask).float_regs[0], &task_thread(fptask).fsr,
+		       &task_thread(fptask).fpqueue[0], &task_thread(fptask).fpqdepth);
 	}
 	last_task_used_math = current;
 	if(used_math()) {
-		fpload(&current->thread.float_regs[0], &current->thread.fsr);
+		fpload(&task_thread(current).float_regs[0], &task_thread(current).fsr);
 	} else {
 		/* Set initial sane state. */
 		fpload(&init_fregs[0], &init_fsr);
@@ -184,7 +184,7 @@ void do_fpd_trap(struct pt_regs *regs, unsigned long pc, unsigned long npc,
 		fpload(&init_fregs[0], &init_fsr);
 		set_used_math();
 	} else {
-		fpload(&current->thread.float_regs[0], &current->thread.fsr);
+		fpload(&task_thread(current).float_regs[0], &task_thread(current).fsr);
 	}
 	set_thread_flag(TIF_USEDFPU);
 #endif
@@ -221,13 +221,13 @@ void do_fpe_trap(struct pt_regs *regs, unsigned long pc, unsigned long npc,
 		regs->psr &= ~PSR_EF;
 		return;
 	}
-	fpsave(&fpt->thread.float_regs[0], &fpt->thread.fsr,
-	       &fpt->thread.fpqueue[0], &fpt->thread.fpqdepth);
+	fpsave(&task_thread(fpt).float_regs[0], &task_thread(fpt).fsr,
+	       &task_thread(fpt).fpqueue[0], &task_thread(fpt).fpqdepth);
 #ifdef DEBUG_FPU
-	printk("Hmm, FP exception, fsr was %016lx\n", fpt->thread.fsr);
+	printk("Hmm, FP exception, fsr was %016lx\n", task_thread(fpt).fsr);
 #endif
 
-	switch ((fpt->thread.fsr & 0x1c000)) {
+	switch ((task_thread(fpt).fsr & 0x1c000)) {
 	/* switch on the contents of the ftt [floating point trap type] field */
 #ifdef DEBUG_FPU
 	case (1 << 14):
@@ -252,7 +252,7 @@ void do_fpe_trap(struct pt_regs *regs, unsigned long pc, unsigned long npc,
 	}
 	/* If we successfully emulated the FPop, we pretend the trap never happened :-> */
 	if (ret) {
-		fpload(&current->thread.float_regs[0], &current->thread.fsr);
+		fpload(&task_thread(current).float_regs[0], &task_thread(current).fsr);
 		return;
 	}
 	/* nope, better SIGFPE the offending process... */
@@ -275,7 +275,7 @@ void do_fpe_trap(struct pt_regs *regs, unsigned long pc, unsigned long npc,
 		return;
 	}
 
-	fsr = fpt->thread.fsr;
+	fsr = task_thread(fpt).fsr;
 	code = FPE_FLTUNK;
 	if ((fsr & 0x1c000) == (1 << 14)) {
 		if (fsr & 0x10)

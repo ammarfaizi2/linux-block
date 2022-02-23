@@ -3983,12 +3983,12 @@ static bool kvm_arch_setup_async_pf(struct kvm_vcpu *vcpu)
 	if (!vcpu->arch.gmap->pfault_enabled)
 		return false;
 
-	hva = gfn_to_hva(vcpu->kvm, gpa_to_gfn(current->thread.gmap_addr));
-	hva += current->thread.gmap_addr & ~PAGE_MASK;
+	hva = gfn_to_hva(vcpu->kvm, gpa_to_gfn(task_thread(current).gmap_addr));
+	hva += task_thread(current).gmap_addr & ~PAGE_MASK;
 	if (read_guest_real(vcpu, vcpu->arch.pfault_token, &arch.pfault_token, 8))
 		return false;
 
-	return kvm_setup_async_pf(vcpu, current->thread.gmap_addr, hva, &arch);
+	return kvm_setup_async_pf(vcpu, task_thread(current).gmap_addr, hva, &arch);
 }
 
 static int vcpu_pre_run(struct kvm_vcpu *vcpu)
@@ -4109,16 +4109,16 @@ static int vcpu_post_run(struct kvm_vcpu *vcpu, int exit_reason)
 	} else if (kvm_is_ucontrol(vcpu->kvm)) {
 		vcpu->run->exit_reason = KVM_EXIT_S390_UCONTROL;
 		vcpu->run->s390_ucontrol.trans_exc_code =
-						current->thread.gmap_addr;
+						task_thread(current).gmap_addr;
 		vcpu->run->s390_ucontrol.pgm_code = 0x10;
 		return -EREMOTE;
-	} else if (current->thread.gmap_pfault) {
+	} else if (task_thread(current).gmap_pfault) {
 		trace_kvm_s390_major_guest_pfault(vcpu);
-		current->thread.gmap_pfault = 0;
+		task_thread(current).gmap_pfault = 0;
 		if (kvm_arch_setup_async_pf(vcpu))
 			return 0;
 		vcpu->stat.pfault_sync++;
-		return kvm_arch_fault_in_page(vcpu, current->thread.gmap_addr, 1);
+		return kvm_arch_fault_in_page(vcpu, task_thread(current).gmap_addr, 1);
 	}
 	return vcpu_post_run_fault_in_sie(vcpu);
 }
@@ -4245,14 +4245,14 @@ static void sync_regs_fmt2(struct kvm_vcpu *vcpu)
 	if (MACHINE_HAS_GS) {
 		preempt_disable();
 		__ctl_set_bit(2, 4);
-		if (current->thread.gs_cb) {
-			vcpu->arch.host_gscb = current->thread.gs_cb;
+		if (task_thread(current).gs_cb) {
+			vcpu->arch.host_gscb = task_thread(current).gs_cb;
 			save_gs_cb(vcpu->arch.host_gscb);
 		}
 		if (vcpu->arch.gs_enabled) {
-			current->thread.gs_cb = (struct gs_cb *)
+			task_thread(current).gs_cb = (struct gs_cb *)
 						&vcpu->run->s.regs.gscb;
-			restore_gs_cb(current->thread.gs_cb);
+			restore_gs_cb(task_thread(current).gs_cb);
 		}
 		preempt_enable();
 	}
@@ -4278,16 +4278,16 @@ static void sync_regs(struct kvm_vcpu *vcpu)
 	restore_access_regs(vcpu->run->s.regs.acrs);
 	/* save host (userspace) fprs/vrs */
 	save_fpu_regs();
-	vcpu->arch.host_fpregs.fpc = current->thread.fpu.fpc;
-	vcpu->arch.host_fpregs.regs = current->thread.fpu.regs;
+	vcpu->arch.host_fpregs.fpc = task_thread(current).fpu.fpc;
+	vcpu->arch.host_fpregs.regs = task_thread(current).fpu.regs;
 	if (MACHINE_HAS_VX)
-		current->thread.fpu.regs = vcpu->run->s.regs.vrs;
+		task_thread(current).fpu.regs = vcpu->run->s.regs.vrs;
 	else
-		current->thread.fpu.regs = vcpu->run->s.regs.fprs;
-	current->thread.fpu.fpc = vcpu->run->s.regs.fpc;
-	if (test_fp_ctl(current->thread.fpu.fpc))
+		task_thread(current).fpu.regs = vcpu->run->s.regs.fprs;
+	task_thread(current).fpu.fpc = vcpu->run->s.regs.fpc;
+	if (test_fp_ctl(task_thread(current).fpu.fpc))
 		/* User space provided an invalid FPC, let's clear it */
-		current->thread.fpu.fpc = 0;
+		task_thread(current).fpu.fpc = 0;
 
 	/* Sync fmt2 only data */
 	if (likely(!kvm_s390_pv_cpu_is_protected(vcpu))) {
@@ -4323,8 +4323,8 @@ static void store_regs_fmt2(struct kvm_vcpu *vcpu)
 		preempt_disable();
 		__ctl_set_bit(2, 4);
 		if (vcpu->arch.gs_enabled)
-			save_gs_cb(current->thread.gs_cb);
-		current->thread.gs_cb = vcpu->arch.host_gscb;
+			save_gs_cb(task_thread(current).gs_cb);
+		task_thread(current).gs_cb = vcpu->arch.host_gscb;
 		restore_gs_cb(vcpu->arch.host_gscb);
 		if (!vcpu->arch.host_gscb)
 			__ctl_clear_bit(2, 4);
@@ -4351,10 +4351,10 @@ static void store_regs(struct kvm_vcpu *vcpu)
 	restore_access_regs(vcpu->arch.host_acrs);
 	/* Save guest register state */
 	save_fpu_regs();
-	vcpu->run->s.regs.fpc = current->thread.fpu.fpc;
+	vcpu->run->s.regs.fpc = task_thread(current).fpu.fpc;
 	/* Restore will be done lazily at return */
-	current->thread.fpu.fpc = vcpu->arch.host_fpregs.fpc;
-	current->thread.fpu.regs = vcpu->arch.host_fpregs.regs;
+	task_thread(current).fpu.fpc = vcpu->arch.host_fpregs.fpc;
+	task_thread(current).fpu.regs = vcpu->arch.host_fpregs.regs;
 	if (likely(!kvm_s390_pv_cpu_is_protected(vcpu)))
 		store_regs_fmt2(vcpu);
 }
@@ -4492,7 +4492,7 @@ int kvm_s390_vcpu_store_status(struct kvm_vcpu *vcpu, unsigned long addr)
 	 * it into the save area
 	 */
 	save_fpu_regs();
-	vcpu->run->s.regs.fpc = current->thread.fpu.fpc;
+	vcpu->run->s.regs.fpc = task_thread(current).fpu.fpc;
 	save_access_regs(vcpu->run->s.regs.acrs);
 
 	return kvm_s390_store_status_unloaded(vcpu, addr);

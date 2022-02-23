@@ -36,13 +36,13 @@ struct thread_info {
 #define THREAD_SIZE_ORDER (THREAD_SHIFT - PAGE_SHIFT)
 
 #define thread_saved_fp(tsk) \
-	((unsigned long)(((struct switch_stack *)(tsk->thread.sp))->r8))
+	((unsigned long)(((struct switch_stack *)(task_thread(tsk).sp))->r8))
 
 #define thread_saved_sp(tsk) \
-	((unsigned long)(tsk->thread.sp))
+	((unsigned long)(task_thread(tsk).sp))
 
 #define thread_saved_lr(tsk) \
-	((unsigned long)(((struct switch_stack *)(tsk->thread.sp))->r15))
+	((unsigned long)(((struct switch_stack *)(task_thread(tsk).sp))->r15))
 
 static inline struct thread_info *current_thread_info(void)
 {

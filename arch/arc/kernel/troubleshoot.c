@@ -113,7 +113,7 @@ static void show_ecr_verbose(struct pt_regs *regs)
 	unsigned long address;
 
 	/* For Data fault, this is data address not instruction addr */
-	address = current->thread.fault_address;
+	address = task_thread(current).fault_address;
 
 	vec = regs->ecr_vec;
 	cause_code = regs->ecr_cause;
@@ -168,7 +168,7 @@ static void show_ecr_verbose(struct pt_regs *regs)
 void show_regs(struct pt_regs *regs)
 {
 	struct task_struct *tsk = current;
-	struct callee_regs *cregs = (struct callee_regs *)tsk->thread.callee_reg;
+	struct callee_regs *cregs = (struct callee_regs *)task_thread(tsk).callee_reg;
 
 	/*
 	 * generic code calls us with preemption disabled, but some calls
@@ -185,7 +185,7 @@ void show_regs(struct pt_regs *regs)
 		show_faulting_vma(regs->ret); /* faulting code, not data */
 
 	pr_info("ECR: 0x%08lx EFA: 0x%08lx ERET: 0x%08lx\nSTAT: 0x%08lx",
-		regs->event, current->thread.fault_address, regs->ret,
+		regs->event, task_thread(current).fault_address, regs->ret,
 		regs->status32);
 
 #define STS_BIT(r, bit)	r->status32 & STATUS_##bit##_MASK ? #bit" " : ""
@@ -213,7 +213,7 @@ void show_regs(struct pt_regs *regs)
 void show_kernel_fault_diag(const char *str, struct pt_regs *regs,
 			    unsigned long address)
 {
-	current->thread.fault_address = address;
+	task_thread(current).fault_address = address;
 
 	/* Show fault description */
 	pr_info("\n%s\n", str);

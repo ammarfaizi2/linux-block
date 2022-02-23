@@ -149,15 +149,15 @@ static int do_account_vtime(struct task_struct *tsk)
 		update_mt_scaling();
 
 	/* Calculate cputime delta */
-	user = update_tsk_timer(&tsk->thread.user_timer,
+	user = update_tsk_timer(&task_thread(tsk).user_timer,
 				READ_ONCE(S390_lowcore.user_timer));
-	guest = update_tsk_timer(&tsk->thread.guest_timer,
+	guest = update_tsk_timer(&task_thread(tsk).guest_timer,
 				 READ_ONCE(S390_lowcore.guest_timer));
-	system = update_tsk_timer(&tsk->thread.system_timer,
+	system = update_tsk_timer(&task_thread(tsk).system_timer,
 				  READ_ONCE(S390_lowcore.system_timer));
-	hardirq = update_tsk_timer(&tsk->thread.hardirq_timer,
+	hardirq = update_tsk_timer(&task_thread(tsk).hardirq_timer,
 				   READ_ONCE(S390_lowcore.hardirq_timer));
-	softirq = update_tsk_timer(&tsk->thread.softirq_timer,
+	softirq = update_tsk_timer(&task_thread(tsk).softirq_timer,
 				   READ_ONCE(S390_lowcore.softirq_timer));
 	S390_lowcore.steal_timer +=
 		clock - user - guest - system - hardirq - softirq;
@@ -186,16 +186,16 @@ static int do_account_vtime(struct task_struct *tsk)
 void vtime_task_switch(struct task_struct *prev)
 {
 	do_account_vtime(prev);
-	prev->thread.user_timer = S390_lowcore.user_timer;
-	prev->thread.guest_timer = S390_lowcore.guest_timer;
-	prev->thread.system_timer = S390_lowcore.system_timer;
-	prev->thread.hardirq_timer = S390_lowcore.hardirq_timer;
-	prev->thread.softirq_timer = S390_lowcore.softirq_timer;
-	S390_lowcore.user_timer = current->thread.user_timer;
-	S390_lowcore.guest_timer = current->thread.guest_timer;
-	S390_lowcore.system_timer = current->thread.system_timer;
-	S390_lowcore.hardirq_timer = current->thread.hardirq_timer;
-	S390_lowcore.softirq_timer = current->thread.softirq_timer;
+	task_thread(prev).user_timer = S390_lowcore.user_timer;
+	task_thread(prev).guest_timer = S390_lowcore.guest_timer;
+	task_thread(prev).system_timer = S390_lowcore.system_timer;
+	task_thread(prev).hardirq_timer = S390_lowcore.hardirq_timer;
+	task_thread(prev).softirq_timer = S390_lowcore.softirq_timer;
+	S390_lowcore.user_timer = task_thread(current).user_timer;
+	S390_lowcore.guest_timer = task_thread(current).guest_timer;
+	S390_lowcore.system_timer = task_thread(current).system_timer;
+	S390_lowcore.hardirq_timer = task_thread(current).hardirq_timer;
+	S390_lowcore.softirq_timer = task_thread(current).softirq_timer;
 }
 
 /*

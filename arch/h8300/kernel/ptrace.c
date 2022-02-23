@@ -40,13 +40,13 @@ long h8300_get_reg(struct task_struct *task, int regno)
 {
 	switch (regno) {
 	case PT_USP:
-		return task->thread.usp + sizeof(long)*2;
+		return task_thread(task).usp + sizeof(long)*2;
 	case PT_CCR:
 	case PT_EXR:
-	    return *(unsigned short *)(task->thread.esp0 +
+	    return *(unsigned short *)(task_thread(task).esp0 +
 				       register_offset[regno]);
 	default:
-	    return *(unsigned long *)(task->thread.esp0 +
+	    return *(unsigned long *)(task_thread(task).esp0 +
 				      register_offset[regno]);
 	}
 }
@@ -58,27 +58,27 @@ int h8300_put_reg(struct task_struct *task, int regno, unsigned long data)
 
 	switch (regno) {
 	case PT_USP:
-		task->thread.usp = data - sizeof(long)*2;
+		task_thread(task).usp = data - sizeof(long)*2;
 	case PT_CCR:
-		oldccr = *(unsigned short *)(task->thread.esp0 +
+		oldccr = *(unsigned short *)(task_thread(task).esp0 +
 					     register_offset[regno]);
 		oldccr &= ~CCR_MASK;
 		data &= CCR_MASK;
 		data |= oldccr;
-		*(unsigned short *)(task->thread.esp0 +
+		*(unsigned short *)(task_thread(task).esp0 +
 				    register_offset[regno]) = data;
 		break;
 	case PT_EXR:
-		oldexr = *(unsigned short *)(task->thread.esp0 +
+		oldexr = *(unsigned short *)(task_thread(task).esp0 +
 					     register_offset[regno]);
 		oldccr &= ~EXR_MASK;
 		data &= EXR_MASK;
 		data |= oldexr;
-		*(unsigned short *)(task->thread.esp0 +
+		*(unsigned short *)(task_thread(task).esp0 +
 				    register_offset[regno]) = data;
 		break;
 	default:
-		*(unsigned long *)(task->thread.esp0 +
+		*(unsigned long *)(task_thread(task).esp0 +
 				   register_offset[regno]) = data;
 		break;
 	}

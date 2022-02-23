@@ -21,21 +21,21 @@ static atomic64_t io_bitmap_sequence;
 
 void io_bitmap_share(struct task_struct *tsk)
 {
-	/* Can be NULL when current->thread.iopl_emul == 3 */
-	if (current->thread.io_bitmap) {
+	/* Can be NULL when task_thread(current).iopl_emul == 3 */
+	if (task_thread(current).io_bitmap) {
 		/*
 		 * Take a refcount on current's bitmap. It can be used by
 		 * both tasks as long as none of them changes the bitmap.
 		 */
-		refcount_inc(&current->thread.io_bitmap->refcnt);
-		tsk->thread.io_bitmap = current->thread.io_bitmap;
+		refcount_inc(&task_thread(current).io_bitmap->refcnt);
+		task_thread(tsk).io_bitmap = task_thread(current).io_bitmap;
 	}
 	set_tsk_thread_flag(tsk, TIF_IO_BITMAP);
 }
 
 static void task_update_io_bitmap(struct task_struct *tsk)
 {
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &task_thread(tsk);
 
 	if (t->iopl_emul == 3 || t->io_bitmap) {
 		/* TSS update is handled on exit to user space */
@@ -51,9 +51,9 @@ static void task_update_io_bitmap(struct task_struct *tsk)
 
 void io_bitmap_exit(struct task_struct *tsk)
 {
-	struct io_bitmap *iobm = tsk->thread.io_bitmap;
+	struct io_bitmap *iobm = task_thread(tsk).io_bitmap;
 
-	tsk->thread.io_bitmap = NULL;
+	task_thread(tsk).io_bitmap = NULL;
 	task_update_io_bitmap(tsk);
 	if (iobm && refcount_dec_and_test(&iobm->refcnt))
 		kfree(iobm);
@@ -64,7 +64,7 @@ void io_bitmap_exit(struct task_struct *tsk)
  */
 long ksys_ioperm(unsigned long from, unsigned long num, int turn_on)
 {
-	struct thread_struct *t = &current->thread;
+	struct thread_struct *t = &task_thread(current);
 	unsigned int i, max_long;
 	struct io_bitmap *iobm;
 
@@ -172,7 +172,7 @@ SYSCALL_DEFINE3(ioperm, unsigned long, from, unsigned long, num, int, turn_on)
  */
 SYSCALL_DEFINE1(iopl, unsigned int, level)
 {
-	struct thread_struct *t = &current->thread;
+	struct thread_struct *t = &task_thread(current);
 	unsigned int old;
 
 	if (level > 3)

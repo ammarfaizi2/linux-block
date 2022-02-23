@@ -92,7 +92,7 @@ void show_regs(struct pt_regs * regs)
 
 void flush_thread(void)
 {
-	current->thread.fc = USER_DATA;
+	task_thread(current).fc = USER_DATA;
 #ifdef CONFIG_FPU
 	if (!FPU_IS_EMU) {
 		unsigned long zero = 0;
@@ -148,14 +148,14 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 
 	frame = (struct fork_frame *) (task_stack_page(p) + THREAD_SIZE) - 1;
 
-	p->thread.ksp = (unsigned long)frame;
-	p->thread.esp0 = (unsigned long)&frame->regs;
+	task_thread(p).ksp = (unsigned long)frame;
+	task_thread(p).esp0 = (unsigned long)&frame->regs;
 
 	/*
 	 * Must save the current SFC/DFC value, NOT the value when
 	 * the parent was last descheduled - RGH  10-08-96
 	 */
-	p->thread.fc = USER_DATA;
+	task_thread(p).fc = USER_DATA;
 
 	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
 		/* kernel thread */
@@ -164,14 +164,14 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 		frame->sw.a3 = usp; /* function */
 		frame->sw.d7 = arg;
 		frame->sw.retpc = (unsigned long)ret_from_kernel_thread;
-		p->thread.usp = 0;
+		task_thread(p).usp = 0;
 		return 0;
 	}
 	memcpy(frame, container_of(current_pt_regs(), struct fork_frame, regs),
 		sizeof(struct fork_frame));
 	frame->regs.d0 = 0;
 	frame->sw.retpc = (unsigned long)ret_from_fork;
-	p->thread.usp = usp ?: rdusp();
+	task_thread(p).usp = usp ?: rdusp();
 
 	if (clone_flags & CLONE_SETTLS)
 		task_thread_info(p)->tp_value = tls;
@@ -179,32 +179,32 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 #ifdef CONFIG_FPU
 	if (!FPU_IS_EMU) {
 		/* Copy the current fpu state */
-		asm volatile ("fsave %0" : : "m" (p->thread.fpstate[0]) : "memory");
+		asm volatile ("fsave %0" : : "m" (task_thread(p).fpstate[0]) : "memory");
 
-		if (!CPU_IS_060 ? p->thread.fpstate[0] : p->thread.fpstate[2]) {
+		if (!CPU_IS_060 ? task_thread(p).fpstate[0] : task_thread(p).fpstate[2]) {
 			if (CPU_IS_COLDFIRE) {
 				asm volatile ("fmovemd %/fp0-%/fp7,%0\n\t"
 					      "fmovel %/fpiar,%1\n\t"
 					      "fmovel %/fpcr,%2\n\t"
 					      "fmovel %/fpsr,%3"
 					      :
-					      : "m" (p->thread.fp[0]),
-						"m" (p->thread.fpcntl[0]),
-						"m" (p->thread.fpcntl[1]),
-						"m" (p->thread.fpcntl[2])
+					      : "m" (task_thread(p).fp[0]),
+						"m" (task_thread(p).fpcntl[0]),
+						"m" (task_thread(p).fpcntl[1]),
+						"m" (task_thread(p).fpcntl[2])
 					      : "memory");
 			} else {
 				asm volatile ("fmovemx %/fp0-%/fp7,%0\n\t"
 					      "fmoveml %/fpiar/%/fpcr/%/fpsr,%1"
 					      :
-					      : "m" (p->thread.fp[0]),
-						"m" (p->thread.fpcntl[0])
+					      : "m" (task_thread(p).fp[0]),
+						"m" (task_thread(p).fpcntl[0])
 					      : "memory");
 			}
 		}
 
 		/* Restore the state in case the fpu was busy */
-		asm volatile ("frestore %0" : : "m" (p->thread.fpstate[0]));
+		asm volatile ("frestore %0" : : "m" (task_thread(p).fpstate[0]));
 	}
 #endif /* CONFIG_FPU */
 
@@ -217,8 +217,8 @@ int dump_fpu (struct pt_regs *regs, struct user_m68kfp_struct *fpu)
 	if (FPU_IS_EMU) {
 		int i;
 
-		memcpy(fpu->fpcntl, current->thread.fpcntl, 12);
-		memcpy(fpu->fpregs, current->thread.fp, 96);
+		memcpy(fpu->fpcntl, task_thread(current).fpcntl, 12);
+		memcpy(fpu->fpregs, task_thread(current).fp, 96);
 		/* Convert internal fpu reg representation
 		 * into long double format
 		 */
@@ -270,7 +270,7 @@ unsigned long __get_wchan(struct task_struct *p)
 	int count = 0;
 
 	stack_page = (unsigned long)task_stack_page(p);
-	fp = ((struct switch_stack *)p->thread.ksp)->a6;
+	fp = ((struct switch_stack *)task_thread(p).ksp)->a6;
 	do {
 		if (fp < stack_page+sizeof(struct thread_info) ||
 		    fp >= 8184+stack_page)

@@ -2026,7 +2026,7 @@ void cpu_init(void)
 
 	if (IS_ENABLED(CONFIG_X86_64)) {
 		loadsegment(fs, 0);
-		memset(cur->thread.tls_array, 0, GDT_ENTRY_TLS_ENTRIES * 8);
+		memset(task_thread(cur).tls_array, 0, GDT_ENTRY_TLS_ENTRIES * 8);
 		syscall_init();
 
 		wrmsrl(MSR_FS_BASE, 0);

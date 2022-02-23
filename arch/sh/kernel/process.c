@@ -26,12 +26,12 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 	unlazy_fpu(src, task_pt_regs(src));
 	*dst = *src;
 
-	if (src->thread.xstate) {
-		dst->thread.xstate = kmem_cache_alloc(task_xstate_cachep,
+	if (task_thread(src).xstate) {
+		task_thread(dst).xstate = kmem_cache_alloc(task_xstate_cachep,
 						      GFP_KERNEL);
-		if (!dst->thread.xstate)
+		if (!task_thread(dst).xstate)
 			return -ENOMEM;
-		memcpy(dst->thread.xstate, src->thread.xstate, xstate_size);
+		memcpy(task_thread(dst).xstate, task_thread(src).xstate, xstate_size);
 	}
 
 	return 0;
@@ -39,9 +39,9 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 
 void free_thread_xstate(struct task_struct *tsk)
 {
-	if (tsk->thread.xstate) {
-		kmem_cache_free(task_xstate_cachep, tsk->thread.xstate);
-		tsk->thread.xstate = NULL;
+	if (task_thread(tsk).xstate) {
+		kmem_cache_free(task_xstate_cachep, task_thread(tsk).xstate);
+		task_thread(tsk).xstate = NULL;
 	}
 }
 

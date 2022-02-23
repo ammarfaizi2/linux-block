@@ -62,7 +62,7 @@ int do_get_thread_area(struct user_desc *info)
  */
 static int get_free_idx(struct task_struct* task)
 {
-	struct thread_struct *t = &task->thread;
+	struct thread_struct *t = &task_thread(task);
 	int idx;
 
 	if (!t->arch.tls_array)
@@ -96,7 +96,7 @@ static int load_TLS(int flags, struct task_struct *to)
 
 	for (idx = GDT_ENTRY_TLS_MIN; idx < GDT_ENTRY_TLS_MAX; idx++) {
 		struct uml_tls_struct* curr =
-			&to->thread.arch.tls_array[idx - GDT_ENTRY_TLS_MIN];
+			&task_thread(to).arch.tls_array[idx - GDT_ENTRY_TLS_MIN];
 
 		/*
 		 * Actually, now if it wasn't flushed it gets cleared and
@@ -136,7 +136,7 @@ static inline int needs_TLS_update(struct task_struct *task)
 
 	for (i = GDT_ENTRY_TLS_MIN; i < GDT_ENTRY_TLS_MAX; i++) {
 		struct uml_tls_struct* curr =
-			&task->thread.arch.tls_array[i - GDT_ENTRY_TLS_MIN];
+			&task_thread(task).arch.tls_array[i - GDT_ENTRY_TLS_MIN];
 
 		/*
 		 * Can't test curr->present, we may need to clear a descriptor
@@ -160,7 +160,7 @@ void clear_flushed_tls(struct task_struct *task)
 
 	for (i = GDT_ENTRY_TLS_MIN; i < GDT_ENTRY_TLS_MAX; i++) {
 		struct uml_tls_struct* curr =
-			&task->thread.arch.tls_array[i - GDT_ENTRY_TLS_MIN];
+			&task_thread(task).arch.tls_array[i - GDT_ENTRY_TLS_MIN];
 
 		/*
 		 * Still correct to do this, if it wasn't present on the host it
@@ -203,7 +203,7 @@ int arch_switch_tls(struct task_struct *to)
 static int set_tls_entry(struct task_struct* task, struct user_desc *info,
 			 int idx, int flushed)
 {
-	struct thread_struct *t = &task->thread;
+	struct thread_struct *t = &task_thread(task);
 
 	if (idx < GDT_ENTRY_TLS_MIN || idx > GDT_ENTRY_TLS_MAX)
 		return -EINVAL;
@@ -238,7 +238,7 @@ out:
 static int get_tls_entry(struct task_struct *task, struct user_desc *info,
 			 int idx)
 {
-	struct thread_struct *t = &task->thread;
+	struct thread_struct *t = &task_thread(task);
 
 	if (!t->arch.tls_array)
 		goto clear;

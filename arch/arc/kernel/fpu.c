@@ -31,8 +31,8 @@
 
 void fpu_save_restore(struct task_struct *prev, struct task_struct *next)
 {
-	unsigned int *saveto = &prev->thread.fpu.aux_dpfp[0].l;
-	unsigned int *readfrom = &next->thread.fpu.aux_dpfp[0].l;
+	unsigned int *saveto = &task_thread(prev).fpu.aux_dpfp[0].l;
+	unsigned int *readfrom = &task_thread(next).fpu.aux_dpfp[0].l;
 
 	const unsigned int zero = 0;
 
@@ -68,8 +68,8 @@ void fpu_init_task(struct pt_regs *regs)
 
 void fpu_save_restore(struct task_struct *prev, struct task_struct *next)
 {
-	struct arc_fpu *save = &prev->thread.fpu;
-	struct arc_fpu *restore = &next->thread.fpu;
+	struct arc_fpu *save = &task_thread(prev).fpu;
+	struct arc_fpu *restore = &task_thread(next).fpu;
 	const unsigned int fwe = 0x80000000;
 
 	save->ctrl = read_aux_reg(ARC_REG_FPU_CTRL);

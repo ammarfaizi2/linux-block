@@ -38,7 +38,7 @@
  * This decides where the kernel will search for a free chunk of vm
  * space during mmap's.
  */
-#define TASK_UNMAPPED_BASE	(current->thread.map_base)
+#define TASK_UNMAPPED_BASE	(task_thread(current).map_base)
 
 #define IA64_THREAD_FPH_VALID	(__IA64_UL(1) << 0)	/* floating-point high state valid? */
 #define IA64_THREAD_DBG_VALID	(__IA64_UL(1) << 1)	/* debug registers valid? */
@@ -249,25 +249,25 @@ typedef struct {
 
 #define SET_UNALIGN_CTL(task,value)								\
 ({												\
-	(task)->thread.flags = (((task)->thread.flags & ~IA64_THREAD_UAC_MASK)			\
+	task_thread(task).flags = ((task_thread(task).flags & ~IA64_THREAD_UAC_MASK)			\
 				| (((value) << IA64_THREAD_UAC_SHIFT) & IA64_THREAD_UAC_MASK));	\
 	0;											\
 })
 #define GET_UNALIGN_CTL(task,addr)								\
 ({												\
-	put_user(((task)->thread.flags & IA64_THREAD_UAC_MASK) >> IA64_THREAD_UAC_SHIFT,	\
+	put_user((task_thread(task).flags & IA64_THREAD_UAC_MASK) >> IA64_THREAD_UAC_SHIFT,	\
 		 (int __user *) (addr));							\
 })
 
 #define SET_FPEMU_CTL(task,value)								\
 ({												\
-	(task)->thread.flags = (((task)->thread.flags & ~IA64_THREAD_FPEMU_MASK)		\
+	task_thread(task).flags = ((task_thread(task).flags & ~IA64_THREAD_FPEMU_MASK)		\
 			  | (((value) << IA64_THREAD_FPEMU_SHIFT) & IA64_THREAD_FPEMU_MASK));	\
 	0;											\
 })
 #define GET_FPEMU_CTL(task,addr)								\
 ({												\
-	put_user(((task)->thread.flags & IA64_THREAD_FPEMU_MASK) >> IA64_THREAD_FPEMU_SHIFT,	\
+	put_user((task_thread(task).flags & IA64_THREAD_FPEMU_MASK) >> IA64_THREAD_FPEMU_SHIFT,	\
 		 (int __user *) (addr));							\
 })
 
@@ -303,7 +303,7 @@ struct thread_struct {
 	regs->cr_iip = new_ip;									\
 	regs->ar_rsc = 0xf;		/* eager mode, privilege level 3 */			\
 	regs->ar_rnat = 0;									\
-	regs->ar_bspstore = current->thread.rbs_bot;						\
+	regs->ar_bspstore = task_thread(current).rbs_bot;						\
 	regs->ar_fpsr = FPSR_DEFAULT;								\
 	regs->loadrs = 0;									\
 	regs->r8 = get_dumpable(current->mm);	/* set "don't zap registers" flag */		\
@@ -340,7 +340,7 @@ extern unsigned long __get_wchan (struct task_struct *p);
   })
 
 /* Return stack pointer of blocked task TSK.  */
-#define KSTK_ESP(tsk)  ((tsk)->thread.ksp)
+#define KSTK_ESP(tsk)  (task_thread(tsk).ksp)
 
 extern void ia64_getreg_unknown_kr (void);
 extern void ia64_setreg_unknown_kr (void);
@@ -390,7 +390,7 @@ extern void ia64_setreg_unknown_kr (void);
 #define ia64_is_local_fpu_owner(t)								\
 ({												\
 	struct task_struct *__ia64_islfo_task = (t);						\
-	(__ia64_islfo_task->thread.last_fph_cpu == smp_processor_id()				\
+	(task_thread(__ia64_islfo_task).last_fph_cpu == smp_processor_id()				\
 	 && __ia64_islfo_task == (struct task_struct *) ia64_get_kr(IA64_KR_FPU_OWNER));	\
 })
 
@@ -400,12 +400,12 @@ extern void ia64_setreg_unknown_kr (void);
  */
 #define ia64_set_local_fpu_owner(t) do {						\
 	struct task_struct *__ia64_slfo_task = (t);					\
-	__ia64_slfo_task->thread.last_fph_cpu = smp_processor_id();			\
+	task_thread(__ia64_slfo_task).last_fph_cpu = smp_processor_id();			\
 	ia64_set_kr(IA64_KR_FPU_OWNER, (unsigned long) __ia64_slfo_task);		\
 } while (0)
 
 /* Mark the fph partition of task T as being invalid on all CPUs.  */
-#define ia64_drop_fpu(t)	((t)->thread.last_fph_cpu = -1)
+#define ia64_drop_fpu(t)	(task_thread(t).last_fph_cpu = -1)
 
 extern void __ia64_init_fpu (void);
 extern void __ia64_save_fpu (struct ia64_fpreg *fph);

@@ -65,7 +65,7 @@ void show_stack(struct task_struct *task, unsigned long *stack,
 
 	if (!stack) {
 		if (task)
-			stack = (unsigned long *)task->thread.ksp;
+			stack = (unsigned long *)task_thread(task).ksp;
 		else
 			stack = (unsigned long *)&stack;
 	}

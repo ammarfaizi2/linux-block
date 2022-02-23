@@ -623,9 +623,9 @@ static void set_signal_archinfo(unsigned long address,
 {
 	struct task_struct *tsk = current;
 
-	tsk->thread.trap_nr = X86_TRAP_PF;
-	tsk->thread.error_code = error_code | X86_PF_USER;
-	tsk->thread.cr2 = address;
+	task_thread(tsk).trap_nr = X86_TRAP_PF;
+	task_thread(tsk).error_code = error_code | X86_PF_USER;
+	task_thread(tsk).cr2 = address;
 }
 
 static noinline void
@@ -731,7 +731,7 @@ kernelmode_fixup_or_oops(struct pt_regs *regs, unsigned long error_code,
 		 * In this case we need to make sure we're not recursively
 		 * faulting through the emulate_vsyscall() logic.
 		 */
-		if (current->thread.sig_on_uaccess_err && signal) {
+		if (task_thread(current).sig_on_uaccess_err && signal) {
 			sanitize_error_code(address, &error_code);
 
 			set_signal_archinfo(address, error_code);

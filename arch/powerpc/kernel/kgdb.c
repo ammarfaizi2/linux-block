@@ -193,7 +193,7 @@ static int kgdb_break_match(struct pt_regs *regs)
 
 void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 {
-	struct pt_regs *regs = (struct pt_regs *)(p->thread.ksp +
+	struct pt_regs *regs = (struct pt_regs *)(task_thread(p).ksp +
 						  STACK_FRAME_OVERHEAD);
 	unsigned long *ptr = gdb_regs;
 	int reg;
@@ -214,7 +214,7 @@ void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 #ifdef CONFIG_FSL_BOOKE
 #ifdef CONFIG_SPE
 	for (reg = 0; reg < 32; reg++)
-		PACK64(ptr, p->thread.evr[reg]);
+		PACK64(ptr, task_thread(p).evr[reg]);
 #else
 	ptr += 32;
 #endif
@@ -334,7 +334,7 @@ char *dbg_get_reg(int regno, void *mem, struct pt_regs *regs)
 		/* FP registers 32 -> 63 */
 #if defined(CONFIG_FSL_BOOKE) && defined(CONFIG_SPE)
 		if (current)
-			memcpy(mem, &current->thread.evr[regno-32],
+			memcpy(mem, &task_thread(current).evr[regno-32],
 					dbg_reg_def[regno].size);
 #else
 		/* fp registers not used by kernel, leave zero */
@@ -359,7 +359,7 @@ int dbg_set_reg(int regno, void *mem, struct pt_regs *regs)
 	if (regno >= 32 && regno < 64) {
 		/* FP registers 32 -> 63 */
 #if defined(CONFIG_FSL_BOOKE) && defined(CONFIG_SPE)
-		memcpy(&current->thread.evr[regno-32], mem,
+		memcpy(&task_thread(current).evr[regno-32], mem,
 				dbg_reg_def[regno].size);
 #else
 		/* fp registers not used by kernel, leave zero */

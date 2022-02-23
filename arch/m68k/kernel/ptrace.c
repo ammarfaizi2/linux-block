@@ -76,14 +76,14 @@ static inline long get_reg(struct task_struct *task, int regno)
 	unsigned long *addr;
 
 	if (regno == PT_USP)
-		addr = &task->thread.usp;
+		addr = &task_thread(task).usp;
 	else if (regno < ARRAY_SIZE(regoff))
-		addr = (unsigned long *)(task->thread.esp0 + regoff[regno]);
+		addr = (unsigned long *)(task_thread(task).esp0 + regoff[regno]);
 	else
 		return 0;
 	/* Need to take stkadj into account. */
 	if (regno == PT_SR || regno == PT_PC) {
-		long stkadj = *(long *)(task->thread.esp0 + PT_REG(stkadj));
+		long stkadj = *(long *)(task_thread(task).esp0 + PT_REG(stkadj));
 		addr = (unsigned long *) ((unsigned long)addr + stkadj);
 		/* The sr is actually a 16 bit register.  */
 		if (regno == PT_SR)
@@ -101,14 +101,14 @@ static inline int put_reg(struct task_struct *task, int regno,
 	unsigned long *addr;
 
 	if (regno == PT_USP)
-		addr = &task->thread.usp;
+		addr = &task_thread(task).usp;
 	else if (regno < ARRAY_SIZE(regoff))
-		addr = (unsigned long *)(task->thread.esp0 + regoff[regno]);
+		addr = (unsigned long *)(task_thread(task).esp0 + regoff[regno]);
 	else
 		return -1;
 	/* Need to take stkadj into account. */
 	if (regno == PT_SR || regno == PT_PC) {
-		long stkadj = *(long *)(task->thread.esp0 + PT_REG(stkadj));
+		long stkadj = *(long *)(task_thread(task).esp0 + PT_REG(stkadj));
 		addr = (unsigned long *) ((unsigned long)addr + stkadj);
 		/* The sr is actually a 16 bit register.  */
 		if (regno == PT_SR) {
@@ -175,7 +175,7 @@ long arch_ptrace(struct task_struct *child, long request,
 		if (regno >= 0 && regno < 19) {
 			tmp = get_reg(child, regno);
 		} else if (regno >= 21 && regno < 49) {
-			tmp = child->thread.fp[regno - 21];
+			tmp = task_thread(child).fp[regno - 21];
 			/* Convert internal fpu reg representation
 			 * into long double format
 			 */
@@ -216,7 +216,7 @@ long arch_ptrace(struct task_struct *child, long request,
 				data = (data & 0xffff0000) |
 				       ((data & 0x0000ffff) >> 1);
 			}
-			child->thread.fp[regno - 21] = data;
+			task_thread(child).fp[regno - 21] = data;
 		} else
 			goto out_eio;
 		break;
@@ -246,13 +246,13 @@ long arch_ptrace(struct task_struct *child, long request,
 		break;
 
 	case PTRACE_GETFPREGS:	/* Get the child FPU state. */
-		if (copy_to_user(datap, &child->thread.fp,
+		if (copy_to_user(datap, &task_thread(child).fp,
 				 sizeof(struct user_m68kfp_struct)))
 			ret = -EFAULT;
 		break;
 
 	case PTRACE_SETFPREGS:	/* Set the child FPU state. */
-		if (copy_from_user(&child->thread.fp, datap,
+		if (copy_from_user(&task_thread(child).fp, datap,
 				   sizeof(struct user_m68kfp_struct)))
 			ret = -EFAULT;
 		break;

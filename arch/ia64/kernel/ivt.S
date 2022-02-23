@@ -765,7 +765,7 @@ ENTRY(break_fault)
 	adds r15=-1024,r15			// A    subtract 1024 from syscall number
 	mov r3=NR_syscalls - 1
 	;;
-	ld1.bias r17=[r16]			// M0|1 r17 = current->thread.on_ustack flag
+	ld1.bias r17=[r16]			// M0|1 r17 = task_thread(current).on_ustack flag
 	ld4 r9=[r9]				// M0|1 r9 = current_thread_info()->flags
 	extr.u r8=r29,41,2			// I0   extract ei field from cr.ipsr
 
@@ -803,7 +803,7 @@ ENTRY(break_fault)
 	// the data arrives.
 	//
 ///////////////////////////////////////////////////////////////////////
-	st1 [r16]=r0				// M2|3 clear current->thread.on_ustack flag
+	st1 [r16]=r0				// M2|3 clear task_thread(current).on_ustack flag
 #ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
 	MOV_FROM_ITC(p0, p14, r30, r18)		// M    get cycle for accounting
 #else

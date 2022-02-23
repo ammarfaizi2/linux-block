@@ -28,8 +28,8 @@ int fpr_get(struct task_struct *target, const struct user_regset *regset,
 
 	/* copy to local buffer then write that out */
 	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.TS_FPR(i);
-	buf[32] = target->thread.fp_state.fpscr;
+		buf[i] = task_thread(target).TS_FPR(i);
+	buf[32] = task_thread(target).fp_state.fpscr;
 	return membuf_write(&to, buf, 33 * sizeof(u64));
 }
 
@@ -56,8 +56,8 @@ int fpr_set(struct task_struct *target, const struct user_regset *regset,
 	flush_fp_to_thread(target);
 
 	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.TS_FPR(i);
-	buf[32] = target->thread.fp_state.fpscr;
+		buf[i] = task_thread(target).TS_FPR(i);
+	buf[32] = task_thread(target).fp_state.fpscr;
 
 	/* copy to local buffer then write that out */
 	i = user_regset_copyin(&pos, &count, &kbuf, &ubuf, buf, 0, -1);
@@ -65,8 +65,8 @@ int fpr_set(struct task_struct *target, const struct user_regset *regset,
 		return i;
 
 	for (i = 0; i < 32 ; i++)
-		target->thread.TS_FPR(i) = buf[i];
-	target->thread.fp_state.fpscr = buf[32];
+		task_thread(target).TS_FPR(i) = buf[i];
+	task_thread(target).fp_state.fpscr = buf[32];
 	return 0;
 }
 
@@ -79,7 +79,7 @@ int fpr_set(struct task_struct *target, const struct user_regset *regset,
 int vsr_active(struct task_struct *target, const struct user_regset *regset)
 {
 	flush_vsx_to_thread(target);
-	return target->thread.used_vsr ? regset->n : 0;
+	return task_thread(target).used_vsr ? regset->n : 0;
 }
 
 /*
@@ -106,7 +106,7 @@ int vsr_get(struct task_struct *target, const struct user_regset *regset,
 	flush_vsx_to_thread(target);
 
 	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.fp_state.fpr[i][TS_VSRLOWOFFSET];
+		buf[i] = task_thread(target).fp_state.fpr[i][TS_VSRLOWOFFSET];
 
 	return membuf_write(&to, buf, 32 * sizeof(double));
 }
@@ -136,13 +136,13 @@ int vsr_set(struct task_struct *target, const struct user_regset *regset,
 	flush_vsx_to_thread(target);
 
 	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.fp_state.fpr[i][TS_VSRLOWOFFSET];
+		buf[i] = task_thread(target).fp_state.fpr[i][TS_VSRLOWOFFSET];
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 buf, 0, 32 * sizeof(double));
 	if (!ret)
 		for (i = 0; i < 32 ; i++)
-			target->thread.fp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
+			task_thread(target).fp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
 
 	return ret;
 }

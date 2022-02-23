@@ -157,12 +157,12 @@ static void kvmppc_vcpu_sync_spe(struct kvm_vcpu *vcpu)
 static inline void kvmppc_load_guest_fp(struct kvm_vcpu *vcpu)
 {
 #ifdef CONFIG_PPC_FPU
-	if (!(current->thread.regs->msr & MSR_FP)) {
+	if (!(task_thread(current).regs->msr & MSR_FP)) {
 		enable_kernel_fp();
 		load_fp_state(&vcpu->arch.fp);
 		disable_kernel_fp();
-		current->thread.fp_save_area = &vcpu->arch.fp;
-		current->thread.regs->msr |= MSR_FP;
+		task_thread(current).fp_save_area = &vcpu->arch.fp;
+		task_thread(current).regs->msr |= MSR_FP;
 	}
 #endif
 }
@@ -174,9 +174,9 @@ static inline void kvmppc_load_guest_fp(struct kvm_vcpu *vcpu)
 static inline void kvmppc_save_guest_fp(struct kvm_vcpu *vcpu)
 {
 #ifdef CONFIG_PPC_FPU
-	if (current->thread.regs->msr & MSR_FP)
+	if (task_thread(current).regs->msr & MSR_FP)
 		giveup_fpu(current);
-	current->thread.fp_save_area = NULL;
+	task_thread(current).fp_save_area = NULL;
 #endif
 }
 
@@ -199,12 +199,12 @@ static inline void kvmppc_load_guest_altivec(struct kvm_vcpu *vcpu)
 {
 #ifdef CONFIG_ALTIVEC
 	if (cpu_has_feature(CPU_FTR_ALTIVEC)) {
-		if (!(current->thread.regs->msr & MSR_VEC)) {
+		if (!(task_thread(current).regs->msr & MSR_VEC)) {
 			enable_kernel_altivec();
 			load_vr_state(&vcpu->arch.vr);
 			disable_kernel_altivec();
-			current->thread.vr_save_area = &vcpu->arch.vr;
-			current->thread.regs->msr |= MSR_VEC;
+			task_thread(current).vr_save_area = &vcpu->arch.vr;
+			task_thread(current).regs->msr |= MSR_VEC;
 		}
 	}
 #endif
@@ -218,9 +218,9 @@ static inline void kvmppc_save_guest_altivec(struct kvm_vcpu *vcpu)
 {
 #ifdef CONFIG_ALTIVEC
 	if (cpu_has_feature(CPU_FTR_ALTIVEC)) {
-		if (current->thread.regs->msr & MSR_VEC)
+		if (task_thread(current).regs->msr & MSR_VEC)
 			giveup_altivec(current);
-		current->thread.vr_save_area = NULL;
+		task_thread(current).vr_save_area = NULL;
 	}
 #endif
 }
@@ -797,8 +797,8 @@ int kvmppc_vcpu_run(struct kvm_vcpu *vcpu)
 	/* Switch to guest debug context */
 	debug = vcpu->arch.dbg_reg;
 	switch_booke_debug_regs(&debug);
-	debug = current->thread.debug;
-	current->thread.debug = vcpu->arch.dbg_reg;
+	debug = task_thread(current).debug;
+	task_thread(current).debug = vcpu->arch.dbg_reg;
 
 	vcpu->arch.pgdir = vcpu->kvm->mm->pgd;
 	kvmppc_fix_ee_before_entry();
@@ -810,7 +810,7 @@ int kvmppc_vcpu_run(struct kvm_vcpu *vcpu)
 
 	/* Switch back to user space debug context */
 	switch_booke_debug_regs(&debug);
-	current->thread.debug = debug;
+	task_thread(current).debug = debug;
 
 #ifdef CONFIG_PPC_FPU
 	kvmppc_save_guest_fp(vcpu);
@@ -2100,12 +2100,12 @@ out:
 void kvmppc_booke_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
 {
 	vcpu->cpu = smp_processor_id();
-	current->thread.kvm_vcpu = vcpu;
+	task_thread(current).kvm_vcpu = vcpu;
 }
 
 void kvmppc_booke_vcpu_put(struct kvm_vcpu *vcpu)
 {
-	current->thread.kvm_vcpu = NULL;
+	task_thread(current).kvm_vcpu = NULL;
 	vcpu->cpu = -1;
 
 	/* Clear pending debug event in DBSR */

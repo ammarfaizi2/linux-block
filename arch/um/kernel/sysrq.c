@@ -30,7 +30,7 @@ static const struct stacktrace_ops stackops = {
 void show_stack(struct task_struct *task, unsigned long *stack,
 		       const char *loglvl)
 {
-	struct pt_regs *segv_regs = current->thread.segv_regs;
+	struct pt_regs *segv_regs = task_thread(current).segv_regs;
 	int i;
 
 	if (!segv_regs && os_is_signal_stack()) {

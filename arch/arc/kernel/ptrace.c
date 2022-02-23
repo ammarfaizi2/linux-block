@@ -12,7 +12,7 @@
 
 static struct callee_regs *task_callee_regs(struct task_struct *tsk)
 {
-	struct callee_regs *tmp = (struct callee_regs *)tsk->thread.callee_reg;
+	struct callee_regs *tmp = (struct callee_regs *)task_thread(tsk).callee_reg;
 	return tmp;
 }
 
@@ -62,10 +62,10 @@ static int genregs_get(struct task_struct *target,
 	membuf_store(&to, cregs->r15);
 	membuf_store(&to, cregs->r14);
 	membuf_store(&to, cregs->r13);
-	membuf_store(&to, target->thread.fault_address); // efa
+	membuf_store(&to, task_thread(target).fault_address); // efa
 
 	if (in_brkpt_trap(ptregs)) {
-		stop_pc_val = target->thread.fault_address;
+		stop_pc_val = task_thread(target).fault_address;
 		pr_debug("\t\tstop_pc (brk-pt)\n");
 	} else {
 		stop_pc_val = ptregs->ret;

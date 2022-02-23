@@ -386,7 +386,7 @@
 #define DBCR0_IA34T	0x00004000	/* Instr Addr 3-4 range Toggle */
 #define DBCR0_FT	0x00000001	/* Freeze Timers on debug event */
 
-#define dbcr_iac_range(task)	((task)->thread.debug.dbcr0)
+#define dbcr_iac_range(task)	(task_thread(task).debug.dbcr0)
 #define DBCR_IAC12I	DBCR0_IA12			/* Range Inclusive */
 #define DBCR_IAC12X	(DBCR0_IA12 | DBCR0_IA12X)	/* Range Exclusive */
 #define DBCR_IAC12MODE	(DBCR0_IA12 | DBCR0_IA12X)	/* IAC 1-2 Mode Bits */
@@ -400,7 +400,7 @@
 #define DBCR1_DAC1W	0x20000000	/* DAC1 Write Debug Event */
 #define DBCR1_DAC2W	0x10000000	/* DAC2 Write Debug Event */
 
-#define dbcr_dac(task)	((task)->thread.debug.dbcr1)
+#define dbcr_dac(task)	(task_thread(task).debug.dbcr1)
 #define DBCR_DAC1R	DBCR1_DAC1R
 #define DBCR_DAC1W	DBCR1_DAC1W
 #define DBCR_DAC2R	DBCR1_DAC2R
@@ -446,7 +446,7 @@
 #define DBCR0_CRET	0x00000020	/* Critical Return Debug Event */
 #define DBCR0_FT	0x00000001	/* Freeze Timers on debug event */
 
-#define dbcr_dac(task)	((task)->thread.debug.dbcr0)
+#define dbcr_dac(task)	(task_thread(task).debug.dbcr0)
 #define DBCR_DAC1R	DBCR0_DAC1R
 #define DBCR_DAC1W	DBCR0_DAC1W
 #define DBCR_DAC2R	DBCR0_DAC2R
@@ -480,7 +480,7 @@
 #define DBCR1_IAC34MX	0x000000C0	/* Instr Addr 3-4 range eXclusive */
 #define DBCR1_IAC34AT	0x00000001	/* Instr Addr 3-4 range Toggle */
 
-#define dbcr_iac_range(task)	((task)->thread.debug.dbcr1)
+#define dbcr_iac_range(task)	(task_thread(task).debug.dbcr1)
 #define DBCR_IAC12I	DBCR1_IAC12M	/* Range Inclusive */
 #define DBCR_IAC12X	DBCR1_IAC12MX	/* Range Exclusive */
 #define DBCR_IAC12MODE	DBCR1_IAC12MX	/* IAC 1-2 Mode Bits */

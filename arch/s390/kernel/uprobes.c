@@ -68,8 +68,8 @@ static int check_per_event(unsigned short cause, unsigned long control,
 			return 1;
 		/* branch into selected range */
 		if (((control & 0x80800000) == 0x80800000) &&
-		    regs->psw.addr >= current->thread.per_user.start &&
-		    regs->psw.addr <= current->thread.per_user.end)
+		    regs->psw.addr >= task_thread(current).per_user.start &&
+		    regs->psw.addr <= task_thread(current).per_user.end)
 			return 1;
 	}
 	return 0;
@@ -98,10 +98,10 @@ int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 		if (regs->psw.addr - utask->xol_vaddr == ilen)
 			regs->psw.addr = utask->vaddr + ilen;
 	}
-	if (check_per_event(current->thread.per_event.cause,
-			    current->thread.per_user.control, regs)) {
+	if (check_per_event(task_thread(current).per_event.cause,
+			    task_thread(current).per_user.control, regs)) {
 		/* fix per address */
-		current->thread.per_event.address = utask->vaddr;
+		task_thread(current).per_event.address = utask->vaddr;
 		/* trigger per event */
 		set_thread_flag(TIF_PER_TRAP);
 	}
@@ -138,7 +138,7 @@ void arch_uprobe_abort_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 	clear_thread_flag(TIF_UPROBE_SINGLESTEP);
 	regs->int_code = auprobe->saved_int_code;
 	regs->psw.addr = current->utask->vaddr;
-	current->thread.per_event.address = current->utask->vaddr;
+	task_thread(current).per_event.address = current->utask->vaddr;
 }
 
 unsigned long arch_uretprobe_hijack_return_addr(unsigned long trampoline,
@@ -252,14 +252,14 @@ static void sim_stor_event(struct pt_regs *regs, void *addr, int len)
 {
 	if (!(regs->psw.mask & PSW_MASK_PER))
 		return;
-	if (!(current->thread.per_user.control & PER_EVENT_STORE))
+	if (!(task_thread(current).per_user.control & PER_EVENT_STORE))
 		return;
-	if ((void *)current->thread.per_user.start > (addr + len))
+	if ((void *)task_thread(current).per_user.start > (addr + len))
 		return;
-	if ((void *)current->thread.per_user.end < addr)
+	if ((void *)task_thread(current).per_user.end < addr)
 		return;
-	current->thread.per_event.address = regs->psw.addr;
-	current->thread.per_event.cause = PER_EVENT_STORE >> 16;
+	task_thread(current).per_event.address = regs->psw.addr;
+	task_thread(current).per_event.cause = PER_EVENT_STORE >> 16;
 	set_thread_flag(TIF_PER_TRAP);
 }
 

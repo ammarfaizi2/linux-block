@@ -48,7 +48,7 @@ static inline int restore_sigcontext_fpu(struct pt_regs *regs,
 	clear_fpu(regs);
 #endif
 
-	return __copy_from_user(&tsk->thread.fpu, &sc->fpu,
+	return __copy_from_user(&task_thread(tsk).fpu, &sc->fpu,
 				sizeof(struct fpu_struct));
 }
 
@@ -70,7 +70,7 @@ static inline int setup_sigcontext_fpu(struct pt_regs *regs,
 #else
 	unlazy_fpu(tsk);
 #endif
-	ret = __copy_to_user(&sc->fpu, &tsk->thread.fpu,
+	ret = __copy_to_user(&sc->fpu, &task_thread(tsk).fpu,
 			     sizeof(struct fpu_struct));
 	preempt_enable();
 	return ret;
@@ -215,11 +215,11 @@ setup_sigframe(struct rt_sigframe __user * sf, struct pt_regs *regs,
 	err |= setup_sigcontext_fpu(regs, &sf->uc.uc_mcontext);
 #endif
 
-	__put_user_error(current->thread.trap_no, &sf->uc.uc_mcontext.trap_no,
+	__put_user_error(task_thread(current).trap_no, &sf->uc.uc_mcontext.trap_no,
 			 err);
-	__put_user_error(current->thread.error_code,
+	__put_user_error(task_thread(current).error_code,
 			 &sf->uc.uc_mcontext.error_code, err);
-	__put_user_error(current->thread.address,
+	__put_user_error(task_thread(current).address,
 			 &sf->uc.uc_mcontext.fault_address, err);
 	__put_user_error(set->sig[0], &sf->uc.uc_mcontext.oldmask, err);
 

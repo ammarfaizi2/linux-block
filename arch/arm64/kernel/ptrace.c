@@ -181,14 +181,14 @@ static void ptrace_hbptriggered(struct perf_event *bp,
 		int i;
 
 		for (i = 0; i < ARM_MAX_BRP; ++i) {
-			if (current->thread.debug.hbp_break[i] == bp) {
+			if (task_thread(current).debug.hbp_break[i] == bp) {
 				si_errno = (i << 1) + 1;
 				break;
 			}
 		}
 
 		for (i = 0; i < ARM_MAX_WRP; ++i) {
-			if (current->thread.debug.hbp_watch[i] == bp) {
+			if (task_thread(current).debug.hbp_watch[i] == bp) {
 				si_errno = -((i << 1) + 1);
 				break;
 			}
@@ -208,7 +208,7 @@ static void ptrace_hbptriggered(struct perf_event *bp,
 void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
 {
 	int i;
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &task_thread(tsk);
 
 	for (i = 0; i < ARM_MAX_BRP; i++) {
 		if (t->debug.hbp_break[i]) {
@@ -227,7 +227,7 @@ void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
 
 void ptrace_hw_copy_thread(struct task_struct *tsk)
 {
-	memset(&tsk->thread.debug, 0, sizeof(struct debug_info));
+	memset(&task_thread(tsk).debug, 0, sizeof(struct debug_info));
 }
 
 static struct perf_event *ptrace_hbp_get_event(unsigned int note_type,
@@ -241,13 +241,13 @@ static struct perf_event *ptrace_hbp_get_event(unsigned int note_type,
 		if (idx >= ARM_MAX_BRP)
 			goto out;
 		idx = array_index_nospec(idx, ARM_MAX_BRP);
-		bp = tsk->thread.debug.hbp_break[idx];
+		bp = task_thread(tsk).debug.hbp_break[idx];
 		break;
 	case NT_ARM_HW_WATCH:
 		if (idx >= ARM_MAX_WRP)
 			goto out;
 		idx = array_index_nospec(idx, ARM_MAX_WRP);
-		bp = tsk->thread.debug.hbp_watch[idx];
+		bp = task_thread(tsk).debug.hbp_watch[idx];
 		break;
 	}
 
@@ -267,14 +267,14 @@ static int ptrace_hbp_set_event(unsigned int note_type,
 		if (idx >= ARM_MAX_BRP)
 			goto out;
 		idx = array_index_nospec(idx, ARM_MAX_BRP);
-		tsk->thread.debug.hbp_break[idx] = bp;
+		task_thread(tsk).debug.hbp_break[idx] = bp;
 		err = 0;
 		break;
 	case NT_ARM_HW_WATCH:
 		if (idx >= ARM_MAX_WRP)
 			goto out;
 		idx = array_index_nospec(idx, ARM_MAX_WRP);
-		tsk->thread.debug.hbp_watch[idx] = bp;
+		task_thread(tsk).debug.hbp_watch[idx] = bp;
 		err = 0;
 		break;
 	}
@@ -602,7 +602,7 @@ static int __fpr_get(struct task_struct *target,
 
 	sve_sync_to_fpsimd(target);
 
-	uregs = &target->thread.uw.fpsimd_state;
+	uregs = &task_thread(target).uw.fpsimd_state;
 
 	return membuf_write(&to, uregs, sizeof(*uregs));
 }
@@ -629,19 +629,19 @@ static int __fpr_set(struct task_struct *target,
 	struct user_fpsimd_state newstate;
 
 	/*
-	 * Ensure target->thread.uw.fpsimd_state is up to date, so that a
+	 * Ensure task_thread(target).uw.fpsimd_state is up to date, so that a
 	 * short copyin can't resurrect stale data.
 	 */
 	sve_sync_to_fpsimd(target);
 
-	newstate = target->thread.uw.fpsimd_state;
+	newstate = task_thread(target).uw.fpsimd_state;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &newstate,
 				 start_pos, start_pos + sizeof(newstate));
 	if (ret)
 		return ret;
 
-	target->thread.uw.fpsimd_state = newstate;
+	task_thread(target).uw.fpsimd_state = newstate;
 
 	return ret;
 }
@@ -671,7 +671,7 @@ static int tls_get(struct task_struct *target, const struct user_regset *regset,
 	if (target == current)
 		tls_preserve_current_state();
 
-	return membuf_store(&to, target->thread.uw.tp_value);
+	return membuf_store(&to, task_thread(target).uw.tp_value);
 }
 
 static int tls_set(struct task_struct *target, const struct user_regset *regset,
@@ -679,13 +679,13 @@ static int tls_set(struct task_struct *target, const struct user_regset *regset,
 		   const void *kbuf, const void __user *ubuf)
 {
 	int ret;
-	unsigned long tls = target->thread.uw.tp_value;
+	unsigned long tls = task_thread(target).uw.tp_value;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &tls, 0, -1);
 	if (ret)
 		return ret;
 
-	target->thread.uw.tp_value = tls;
+	task_thread(target).uw.tp_value = tls;
 	return ret;
 }
 
@@ -771,7 +771,7 @@ static int sve_get(struct task_struct *target,
 	BUILD_BUG_ON(SVE_PT_SVE_OFFSET != sizeof(header));
 	start = SVE_PT_SVE_OFFSET;
 	end = SVE_PT_SVE_FFR_OFFSET(vq) + SVE_PT_SVE_FFR_SIZE(vq);
-	membuf_write(&to, target->thread.sve_state, end - start);
+	membuf_write(&to, task_thread(target).sve_state, end - start);
 
 	start = end;
 	end = SVE_PT_SVE_FPSR_OFFSET(vq);
@@ -783,7 +783,7 @@ static int sve_get(struct task_struct *target,
 	 */
 	start = end;
 	end = SVE_PT_SVE_FPCR_OFFSET(vq) + SVE_PT_SVE_FPCR_SIZE;
-	membuf_write(&to, &target->thread.uw.fpsimd_state.fpsr, end - start);
+	membuf_write(&to, &task_thread(target).uw.fpsimd_state.fpsr, end - start);
 
 	start = end;
 	end = sve_size_from_header(&header);
@@ -846,14 +846,14 @@ static int sve_set(struct task_struct *target,
 	}
 
 	sve_alloc(target);
-	if (!target->thread.sve_state) {
+	if (!task_thread(target).sve_state) {
 		ret = -ENOMEM;
 		clear_tsk_thread_flag(target, TIF_SVE);
 		goto out;
 	}
 
 	/*
-	 * Ensure target->thread.sve_state is up to date with target's
+	 * Ensure task_thread(target).sve_state is up to date with target's
 	 * FPSIMD regs, so that a short copyin leaves trailing registers
 	 * unmodified.
 	 */
@@ -864,7 +864,7 @@ static int sve_set(struct task_struct *target,
 	start = SVE_PT_SVE_OFFSET;
 	end = SVE_PT_SVE_FFR_OFFSET(vq) + SVE_PT_SVE_FFR_SIZE(vq);
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 target->thread.sve_state,
+				 task_thread(target).sve_state,
 				 start, end);
 	if (ret)
 		goto out;
@@ -883,7 +883,7 @@ static int sve_set(struct task_struct *target,
 	start = end;
 	end = SVE_PT_SVE_FPCR_OFFSET(vq) + SVE_PT_SVE_FPCR_SIZE;
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.uw.fpsimd_state.fpsr,
+				 &task_thread(target).uw.fpsimd_state.fpsr,
 				 start, end);
 
 out:
@@ -985,7 +985,7 @@ static int pac_address_keys_get(struct task_struct *target,
 				const struct user_regset *regset,
 				struct membuf to)
 {
-	struct ptrauth_keys_user *keys = &target->thread.keys_user;
+	struct ptrauth_keys_user *keys = &task_thread(target).keys_user;
 	struct user_pac_address_keys user_keys;
 
 	if (!system_supports_address_auth())
@@ -1001,7 +1001,7 @@ static int pac_address_keys_set(struct task_struct *target,
 				unsigned int pos, unsigned int count,
 				const void *kbuf, const void __user *ubuf)
 {
-	struct ptrauth_keys_user *keys = &target->thread.keys_user;
+	struct ptrauth_keys_user *keys = &task_thread(target).keys_user;
 	struct user_pac_address_keys user_keys;
 	int ret;
 
@@ -1034,7 +1034,7 @@ static int pac_generic_keys_get(struct task_struct *target,
 				const struct user_regset *regset,
 				struct membuf to)
 {
-	struct ptrauth_keys_user *keys = &target->thread.keys_user;
+	struct ptrauth_keys_user *keys = &task_thread(target).keys_user;
 	struct user_pac_generic_keys user_keys;
 
 	if (!system_supports_generic_auth())
@@ -1050,7 +1050,7 @@ static int pac_generic_keys_set(struct task_struct *target,
 				unsigned int pos, unsigned int count,
 				const void *kbuf, const void __user *ubuf)
 {
-	struct ptrauth_keys_user *keys = &target->thread.keys_user;
+	struct ptrauth_keys_user *keys = &task_thread(target).keys_user;
 	struct user_pac_generic_keys user_keys;
 	int ret;
 
@@ -1348,7 +1348,7 @@ static int compat_vfp_get(struct task_struct *target,
 	if (!system_supports_fpsimd())
 		return -EINVAL;
 
-	uregs = &target->thread.uw.fpsimd_state;
+	uregs = &task_thread(target).uw.fpsimd_state;
 
 	if (target == current)
 		fpsimd_preserve_current_state();
@@ -1375,7 +1375,7 @@ static int compat_vfp_set(struct task_struct *target,
 	if (!system_supports_fpsimd())
 		return -EINVAL;
 
-	uregs = &target->thread.uw.fpsimd_state;
+	uregs = &task_thread(target).uw.fpsimd_state;
 
 	vregs_end_pos = VFP_STATE_SIZE - sizeof(compat_ulong_t);
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, uregs, 0,
@@ -1398,7 +1398,7 @@ static int compat_tls_get(struct task_struct *target,
 			  const struct user_regset *regset,
 			  struct membuf to)
 {
-	return membuf_store(&to, (compat_ulong_t)target->thread.uw.tp_value);
+	return membuf_store(&to, (compat_ulong_t)task_thread(target).uw.tp_value);
 }
 
 static int compat_tls_set(struct task_struct *target,
@@ -1407,13 +1407,13 @@ static int compat_tls_set(struct task_struct *target,
 			  const void __user *ubuf)
 {
 	int ret;
-	compat_ulong_t tls = target->thread.uw.tp_value;
+	compat_ulong_t tls = task_thread(target).uw.tp_value;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &tls, 0, -1);
 	if (ret)
 		return ret;
 
-	target->thread.uw.tp_value = tls;
+	task_thread(target).uw.tp_value = tls;
 	return ret;
 }
 
@@ -1714,7 +1714,7 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 			break;
 
 		case COMPAT_PTRACE_GET_THREAD_AREA:
-			ret = put_user((compat_ulong_t)child->thread.uw.tp_value,
+			ret = put_user((compat_ulong_t)task_thread(child).uw.tp_value,
 				       (compat_ulong_t __user *)datap);
 			break;
 

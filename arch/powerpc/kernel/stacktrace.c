@@ -37,7 +37,7 @@ void __no_sanitize_address arch_stack_walk(stack_trace_consume_fn consume_entry,
 	else if (task == current)
 		sp = current_stack_frame();
 	else
-		sp = task->thread.ksp;
+		sp = task_thread(task).ksp;
 
 	for (;;) {
 		unsigned long *stack = (unsigned long *) sp;
@@ -100,7 +100,7 @@ int __no_sanitize_address arch_stack_walk_reliable(stack_trace_consume_fn consum
 	if (task == current)
 		sp = current_stack_frame();
 	else
-		sp = task->thread.ksp;
+		sp = task_thread(task).ksp;
 
 	if (sp < stack_page + sizeof(struct thread_struct) ||
 	    sp > stack_end - STACK_FRAME_MIN_SIZE) {

@@ -217,9 +217,9 @@ void show_stack(struct task_struct *task, unsigned long *sp, const char *loglvl)
 		regs.cp0_epc = 0;
 	} else {
 		if (task && task != current) {
-			regs.regs[29] = task->thread.reg29;
+			regs.regs[29] = task_thread(task).reg29;
 			regs.regs[31] = 0;
-			regs.cp0_epc = task->thread.reg31;
+			regs.cp0_epc = task_thread(task).reg31;
 		} else {
 			prepare_frametrace(&regs);
 		}
@@ -399,7 +399,7 @@ void __noreturn die(const char *str, struct pt_regs *regs)
 
 	oops_enter();
 
-	if (notify_die(DIE_OOPS, str, regs, 0, current->thread.trap_nr,
+	if (notify_die(DIE_OOPS, str, regs, 0, task_thread(current).trap_nr,
 		       SIGSEGV) == NOTIFY_STOP)
 		sig = 0;
 
@@ -485,7 +485,7 @@ asmlinkage void do_be(struct pt_regs *regs)
 	printk(KERN_ALERT "%s bus error, epc == %0*lx, ra == %0*lx\n",
 	       data ? "Data" : "Instruction",
 	       field, regs->cp0_epc, field, regs->regs[31]);
-	if (notify_die(DIE_OOPS, "bus error", regs, 0, current->thread.trap_nr,
+	if (notify_die(DIE_OOPS, "bus error", regs, 0, task_thread(current).trap_nr,
 		       SIGBUS) == NOTIFY_STOP)
 		goto out;
 
@@ -850,15 +850,15 @@ static int simulate_fp(struct pt_regs *regs, unsigned int opcode,
 	regs->regs[31] = old_ra;
 
 	/* Run the emulator */
-	sig = fpu_emulator_cop1Handler(regs, &current->thread.fpu, 1,
+	sig = fpu_emulator_cop1Handler(regs, &task_thread(current).fpu, 1,
 				       &fault_addr);
 
 	/*
 	 * We can't allow the emulated instruction to leave any
 	 * enabled Cause bits set in $fcr31.
 	 */
-	fcr31 = mask_fcr31_x(current->thread.fpu.fcr31);
-	current->thread.fpu.fcr31 &= ~fcr31;
+	fcr31 = mask_fcr31_x(task_thread(current).fpu.fcr31);
+	task_thread(current).fpu.fcr31 &= ~fcr31;
 
 	/* Restore the hardware register state */
 	own_fpu(1);
@@ -879,7 +879,7 @@ asmlinkage void do_fpe(struct pt_regs *regs, unsigned long fcr31)
 	int sig;
 
 	prev_state = exception_enter();
-	if (notify_die(DIE_FP, "FP exception", regs, 0, current->thread.trap_nr,
+	if (notify_die(DIE_FP, "FP exception", regs, 0, task_thread(current).trap_nr,
 		       SIGFPE) == NOTIFY_STOP)
 		goto out;
 
@@ -902,15 +902,15 @@ asmlinkage void do_fpe(struct pt_regs *regs, unsigned long fcr31)
 		 */
 
 		/* Run the emulator */
-		sig = fpu_emulator_cop1Handler(regs, &current->thread.fpu, 1,
+		sig = fpu_emulator_cop1Handler(regs, &task_thread(current).fpu, 1,
 					       &fault_addr);
 
 		/*
 		 * We can't allow the emulated instruction to leave any
 		 * enabled Cause bits set in $fcr31.
 		 */
-		fcr31 = mask_fcr31_x(current->thread.fpu.fcr31);
-		current->thread.fpu.fcr31 &= ~fcr31;
+		fcr31 = mask_fcr31_x(task_thread(current).fpu.fcr31);
+		task_thread(current).fpu.fcr31 &= ~fcr31;
 
 		/* Restore the hardware register state */
 		own_fpu(1);	/* Using the FPU again.	 */
@@ -935,7 +935,7 @@ static void mt_ase_fp_affinity(void)
 {
 #ifdef CONFIG_MIPS_MT_FPAFF
 	if (mt_fpemul_threshold > 0 &&
-	     ((current->thread.emulated_fp++ > mt_fpemul_threshold))) {
+	     ((task_thread(current).emulated_fp++ > mt_fpemul_threshold))) {
 		/*
 		 * If there's no FPU present, or if the application has already
 		 * restricted the allowed set to exclude any CPUs with FPUs,
@@ -944,7 +944,7 @@ static void mt_ase_fp_affinity(void)
 		if (cpumask_intersects(&current->cpus_mask, &mt_fpu_cpumask)) {
 			cpumask_t tmask;
 
-			current->thread.user_cpus_allowed
+			task_thread(current).user_cpus_allowed
 				= current->cpus_mask;
 			cpumask_and(&tmask, &current->cpus_mask,
 				    &mt_fpu_cpumask);
@@ -971,12 +971,12 @@ void do_trap_or_bp(struct pt_regs *regs, unsigned int code, int si_code,
 	char b[40];
 
 #ifdef CONFIG_KGDB_LOW_LEVEL_TRAP
-	if (kgdb_ll_trap(DIE_TRAP, str, regs, code, current->thread.trap_nr,
+	if (kgdb_ll_trap(DIE_TRAP, str, regs, code, task_thread(current).trap_nr,
 			 SIGTRAP) == NOTIFY_STOP)
 		return;
 #endif /* CONFIG_KGDB_LOW_LEVEL_TRAP */
 
-	if (notify_die(DIE_TRAP, str, regs, code, current->thread.trap_nr,
+	if (notify_die(DIE_TRAP, str, regs, code, task_thread(current).trap_nr,
 		       SIGTRAP) == NOTIFY_STOP)
 		return;
 
@@ -1033,7 +1033,7 @@ asmlinkage void do_bp(struct pt_regs *regs)
 	bool user = user_mode(regs);
 
 	prev_state = exception_enter();
-	current->thread.trap_nr = (regs->cp0_cause >> 2) & 0x1f;
+	task_thread(current).trap_nr = (regs->cp0_cause >> 2) & 0x1f;
 	if (get_isa16_mode(regs->cp0_epc)) {
 		u16 instr[2];
 
@@ -1075,25 +1075,25 @@ asmlinkage void do_bp(struct pt_regs *regs)
 	switch (bcode) {
 	case BRK_UPROBE:
 		if (notify_die(DIE_UPROBE, "uprobe", regs, bcode,
-			       current->thread.trap_nr, SIGTRAP) == NOTIFY_STOP)
+			       task_thread(current).trap_nr, SIGTRAP) == NOTIFY_STOP)
 			goto out;
 		else
 			break;
 	case BRK_UPROBE_XOL:
 		if (notify_die(DIE_UPROBE_XOL, "uprobe_xol", regs, bcode,
-			       current->thread.trap_nr, SIGTRAP) == NOTIFY_STOP)
+			       task_thread(current).trap_nr, SIGTRAP) == NOTIFY_STOP)
 			goto out;
 		else
 			break;
 	case BRK_KPROBE_BP:
 		if (notify_die(DIE_BREAK, "debug", regs, bcode,
-			       current->thread.trap_nr, SIGTRAP) == NOTIFY_STOP)
+			       task_thread(current).trap_nr, SIGTRAP) == NOTIFY_STOP)
 			goto out;
 		else
 			break;
 	case BRK_KPROBE_SSTEPBP:
 		if (notify_die(DIE_SSTEPBP, "single_step", regs, bcode,
-			       current->thread.trap_nr, SIGTRAP) == NOTIFY_STOP)
+			       task_thread(current).trap_nr, SIGTRAP) == NOTIFY_STOP)
 			goto out;
 		else
 			break;
@@ -1121,7 +1121,7 @@ asmlinkage void do_tr(struct pt_regs *regs)
 	unsigned long epc = msk_isa16_mode(exception_epc(regs));
 
 	prev_state = exception_enter();
-	current->thread.trap_nr = (regs->cp0_cause >> 2) & 0x1f;
+	task_thread(current).trap_nr = (regs->cp0_cause >> 2) & 0x1f;
 	if (get_isa16_mode(regs->cp0_epc)) {
 		if (__get_inst16(&instr[0], (u16 *)(epc + 0), user) ||
 		    __get_inst16(&instr[1], (u16 *)(epc + 2), user))
@@ -1176,7 +1176,7 @@ asmlinkage void do_ri(struct pt_regs *regs)
 			goto no_r2_instr;
 		default:
 			process_fpemu_return(status,
-					     &current->thread.cp0_baduaddr,
+					     &task_thread(current).cp0_baduaddr,
 					     fcr31);
 			return;
 		}
@@ -1185,9 +1185,9 @@ asmlinkage void do_ri(struct pt_regs *regs)
 no_r2_instr:
 
 	prev_state = exception_enter();
-	current->thread.trap_nr = (regs->cp0_cause >> 2) & 0x1f;
+	task_thread(current).trap_nr = (regs->cp0_cause >> 2) & 0x1f;
 
-	if (notify_die(DIE_RI, "RI Fault", regs, 0, current->thread.trap_nr,
+	if (notify_die(DIE_RI, "RI Fault", regs, 0, task_thread(current).trap_nr,
 		       SIGILL) == NOTIFY_STOP)
 		goto out;
 
@@ -1291,7 +1291,7 @@ static int enable_restore_fp_context(int msa)
 			 * other task before current task, restore them
 			 * from saved fp/msa context
 			 */
-			write_msa_csr(current->thread.fpu.msacsr);
+			write_msa_csr(task_thread(current).fpu.msacsr);
 			/*
 			 * own_fpu_inatomic(1) just restore low 64bit,
 			 * fix the high 64bit
@@ -1345,7 +1345,7 @@ static int enable_restore_fp_context(int msa)
 		goto out;
 
 	enable_msa();
-	write_msa_csr(current->thread.fpu.msacsr);
+	write_msa_csr(task_thread(current).fpu.msacsr);
 	set_thread_flag(TIF_USEDMSA);
 
 	/*
@@ -1382,7 +1382,7 @@ static int enable_restore_fp_context(int msa)
 		/* Restore the scalar FP control & status register */
 		if (!was_fpu_owner)
 			write_32bit_cp1_register(CP1_STATUS,
-						 current->thread.fpu.fcr31);
+						 task_thread(current).fpu.fcr31);
 	}
 
 out:
@@ -1474,15 +1474,15 @@ asmlinkage void do_cpu(struct pt_regs *regs)
 		if (raw_cpu_has_fpu && !err)
 			break;
 
-		sig = fpu_emulator_cop1Handler(regs, &current->thread.fpu, 0,
+		sig = fpu_emulator_cop1Handler(regs, &task_thread(current).fpu, 0,
 					       &fault_addr);
 
 		/*
 		 * We can't allow the emulated instruction to leave
 		 * any enabled Cause bits set in $fcr31.
 		 */
-		fcr31 = mask_fcr31_x(current->thread.fpu.fcr31);
-		current->thread.fpu.fcr31 &= ~fcr31;
+		fcr31 = mask_fcr31_x(task_thread(current).fpu.fcr31);
+		task_thread(current).fpu.fcr31 &= ~fcr31;
 
 		/* Send a signal if required.  */
 		if (!process_fpemu_return(sig, fault_addr, fcr31) && !err)
@@ -1510,9 +1510,9 @@ asmlinkage void do_msa_fpe(struct pt_regs *regs, unsigned int msacsr)
 	enum ctx_state prev_state;
 
 	prev_state = exception_enter();
-	current->thread.trap_nr = (regs->cp0_cause >> 2) & 0x1f;
+	task_thread(current).trap_nr = (regs->cp0_cause >> 2) & 0x1f;
 	if (notify_die(DIE_MSAFP, "MSA FP exception", regs, 0,
-		       current->thread.trap_nr, SIGFPE) == NOTIFY_STOP)
+		       task_thread(current).trap_nr, SIGFPE) == NOTIFY_STOP)
 		goto out;
 
 	/* Clear MSACSR.Cause before enabling interrupts */

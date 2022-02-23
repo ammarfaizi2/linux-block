@@ -116,8 +116,8 @@ int arch_uprobe_pre_xol(struct arch_uprobe *aup, struct pt_regs *regs)
 			(union mips_instruction) aup->insn[0]);
 		aup->resume_epc = regs->cp0_epc;
 	}
-	utask->autask.saved_trap_nr = current->thread.trap_nr;
-	current->thread.trap_nr = UPROBE_TRAP_NR;
+	utask->autask.saved_trap_nr = task_thread(current).trap_nr;
+	task_thread(current).trap_nr = UPROBE_TRAP_NR;
 	regs->cp0_epc = current->utask->xol_vaddr;
 
 	return 0;
@@ -127,7 +127,7 @@ int arch_uprobe_post_xol(struct arch_uprobe *aup, struct pt_regs *regs)
 {
 	struct uprobe_task *utask = current->utask;
 
-	current->thread.trap_nr = utask->autask.saved_trap_nr;
+	task_thread(current).trap_nr = utask->autask.saved_trap_nr;
 	regs->cp0_epc = aup->resume_epc;
 
 	return 0;
@@ -145,7 +145,7 @@ int arch_uprobe_post_xol(struct arch_uprobe *aup, struct pt_regs *regs)
  */
 bool arch_uprobe_xol_was_trapped(struct task_struct *tsk)
 {
-	if (tsk->thread.trap_nr != UPROBE_TRAP_NR)
+	if (task_thread(tsk).trap_nr != UPROBE_TRAP_NR)
 		return true;
 
 	return false;

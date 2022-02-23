@@ -194,8 +194,8 @@ static void mte_update_sctlr_user(struct task_struct *task)
 	 * is going to run. The caller is responsible for calling
 	 * update_sctlr_el1() later in the same preemption disabled block.
 	 */
-	unsigned long sctlr = task->thread.sctlr_user;
-	unsigned long mte_ctrl = task->thread.mte_ctrl;
+	unsigned long sctlr = task_thread(task).sctlr_user;
+	unsigned long mte_ctrl = task_thread(task).mte_ctrl;
 	unsigned long pref, resolved_mte_tcf;
 
 	pref = __this_cpu_read(mte_tcf_preferred);
@@ -205,20 +205,20 @@ static void mte_update_sctlr_user(struct task_struct *task)
 		sctlr |= SCTLR_EL1_TCF0_ASYNC;
 	else if (resolved_mte_tcf & MTE_CTRL_TCF_SYNC)
 		sctlr |= SCTLR_EL1_TCF0_SYNC;
-	task->thread.sctlr_user = sctlr;
+	task_thread(task).sctlr_user = sctlr;
 }
 
 static void mte_update_gcr_excl(struct task_struct *task)
 {
 	/*
-	 * SYS_GCR_EL1 will be set to current->thread.mte_ctrl value by
+	 * SYS_GCR_EL1 will be set to task_thread(current).mte_ctrl value by
 	 * mte_set_user_gcr() in kernel_exit, but only if KASAN is enabled.
 	 */
 	if (kasan_hw_tags_enabled())
 		return;
 
 	write_sysreg_s(
-		((task->thread.mte_ctrl >> MTE_CTRL_GCR_USER_EXCL_SHIFT) &
+		((task_thread(task).mte_ctrl >> MTE_CTRL_GCR_USER_EXCL_SHIFT) &
 		 SYS_GCR_EL1_EXCL_MASK) | SYS_GCR_EL1_RRND,
 		SYS_GCR_EL1);
 }
@@ -293,12 +293,12 @@ long set_mte_ctrl(struct task_struct *task, unsigned long arg)
 	if (arg & PR_MTE_TCF_SYNC)
 		mte_ctrl |= MTE_CTRL_TCF_SYNC;
 
-	task->thread.mte_ctrl = mte_ctrl;
+	task_thread(task).mte_ctrl = mte_ctrl;
 	if (task == current) {
 		preempt_disable();
 		mte_update_sctlr_user(task);
 		mte_update_gcr_excl(task);
-		update_sctlr_el1(task->thread.sctlr_user);
+		update_sctlr_el1(task_thread(task).sctlr_user);
 		preempt_enable();
 	}
 
@@ -308,7 +308,7 @@ long set_mte_ctrl(struct task_struct *task, unsigned long arg)
 long get_mte_ctrl(struct task_struct *task)
 {
 	unsigned long ret;
-	u64 mte_ctrl = task->thread.mte_ctrl;
+	u64 mte_ctrl = task_thread(task).mte_ctrl;
 	u64 incl = (~mte_ctrl >> MTE_CTRL_GCR_USER_EXCL_SHIFT) &
 		   SYS_GCR_EL1_EXCL_MASK;
 

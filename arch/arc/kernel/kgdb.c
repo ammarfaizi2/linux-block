@@ -57,13 +57,13 @@ static void from_gdb_regs(unsigned long *gdb_regs, struct pt_regs *kernel_regs,
 void pt_regs_to_gdb_regs(unsigned long *gdb_regs, struct pt_regs *kernel_regs)
 {
 	to_gdb_regs(gdb_regs, kernel_regs, (struct callee_regs *)
-		current->thread.callee_reg);
+		task_thread(current).callee_reg);
 }
 
 void gdb_regs_to_pt_regs(unsigned long *gdb_regs, struct pt_regs *kernel_regs)
 {
 	from_gdb_regs(gdb_regs, kernel_regs, (struct callee_regs *)
-		current->thread.callee_reg);
+		task_thread(current).callee_reg);
 }
 
 void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs,
@@ -71,7 +71,7 @@ void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs,
 {
 	if (task)
 		to_gdb_regs(gdb_regs, task_pt_regs(task),
-			(struct callee_regs *) task->thread.callee_reg);
+			(struct callee_regs *) task_thread(task).callee_reg);
 }
 
 struct single_step_data_t {
@@ -111,7 +111,7 @@ static void do_single_step(struct pt_regs *regs)
 {
 	single_step_data.is_branch = disasm_next_pc((unsigned long)
 		regs->ret, regs, (struct callee_regs *)
-		current->thread.callee_reg,
+		task_thread(current).callee_reg,
 		&single_step_data.address[0],
 		&single_step_data.address[1]);
 

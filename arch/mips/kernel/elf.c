@@ -309,15 +309,15 @@ void mips_set_personality_nan(struct arch_elf_state *state)
 	struct cpuinfo_mips *c = &boot_cpu_data;
 	struct task_struct *t = current;
 
-	t->thread.fpu.fcr31 = c->fpu_csr31;
+	task_thread(t).fpu.fcr31 = c->fpu_csr31;
 	switch (state->nan_2008) {
 	case 0:
 		break;
 	case 1:
 		if (!(c->fpu_msk31 & FPU_CSR_NAN2008))
-			t->thread.fpu.fcr31 |= FPU_CSR_NAN2008;
+			task_thread(t).fpu.fcr31 |= FPU_CSR_NAN2008;
 		if (!(c->fpu_msk31 & FPU_CSR_ABS2008))
-			t->thread.fpu.fcr31 |= FPU_CSR_ABS2008;
+			task_thread(t).fpu.fcr31 |= FPU_CSR_ABS2008;
 		break;
 	default:
 		BUG();

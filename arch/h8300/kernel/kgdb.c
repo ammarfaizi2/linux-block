@@ -89,7 +89,7 @@ asmlinkage void h8300_kgdb_trap(struct pt_regs *regs)
 void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 {
 	memset((char *)gdb_regs, 0, NUMREGBYTES);
-	gdb_regs[GDB_SP] = p->thread.ksp;
+	gdb_regs[GDB_SP] = task_thread(p).ksp;
 	gdb_regs[GDB_PC] = KSTK_EIP(p);
 }
 

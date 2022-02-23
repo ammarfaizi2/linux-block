@@ -508,8 +508,8 @@ void switch_slb(struct task_struct *tsk, struct mm_struct *mm)
 	 * reload). Each time we wrap 256 switches, take an entry out of the
 	 * SLB preload cache.
 	 */
-	tsk->thread.load_slb++;
-	if (!tsk->thread.load_slb) {
+	task_thread(tsk).load_slb++;
+	if (!task_thread(tsk).load_slb) {
 		unsigned long pc = KSTK_EIP(tsk);
 
 		preload_age(ti);

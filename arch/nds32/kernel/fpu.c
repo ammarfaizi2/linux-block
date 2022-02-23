@@ -43,7 +43,7 @@ void save_fpu(struct task_struct *tsk)
 			      "fsdi $fd17, [%0+0x88]\n\t"
 			      "fsdi $fd16, [%0+0x80]\n\t"
 			      :	/* no output */
-			      : "r" (&tsk->thread.fpu)
+			      : "r" (&task_thread(tsk).fpu)
 			      : "memory");
 		fallthrough;
 	case SP32_DP16_reg:
@@ -56,7 +56,7 @@ void save_fpu(struct task_struct *tsk)
 			      "fsdi $fd9,  [%0+0x48]\n\t"
 			      "fsdi $fd8,  [%0+0x40]\n\t"
 			      :	/* no output */
-			      : "r" (&tsk->thread.fpu)
+			      : "r" (&task_thread(tsk).fpu)
 			      : "memory");
 		fallthrough;
 	case SP16_DP8_reg:
@@ -65,7 +65,7 @@ void save_fpu(struct task_struct *tsk)
 			      "fsdi $fd5,  [%0+0x28]\n\t"
 			      "fsdi $fd4,  [%0+0x20]\n\t"
 			      :	/* no output */
-			      : "r" (&tsk->thread.fpu)
+			      : "r" (&task_thread(tsk).fpu)
 			      : "memory");
 		fallthrough;
 	case SP8_DP4_reg:
@@ -76,7 +76,7 @@ void save_fpu(struct task_struct *tsk)
 			      "fmfcsr	%0\n\t"
 			      "swi  %0, [%1+0x100]\n\t"
 			      : "=&r" (fpcsr)
-			      : "r"(&tsk->thread.fpu)
+			      : "r"(&task_thread(tsk).fpu)
 			      : "memory");
 	}
 	disable_fpu();
@@ -173,12 +173,12 @@ inline void do_fpu_context_switch(struct pt_regs *regs)
 	last_task_used_math = current;
 #endif
 	if (used_math()) {
-		load_fpu(&current->thread.fpu);
+		load_fpu(&task_thread(current).fpu);
 	} else {
 		/* First time FPU user.  */
 		load_fpu(&init_fpuregs);
 #if IS_ENABLED(CONFIG_SUPPORT_DENORMAL_ARITHMETIC)
-		current->thread.fpu.UDF_IEX_trap = init_fpuregs.UDF_IEX_trap;
+		task_thread(current).fpu.UDF_IEX_trap = init_fpuregs.UDF_IEX_trap;
 #endif
 		set_used_math();
 	}
@@ -212,13 +212,13 @@ inline void handle_fpu_exception(struct pt_regs *regs)
 #endif
 
 	lose_fpu();
-	fpcsr = current->thread.fpu.fpcsr;
+	fpcsr = task_thread(current).fpu.fpcsr;
 
 	if (fpcsr & redo_except) {
-		si_signo = do_fpuemu(regs, &current->thread.fpu);
-		fpcsr = current->thread.fpu.fpcsr;
+		si_signo = do_fpuemu(regs, &task_thread(current).fpu);
+		fpcsr = task_thread(current).fpu.fpcsr;
 		if (!si_signo) {
-			current->thread.fpu.fpcsr &= ~(redo_except);
+			task_thread(current).fpu.fpcsr &= ~(redo_except);
 			goto done;
 		}
 	} else if (fpcsr & FPCSR_mskRIT) {

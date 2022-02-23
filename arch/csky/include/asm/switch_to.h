@@ -9,8 +9,8 @@
 static inline void __switch_to_fpu(struct task_struct *prev,
 				   struct task_struct *next)
 {
-	save_to_user_fp(&prev->thread.user_fp);
-	restore_from_user_fp(&next->thread.user_fp);
+	save_to_user_fp(&task_thread(prev).user_fp);
+	restore_from_user_fp(&task_thread(next).user_fp);
 }
 #else
 static inline void __switch_to_fpu(struct task_struct *prev,

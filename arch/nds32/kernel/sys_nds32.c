@@ -58,19 +58,19 @@ SYSCALL_DEFINE2(fp_udfiex_crtl, unsigned int, cmd, unsigned int, act)
 
 	if (!used_math()) {
 		load_fpu(&init_fpuregs);
-		current->thread.fpu.UDF_IEX_trap = init_fpuregs.UDF_IEX_trap;
+		task_thread(current).fpu.UDF_IEX_trap = init_fpuregs.UDF_IEX_trap;
 		set_used_math();
 	}
 
-	old_udf_iex = current->thread.fpu.UDF_IEX_trap;
+	old_udf_iex = task_thread(current).fpu.UDF_IEX_trap;
 	act &= (FPCSR_mskUDFE | FPCSR_mskIEXE);
 
 	switch (cmd) {
 	case DISABLE_UDF_IEX_TRAP:
-		current->thread.fpu.UDF_IEX_trap &= ~act;
+		task_thread(current).fpu.UDF_IEX_trap &= ~act;
 		break;
 	case ENABLE_UDF_IEX_TRAP:
-		current->thread.fpu.UDF_IEX_trap |= act;
+		task_thread(current).fpu.UDF_IEX_trap |= act;
 		break;
 	case GET_UDF_IEX_TRAP:
 		break;

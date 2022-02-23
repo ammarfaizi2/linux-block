@@ -241,25 +241,25 @@ static u16 get_segment_reg(struct task_struct *task, unsigned long offset)
 			asm("movl %%fs,%0" : "=r" (seg));
 			return seg;
 		}
-		return task->thread.fsindex;
+		return task_thread(task).fsindex;
 	case offsetof(struct user_regs_struct, gs):
 		if (task == current) {
 			asm("movl %%gs,%0" : "=r" (seg));
 			return seg;
 		}
-		return task->thread.gsindex;
+		return task_thread(task).gsindex;
 	case offsetof(struct user_regs_struct, ds):
 		if (task == current) {
 			asm("movl %%ds,%0" : "=r" (seg));
 			return seg;
 		}
-		return task->thread.ds;
+		return task_thread(task).ds;
 	case offsetof(struct user_regs_struct, es):
 		if (task == current) {
 			asm("movl %%es,%0" : "=r" (seg));
 			return seg;
 		}
-		return task->thread.es;
+		return task_thread(task).es;
 
 	case offsetof(struct user_regs_struct, cs):
 	case offsetof(struct user_regs_struct, ss):
@@ -288,16 +288,16 @@ static int set_segment_reg(struct task_struct *task,
 
 	switch (offset) {
 	case offsetof(struct user_regs_struct,fs):
-		task->thread.fsindex = value;
+		task_thread(task).fsindex = value;
 		break;
 	case offsetof(struct user_regs_struct,gs):
-		task->thread.gsindex = value;
+		task_thread(task).gsindex = value;
 		break;
 	case offsetof(struct user_regs_struct,ds):
-		task->thread.ds = value;
+		task_thread(task).ds = value;
 		break;
 	case offsetof(struct user_regs_struct,es):
-		task->thread.es = value;
+		task_thread(task).es = value;
 		break;
 
 		/*
@@ -454,7 +454,7 @@ static void ptrace_triggered(struct perf_event *bp,
 			     struct pt_regs *regs)
 {
 	int i;
-	struct thread_struct *thread = &(current->thread);
+	struct thread_struct *thread = &(task_thread(current));
 
 	/*
 	 * Store in the virtual DR6 register the fact that the breakpoint
@@ -540,7 +540,7 @@ static int ptrace_modify_breakpoint(struct perf_event *bp, int len, int type,
  */
 static int ptrace_write_dr7(struct task_struct *tsk, unsigned long data)
 {
-	struct thread_struct *thread = &tsk->thread;
+	struct thread_struct *thread = &task_thread(tsk);
 	unsigned long old_dr7;
 	bool second_pass = false;
 	int i, rc, ret = 0;
@@ -591,7 +591,7 @@ restore:
  */
 static unsigned long ptrace_get_debugreg(struct task_struct *tsk, int n)
 {
-	struct thread_struct *thread = &tsk->thread;
+	struct thread_struct *thread = &task_thread(tsk);
 	unsigned long val = 0;
 
 	if (n < HBP_NUM) {
@@ -611,7 +611,7 @@ static unsigned long ptrace_get_debugreg(struct task_struct *tsk, int n)
 static int ptrace_set_breakpoint_addr(struct task_struct *tsk, int nr,
 				      unsigned long addr)
 {
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &task_thread(tsk);
 	struct perf_event *bp = t->ptrace_bps[nr];
 	int err = 0;
 
@@ -650,7 +650,7 @@ static int ptrace_set_breakpoint_addr(struct task_struct *tsk, int nr,
 static int ptrace_set_debugreg(struct task_struct *tsk, int n,
 			       unsigned long val)
 {
-	struct thread_struct *thread = &tsk->thread;
+	struct thread_struct *thread = &task_thread(tsk);
 	/* There are no DR4 or DR5 registers */
 	int rc = -EIO;
 
@@ -674,7 +674,7 @@ static int ptrace_set_debugreg(struct task_struct *tsk, int n,
 static int ioperm_active(struct task_struct *target,
 			 const struct user_regset *regset)
 {
-	struct io_bitmap *iobm = target->thread.io_bitmap;
+	struct io_bitmap *iobm = task_thread(target).io_bitmap;
 
 	return iobm ? DIV_ROUND_UP(iobm->max, regset->size) : 0;
 }
@@ -683,7 +683,7 @@ static int ioperm_get(struct task_struct *target,
 		      const struct user_regset *regset,
 		      struct membuf to)
 {
-	struct io_bitmap *iobm = target->thread.io_bitmap;
+	struct io_bitmap *iobm = task_thread(target).io_bitmap;
 
 	if (!iobm)
 		return -ENXIO;
@@ -874,7 +874,7 @@ static int putreg32(struct task_struct *child, unsigned regno, u32 value)
 				      offsetof(struct user_regs_struct, fs),
 				      value);
 		if (ret == 0)
-			child->thread.fsbase =
+			task_thread(child).fsbase =
 				x86_fsgsbase_read_task(child, value);
 		return ret;
 
@@ -883,7 +883,7 @@ static int putreg32(struct task_struct *child, unsigned regno, u32 value)
 				      offsetof(struct user_regs_struct, gs),
 				      value);
 		if (ret == 0)
-			child->thread.gsbase =
+			task_thread(child).gsbase =
 				x86_fsgsbase_read_task(child, value);
 		return ret;
 
@@ -1356,8 +1356,8 @@ void send_sigtrap(struct pt_regs *regs, int error_code, int si_code)
 {
 	struct task_struct *tsk = current;
 
-	tsk->thread.trap_nr = X86_TRAP_DB;
-	tsk->thread.error_code = error_code;
+	task_thread(tsk).trap_nr = X86_TRAP_DB;
+	task_thread(tsk).error_code = error_code;
 
 	/* Send us the fake SIGTRAP */
 	force_sig_fault(SIGTRAP, si_code,

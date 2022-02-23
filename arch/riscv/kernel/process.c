@@ -108,7 +108,7 @@ void flush_thread(void)
 	 *	fflags: accrued exceptions cleared
 	 */
 	fstate_off(current, task_pt_regs(current));
-	memset(&current->thread.fstate, 0, sizeof(current->thread.fstate));
+	memset(&task_thread(current).fstate, 0, sizeof(task_thread(current).fstate));
 #endif
 }
 
@@ -124,7 +124,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 {
 	struct pt_regs *childregs = task_pt_regs(p);
 
-	/* p->thread holds context to be restored by __switch_to() */
+	/* task_thread(p) holds context to be restored by __switch_to() */
 	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
 		/* Kernel thread */
 		memset(childregs, 0, sizeof(struct pt_regs));
@@ -132,9 +132,9 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 		/* Supervisor/Machine, irqs on: */
 		childregs->status = SR_PP | SR_PIE;
 
-		p->thread.ra = (unsigned long)ret_from_kernel_thread;
-		p->thread.s[0] = usp; /* fn */
-		p->thread.s[1] = arg;
+		task_thread(p).ra = (unsigned long)ret_from_kernel_thread;
+		task_thread(p).s[0] = usp; /* fn */
+		task_thread(p).s[1] = arg;
 	} else {
 		*childregs = *(current_pt_regs());
 		if (usp) /* User fork */
@@ -142,8 +142,8 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 		if (clone_flags & CLONE_SETTLS)
 			childregs->tp = tls;
 		childregs->a0 = 0; /* Return value of fork() */
-		p->thread.ra = (unsigned long)ret_from_fork;
+		task_thread(p).ra = (unsigned long)ret_from_fork;
 	}
-	p->thread.sp = (unsigned long)childregs; /* kernel sp */
+	task_thread(p).sp = (unsigned long)childregs; /* kernel sp */
 	return 0;
 }

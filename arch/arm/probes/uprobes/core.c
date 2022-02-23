@@ -137,8 +137,8 @@ int arch_uprobe_pre_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 	if (auprobe->prehandler)
 		auprobe->prehandler(auprobe, &utask->autask, regs);
 
-	utask->autask.saved_trap_no = current->thread.trap_no;
-	current->thread.trap_no = UPROBE_TRAP_NR;
+	utask->autask.saved_trap_no = task_thread(current).trap_no;
+	task_thread(current).trap_no = UPROBE_TRAP_NR;
 	regs->ARM_pc = utask->xol_vaddr;
 
 	return 0;
@@ -148,9 +148,9 @@ int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 {
 	struct uprobe_task *utask = current->utask;
 
-	WARN_ON_ONCE(current->thread.trap_no != UPROBE_TRAP_NR);
+	WARN_ON_ONCE(task_thread(current).trap_no != UPROBE_TRAP_NR);
 
-	current->thread.trap_no = utask->autask.saved_trap_no;
+	task_thread(current).trap_no = utask->autask.saved_trap_no;
 	regs->ARM_pc = utask->vaddr + 4;
 
 	if (auprobe->posthandler)
@@ -161,7 +161,7 @@ int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 
 bool arch_uprobe_xol_was_trapped(struct task_struct *t)
 {
-	if (t->thread.trap_no != UPROBE_TRAP_NR)
+	if (task_thread(t).trap_no != UPROBE_TRAP_NR)
 		return true;
 
 	return false;
@@ -171,7 +171,7 @@ void arch_uprobe_abort_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 {
 	struct uprobe_task *utask = current->utask;
 
-	current->thread.trap_no = utask->autask.saved_trap_no;
+	task_thread(current).trap_no = utask->autask.saved_trap_no;
 	instruction_pointer_set(regs, utask->vaddr);
 }
 

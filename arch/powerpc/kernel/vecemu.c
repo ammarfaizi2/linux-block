@@ -277,7 +277,7 @@ int emulate_altivec(struct pt_regs *regs)
 	vb = (word >> 11) & 0x1f;
 	vc = (word >> 6) & 0x1f;
 
-	vrs = current->thread.vr_state.vr;
+	vrs = task_thread(current).vr_state.vr;
 	switch (word & 0x3f) {
 	case 10:
 		switch (vc) {
@@ -326,12 +326,12 @@ int emulate_altivec(struct pt_regs *regs)
 		case 14:	/* vctuxs */
 			for (i = 0; i < 4; ++i)
 				vrs[vd].u[i] = ctuxs(vrs[vb].u[i], va,
-					&current->thread.vr_state.vscr.u[3]);
+					&task_thread(current).vr_state.vscr.u[3]);
 			break;
 		case 15:	/* vctsxs */
 			for (i = 0; i < 4; ++i)
 				vrs[vd].u[i] = ctsxs(vrs[vb].u[i], va,
-					&current->thread.vr_state.vscr.u[3]);
+					&task_thread(current).vr_state.vscr.u[3]);
 			break;
 		default:
 			return -EINVAL;

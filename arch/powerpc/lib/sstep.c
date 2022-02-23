@@ -614,14 +614,14 @@ static int do_fp_load(struct instruction_op *op, unsigned long ea,
 	if (regs->msr & MSR_FP)
 		put_fpr(rn, &u.d[0]);
 	else
-		current->thread.TS_FPR(rn) = u.l[0];
+		task_thread(current).TS_FPR(rn) = u.l[0];
 	if (nb == 16) {
 		/* lfdp */
 		rn |= 1;
 		if (regs->msr & MSR_FP)
 			put_fpr(rn, &u.d[1]);
 		else
-			current->thread.TS_FPR(rn) = u.l[1];
+			task_thread(current).TS_FPR(rn) = u.l[1];
 	}
 	preempt_enable();
 	return 0;
@@ -648,7 +648,7 @@ static int do_fp_store(struct instruction_op *op, unsigned long ea,
 	if (regs->msr & MSR_FP)
 		get_fpr(rn, &u.d[0]);
 	else
-		u.l[0] = current->thread.TS_FPR(rn);
+		u.l[0] = task_thread(current).TS_FPR(rn);
 	if (nb == 4) {
 		if (op->type & FPCONV)
 			conv_dp_to_sp(&u.d[0], &u.f);
@@ -660,7 +660,7 @@ static int do_fp_store(struct instruction_op *op, unsigned long ea,
 		if (regs->msr & MSR_FP)
 			get_fpr(rn, &u.d[1]);
 		else
-			u.l[1] = current->thread.TS_FPR(rn);
+			u.l[1] = task_thread(current).TS_FPR(rn);
 	}
 	preempt_enable();
 	if (unlikely(cross_endian)) {
@@ -698,7 +698,7 @@ static nokprobe_inline int do_vec_load(int rn, unsigned long ea,
 	if (regs->msr & MSR_VEC)
 		put_vr(rn, &u.v);
 	else
-		current->thread.vr_state.vr[rn] = u.v;
+		task_thread(current).vr_state.vr[rn] = u.v;
 	preempt_enable();
 	return 0;
 }
@@ -721,7 +721,7 @@ static nokprobe_inline int do_vec_store(int rn, unsigned long ea,
 	if (regs->msr & MSR_VEC)
 		get_vr(rn, &u.v);
 	else
-		u.v = current->thread.vr_state.vr[rn];
+		u.v = task_thread(current).vr_state.vr[rn];
 	preempt_enable();
 	if (unlikely(cross_endian))
 		do_byte_reverse(&u.b[ea & 0xf], size);
@@ -979,8 +979,8 @@ static nokprobe_inline int do_vsx_load(struct instruction_op *op,
 		} else {
 			for (i = 0; i < nr_vsx_regs; i++) {
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
-				current->thread.fp_state.fpr[reg + i][0] = buf[j].d[0];
-				current->thread.fp_state.fpr[reg + i][1] = buf[j].d[1];
+				task_thread(current).fp_state.fpr[reg + i][0] = buf[j].d[0];
+				task_thread(current).fp_state.fpr[reg + i][1] = buf[j].d[1];
 			}
 		}
 	} else {
@@ -992,7 +992,7 @@ static nokprobe_inline int do_vsx_load(struct instruction_op *op,
 		} else {
 			for (i = 0; i < nr_vsx_regs; i++) {
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
-				current->thread.vr_state.vr[reg - 32 + i] = buf[j].v;
+				task_thread(current).vr_state.vr[reg - 32 + i] = buf[j].v;
 			}
 		}
 	}
@@ -1025,8 +1025,8 @@ static nokprobe_inline int do_vsx_store(struct instruction_op *op,
 		} else {
 			for (i = 0; i < nr_vsx_regs; i++) {
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
-				buf[j].d[0] = current->thread.fp_state.fpr[reg + i][0];
-				buf[j].d[1] = current->thread.fp_state.fpr[reg + i][1];
+				buf[j].d[0] = task_thread(current).fp_state.fpr[reg + i][0];
+				buf[j].d[1] = task_thread(current).fp_state.fpr[reg + i][1];
 			}
 		}
 	} else {
@@ -1038,7 +1038,7 @@ static nokprobe_inline int do_vsx_store(struct instruction_op *op,
 		} else {
 			for (i = 0; i < nr_vsx_regs; i++) {
 				j = IS_LE ? nr_vsx_regs - i - 1 : i;
-				buf[j].v = current->thread.vr_state.vr[reg - 32 + i];
+				buf[j].v = task_thread(current).vr_state.vr[reg - 32 + i];
 			}
 		}
 	}

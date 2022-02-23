@@ -68,7 +68,7 @@ pfm_ita_pmc_check(struct task_struct *task, pfm_context_t *ctx, unsigned int cnu
 		DPRINT(("pmc[%d]=0x%lx has active pmc13.ta cleared, clearing ibr\n", cnum, *val));
 
 		/* don't mix debug with perfmon */
-		if (task && (task->thread.flags & IA64_THREAD_DBG_VALID) != 0) return -EINVAL;
+		if (task && (task_thread(task).flags & IA64_THREAD_DBG_VALID) != 0) return -EINVAL;
 
 		/*
 		 * a count of 0 will mark the debug registers as in use and also
@@ -87,7 +87,7 @@ pfm_ita_pmc_check(struct task_struct *task, pfm_context_t *ctx, unsigned int cnu
 		DPRINT(("pmc[%d]=0x%lx has active pmc11.pt cleared, clearing dbr\n", cnum, *val));
 
 		/* don't mix debug with perfmon */
-		if (task && (task->thread.flags & IA64_THREAD_DBG_VALID) != 0) return -EINVAL;
+		if (task && (task_thread(task).flags & IA64_THREAD_DBG_VALID) != 0) return -EINVAL;
 
 		/*
 		 * a count of 0 will mark the debug registers as in use and also

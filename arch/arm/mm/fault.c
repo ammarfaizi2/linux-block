@@ -179,9 +179,9 @@ __do_user_fault(unsigned long addr, unsigned int fsr, unsigned int sig,
 				   tsk->comm, addr);
 #endif
 
-	tsk->thread.address = addr;
-	tsk->thread.error_code = fsr;
-	tsk->thread.trap_no = 14;
+	task_thread(tsk).address = addr;
+	task_thread(tsk).error_code = fsr;
+	task_thread(tsk).trap_no = 14;
 	force_sig_fault(sig, code, (void __user *)addr);
 }
 

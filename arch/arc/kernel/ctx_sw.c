@@ -44,7 +44,7 @@ __switch_to(struct task_struct *prev_task, struct task_struct *next_task)
 		"sub     sp, sp, 4      \n\t"	/* usual r25 placeholder */
 #endif
 
-		/* set ksp of outgoing task in tsk->thread.ksp */
+		/* set ksp of outgoing task in task_thread(tsk).ksp */
 #if KSP_WORD_OFF <= 255
 		"st.as   sp, [%3, %1]    \n\t"
 #else
@@ -75,7 +75,7 @@ __switch_to(struct task_struct *prev_task, struct task_struct *next_task)
 		"mov r25, %2   \n\t"
 #endif
 
-		/* get ksp of incoming task from tsk->thread.ksp */
+		/* get ksp of incoming task from task_thread(tsk).ksp */
 		"ld.as  sp, [%2, %1]   \n\t"
 
 		/* start loading it's CALLEE reg file */

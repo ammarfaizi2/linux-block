@@ -402,9 +402,9 @@ static inline vm_fault_t do_exception(struct pt_regs *regs, int access)
 	gmap = NULL;
 	if (IS_ENABLED(CONFIG_PGSTE) && type == GMAP_FAULT) {
 		gmap = (struct gmap *) S390_lowcore.gmap;
-		current->thread.gmap_addr = address;
-		current->thread.gmap_write_flag = !!(flags & FAULT_FLAG_WRITE);
-		current->thread.gmap_int_code = regs->int_code & 0xffff;
+		task_thread(current).gmap_addr = address;
+		task_thread(current).gmap_write_flag = !!(flags & FAULT_FLAG_WRITE);
+		task_thread(current).gmap_int_code = regs->int_code & 0xffff;
 		address = __gmap_translate(gmap, address);
 		if (address == -EFAULT) {
 			fault = VM_FAULT_BADMAP;
@@ -459,7 +459,7 @@ retry:
 			 * FAULT_FLAG_RETRY_NOWAIT has been set, mmap_lock has
 			 * not been released
 			 */
-			current->thread.gmap_pfault = 1;
+			task_thread(current).gmap_pfault = 1;
 			fault = VM_FAULT_PFAULT;
 			goto out_up;
 		}
@@ -469,7 +469,7 @@ retry:
 		goto retry;
 	}
 	if (IS_ENABLED(CONFIG_PGSTE) && gmap) {
-		address =  __gmap_link(gmap, current->thread.gmap_addr,
+		address =  __gmap_link(gmap, task_thread(current).gmap_addr,
 				       address);
 		if (address == -EFAULT) {
 			fault = VM_FAULT_BADMAP;
@@ -664,14 +664,14 @@ static void pfault_interrupt(struct ext_code ext_code,
 	spin_lock(&pfault_lock);
 	if (subcode & PF_COMPLETE) {
 		/* signal bit is set -> a page has been swapped in by VM */
-		if (tsk->thread.pfault_wait == 1) {
+		if (task_thread(tsk).pfault_wait == 1) {
 			/* Initial interrupt was faster than the completion
 			 * interrupt. pfault_wait is valid. Set pfault_wait
 			 * back to zero and wake up the process. This can
 			 * safely be done because the task is still sleeping
 			 * and can't produce new pfaults. */
-			tsk->thread.pfault_wait = 0;
-			list_del(&tsk->thread.list);
+			task_thread(tsk).pfault_wait = 0;
+			list_del(&task_thread(tsk).list);
 			wake_up_process(tsk);
 			put_task_struct(tsk);
 		} else {
@@ -683,20 +683,20 @@ static void pfault_interrupt(struct ext_code ext_code,
 			 * CANCEL operation which didn't remove all pending
 			 * completion interrupts. */
 			if (task_is_running(tsk))
-				tsk->thread.pfault_wait = -1;
+				task_thread(tsk).pfault_wait = -1;
 		}
 	} else {
 		/* signal bit not set -> a real page is missing. */
 		if (WARN_ON_ONCE(tsk != current))
 			goto out;
-		if (tsk->thread.pfault_wait == 1) {
+		if (task_thread(tsk).pfault_wait == 1) {
 			/* Already on the list with a reference: put to sleep */
 			goto block;
-		} else if (tsk->thread.pfault_wait == -1) {
+		} else if (task_thread(tsk).pfault_wait == -1) {
 			/* Completion interrupt was faster than the initial
 			 * interrupt (pfault_wait == -1). Set pfault_wait
 			 * back to zero and exit. */
-			tsk->thread.pfault_wait = 0;
+			task_thread(tsk).pfault_wait = 0;
 		} else {
 			/* Initial interrupt arrived before completion
 			 * interrupt. Let the task sleep.
@@ -704,8 +704,8 @@ static void pfault_interrupt(struct ext_code ext_code,
 			 * cpu may set the task state to TASK_RUNNING again
 			 * before the scheduler is reached. */
 			get_task_struct(tsk);
-			tsk->thread.pfault_wait = 1;
-			list_add(&tsk->thread.list, &pfault_list);
+			task_thread(tsk).pfault_wait = 1;
+			list_add(&task_thread(tsk).list, &pfault_list);
 block:
 			/* Since this must be a userspace fault, there
 			 * is no kernel task state to trample. Rely on the

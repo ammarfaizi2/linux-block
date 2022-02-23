@@ -402,7 +402,7 @@ static void emulate_load_store_insn(struct pt_regs *regs,
 		die_if_kernel("Unaligned FP access in kernel code", regs);
 		BUG_ON(!used_math());
 
-		res = fpu_emulator_cop1Handler(regs, &current->thread.fpu, 1,
+		res = fpu_emulator_cop1Handler(regs, &task_thread(current).fpu, 1,
 					       &fault_addr);
 		own_fpu(1);	/* Restore FPU state. */
 
@@ -434,7 +434,7 @@ static void emulate_load_store_insn(struct pt_regs *regs,
 
 		df = insn.msa_mi10_format.df;
 		wd = insn.msa_mi10_format.wd;
-		fpr = &current->thread.fpu.fpr[wd];
+		fpr = &task_thread(current).fpu.fpr[wd];
 
 		switch (insn.msa_mi10_format.func) {
 		case msa_ld_op:
@@ -923,7 +923,7 @@ fpu_emul:
 		BUG_ON(!used_math());
 		BUG_ON(!is_fpu_owner());
 
-		res = fpu_emulator_cop1Handler(regs, &current->thread.fpu, 1,
+		res = fpu_emulator_cop1Handler(regs, &task_thread(current).fpu, 1,
 					       &fault_addr);
 		own_fpu(1);	/* restore FPU state */
 

@@ -239,8 +239,8 @@ void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 	for (reg = GDB_R8; reg < GDB_R15; reg++)
 		gdb_regs[reg] = thread_regs->regs[reg];
 
-	gdb_regs[GDB_R15] = p->thread.sp;
-	gdb_regs[GDB_PC] = p->thread.pc;
+	gdb_regs[GDB_R15] = task_thread(p).sp;
+	gdb_regs[GDB_PC] = task_thread(p).pc;
 
 	/*
 	 * Additional registers we have context for

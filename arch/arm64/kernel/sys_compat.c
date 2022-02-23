@@ -90,7 +90,7 @@ long compat_arm_syscall(struct pt_regs *regs, int scno)
 		return do_compat_cache_op(regs->regs[0], regs->regs[1], regs->regs[2]);
 
 	case __ARM_NR_compat_set_tls:
-		current->thread.uw.tp_value = regs->regs[0];
+		task_thread(current).uw.tp_value = regs->regs[0];
 
 		/*
 		 * Protect against register corruption from context switch.

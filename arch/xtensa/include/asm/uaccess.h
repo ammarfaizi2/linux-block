@@ -32,8 +32,8 @@
 #define KERNEL_DS	((mm_segment_t) { 0 })
 #define USER_DS		((mm_segment_t) { 1 })
 
-#define get_fs()	(current->thread.current_ds)
-#define set_fs(val)	(current->thread.current_ds = (val))
+#define get_fs()	(task_thread(current).current_ds)
+#define set_fs(val)	(task_thread(current).current_ds = (val))
 
 #define uaccess_kernel() (get_fs().seg == KERNEL_DS.seg)
 

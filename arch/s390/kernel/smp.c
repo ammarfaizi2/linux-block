@@ -281,11 +281,11 @@ static void pcpu_attach_task(struct pcpu *pcpu, struct task_struct *tsk)
 	lc->current_task = (unsigned long) tsk;
 	lc->lpp = LPP_MAGIC;
 	lc->current_pid = tsk->pid;
-	lc->user_timer = tsk->thread.user_timer;
-	lc->guest_timer = tsk->thread.guest_timer;
-	lc->system_timer = tsk->thread.system_timer;
-	lc->hardirq_timer = tsk->thread.hardirq_timer;
-	lc->softirq_timer = tsk->thread.softirq_timer;
+	lc->user_timer = task_thread(tsk).user_timer;
+	lc->guest_timer = task_thread(tsk).guest_timer;
+	lc->system_timer = task_thread(tsk).system_timer;
+	lc->hardirq_timer = task_thread(tsk).hardirq_timer;
+	lc->softirq_timer = task_thread(tsk).softirq_timer;
 	lc->steal_timer = 0;
 }
 

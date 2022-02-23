@@ -173,7 +173,7 @@ static void __user *apply_user_offset(
 static int preserve_fpsimd_context(struct fpsimd_context __user *ctx)
 {
 	struct user_fpsimd_state const *fpsimd =
-		&current->thread.uw.fpsimd_state;
+		&task_thread(current).uw.fpsimd_state;
 	int err;
 
 	/* copy the FP and status/control registers */
@@ -251,7 +251,7 @@ static int preserve_sve_context(struct sve_context __user *ctx)
 		 * fpsimd_signal_preserve_current_state().
 		 */
 		err |= __copy_to_user((char __user *)ctx + SVE_SIG_REGS_OFFSET,
-				      current->thread.sve_state,
+				      task_thread(current).sve_state,
 				      SVE_SIG_REGS_SIZE(vq));
 	}
 
@@ -292,12 +292,12 @@ static int restore_sve_fpsimd_context(struct user_ctxs *user)
 	/* From now, fpsimd_thread_switch() won't touch thread.sve_state */
 
 	sve_alloc(current);
-	if (!current->thread.sve_state) {
+	if (!task_thread(current).sve_state) {
 		clear_thread_flag(TIF_SVE);
 		return -ENOMEM;
 	}
 
-	err = __copy_from_user(current->thread.sve_state,
+	err = __copy_from_user(task_thread(current).sve_state,
 			       (char __user const *)user->sve +
 					SVE_SIG_REGS_OFFSET,
 			       SVE_SIG_REGS_SIZE(vq));
@@ -585,7 +585,7 @@ static int setup_sigframe_layout(struct rt_sigframe_user_layout *user,
 		return err;
 
 	/* fault information, if valid */
-	if (add_all || current->thread.fault_code) {
+	if (add_all || task_thread(current).fault_code) {
 		err = sigframe_alloc(user, &user->esr_offset,
 				     sizeof(struct esr_context));
 		if (err)
@@ -630,7 +630,7 @@ static int setup_sigframe(struct rt_sigframe_user_layout *user,
 	__put_user_error(regs->pc, &sf->uc.uc_mcontext.pc, err);
 	__put_user_error(regs->pstate, &sf->uc.uc_mcontext.pstate, err);
 
-	__put_user_error(current->thread.fault_address, &sf->uc.uc_mcontext.fault_address, err);
+	__put_user_error(task_thread(current).fault_address, &sf->uc.uc_mcontext.fault_address, err);
 
 	err |= __copy_to_user(&sf->uc.uc_sigmask, set, sizeof(*set));
 
@@ -647,7 +647,7 @@ static int setup_sigframe(struct rt_sigframe_user_layout *user,
 
 		__put_user_error(ESR_MAGIC, &esr_ctx->head.magic, err);
 		__put_user_error(sizeof(*esr_ctx), &esr_ctx->head.size, err);
-		__put_user_error(current->thread.fault_code, &esr_ctx->esr, err);
+		__put_user_error(task_thread(current).fault_code, &esr_ctx->esr, err);
 	}
 
 	/* Scalable Vector Extension state, if present */

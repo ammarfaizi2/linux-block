@@ -72,7 +72,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 	ss = (struct hexagon_switch_stack *) ((unsigned long) childregs -
 						    sizeof(*ss));
 	ss->lr = (unsigned long)ret_from_fork;
-	p->thread.switch_sp = ss;
+	task_thread(p).switch_sp = ss;
 	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
 		memset(childregs, 0, sizeof(struct pt_regs));
 		/* r24 <- fn, r25 <- arg */
@@ -137,7 +137,7 @@ unsigned long __get_wchan(struct task_struct *p)
 	int count = 0;
 
 	stack_page = (unsigned long)task_stack_page(p);
-	fp = ((struct hexagon_switch_stack *)p->thread.switch_sp)->fp;
+	fp = ((struct hexagon_switch_stack *)task_thread(p).switch_sp)->fp;
 	do {
 		if (fp < (stack_page + sizeof(struct thread_info)) ||
 			fp >= (THREAD_SIZE - 8 + stack_page))

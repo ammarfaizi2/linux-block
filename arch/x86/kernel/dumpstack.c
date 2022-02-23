@@ -418,7 +418,7 @@ static int __die_body(const char *str, struct pt_regs *regs, long err)
 	print_modules();
 
 	if (notify_die(DIE_OOPS, str, regs, err,
-			current->thread.trap_nr, SIGSEGV) == NOTIFY_STOP)
+			task_thread(current).trap_nr, SIGSEGV) == NOTIFY_STOP)
 		return 1;
 
 	return 0;

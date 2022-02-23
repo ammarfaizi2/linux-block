@@ -125,7 +125,7 @@
  * (By default only scratch regs are saved on entry to kernel)
  *
  * Special handling for r25 if used for caching Task Pointer.
- * It would have been saved in task->thread.user_r25 already, but to keep
+ * It would have been saved in task_thread(task).user_r25 already, but to keep
  * the interface same it is copied into regular r25 placeholder in
  * struct callee_regs.
  *-------------------------------------------------------------*/

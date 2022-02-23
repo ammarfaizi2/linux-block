@@ -147,7 +147,7 @@ void show_stack(struct task_struct *tsk, unsigned long *sp, const char *loglvl)
 	if (tsk == current)
 		sp = (unsigned long *)current_stack_pointer;
 	else
-		sp = (unsigned long *)tsk->thread.sp;
+		sp = (unsigned long *)task_thread(tsk).sp;
 
 	stack = (unsigned long)sp;
 	dump_mem("Stack: ", loglvl, stack, THREAD_SIZE +

@@ -167,7 +167,7 @@ static __inline__ void enable_fpu(void)
 /*
  * Return saved PC of a blocked thread.
  */
-#define thread_saved_pc(tsk)	(tsk->thread.pc)
+#define thread_saved_pc(tsk)	(task_thread(tsk).pc)
 
 void show_trace(struct task_struct *tsk, unsigned long *sp,
 		struct pt_regs *regs, const char *loglvl);

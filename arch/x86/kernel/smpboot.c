@@ -1088,10 +1088,10 @@ static int do_boot_cpu(int apicid, int cpu, struct task_struct *idle,
 	unsigned long boot_error = 0;
 	unsigned long timeout;
 
-	idle->thread.sp = (unsigned long)task_pt_regs(idle);
+	task_thread(idle).sp = (unsigned long)task_pt_regs(idle);
 	early_gdt_descr.address = (unsigned long)get_cpu_gdt_rw(cpu);
 	initial_code = (unsigned long)start_secondary;
-	initial_stack  = idle->thread.sp;
+	initial_stack  = task_thread(idle).sp;
 
 	/* Enable the espfix hack for this CPU */
 	init_espfix_ap(cpu);

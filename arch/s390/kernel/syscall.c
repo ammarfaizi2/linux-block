@@ -141,7 +141,7 @@ static void do_syscall(struct pt_regs *regs)
 	if (likely(nr >= NR_syscalls))
 		goto out;
 	do {
-		regs->gprs[2] = current->thread.sys_call_table[nr](regs);
+		regs->gprs[2] = task_thread(current).sys_call_table[nr](regs);
 	} while (test_and_clear_pt_regs_flag(regs, PIF_EXECVE_PGSTE_RESTART));
 out:
 	syscall_exit_to_user_mode_work(regs);
@@ -155,7 +155,7 @@ void noinstr __do_syscall(struct pt_regs *regs, int per_trap)
 	regs->int_code = S390_lowcore.svc_int_code;
 	update_timer_sys();
 	if (static_branch_likely(&cpu_has_bear))
-		current->thread.last_break = regs->last_break;
+		task_thread(current).last_break = regs->last_break;
 
 	local_irq_enable();
 	regs->orig_gpr2 = regs->gprs[2];

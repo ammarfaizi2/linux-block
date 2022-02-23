@@ -144,7 +144,7 @@ void __unwind_start(struct unwind_state *state, struct task_struct *task,
 	} else if (task == current) {
 		sp = current_frame_address();
 	} else {
-		sp = task->thread.ksp;
+		sp = task_thread(task).ksp;
 	}
 
 	/* Get current stack pointer and initialize stack info */

@@ -67,9 +67,9 @@ static inline void update_task_stack(struct task_struct *task)
 	/* sp0 always points to the entry trampoline stack, which is constant: */
 #ifdef CONFIG_X86_32
 	if (static_cpu_has(X86_FEATURE_XENPV))
-		load_sp0(task->thread.sp0);
+		load_sp0(task_thread(task).sp0);
 	else
-		this_cpu_write(cpu_tss_rw.x86_tss.sp1, task->thread.sp0);
+		this_cpu_write(cpu_tss_rw.x86_tss.sp1, task_thread(task).sp0);
 #else
 	/* Xen PV enters the kernel on the thread stack. */
 	if (static_cpu_has(X86_FEATURE_XENPV))

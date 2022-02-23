@@ -255,9 +255,9 @@ bad_area_nosemaphore:
 	/* User mode accesses just cause a SIGSEGV */
 
 	if (user_mode(regs)) {
-		tsk->thread.address = addr;
-		tsk->thread.error_code = error_code;
-		tsk->thread.trap_no = entry;
+		task_thread(tsk).address = addr;
+		task_thread(tsk).error_code = error_code;
+		task_thread(tsk).trap_no = entry;
 		force_sig_fault(SIGSEGV, si_code, (void __user *)addr);
 		return;
 	}
@@ -320,9 +320,9 @@ do_sigbus:
 	/*
 	 * Send a sigbus
 	 */
-	tsk->thread.address = addr;
-	tsk->thread.error_code = error_code;
-	tsk->thread.trap_no = entry;
+	task_thread(tsk).address = addr;
+	task_thread(tsk).error_code = error_code;
+	task_thread(tsk).trap_no = entry;
 	force_sig_fault(SIGBUS, BUS_ADRERR, (void __user *)addr);
 
 	return;

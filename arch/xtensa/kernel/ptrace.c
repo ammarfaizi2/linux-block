@@ -372,12 +372,12 @@ static void ptrace_hbptriggered(struct perf_event *bp,
 
 	if (bp->attr.bp_type & HW_BREAKPOINT_X) {
 		for (i = 0; i < XCHAL_NUM_IBREAK; ++i)
-			if (current->thread.ptrace_bp[i] == bp)
+			if (task_thread(current).ptrace_bp[i] == bp)
 				break;
 		i <<= 1;
 	} else {
 		for (i = 0; i < XCHAL_NUM_DBREAK; ++i)
-			if (current->thread.ptrace_wp[i] == bp)
+			if (task_thread(current).ptrace_wp[i] == bp)
 				break;
 		i = (i << 1) | 1;
 	}
@@ -426,9 +426,9 @@ static long ptrace_gethbpregs(struct task_struct *child, long addr,
 		return -EINVAL;
 
 	if (dbreak)
-		bp = child->thread.ptrace_wp[idx];
+		bp = task_thread(child).ptrace_wp[idx];
 	else
-		bp = child->thread.ptrace_bp[idx];
+		bp = task_thread(child).ptrace_bp[idx];
 
 	if (bp) {
 		user_data[0] = bp->attr.bp_addr;
@@ -465,13 +465,13 @@ static long ptrace_sethbpregs(struct task_struct *child, long addr,
 		return -EFAULT;
 
 	if (dbreak) {
-		bp = child->thread.ptrace_wp[idx];
+		bp = task_thread(child).ptrace_wp[idx];
 		if (user_data[1] & DBREAKC_LOAD_MASK)
 			bp_type |= HW_BREAKPOINT_R;
 		if (user_data[1] & DBREAKC_STOR_MASK)
 			bp_type |= HW_BREAKPOINT_W;
 	} else {
-		bp = child->thread.ptrace_bp[idx];
+		bp = task_thread(child).ptrace_bp[idx];
 		bp_type = HW_BREAKPOINT_X;
 	}
 
@@ -481,9 +481,9 @@ static long ptrace_sethbpregs(struct task_struct *child, long addr,
 		if (IS_ERR(bp))
 			return PTR_ERR(bp);
 		if (dbreak)
-			child->thread.ptrace_wp[idx] = bp;
+			task_thread(child).ptrace_wp[idx] = bp;
 		else
-			child->thread.ptrace_bp[idx] = bp;
+			task_thread(child).ptrace_bp[idx] = bp;
 	}
 
 	attr = bp->attr;

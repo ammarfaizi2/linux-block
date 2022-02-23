@@ -185,7 +185,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 	 * this to populate kernel thread entry-pt/args into callee regs,
 	 * so that ret_from_kernel_thread() becomes simpler.
 	 */
-	p->thread.ksp = (unsigned long)c_callee;	/* THREAD_KSP */
+	task_thread(p).ksp = (unsigned long)c_callee;	/* THREAD_KSP */
 
 	/* __switch_to expects FP(0), BLINK(return addr) at top */
 	childksp[0] = 0;			/* fp */

@@ -273,9 +273,9 @@ setup_sigframe(struct sigframe __user *sf, struct pt_regs *regs, sigset_t *set)
 		.arm_pc        = regs->ARM_pc,
 		.arm_cpsr      = regs->ARM_cpsr,
 
-		.trap_no       = current->thread.trap_no,
-		.error_code    = current->thread.error_code,
-		.fault_address = current->thread.address,
+		.trap_no       = task_thread(current).trap_no,
+		.error_code    = task_thread(current).error_code,
+		.fault_address = task_thread(current).address,
 		.oldmask       = set->sig[0],
 	};
 

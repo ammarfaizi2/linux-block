@@ -188,7 +188,7 @@ int
 copy_thread(unsigned long clone_flags, unsigned long usp,
 	    unsigned long kthread_arg, struct task_struct *p, unsigned long tls)
 {
-	struct pt_regs *cregs = &(p->thread.regs);
+	struct pt_regs *cregs = &(task_thread(p).regs);
 	void *stack = task_stack_page(p);
 	
 	/* We have to use void * instead of a function pointer, because

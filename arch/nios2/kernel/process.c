@@ -119,8 +119,8 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 		childregs->estatus = STATUS_PIE;
 		childregs->sp = (unsigned long) childstack;
 
-		p->thread.ksp = (unsigned long) childstack;
-		p->thread.kregs = childregs;
+		task_thread(p).ksp = (unsigned long) childstack;
+		task_thread(p).kregs = childregs;
 		return 0;
 	}
 
@@ -132,8 +132,8 @@ int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
 	stack = ((struct switch_stack *) regs) - 1;
 	*childstack = *stack;
 	childstack->ra = (unsigned long)ret_from_fork;
-	p->thread.kregs = childregs;
-	p->thread.ksp = (unsigned long) childstack;
+	task_thread(p).kregs = childregs;
+	task_thread(p).ksp = (unsigned long) childstack;
 
 	if (usp)
 		childregs->sp = usp;
@@ -224,7 +224,7 @@ unsigned long __get_wchan(struct task_struct *p)
 	int count = 0;
 
 	stack_page = (unsigned long)p;
-	fp = ((struct switch_stack *)p->thread.ksp)->fp;	/* ;dgt2 */
+	fp = ((struct switch_stack *)task_thread(p).ksp)->fp;	/* ;dgt2 */
 	do {
 		if (fp < stack_page+sizeof(struct task_struct) ||
 			fp >= 8184+stack_page)	/* ;dgt2;tmp */

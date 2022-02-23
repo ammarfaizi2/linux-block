@@ -34,9 +34,9 @@ void notrace walk_stackframe(struct task_struct *task, struct pt_regs *regs,
 		pc = (unsigned long)walk_stackframe;
 	} else {
 		/* task blocked in __switch_to */
-		fp = task->thread.s[0];
-		sp = task->thread.sp;
-		pc = task->thread.ra;
+		fp = task_thread(task).s[0];
+		sp = task_thread(task).sp;
+		pc = task_thread(task).ra;
 	}
 
 	for (;;) {
@@ -82,8 +82,8 @@ void notrace walk_stackframe(struct task_struct *task,
 		pc = (unsigned long)walk_stackframe;
 	} else {
 		/* task blocked in __switch_to */
-		sp = task->thread.sp;
-		pc = task->thread.ra;
+		sp = task_thread(task).sp;
+		pc = task_thread(task).ra;
 	}
 
 	if (unlikely(sp & 0x7))

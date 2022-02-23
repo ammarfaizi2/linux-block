@@ -13,7 +13,7 @@
 void user_enable_single_step(struct task_struct *child)
 {
 	child->ptrace |= PT_DTRACE;
-	child->thread.singlestep_syscall = 0;
+	task_thread(child).singlestep_syscall = 0;
 
 #ifdef SUBARCH_SET_SINGLESTEPPING
 	SUBARCH_SET_SINGLESTEPPING(child, 1);
@@ -23,7 +23,7 @@ void user_enable_single_step(struct task_struct *child)
 void user_disable_single_step(struct task_struct *child)
 {
 	child->ptrace &= ~PT_DTRACE;
-	child->thread.singlestep_syscall = 0;
+	task_thread(child).singlestep_syscall = 0;
 
 #ifdef SUBARCH_SET_SINGLESTEPPING
 	SUBARCH_SET_SINGLESTEPPING(child, 0);

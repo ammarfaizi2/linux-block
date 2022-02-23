@@ -83,9 +83,9 @@ void save_stack_trace_tsk(struct task_struct *tsk, struct stack_trace *trace)
 	WARN_ON(trace->nr_entries || !trace->max_entries);
 
 	if (tsk != current) {
-		regs->regs[29] = tsk->thread.reg29;
+		regs->regs[29] = task_thread(tsk).reg29;
 		regs->regs[31] = 0;
-		regs->cp0_epc = tsk->thread.reg31;
+		regs->cp0_epc = task_thread(tsk).reg31;
 	} else
 		prepare_frametrace(regs);
 	save_context_stack(trace, tsk, regs, tsk == current);

@@ -72,7 +72,7 @@ static const struct stacktrace_ops save_stack_ops_nosched = {
 
 void save_stack_trace_tsk(struct task_struct *tsk, struct stack_trace *trace)
 {
-	unsigned long *sp = (unsigned long *)tsk->thread.sp;
+	unsigned long *sp = (unsigned long *)task_thread(tsk).sp;
 
 	unwind_stack(current, NULL, sp,  &save_stack_ops_nosched, trace);
 }

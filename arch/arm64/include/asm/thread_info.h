@@ -46,11 +46,11 @@ struct thread_info {
 };
 
 #define thread_saved_pc(tsk)	\
-	((unsigned long)(tsk->thread.cpu_context.pc))
+	((unsigned long)(task_thread(tsk).cpu_context.pc))
 #define thread_saved_sp(tsk)	\
-	((unsigned long)(tsk->thread.cpu_context.sp))
+	((unsigned long)(task_thread(tsk).cpu_context.sp))
 #define thread_saved_fp(tsk)	\
-	((unsigned long)(tsk->thread.cpu_context.fp))
+	((unsigned long)(task_thread(tsk).cpu_context.fp))
 
 void arch_setup_new_exec(void);
 #define arch_setup_new_exec     arch_setup_new_exec

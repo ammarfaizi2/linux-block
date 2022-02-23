@@ -115,8 +115,8 @@ do_trap_no_signal(struct task_struct *tsk, int trapnr, const char *str,
 		if (fixup_exception(regs, trapnr, error_code, 0))
 			return 0;
 
-		tsk->thread.error_code = error_code;
-		tsk->thread.trap_nr = trapnr;
+		task_thread(tsk).error_code = error_code;
+		task_thread(tsk).trap_nr = trapnr;
 		die(str, regs, error_code);
 	} else {
 		if (fixup_vdso_exception(regs, trapnr, error_code, 0))
@@ -132,8 +132,8 @@ do_trap_no_signal(struct task_struct *tsk, int trapnr, const char *str,
 	 * the information about previously queued, but not yet
 	 * delivered, faults.  See also exc_general_protection below.
 	 */
-	tsk->thread.error_code = error_code;
-	tsk->thread.trap_nr = trapnr;
+	task_thread(tsk).error_code = error_code;
+	task_thread(tsk).trap_nr = trapnr;
 
 	return -1;
 }
@@ -417,8 +417,8 @@ DEFINE_IDTENTRY_DF(exc_double_fault)
 	instrumentation_begin();
 	notify_die(DIE_TRAP, str, regs, error_code, X86_TRAP_DF, SIGSEGV);
 
-	tsk->thread.error_code = error_code;
-	tsk->thread.trap_nr = X86_TRAP_DF;
+	task_thread(tsk).error_code = error_code;
+	task_thread(tsk).trap_nr = X86_TRAP_DF;
 
 #ifdef CONFIG_VMAP_STACK
 	/*
@@ -531,7 +531,7 @@ static enum kernel_gp_hint get_kernel_gp_address(struct pt_regs *regs,
 
 static bool fixup_iopl_exception(struct pt_regs *regs)
 {
-	struct thread_struct *t = &current->thread;
+	struct thread_struct *t = &task_thread(current);
 	unsigned char byte;
 	unsigned long ip;
 
@@ -587,8 +587,8 @@ DEFINE_IDTENTRY_ERRORCODE(exc_general_protection)
 		if (fixup_iopl_exception(regs))
 			goto exit;
 
-		tsk->thread.error_code = error_code;
-		tsk->thread.trap_nr = X86_TRAP_GP;
+		task_thread(tsk).error_code = error_code;
+		task_thread(tsk).trap_nr = X86_TRAP_GP;
 
 		if (fixup_vdso_exception(regs, X86_TRAP_GP, error_code, 0))
 			goto exit;
@@ -601,8 +601,8 @@ DEFINE_IDTENTRY_ERRORCODE(exc_general_protection)
 	if (fixup_exception(regs, X86_TRAP_GP, error_code, 0))
 		goto exit;
 
-	tsk->thread.error_code = error_code;
-	tsk->thread.trap_nr = X86_TRAP_GP;
+	task_thread(tsk).error_code = error_code;
+	task_thread(tsk).trap_nr = X86_TRAP_GP;
 
 	/*
 	 * To be potentially processing a kprobe fault and to trust the result
@@ -984,7 +984,7 @@ static __always_inline void exc_debug_user(struct pt_regs *regs,
 	 * Userspace expects DR_STEP to be visible in ptrace_get_debugreg(6)
 	 * even if it is not the result of PTRACE_SINGLESTEP.
 	 */
-	current->thread.virtual_dr6 = (dr6 & DR_STEP);
+	task_thread(current).virtual_dr6 = (dr6 & DR_STEP);
 
 	/*
 	 * The SDM says "The processor clears the BTF flag when it
@@ -1016,7 +1016,7 @@ static __always_inline void exc_debug_user(struct pt_regs *regs,
 		handle_bus_lock(regs);
 
 	/* Add the virtual_dr6 bits for signals. */
-	dr6 |= current->thread.virtual_dr6;
+	dr6 |= task_thread(current).virtual_dr6;
 	if (dr6 & (DR_STEP | DR_TRAP_BITS) || icebp)
 		send_sigtrap(regs, 0, get_si_code(dr6));
 
@@ -1060,7 +1060,7 @@ DEFINE_IDTENTRY_RAW(exc_debug)
 static void math_error(struct pt_regs *regs, int trapnr)
 {
 	struct task_struct *task = current;
-	struct fpu *fpu = task->thread.fpu;
+	struct fpu *fpu = task_thread(task).fpu;
 	int si_code;
 	char *str = (trapnr == X86_TRAP_MF) ? "fpu exception" :
 						"simd exception";
@@ -1071,8 +1071,8 @@ static void math_error(struct pt_regs *regs, int trapnr)
 		if (fixup_exception(regs, trapnr, 0, 0))
 			goto exit;
 
-		task->thread.error_code = 0;
-		task->thread.trap_nr = trapnr;
+		task_thread(task).error_code = 0;
+		task_thread(task).trap_nr = trapnr;
 
 		if (notify_die(DIE_TRAP, str, regs, 0, trapnr,
 			       SIGFPE) != NOTIFY_STOP)
@@ -1086,8 +1086,8 @@ static void math_error(struct pt_regs *regs, int trapnr)
 	 */
 	fpu_sync_fpstate(fpu);
 
-	task->thread.trap_nr	= trapnr;
-	task->thread.error_code = 0;
+	task_thread(task).trap_nr	= trapnr;
+	task_thread(task).error_code = 0;
 
 	si_code = fpu__exception_code(fpu, trapnr);
 	/* Retry when we get spurious exceptions: */

@@ -240,7 +240,7 @@ static int copy_sc_to_user(struct sigcontext __user *to,
 			   unsigned long mask)
 {
 	struct sigcontext sc;
-	struct faultinfo * fi = &current->thread.arch.faultinfo;
+	struct faultinfo * fi = &task_thread(current).arch.faultinfo;
 	int err, pid;
 	memset(&sc, 0, sizeof(struct sigcontext));
 
@@ -332,7 +332,7 @@ static int copy_ucontext_to_user(struct ucontext __user *uc,
 	int err = 0;
 
 	err |= __save_altstack(&uc->uc_stack, sp);
-	err |= copy_sc_to_user(&uc->uc_mcontext, fp, &current->thread.regs, 0);
+	err |= copy_sc_to_user(&uc->uc_mcontext, fp, &task_thread(current).regs, 0);
 	err |= copy_to_user(&uc->uc_sigmask, set, sizeof(*set));
 	return err;
 }
@@ -453,7 +453,7 @@ int setup_signal_stack_si(unsigned long stack_top, struct ksignal *ksig,
 
 long sys_sigreturn(void)
 {
-	unsigned long sp = PT_REGS_SP(&current->thread.regs);
+	unsigned long sp = PT_REGS_SP(&task_thread(current).regs);
 	struct sigframe __user *frame = (struct sigframe __user *)(sp - 8);
 	sigset_t set;
 	struct sigcontext __user *sc = &frame->sc;
@@ -465,12 +465,12 @@ long sys_sigreturn(void)
 
 	set_current_blocked(&set);
 
-	if (copy_sc_from_user(&current->thread.regs, sc))
+	if (copy_sc_from_user(&task_thread(current).regs, sc))
 		goto segfault;
 
 	/* Avoid ERESTART handling */
-	PT_REGS_SYSCALL_NR(&current->thread.regs) = -1;
-	return PT_REGS_SYSCALL_RET(&current->thread.regs);
+	PT_REGS_SYSCALL_NR(&task_thread(current).regs) = -1;
+	return PT_REGS_SYSCALL_RET(&task_thread(current).regs);
 
  segfault:
 	force_sig(SIGSEGV);
@@ -560,7 +560,7 @@ int setup_signal_stack_si(unsigned long stack_top, struct ksignal *ksig,
 
 long sys_rt_sigreturn(void)
 {
-	unsigned long sp = PT_REGS_SP(&current->thread.regs);
+	unsigned long sp = PT_REGS_SP(&task_thread(current).regs);
 	struct rt_sigframe __user *frame =
 		(struct rt_sigframe __user *)(sp - sizeof(long));
 	struct ucontext __user *uc = &frame->uc;
@@ -571,12 +571,12 @@ long sys_rt_sigreturn(void)
 
 	set_current_blocked(&set);
 
-	if (copy_sc_from_user(&current->thread.regs, &uc->uc_mcontext))
+	if (copy_sc_from_user(&task_thread(current).regs, &uc->uc_mcontext))
 		goto segfault;
 
 	/* Avoid ERESTART handling */
-	PT_REGS_SYSCALL_NR(&current->thread.regs) = -1;
-	return PT_REGS_SYSCALL_RET(&current->thread.regs);
+	PT_REGS_SYSCALL_NR(&task_thread(current).regs) = -1;
+	return PT_REGS_SYSCALL_RET(&task_thread(current).regs);
 
  segfault:
 	force_sig(SIGSEGV);

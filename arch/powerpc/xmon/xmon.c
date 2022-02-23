@@ -3281,7 +3281,7 @@ static void show_task(struct task_struct *volatile tsk)
 		(p_state & TASK_INTERRUPTIBLE) ? 'S' : '?';
 
 	printf("%16px %16lx %16px %6d %6d %c %2d %s\n", tsk,
-		tsk->thread.ksp, tsk->thread.regs,
+		task_thread(tsk).ksp, task_thread(tsk).regs,
 		tsk->pid, rcu_dereference(tsk->parent)->pid,
 		state, task_cpu(tsk),
 		tsk->comm);

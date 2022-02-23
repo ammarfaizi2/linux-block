@@ -61,7 +61,7 @@ void start_thread(struct pt_regs * regs, unsigned long pc, unsigned long sp)
 	clear_thread_flag(TIF_MSA_CTX_LIVE);
 	clear_used_math();
 #ifdef CONFIG_MIPS_FP_SUPPORT
-	atomic_set(&current->thread.bd_emu_frame, BD_EMUFRAME_NONE);
+	atomic_set(&task_thread(current).bd_emu_frame, BD_EMUFRAME_NONE);
 #endif
 	init_dsp();
 	regs->cp0_epc = pc;
@@ -119,15 +119,15 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 	childregs = (struct pt_regs *) childksp - 1;
 	/*  Put the stack after the struct pt_regs.  */
 	childksp = (unsigned long) childregs;
-	p->thread.cp0_status = (read_c0_status() & ~(ST0_CU2|ST0_CU1)) | ST0_KERNEL_CUMASK;
+	task_thread(p).cp0_status = (read_c0_status() & ~(ST0_CU2|ST0_CU1)) | ST0_KERNEL_CUMASK;
 	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
 		/* kernel thread */
-		unsigned long status = p->thread.cp0_status;
+		unsigned long status = task_thread(p).cp0_status;
 		memset(childregs, 0, sizeof(struct pt_regs));
-		p->thread.reg16 = usp; /* fn */
-		p->thread.reg17 = kthread_arg;
-		p->thread.reg29 = childksp;
-		p->thread.reg31 = (unsigned long) ret_from_kernel_thread;
+		task_thread(p).reg16 = usp; /* fn */
+		task_thread(p).reg17 = kthread_arg;
+		task_thread(p).reg29 = childksp;
+		task_thread(p).reg31 = (unsigned long) ret_from_kernel_thread;
 #if defined(CONFIG_CPU_R3000) || defined(CONFIG_CPU_TX39XX)
 		status = (status & ~(ST0_KUP | ST0_IEP | ST0_IEC)) |
 			 ((status & (ST0_KUC | ST0_IEC)) << 2);
@@ -145,8 +145,8 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 	if (usp)
 		childregs->regs[29] = usp;
 
-	p->thread.reg29 = (unsigned long) childregs;
-	p->thread.reg31 = (unsigned long) ret_from_fork;
+	task_thread(p).reg29 = (unsigned long) childregs;
+	task_thread(p).reg31 = (unsigned long) ret_from_fork;
 
 	/*
 	 * New tasks lose permission to use the fpu. This accelerates context
@@ -163,7 +163,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 #endif /* CONFIG_MIPS_MT_FPAFF */
 
 #ifdef CONFIG_MIPS_FP_SUPPORT
-	atomic_set(&p->thread.bd_emu_frame, BD_EMUFRAME_NONE);
+	atomic_set(&task_thread(p).bd_emu_frame, BD_EMUFRAME_NONE);
 #endif
 
 	if (clone_flags & CLONE_SETTLS)
@@ -526,7 +526,7 @@ arch_initcall(frame_info_init);
  */
 static unsigned long thread_saved_pc(struct task_struct *tsk)
 {
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &task_thread(tsk);
 
 	/* New born processes are a special case */
 	if (t->reg31 == (unsigned long) ret_from_fork)
@@ -668,7 +668,7 @@ unsigned long __get_wchan(struct task_struct *task)
 	pc = thread_saved_pc(task);
 
 #ifdef CONFIG_KALLSYMS
-	sp = task->thread.reg29 + schedule_mfi.frame_size;
+	sp = task_thread(task).reg29 + schedule_mfi.frame_size;
 
 	while (in_sched_functions(pc))
 		pc = unwind_stack(task, &sp, pc, &ra);
@@ -688,7 +688,7 @@ unsigned long mips_stack_top(void)
 	}
 
 	/* Space for the VDSO, data page & GIC user page */
-	top -= PAGE_ALIGN(current->thread.abi->vdso->size);
+	top -= PAGE_ALIGN(task_thread(current).abi->vdso->size);
 	top -= PAGE_SIZE;
 	top -= mips_gic_present() ? PAGE_SIZE : 0;
 

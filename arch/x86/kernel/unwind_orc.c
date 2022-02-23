@@ -670,9 +670,9 @@ void __unwind_start(struct unwind_state *state, struct task_struct *task,
 			       "=r" (state->bp));
 
 	} else {
-		struct inactive_task_frame *frame = (void *)task->thread.sp;
+		struct inactive_task_frame *frame = (void *)task_thread(task).sp;
 
-		state->sp = task->thread.sp + sizeof(*frame);
+		state->sp = task_thread(task).sp + sizeof(*frame);
 		state->bp = READ_ONCE_NOCHECK(frame->bp);
 		state->ip = READ_ONCE_NOCHECK(frame->ret_addr);
 		state->signal = (void *)state->ip == ret_from_fork;

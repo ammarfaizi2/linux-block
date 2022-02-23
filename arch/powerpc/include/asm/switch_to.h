@@ -100,15 +100,15 @@ static inline void clear_task_ebb(struct task_struct *t)
 {
 #ifdef CONFIG_PPC_BOOK3S_64
     /* EBB perf events are not inherited, so clear all EBB state. */
-    t->thread.ebbrr = 0;
-    t->thread.ebbhr = 0;
-    t->thread.bescr = 0;
-    t->thread.mmcr2 = 0;
-    t->thread.mmcr0 = 0;
-    t->thread.siar = 0;
-    t->thread.sdar = 0;
-    t->thread.sier = 0;
-    t->thread.used_ebb = 0;
+    task_thread(t).ebbrr = 0;
+    task_thread(t).ebbhr = 0;
+    task_thread(t).bescr = 0;
+    task_thread(t).mmcr2 = 0;
+    task_thread(t).mmcr0 = 0;
+    task_thread(t).siar = 0;
+    task_thread(t).sdar = 0;
+    task_thread(t).sier = 0;
+    task_thread(t).used_ebb = 0;
 #endif
 }
 

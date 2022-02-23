@@ -269,7 +269,7 @@ static int __die(const char *str, int err, struct pt_regs *regs)
 	         str, err, ++die_counter);
 
 	/* trap and error numbers are mostly meaningless on ARM */
-	ret = notify_die(DIE_OOPS, str, regs, err, tsk->thread.trap_no, SIGSEGV);
+	ret = notify_die(DIE_OOPS, str, regs, err, task_thread(tsk).trap_no, SIGSEGV);
 	if (ret == NOTIFY_STOP)
 		return 1;
 
@@ -364,8 +364,8 @@ void arm_notify_die(const char *str, struct pt_regs *regs,
 		unsigned long err, unsigned long trap)
 {
 	if (user_mode(regs)) {
-		current->thread.error_code = err;
-		current->thread.trap_no = trap;
+		task_thread(current).error_code = err;
+		task_thread(current).trap_no = trap;
 
 		force_sig_fault(signo, si_code, addr);
 	} else {

@@ -703,7 +703,7 @@ int isBranchInstr(struct pt_regs *regs, struct mm_decoded_insn dec_insn,
 		    ((insn.i_format.rs == bc1eqz_op) ||
 		     (insn.i_format.rs == bc1nez_op))) {
 			bit = 0;
-			fpr = &current->thread.fpu.fpr[insn.i_format.rt];
+			fpr = &task_thread(current).fpu.fpr[insn.i_format.rt];
 			bit0 = get_fpr32(fpr, 0) & 0x1;
 			switch (insn.i_format.rs) {
 			case bc1eqz_op:
@@ -733,7 +733,7 @@ int isBranchInstr(struct pt_regs *regs, struct mm_decoded_insn dec_insn,
 			if (is_fpu_owner())
 			        fcr31 = read_32bit_cp1_register(CP1_STATUS);
 			else
-				fcr31 = current->thread.fpu.fcr31;
+				fcr31 = task_thread(current).fpu.fcr31;
 			preempt_enable();
 
 			bit = (insn.i_format.rt >> 2);
@@ -1188,7 +1188,7 @@ emul:
 
 			likely = 0;
 			cond = 0;
-			fpr = &current->thread.fpu.fpr[MIPSInst_RT(ir)];
+			fpr = &task_thread(current).fpu.fpr[MIPSInst_RT(ir)];
 			bit0 = get_fpr32(fpr, 0) & 0x1;
 			switch (MIPSInst_RS(ir)) {
 			case bc1eqz_op:

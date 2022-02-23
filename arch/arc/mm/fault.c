@@ -181,7 +181,7 @@ bad_area:
 		sig = SIGSEGV;
 	}
 
-	tsk->thread.fault_address = address;
+	task_thread(tsk).fault_address = address;
 	force_sig_fault(sig, si_code, (void __user *)address);
 	return;
 

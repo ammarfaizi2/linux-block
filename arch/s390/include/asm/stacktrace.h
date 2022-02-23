@@ -71,7 +71,7 @@ static __always_inline unsigned long get_stack_pointer(struct task_struct *task,
 		return (unsigned long)kernel_stack_pointer(regs);
 	if (task == current)
 		return current_frame_address();
-	return (unsigned long)task->thread.ksp;
+	return (unsigned long)task_thread(task).ksp;
 }
 
 /*

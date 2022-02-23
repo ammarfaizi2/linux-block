@@ -143,7 +143,7 @@ int dbg_set_reg(int regno, void *mem, struct pt_regs *regs)
 			return 0;
 		if (regno == 70) {
 			/* Process the fcr31/fsr (register 70) */
-			memcpy((void *)&current->thread.fpu.fcr31, mem,
+			memcpy((void *)&task_thread(current).fpu.fcr31, mem,
 			       dbg_reg_def[regno].size);
 			goto out_save;
 		} else if (regno == 71) {
@@ -151,7 +151,7 @@ int dbg_set_reg(int regno, void *mem, struct pt_regs *regs)
 			goto out_save;
 		}
 		fp_reg = dbg_reg_def[regno].offset;
-		memcpy((void *)&current->thread.fpu.fpr[fp_reg], mem,
+		memcpy((void *)&task_thread(current).fpu.fpr[fp_reg], mem,
 		       dbg_reg_def[regno].size);
 out_save:
 		restore_fp(current);
@@ -178,7 +178,7 @@ char *dbg_get_reg(int regno, void *mem, struct pt_regs *regs)
 		save_fp(current);
 		if (regno == 70) {
 			/* Process the fcr31/fsr (register 70) */
-			memcpy(mem, (void *)&current->thread.fpu.fcr31,
+			memcpy(mem, (void *)&task_thread(current).fpu.fcr31,
 			       dbg_reg_def[regno].size);
 			goto out;
 		} else if (regno == 71) {
@@ -187,7 +187,7 @@ char *dbg_get_reg(int regno, void *mem, struct pt_regs *regs)
 			goto out;
 		}
 		fp_reg = dbg_reg_def[regno].offset;
-		memcpy(mem, (void *)&current->thread.fpu.fpr[fp_reg],
+		memcpy(mem, (void *)&task_thread(current).fpu.fpr[fp_reg],
 		       dbg_reg_def[regno].size);
 	}
 
@@ -235,25 +235,25 @@ void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 		*(ptr++) = 0;
 
 	/* S0 - S7 */
-	*(ptr++) = p->thread.reg16;
-	*(ptr++) = p->thread.reg17;
-	*(ptr++) = p->thread.reg18;
-	*(ptr++) = p->thread.reg19;
-	*(ptr++) = p->thread.reg20;
-	*(ptr++) = p->thread.reg21;
-	*(ptr++) = p->thread.reg22;
-	*(ptr++) = p->thread.reg23;
+	*(ptr++) = task_thread(p).reg16;
+	*(ptr++) = task_thread(p).reg17;
+	*(ptr++) = task_thread(p).reg18;
+	*(ptr++) = task_thread(p).reg19;
+	*(ptr++) = task_thread(p).reg20;
+	*(ptr++) = task_thread(p).reg21;
+	*(ptr++) = task_thread(p).reg22;
+	*(ptr++) = task_thread(p).reg23;
 
 	for (reg = 24; reg < 28; reg++)
 		*(ptr++) = 0;
 
 	/* GP, SP, FP, RA */
 	*(ptr++) = (long)p;
-	*(ptr++) = p->thread.reg29;
-	*(ptr++) = p->thread.reg30;
-	*(ptr++) = p->thread.reg31;
+	*(ptr++) = task_thread(p).reg29;
+	*(ptr++) = task_thread(p).reg30;
+	*(ptr++) = task_thread(p).reg31;
 
-	*(ptr++) = p->thread.cp0_status;
+	*(ptr++) = task_thread(p).cp0_status;
 
 	/* lo, hi */
 	*(ptr++) = 0;
@@ -271,7 +271,7 @@ void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 	 * PC
 	 * use return address (RA), i.e. the moment after return from resume()
 	 */
-	*(ptr++) = p->thread.reg31;
+	*(ptr++) = task_thread(p).reg31;
 }
 
 void kgdb_arch_set_pc(struct pt_regs *regs, unsigned long pc)

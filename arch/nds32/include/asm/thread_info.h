@@ -32,8 +32,8 @@ struct thread_info {
 	.preempt_count	= INIT_PREEMPT_COUNT,				\
 	.addr_limit	= KERNEL_DS,					\
 }
-#define thread_saved_pc(tsk) ((unsigned long)(tsk->thread.cpu_context.pc))
-#define thread_saved_fp(tsk) ((unsigned long)(tsk->thread.cpu_context.fp))
+#define thread_saved_pc(tsk) ((unsigned long)(task_thread(tsk).cpu_context.pc))
+#define thread_saved_fp(tsk) ((unsigned long)(task_thread(tsk).cpu_context.fp))
 #endif
 
 /*

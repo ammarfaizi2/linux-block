@@ -966,7 +966,7 @@ GLOBAL_ENTRY(ia64_leave_kernel)
 	//
 	//  no one require bsp in r16 if (pKStk) branch is selected.
 (pUStk)	st8 [r3]=r22		// save time at leave
-(pUStk)	st1 [r18]=r17		// restore current->thread.on_ustack
+(pUStk)	st1 [r18]=r17		// restore task_thread(current).on_ustack
 	shr.u r18=r19,16	// get byte size of existing "dirty" partition
 	;;
 	ld8.fill r3=[r16]	// deferred
@@ -975,7 +975,7 @@ GLOBAL_ENTRY(ia64_leave_kernel)
 	mov r16=ar.bsp		// get existing backing store pointer
 #else
 	ld8.fill r3=[r16]
-(pUStk)	st1 [r18]=r17		// restore current->thread.on_ustack
+(pUStk)	st1 [r18]=r17		// restore task_thread(current).on_ustack
 	shr.u r18=r19,16	// get byte size of existing "dirty" partition
 	;;
 	mov r16=ar.bsp		// get existing backing store pointer

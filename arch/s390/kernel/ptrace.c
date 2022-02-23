@@ -41,7 +41,7 @@
 void update_cr_regs(struct task_struct *task)
 {
 	struct pt_regs *regs = task_pt_regs(task);
-	struct thread_struct *thread = &task->thread;
+	struct thread_struct *thread = &task_thread(task);
 	struct per_regs old, new;
 	union ctlreg0 cr0_old, cr0_new;
 	union ctlreg2 cr2_old, cr2_new;
@@ -55,12 +55,12 @@ void update_cr_regs(struct task_struct *task)
 	if (MACHINE_HAS_TE) {
 		/* Set or clear transaction execution TXC bit 8. */
 		cr0_new.tcx = 1;
-		if (task->thread.per_flags & PER_FLAG_NO_TE)
+		if (task_thread(task).per_flags & PER_FLAG_NO_TE)
 			cr0_new.tcx = 0;
 		/* Set or clear transaction execution TDC bits 62 and 63. */
 		cr2_new.tdc = 0;
-		if (task->thread.per_flags & PER_FLAG_TE_ABORT_RAND) {
-			if (task->thread.per_flags & PER_FLAG_TE_ABORT_RAND_TEND)
+		if (task_thread(task).per_flags & PER_FLAG_TE_ABORT_RAND) {
+			if (task_thread(task).per_flags & PER_FLAG_TE_ABORT_RAND_TEND)
 				cr2_new.tdc = 1;
 			else
 				cr2_new.tdc = 2;
@@ -69,7 +69,7 @@ void update_cr_regs(struct task_struct *task)
 	/* Take care of enable/disable of guarded storage. */
 	if (MACHINE_HAS_GS) {
 		cr2_new.gse = 0;
-		if (task->thread.gs_cb)
+		if (task_thread(task).gs_cb)
 			cr2_new.gse = 1;
 	}
 	/* Load control register 0/2 iff changed */
@@ -135,11 +135,11 @@ void user_enable_block_step(struct task_struct *task)
  */
 void ptrace_disable(struct task_struct *task)
 {
-	memset(&task->thread.per_user, 0, sizeof(task->thread.per_user));
-	memset(&task->thread.per_event, 0, sizeof(task->thread.per_event));
+	memset(&task_thread(task).per_user, 0, sizeof(task_thread(task).per_user));
+	memset(&task_thread(task).per_event, 0, sizeof(task_thread(task).per_event));
 	clear_tsk_thread_flag(task, TIF_SINGLE_STEP);
 	clear_tsk_thread_flag(task, TIF_PER_TRAP);
-	task->thread.per_flags = 0;
+	task_thread(task).per_flags = 0;
 }
 
 #define __ADDR_MASK 7
@@ -152,36 +152,36 @@ static inline unsigned long __peek_user_per(struct task_struct *child,
 	if (addr == (addr_t) &dummy->cr9)
 		/* Control bits of the active per set. */
 		return test_thread_flag(TIF_SINGLE_STEP) ?
-			PER_EVENT_IFETCH : child->thread.per_user.control;
+			PER_EVENT_IFETCH : task_thread(child).per_user.control;
 	else if (addr == (addr_t) &dummy->cr10)
 		/* Start address of the active per set. */
 		return test_thread_flag(TIF_SINGLE_STEP) ?
-			0 : child->thread.per_user.start;
+			0 : task_thread(child).per_user.start;
 	else if (addr == (addr_t) &dummy->cr11)
 		/* End address of the active per set. */
 		return test_thread_flag(TIF_SINGLE_STEP) ?
-			-1UL : child->thread.per_user.end;
+			-1UL : task_thread(child).per_user.end;
 	else if (addr == (addr_t) &dummy->bits)
 		/* Single-step bit. */
 		return test_thread_flag(TIF_SINGLE_STEP) ?
 			(1UL << (BITS_PER_LONG - 1)) : 0;
 	else if (addr == (addr_t) &dummy->starting_addr)
 		/* Start address of the user specified per set. */
-		return child->thread.per_user.start;
+		return task_thread(child).per_user.start;
 	else if (addr == (addr_t) &dummy->ending_addr)
 		/* End address of the user specified per set. */
-		return child->thread.per_user.end;
+		return task_thread(child).per_user.end;
 	else if (addr == (addr_t) &dummy->perc_atmid)
 		/* PER code, ATMID and AI of the last PER trap */
 		return (unsigned long)
-			child->thread.per_event.cause << (BITS_PER_LONG - 16);
+			task_thread(child).per_event.cause << (BITS_PER_LONG - 16);
 	else if (addr == (addr_t) &dummy->address)
 		/* Address of the last PER trap */
-		return child->thread.per_event.address;
+		return task_thread(child).per_event.address;
 	else if (addr == (addr_t) &dummy->access_id)
 		/* Access id of the last PER trap */
 		return (unsigned long)
-			child->thread.per_event.paid << (BITS_PER_LONG - 8);
+			task_thread(child).per_event.paid << (BITS_PER_LONG - 8);
 	return 0;
 }
 
@@ -221,9 +221,9 @@ static unsigned long __peek_user(struct task_struct *child, addr_t addr)
 		 * 32 bit acrs[15] value and shift it by 32. Sick...
 		 */
 		if (addr == (addr_t) &dummy->regs.acrs[15])
-			tmp = ((unsigned long) child->thread.acrs[15]) << 32;
+			tmp = ((unsigned long) task_thread(child).acrs[15]) << 32;
 		else
-			tmp = *(addr_t *)((addr_t) &child->thread.acrs + offset);
+			tmp = *(addr_t *)((addr_t) &task_thread(child).acrs + offset);
 
 	} else if (addr == (addr_t) &dummy->regs.orig_gpr2) {
 		/*
@@ -242,21 +242,21 @@ static unsigned long __peek_user(struct task_struct *child, addr_t addr)
 		/*
 		 * floating point control reg. is in the thread structure
 		 */
-		tmp = child->thread.fpu.fpc;
+		tmp = task_thread(child).fpu.fpc;
 		tmp <<= BITS_PER_LONG - 32;
 
 	} else if (addr < (addr_t) (&dummy->regs.fp_regs + 1)) {
 		/*
-		 * floating point regs. are either in child->thread.fpu
-		 * or the child->thread.fpu.vxrs array
+		 * floating point regs. are either in task_thread(child).fpu
+		 * or the task_thread(child).fpu.vxrs array
 		 */
 		offset = addr - (addr_t) &dummy->regs.fp_regs.fprs;
 		if (MACHINE_HAS_VX)
 			tmp = *(addr_t *)
-			       ((addr_t) child->thread.fpu.vxrs + 2*offset);
+			       ((addr_t) task_thread(child).fpu.vxrs + 2*offset);
 		else
 			tmp = *(addr_t *)
-			       ((addr_t) child->thread.fpu.fprs + offset);
+			       ((addr_t) task_thread(child).fpu.fprs + offset);
 
 	} else if (addr < (addr_t) (&dummy->regs.per_info + 1)) {
 		/*
@@ -310,14 +310,14 @@ static inline void __poke_user_per(struct task_struct *child,
 	 */
 	if (addr == (addr_t) &dummy->cr9)
 		/* PER event mask of the user specified per set. */
-		child->thread.per_user.control =
+		task_thread(child).per_user.control =
 			data & (PER_EVENT_MASK | PER_CONTROL_MASK);
 	else if (addr == (addr_t) &dummy->starting_addr)
 		/* Starting address of the user specified per set. */
-		child->thread.per_user.start = data;
+		task_thread(child).per_user.start = data;
 	else if (addr == (addr_t) &dummy->ending_addr)
 		/* Ending address of the user specified per set. */
-		child->thread.per_user.end = data;
+		task_thread(child).per_user.end = data;
 }
 
 /*
@@ -371,9 +371,9 @@ static int __poke_user(struct task_struct *child, addr_t addr, addr_t data)
 		 * acrs[15]. Sick...
 		 */
 		if (addr == (addr_t) &dummy->regs.acrs[15])
-			child->thread.acrs[15] = (unsigned int) (data >> 32);
+			task_thread(child).acrs[15] = (unsigned int) (data >> 32);
 		else
-			*(addr_t *)((addr_t) &child->thread.acrs + offset) = data;
+			*(addr_t *)((addr_t) &task_thread(child).acrs + offset) = data;
 
 	} else if (addr == (addr_t) &dummy->regs.orig_gpr2) {
 		/*
@@ -395,20 +395,20 @@ static int __poke_user(struct task_struct *child, addr_t addr, addr_t data)
 		if ((unsigned int) data != 0 ||
 		    test_fp_ctl(data >> (BITS_PER_LONG - 32)))
 			return -EINVAL;
-		child->thread.fpu.fpc = data >> (BITS_PER_LONG - 32);
+		task_thread(child).fpu.fpc = data >> (BITS_PER_LONG - 32);
 
 	} else if (addr < (addr_t) (&dummy->regs.fp_regs + 1)) {
 		/*
-		 * floating point regs. are either in child->thread.fpu
-		 * or the child->thread.fpu.vxrs array
+		 * floating point regs. are either in task_thread(child).fpu
+		 * or the task_thread(child).fpu.vxrs array
 		 */
 		offset = addr - (addr_t) &dummy->regs.fp_regs.fprs;
 		if (MACHINE_HAS_VX)
 			*(addr_t *)((addr_t)
-				child->thread.fpu.vxrs + 2*offset) = data;
+				task_thread(child).fpu.vxrs + 2*offset) = data;
 		else
 			*(addr_t *)((addr_t)
-				child->thread.fpu.fprs + offset) = data;
+				task_thread(child).fpu.fprs + offset) = data;
 
 	} else if (addr < (addr_t) (&dummy->regs.per_info + 1)) {
 		/*
@@ -481,34 +481,34 @@ long arch_ptrace(struct task_struct *child, long request,
 		}
 		return 0;
 	case PTRACE_GET_LAST_BREAK:
-		put_user(child->thread.last_break,
+		put_user(task_thread(child).last_break,
 			 (unsigned long __user *) data);
 		return 0;
 	case PTRACE_ENABLE_TE:
 		if (!MACHINE_HAS_TE)
 			return -EIO;
-		child->thread.per_flags &= ~PER_FLAG_NO_TE;
+		task_thread(child).per_flags &= ~PER_FLAG_NO_TE;
 		return 0;
 	case PTRACE_DISABLE_TE:
 		if (!MACHINE_HAS_TE)
 			return -EIO;
-		child->thread.per_flags |= PER_FLAG_NO_TE;
-		child->thread.per_flags &= ~PER_FLAG_TE_ABORT_RAND;
+		task_thread(child).per_flags |= PER_FLAG_NO_TE;
+		task_thread(child).per_flags &= ~PER_FLAG_TE_ABORT_RAND;
 		return 0;
 	case PTRACE_TE_ABORT_RAND:
-		if (!MACHINE_HAS_TE || (child->thread.per_flags & PER_FLAG_NO_TE))
+		if (!MACHINE_HAS_TE || (task_thread(child).per_flags & PER_FLAG_NO_TE))
 			return -EIO;
 		switch (data) {
 		case 0UL:
-			child->thread.per_flags &= ~PER_FLAG_TE_ABORT_RAND;
+			task_thread(child).per_flags &= ~PER_FLAG_TE_ABORT_RAND;
 			break;
 		case 1UL:
-			child->thread.per_flags |= PER_FLAG_TE_ABORT_RAND;
-			child->thread.per_flags |= PER_FLAG_TE_ABORT_RAND_TEND;
+			task_thread(child).per_flags |= PER_FLAG_TE_ABORT_RAND;
+			task_thread(child).per_flags |= PER_FLAG_TE_ABORT_RAND_TEND;
 			break;
 		case 2UL:
-			child->thread.per_flags |= PER_FLAG_TE_ABORT_RAND;
-			child->thread.per_flags &= ~PER_FLAG_TE_ABORT_RAND_TEND;
+			task_thread(child).per_flags |= PER_FLAG_TE_ABORT_RAND;
+			task_thread(child).per_flags &= ~PER_FLAG_TE_ABORT_RAND_TEND;
 			break;
 		default:
 			return -EINVAL;
@@ -545,34 +545,34 @@ static inline __u32 __peek_user_per_compat(struct task_struct *child,
 	if (addr == (addr_t) &dummy32->cr9)
 		/* Control bits of the active per set. */
 		return (__u32) test_thread_flag(TIF_SINGLE_STEP) ?
-			PER_EVENT_IFETCH : child->thread.per_user.control;
+			PER_EVENT_IFETCH : task_thread(child).per_user.control;
 	else if (addr == (addr_t) &dummy32->cr10)
 		/* Start address of the active per set. */
 		return (__u32) test_thread_flag(TIF_SINGLE_STEP) ?
-			0 : child->thread.per_user.start;
+			0 : task_thread(child).per_user.start;
 	else if (addr == (addr_t) &dummy32->cr11)
 		/* End address of the active per set. */
 		return test_thread_flag(TIF_SINGLE_STEP) ?
-			PSW32_ADDR_INSN : child->thread.per_user.end;
+			PSW32_ADDR_INSN : task_thread(child).per_user.end;
 	else if (addr == (addr_t) &dummy32->bits)
 		/* Single-step bit. */
 		return (__u32) test_thread_flag(TIF_SINGLE_STEP) ?
 			0x80000000 : 0;
 	else if (addr == (addr_t) &dummy32->starting_addr)
 		/* Start address of the user specified per set. */
-		return (__u32) child->thread.per_user.start;
+		return (__u32) task_thread(child).per_user.start;
 	else if (addr == (addr_t) &dummy32->ending_addr)
 		/* End address of the user specified per set. */
-		return (__u32) child->thread.per_user.end;
+		return (__u32) task_thread(child).per_user.end;
 	else if (addr == (addr_t) &dummy32->perc_atmid)
 		/* PER code, ATMID and AI of the last PER trap */
-		return (__u32) child->thread.per_event.cause << 16;
+		return (__u32) task_thread(child).per_event.cause << 16;
 	else if (addr == (addr_t) &dummy32->address)
 		/* Address of the last PER trap */
-		return (__u32) child->thread.per_event.address;
+		return (__u32) task_thread(child).per_event.address;
 	else if (addr == (addr_t) &dummy32->access_id)
 		/* Access id of the last PER trap */
-		return (__u32) child->thread.per_event.paid << 24;
+		return (__u32) task_thread(child).per_event.paid << 24;
 	return 0;
 }
 
@@ -608,7 +608,7 @@ static u32 __peek_user_compat(struct task_struct *child, addr_t addr)
 		 * access registers are stored in the thread structure
 		 */
 		offset = addr - (addr_t) &dummy32->regs.acrs;
-		tmp = *(__u32*)((addr_t) &child->thread.acrs + offset);
+		tmp = *(__u32*)((addr_t) &task_thread(child).acrs + offset);
 
 	} else if (addr == (addr_t) (&dummy32->regs.orig_gpr2)) {
 		/*
@@ -627,20 +627,20 @@ static u32 __peek_user_compat(struct task_struct *child, addr_t addr)
 		/*
 		 * floating point control reg. is in the thread structure
 		 */
-		tmp = child->thread.fpu.fpc;
+		tmp = task_thread(child).fpu.fpc;
 
 	} else if (addr < (addr_t) (&dummy32->regs.fp_regs + 1)) {
 		/*
-		 * floating point regs. are either in child->thread.fpu
-		 * or the child->thread.fpu.vxrs array
+		 * floating point regs. are either in task_thread(child).fpu
+		 * or the task_thread(child).fpu.vxrs array
 		 */
 		offset = addr - (addr_t) &dummy32->regs.fp_regs.fprs;
 		if (MACHINE_HAS_VX)
 			tmp = *(__u32 *)
-			       ((addr_t) child->thread.fpu.vxrs + 2*offset);
+			       ((addr_t) task_thread(child).fpu.vxrs + 2*offset);
 		else
 			tmp = *(__u32 *)
-			       ((addr_t) child->thread.fpu.fprs + offset);
+			       ((addr_t) task_thread(child).fpu.fprs + offset);
 
 	} else if (addr < (addr_t) (&dummy32->regs.per_info + 1)) {
 		/*
@@ -677,14 +677,14 @@ static inline void __poke_user_per_compat(struct task_struct *child,
 
 	if (addr == (addr_t) &dummy32->cr9)
 		/* PER event mask of the user specified per set. */
-		child->thread.per_user.control =
+		task_thread(child).per_user.control =
 			data & (PER_EVENT_MASK | PER_CONTROL_MASK);
 	else if (addr == (addr_t) &dummy32->starting_addr)
 		/* Starting address of the user specified per set. */
-		child->thread.per_user.start = data;
+		task_thread(child).per_user.start = data;
 	else if (addr == (addr_t) &dummy32->ending_addr)
 		/* Ending address of the user specified per set. */
-		child->thread.per_user.end = data;
+		task_thread(child).per_user.end = data;
 }
 
 /*
@@ -737,7 +737,7 @@ static int __poke_user_compat(struct task_struct *child,
 		 * access registers are stored in the thread structure
 		 */
 		offset = addr - (addr_t) &dummy32->regs.acrs;
-		*(__u32*)((addr_t) &child->thread.acrs + offset) = tmp;
+		*(__u32*)((addr_t) &task_thread(child).acrs + offset) = tmp;
 
 	} else if (addr == (addr_t) (&dummy32->regs.orig_gpr2)) {
 		/*
@@ -758,20 +758,20 @@ static int __poke_user_compat(struct task_struct *child,
 		 */
 		if (test_fp_ctl(tmp))
 			return -EINVAL;
-		child->thread.fpu.fpc = data;
+		task_thread(child).fpu.fpc = data;
 
 	} else if (addr < (addr_t) (&dummy32->regs.fp_regs + 1)) {
 		/*
-		 * floating point regs. are either in child->thread.fpu
-		 * or the child->thread.fpu.vxrs array
+		 * floating point regs. are either in task_thread(child).fpu
+		 * or the task_thread(child).fpu.vxrs array
 		 */
 		offset = addr - (addr_t) &dummy32->regs.fp_regs.fprs;
 		if (MACHINE_HAS_VX)
 			*(__u32 *)((addr_t)
-				child->thread.fpu.vxrs + 2*offset) = tmp;
+				task_thread(child).fpu.vxrs + 2*offset) = tmp;
 		else
 			*(__u32 *)((addr_t)
-				child->thread.fpu.fprs + offset) = tmp;
+				task_thread(child).fpu.fprs + offset) = tmp;
 
 	} else if (addr < (addr_t) (&dummy32->regs.per_info + 1)) {
 		/*
@@ -837,7 +837,7 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 		}
 		return 0;
 	case PTRACE_GET_LAST_BREAK:
-		put_user(child->thread.last_break,
+		put_user(task_thread(child).last_break,
 			 (unsigned int __user *) data);
 		return 0;
 	}
@@ -855,7 +855,7 @@ static int s390_regs_get(struct task_struct *target,
 {
 	unsigned pos;
 	if (target == current)
-		save_access_regs(target->thread.acrs);
+		save_access_regs(task_thread(target).acrs);
 
 	for (pos = 0; pos < sizeof(s390_regs); pos += sizeof(long))
 		membuf_store(&to, __peek_user(target, pos));
@@ -870,7 +870,7 @@ static int s390_regs_set(struct task_struct *target,
 	int rc = 0;
 
 	if (target == current)
-		save_access_regs(target->thread.acrs);
+		save_access_regs(task_thread(target).acrs);
 
 	if (kbuf) {
 		const unsigned long *k = kbuf;
@@ -893,7 +893,7 @@ static int s390_regs_set(struct task_struct *target,
 	}
 
 	if (rc == 0 && target == current)
-		restore_access_regs(target->thread.acrs);
+		restore_access_regs(task_thread(target).acrs);
 
 	return rc;
 }
@@ -907,8 +907,8 @@ static int s390_fpregs_get(struct task_struct *target,
 	if (target == current)
 		save_fpu_regs();
 
-	fp_regs.fpc = target->thread.fpu.fpc;
-	fpregs_store(&fp_regs, &target->thread.fpu);
+	fp_regs.fpc = task_thread(target).fpu.fpc;
+	fpregs_store(&fp_regs, &task_thread(target).fpu);
 
 	return membuf_write(&to, &fp_regs, sizeof(fp_regs));
 }
@@ -925,20 +925,20 @@ static int s390_fpregs_set(struct task_struct *target,
 		save_fpu_regs();
 
 	if (MACHINE_HAS_VX)
-		convert_vx_to_fp(fprs, target->thread.fpu.vxrs);
+		convert_vx_to_fp(fprs, task_thread(target).fpu.vxrs);
 	else
-		memcpy(&fprs, target->thread.fpu.fprs, sizeof(fprs));
+		memcpy(&fprs, task_thread(target).fpu.fprs, sizeof(fprs));
 
 	/* If setting FPC, must validate it first. */
 	if (count > 0 && pos < offsetof(s390_fp_regs, fprs)) {
-		u32 ufpc[2] = { target->thread.fpu.fpc, 0 };
+		u32 ufpc[2] = { task_thread(target).fpu.fpc, 0 };
 		rc = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &ufpc,
 					0, offsetof(s390_fp_regs, fprs));
 		if (rc)
 			return rc;
 		if (ufpc[1] != 0 || test_fp_ctl(ufpc[0]))
 			return -EINVAL;
-		target->thread.fpu.fpc = ufpc[0];
+		task_thread(target).fpu.fpc = ufpc[0];
 	}
 
 	if (rc == 0 && count > 0)
@@ -948,9 +948,9 @@ static int s390_fpregs_set(struct task_struct *target,
 		return rc;
 
 	if (MACHINE_HAS_VX)
-		convert_fp_to_vx(target->thread.fpu.vxrs, fprs);
+		convert_fp_to_vx(task_thread(target).fpu.vxrs, fprs);
 	else
-		memcpy(target->thread.fpu.fprs, &fprs, sizeof(fprs));
+		memcpy(task_thread(target).fpu.fprs, &fprs, sizeof(fprs));
 
 	return rc;
 }
@@ -959,7 +959,7 @@ static int s390_last_break_get(struct task_struct *target,
 			       const struct user_regset *regset,
 			       struct membuf to)
 {
-	return membuf_store(&to, target->thread.last_break);
+	return membuf_store(&to, task_thread(target).last_break);
 }
 
 static int s390_last_break_set(struct task_struct *target,
@@ -979,8 +979,8 @@ static int s390_tdb_get(struct task_struct *target,
 
 	if (!(regs->int_code & 0x200))
 		return -ENODATA;
-	size = sizeof(target->thread.trap_tdb.data);
-	return membuf_write(&to, target->thread.trap_tdb.data, size);
+	size = sizeof(task_thread(target).trap_tdb.data);
+	return membuf_write(&to, task_thread(target).trap_tdb.data, size);
 }
 
 static int s390_tdb_set(struct task_struct *target,
@@ -1003,7 +1003,7 @@ static int s390_vxrs_low_get(struct task_struct *target,
 	if (target == current)
 		save_fpu_regs();
 	for (i = 0; i < __NUM_VXRS_LOW; i++)
-		vxrs[i] = *((__u64 *)(target->thread.fpu.vxrs + i) + 1);
+		vxrs[i] = *((__u64 *)(task_thread(target).fpu.vxrs + i) + 1);
 	return membuf_write(&to, vxrs, sizeof(vxrs));
 }
 
@@ -1021,12 +1021,12 @@ static int s390_vxrs_low_set(struct task_struct *target,
 		save_fpu_regs();
 
 	for (i = 0; i < __NUM_VXRS_LOW; i++)
-		vxrs[i] = *((__u64 *)(target->thread.fpu.vxrs + i) + 1);
+		vxrs[i] = *((__u64 *)(task_thread(target).fpu.vxrs + i) + 1);
 
 	rc = user_regset_copyin(&pos, &count, &kbuf, &ubuf, vxrs, 0, -1);
 	if (rc == 0)
 		for (i = 0; i < __NUM_VXRS_LOW; i++)
-			*((__u64 *)(target->thread.fpu.vxrs + i) + 1) = vxrs[i];
+			*((__u64 *)(task_thread(target).fpu.vxrs + i) + 1) = vxrs[i];
 
 	return rc;
 }
@@ -1039,7 +1039,7 @@ static int s390_vxrs_high_get(struct task_struct *target,
 		return -ENODEV;
 	if (target == current)
 		save_fpu_regs();
-	return membuf_write(&to, target->thread.fpu.vxrs + __NUM_VXRS_LOW,
+	return membuf_write(&to, task_thread(target).fpu.vxrs + __NUM_VXRS_LOW,
 			    __NUM_VXRS_HIGH * sizeof(__vector128));
 }
 
@@ -1056,7 +1056,7 @@ static int s390_vxrs_high_set(struct task_struct *target,
 		save_fpu_regs();
 
 	rc = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				target->thread.fpu.vxrs + __NUM_VXRS_LOW, 0, -1);
+				task_thread(target).fpu.vxrs + __NUM_VXRS_LOW, 0, -1);
 	return rc;
 }
 
@@ -1064,7 +1064,7 @@ static int s390_system_call_get(struct task_struct *target,
 				const struct user_regset *regset,
 				struct membuf to)
 {
-	return membuf_store(&to, target->thread.system_call);
+	return membuf_store(&to, task_thread(target).system_call);
 }
 
 static int s390_system_call_set(struct task_struct *target,
@@ -1072,7 +1072,7 @@ static int s390_system_call_set(struct task_struct *target,
 				unsigned int pos, unsigned int count,
 				const void *kbuf, const void __user *ubuf)
 {
-	unsigned int *data = &target->thread.system_call;
+	unsigned int *data = &task_thread(target).system_call;
 	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				  data, 0, sizeof(unsigned int));
 }
@@ -1081,7 +1081,7 @@ static int s390_gs_cb_get(struct task_struct *target,
 			  const struct user_regset *regset,
 			  struct membuf to)
 {
-	struct gs_cb *data = target->thread.gs_cb;
+	struct gs_cb *data = task_thread(target).gs_cb;
 
 	if (!MACHINE_HAS_GS)
 		return -ENODEV;
@@ -1102,17 +1102,17 @@ static int s390_gs_cb_set(struct task_struct *target,
 
 	if (!MACHINE_HAS_GS)
 		return -ENODEV;
-	if (!target->thread.gs_cb) {
+	if (!task_thread(target).gs_cb) {
 		data = kzalloc(sizeof(*data), GFP_KERNEL);
 		if (!data)
 			return -ENOMEM;
 	}
-	if (!target->thread.gs_cb)
+	if (!task_thread(target).gs_cb)
 		gs_cb.gsd = 25;
 	else if (target == current)
 		save_gs_cb(&gs_cb);
 	else
-		gs_cb = *target->thread.gs_cb;
+		gs_cb = *task_thread(target).gs_cb;
 	rc = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				&gs_cb, 0, sizeof(gs_cb));
 	if (rc) {
@@ -1120,12 +1120,12 @@ static int s390_gs_cb_set(struct task_struct *target,
 		return -EFAULT;
 	}
 	preempt_disable();
-	if (!target->thread.gs_cb)
-		target->thread.gs_cb = data;
-	*target->thread.gs_cb = gs_cb;
+	if (!task_thread(target).gs_cb)
+		task_thread(target).gs_cb = data;
+	*task_thread(target).gs_cb = gs_cb;
 	if (target == current) {
 		__ctl_set_bit(2, 4);
-		restore_gs_cb(target->thread.gs_cb);
+		restore_gs_cb(task_thread(target).gs_cb);
 	}
 	preempt_enable();
 	return rc;
@@ -1135,7 +1135,7 @@ static int s390_gs_bc_get(struct task_struct *target,
 			  const struct user_regset *regset,
 			  struct membuf to)
 {
-	struct gs_cb *data = target->thread.gs_bc_cb;
+	struct gs_cb *data = task_thread(target).gs_bc_cb;
 
 	if (!MACHINE_HAS_GS)
 		return -ENODEV;
@@ -1149,7 +1149,7 @@ static int s390_gs_bc_set(struct task_struct *target,
 			  unsigned int pos, unsigned int count,
 			  const void *kbuf, const void __user *ubuf)
 {
-	struct gs_cb *data = target->thread.gs_bc_cb;
+	struct gs_cb *data = task_thread(target).gs_bc_cb;
 
 	if (!MACHINE_HAS_GS)
 		return -ENODEV;
@@ -1157,7 +1157,7 @@ static int s390_gs_bc_set(struct task_struct *target,
 		data = kzalloc(sizeof(*data), GFP_KERNEL);
 		if (!data)
 			return -ENOMEM;
-		target->thread.gs_bc_cb = data;
+		task_thread(target).gs_bc_cb = data;
 	}
 	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				  data, 0, sizeof(struct gs_cb));
@@ -1193,7 +1193,7 @@ static int s390_runtime_instr_get(struct task_struct *target,
 				const struct user_regset *regset,
 				struct membuf to)
 {
-	struct runtime_instr_cb *data = target->thread.ri_cb;
+	struct runtime_instr_cb *data = task_thread(target).ri_cb;
 
 	if (!test_facility(64))
 		return -ENODEV;
@@ -1214,17 +1214,17 @@ static int s390_runtime_instr_set(struct task_struct *target,
 	if (!test_facility(64))
 		return -ENODEV;
 
-	if (!target->thread.ri_cb) {
+	if (!task_thread(target).ri_cb) {
 		data = kzalloc(sizeof(*data), GFP_KERNEL);
 		if (!data)
 			return -ENOMEM;
 	}
 
-	if (target->thread.ri_cb) {
+	if (task_thread(target).ri_cb) {
 		if (target == current)
 			store_runtime_instr_cb(&ri_cb);
 		else
-			ri_cb = *target->thread.ri_cb;
+			ri_cb = *task_thread(target).ri_cb;
 	}
 
 	rc = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
@@ -1244,11 +1244,11 @@ static int s390_runtime_instr_set(struct task_struct *target,
 	 */
 	ri_cb.key = PAGE_DEFAULT_KEY >> 4;
 	preempt_disable();
-	if (!target->thread.ri_cb)
-		target->thread.ri_cb = data;
-	*target->thread.ri_cb = ri_cb;
+	if (!task_thread(target).ri_cb)
+		task_thread(target).ri_cb = data;
+	*task_thread(target).ri_cb = ri_cb;
 	if (target == current)
-		load_runtime_instr_cb(target->thread.ri_cb);
+		load_runtime_instr_cb(task_thread(target).ri_cb);
 	preempt_enable();
 
 	return 0;
@@ -1352,7 +1352,7 @@ static int s390_compat_regs_get(struct task_struct *target,
 	unsigned n;
 
 	if (target == current)
-		save_access_regs(target->thread.acrs);
+		save_access_regs(task_thread(target).acrs);
 
 	for (n = 0; n < sizeof(s390_compat_regs); n += sizeof(compat_ulong_t))
 		membuf_store(&to, __peek_user_compat(target, n));
@@ -1367,7 +1367,7 @@ static int s390_compat_regs_set(struct task_struct *target,
 	int rc = 0;
 
 	if (target == current)
-		save_access_regs(target->thread.acrs);
+		save_access_regs(task_thread(target).acrs);
 
 	if (kbuf) {
 		const compat_ulong_t *k = kbuf;
@@ -1390,7 +1390,7 @@ static int s390_compat_regs_set(struct task_struct *target,
 	}
 
 	if (rc == 0 && target == current)
-		restore_access_regs(target->thread.acrs);
+		restore_access_regs(task_thread(target).acrs);
 
 	return rc;
 }
@@ -1445,7 +1445,7 @@ static int s390_compat_last_break_get(struct task_struct *target,
 				      const struct user_regset *regset,
 				      struct membuf to)
 {
-	compat_ulong_t last_break = target->thread.last_break;
+	compat_ulong_t last_break = task_thread(target).last_break;
 
 	return membuf_store(&to, (unsigned long)last_break);
 }

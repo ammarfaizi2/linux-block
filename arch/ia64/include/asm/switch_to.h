@@ -32,7 +32,7 @@ extern void ia64_save_extra (struct task_struct *task);
 extern void ia64_load_extra (struct task_struct *task);
 
 #define IA64_HAS_EXTRA_STATE(t)							\
-	((t)->thread.flags & (IA64_THREAD_DBG_VALID|IA64_THREAD_PM_VALID))
+	(task_thread(t).flags & (IA64_THREAD_DBG_VALID|IA64_THREAD_PM_VALID))
 
 #define __switch_to(prev,next,last) do {							 \
 	if (IA64_HAS_EXTRA_STATE(prev))								 \
@@ -47,18 +47,18 @@ extern void ia64_load_extra (struct task_struct *task);
 /*
  * In the SMP case, we save the fph state when context-switching away from a thread that
  * modified fph.  This way, when the thread gets scheduled on another CPU, the CPU can
- * pick up the state from task->thread.fph, avoiding the complication of having to fetch
+ * pick up the state from task_thread(task).fph, avoiding the complication of having to fetch
  * the latest fph state from another CPU.  In other words: eager save, lazy restore.
  */
 # define switch_to(prev,next,last) do {						\
 	if (ia64_psr(task_pt_regs(prev))->mfh && ia64_is_local_fpu_owner(prev)) {				\
 		ia64_psr(task_pt_regs(prev))->mfh = 0;			\
-		(prev)->thread.flags |= IA64_THREAD_FPH_VALID;			\
-		__ia64_save_fpu((prev)->thread.fph);				\
+		task_thread(prev).flags |= IA64_THREAD_FPH_VALID;			\
+		__ia64_save_fpu(task_thread(prev).fph);				\
 	}									\
 	__switch_to(prev, next, last);						\
 	/* "next" in old context is "current" in new context */			\
-	if (unlikely((current->thread.flags & IA64_THREAD_MIGRATION) &&	       \
+	if (unlikely((task_thread(current).flags & IA64_THREAD_MIGRATION) &&	       \
 		     (task_cpu(current) !=				       \
 		      		      task_thread_info(current)->last_cpu))) { \
 		task_thread_info(current)->last_cpu = task_cpu(current);       \

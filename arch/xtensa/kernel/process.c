@@ -216,10 +216,10 @@ int copy_thread(unsigned long clone_flags, unsigned long usp_thread_fn,
 	SPILL_SLOT(childregs, 1) = (unsigned long)childregs;
 	SPILL_SLOT(childregs, 0) = 0;
 
-	p->thread.sp = (unsigned long)childregs;
+	task_thread(p).sp = (unsigned long)childregs;
 #elif defined(__XTENSA_CALL0_ABI__)
 	/* Reserve 16 bytes for the _switch_to stack frame. */
-	p->thread.sp = (unsigned long)childregs - 16;
+	task_thread(p).sp = (unsigned long)childregs - 16;
 #else
 #error Unsupported Xtensa ABI
 #endif
@@ -229,7 +229,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp_thread_fn,
 		unsigned long usp = usp_thread_fn ?
 			usp_thread_fn : regs->areg[1];
 
-		p->thread.ra = MAKE_RA_FOR_CALL(
+		task_thread(p).ra = MAKE_RA_FOR_CALL(
 				(unsigned long)ret_from_fork, 0x1);
 
 		/* This does not copy all the regs.
@@ -276,7 +276,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp_thread_fn,
 		if (clone_flags & CLONE_SETTLS)
 			childregs->threadptr = tls;
 	} else {
-		p->thread.ra = MAKE_RA_FOR_CALL(
+		task_thread(p).ra = MAKE_RA_FOR_CALL(
 				(unsigned long)ret_from_kernel_thread, 1);
 
 		/* pass parameters to ret_from_kernel_thread: */
@@ -293,8 +293,8 @@ int copy_thread(unsigned long clone_flags, unsigned long usp_thread_fn,
 		 * a12 = thread_fn, a13 = thread_fn arg.
 		 * _switch_to epilogue will load registers from the stack.
 		 */
-		((unsigned long *)p->thread.sp)[0] = usp_thread_fn;
-		((unsigned long *)p->thread.sp)[1] = thread_fn_arg;
+		((unsigned long *)task_thread(p).sp)[0] = usp_thread_fn;
+		((unsigned long *)task_thread(p).sp)[1] = thread_fn_arg;
 #else
 #error Unsupported Xtensa ABI
 #endif
@@ -325,8 +325,8 @@ unsigned long __get_wchan(struct task_struct *p)
 	unsigned long stack_page = (unsigned long) task_stack_page(p);
 	int count = 0;
 
-	sp = p->thread.sp;
-	pc = MAKE_PC_FROM_RA(p->thread.ra, p->thread.sp);
+	sp = task_thread(p).sp;
+	pc = MAKE_PC_FROM_RA(task_thread(p).ra, task_thread(p).sp);
 
 	do {
 		if (sp < stack_page + sizeof(struct task_struct) ||

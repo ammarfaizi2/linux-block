@@ -76,7 +76,7 @@ get_frame_pointer(struct task_struct *task, struct pt_regs *regs)
 	if (task == current)
 		return __builtin_frame_address(0);
 
-	return &((struct inactive_task_frame *)task->thread.sp)->bp;
+	return &((struct inactive_task_frame *)task_thread(task).sp)->bp;
 }
 #else
 static inline unsigned long *
@@ -95,7 +95,7 @@ get_stack_pointer(struct task_struct *task, struct pt_regs *regs)
 	if (task == current)
 		return __builtin_frame_address(0);
 
-	return (unsigned long *)task->thread.sp;
+	return (unsigned long *)task_thread(task).sp;
 }
 
 /* The form of the top of the frame on the stack */

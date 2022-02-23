@@ -36,13 +36,13 @@ static inline void restore_access_regs(unsigned int *acrs)
 	 * soon as the next task returns to user space			\
 	 */								\
 	save_fpu_regs();						\
-	save_access_regs(&prev->thread.acrs[0]);			\
-	save_ri_cb(prev->thread.ri_cb);					\
-	save_gs_cb(prev->thread.gs_cb);					\
+	save_access_regs(&task_thread(prev).acrs[0]);			\
+	save_ri_cb(task_thread(prev).ri_cb);					\
+	save_gs_cb(task_thread(prev).gs_cb);					\
 	update_cr_regs(next);						\
-	restore_access_regs(&next->thread.acrs[0]);			\
-	restore_ri_cb(next->thread.ri_cb, prev->thread.ri_cb);		\
-	restore_gs_cb(next->thread.gs_cb);				\
+	restore_access_regs(&task_thread(next).acrs[0]);			\
+	restore_ri_cb(task_thread(next).ri_cb, task_thread(prev).ri_cb);		\
+	restore_gs_cb(task_thread(next).gs_cb);				\
 	prev = __switch_to(prev, next);					\
 } while (0)
 

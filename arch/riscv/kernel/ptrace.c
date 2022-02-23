@@ -53,7 +53,7 @@ static int riscv_fpr_get(struct task_struct *target,
 			 const struct user_regset *regset,
 			 struct membuf to)
 {
-	struct __riscv_d_ext_state *fstate = &target->thread.fstate;
+	struct __riscv_d_ext_state *fstate = &task_thread(target).fstate;
 
 	if (target == current)
 		fstate_save(current, task_pt_regs(current));
@@ -69,7 +69,7 @@ static int riscv_fpr_set(struct task_struct *target,
 			 const void *kbuf, const void __user *ubuf)
 {
 	int ret;
-	struct __riscv_d_ext_state *fstate = &target->thread.fstate;
+	struct __riscv_d_ext_state *fstate = &task_thread(target).fstate;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, fstate, 0,
 				 offsetof(struct __riscv_d_ext_state, fcsr));

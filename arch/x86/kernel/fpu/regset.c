@@ -44,7 +44,7 @@ int regset_xregset_fpregs_active(struct task_struct *target, const struct user_r
  */
 static void sync_fpstate(struct fpu *fpu)
 {
-	if (fpu == current->thread.fpu)
+	if (fpu == task_thread(current).fpu)
 		fpu_sync_fpstate(fpu);
 }
 
@@ -62,7 +62,7 @@ static void fpu_force_restore(struct fpu *fpu)
 	 * Only stopped child tasks can be used to modify the FPU
 	 * state in the fpstate buffer:
 	 */
-	WARN_ON_FPU(fpu == current->thread.fpu);
+	WARN_ON_FPU(fpu == task_thread(current).fpu);
 
 	__fpu_invalidate_fpregs_state(fpu);
 }
@@ -70,7 +70,7 @@ static void fpu_force_restore(struct fpu *fpu)
 int xfpregs_get(struct task_struct *target, const struct user_regset *regset,
 		struct membuf to)
 {
-	struct fpu *fpu = target->thread.fpu;
+	struct fpu *fpu = task_thread(target).fpu;
 
 	if (!cpu_feature_enabled(X86_FEATURE_FXSR))
 		return -ENODEV;
@@ -90,7 +90,7 @@ int xfpregs_set(struct task_struct *target, const struct user_regset *regset,
 		unsigned int pos, unsigned int count,
 		const void *kbuf, const void __user *ubuf)
 {
-	struct fpu *fpu = target->thread.fpu;
+	struct fpu *fpu = task_thread(target).fpu;
 	struct fxregs_state newstate;
 	int ret;
 
@@ -132,7 +132,7 @@ int xstateregs_get(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_feature_enabled(X86_FEATURE_XSAVE))
 		return -ENODEV;
 
-	sync_fpstate(target->thread.fpu);
+	sync_fpstate(task_thread(target).fpu);
 
 	copy_xstate_to_uabi_buf(to, target, XSTATE_COPY_XSAVE);
 	return 0;
@@ -142,7 +142,7 @@ int xstateregs_set(struct task_struct *target, const struct user_regset *regset,
 		  unsigned int pos, unsigned int count,
 		  const void *kbuf, const void __user *ubuf)
 {
-	struct fpu *fpu = target->thread.fpu;
+	struct fpu *fpu = task_thread(target).fpu;
 	struct xregs_state *tmpbuf = NULL;
 	int ret;
 
@@ -269,7 +269,7 @@ static void __convert_from_fxsr(struct user_i387_ia32_struct *env,
 	if (tsk == current) {
 		savesegment(ds, env->fos);
 	} else {
-		env->fos = tsk->thread.ds;
+		env->fos = task_thread(tsk).ds;
 	}
 	env->fos |= 0xffff0000;
 #else
@@ -286,7 +286,7 @@ static void __convert_from_fxsr(struct user_i387_ia32_struct *env,
 void
 convert_from_fxsr(struct user_i387_ia32_struct *env, struct task_struct *tsk)
 {
-	__convert_from_fxsr(env, tsk, &tsk->thread.fpu->fpstate->regs.fxsave);
+	__convert_from_fxsr(env, tsk, &task_thread(tsk).fpu->fpstate->regs.fxsave);
 }
 
 void convert_to_fxsr(struct fxregs_state *fxsave,
@@ -319,7 +319,7 @@ void convert_to_fxsr(struct fxregs_state *fxsave,
 int fpregs_get(struct task_struct *target, const struct user_regset *regset,
 	       struct membuf to)
 {
-	struct fpu *fpu = target->thread.fpu;
+	struct fpu *fpu = task_thread(target).fpu;
 	struct user_i387_ia32_struct env;
 	struct fxregs_state fxsave, *fx;
 
@@ -351,7 +351,7 @@ int fpregs_set(struct task_struct *target, const struct user_regset *regset,
 	       unsigned int pos, unsigned int count,
 	       const void *kbuf, const void __user *ubuf)
 {
-	struct fpu *fpu = target->thread.fpu;
+	struct fpu *fpu = task_thread(target).fpu;
 	struct user_i387_ia32_struct env;
 	int ret;
 

@@ -24,7 +24,7 @@ static __always_inline unsigned long *stack_pointer(struct task_struct *task)
 	if (!task || task == current)
 		__asm__ __volatile__ ("mov %0, a1\n" : "=a"(sp));
 	else
-		sp = (unsigned long *)task->thread.sp;
+		sp = (unsigned long *)task_thread(task).sp;
 
 	return sp;
 }

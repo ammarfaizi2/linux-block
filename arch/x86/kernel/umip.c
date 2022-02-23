@@ -302,9 +302,9 @@ static void force_sig_info_umip_fault(void __user *addr, struct pt_regs *regs)
 {
 	struct task_struct *tsk = current;
 
-	tsk->thread.cr2		= (unsigned long)addr;
-	tsk->thread.error_code	= X86_PF_USER | X86_PF_WRITE;
-	tsk->thread.trap_nr	= X86_TRAP_PF;
+	task_thread(tsk).cr2		= (unsigned long)addr;
+	task_thread(tsk).error_code	= X86_PF_USER | X86_PF_WRITE;
+	task_thread(tsk).trap_nr	= X86_TRAP_PF;
 
 	force_sig_fault(SIGSEGV, SEGV_MAPERR, addr);
 

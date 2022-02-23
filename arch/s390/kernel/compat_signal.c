@@ -55,14 +55,14 @@ typedef struct
 /* Store registers needed to create the signal frame */
 static void store_sigregs(void)
 {
-	save_access_regs(current->thread.acrs);
+	save_access_regs(task_thread(current).acrs);
 	save_fpu_regs();
 }
 
 /* Load registers after signal return */
 static void load_sigregs(void)
 {
-	restore_access_regs(current->thread.acrs);
+	restore_access_regs(task_thread(current).acrs);
 }
 
 static int save_sigregs32(struct pt_regs *regs, _sigregs32 __user *sregs)
@@ -77,9 +77,9 @@ static int save_sigregs32(struct pt_regs *regs, _sigregs32 __user *sregs)
 		(__u32)(regs->psw.mask & PSW_MASK_BA);
 	for (i = 0; i < NUM_GPRS; i++)
 		user_sregs.regs.gprs[i] = (__u32) regs->gprs[i];
-	memcpy(&user_sregs.regs.acrs, current->thread.acrs,
+	memcpy(&user_sregs.regs.acrs, task_thread(current).acrs,
 	       sizeof(user_sregs.regs.acrs));
-	fpregs_store((_s390_fp_regs *) &user_sregs.fpregs, &current->thread.fpu);
+	fpregs_store((_s390_fp_regs *) &user_sregs.fpregs, &task_thread(current).fpu);
 	if (__copy_to_user(sregs, &user_sregs, sizeof(_sigregs32)))
 		return -EFAULT;
 	return 0;
@@ -115,9 +115,9 @@ static int restore_sigregs32(struct pt_regs *regs,_sigregs32 __user *sregs)
 	regs->psw.addr = (__u64)(user_sregs.regs.psw.addr & PSW32_ADDR_INSN);
 	for (i = 0; i < NUM_GPRS; i++)
 		regs->gprs[i] = (__u64) user_sregs.regs.gprs[i];
-	memcpy(&current->thread.acrs, &user_sregs.regs.acrs,
-	       sizeof(current->thread.acrs));
-	fpregs_load((_s390_fp_regs *) &user_sregs.fpregs, &current->thread.fpu);
+	memcpy(&task_thread(current).acrs, &user_sregs.regs.acrs,
+	       sizeof(task_thread(current).acrs));
+	fpregs_load((_s390_fp_regs *) &user_sregs.fpregs, &task_thread(current).fpu);
 
 	clear_pt_regs_flag(regs, PIF_SYSCALL); /* No longer in a system call */
 	return 0;
@@ -140,11 +140,11 @@ static int save_sigregs_ext32(struct pt_regs *regs,
 	/* Save vector registers to signal stack */
 	if (MACHINE_HAS_VX) {
 		for (i = 0; i < __NUM_VXRS_LOW; i++)
-			vxrs[i] = *((__u64 *)(current->thread.fpu.vxrs + i) + 1);
+			vxrs[i] = *((__u64 *)(task_thread(current).fpu.vxrs + i) + 1);
 		if (__copy_to_user(&sregs_ext->vxrs_low, vxrs,
 				   sizeof(sregs_ext->vxrs_low)) ||
 		    __copy_to_user(&sregs_ext->vxrs_high,
-				   current->thread.fpu.vxrs + __NUM_VXRS_LOW,
+				   task_thread(current).fpu.vxrs + __NUM_VXRS_LOW,
 				   sizeof(sregs_ext->vxrs_high)))
 			return -EFAULT;
 	}
@@ -169,12 +169,12 @@ static int restore_sigregs_ext32(struct pt_regs *regs,
 	if (MACHINE_HAS_VX) {
 		if (__copy_from_user(vxrs, &sregs_ext->vxrs_low,
 				     sizeof(sregs_ext->vxrs_low)) ||
-		    __copy_from_user(current->thread.fpu.vxrs + __NUM_VXRS_LOW,
+		    __copy_from_user(task_thread(current).fpu.vxrs + __NUM_VXRS_LOW,
 				     &sregs_ext->vxrs_high,
 				     sizeof(sregs_ext->vxrs_high)))
 			return -EFAULT;
 		for (i = 0; i < __NUM_VXRS_LOW; i++)
-			*((__u64 *)(current->thread.fpu.vxrs + i) + 1) = vxrs[i];
+			*((__u64 *)(task_thread(current).fpu.vxrs + i) + 1) = vxrs[i];
 	}
 	return 0;
 }
@@ -327,7 +327,7 @@ static int setup_frame32(struct ksignal *ksig, sigset_t *set,
 		/* set extra registers only for synchronous signals */
 		regs->gprs[4] = regs->int_code & 127;
 		regs->gprs[5] = regs->int_parm_long;
-		regs->gprs[6] = current->thread.last_break;
+		regs->gprs[6] = task_thread(current).last_break;
 	}
 
 	return 0;
@@ -399,7 +399,7 @@ static int setup_rt_frame32(struct ksignal *ksig, sigset_t *set,
 	regs->gprs[2] = ksig->sig;
 	regs->gprs[3] = (__force __u64) &frame->info;
 	regs->gprs[4] = (__force __u64) &frame->uc;
-	regs->gprs[5] = current->thread.last_break;
+	regs->gprs[5] = task_thread(current).last_break;
 	return 0;
 }
 

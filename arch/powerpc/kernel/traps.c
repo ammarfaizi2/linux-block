@@ -351,7 +351,7 @@ static bool exception_common(int signr, struct pt_regs *regs, int code,
 
 	show_signal_msg(signr, regs, code, addr);
 
-	current->thread.trap_nr = code;
+	task_thread(current).trap_nr = code;
 
 	return true;
 }
@@ -576,8 +576,8 @@ static inline int check_io_access(struct pt_regs *regs)
 #define REASON_BOUNDARY		0
 
 /* single-step stuff */
-#define single_stepping(regs)	(current->thread.debug.dbcr0 & DBCR0_IC)
-#define clear_single_step(regs)	(current->thread.debug.dbcr0 &= ~DBCR0_IC)
+#define single_stepping(regs)	(task_thread(current).debug.dbcr0 & DBCR0_IC)
+#define clear_single_step(regs)	(task_thread(current).debug.dbcr0 &= ~DBCR0_IC)
 #define clear_br_trace(regs)	do {} while(0)
 #else
 /* On non-4xx, the reason for the machine check or program
@@ -907,9 +907,9 @@ static void p9_hmi_special_emu(struct pt_regs *regs)
 	rb = (instr >> 11) & 0x1f;
 	t = (instr >> 21) & 0x1f;
 	if (instr & 1)
-		vdst = (u8 *)&current->thread.vr_state.vr[t];
+		vdst = (u8 *)&task_thread(current).vr_state.vr[t];
 	else
-		vdst = (u8 *)&current->thread.fp_state.fpr[t][0];
+		vdst = (u8 *)&task_thread(current).fp_state.fpr[t][0];
 
 	/* Grab the vector address */
 	ea = regs->gpr[rb] + (ra ? regs->gpr[ra] : 0);
@@ -1182,7 +1182,7 @@ static void parse_fpe(struct pt_regs *regs)
 	flush_fp_to_thread(current);
 
 #ifdef CONFIG_PPC_FPU_REGS
-	code = __parse_fpscr(current->thread.fp_state.fpscr);
+	code = __parse_fpscr(task_thread(current).fp_state.fpscr);
 #endif
 
 	_exception(SIGFPE, regs, code, regs->nip);
@@ -1411,9 +1411,9 @@ static int emulate_instruction(struct pt_regs *regs)
 			cpu_has_feature(CPU_FTR_DSCR)) {
 		PPC_WARN_EMULATED(mtdscr, regs);
 		rd = (instword >> 21) & 0x1f;
-		current->thread.dscr = regs->gpr[rd];
-		current->thread.dscr_inherit = 1;
-		mtspr(SPRN_DSCR, current->thread.dscr);
+		task_thread(current).dscr = regs->gpr[rd];
+		task_thread(current).dscr_inherit = 1;
+		mtspr(SPRN_DSCR, task_thread(current).dscr);
 		return 0;
 	}
 #endif
@@ -1441,7 +1441,7 @@ static int emulate_math(struct pt_regs *regs)
 		return 0;
 	case 1: {
 			int code = 0;
-			code = __parse_fpscr(current->thread.fp_state.fpscr);
+			code = __parse_fpscr(task_thread(current).fp_state.fpscr);
 			_exception(SIGFPE, regs, code, regs->nip);
 			return 0;
 		}
@@ -1609,7 +1609,7 @@ DEFINE_INTERRUPT_HANDLER(alignment_exception)
 		return;
 
 	/* we don't implement logging of alignment exceptions */
-	if (!(current->thread.align_ctl & PR_UNALIGN_SIGBUS))
+	if (!(task_thread(current).align_ctl & PR_UNALIGN_SIGBUS))
 		fixed = fix_alignment(regs);
 
 	if (fixed == 1) {
@@ -1679,10 +1679,10 @@ static void tm_unavailable(struct pt_regs *regs)
 {
 #ifdef CONFIG_PPC_TRANSACTIONAL_MEM
 	if (user_mode(regs)) {
-		current->thread.load_tm++;
+		task_thread(current).load_tm++;
 		regs_set_return_msr(regs, regs->msr | MSR_TM);
 		tm_enable();
-		tm_restore_sprs(&current->thread);
+		tm_restore_sprs(&task_thread(current));
 		return;
 	}
 #endif
@@ -1759,10 +1759,10 @@ DEFINE_INTERRUPT_HANDLER(facility_unavailable_exception)
 		if ((instword & PPC_INST_MTSPR_DSCR_USER_MASK)
 				== PPC_INST_MTSPR_DSCR_USER) {
 			rd = (instword >> 21) & 0x1f;
-			current->thread.dscr = regs->gpr[rd];
-			current->thread.dscr_inherit = 1;
-			current->thread.fscr |= FSCR_DSCR;
-			mtspr(SPRN_FSCR, current->thread.fscr);
+			task_thread(current).dscr = regs->gpr[rd];
+			task_thread(current).dscr_inherit = 1;
+			task_thread(current).fscr |= FSCR_DSCR;
+			mtspr(SPRN_FSCR, task_thread(current).fscr);
 		}
 
 		/* Read from DSCR (mfspr RT, 0x03) */
@@ -1834,12 +1834,12 @@ DEFINE_INTERRUPT_HANDLER(fp_unavailable_tm)
 	 */
 
 	/* Enable FP for the task: */
-	current->thread.load_fp = 1;
+	task_thread(current).load_fp = 1;
 
 	/*
 	 * Recheckpoint all the checkpointed ckpt, ck{fp, vr}_state registers.
 	 */
-	tm_recheckpoint(&current->thread);
+	tm_recheckpoint(&task_thread(current));
 }
 
 DEFINE_INTERRUPT_HANDLER(altivec_unavailable_tm)
@@ -1852,9 +1852,9 @@ DEFINE_INTERRUPT_HANDLER(altivec_unavailable_tm)
 		 "MSR=%lx\n",
 		 regs->nip, regs->msr);
 	tm_reclaim_current(TM_CAUSE_FAC_UNAV);
-	current->thread.load_vec = 1;
-	tm_recheckpoint(&current->thread);
-	current->thread.used_vr = 1;
+	task_thread(current).load_vec = 1;
+	tm_recheckpoint(&task_thread(current));
+	task_thread(current).used_vr = 1;
 }
 
 DEFINE_INTERRUPT_HANDLER(vsx_unavailable_tm)
@@ -1870,15 +1870,15 @@ DEFINE_INTERRUPT_HANDLER(vsx_unavailable_tm)
 		 "MSR=%lx\n",
 		 regs->nip, regs->msr);
 
-	current->thread.used_vsr = 1;
+	task_thread(current).used_vsr = 1;
 
 	/* This reclaims FP and/or VR regs if they're already enabled */
 	tm_reclaim_current(TM_CAUSE_FAC_UNAV);
 
-	current->thread.load_vec = 1;
-	current->thread.load_fp = 1;
+	task_thread(current).load_vec = 1;
+	task_thread(current).load_fp = 1;
 
-	tm_recheckpoint(&current->thread);
+	tm_recheckpoint(&task_thread(current));
 }
 #endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
 
@@ -1929,7 +1929,7 @@ static void handle_debug(struct pt_regs *regs, unsigned long debug_status)
 	if (debug_status & (DBSR_DAC1R | DBSR_DAC1W)) {
 		dbcr_dac(current) &= ~(DBCR_DAC1R | DBCR_DAC1W);
 #ifdef CONFIG_PPC_ADV_DEBUG_DAC_RANGE
-		current->thread.debug.dbcr2 &= ~DBCR2_DAC12MODE;
+		task_thread(current).debug.dbcr2 &= ~DBCR2_DAC12MODE;
 #endif
 		do_send_trap(regs, mfspr(SPRN_DAC1), debug_status,
 			     5);
@@ -1940,24 +1940,24 @@ static void handle_debug(struct pt_regs *regs, unsigned long debug_status)
 			     6);
 		changed |= 0x01;
 	}  else if (debug_status & DBSR_IAC1) {
-		current->thread.debug.dbcr0 &= ~DBCR0_IAC1;
+		task_thread(current).debug.dbcr0 &= ~DBCR0_IAC1;
 		dbcr_iac_range(current) &= ~DBCR_IAC12MODE;
 		do_send_trap(regs, mfspr(SPRN_IAC1), debug_status,
 			     1);
 		changed |= 0x01;
 	}  else if (debug_status & DBSR_IAC2) {
-		current->thread.debug.dbcr0 &= ~DBCR0_IAC2;
+		task_thread(current).debug.dbcr0 &= ~DBCR0_IAC2;
 		do_send_trap(regs, mfspr(SPRN_IAC2), debug_status,
 			     2);
 		changed |= 0x01;
 	}  else if (debug_status & DBSR_IAC3) {
-		current->thread.debug.dbcr0 &= ~DBCR0_IAC3;
+		task_thread(current).debug.dbcr0 &= ~DBCR0_IAC3;
 		dbcr_iac_range(current) &= ~DBCR_IAC34MODE;
 		do_send_trap(regs, mfspr(SPRN_IAC3), debug_status,
 			     3);
 		changed |= 0x01;
 	}  else if (debug_status & DBSR_IAC4) {
-		current->thread.debug.dbcr0 &= ~DBCR0_IAC4;
+		task_thread(current).debug.dbcr0 &= ~DBCR0_IAC4;
 		do_send_trap(regs, mfspr(SPRN_IAC4), debug_status,
 			     4);
 		changed |= 0x01;
@@ -1967,22 +1967,22 @@ static void handle_debug(struct pt_regs *regs, unsigned long debug_status)
 	 * Check all other debug flags and see if that bit needs to be turned
 	 * back on or not.
 	 */
-	if (DBCR_ACTIVE_EVENTS(current->thread.debug.dbcr0,
-			       current->thread.debug.dbcr1))
+	if (DBCR_ACTIVE_EVENTS(task_thread(current).debug.dbcr0,
+			       task_thread(current).debug.dbcr1))
 		regs_set_return_msr(regs, regs->msr | MSR_DE);
 	else
 		/* Make sure the IDM flag is off */
-		current->thread.debug.dbcr0 &= ~DBCR0_IDM;
+		task_thread(current).debug.dbcr0 &= ~DBCR0_IDM;
 
 	if (changed & 0x01)
-		mtspr(SPRN_DBCR0, current->thread.debug.dbcr0);
+		mtspr(SPRN_DBCR0, task_thread(current).debug.dbcr0);
 }
 
 DEFINE_INTERRUPT_HANDLER(DebugException)
 {
 	unsigned long debug_status = regs->dsisr;
 
-	current->thread.debug.dbsr = debug_status;
+	task_thread(current).debug.dbsr = debug_status;
 
 	/* Hack alert: On BookE, Branch Taken stops on the branch itself, while
 	 * on server, it stops on the target of the branch. In order to simulate
@@ -1999,8 +1999,8 @@ DEFINE_INTERRUPT_HANDLER(DebugException)
 
 		/* Do the single step trick only when coming from userspace */
 		if (user_mode(regs)) {
-			current->thread.debug.dbcr0 &= ~DBCR0_BT;
-			current->thread.debug.dbcr0 |= DBCR0_IDM | DBCR0_IC;
+			task_thread(current).debug.dbcr0 &= ~DBCR0_BT;
+			task_thread(current).debug.dbcr0 |= DBCR0_IDM | DBCR0_IC;
 			regs_set_return_msr(regs, regs->msr | MSR_DE);
 			return;
 		}
@@ -2034,13 +2034,13 @@ DEFINE_INTERRUPT_HANDLER(DebugException)
 			return;
 
 		if (user_mode(regs)) {
-			current->thread.debug.dbcr0 &= ~DBCR0_IC;
-			if (DBCR_ACTIVE_EVENTS(current->thread.debug.dbcr0,
-					       current->thread.debug.dbcr1))
+			task_thread(current).debug.dbcr0 &= ~DBCR0_IC;
+			if (DBCR_ACTIVE_EVENTS(task_thread(current).debug.dbcr0,
+					       task_thread(current).debug.dbcr1))
 				regs_set_return_msr(regs, regs->msr | MSR_DE);
 			else
 				/* Make sure the IDM bit is off */
-				current->thread.debug.dbcr0 &= ~DBCR0_IDM;
+				task_thread(current).debug.dbcr0 &= ~DBCR0_IDM;
 		}
 
 		_exception(SIGTRAP, regs, TRAP_TRACE, regs->nip);
@@ -2078,7 +2078,7 @@ DEFINE_INTERRUPT_HANDLER(altivec_assist_exception)
 		/* XXX quick hack for now: set the non-Java bit in the VSCR */
 		printk_ratelimited(KERN_ERR "Unrecognized altivec instruction "
 				   "in %s at %lx\n", current->comm, regs->nip);
-		current->thread.vr_state.vscr.u[3] |= 0x10000;
+		task_thread(current).vr_state.vscr.u[3] |= 0x10000;
 	}
 }
 #endif /* CONFIG_ALTIVEC */
@@ -2111,8 +2111,8 @@ DEFINE_INTERRUPT_HANDLER(SPEFloatingPointException)
 
 	flush_spe_to_thread(current);
 
-	spefscr = current->thread.spefscr;
-	fpexc_mode = current->thread.fpexc_mode;
+	spefscr = task_thread(current).spefscr;
+	fpexc_mode = task_thread(current).fpexc_mode;
 
 	if ((spefscr & SPEFSCR_FOVF) && (fpexc_mode & PR_FP_EXC_OVF)) {
 		code = FPE_FLTOVF;

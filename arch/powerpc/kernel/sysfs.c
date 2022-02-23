@@ -157,8 +157,8 @@ static void read_dscr(void *val)
 static void write_dscr(void *val)
 {
 	get_paca()->dscr_default = *(unsigned long *)val;
-	if (!current->thread.dscr_inherit) {
-		current->thread.dscr = *(unsigned long *)val;
+	if (!task_thread(current).dscr_inherit) {
+		task_thread(current).dscr = *(unsigned long *)val;
 		mtspr(SPRN_DSCR, *(unsigned long *)val);
 	}
 }

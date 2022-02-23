@@ -178,8 +178,8 @@ EXPORT_SYMBOL(__kernel_fpu_end);
 
 void __load_fpu_regs(void)
 {
-	struct fpu *state = &current->thread.fpu;
-	unsigned long *regs = current->thread.fpu.regs;
+	struct fpu *state = &task_thread(current).fpu;
+	unsigned long *regs = task_thread(current).fpu.regs;
 
 	asm volatile("lfpc %0" : : "Q" (state->fpc));
 	if (likely(MACHINE_HAS_VX)) {
@@ -229,8 +229,8 @@ void save_fpu_regs(void)
 	if (test_cpu_flag(CIF_FPU))
 		goto out;
 
-	state = &current->thread.fpu;
-	regs = current->thread.fpu.regs;
+	state = &task_thread(current).fpu;
+	regs = task_thread(current).fpu.regs;
 
 	asm volatile("stfpc %0" : "=Q" (state->fpc));
 	if (likely(MACHINE_HAS_VX)) {

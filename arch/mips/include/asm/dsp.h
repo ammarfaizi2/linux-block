@@ -38,13 +38,13 @@ static inline void init_dsp(void)
 
 #define __save_dsp(tsk)							\
 do {									\
-	tsk->thread.dsp.dspr[0] = mfhi1();				\
-	tsk->thread.dsp.dspr[1] = mflo1();				\
-	tsk->thread.dsp.dspr[2] = mfhi2();				\
-	tsk->thread.dsp.dspr[3] = mflo2();				\
-	tsk->thread.dsp.dspr[4] = mfhi3();				\
-	tsk->thread.dsp.dspr[5] = mflo3();				\
-	tsk->thread.dsp.dspcontrol = rddsp(DSP_MASK);			\
+	task_thread(tsk).dsp.dspr[0] = mfhi1();				\
+	task_thread(tsk).dsp.dspr[1] = mflo1();				\
+	task_thread(tsk).dsp.dspr[2] = mfhi2();				\
+	task_thread(tsk).dsp.dspr[3] = mflo2();				\
+	task_thread(tsk).dsp.dspr[4] = mfhi3();				\
+	task_thread(tsk).dsp.dspr[5] = mflo3();				\
+	task_thread(tsk).dsp.dspcontrol = rddsp(DSP_MASK);			\
 } while (0)
 
 #define save_dsp(tsk)							\
@@ -55,13 +55,13 @@ do {									\
 
 #define __restore_dsp(tsk)						\
 do {									\
-	mthi1(tsk->thread.dsp.dspr[0]);					\
-	mtlo1(tsk->thread.dsp.dspr[1]);					\
-	mthi2(tsk->thread.dsp.dspr[2]);					\
-	mtlo2(tsk->thread.dsp.dspr[3]);					\
-	mthi3(tsk->thread.dsp.dspr[4]);					\
-	mtlo3(tsk->thread.dsp.dspr[5]);					\
-	wrdsp(tsk->thread.dsp.dspcontrol, DSP_MASK);			\
+	mthi1(task_thread(tsk).dsp.dspr[0]);					\
+	mtlo1(task_thread(tsk).dsp.dspr[1]);					\
+	mthi2(task_thread(tsk).dsp.dspr[2]);					\
+	mtlo2(task_thread(tsk).dsp.dspr[3]);					\
+	mthi3(task_thread(tsk).dsp.dspr[4]);					\
+	mtlo3(task_thread(tsk).dsp.dspr[5]);					\
+	wrdsp(task_thread(tsk).dsp.dspcontrol, DSP_MASK);			\
 } while (0)
 
 #define restore_dsp(tsk)						\
@@ -75,7 +75,7 @@ do {									\
 	if (tsk == current)						\
 		__save_dsp(current);					\
 									\
-	tsk->thread.dsp.dspr;						\
+	task_thread(tsk).dsp.dspr;						\
 })
 
 #endif /* _ASM_DSP_H */

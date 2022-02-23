@@ -107,8 +107,8 @@ SYSCALL_DEFINE0(switch_endian)
 {
 	struct thread_info *ti;
 
-	regs_set_return_msr(current->thread.regs,
-				current->thread.regs->msr ^ MSR_LE);
+	regs_set_return_msr(task_thread(current).regs,
+				task_thread(current).regs->msr ^ MSR_LE);
 
 	/*
 	 * Set TIF_RESTOREALL so that r3 isn't clobbered on return to

@@ -343,12 +343,12 @@ good_area:
 	return;
 bad_area:
 	mmap_read_unlock(mm);
-	__do_fault_siginfo(code, SIGSEGV, tsk->thread.kregs, address);
+	__do_fault_siginfo(code, SIGSEGV, task_thread(tsk).kregs, address);
 	return;
 
 do_sigbus:
 	mmap_read_unlock(mm);
-	__do_fault_siginfo(BUS_ADRERR, SIGBUS, tsk->thread.kregs, address);
+	__do_fault_siginfo(BUS_ADRERR, SIGBUS, task_thread(tsk).kregs, address);
 }
 
 static void check_stack_aligned(unsigned long sp)

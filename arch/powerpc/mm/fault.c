@@ -141,7 +141,7 @@ static int do_sigbus(struct pt_regs *regs, unsigned long address,
 	if (!user_mode(regs))
 		return SIGBUS;
 
-	current->thread.trap_nr = BUS_ADRERR;
+	task_thread(current).trap_nr = BUS_ADRERR;
 #ifdef CONFIG_MEMORY_FAILURE
 	if (fault & (VM_FAULT_HWPOISON|VM_FAULT_HWPOISON_LARGE)) {
 		unsigned int lsb = 0; /* shutup gcc */

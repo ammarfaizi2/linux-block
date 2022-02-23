@@ -142,7 +142,7 @@ kdump_cpu_freeze(struct unw_frame_info *info, void *arg)
 	local_irq_disable();
 	cpuid = smp_processor_id();
 	crash_save_this_cpu();
-	current->thread.ksp = (__u64)info->sw - 16;
+	task_thread(current).ksp = (__u64)info->sw - 16;
 
 	ia64_set_psr_mc();	/* mask MCA/INIT and stop reentrance */
 

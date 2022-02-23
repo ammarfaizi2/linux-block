@@ -36,7 +36,7 @@ static inline void __user *get_trap_ip(struct pt_regs *regs)
 	unsigned long address;
 
 	if (regs->int_code & 0x200)
-		address = current->thread.trap_tdb.data[3];
+		address = task_thread(current).trap_tdb.data[3];
 	else
 		address = regs->psw.addr;
 	return (void __user *) (address - (regs->int_code >> 16));
@@ -76,7 +76,7 @@ void do_per_trap(struct pt_regs *regs)
 	if (!current->ptrace)
 		return;
 	force_sig_fault(SIGTRAP, TRAP_HWBKPT,
-		(void __force __user *) current->thread.per_event.address);
+		(void __force __user *) task_thread(current).per_event.address);
 }
 NOKPROBE_SYMBOL(do_per_trap);
 
@@ -201,7 +201,7 @@ static void vector_exception(struct pt_regs *regs)
 
 	/* get vector interrupt code from fpc */
 	save_fpu_regs();
-	vic = (current->thread.fpu.fpc & 0xf00) >> 8;
+	vic = (task_thread(current).fpu.fpc & 0xf00) >> 8;
 	switch (vic) {
 	case 1: /* invalid vector operation */
 		si_code = FPE_FLTINV;
@@ -227,8 +227,8 @@ static void vector_exception(struct pt_regs *regs)
 static void data_exception(struct pt_regs *regs)
 {
 	save_fpu_regs();
-	if (current->thread.fpu.fpc & FPC_DXC_MASK)
-		do_fp_trap(regs, current->thread.fpu.fpc);
+	if (task_thread(current).fpu.fpc & FPC_DXC_MASK)
+		do_fp_trap(regs, task_thread(current).fpu.fpc);
 	else
 		do_trap(regs, SIGILL, ILL_ILLOPN, "data exception");
 }
@@ -314,17 +314,17 @@ void noinstr __do_pgm_check(struct pt_regs *regs)
 			if (regs->last_break < 4096)
 				regs->last_break = 1;
 		}
-		current->thread.last_break = regs->last_break;
+		task_thread(current).last_break = regs->last_break;
 	}
 
 	if (S390_lowcore.pgm_code & 0x0200) {
 		/* transaction abort */
-		current->thread.trap_tdb = S390_lowcore.pgm_tdb;
+		task_thread(current).trap_tdb = S390_lowcore.pgm_tdb;
 	}
 
 	if (S390_lowcore.pgm_code & PGM_INT_CODE_PER) {
 		if (user_mode(regs)) {
-			struct per_event *ev = &current->thread.per_event;
+			struct per_event *ev = &task_thread(current).per_event;
 
 			set_thread_flag(TIF_PER_TRAP);
 			ev->address = S390_lowcore.per_address;

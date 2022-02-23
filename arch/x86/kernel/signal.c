@@ -175,8 +175,8 @@ __unsafe_setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 	unsafe_put_user(regs->r15, &sc->r15, Efault);
 #endif /* CONFIG_X86_64 */
 
-	unsafe_put_user(current->thread.trap_nr, &sc->trapno, Efault);
-	unsafe_put_user(current->thread.error_code, &sc->err, Efault);
+	unsafe_put_user(task_thread(current).trap_nr, &sc->trapno, Efault);
+	unsafe_put_user(task_thread(current).error_code, &sc->err, Efault);
 	unsafe_put_user(regs->ip, &sc->ip, Efault);
 #ifdef CONFIG_X86_32
 	unsafe_put_user(regs->cs, (unsigned int __user *)&sc->cs, Efault);
@@ -195,7 +195,7 @@ __unsafe_setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 
 	/* non-iBCS2 extensions.. */
 	unsafe_put_user(mask, &sc->oldmask, Efault);
-	unsafe_put_user(current->thread.cr2, &sc->cr2, Efault);
+	unsafe_put_user(task_thread(current).cr2, &sc->cr2, Efault);
 	return 0;
 Efault:
 	return -EFAULT;
@@ -788,7 +788,7 @@ static void
 handle_signal(struct ksignal *ksig, struct pt_regs *regs)
 {
 	bool stepping, failed;
-	struct fpu *fpu = current->thread.fpu;
+	struct fpu *fpu = task_thread(current).fpu;
 
 	if (v8086_mode(regs))
 		save_v86_state((struct kernel_vm86_regs *) regs, VM86_SIGNAL);
@@ -956,14 +956,14 @@ bool sigaltstack_size_valid(size_t ss_size)
 	if (!fpu_state_size_dynamic() && !strict_sigaltstack_size)
 		return true;
 
-	fsize += current->group_leader->thread.fpu->perm.__user_state_size;
+	fsize += task_thread(current->group_leader).fpu->perm.__user_state_size;
 	if (likely(ss_size > fsize))
 		return true;
 
 	if (strict_sigaltstack_size)
 		return ss_size > fsize;
 
-	mask = current->group_leader->thread.fpu->perm.__state_perm;
+	mask = task_thread(current->group_leader).fpu->perm.__state_perm;
 	if (mask & XFEATURE_MASK_USER_DYNAMIC)
 		return ss_size > fsize;
 

@@ -89,10 +89,10 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 {
 	memcpy(dst, src, arch_task_struct_size);
 #ifdef CONFIG_VM86
-	dst->thread.vm86 = NULL;
+	task_thread(dst).vm86 = NULL;
 #endif
 	/* Drop the copied pointer to current's fpstate */
-	dst->thread.fpu = NULL;
+	task_thread(dst).fpu = NULL;
 
 	return 0;
 }
@@ -101,7 +101,7 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 void arch_release_task_struct(struct task_struct *tsk)
 {
 	if (fpu_state_size_dynamic())
-		fpstate_free(tsk->thread.fpu);
+		fpstate_free(task_thread(tsk).fpu);
 }
 #endif
 
@@ -110,7 +110,7 @@ void arch_release_task_struct(struct task_struct *tsk)
  */
 void exit_thread(struct task_struct *tsk)
 {
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &task_thread(tsk);
 	struct fpu *fpu = t->fpu;
 
 	if (test_thread_flag(TIF_IO_BITMAP))
@@ -145,22 +145,22 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
 
 	frame->bp = encode_frame_pointer(childregs);
 	frame->ret_addr = (unsigned long) ret_from_fork;
-	p->thread.sp = (unsigned long) fork_frame;
-	p->thread.io_bitmap = NULL;
-	p->thread.iopl_warn = 0;
-	memset(p->thread.ptrace_bps, 0, sizeof(p->thread.ptrace_bps));
+	task_thread(p).sp = (unsigned long) fork_frame;
+	task_thread(p).io_bitmap = NULL;
+	task_thread(p).iopl_warn = 0;
+	memset(task_thread(p).ptrace_bps, 0, sizeof(task_thread(p).ptrace_bps));
 
 #ifdef CONFIG_X86_64
 	current_save_fsgs();
-	p->thread.fsindex = current->thread.fsindex;
-	p->thread.fsbase = current->thread.fsbase;
-	p->thread.gsindex = current->thread.gsindex;
-	p->thread.gsbase = current->thread.gsbase;
+	task_thread(p).fsindex = task_thread(current).fsindex;
+	task_thread(p).fsbase = task_thread(current).fsbase;
+	task_thread(p).gsindex = task_thread(current).gsindex;
+	task_thread(p).gsbase = task_thread(current).gsbase;
 
-	savesegment(es, p->thread.es);
-	savesegment(ds, p->thread.ds);
+	savesegment(es, task_thread(p).es);
+	savesegment(ds, task_thread(p).ds);
 #else
-	p->thread.sp0 = (unsigned long) (childregs + 1);
+	task_thread(p).sp0 = (unsigned long) (childregs + 1);
 	/*
 	 * Clear all status flags including IF and set fixed bit. 64bit
 	 * does not have this initialization as the frame does not contain
@@ -174,17 +174,17 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
 
 	/* Kernel thread ? */
 	if (unlikely(p->flags & PF_KTHREAD)) {
-		p->thread.pkru = pkru_get_init_value();
+		task_thread(p).pkru = pkru_get_init_value();
 		memset(childregs, 0, sizeof(struct pt_regs));
 		kthread_frame_init(frame, sp, arg);
 		return 0;
 	}
 
 	/*
-	 * Clone current's PKRU value from hardware. tsk->thread.pkru
+	 * Clone current's PKRU value from hardware. task_thread(tsk).pkru
 	 * is only valid when scheduled out.
 	 */
-	p->thread.pkru = read_pkru();
+	task_thread(p).pkru = read_pkru();
 
 	frame->bx = 0;
 	*childregs = *current_pt_regs();
@@ -237,7 +237,7 @@ void flush_thread(void)
 	struct task_struct *tsk = current;
 
 	flush_ptrace_hw_breakpoint(tsk);
-	memset(tsk->thread.tls_array, 0, sizeof(tsk->thread.tls_array));
+	memset(task_thread(tsk).tls_array, 0, sizeof(task_thread(tsk).tls_array));
 
 	fpu_flush_thread();
 	pkru_flush_thread();
@@ -411,7 +411,7 @@ static void tss_copy_io_bitmap(struct tss_struct *tss, struct io_bitmap *iobm)
 void native_tss_update_io_bitmap(void)
 {
 	struct tss_struct *tss = this_cpu_ptr(&cpu_tss_rw);
-	struct thread_struct *t = &current->thread;
+	struct thread_struct *t = &task_thread(current);
 	u16 *base = &tss->x86_tss.io_bitmap_base;
 
 	if (!test_thread_flag(TIF_IO_BITMAP)) {

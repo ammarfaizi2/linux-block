@@ -58,7 +58,7 @@ static inline int decode_access_size(unsigned int insn)
 		return 2;
 	else {
 		printk("Impossible unaligned trap. insn=%08x\n", insn);
-		die_if_kernel("Byte sized unaligned access?!?!", current->thread.kregs);
+		die_if_kernel("Byte sized unaligned access?!?!", task_thread(current).kregs);
 		return 4; /* just to keep gcc happy. */
 	}
 }

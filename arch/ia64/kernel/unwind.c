@@ -476,7 +476,7 @@ unw_access_fr (struct unw_frame_info *info, int regnum, struct ia64_fpreg *val, 
 			ia64_sync_fph(t);
 		else
 			ia64_flush_fph(t);
-		addr = t->thread.fph + (regnum - 32);
+		addr = task_thread(t).fph + (regnum - 32);
 	}
 
 	if (write)
@@ -2071,7 +2071,7 @@ EXPORT_SYMBOL(unw_init_frame_info);
 void
 unw_init_from_blocked_task (struct unw_frame_info *info, struct task_struct *t)
 {
-	struct switch_stack *sw = (struct switch_stack *) (t->thread.ksp + 16);
+	struct switch_stack *sw = (struct switch_stack *) (task_thread(t).ksp + 16);
 
 	UNW_DPRINT(1, "unwind.%s\n", __func__);
 	unw_init_frame_info(info, t, sw);

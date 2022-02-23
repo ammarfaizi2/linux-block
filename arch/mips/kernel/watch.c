@@ -17,7 +17,7 @@
  */
 void mips_install_watch_registers(struct task_struct *t)
 {
-	struct mips3264_watch_reg_state *watches = &t->thread.watch.mips3264;
+	struct mips3264_watch_reg_state *watches = &task_thread(t).watch.mips3264;
 	unsigned int watchhi = MIPS_WATCHHI_G |		/* Trap all ASIDs */
 			       MIPS_WATCHHI_IRW;	/* Clear result bits */
 
@@ -50,7 +50,7 @@ void mips_install_watch_registers(struct task_struct *t)
 void mips_read_watch_registers(void)
 {
 	struct mips3264_watch_reg_state *watches =
-		&current->thread.watch.mips3264;
+		&task_thread(current).watch.mips3264;
 	unsigned int watchhi_mask = MIPS_WATCHHI_MASK | MIPS_WATCHHI_IRW;
 
 	switch (current_cpu_data.watch_reg_use_cnt) {

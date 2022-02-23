@@ -236,7 +236,7 @@ notrace long system_call_exception(long r3, long r4, long r5,
 static notrace void booke_load_dbcr0(void)
 {
 #ifdef CONFIG_PPC_ADV_DEBUG_REGS
-	unsigned long dbcr0 = current->thread.debug.dbcr0;
+	unsigned long dbcr0 = task_thread(current).debug.dbcr0;
 
 	if (likely(!(dbcr0 & DBCR0_IDM)))
 		return;

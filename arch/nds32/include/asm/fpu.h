@@ -93,12 +93,12 @@ static inline void own_fpu(void)
 	if (last_task_used_math != current) {
 		if (last_task_used_math != NULL)
 			save_fpu(last_task_used_math);
-		load_fpu(&current->thread.fpu);
+		load_fpu(&task_thread(current).fpu);
 		last_task_used_math = current;
 	}
 #else
 	if (!test_tsk_fpu(task_pt_regs(current))) {
-		load_fpu(&current->thread.fpu);
+		load_fpu(&task_thread(current).fpu);
 	}
 #endif
 	enable_ptreg_fpu(task_pt_regs(current));

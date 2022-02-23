@@ -4648,9 +4648,9 @@ static int kvmppc_vcpu_run_hv(struct kvm_vcpu *vcpu)
 	 * Don't allow entry with a suspended transaction, because
 	 * the guest entry/exit code will lose it.
 	 */
-	if (cpu_has_feature(CPU_FTR_TM) && current->thread.regs &&
-	    (current->thread.regs->msr & MSR_TM)) {
-		if (MSR_TM_ACTIVE(current->thread.regs->msr)) {
+	if (cpu_has_feature(CPU_FTR_TM) && task_thread(current).regs &&
+	    (task_thread(current).regs->msr & MSR_TM)) {
+		if (MSR_TM_ACTIVE(task_thread(current).regs->msr)) {
 			run->exit_reason = KVM_EXIT_FAIL_ENTRY;
 			run->fail_entry.hardware_entry_failure_reason = 0;
 			return -EINVAL;

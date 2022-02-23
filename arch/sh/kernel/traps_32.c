@@ -630,7 +630,7 @@ asmlinkage void do_reserved_inst(void)
 		/* Enable DSP mode, and restart instruction. */
 		regs->sr |= SR_DSP;
 		/* Save DSP mode */
-		current->thread.dsp_status.status |= SR_DSP;
+		task_thread(current).dsp_status.status |= SR_DSP;
 		return;
 	}
 #endif

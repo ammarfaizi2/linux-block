@@ -19,19 +19,19 @@ int init_fpu(struct task_struct *tsk)
 	/*
 	 * Memory allocation at the first usage of the FPU and other state.
 	 */
-	if (!tsk->thread.xstate) {
-		tsk->thread.xstate = kmem_cache_alloc(task_xstate_cachep,
+	if (!task_thread(tsk).xstate) {
+		task_thread(tsk).xstate = kmem_cache_alloc(task_xstate_cachep,
 						      GFP_KERNEL);
-		if (!tsk->thread.xstate)
+		if (!task_thread(tsk).xstate)
 			return -ENOMEM;
 	}
 
 	if (boot_cpu_data.flags & CPU_HAS_FPU) {
-		struct sh_fpu_hard_struct *fp = &tsk->thread.xstate->hardfpu;
+		struct sh_fpu_hard_struct *fp = &task_thread(tsk).xstate->hardfpu;
 		memset(fp, 0, xstate_size);
 		fp->fpscr = FPSCR_INIT;
 	} else {
-		struct sh_fpu_soft_struct *fp = &tsk->thread.xstate->softfpu;
+		struct sh_fpu_soft_struct *fp = &task_thread(tsk).xstate->softfpu;
 		memset(fp, 0, xstate_size);
 		fp->fpscr = FPSCR_INIT;
 	}
@@ -48,7 +48,7 @@ void __fpu_state_restore(void)
 	restore_fpu(tsk);
 
 	task_thread_info(tsk)->status |= TS_USEDFPU;
-	tsk->thread.fpu_counter++;
+	task_thread(tsk).fpu_counter++;
 }
 
 void fpu_state_restore(struct pt_regs *regs)

@@ -129,8 +129,8 @@ void do_signal(struct pt_regs *regs)
 	 * PTRACE_SYSCALL if necessary.
 	 */
 	if (current->ptrace & PT_DTRACE)
-		current->thread.singlestep_syscall =
-			is_syscall(PT_REGS_IP(&current->thread.regs));
+		task_thread(current).singlestep_syscall =
+			is_syscall(PT_REGS_IP(&task_thread(current).regs));
 
 	/*
 	 * if there's no signal to deliver, we just put the saved sigmask

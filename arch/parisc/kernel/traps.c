@@ -251,12 +251,12 @@ void die_if_kernel(char *str, struct pt_regs *regs, long err)
 			current->comm, task_pid_nr(current), str, err);
 
 	/* Wot's wrong wif bein' racy? */
-	if (current->thread.flags & PARISC_KERNEL_DEATH) {
+	if (task_thread(current).flags & PARISC_KERNEL_DEATH) {
 		printk(KERN_CRIT "%s() recursion detected.\n", __func__);
 		local_irq_enable();
 		while (1);
 	}
-	current->thread.flags |= PARISC_KERNEL_DEATH;
+	task_thread(current).flags |= PARISC_KERNEL_DEATH;
 
 	show_regs(regs);
 	dump_stack();

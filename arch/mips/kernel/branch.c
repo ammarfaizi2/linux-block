@@ -153,7 +153,7 @@ int __mm_isBranchInstr(struct pt_regs *regs, struct mm_decoded_insn dec_insn,
 			if (is_fpu_owner())
 			        fcr31 = read_32bit_cp1_register(CP1_STATUS);
 			else
-				fcr31 = current->thread.fpu.fcr31;
+				fcr31 = task_thread(current).fpu.fcr31;
 			preempt_enable();
 
 			if (bc_false)
@@ -693,7 +693,7 @@ int __compute_return_epc_for_insn(struct pt_regs *regs,
 			if (!init_fp_ctx(current))
 				lose_fpu(1);
 			reg = insn.i_format.rt;
-			bit = get_fpr32(&current->thread.fpu.fpr[reg], 0) & 0x1;
+			bit = get_fpr32(&task_thread(current).fpu.fpr[reg], 0) & 0x1;
 			if (insn.i_format.rs == bc1eqz_op)
 				bit = !bit;
 			own_fpu(1);
@@ -711,7 +711,7 @@ int __compute_return_epc_for_insn(struct pt_regs *regs,
 			if (is_fpu_owner())
 			        fcr31 = read_32bit_cp1_register(CP1_STATUS);
 			else
-				fcr31 = current->thread.fpu.fcr31;
+				fcr31 = task_thread(current).fpu.fcr31;
 			preempt_enable();
 
 			bit = (insn.i_format.rt >> 2);

@@ -922,8 +922,8 @@ int arch_uprobe_pre_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 	}
 
 	regs->ip = utask->xol_vaddr;
-	utask->autask.saved_trap_nr = current->thread.trap_nr;
-	current->thread.trap_nr = UPROBE_TRAP_NR;
+	utask->autask.saved_trap_nr = task_thread(current).trap_nr;
+	task_thread(current).trap_nr = UPROBE_TRAP_NR;
 
 	utask->autask.saved_tf = !!(regs->flags & X86_EFLAGS_TF);
 	regs->flags |= X86_EFLAGS_TF;
@@ -945,7 +945,7 @@ int arch_uprobe_pre_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
  */
 bool arch_uprobe_xol_was_trapped(struct task_struct *t)
 {
-	if (t->thread.trap_nr != UPROBE_TRAP_NR)
+	if (task_thread(t).trap_nr != UPROBE_TRAP_NR)
 		return true;
 
 	return false;
@@ -964,8 +964,8 @@ int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 	bool send_sigtrap = utask->autask.saved_tf;
 	int err = 0;
 
-	WARN_ON_ONCE(current->thread.trap_nr != UPROBE_TRAP_NR);
-	current->thread.trap_nr = utask->autask.saved_trap_nr;
+	WARN_ON_ONCE(task_thread(current).trap_nr != UPROBE_TRAP_NR);
+	task_thread(current).trap_nr = utask->autask.saved_trap_nr;
 
 	if (auprobe->ops->post_xol) {
 		err = auprobe->ops->post_xol(auprobe, regs);
@@ -1038,7 +1038,7 @@ void arch_uprobe_abort_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 	if (auprobe->ops->abort)
 		auprobe->ops->abort(auprobe, regs);
 
-	current->thread.trap_nr = utask->autask.saved_trap_nr;
+	task_thread(current).trap_nr = utask->autask.saved_trap_nr;
 	regs->ip = utask->vaddr;
 	/* clear TF if it was set by us in arch_uprobe_pre_xol() */
 	if (!utask->autask.saved_tf)

@@ -198,7 +198,7 @@ unsigned long __get_wchan(struct task_struct *p);
 #define KSTK_ESP(tsk)	(task_pt_regs(tsk)->gprs[15])
 
 /* Has task runtime instrumentation enabled ? */
-#define is_ri_task(tsk) (!!(tsk)->thread.ri_cb)
+#define is_ri_task(tsk) (!!task_thread(tsk).ri_cb)
 
 static __always_inline unsigned long current_stack_pointer(void)
 {

@@ -20,7 +20,7 @@
  */
 static int get_free_idx(void)
 {
-	struct thread_struct *t = &current->thread;
+	struct thread_struct *t = &task_thread(current);
 	int idx;
 
 	for (idx = 0; idx < GDT_ENTRY_TLS_ENTRIES; idx++)
@@ -84,7 +84,7 @@ static bool tls_desc_okay(const struct user_desc *info)
 static void set_tls_desc(struct task_struct *p, int idx,
 			 const struct user_desc *info, int n)
 {
-	struct thread_struct *t = &p->thread;
+	struct thread_struct *t = &task_thread(p);
 	struct desc_struct *desc = &t->tls_array[idx - GDT_ENTRY_TLS_MIN];
 	int cpu;
 
@@ -102,7 +102,7 @@ static void set_tls_desc(struct task_struct *p, int idx,
 		++desc;
 	}
 
-	if (t == &current->thread)
+	if (t == &task_thread(current))
 		load_TLS(t, cpu);
 
 	put_cpu();
@@ -171,11 +171,11 @@ int do_set_thread_area(struct task_struct *p, int idx,
 			load_gs_index(sel);
 	} else {
 #ifdef CONFIG_X86_64
-		if (p->thread.fsindex == modified_sel)
-			p->thread.fsbase = info.base_addr;
+		if (task_thread(p).fsindex == modified_sel)
+			task_thread(p).fsbase = info.base_addr;
 
-		if (p->thread.gsindex == modified_sel)
-			p->thread.gsbase = info.base_addr;
+		if (task_thread(p).gsindex == modified_sel)
+			task_thread(p).gsbase = info.base_addr;
 #endif
 	}
 
@@ -227,7 +227,7 @@ int do_get_thread_area(struct task_struct *p, int idx,
 	index = array_index_nospec(index,
 			GDT_ENTRY_TLS_MAX - GDT_ENTRY_TLS_MIN + 1);
 
-	fill_user_desc(&info, idx, &p->thread.tls_array[index]);
+	fill_user_desc(&info, idx, &task_thread(p).tls_array[index]);
 
 	if (copy_to_user(u_info, &info, sizeof(info)))
 		return -EFAULT;
@@ -242,7 +242,7 @@ SYSCALL_DEFINE1(get_thread_area, struct user_desc __user *, u_info)
 int regset_tls_active(struct task_struct *target,
 		      const struct user_regset *regset)
 {
-	struct thread_struct *t = &target->thread;
+	struct thread_struct *t = &task_thread(target);
 	int n = GDT_ENTRY_TLS_ENTRIES;
 	while (n > 0 && desc_empty(&t->tls_array[n - 1]))
 		--n;
@@ -256,7 +256,7 @@ int regset_tls_get(struct task_struct *target, const struct user_regset *regset,
 	struct user_desc v;
 	int pos;
 
-	for (pos = 0, tls = target->thread.tls_array; to.left; pos++, tls++) {
+	for (pos = 0, tls = task_thread(target).tls_array; to.left; pos++, tls++) {
 		fill_user_desc(&v, GDT_ENTRY_TLS_MIN + pos, tls);
 		membuf_write(&to, &v, sizeof(v));
 	}

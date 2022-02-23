@@ -18,10 +18,10 @@ extern struct thread_info *current_set[NR_CPUS];
 	do {			\
 	if (test_tsk_thread_flag(prv, TIF_USEDFPU)) { \
 		put_psr(get_psr() | PSR_EF); \
-		fpsave(&(prv)->thread.float_regs[0], &(prv)->thread.fsr, \
-		       &(prv)->thread.fpqueue[0], &(prv)->thread.fpqdepth); \
+		fpsave(&task_thread(prv).float_regs[0], &task_thread(prv).fsr, \
+		       &task_thread(prv).fpqueue[0], &task_thread(prv).fpqdepth); \
 		clear_tsk_thread_flag(prv, TIF_USEDFPU); \
-		(prv)->thread.kregs->psr &= ~PSR_EF; \
+		task_thread(prv).kregs->psr &= ~PSR_EF; \
 	} \
 	} while(0)
 
@@ -31,7 +31,7 @@ extern struct thread_info *current_set[NR_CPUS];
 #define SWITCH_DO_LAZY_FPU(nxt)	\
 	do {			\
 	if (last_task_used_math != (nxt))		\
-		(nxt)->thread.kregs->psr&=~PSR_EF;	\
+		task_thread(nxt).kregs->psr&=~PSR_EF;	\
 	} while(0)
 #endif
 

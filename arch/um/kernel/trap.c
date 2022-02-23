@@ -149,14 +149,14 @@ static void show_segv_info(struct uml_pt_regs *regs)
 
 static void bad_segv(struct faultinfo fi, unsigned long ip)
 {
-	current->thread.arch.faultinfo = fi;
+	task_thread(current).arch.faultinfo = fi;
 	force_sig_fault(SIGSEGV, SEGV_ACCERR, (void __user *) FAULT_ADDRESS(fi));
 }
 
 void fatal_sigsegv(void)
 {
 	force_fatal_sig(SIGSEGV);
-	do_signal(&current->thread.regs);
+	do_signal(&task_thread(current).regs);
 	/*
 	 * This is to tell gcc that we're not returning - do_signal
 	 * can, in general, return, but in this case, it's not, since
@@ -203,7 +203,7 @@ unsigned long segv(struct faultinfo fi, unsigned long ip, int is_user,
 	unsigned long address = FAULT_ADDRESS(fi);
 
 	if (!is_user && regs)
-		current->thread.segv_regs = container_of(regs, struct pt_regs, regs);
+		task_thread(current).segv_regs = container_of(regs, struct pt_regs, regs);
 
 	if (!is_user && (address >= start_vm) && (address < end_vm)) {
 		flush_tlb_kernel_vm();
@@ -232,14 +232,14 @@ unsigned long segv(struct faultinfo fi, unsigned long ip, int is_user,
 		address = 0;
 	}
 
-	catcher = current->thread.fault_catcher;
+	catcher = task_thread(current).fault_catcher;
 	if (!err)
 		goto out;
 	else if (catcher != NULL) {
-		current->thread.fault_addr = (void *) address;
+		task_thread(current).fault_addr = (void *) address;
 		UML_LONGJMP(catcher, 1);
 	}
-	else if (current->thread.fault_addr != NULL)
+	else if (task_thread(current).fault_addr != NULL)
 		panic("fault_addr set but no fault catcher");
 	else if (!is_user && arch_fixup(ip, regs))
 		goto out;
@@ -253,17 +253,17 @@ unsigned long segv(struct faultinfo fi, unsigned long ip, int is_user,
 	show_segv_info(regs);
 
 	if (err == -EACCES) {
-		current->thread.arch.faultinfo = fi;
+		task_thread(current).arch.faultinfo = fi;
 		force_sig_fault(SIGBUS, BUS_ADRERR, (void __user *)address);
 	} else {
 		BUG_ON(err != -EFAULT);
-		current->thread.arch.faultinfo = fi;
+		task_thread(current).arch.faultinfo = fi;
 		force_sig_fault(SIGSEGV, si_code, (void __user *) address);
 	}
 
 out:
 	if (regs)
-		current->thread.segv_regs = NULL;
+		task_thread(current).segv_regs = NULL;
 
 	return 0;
 }
@@ -287,7 +287,7 @@ void relay_signal(int sig, struct siginfo *si, struct uml_pt_regs *regs)
 	err = si->si_errno;
 	if ((err == 0) && (siginfo_layout(sig, code) == SIL_FAULT)) {
 		struct faultinfo *fi = UPT_FAULTINFO(regs);
-		current->thread.arch.faultinfo = *fi;
+		task_thread(current).arch.faultinfo = *fi;
 		force_sig_fault(sig, code, (void __user *)FAULT_ADDRESS(*fi));
 	} else {
 		printk(KERN_ERR "Attempted to relay unknown signal %d (si_code = %d) with errno %d\n",
@@ -298,8 +298,8 @@ void relay_signal(int sig, struct siginfo *si, struct uml_pt_regs *regs)
 
 void bus_handler(int sig, struct siginfo *si, struct uml_pt_regs *regs)
 {
-	if (current->thread.fault_catcher != NULL)
-		UML_LONGJMP(current->thread.fault_catcher, 1);
+	if (task_thread(current).fault_catcher != NULL)
+		UML_LONGJMP(task_thread(current).fault_catcher, 1);
 	else
 		relay_signal(sig, si, regs);
 }

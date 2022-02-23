@@ -1985,7 +1985,7 @@ struct elf_thread_status
 static int elf_dump_thread_status(long signr, struct elf_thread_status *t)
 {
 	int sz = 0;
-	struct task_struct *p = t->thread;
+	struct task_struct *p = task_thread(t);
 	t->num_notes = 0;
 
 	fill_prstatus(&t->prstatus.common, p, signr);

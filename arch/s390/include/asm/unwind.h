@@ -15,7 +15,7 @@
  * 2) task==NULL, regs!=NULL: the unwind starts from the sp/ip found in
  *    the struct pt_regs of an interrupt frame for the current task
  * 3) task!=NULL, regs==NULL: the unwind starts for an inactive task with
- *    the sp picked up from task->thread.ksp and the ip picked up from the
+ *    the sp picked up from task_thread(task).ksp and the ip picked up from the
  *    return address stored by __switch_to
  * 4) task!=NULL, regs!=NULL: the sp/ip are picked up from the interrupt
  *    frame 'regs' of a inactive task

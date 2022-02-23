@@ -232,13 +232,13 @@ static inline void arch_thread_struct_whitelist(unsigned long *offset,
 ({									\
 	unsigned long *__tls;						\
 	if (is_compat_thread(task_thread_info(t)))			\
-		__tls = &(t)->thread.uw.tp2_value;			\
+		__tls = &task_thread(t).uw.tp2_value;			\
 	else								\
-		__tls = &(t)->thread.uw.tp_value;			\
+		__tls = &task_thread(t).uw.tp_value;			\
 	__tls;								\
  })
 #else
-#define task_user_tls(t)	(&(t)->thread.uw.tp_value)
+#define task_user_tls(t)	(&task_thread(t).uw.tp_value)
 #endif
 
 /* Sync TPIDR_EL0 back to thread_struct for current */

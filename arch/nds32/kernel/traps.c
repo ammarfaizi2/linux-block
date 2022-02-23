@@ -100,12 +100,12 @@ void show_stack(struct task_struct *tsk, unsigned long *sp, const char *loglvl)
 		tsk = current;
 	if (!IS_ENABLED(CONFIG_FRAME_POINTER)) {
 		if (tsk != current)
-			base_reg = (unsigned long *)(tsk->thread.cpu_context.sp);
+			base_reg = (unsigned long *)(task_thread(tsk).cpu_context.sp);
 		else
 			__asm__ __volatile__("\tori\t%0, $sp, #0\n":"=r"(base_reg));
 	} else {
 		if (tsk != current)
-			base_reg = (unsigned long *)(tsk->thread.cpu_context.fp);
+			base_reg = (unsigned long *)(task_thread(tsk).cpu_context.fp);
 		else
 			__asm__ __volatile__("\tori\t%0, $fp, #0\n":"=r"(base_reg));
 	}
@@ -211,8 +211,8 @@ static void send_sigtrap(struct pt_regs *regs, int error_code, int si_code)
 {
 	struct task_struct *tsk = current;
 
-	tsk->thread.trap_no = ENTRY_DEBUG_RELATED;
-	tsk->thread.error_code = error_code;
+	task_thread(tsk).trap_no = ENTRY_DEBUG_RELATED;
+	task_thread(tsk).error_code = error_code;
 
 	force_sig_fault(SIGTRAP, si_code,
 			(void __user *)instruction_pointer(regs));

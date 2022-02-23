@@ -184,8 +184,8 @@ void exit_thread(struct task_struct *tsk)
 #endif
 		/* Keep process from leaving FPU in a bogon state. */
 		put_psr(get_psr() | PSR_EF);
-		fpsave(&tsk->thread.float_regs[0], &tsk->thread.fsr,
-		       &tsk->thread.fpqueue[0], &tsk->thread.fpqdepth);
+		fpsave(&task_thread(tsk).float_regs[0], &task_thread(tsk).fsr,
+		       &task_thread(tsk).fpqueue[0], &task_thread(tsk).fpqdepth);
 #ifndef CONFIG_SMP
 		last_task_used_math = NULL;
 #else
@@ -205,8 +205,8 @@ void flush_thread(void)
 #endif
 		/* Clean the fpu. */
 		put_psr(get_psr() | PSR_EF);
-		fpsave(&current->thread.float_regs[0], &current->thread.fsr,
-		       &current->thread.fpqueue[0], &current->thread.fpqdepth);
+		fpsave(&task_thread(current).float_regs[0], &task_thread(current).fsr,
+		       &task_thread(current).fpqueue[0], &task_thread(current).fpqdepth);
 #ifndef CONFIG_SMP
 		last_task_used_math = NULL;
 #else
@@ -272,8 +272,8 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
 	if (test_thread_flag(TIF_USEDFPU)) {
 #endif
 		put_psr(get_psr() | PSR_EF);
-		fpsave(&p->thread.float_regs[0], &p->thread.fsr,
-		       &p->thread.fpqueue[0], &p->thread.fpqdepth);
+		fpsave(&task_thread(p).float_regs[0], &task_thread(p).fsr,
+		       &task_thread(p).fpqueue[0], &task_thread(p).fpqdepth);
 	}
 
 	/*
@@ -294,13 +294,13 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
 	 * Thus, kpsr |= PSR_PIL.
 	 */
 	ti->ksp = (unsigned long) new_stack;
-	p->thread.kregs = childregs;
+	task_thread(p).kregs = childregs;
 
 	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
 		extern int nwindows;
 		unsigned long psr;
 		memset(new_stack, 0, STACKFRAME_SZ + TRACEREG_SZ);
-		p->thread.current_ds = KERNEL_DS;
+		task_thread(p).current_ds = KERNEL_DS;
 		ti->kpc = (((unsigned long) ret_from_kernel_thread) - 0x8);
 		childregs->u_regs[UREG_G1] = sp; /* function */
 		childregs->u_regs[UREG_G2] = arg;
@@ -311,10 +311,10 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
 	}
 	memcpy(new_stack, (char *)regs - STACKFRAME_SZ, STACKFRAME_SZ + TRACEREG_SZ);
 	childregs->u_regs[UREG_FP] = sp;
-	p->thread.current_ds = USER_DS;
+	task_thread(p).current_ds = USER_DS;
 	ti->kpc = (((unsigned long) ret_from_fork) - 0x8);
-	ti->kpsr = current->thread.fork_kpsr | PSR_PIL;
-	ti->kwim = current->thread.fork_kwim;
+	ti->kpsr = task_thread(current).fork_kpsr | PSR_PIL;
+	ti->kwim = task_thread(current).fork_kwim;
 
 	if (sp != regs->u_regs[UREG_FP]) {
 		struct sparc_stackf __user *childstack;

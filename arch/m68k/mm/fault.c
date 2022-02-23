@@ -24,9 +24,9 @@ int send_fault_sig(struct pt_regs *regs)
 	int signo, si_code;
 	void __user *addr;
 
-	signo = current->thread.signo;
-	si_code = current->thread.code;
-	addr = (void __user *)current->thread.faddr;
+	signo = task_thread(current).signo;
+	si_code = task_thread(current).code;
+	addr = (void __user *)task_thread(current).faddr;
 	pr_debug("send_fault_sig: %p,%d,%d\n", addr, signo, si_code);
 
 	if (user_mode(regs)) {
@@ -180,26 +180,26 @@ out_of_memory:
 	return 0;
 
 no_context:
-	current->thread.signo = SIGBUS;
-	current->thread.faddr = address;
+	task_thread(current).signo = SIGBUS;
+	task_thread(current).faddr = address;
 	return send_fault_sig(regs);
 
 bus_err:
-	current->thread.signo = SIGBUS;
-	current->thread.code = BUS_ADRERR;
-	current->thread.faddr = address;
+	task_thread(current).signo = SIGBUS;
+	task_thread(current).code = BUS_ADRERR;
+	task_thread(current).faddr = address;
 	goto send_sig;
 
 map_err:
-	current->thread.signo = SIGSEGV;
-	current->thread.code = SEGV_MAPERR;
-	current->thread.faddr = address;
+	task_thread(current).signo = SIGSEGV;
+	task_thread(current).code = SEGV_MAPERR;
+	task_thread(current).faddr = address;
 	goto send_sig;
 
 acc_err:
-	current->thread.signo = SIGSEGV;
-	current->thread.code = SEGV_ACCERR;
-	current->thread.faddr = address;
+	task_thread(current).signo = SIGSEGV;
+	task_thread(current).code = SEGV_ACCERR;
+	task_thread(current).faddr = address;
 
 send_sig:
 	mmap_read_unlock(mm);

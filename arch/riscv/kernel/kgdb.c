@@ -253,19 +253,19 @@ sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *task)
 	/* Initialize to zero */
 	memset((char *)gdb_regs, 0, NUMREGBYTES);
 
-	gdb_regs[DBG_REG_SP_OFF] = task->thread.sp;
-	gdb_regs[DBG_REG_FP_OFF] = task->thread.s[0];
-	gdb_regs[DBG_REG_S1_OFF] = task->thread.s[1];
-	gdb_regs[DBG_REG_S2_OFF] = task->thread.s[2];
-	gdb_regs[DBG_REG_S3_OFF] = task->thread.s[3];
-	gdb_regs[DBG_REG_S4_OFF] = task->thread.s[4];
-	gdb_regs[DBG_REG_S5_OFF] = task->thread.s[5];
-	gdb_regs[DBG_REG_S6_OFF] = task->thread.s[6];
-	gdb_regs[DBG_REG_S7_OFF] = task->thread.s[7];
-	gdb_regs[DBG_REG_S8_OFF] = task->thread.s[8];
-	gdb_regs[DBG_REG_S9_OFF] = task->thread.s[10];
-	gdb_regs[DBG_REG_S10_OFF] = task->thread.s[11];
-	gdb_regs[DBG_REG_EPC_OFF] = task->thread.ra;
+	gdb_regs[DBG_REG_SP_OFF] = task_thread(task).sp;
+	gdb_regs[DBG_REG_FP_OFF] = task_thread(task).s[0];
+	gdb_regs[DBG_REG_S1_OFF] = task_thread(task).s[1];
+	gdb_regs[DBG_REG_S2_OFF] = task_thread(task).s[2];
+	gdb_regs[DBG_REG_S3_OFF] = task_thread(task).s[3];
+	gdb_regs[DBG_REG_S4_OFF] = task_thread(task).s[4];
+	gdb_regs[DBG_REG_S5_OFF] = task_thread(task).s[5];
+	gdb_regs[DBG_REG_S6_OFF] = task_thread(task).s[6];
+	gdb_regs[DBG_REG_S7_OFF] = task_thread(task).s[7];
+	gdb_regs[DBG_REG_S8_OFF] = task_thread(task).s[8];
+	gdb_regs[DBG_REG_S9_OFF] = task_thread(task).s[10];
+	gdb_regs[DBG_REG_S10_OFF] = task_thread(task).s[11];
+	gdb_regs[DBG_REG_EPC_OFF] = task_thread(task).ra;
 }
 
 void kgdb_arch_set_pc(struct pt_regs *regs, unsigned long pc)

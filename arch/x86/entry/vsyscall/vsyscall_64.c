@@ -104,7 +104,7 @@ static bool write_ok_or_segv(unsigned long ptr, size_t size)
 	 */
 
 	if (!access_ok((void __user *)ptr, size)) {
-		struct thread_struct *thread = &current->thread;
+		struct thread_struct *thread = &task_thread(current);
 
 		thread->error_code	= X86_PF_USER | X86_PF_WRITE;
 		thread->cr2		= ptr;
@@ -237,8 +237,8 @@ bool emulate_vsyscall(unsigned long error_code,
 	 * With a real vsyscall, page faults cause SIGSEGV.  We want to
 	 * preserve that behavior to make writing exploits harder.
 	 */
-	prev_sig_on_uaccess_err = current->thread.sig_on_uaccess_err;
-	current->thread.sig_on_uaccess_err = 1;
+	prev_sig_on_uaccess_err = task_thread(current).sig_on_uaccess_err;
+	task_thread(current).sig_on_uaccess_err = 1;
 
 	ret = -EFAULT;
 	switch (vsyscall_nr) {
@@ -262,7 +262,7 @@ bool emulate_vsyscall(unsigned long error_code,
 		break;
 	}
 
-	current->thread.sig_on_uaccess_err = prev_sig_on_uaccess_err;
+	task_thread(current).sig_on_uaccess_err = prev_sig_on_uaccess_err;
 
 check_fault:
 	if (ret == -EFAULT) {
