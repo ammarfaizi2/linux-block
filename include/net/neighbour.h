@@ -485,20 +485,6 @@ static inline int neigh_event_send(struct neighbour *neigh, struct sk_buff *skb)
 	return neigh_event_send_probe(neigh, skb, true);
 }
 
-#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-static inline int neigh_hh_bridge(struct hh_cache *hh, struct sk_buff *skb)
-{
-	unsigned int seq, hh_alen;
-
-	do {
-		seq = read_seqbegin(&hh->hh_lock);
-		hh_alen = HH_DATA_ALIGN(ETH_HLEN);
-		memcpy(skb->data - hh_alen, hh->hh_data, ETH_ALEN + hh_alen - ETH_HLEN);
-	} while (read_seqretry(&hh->hh_lock, seq));
-	return 0;
-}
-#endif
-
 static inline struct neighbour *
 __neigh_lookup(struct neigh_table *tbl, const void *pkey, struct net_device *dev, int creat)
 {
@@ -531,17 +517,6 @@ struct neighbour_cb {
 #define LOCALLY_ENQUEUED 0x1
 
 #define NEIGH_CB(skb)	((struct neighbour_cb *)(skb)->cb)
-
-static inline void neigh_ha_snapshot(char *dst, const struct neighbour *n,
-				     const struct net_device *dev)
-{
-	unsigned int seq;
-
-	do {
-		seq = read_seqbegin(&n->ha_lock);
-		memcpy(dst, n->ha, dev->addr_len);
-	} while (read_seqretry(&n->ha_lock, seq));
-}
 
 static inline void neigh_update_is_router(struct neighbour *neigh, u32 flags,
 					  int *notify)
