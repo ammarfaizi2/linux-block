@@ -16,6 +16,8 @@
 #include <scsi/scsi_common.h>
 #include <uapi/linux/cdrom.h>
 
+struct block_device;
+
 struct packet_command
 {
 	unsigned char 		cmd[CDROM_PACKET_SIZE];
