@@ -1500,21 +1500,14 @@ struct task_struct {
 	struct callback_head		l1d_flush_kill;
 #endif
 
+	/* CPU-specific state of this task: */
+	struct thread_struct		thread;
+
 	/*
 	 * New fields for task_struct should be added above here, so that
 	 * they are included in the randomized portion of task_struct.
 	 */
 	randomized_struct_fields_end
-
-	/* CPU-specific state of this task: */
-	struct thread_struct		thread;
-
-	/*
-	 * WARNING: on x86, 'thread_struct' contains a variable-sized
-	 * structure.  It *MUST* be at the end of 'task_struct'.
-	 *
-	 * Do not put anything below here!
-	 */
 };
 
 #define task_thread(task) (task)->thread

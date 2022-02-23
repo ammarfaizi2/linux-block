@@ -842,7 +842,7 @@ static void __init fpu__init_disable_system_xstate(unsigned int legacy_size)
 	 */
 	init_fpstate.xfd = 0;
 
-	fpstate_reset(&current->thread.fpu);
+	fpstate_reset(current->thread.fpu);
 }
 
 /*
@@ -940,7 +940,7 @@ void __init fpu__init_system_xstate(unsigned int legacy_size)
 		goto out_disable;
 
 	/* Reset the state for the current task */
-	fpstate_reset(&current->thread.fpu);
+	fpstate_reset(current->thread.fpu);
 
 	/*
 	 * Update info used for ptrace frames; use standard-format size and no
@@ -996,7 +996,7 @@ void fpu__resume_cpu(void)
 	}
 
 	if (fpu_state_size_dynamic())
-		wrmsrl(MSR_IA32_XFD, current->thread.fpu.fpstate->xfd);
+		wrmsrl(MSR_IA32_XFD, current->thread.fpu->fpstate->xfd);
 }
 
 /*
@@ -1248,7 +1248,7 @@ out:
 void copy_xstate_to_uabi_buf(struct membuf to, struct task_struct *tsk,
 			     enum xstate_copy_mode copy_mode)
 {
-	__copy_xstate_to_uabi_buf(to, tsk->thread.fpu.fpstate,
+	__copy_xstate_to_uabi_buf(to, tsk->thread.fpu->fpstate,
 				  tsk->thread.pkru, copy_mode);
 }
 
@@ -1440,7 +1440,7 @@ static bool xstate_op_valid(struct fpstate *fpstate, u64 mask, bool rstor)
 	  * The XFD MSR does not match fpstate->xfd. That's invalid when
 	  * the passed in fpstate is current's fpstate.
 	  */
-	if (fpstate->xfd == current->thread.fpu.fpstate->xfd)
+	if (fpstate->xfd == current->thread.fpu->fpstate->xfd)
 		return false;
 
 	/*
@@ -1517,7 +1517,7 @@ void fpstate_free(struct fpu *fpu)
 static int fpstate_realloc(u64 xfeatures, unsigned int ksize,
 			   unsigned int usize, struct fpu_guest *guest_fpu)
 {
-	struct fpu *fpu = &current->thread.fpu;
+	struct fpu *fpu = current->thread.fpu;
 	struct fpstate *curfps, *newfps = NULL;
 	unsigned int fpsize;
 	bool in_use;
@@ -1613,7 +1613,7 @@ static int __xstate_request_perm(u64 permitted, u64 requested, bool guest)
 	 * AVX512.
 	 */
 	bool compacted = cpu_feature_enabled(X86_FEATURE_XSAVES);
-	struct fpu *fpu = &current->group_leader->thread.fpu;
+	struct fpu *fpu = current->group_leader->thread.fpu;
 	struct fpu_state_perm *perm;
 	unsigned int ksize, usize;
 	u64 mask;
@@ -1713,7 +1713,7 @@ int __xfd_enable_feature(u64 xfd_err, struct fpu_guest *guest_fpu)
 		return -EPERM;
 	}
 
-	fpu = &current->group_leader->thread.fpu;
+	fpu = current->group_leader->thread.fpu;
 	perm = guest_fpu ? &fpu->guest_perm : &fpu->perm;
 	ksize = perm->__state_size;
 	usize = perm->__user_state_size;
@@ -1822,7 +1822,7 @@ long fpu_xstate_prctl(struct task_struct *tsk, int option, unsigned long arg2)
  */
 static void avx512_status(struct seq_file *m, struct task_struct *task)
 {
-	unsigned long timestamp = READ_ONCE(task->thread.fpu.avx512_timestamp);
+	unsigned long timestamp = READ_ONCE(task->thread.fpu->avx512_timestamp);
 	long delta;
 
 	if (!timestamp) {
