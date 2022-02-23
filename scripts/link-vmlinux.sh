@@ -359,7 +359,7 @@ fi
 kallsymso=""
 kallsymso_prev=""
 kallsyms_vmlinux=""
-if is_enabled CONFIG_KALLSYMS; then
+if is_enabled CONFIG_KALLSYMS_GENERIC; then
 
 	# kallsyms support
 	# Generate section listing all symbols and add it into vmlinux
@@ -416,7 +416,7 @@ if is_enabled CONFIG_BUILDTIME_TABLE_SORT; then
 fi
 
 # step a (see comment above)
-if is_enabled CONFIG_KALLSYMS; then
+if is_enabled CONFIG_KALLSYMS_GENERIC; then
 	mksysmap ${kallsyms_vmlinux} .tmp_System.map
 
 	if ! cmp -s System.map .tmp_System.map; then

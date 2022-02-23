@@ -1733,6 +1733,34 @@ config KALLSYMS_BASE_RELATIVE
 	  time constants, and no relocation pass is required at runtime to fix
 	  up the entries based on the runtime load address of the kernel.
 
+config KALLSYMS_FAST
+	bool "Generate uncompressed kallsyms symbols via objtool"
+	depends on HAVE_OBJTOOL_KALLSYMS
+	depends on KALLSYMS
+	default y
+	help
+	  Normally kallsyms stores symbol strings in the kernel image in a
+	  compressed format that is suitable for distro kernels. While this
+	  saves RAM, it slows down the kernel build rather significantly,
+	  through a complicated triple-linking step of the final vmlinux.
+
+	  This feature removes the triple-linking and generates the symbol
+	  table while building the individual .o files, at the cost of higher
+	  RAM footprint of the kernel symbols by a couple of megabytes on a
+	  particularly large .config. On a defconfig-alike kernel the overhead
+	  is in the hundreds of kilobytes range.
+
+	  If you are a developer who frequently needs to rebuild the kernel,
+	  say Y.
+
+config KALLSYMS_GENERIC
+	bool
+	depends on KALLSYMS
+	default !KALLSYMS_FAST
+	help
+	  This option is basically the inverse of KALLSYMS_FAST: when we use the
+	  slow post-processing steps of generating the kallsyms symbol table.
+
 # end of the "standard kernel features (expert users)" menu
 
 # syscall, maps, verifier
