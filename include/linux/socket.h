@@ -3,6 +3,7 @@
 #define _LINUX_SOCKET_H
 
 
+#include <linux/time64.h>
 #include <asm/socket.h>			/* arch-dependent defines	*/
 #include <linux/sockios.h>		/* the SIOCxxx I/O controls	*/
 #include <linux/uio.h>			/* iovec support		*/
