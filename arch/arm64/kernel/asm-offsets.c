@@ -11,6 +11,11 @@
 #include <linux/arm_sdei.h>
 #include <linux/sched.h>
 #include <linux/kexec.h>
+#include <linux/sched/thread_info_api.h>
+#include <linux/thread_info.h>
+#include <linux/stackprotector.h>
+#include <linux/signal.h>
+#include <linux/err.h>
 #include <linux/mm.h>
 #include <linux/dma-mapping.h>
 #include <linux/kvm_host.h>
@@ -35,16 +40,18 @@
 int main(void)
 {
   DEFINE(TSK_ACTIVE_MM,		offsetof(struct task_struct, active_mm));
+
   BLANK();
-  DEFINE(TSK_TI_CPU,		offsetof(struct task_struct, thread_info.cpu));
-  DEFINE(TSK_TI_FLAGS,		offsetof(struct task_struct, thread_info.flags));
-  DEFINE(TSK_TI_PREEMPT,	offsetof(struct task_struct, thread_info.preempt_count));
+  DEFINE(TSK_TI_CPU,		TI_BASE + offsetof(struct thread_info, cpu));
+  DEFINE(TSK_TI_FLAGS,		TI_BASE + offsetof(struct thread_info, flags));
+  DEFINE(TSK_TI_PREEMPT,	TI_BASE + offsetof(struct thread_info, preempt_count));
+
 #ifdef CONFIG_ARM64_SW_TTBR0_PAN
-  DEFINE(TSK_TI_TTBR0,		offsetof(struct task_struct, thread_info.ttbr0));
+  DEFINE(TSK_TI_TTBR0,		TI_BASE + offsetof(struct thread_info, ttbr0));
 #endif
 #ifdef CONFIG_SHADOW_CALL_STACK
-  DEFINE(TSK_TI_SCS_BASE,	offsetof(struct task_struct, thread_info.scs_base));
-  DEFINE(TSK_TI_SCS_SP,		offsetof(struct task_struct, thread_info.scs_sp));
+  DEFINE(TSK_TI_SCS_BASE,	TI_BASE + offsetof(struct thread_info, scs_base));
+  DEFINE(TSK_TI_SCS_SP,		TI_BASE + offsetof(struct thread_info, scs_sp));
 #endif
   DEFINE(TSK_STACK,		TSK_PER_TASK_BASE + offsetof(struct task_struct_per_task, stack));
 #ifdef CONFIG_STACKPROTECTOR

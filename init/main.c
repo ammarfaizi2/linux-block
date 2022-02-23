@@ -893,6 +893,9 @@ void __init __weak arch_call_rest_init(void)
 
 void __init init_per_task_early(void)
 {
+#ifdef CONFIG_THREAD_INFO_IN_TASK
+	per_task(&init_task, ti) = (struct thread_info) INIT_THREAD_INFO(init_task);
+#endif
 #ifdef CONFIG_POSIX_TIMERS
 	per_task(&init_task, posix_cputimers) = (struct posix_cputimers) __INIT_CPU_TIMERS(init_task);
 #endif

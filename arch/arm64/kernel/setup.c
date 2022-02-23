@@ -380,7 +380,7 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 	 * faults in case uaccess_enable() is inadvertently called by the init
 	 * thread.
 	 */
-	init_task.thread_info.ttbr0 = phys_to_ttbr(__pa_symbol(reserved_pg_dir));
+	per_task(&init_task, ti).ttbr0 = phys_to_ttbr(__pa_symbol(reserved_pg_dir));
 #endif
 
 	if (boot_args[1] || boot_args[2] || boot_args[3]) {

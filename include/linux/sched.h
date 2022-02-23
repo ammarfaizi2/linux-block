@@ -10,7 +10,6 @@
 #include <uapi/linux/sched.h>
 
 #include <linux/sched/per_task.h>
-#include <linux/thread_info.h>
 #include <linux/cache.h>
 #include <linux/bitops.h>
 #include <linux/linkage.h>
@@ -360,13 +359,6 @@ struct wake_q_node {
 };
 
 struct task_struct {
-#ifdef CONFIG_THREAD_INFO_IN_TASK
-	/*
-	 * For reasons of header soup (see current_thread_info()), this
-	 * must be the first element of task_struct.
-	 */
-	struct thread_info		thread_info;
-#endif
 	unsigned int			__state;
 
 #ifdef CONFIG_PREEMPT_RT
@@ -1113,28 +1105,6 @@ extern void ia64_set_curr_task(int cpu, struct task_struct *p);
 
 void yield(void);
 
-union thread_union {
-#ifndef CONFIG_ARCH_TASK_STRUCT_ON_STACK
-	struct task_struct task;
-#endif
-#ifndef CONFIG_THREAD_INFO_IN_TASK
-	struct thread_info thread_info;
-#endif
-	unsigned long stack[THREAD_SIZE/sizeof(long)];
-};
-
-#ifndef CONFIG_THREAD_INFO_IN_TASK
-extern struct thread_info init_thread_info;
-#endif
-
-extern unsigned long init_stack[THREAD_SIZE / sizeof(unsigned long)];
-
-#ifdef CONFIG_THREAD_INFO_IN_TASK
-# define task_thread_info(task)	(&(task)->thread_info)
-#elif !defined(__HAVE_THREAD_FUNCTIONS)
-# define task_thread_info(task)	((struct thread_info *)per_task(task, stack))
-#endif
-
 /*
  * find a task by one of its numerical ids
  *
@@ -1148,56 +1118,6 @@ extern unsigned long init_stack[THREAD_SIZE / sizeof(unsigned long)];
 
 extern struct task_struct *find_task_by_vpid(pid_t nr);
 extern struct task_struct *find_task_by_pid_ns(pid_t nr, struct pid_namespace *ns);
-
-/*
- * Set thread flags in other task's structures.
- * See asm/thread_info.h for TIF_xxxx flags available:
- */
-static inline void set_tsk_thread_flag(struct task_struct *tsk, int flag)
-{
-	set_ti_thread_flag(task_thread_info(tsk), flag);
-}
-
-static inline void clear_tsk_thread_flag(struct task_struct *tsk, int flag)
-{
-	clear_ti_thread_flag(task_thread_info(tsk), flag);
-}
-
-static inline void update_tsk_thread_flag(struct task_struct *tsk, int flag,
-					  bool value)
-{
-	update_ti_thread_flag(task_thread_info(tsk), flag, value);
-}
-
-static inline int test_and_set_tsk_thread_flag(struct task_struct *tsk, int flag)
-{
-	return test_and_set_ti_thread_flag(task_thread_info(tsk), flag);
-}
-
-static inline int test_and_clear_tsk_thread_flag(struct task_struct *tsk, int flag)
-{
-	return test_and_clear_ti_thread_flag(task_thread_info(tsk), flag);
-}
-
-static inline int test_tsk_thread_flag(struct task_struct *tsk, int flag)
-{
-	return test_ti_thread_flag(task_thread_info(tsk), flag);
-}
-
-static inline void set_tsk_need_resched(struct task_struct *tsk)
-{
-	set_tsk_thread_flag(tsk,TIF_NEED_RESCHED);
-}
-
-static inline void clear_tsk_need_resched(struct task_struct *tsk)
-{
-	clear_tsk_thread_flag(tsk,TIF_NEED_RESCHED);
-}
-
-static inline int test_tsk_need_resched(struct task_struct *tsk)
-{
-	return unlikely(test_tsk_thread_flag(tsk,TIF_NEED_RESCHED));
-}
 
 /*
  * find a task by its virtual pid and get the task struct
@@ -1226,36 +1146,6 @@ extern char *__get_task_comm(char *to, size_t len, struct task_struct *tsk);
 	BUILD_BUG_ON(sizeof(buf) != TASK_COMM_LEN);	\
 	__get_task_comm(buf, sizeof(buf), tsk);		\
 })
-
-static __always_inline bool need_resched(void)
-{
-	return unlikely(tif_need_resched());
-}
-
-/*
- * Wrappers for p->thread_info->cpu access. No-op on UP.
- */
-#ifdef CONFIG_SMP
-
-static inline unsigned int task_cpu(const struct task_struct *p)
-{
-	return READ_ONCE(task_thread_info(p)->cpu);
-}
-
-extern void set_task_cpu(struct task_struct *p, unsigned int cpu);
-
-#else
-
-static inline unsigned int task_cpu(const struct task_struct *p)
-{
-	return 0;
-}
-
-static inline void set_task_cpu(struct task_struct *p, unsigned int cpu)
-{
-}
-
-#endif /* CONFIG_SMP */
 
 extern bool sched_task_on_rq(struct task_struct *p);
 extern unsigned long get_wchan(struct task_struct *p);

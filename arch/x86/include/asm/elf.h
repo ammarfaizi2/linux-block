@@ -5,7 +5,7 @@
 /*
  * ELF register definitions..
  */
-#include <linux/thread_info.h>
+#include <linux/sched/thread_info_api.h>
 
 #include <asm/ptrace.h>
 #include <asm/user.h>

@@ -6,6 +6,7 @@
 #include <linux/mutex.h>
 
 #include <linux/sched/idle.h>
+#include <linux/sched/thread_info_api.h>
 
 /*
  * sched-domains (multiprocessor balancing) declarations:

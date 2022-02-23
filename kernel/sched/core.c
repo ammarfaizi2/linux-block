@@ -93,6 +93,10 @@
 
 DEFINE_PER_TASK(unsigned int,				flags);
 
+#ifdef CONFIG_THREAD_INFO_IN_TASK
+DEFINE_PER_TASK(struct thread_info, ti);
+#endif
+
 DEFINE_PER_TASK(struct sched_dl_entity,			dl);
 
 DEFINE_PER_TASK(int,					on_rq);

@@ -2,6 +2,7 @@
 #ifndef _LINUX_SCHED_AFFINITY_H
 #define _LINUX_SCHED_AFFINITY_H
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/per_task.h>
 #include <linux/cpumask.h>
 
