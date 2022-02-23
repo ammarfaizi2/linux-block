@@ -7,6 +7,8 @@
 #ifndef __LINUX_PAGE_TABLE_CHECK_H
 #define __LINUX_PAGE_TABLE_CHECK_H
 
+#include <linux/mm_types.h>
+
 #ifdef CONFIG_PAGE_TABLE_CHECK
 #include <linux/jump_label.h>
 
@@ -113,7 +115,7 @@ static inline void page_table_check_pte_clear_range(struct mm_struct *mm,
 	__page_table_check_pte_clear_range(mm, addr, pmd);
 }
 
-#else
+#else /* !CONFIG_PAGE_TABLE_CHECK: */
 
 static inline void page_table_check_alloc(struct page *page, unsigned int order)
 {
