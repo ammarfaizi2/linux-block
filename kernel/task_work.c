@@ -88,14 +88,14 @@ task_work_cancel_match(struct task_struct *task,
 	 * new entry before this work, we will find it again. Or
 	 * we raced with task_work_run(), *pprev == NULL/exited.
 	 */
-	raw_spin_lock_irqsave(&task->pi_lock, flags);
+	raw_spin_lock_irqsave(&per_task(task, pi_lock), flags);
 	while ((work = READ_ONCE(*pprev))) {
 		if (!match(work, data))
 			pprev = &work->next;
 		else if (cmpxchg(pprev, work, work->next) == work)
 			break;
 	}
-	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+	raw_spin_unlock_irqrestore(&per_task(task, pi_lock), flags);
 
 	return work;
 }
@@ -158,8 +158,8 @@ void task_work_run(void)
 		 * the first entry == work, cmpxchg(task_works) must fail.
 		 * But it can remove another entry from the ->next list.
 		 */
-		raw_spin_lock_irq(&task->pi_lock);
-		raw_spin_unlock_irq(&task->pi_lock);
+		raw_spin_lock_irq(&per_task(task, pi_lock));
+		raw_spin_unlock_irq(&per_task(task, pi_lock));
 
 		do {
 			next = work->next;

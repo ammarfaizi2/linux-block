@@ -18,6 +18,11 @@ DECLARE_PER_TASK(refcount_t, usage);
 DECLARE_PER_TASK(int, on_cpu);
 #endif
 
+DECLARE_PER_TASK(spinlock_t, alloc_lock);
+
+/* Protection of the PI data structures: */
+DECLARE_PER_TASK(raw_spinlock_t, pi_lock);
+
 struct task_struct;
 struct rusage;
 union thread_union;
@@ -149,12 +154,12 @@ extern int arch_task_struct_size __read_mostly;
  */
 static inline void task_lock(struct task_struct *p)
 {
-	spin_lock(&p->alloc_lock);
+	spin_lock(&per_task(p, alloc_lock));
 }
 
 static inline void task_unlock(struct task_struct *p)
 {
-	spin_unlock(&p->alloc_lock);
+	spin_unlock(&per_task(p, alloc_lock));
 }
 
 static inline bool task_on_another_cpu(struct task_struct *task)

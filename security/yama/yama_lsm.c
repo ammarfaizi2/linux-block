@@ -78,7 +78,7 @@ static void report_access(const char *access, struct task_struct *target,
 	struct access_report_info *info;
 	char agent_comm[sizeof(agent->comm)];
 
-	assert_spin_locked(&target->alloc_lock); /* for target->comm */
+	assert_spin_locked(&per_task(target, alloc_lock)); /* for target->comm */
 
 	if (current->flags & PF_KTHREAD) {
 		/* I don't think kthreads call task_work_run() before exiting.
