@@ -1488,12 +1488,13 @@ static void rcutorture_one_extend(int *readstate, int newstate,
 
 		lockit = !cur_ops->no_pi_lock && !statesnew && !(torture_random(trsp) & 0xffff);
 		if (lockit)
-			raw_spin_lock_irqsave(&current->pi_lock, flags);
+			raw_spin_lock_irqsave(&per_task(current, pi_lock), flags);
 		cur_ops->readunlock((idxold1 >> RCUTORTURE_RDR_SHIFT_1) & 0x1);
 		WARN_ON_ONCE(idxnew1 != -1);
 		idxold1 = 0;
 		if (lockit)
-			raw_spin_unlock_irqrestore(&current->pi_lock, flags);
+			raw_spin_unlock_irqrestore(&per_task(current, pi_lock),
+						   flags);
 	}
 
 	/* Delay if neither beginning nor end and there was a change. */

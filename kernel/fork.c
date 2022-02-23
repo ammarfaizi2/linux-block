@@ -1735,7 +1735,7 @@ SYSCALL_DEFINE1(set_tid_address, int __user *, tidptr)
 
 static void rt_mutex_init_task(struct task_struct *p)
 {
-	raw_spin_lock_init(&p->pi_lock);
+	raw_spin_lock_init(&per_task(p, pi_lock));
 #ifdef CONFIG_RT_MUTEXES
 	per_task(p, pi_waiters) = RB_ROOT_CACHED;
 	p->pi_top_task = NULL;
@@ -2086,7 +2086,7 @@ static __latent_entropy struct task_struct *copy_process(
 	INIT_LIST_HEAD(&p->sibling);
 	rcu_copy_process(p);
 	p->vfork_done = NULL;
-	spin_lock_init(&p->alloc_lock);
+	spin_lock_init(&per_task(p, alloc_lock));
 
 	init_sigpending(&per_task(p, pending));
 
@@ -2139,7 +2139,8 @@ static __latent_entropy struct task_struct *copy_process(
 #ifdef CONFIG_CPUSETS
 	per_task(p, cpuset_mem_spread_rotor) = NUMA_NO_NODE;
 	per_task(p, cpuset_slab_spread_rotor) = NUMA_NO_NODE;
-	seqcount_spinlock_init(&per_task(p, mems_allowed_seq), &p->alloc_lock);
+	seqcount_spinlock_init(&per_task(p, mems_allowed_seq),
+			       &per_task(p, alloc_lock));
 #endif
 #ifdef CONFIG_TRACE_IRQFLAGS
 	memset(&p->irqtrace, 0, sizeof(p->irqtrace));

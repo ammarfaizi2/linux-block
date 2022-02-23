@@ -231,10 +231,10 @@ struct task_group;
 	do {								\
 		unsigned long flags; /* may shadow */			\
 									\
-		raw_spin_lock_irqsave(&current->pi_lock, flags);	\
+		raw_spin_lock_irqsave(&per_task(current, pi_lock), flags);	\
 		debug_special_state_change((state_value));		\
 		WRITE_ONCE(current->__state, (state_value));		\
-		raw_spin_unlock_irqrestore(&current->pi_lock, flags);	\
+		raw_spin_unlock_irqrestore(&per_task(current, pi_lock), flags);	\
 	} while (0)
 
 /*
@@ -265,21 +265,21 @@ struct task_group;
 #define current_save_and_set_rtlock_wait_state()			\
 	do {								\
 		lockdep_assert_irqs_disabled();				\
-		raw_spin_lock(&current->pi_lock);			\
+		raw_spin_lock(&per_task(current, pi_lock));		\
 		current->saved_state = current->__state;		\
 		debug_rtlock_wait_set_state();				\
 		WRITE_ONCE(current->__state, TASK_RTLOCK_WAIT);		\
-		raw_spin_unlock(&current->pi_lock);			\
+		raw_spin_unlock(&per_task(current, pi_lock));		\
 	} while (0);
 
 #define current_restore_rtlock_saved_state()				\
 	do {								\
 		lockdep_assert_irqs_disabled();				\
-		raw_spin_lock(&current->pi_lock);			\
+		raw_spin_lock(&per_task(current, pi_lock));		\
 		debug_rtlock_wait_restore_state();			\
 		WRITE_ONCE(current->__state, current->saved_state);	\
 		current->saved_state = TASK_RUNNING;			\
-		raw_spin_unlock(&current->pi_lock);			\
+		raw_spin_unlock(&per_task(current, pi_lock));		\
 	} while (0);
 
 #define get_current_state()	READ_ONCE(current->__state)
@@ -667,12 +667,6 @@ struct task_struct {
 	/* Thread group tracking: */
 	u64				parent_exec_id;
 	u64				self_exec_id;
-
-	/* Protection against (de-)allocation: mm, files, fs, tty, keyrings, mems_allowed, mempolicy: */
-	spinlock_t			alloc_lock;
-
-	/* Protection of the PI data structures: */
-	raw_spinlock_t			pi_lock;
 
 	struct wake_q_node		wake_q;
 

@@ -456,15 +456,15 @@ void __sched rt_mutex_adjust_pi(struct task_struct *task)
 	struct rt_mutex_base *next_lock;
 	unsigned long flags;
 
-	raw_spin_lock_irqsave(&task->pi_lock, flags);
+	raw_spin_lock_irqsave(&per_task(task, pi_lock), flags);
 
 	waiter = task->pi_blocked_on;
 	if (!waiter || rt_mutex_waiter_equal(waiter, task_to_waiter(task))) {
-		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+		raw_spin_unlock_irqrestore(&per_task(task, pi_lock), flags);
 		return;
 	}
 	next_lock = waiter->lock;
-	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+	raw_spin_unlock_irqrestore(&per_task(task, pi_lock), flags);
 
 	/* gets dropped in rt_mutex_adjust_prio_chain()! */
 	get_task_struct(task);

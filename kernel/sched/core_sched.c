@@ -99,9 +99,9 @@ static unsigned long sched_core_clone_cookie(struct task_struct *p)
 {
 	unsigned long cookie, flags;
 
-	raw_spin_lock_irqsave(&p->pi_lock, flags);
+	raw_spin_lock_irqsave(&per_task(p, pi_lock), flags);
 	cookie = sched_core_get_cookie(per_task(p, core_cookie));
-	raw_spin_unlock_irqrestore(&p->pi_lock, flags);
+	raw_spin_unlock_irqrestore(&per_task(p, pi_lock), flags);
 
 	return cookie;
 }

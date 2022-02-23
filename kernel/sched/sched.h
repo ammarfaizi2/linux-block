@@ -1846,7 +1846,7 @@ task_rq_unlock(struct rq *rq, struct task_struct *p, struct rq_flags *rf)
 {
 	rq_unpin_lock(rq, rf);
 	raw_spin_rq_unlock(rq);
-	raw_spin_unlock_irqrestore(&p->pi_lock, rf->flags);
+	raw_spin_unlock_irqrestore(&per_task(p, pi_lock), rf->flags);
 }
 
 static inline void

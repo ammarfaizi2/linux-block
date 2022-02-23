@@ -918,7 +918,7 @@ void __init init_per_task_early(void)
 #endif
 #ifdef CONFIG_CPUSETS
 	per_task(&init_task, mems_allowed_seq) = (seqcount_spinlock_t) SEQCNT_SPINLOCK_ZERO(init_task.mems_allowed_seq,
-						 &init_task.alloc_lock);
+						 &per_task(&init_task, alloc_lock));
 #endif
 	per_task(&init_task, restart_block).fn = do_no_restart_syscall;
 #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
@@ -944,6 +944,8 @@ void __init init_per_task_early(void)
 #ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
 	raw_spin_lock_init(&per_task(&init_task, prev_cputime).lock);
 #endif
+	spin_lock_init(&per_task(&init_task, alloc_lock));
+	raw_spin_lock_init(&per_task(&init_task, pi_lock));
 }
 
 static void __init print_unknown_bootoptions(void)
