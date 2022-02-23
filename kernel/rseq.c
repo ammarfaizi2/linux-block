@@ -17,6 +17,8 @@
 #include <linux/types.h>
 #include <asm/ptrace.h>
 
+DEFINE_PER_TASK(struct rseq __user *, rseq);
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/rseq.h>
 
@@ -86,7 +88,7 @@
 static int rseq_update_cpu_id(struct task_struct *t)
 {
 	u32 cpu_id = raw_smp_processor_id();
-	struct rseq __user *rseq = t->rseq;
+	struct rseq __user *rseq = per_task(t, rseq);
 
 	if (!user_write_access_begin(rseq, sizeof(*rseq)))
 		goto efault;
@@ -109,14 +111,14 @@ static int rseq_reset_rseq_cpu_id(struct task_struct *t)
 	/*
 	 * Reset cpu_id_start to its initial state (0).
 	 */
-	if (put_user(cpu_id_start, &t->rseq->cpu_id_start))
+	if (put_user(cpu_id_start, &per_task(t, rseq)->cpu_id_start))
 		return -EFAULT;
 	/*
 	 * Reset cpu_id to RSEQ_CPU_ID_UNINITIALIZED, so any user coming
 	 * in after unregistration can figure out that rseq needs to be
 	 * registered again.
 	 */
-	if (put_user(cpu_id, &t->rseq->cpu_id))
+	if (put_user(cpu_id, &per_task(t, rseq)->cpu_id))
 		return -EFAULT;
 	return 0;
 }
@@ -130,10 +132,10 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
 	int ret;
 
 #ifdef CONFIG_64BIT
-	if (get_user(ptr, &t->rseq->rseq_cs))
+	if (get_user(ptr, &per_task(t, rseq)->rseq_cs))
 		return -EFAULT;
 #else
-	if (copy_from_user(&ptr, &t->rseq->rseq_cs, sizeof(ptr)))
+	if (copy_from_user(&ptr, &per_task(t, rseq)->rseq_cs, sizeof(ptr)))
 		return -EFAULT;
 #endif
 	if (!ptr) {
@@ -178,7 +180,7 @@ static int rseq_need_restart(struct task_struct *t, u32 cs_flags)
 	int ret;
 
 	/* Get thread flags. */
-	ret = get_user(flags, &t->rseq->flags);
+	ret = get_user(flags, &per_task(t, rseq)->flags);
 	if (ret)
 		return ret;
 
@@ -219,9 +221,9 @@ static int clear_rseq_cs(struct task_struct *t)
 	 * Set rseq_cs to NULL.
 	 */
 #ifdef CONFIG_64BIT
-	return put_user(0UL, &t->rseq->rseq_cs);
+	return put_user(0UL, &per_task(t, rseq)->rseq_cs);
 #else
-	if (clear_user(&t->rseq->rseq_cs, sizeof(t->rseq->rseq_cs)))
+	if (clear_user(&per_task(t, rseq)->rseq_cs, sizeof(per_task(t, rseq)->rseq_cs)))
 		return -EFAULT;
 	return 0;
 #endif
@@ -316,7 +318,7 @@ void rseq_syscall(struct pt_regs *regs)
 	struct task_struct *t = current;
 	struct rseq_cs rseq_cs;
 
-	if (!t->rseq)
+	if (!per_task(t, rseq))
 		return;
 	if (rseq_get_rseq_cs(t, &rseq_cs) || in_rseq_cs(ip, &rseq_cs))
 		force_sig(SIGSEGV);
@@ -336,7 +338,7 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
 		if (flags & ~RSEQ_FLAG_UNREGISTER)
 			return -EINVAL;
 		/* Unregister rseq for current thread. */
-		if (current->rseq != rseq || !current->rseq)
+		if (per_task(current, rseq) != rseq || !per_task(current, rseq))
 			return -EINVAL;
 		if (rseq_len != sizeof(*rseq))
 			return -EINVAL;
@@ -345,7 +347,7 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
 		ret = rseq_reset_rseq_cpu_id(current);
 		if (ret)
 			return ret;
-		current->rseq = NULL;
+		per_task(current, rseq) = NULL;
 		current->rseq_sig = 0;
 		return 0;
 	}
@@ -353,13 +355,13 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
 	if (unlikely(flags))
 		return -EINVAL;
 
-	if (current->rseq) {
+	if (per_task(current, rseq)) {
 		/*
 		 * If rseq is already registered, check whether
 		 * the provided address differs from the prior
 		 * one.
 		 */
-		if (current->rseq != rseq || rseq_len != sizeof(*rseq))
+		if (per_task(current, rseq) != rseq || rseq_len != sizeof(*rseq))
 			return -EINVAL;
 		if (current->rseq_sig != sig)
 			return -EPERM;
@@ -376,7 +378,7 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
 		return -EINVAL;
 	if (!access_ok(rseq, rseq_len))
 		return -EFAULT;
-	current->rseq = rseq;
+	per_task(current, rseq) = rseq;
 	current->rseq_sig = sig;
 	/*
 	 * If rseq was previously inactive, and has just been
