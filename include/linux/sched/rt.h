@@ -2,7 +2,10 @@
 #ifndef _LINUX_SCHED_RT_H
 #define _LINUX_SCHED_RT_H
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
+#include <linux/sched/task.h>
+#include <linux/sched/cond_resched.h>
 
 struct task_struct;
 
@@ -63,5 +66,16 @@ extern void normalize_rt_tasks(void);
  * Timeslices get refilled after they expire.
  */
 #define RR_TIMESLICE		(100 * HZ / 1000)
+
+#ifdef CONFIG_SMP
+static inline bool owner_on_cpu(struct task_struct *owner)
+{
+	/*
+	 * As lock holder preemption issue, we both skip spinning if
+	 * task is not on cpu or its cpu is preempted
+	 */
+	return READ_ONCE(owner->on_cpu) && !vcpu_is_preempted(task_cpu(owner));
+}
+#endif
 
 #endif /* _LINUX_SCHED_RT_H */

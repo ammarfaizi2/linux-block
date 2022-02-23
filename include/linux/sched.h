@@ -1826,45 +1826,6 @@ extern struct task_struct *find_task_by_vpid(pid_t nr);
 extern struct task_struct *find_task_by_pid_ns(pid_t nr, struct pid_namespace *ns);
 
 /*
- * find a task by its virtual pid and get the task struct
- */
-extern struct task_struct *find_get_task_by_vpid(pid_t nr);
-
-extern int wake_up_state(struct task_struct *tsk, unsigned int state);
-extern int wake_up_process(struct task_struct *tsk);
-extern void wake_up_new_task(struct task_struct *tsk);
-
-#ifdef CONFIG_SMP
-extern void kick_process(struct task_struct *tsk);
-#else
-static inline void kick_process(struct task_struct *tsk) { }
-#endif
-
-extern void __set_task_comm(struct task_struct *tsk, const char *from, bool exec);
-
-static inline void set_task_comm(struct task_struct *tsk, const char *from)
-{
-	__set_task_comm(tsk, from, false);
-}
-
-extern char *__get_task_comm(char *to, size_t len, struct task_struct *tsk);
-#define get_task_comm(buf, tsk) ({			\
-	BUILD_BUG_ON(sizeof(buf) != TASK_COMM_LEN);	\
-	__get_task_comm(buf, sizeof(buf), tsk);		\
-})
-
-#ifdef CONFIG_SMP
-extern void scheduler_ipi(void);
-extern unsigned long wait_task_inactive(struct task_struct *, unsigned int match_state);
-#else
-static inline void scheduler_ipi(void) { }
-static inline unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state)
-{
-	return 1;
-}
-#endif
-
-/*
  * Set thread flags in other task's structures.
  * See asm/thread_info.h for TIF_xxxx flags available:
  */
@@ -1915,128 +1876,43 @@ static inline int test_tsk_need_resched(struct task_struct *tsk)
 }
 
 /*
- * cond_resched() and cond_resched_lock(): latency reduction via
- * explicit rescheduling in places that are safe. The return
- * value indicates whether a reschedule was done in fact.
- * cond_resched_lock() will drop the spinlock before scheduling,
+ * find a task by its virtual pid and get the task struct
  */
-#if !defined(CONFIG_PREEMPTION) || defined(CONFIG_PREEMPT_DYNAMIC)
-extern int __cond_resched(void);
+extern struct task_struct *find_get_task_by_vpid(pid_t nr);
 
-#if defined(CONFIG_PREEMPT_DYNAMIC) && defined(CONFIG_HAVE_PREEMPT_DYNAMIC_CALL)
+extern int wake_up_state(struct task_struct *tsk, unsigned int state);
+extern int wake_up_process(struct task_struct *tsk);
+extern void wake_up_new_task(struct task_struct *tsk);
 
-DECLARE_STATIC_CALL(cond_resched, __cond_resched);
-
-static __always_inline int _cond_resched(void)
-{
-	return static_call_mod(cond_resched)();
-}
-
-#elif defined(CONFIG_PREEMPT_DYNAMIC) && defined(CONFIG_HAVE_PREEMPT_DYNAMIC_KEY)
-extern int dynamic_cond_resched(void);
-
-static __always_inline int _cond_resched(void)
-{
-	return dynamic_cond_resched();
-}
-
+#ifdef CONFIG_SMP
+extern void kick_process(struct task_struct *tsk);
 #else
-
-static inline int _cond_resched(void)
-{
-	return __cond_resched();
-}
-
-#endif /* CONFIG_PREEMPT_DYNAMIC */
-
-#else
-
-static inline int _cond_resched(void) { return 0; }
-
-#endif /* !defined(CONFIG_PREEMPTION) || defined(CONFIG_PREEMPT_DYNAMIC) */
-
-#define cond_resched() ({			\
-	__might_resched(__FILE__, __LINE__, 0);	\
-	_cond_resched();			\
-})
-
-extern int __cond_resched_lock(spinlock_t *lock);
-extern int __cond_resched_rwlock_read(rwlock_t *lock);
-extern int __cond_resched_rwlock_write(rwlock_t *lock);
-
-#define MIGHT_RESCHED_RCU_SHIFT		8
-#define MIGHT_RESCHED_PREEMPT_MASK	((1U << MIGHT_RESCHED_RCU_SHIFT) - 1)
-
-#ifndef CONFIG_PREEMPT_RT
-/*
- * Non RT kernels have an elevated preempt count due to the held lock,
- * but are not allowed to be inside a RCU read side critical section
- */
-# define PREEMPT_LOCK_RESCHED_OFFSETS	PREEMPT_LOCK_OFFSET
-#else
-/*
- * spin/rw_lock() on RT implies rcu_read_lock(). The might_sleep() check in
- * cond_resched*lock() has to take that into account because it checks for
- * preempt_count() and rcu_preempt_depth().
- */
-# define PREEMPT_LOCK_RESCHED_OFFSETS	\
-	(PREEMPT_LOCK_OFFSET + (1U << MIGHT_RESCHED_RCU_SHIFT))
+static inline void kick_process(struct task_struct *tsk) { }
 #endif
 
-#define cond_resched_lock(lock) ({						\
-	__might_resched(__FILE__, __LINE__, PREEMPT_LOCK_RESCHED_OFFSETS);	\
-	__cond_resched_lock(lock);						\
-})
+extern void __set_task_comm(struct task_struct *tsk, const char *from, bool exec);
 
-#define cond_resched_rwlock_read(lock) ({					\
-	__might_resched(__FILE__, __LINE__, PREEMPT_LOCK_RESCHED_OFFSETS);	\
-	__cond_resched_rwlock_read(lock);					\
-})
-
-#define cond_resched_rwlock_write(lock) ({					\
-	__might_resched(__FILE__, __LINE__, PREEMPT_LOCK_RESCHED_OFFSETS);	\
-	__cond_resched_rwlock_write(lock);					\
-})
-
-extern void __cond_resched_rcu(void);
-
-static inline void cond_resched_rcu(void)
+static inline void set_task_comm(struct task_struct *tsk, const char *from)
 {
-#if defined(CONFIG_DEBUG_ATOMIC_SLEEP) || !defined(CONFIG_PREEMPT_RCU)
-	__cond_resched_rcu();
-#endif
+	__set_task_comm(tsk, from, false);
 }
 
-/*
- * Does a critical section need to be broken due to another
- * task waiting?: (technically does not depend on CONFIG_PREEMPTION,
- * but a general need for low latency)
- */
-static inline int spin_needbreak(spinlock_t *lock)
-{
-#ifdef CONFIG_PREEMPTION
-	return spin_is_contended(lock);
+extern char *__get_task_comm(char *to, size_t len, struct task_struct *tsk);
+#define get_task_comm(buf, tsk) ({			\
+	BUILD_BUG_ON(sizeof(buf) != TASK_COMM_LEN);	\
+	__get_task_comm(buf, sizeof(buf), tsk);		\
+})
+
+#ifdef CONFIG_SMP
+extern void scheduler_ipi(void);
+extern unsigned long wait_task_inactive(struct task_struct *, unsigned int match_state);
 #else
-	return 0;
-#endif
-}
-
-/*
- * Check if a rwlock is contended.
- * Returns non-zero if there is another task waiting on the rwlock.
- * Returns zero if the lock is not contended or the system / underlying
- * rwlock implementation does not support contention detection.
- * Technically does not depend on CONFIG_PREEMPTION, but a general need
- * for low latency.
- */
-static inline int rwlock_needbreak(rwlock_t *lock)
+static inline void scheduler_ipi(void) { }
+static inline unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state)
 {
-#ifdef CONFIG_PREEMPTION
-	return rwlock_is_contended(lock);
-#else
-	return 0;
-#endif
+	return 1;
 }
+#endif
 
 static __always_inline bool need_resched(void)
 {
@@ -2071,34 +1947,12 @@ static inline void set_task_cpu(struct task_struct *p, unsigned int cpu)
 extern bool sched_task_on_rq(struct task_struct *p);
 extern unsigned long get_wchan(struct task_struct *p);
 
-/*
- * In order to reduce various lock holder preemption latencies provide an
- * interface to see if a vCPU is currently running or not.
- *
- * This allows us to terminate optimistic spin loops and block, analogous to
- * the native optimistic spin heuristic of testing if the lock owner task is
- * running or not.
- */
-#ifndef vcpu_is_preempted
-static inline bool vcpu_is_preempted(int cpu)
-{
-	return false;
-}
-#endif
+#include <linux/sched/cond_resched.h>
 
 extern long sched_setaffinity(pid_t pid, const struct cpumask *new_mask);
 extern long sched_getaffinity(pid_t pid, struct cpumask *mask);
 
 #ifdef CONFIG_SMP
-static inline bool owner_on_cpu(struct task_struct *owner)
-{
-	/*
-	 * As lock holder preemption issue, we both skip spinning if
-	 * task is not on cpu or its cpu is preempted
-	 */
-	return READ_ONCE(owner->on_cpu) && !vcpu_is_preempted(task_cpu(owner));
-}
-
 /* Returns effective CPU energy utilization, as seen by the scheduler */
 unsigned long sched_cpu_util(int cpu, unsigned long max);
 #endif /* CONFIG_SMP */
