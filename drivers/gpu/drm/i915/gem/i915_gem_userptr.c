@@ -81,7 +81,7 @@ static bool i915_gem_userptr_invalidate(struct mmu_interval_notifier *mni,
 	 * cannot currently force non-consistent batch buffers to preempt
 	 * and reschedule by waiting on it, hanging processes on exit.
 	 */
-	if (current->flags & PF_EXITING)
+	if (task_flags(current) & PF_EXITING)
 		return true;
 
 	/* we will unbind on next submission, still have userptr pins */

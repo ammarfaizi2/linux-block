@@ -1738,7 +1738,7 @@ static bool task_numa_compare(struct task_numa_env *env,
 
 	rcu_read_lock();
 	cur = rcu_dereference(dst_rq->curr);
-	if (cur && ((cur->flags & PF_EXITING) || is_idle_task(cur)))
+	if (cur && ((task_flags(cur) & PF_EXITING) || is_idle_task(cur)))
 		cur = NULL;
 
 	/*
@@ -2743,7 +2743,7 @@ static void task_numa_work(struct callback_head *work)
 	 * without p->mm even though we still had it when we enqueued this
 	 * work.
 	 */
-	if (p->flags & PF_EXITING)
+	if (task_flags(p) & PF_EXITING)
 		return;
 
 	if (!mm->numa_next_scan) {
@@ -2920,7 +2920,7 @@ static void task_tick_numa(struct rq *rq, struct task_struct *curr)
 	/*
 	 * We don't care about NUMA placement if we don't have memory.
 	 */
-	if ((curr->flags & (PF_EXITING | PF_KTHREAD)) || work->next != work)
+	if ((task_flags(curr) & (PF_EXITING | PF_KTHREAD)) || work->next != work)
 		return;
 
 	/*
@@ -2950,7 +2950,7 @@ static void update_scan_period(struct task_struct *p, int new_cpu)
 	if (!static_branch_likely(&sched_numa_balancing))
 		return;
 
-	if (!p->mm || !p->numa_faults || (p->flags & PF_EXITING))
+	if (!p->mm || !p->numa_faults || (task_flags(p) & PF_EXITING))
 		return;
 
 	if (src_nid == dst_nid)
@@ -6916,7 +6916,7 @@ unlock:
 static int
 select_task_rq_fair(struct task_struct *p, int prev_cpu, int wake_flags)
 {
-	int sync = (wake_flags & WF_SYNC) && !(current->flags & PF_EXITING);
+	int sync = (wake_flags & WF_SYNC) && !(task_flags(current) & PF_EXITING);
 	struct sched_domain *tmp, *sd = NULL;
 	int cpu = smp_processor_id();
 	int new_cpu = prev_cpu;

@@ -83,7 +83,7 @@ static void __init handle_initrd(void)
 	 * In case that a resume from disk is carried out by linuxrc or one of
 	 * its children, we need to tell the freezer not to wait for us.
 	 */
-	current->flags |= PF_FREEZER_SKIP;
+	task_flags(current) |= PF_FREEZER_SKIP;
 
 	info = call_usermodehelper_setup("/linuxrc", argv, envp_init,
 					 GFP_KERNEL, init_linuxrc, NULL, NULL);
@@ -91,7 +91,7 @@ static void __init handle_initrd(void)
 		return;
 	call_usermodehelper_exec(info, UMH_WAIT_PROC);
 
-	current->flags &= ~PF_FREEZER_SKIP;
+	task_flags(current) &= ~PF_FREEZER_SKIP;
 
 	/* move initrd to rootfs' /old */
 	init_mount("..", ".", NULL, MS_MOVE, NULL);

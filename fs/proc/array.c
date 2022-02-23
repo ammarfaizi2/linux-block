@@ -102,7 +102,7 @@ void proc_task_name(struct seq_file *m, struct task_struct *p, bool escape)
 {
 	char tcomm[64];
 
-	if (p->flags & PF_WQ_WORKER)
+	if (task_flags(p) & PF_WQ_WORKER)
 		wq_worker_comm(tcomm, sizeof(tcomm), p);
 	else if (p->flags & PF_KTHREAD)
 		get_kthread_comm(tcomm, sizeof(tcomm), p);
@@ -489,7 +489,7 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 		 * a program is not able to use ptrace(2) in that case. It is
 		 * safe because the task has stopped executing permanently.
 		 */
-		if (permitted && (task->flags & (PF_EXITING|PF_DUMPCORE))) {
+		if (permitted && (task_flags(task) & (PF_EXITING|PF_DUMPCORE))) {
 			if (try_get_task_stack(task)) {
 				eip = KSTK_EIP(task);
 				esp = KSTK_ESP(task);
@@ -576,7 +576,7 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 	seq_put_decimal_ll(m, " ", sid);
 	seq_put_decimal_ll(m, " ", tty_nr);
 	seq_put_decimal_ll(m, " ", tty_pgrp);
-	seq_put_decimal_ull(m, " ", task->flags);
+	seq_put_decimal_ull(m, " ", task_flags(task));
 	seq_put_decimal_ull(m, " ", min_flt);
 	seq_put_decimal_ull(m, " ", cmin_flt);
 	seq_put_decimal_ull(m, " ", maj_flt);

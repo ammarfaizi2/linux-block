@@ -489,7 +489,7 @@ void free_task(struct task_struct *tsk)
 	rt_mutex_debug_task_free(tsk);
 	ftrace_graph_exit_task(tsk);
 	arch_release_task_struct(tsk);
-	if (tsk->flags & PF_KTHREAD)
+	if (task_flags(tsk) & PF_KTHREAD)
 		free_kthread_struct(tsk);
 	free_task_struct(tsk);
 }
@@ -1314,7 +1314,7 @@ struct file *get_task_exe_file(struct task_struct *task)
 	task_lock(task);
 	mm = task->mm;
 	if (mm) {
-		if (!(task->flags & PF_KTHREAD))
+		if (!(task_flags(task) & PF_KTHREAD))
 			exe_file = get_mm_exe_file(mm);
 	}
 	task_unlock(task);
@@ -1337,7 +1337,7 @@ struct mm_struct *get_task_mm(struct task_struct *task)
 	task_lock(task);
 	mm = task->mm;
 	if (mm) {
-		if (task->flags & PF_KTHREAD)
+		if (task_flags(task) & PF_KTHREAD)
 			mm = NULL;
 		else
 			mmget(mm);
@@ -2039,7 +2039,7 @@ static __latent_entropy struct task_struct *copy_process(
 		 * Mark us an IO worker, and block any signal that isn't
 		 * fatal or STOP
 		 */
-		p->flags |= PF_IO_WORKER;
+		task_flags(p) |= PF_IO_WORKER;
 		siginitsetinv(&per_task(p, blocked),
 			      sigmask(SIGKILL)|sigmask(SIGSTOP));
 	}
@@ -2068,7 +2068,7 @@ static __latent_entropy struct task_struct *copy_process(
 		    !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
 			goto bad_fork_cleanup_count;
 	}
-	current->flags &= ~PF_NPROC_EXCEEDED;
+	task_flags(current) &= ~PF_NPROC_EXCEEDED;
 
 	/*
 	 * If multiple threads are within copy_process(), then this check
@@ -2080,8 +2080,8 @@ static __latent_entropy struct task_struct *copy_process(
 		goto bad_fork_cleanup_count;
 
 	delayacct_tsk_init(p);	/* Must remain after dup_task_struct() */
-	p->flags &= ~(PF_SUPERPRIV | PF_WQ_WORKER | PF_IDLE | PF_NO_SETAFFINITY);
-	p->flags |= PF_FORKNOEXEC;
+	task_flags(p) &= ~(PF_SUPERPRIV | PF_WQ_WORKER | PF_IDLE | PF_NO_SETAFFINITY);
+	task_flags(p) |= PF_FORKNOEXEC;
 	INIT_LIST_HEAD(&p->children);
 	INIT_LIST_HEAD(&p->sibling);
 	rcu_copy_process(p);

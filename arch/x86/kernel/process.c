@@ -173,7 +173,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
 	fpu_clone(p, clone_flags);
 
 	/* Kernel thread ? */
-	if (unlikely(p->flags & PF_KTHREAD)) {
+	if (unlikely(task_flags(p) & PF_KTHREAD)) {
 		task_thread(p).pkru = pkru_get_init_value();
 		memset(childregs, 0, sizeof(struct pt_regs));
 		kthread_frame_init(frame, sp, arg);
@@ -196,7 +196,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
 	task_user_gs(p) = get_user_gs(current_pt_regs());
 #endif
 
-	if (unlikely(p->flags & PF_IO_WORKER)) {
+	if (unlikely(task_flags(p) & PF_IO_WORKER)) {
 		/*
 		 * An IO thread is a user space thread, but it doesn't
 		 * return to ret_after_fork().

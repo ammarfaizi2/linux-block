@@ -2016,14 +2016,14 @@ static int ext4_writepage(struct page *page,
 	if (ext4_walk_page_buffers(NULL, inode, page_bufs, 0, len, NULL,
 				   ext4_bh_delay_or_unwritten)) {
 		redirty_page_for_writepage(wbc, page);
-		if ((current->flags & PF_MEMALLOC) ||
+		if ((task_flags(current) & PF_MEMALLOC) ||
 		    (inode->i_sb->s_blocksize == PAGE_SIZE)) {
 			/*
 			 * For memory cleaning there's no point in writing only
 			 * some buffers. So just bail out. Warn if we came here
 			 * from direct reclaim.
 			 */
-			WARN_ON_ONCE((current->flags & (PF_MEMALLOC|PF_KSWAPD))
+			WARN_ON_ONCE((task_flags(current) & (PF_MEMALLOC|PF_KSWAPD))
 							== PF_MEMALLOC);
 			unlock_page(page);
 			return 0;
@@ -5159,7 +5159,7 @@ int ext4_write_inode(struct inode *inode, struct writeback_control *wbc)
 {
 	int err;
 
-	if (WARN_ON_ONCE(current->flags & PF_MEMALLOC) ||
+	if (WARN_ON_ONCE(task_flags(current) & PF_MEMALLOC) ||
 	    sb_rdonly(inode->i_sb))
 		return 0;
 

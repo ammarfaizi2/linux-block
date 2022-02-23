@@ -542,7 +542,7 @@ static int writepage_nounlock(struct page *page, struct writeback_control *wbc)
 		dout("writepage %p page %p snapc %p not writeable - noop\n",
 		     inode, page, snapc);
 		/* we should only noop if called by kswapd */
-		WARN_ON(!(current->flags & PF_MEMALLOC));
+		WARN_ON(!(task_flags(current) & PF_MEMALLOC));
 		ceph_put_snap_context(oldest);
 		redirty_page_for_writepage(wbc, page);
 		return 0;

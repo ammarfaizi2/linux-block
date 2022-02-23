@@ -78,7 +78,7 @@ static unsigned long vdso_base(void)
 		base += PAGE_SIZE;
 	}
 
-	if (current->flags & PF_RANDOMIZE) {
+	if (task_flags(current) & PF_RANDOMIZE) {
 		base += get_random_int() & (VDSO_RANDOMIZE_SIZE - 1);
 		base = PAGE_ALIGN(base);
 	}

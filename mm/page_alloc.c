@@ -928,7 +928,7 @@ static inline struct capture_control *task_capc(struct zone *zone)
 	struct capture_control *capc = current->capture_control;
 
 	return unlikely(capc) &&
-		!(current->flags & PF_KTHREAD) &&
+		!(task_flags(current) & PF_KTHREAD) &&
 		!capc->page &&
 		capc->cc->zone == zone ? capc : NULL;
 }
@@ -4208,7 +4208,7 @@ static void warn_alloc_show_mem(gfp_t gfp_mask, nodemask_t *nodemask)
 	 */
 	if (!(gfp_mask & __GFP_NOMEMALLOC))
 		if (tsk_is_oom_victim(current) ||
-		    (current->flags & (PF_MEMALLOC | PF_EXITING)))
+		    (task_flags(current) & (PF_MEMALLOC | PF_EXITING)))
 			filter &= ~SHOW_MEM_FILTER_NODES;
 	if (!in_task() || !(gfp_mask & __GFP_DIRECT_RECLAIM))
 		filter &= ~SHOW_MEM_FILTER_NODES;
@@ -4300,7 +4300,7 @@ __alloc_pages_may_oom(gfp_t gfp_mask, unsigned int order,
 		goto out;
 
 	/* Coredumps can quickly deplete all memory reserves */
-	if (current->flags & PF_DUMPCORE)
+	if (task_flags(current) & PF_DUMPCORE)
 		goto out;
 	/* The OOM killer will not help higher order allocs */
 	if (order > PAGE_ALLOC_COSTLY_ORDER)
@@ -4543,7 +4543,7 @@ static bool __need_reclaim(gfp_t gfp_mask)
 		return false;
 
 	/* this guy won't enter reclaim */
-	if (current->flags & PF_MEMALLOC)
+	if (task_flags(current) & PF_MEMALLOC)
 		return false;
 
 	if (gfp_mask & __GFP_NOLOCKDEP)
@@ -4733,10 +4733,10 @@ static inline int __gfp_pfmemalloc_flags(gfp_t gfp_mask)
 		return 0;
 	if (gfp_mask & __GFP_MEMALLOC)
 		return ALLOC_NO_WATERMARKS;
-	if (in_serving_softirq() && (current->flags & PF_MEMALLOC))
+	if (in_serving_softirq() && (task_flags(current) & PF_MEMALLOC))
 		return ALLOC_NO_WATERMARKS;
 	if (!in_interrupt()) {
-		if (current->flags & PF_MEMALLOC)
+		if (task_flags(current) & PF_MEMALLOC)
 			return ALLOC_NO_WATERMARKS;
 		else if (oom_reserves_allowed(current))
 			return ALLOC_OOM;
@@ -4825,7 +4825,7 @@ should_reclaim_retry(gfp_t gfp_mask, unsigned order,
 	 * looping without ever sleeping. Therefore we have to do a short sleep
 	 * here rather than calling cond_resched().
 	 */
-	if (current->flags & PF_WQ_WORKER)
+	if (task_flags(current) & PF_WQ_WORKER)
 		schedule_timeout_uninterruptible(1);
 	else
 		cond_resched();
@@ -5022,7 +5022,7 @@ retry:
 		goto nopage;
 
 	/* Avoid recursion of direct reclaim */
-	if (current->flags & PF_MEMALLOC)
+	if (task_flags(current) & PF_MEMALLOC)
 		goto nopage;
 
 	/* Try direct reclaim and then allocating */
@@ -5108,7 +5108,7 @@ nopage:
 		 * because we cannot reclaim anything and only can loop waiting
 		 * for somebody to do a work for us
 		 */
-		WARN_ON_ONCE(current->flags & PF_MEMALLOC);
+		WARN_ON_ONCE(task_flags(current) & PF_MEMALLOC);
 
 		/*
 		 * non failing costly orders are a hard requirement which we

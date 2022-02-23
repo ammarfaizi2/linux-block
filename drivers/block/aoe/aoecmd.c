@@ -1224,7 +1224,7 @@ kthread(void *vp)
 	int more;
 
 	k = vp;
-	current->flags |= PF_NOFREEZE;
+	task_flags(current) |= PF_NOFREEZE;
 	set_user_nice(current, -10);
 	complete(&k->rendez);	/* tell spawner we're running */
 	do {

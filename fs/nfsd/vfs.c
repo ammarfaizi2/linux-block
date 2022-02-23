@@ -986,7 +986,7 @@ nfsd_vfs_write(struct svc_rqst *rqstp, struct svc_fh *fhp, struct nfsd_file *nf,
 	int			use_wgather;
 	loff_t			pos = offset;
 	unsigned long		exp_op_flags = 0;
-	unsigned int		pflags = current->flags;
+	unsigned int		pflags = task_flags(current);
 	rwf_t			flags = 0;
 	bool			restore_flags = false;
 
@@ -1004,7 +1004,7 @@ nfsd_vfs_write(struct svc_rqst *rqstp, struct svc_fh *fhp, struct nfsd_file *nf,
 		 * localhost doesn't cause nfsd to lock up due to all
 		 * the client's dirty pages or its congested queue.
 		 */
-		current->flags |= PF_LOCAL_THROTTLE;
+		task_flags(current) |= PF_LOCAL_THROTTLE;
 		restore_flags = true;
 	}
 

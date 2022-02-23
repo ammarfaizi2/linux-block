@@ -144,7 +144,7 @@ void task_work_run(void)
 			head = NULL;
 			work = READ_ONCE(task->task_works);
 			if (!work) {
-				if (task->flags & PF_EXITING)
+				if (task_flags(task) & PF_EXITING)
 					head = &work_exited;
 				else
 					break;

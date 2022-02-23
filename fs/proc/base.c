@@ -1276,7 +1276,7 @@ static ssize_t proc_loginuid_write(struct file * file, const char __user * buf,
 	int rv;
 
 	/* Don't let kthreads write their own loginuid */
-	if (current->flags & PF_KTHREAD)
+	if (task_flags(current) & PF_KTHREAD)
 		return -EPERM;
 
 	rcu_read_lock();
@@ -1827,7 +1827,7 @@ void task_dump_owner(struct task_struct *task, umode_t mode,
 	kuid_t uid;
 	kgid_t gid;
 
-	if (unlikely(task->flags & PF_KTHREAD)) {
+	if (unlikely(task_flags(task) & PF_KTHREAD)) {
 		*ruid = GLOBAL_ROOT_UID;
 		*rgid = GLOBAL_ROOT_GID;
 		return;

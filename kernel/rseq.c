@@ -284,7 +284,7 @@ void __rseq_handle_notify_resume(struct ksignal *ksig, struct pt_regs *regs)
 	struct task_struct *t = current;
 	int ret, sig;
 
-	if (unlikely(t->flags & PF_EXITING))
+	if (unlikely(task_flags(t) & PF_EXITING))
 		return;
 
 	/*

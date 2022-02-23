@@ -145,7 +145,7 @@ void __ptrace_unlink(struct task_struct *child)
 	 * Reinstate JOBCTL_STOP_PENDING if group stop is in effect and
 	 * @child isn't dead.
 	 */
-	if (!(child->flags & PF_EXITING) &&
+	if (!(task_flags(child) & PF_EXITING) &&
 	    (child->signal->flags & SIGNAL_STOP_STOPPED ||
 	     child->signal->group_stop_count)) {
 		child->jobctl |= JOBCTL_STOP_PENDING;
@@ -395,7 +395,7 @@ static int ptrace_attach(struct task_struct *task, long request,
 	audit_ptrace(task);
 
 	retval = -EPERM;
-	if (unlikely(task->flags & PF_KTHREAD))
+	if (unlikely(task_flags(task) & PF_KTHREAD))
 		goto out;
 	if (same_thread_group(task, current))
 		goto out;

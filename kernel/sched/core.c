@@ -2378,7 +2378,7 @@ static inline bool is_cpu_allowed(struct task_struct *p, int cpu)
 		return cpu_online(cpu);
 
 	/* Non kernel threads are not allowed during either online or offline. */
-	if (!(p->flags & PF_KTHREAD))
+	if (!(task_flags(p) & PF_KTHREAD))
 		return cpu_active(cpu) && task_cpu_possible(cpu, p);
 
 	/* KTHREAD_IS_PER_CPU is always allowed. */
@@ -2943,7 +2943,7 @@ static int __set_cpus_allowed_ptr_locked(struct task_struct *p,
 {
 	const struct cpumask *cpu_allowed_mask = task_cpu_possible_mask(p);
 	const struct cpumask *cpu_valid_mask = cpu_active_mask;
-	bool kthread = p->flags & PF_KTHREAD;
+	bool kthread = task_flags(p) & PF_KTHREAD;
 	struct cpumask *user_mask = NULL;
 	unsigned int dest_cpu;
 	int ret = 0;
@@ -2973,7 +2973,7 @@ static int __set_cpus_allowed_ptr_locked(struct task_struct *p,
 	 * Must re-check here, to close a race against __kthread_bind(),
 	 * sched_setaffinity() is not guaranteed to observe the flag.
 	 */
-	if ((flags & SCA_CHECK) && (p->flags & PF_NO_SETAFFINITY)) {
+	if ((flags & SCA_CHECK) && (task_flags(p) & PF_NO_SETAFFINITY)) {
 		ret = -EINVAL;
 		goto out;
 	}
@@ -6406,7 +6406,7 @@ static void __sched notrace __schedule(unsigned int sched_mode)
 			prev->sched_contributes_to_load =
 				(prev_state & TASK_UNINTERRUPTIBLE) &&
 				!(prev_state & TASK_NOLOAD) &&
-				!(prev->flags & PF_FROZEN);
+				!(task_flags(prev) & PF_FROZEN);
 
 			if (prev->sched_contributes_to_load)
 				rq->nr_uninterruptible++;
@@ -6484,7 +6484,7 @@ void __noreturn do_task_dead(void)
 	set_special_state(TASK_DEAD);
 
 	/* Tell freezer to ignore us: */
-	current->flags |= PF_NOFREEZE;
+	task_flags(current) |= PF_NOFREEZE;
 
 	__schedule(SM_NONE);
 	BUG();
@@ -6501,7 +6501,7 @@ static inline void sched_submit_work(struct task_struct *tsk)
 	if (task_is_running(tsk))
 		return;
 
-	task_flags = tsk->flags;
+	task_flags = task_flags(tsk);
 	/*
 	 * If a worker goes to sleep, notify and ask workqueue whether it
 	 * wants to wake up a task to maintain concurrency.
@@ -6526,8 +6526,8 @@ static inline void sched_submit_work(struct task_struct *tsk)
 
 static void sched_update_worker(struct task_struct *tsk)
 {
-	if (tsk->flags & (PF_WQ_WORKER | PF_IO_WORKER)) {
-		if (tsk->flags & PF_WQ_WORKER)
+	if (task_flags(tsk) & (PF_WQ_WORKER | PF_IO_WORKER)) {
+		if (task_flags(tsk) & PF_WQ_WORKER)
 			wq_worker_running(tsk);
 		else
 			io_wq_worker_running(tsk);
@@ -8082,7 +8082,7 @@ long sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 	get_task_struct(p);
 	rcu_read_unlock();
 
-	if (p->flags & PF_NO_SETAFFINITY) {
+	if (task_flags(p) & PF_NO_SETAFFINITY) {
 		retval = -EINVAL;
 		goto out_put_task;
 	}
@@ -8905,7 +8905,7 @@ void __init init_idle(struct task_struct *idle, int cpu)
 	 * PF_KTHREAD should already be set at this point; regardless, make it
 	 * look like a proper per-CPU kthread.
 	 */
-	idle->flags |= PF_IDLE | PF_KTHREAD | PF_NO_SETAFFINITY;
+	task_flags(idle) |= PF_IDLE | PF_KTHREAD | PF_NO_SETAFFINITY;
 	kthread_set_per_cpu(idle, cpu);
 
 #ifdef CONFIG_SMP
@@ -8983,7 +8983,7 @@ int task_can_attach(struct task_struct *p,
 	 * success of set_cpus_allowed_ptr() on all attached tasks
 	 * before cpus_mask may be changed.
 	 */
-	if (p->flags & PF_NO_SETAFFINITY) {
+	if (task_flags(p) & PF_NO_SETAFFINITY) {
 		ret = -EINVAL;
 		goto out;
 	}
@@ -9511,7 +9511,7 @@ void __init sched_init_smp(void)
 	/* Move init over to a non-isolated CPU */
 	if (set_cpus_allowed_ptr(current, housekeeping_cpumask(HK_TYPE_DOMAIN)) < 0)
 		BUG();
-	current->flags &= ~PF_NO_SETAFFINITY;
+	task_flags(current) &= ~PF_NO_SETAFFINITY;
 	sched_init_granularity();
 
 	init_sched_rt_class();
@@ -9934,7 +9934,7 @@ void normalize_rt_tasks(void)
 		/*
 		 * Only normalize user tasks:
 		 */
-		if (p->flags & PF_KTHREAD)
+		if (task_flags(p) & PF_KTHREAD)
 			continue;
 
 		per_task(p, se).exec_start = 0;

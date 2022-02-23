@@ -129,7 +129,7 @@ int freeze_processes(void)
 		return error;
 
 	/* Make sure this task doesn't get frozen */
-	current->flags |= PF_SUSPEND_TASK;
+	task_flags(current) |= PF_SUSPEND_TASK;
 
 	if (!pm_freezing)
 		atomic_inc(&system_freezing_cnt);
@@ -209,7 +209,7 @@ void thaw_processes(void)
 	read_lock(&tasklist_lock);
 	for_each_process_thread(g, p) {
 		/* No other threads should have PF_SUSPEND_TASK set */
-		WARN_ON((p != curr) && (p->flags & PF_SUSPEND_TASK));
+		WARN_ON((p != curr) && (task_flags(p) & PF_SUSPEND_TASK));
 		__thaw_task(p);
 	}
 	read_unlock(&tasklist_lock);
@@ -235,7 +235,7 @@ void thaw_kernel_threads(void)
 
 	read_lock(&tasklist_lock);
 	for_each_process_thread(g, p) {
-		if (p->flags & PF_KTHREAD)
+		if (task_flags(p) & PF_KTHREAD)
 			__thaw_task(p);
 	}
 	read_unlock(&tasklist_lock);

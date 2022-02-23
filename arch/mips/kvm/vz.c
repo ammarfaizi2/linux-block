@@ -2583,7 +2583,7 @@ static int kvm_vz_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
 	 * restore wired guest TLB entries (while in guest context).
 	 */
 	kvm_restore_gc0_wired(cop0);
-	if (current->flags & PF_VCPU) {
+	if (task_flags(current) & PF_VCPU) {
 		tlbw_use_hazard();
 		kvm_vz_vcpu_load_tlb(vcpu, cpu);
 		kvm_vz_vcpu_load_wired(vcpu);
@@ -2706,7 +2706,7 @@ static int kvm_vz_vcpu_put(struct kvm_vcpu *vcpu, int cpu)
 {
 	struct mips_coproc *cop0 = vcpu->arch.cop0;
 
-	if (current->flags & PF_VCPU)
+	if (task_flags(current) & PF_VCPU)
 		kvm_vz_vcpu_save_wired(vcpu);
 
 	kvm_lose_fpu(vcpu);

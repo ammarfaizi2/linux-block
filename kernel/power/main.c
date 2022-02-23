@@ -23,7 +23,7 @@
 
 void lock_system_sleep(void)
 {
-	current->flags |= PF_FREEZER_SKIP;
+	task_flags(current) |= PF_FREEZER_SKIP;
 	mutex_lock(&system_transition_mutex);
 }
 EXPORT_SYMBOL_GPL(lock_system_sleep);
@@ -46,7 +46,7 @@ void unlock_system_sleep(void)
 	 * Which means, if we use try_to_freeze() here, it would make them
 	 * enter the refrigerator, thus causing hibernation to lockup.
 	 */
-	current->flags &= ~PF_FREEZER_SKIP;
+	task_flags(current) &= ~PF_FREEZER_SKIP;
 	mutex_unlock(&system_transition_mutex);
 }
 EXPORT_SYMBOL_GPL(unlock_system_sleep);

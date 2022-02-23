@@ -492,9 +492,9 @@ static void flag_nproc_exceeded(struct cred *new)
 	 */
 	if (is_ucounts_overlimit(new->ucounts, UCOUNT_RLIMIT_NPROC, rlimit(RLIMIT_NPROC)) &&
 			new->user != INIT_USER)
-		current->flags |= PF_NPROC_EXCEEDED;
+		task_flags(current) |= PF_NPROC_EXCEEDED;
 	else
-		current->flags &= ~PF_NPROC_EXCEEDED;
+		task_flags(current) &= ~PF_NPROC_EXCEEDED;
 }
 
 /*
@@ -1079,7 +1079,7 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 		if (task_session(p) != task_session(group_leader))
 			goto out;
 		err = -EACCES;
-		if (!(p->flags & PF_FORKNOEXEC))
+		if (!(task_flags(p) & PF_FORKNOEXEC))
 			goto out;
 	} else {
 		err = -ESRCH;
@@ -2450,19 +2450,19 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
 		case PR_MCE_KILL_CLEAR:
 			if (arg3 != 0)
 				return -EINVAL;
-			current->flags &= ~PF_MCE_PROCESS;
+			task_flags(current) &= ~PF_MCE_PROCESS;
 			break;
 		case PR_MCE_KILL_SET:
-			current->flags |= PF_MCE_PROCESS;
+			task_flags(current) |= PF_MCE_PROCESS;
 			if (arg3 == PR_MCE_KILL_EARLY)
-				current->flags |= PF_MCE_EARLY;
-			else if (arg3 == PR_MCE_KILL_LATE)
-				current->flags &= ~PF_MCE_EARLY;
-			else if (arg3 == PR_MCE_KILL_DEFAULT)
-				current->flags &=
-						~(PF_MCE_EARLY|PF_MCE_PROCESS);
-			else
-				return -EINVAL;
+				task_flags(current) |= PF_MCE_EARLY;
+				else if (arg3 == PR_MCE_KILL_LATE)
+					task_flags(current) &= ~PF_MCE_EARLY;
+					else if (arg3 == PR_MCE_KILL_DEFAULT)
+						task_flags(current) &=
+									~(PF_MCE_EARLY|PF_MCE_PROCESS);
+												else
+							return -EINVAL;
 			break;
 		default:
 			return -EINVAL;
@@ -2471,8 +2471,8 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
 	case PR_MCE_KILL_GET:
 		if (arg2 | arg3 | arg4 | arg5)
 			return -EINVAL;
-		if (current->flags & PF_MCE_PROCESS)
-			error = (current->flags & PF_MCE_EARLY) ?
+		if (task_flags(current) & PF_MCE_PROCESS)
+			error = (task_flags(current) & PF_MCE_EARLY) ?
 				PR_MCE_KILL_EARLY : PR_MCE_KILL_LATE;
 		else
 			error = PR_MCE_KILL_DEFAULT;
@@ -2579,11 +2579,11 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
 			return -EINVAL;
 
 		if (arg2 == 1)
-			current->flags |= PR_IO_FLUSHER;
-		else if (!arg2)
-			current->flags &= ~PR_IO_FLUSHER;
-		else
-			return -EINVAL;
+			task_flags(current) |= PR_IO_FLUSHER;
+			else if (!arg2)
+				task_flags(current) &= ~PR_IO_FLUSHER;
+				else
+					return -EINVAL;
 		break;
 	case PR_GET_IO_FLUSHER:
 		if (!capable(CAP_SYS_RESOURCE))
@@ -2592,7 +2592,7 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
 		if (arg2 || arg3 || arg4 || arg5)
 			return -EINVAL;
 
-		error = (current->flags & PR_IO_FLUSHER) == PR_IO_FLUSHER;
+		error = (task_flags(current) & PR_IO_FLUSHER) == PR_IO_FLUSHER;
 		break;
 	case PR_SET_SYSCALL_USER_DISPATCH:
 		error = set_syscall_user_dispatch(arg2, arg3, arg4,

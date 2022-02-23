@@ -1882,7 +1882,7 @@ static int do_execveat_common(int fd, struct filename *filename,
 	 * don't check setuid() return code.  Here we additionally recheck
 	 * whether NPROC limit is still exceeded.
 	 */
-	if ((current->flags & PF_NPROC_EXCEEDED) &&
+	if ((task_flags(current) & PF_NPROC_EXCEEDED) &&
 	    is_ucounts_overlimit(current_ucounts(), UCOUNT_RLIMIT_NPROC, rlimit(RLIMIT_NPROC))) {
 		retval = -EAGAIN;
 		goto out_ret;
@@ -1890,7 +1890,7 @@ static int do_execveat_common(int fd, struct filename *filename,
 
 	/* We're below the limit (still or again), so we don't want to make
 	 * further execve() calls fail. */
-	current->flags &= ~PF_NPROC_EXCEEDED;
+	task_flags(current) &= ~PF_NPROC_EXCEEDED;
 
 	bprm = alloc_bprm(fd, filename);
 	if (IS_ERR(bprm)) {

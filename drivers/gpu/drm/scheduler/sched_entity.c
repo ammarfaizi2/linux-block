@@ -166,7 +166,7 @@ long drm_sched_entity_flush(struct drm_sched_entity *entity, long timeout)
 	 * The client will not queue more IBs during this fini, consume existing
 	 * queued IBs or discard them on SIGKILL
 	 */
-	if (current->flags & PF_EXITING) {
+	if (task_flags(current) & PF_EXITING) {
 		if (timeout)
 			ret = wait_event_timeout(
 					sched->job_scheduled,
@@ -180,7 +180,7 @@ long drm_sched_entity_flush(struct drm_sched_entity *entity, long timeout)
 	/* For killed process disable any more IBs enqueue right now */
 	last_user = cmpxchg(&entity->last_user, current->group_leader, NULL);
 	if ((!last_user || last_user == current->group_leader) &&
-	    (current->flags & PF_EXITING) && (current->exit_code == SIGKILL)) {
+	    (task_flags(current) & PF_EXITING) && (current->exit_code == SIGKILL)) {
 		spin_lock(&entity->rq_lock);
 		entity->stopped = true;
 		drm_sched_rq_remove_entity(entity->rq, entity);

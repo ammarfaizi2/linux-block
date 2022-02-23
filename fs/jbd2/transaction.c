@@ -1927,7 +1927,7 @@ int jbd2_journal_stop(handle_t *handle)
 		 * Special case: JBD2_SYNC synchronous updates require us
 		 * to wait for the commit to complete.
 		 */
-		if (handle->h_sync && !(current->flags & PF_MEMALLOC))
+		if (handle->h_sync && !(task_flags(current) & PF_MEMALLOC))
 			wait_for_commit = 1;
 	}
 

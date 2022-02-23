@@ -3592,7 +3592,7 @@ bool __cpuset_node_allowed(int node, gfp_t gfp_mask)
 	if (gfp_mask & __GFP_HARDWALL)	/* If hardwall request, stop here */
 		return false;
 
-	if (current->flags & PF_EXITING) /* Let dying task have memory */
+	if (task_flags(current) & PF_EXITING) /* Let dying task have memory */
 		return true;
 
 	/* Not hardwall and node outside mems_allowed: scan up cpusets */

@@ -41,7 +41,7 @@ unsigned long task_size_64bit(int full_addr_space)
 static unsigned long stack_maxrandom_size(unsigned long task_size)
 {
 	unsigned long max = 0;
-	if (current->flags & PF_RANDOMIZE) {
+	if (task_flags(current) & PF_RANDOMIZE) {
 		max = (-1UL) & __STACK_RND_MASK(task_size == task_size_32bit());
 		max <<= PAGE_SHIFT;
 	}
@@ -69,7 +69,7 @@ static int mmap_is_legacy(void)
 
 static unsigned long arch_rnd(unsigned int rndbits)
 {
-	if (!(current->flags & PF_RANDOMIZE))
+	if (!(task_flags(current) & PF_RANDOMIZE))
 		return 0;
 	return (get_random_long() & ((1UL << rndbits) - 1)) << PAGE_SHIFT;
 }

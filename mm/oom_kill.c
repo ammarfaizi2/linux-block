@@ -166,7 +166,7 @@ static bool oom_unkillable_task(struct task_struct *p)
 {
 	if (is_global_init(p))
 		return true;
-	if (p->flags & PF_KTHREAD)
+	if (task_flags(p) & PF_KTHREAD)
 		return true;
 	return false;
 }
@@ -799,7 +799,7 @@ static inline bool __task_will_free_mem(struct task_struct *task)
 	if (sig->flags & SIGNAL_GROUP_EXIT)
 		return true;
 
-	if (thread_group_empty(task) && (task->flags & PF_EXITING))
+	if (thread_group_empty(task) && (task_flags(task) & PF_EXITING))
 		return true;
 
 	return false;
@@ -928,7 +928,7 @@ static void __oom_kill_process(struct task_struct *victim, const char *message)
 		 * No kthread_use_mm() user needs to read from the userspace so
 		 * we are ok to reap it.
 		 */
-		if (unlikely(p->flags & PF_KTHREAD))
+		if (unlikely(task_flags(p) & PF_KTHREAD))
 			continue;
 		do_send_sig_info(SIGKILL, SEND_SIG_PRIV, p, PIDTYPE_TGID);
 	}

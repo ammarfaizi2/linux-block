@@ -1879,10 +1879,10 @@ static void loop_set_timer(struct loop_device *lo)
 static void loop_process_work(struct loop_worker *worker,
 			struct list_head *cmd_list, struct loop_device *lo)
 {
-	int orig_flags = current->flags;
+	int orig_flags = task_flags(current);
 	struct loop_cmd *cmd;
 
-	current->flags |= PF_LOCAL_THROTTLE | PF_MEMALLOC_NOIO;
+	task_flags(current) |= PF_LOCAL_THROTTLE | PF_MEMALLOC_NOIO;
 	spin_lock_irq(&lo->lo_work_lock);
 	while (!list_empty(cmd_list)) {
 		cmd = container_of(
@@ -1907,7 +1907,7 @@ static void loop_process_work(struct loop_worker *worker,
 		loop_set_timer(lo);
 	}
 	spin_unlock_irq(&lo->lo_work_lock);
-	current->flags = orig_flags;
+	task_flags(current) = orig_flags;
 }
 
 static void loop_workfn(struct work_struct *work)

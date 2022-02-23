@@ -230,7 +230,7 @@ unsigned int stack_trace_save_user(unsigned long *store, unsigned int size)
 	mm_segment_t fs;
 
 	/* Trace user stack if not a kernel thread */
-	if (current->flags & PF_KTHREAD)
+	if (task_flags(current) & PF_KTHREAD)
 		return 0;
 
 	fs = force_uaccess_begin();

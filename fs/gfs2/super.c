@@ -940,7 +940,7 @@ static int gfs2_drop_inode(struct inode *inode)
 	 * calling into DLM under memory pressure, which can deadlock.
 	 */
 	if (!inode->i_nlink &&
-	    unlikely(current->flags & PF_MEMALLOC) &&
+	    unlikely(task_flags(current) & PF_MEMALLOC) &&
 	    gfs2_holder_initialized(&ip->i_iopen_gh)) {
 		struct gfs2_glock *gl = ip->i_iopen_gh.gh_gl;
 
@@ -1144,7 +1144,7 @@ out_qs:
 
 static void gfs2_glock_put_eventually(struct gfs2_glock *gl)
 {
-	if (current->flags & PF_MEMALLOC)
+	if (task_flags(current) & PF_MEMALLOC)
 		gfs2_glock_queue_put(gl);
 	else
 		gfs2_glock_put(gl);
@@ -1226,7 +1226,7 @@ static enum dinode_demise evict_should_delete(struct inode *inode,
 		return SHOULD_DEFER_EVICTION;
 
 	/* Deletes should never happen under memory pressure anymore.  */
-	if (WARN_ON_ONCE(current->flags & PF_MEMALLOC))
+	if (WARN_ON_ONCE(task_flags(current) & PF_MEMALLOC))
 		return SHOULD_DEFER_EVICTION;
 
 	/* Must not read inode block until block type has been verified */

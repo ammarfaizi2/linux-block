@@ -516,7 +516,7 @@ static inline void lockdep_softirq_end(bool in_hardirq) { }
 asmlinkage __visible void __softirq_entry __do_softirq(void)
 {
 	unsigned long end = jiffies + MAX_SOFTIRQ_TIME;
-	unsigned long old_flags = current->flags;
+	unsigned long old_flags = task_flags(current);
 	int max_restart = MAX_SOFTIRQ_RESTART;
 	struct softirq_action *h;
 	bool in_hardirq;
@@ -528,7 +528,7 @@ asmlinkage __visible void __softirq_entry __do_softirq(void)
 	 * softirq. A softirq handled, such as network RX, might set PF_MEMALLOC
 	 * again if the socket is related to swapping.
 	 */
-	current->flags &= ~PF_MEMALLOC;
+	task_flags(current) &= ~PF_MEMALLOC;
 
 	pending = local_softirq_pending();
 

@@ -280,7 +280,7 @@ int set_task_ioprio(struct task_struct *task, int ioprio)
 			return -ENOMEM;
 
 		task_lock(task);
-		if (task->flags & PF_EXITING) {
+		if (task_flags(task) & PF_EXITING) {
 			err = -ESRCH;
 			kmem_cache_free(iocontext_cachep, ioc);
 			goto out;

@@ -3346,7 +3346,7 @@ static inline void membarrier_switch_mm(struct rq *rq,
 #ifdef CONFIG_SMP
 static inline bool is_per_cpu_kthread(struct task_struct *p)
 {
-	if (!(p->flags & PF_KTHREAD))
+	if (!(task_flags(p) & PF_KTHREAD))
 		return false;
 
 	if (p->nr_cpus_allowed != 1)

@@ -952,7 +952,7 @@ static bool virtio_transport_close(struct vsock_sock *vsk)
 	if ((sk->sk_shutdown & SHUTDOWN_MASK) != SHUTDOWN_MASK)
 		(void)virtio_transport_shutdown(vsk, SHUTDOWN_MASK);
 
-	if (sock_flag(sk, SOCK_LINGER) && !(current->flags & PF_EXITING))
+	if (sock_flag(sk, SOCK_LINGER) && !(task_flags(current) & PF_EXITING))
 		virtio_transport_wait_close(sk, sk->sk_lingertime);
 
 	if (sock_flag(sk, SOCK_DONE)) {

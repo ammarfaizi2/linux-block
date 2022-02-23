@@ -184,7 +184,7 @@ static inline bool in_vfork(struct task_struct *tsk)
  */
 static inline gfp_t current_gfp_context(gfp_t flags)
 {
-	unsigned int pflags = READ_ONCE(current->flags);
+	unsigned int pflags = READ_ONCE(task_flags(current));
 
 	if (unlikely(pflags & (PF_MEMALLOC_NOIO | PF_MEMALLOC_NOFS | PF_MEMALLOC_PIN))) {
 		/*
@@ -269,8 +269,8 @@ static inline void might_alloc(gfp_t gfp_mask)
  */
 static inline unsigned int memalloc_noio_save(void)
 {
-	unsigned int flags = current->flags & PF_MEMALLOC_NOIO;
-	current->flags |= PF_MEMALLOC_NOIO;
+	unsigned int flags = task_flags(current) & PF_MEMALLOC_NOIO;
+	task_flags(current) |= PF_MEMALLOC_NOIO;
 	return flags;
 }
 
@@ -284,7 +284,7 @@ static inline unsigned int memalloc_noio_save(void)
  */
 static inline void memalloc_noio_restore(unsigned int flags)
 {
-	current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
+	task_flags(current) = (task_flags(current) & ~PF_MEMALLOC_NOIO) | flags;
 }
 
 /**
@@ -300,8 +300,8 @@ static inline void memalloc_noio_restore(unsigned int flags)
  */
 static inline unsigned int memalloc_nofs_save(void)
 {
-	unsigned int flags = current->flags & PF_MEMALLOC_NOFS;
-	current->flags |= PF_MEMALLOC_NOFS;
+	unsigned int flags = task_flags(current) & PF_MEMALLOC_NOFS;
+	task_flags(current) |= PF_MEMALLOC_NOFS;
 	return flags;
 }
 
@@ -315,32 +315,32 @@ static inline unsigned int memalloc_nofs_save(void)
  */
 static inline void memalloc_nofs_restore(unsigned int flags)
 {
-	current->flags = (current->flags & ~PF_MEMALLOC_NOFS) | flags;
+	task_flags(current) = (task_flags(current) & ~PF_MEMALLOC_NOFS) | flags;
 }
 
 static inline unsigned int memalloc_noreclaim_save(void)
 {
-	unsigned int flags = current->flags & PF_MEMALLOC;
-	current->flags |= PF_MEMALLOC;
+	unsigned int flags = task_flags(current) & PF_MEMALLOC;
+	task_flags(current) |= PF_MEMALLOC;
 	return flags;
 }
 
 static inline void memalloc_noreclaim_restore(unsigned int flags)
 {
-	current->flags = (current->flags & ~PF_MEMALLOC) | flags;
+	task_flags(current) = (task_flags(current) & ~PF_MEMALLOC) | flags;
 }
 
 static inline unsigned int memalloc_pin_save(void)
 {
-	unsigned int flags = current->flags & PF_MEMALLOC_PIN;
+	unsigned int flags = task_flags(current) & PF_MEMALLOC_PIN;
 
-	current->flags |= PF_MEMALLOC_PIN;
+	task_flags(current) |= PF_MEMALLOC_PIN;
 	return flags;
 }
 
 static inline void memalloc_pin_restore(unsigned int flags)
 {
-	current->flags = (current->flags & ~PF_MEMALLOC_PIN) | flags;
+	task_flags(current) = (task_flags(current) & ~PF_MEMALLOC_PIN) | flags;
 }
 
 #ifdef CONFIG_MEMCG

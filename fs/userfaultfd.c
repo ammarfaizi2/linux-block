@@ -386,7 +386,7 @@ vm_fault_t handle_userfault(struct vm_fault *vmf, unsigned long reason)
 	 * shmem_vm_ops->fault method is invoked even during
 	 * coredumping without mmap_lock and it ends up here.
 	 */
-	if (current->flags & (PF_EXITING|PF_DUMPCORE))
+	if (task_flags(current) & (PF_EXITING|PF_DUMPCORE))
 		goto out;
 
 	/*
@@ -558,7 +558,7 @@ static void userfaultfd_event_wait_completion(struct userfaultfd_ctx *ctx,
 {
 	struct userfaultfd_ctx *release_new_ctx;
 
-	if (WARN_ON_ONCE(current->flags & PF_EXITING))
+	if (WARN_ON_ONCE(task_flags(current) & PF_EXITING))
 		goto out;
 
 	ewq->ctx = ctx;

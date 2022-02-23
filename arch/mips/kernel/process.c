@@ -74,7 +74,7 @@ void exit_thread(struct task_struct *tsk)
 	 * User threads may have allocated a delay slot emulation frame.
 	 * If so, clean up that allocation.
 	 */
-	if (!(current->flags & PF_KTHREAD))
+	if (!(task_flags(current) & PF_KTHREAD))
 		dsemul_thread_cleanup(tsk);
 }
 
@@ -120,7 +120,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 	/*  Put the stack after the struct pt_regs.  */
 	childksp = (unsigned long) childregs;
 	task_thread(p).cp0_status = (read_c0_status() & ~(ST0_CU2|ST0_CU1)) | ST0_KERNEL_CUMASK;
-	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
+	if (unlikely(task_flags(p) & (PF_KTHREAD | PF_IO_WORKER))) {
 		/* kernel thread */
 		unsigned long status = task_thread(p).cp0_status;
 		memset(childregs, 0, sizeof(struct pt_regs));
@@ -697,7 +697,7 @@ unsigned long mips_stack_top(void)
 		top -= shm_align_mask + 1;
 
 	/* Space to randomize the VDSO base */
-	if (current->flags & PF_RANDOMIZE)
+	if (task_flags(current) & PF_RANDOMIZE)
 		top -= VDSO_RANDOMIZE_SIZE;
 
 	return top;

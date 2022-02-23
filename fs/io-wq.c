@@ -230,7 +230,7 @@ static void io_worker_exit(struct io_worker *worker)
 	preempt_disable();
 	io_wqe_dec_running(worker);
 	worker->flags = 0;
-	current->flags &= ~PF_IO_WORKER;
+	task_flags(current) &= ~PF_IO_WORKER;
 	preempt_enable();
 	raw_spin_unlock(&wqe->lock);
 
@@ -720,7 +720,7 @@ static void io_init_new_worker(struct io_wqe *wqe, struct io_worker *worker,
 	tsk->worker_private = worker;
 	worker->task = tsk;
 	set_cpus_allowed_ptr(tsk, wqe->cpu_mask);
-	tsk->flags |= PF_NO_SETAFFINITY;
+	task_flags(tsk) |= PF_NO_SETAFFINITY;
 
 	raw_spin_lock(&wqe->lock);
 	hlist_nulls_add_head_rcu(&worker->nulls_node, &wqe->free_list);

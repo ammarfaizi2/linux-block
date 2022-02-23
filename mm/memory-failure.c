@@ -444,8 +444,8 @@ static struct task_struct *find_early_kill_thread(struct task_struct *tsk)
 	struct task_struct *t;
 
 	for_each_thread(tsk, t) {
-		if (t->flags & PF_MCE_PROCESS) {
-			if (t->flags & PF_MCE_EARLY)
+		if (task_flags(t) & PF_MCE_PROCESS) {
+			if (task_flags(t) & PF_MCE_EARLY)
 				return t;
 		} else {
 			if (sysctl_memory_failure_early_kill)

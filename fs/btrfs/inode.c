@@ -8115,7 +8115,7 @@ static int btrfs_writepage(struct page *page, struct writeback_control *wbc)
 	struct inode *inode = page->mapping->host;
 	int ret;
 
-	if (current->flags & PF_MEMALLOC) {
+	if (task_flags(current) & PF_MEMALLOC) {
 		redirty_page_for_writepage(wbc, page);
 		unlock_page(page);
 		return 0;

@@ -38,15 +38,15 @@ void bacct_add_tsk(struct user_namespace *user_ns,
 	stats->ac_btime = clamp_t(time64_t, btime, 0, U32_MAX);
 	stats->ac_btime64 = btime;
 
-	if (tsk->flags & PF_EXITING)
+	if (task_flags(tsk) & PF_EXITING)
 		stats->ac_exitcode = tsk->exit_code;
-	if (thread_group_leader(tsk) && (tsk->flags & PF_FORKNOEXEC))
+	if (thread_group_leader(tsk) && (task_flags(tsk) & PF_FORKNOEXEC))
 		stats->ac_flag |= AFORK;
-	if (tsk->flags & PF_SUPERPRIV)
+	if (task_flags(tsk) & PF_SUPERPRIV)
 		stats->ac_flag |= ASU;
-	if (tsk->flags & PF_DUMPCORE)
+	if (task_flags(tsk) & PF_DUMPCORE)
 		stats->ac_flag |= ACORE;
-	if (tsk->flags & PF_SIGNALED)
+	if (task_flags(tsk) & PF_SIGNALED)
 		stats->ac_flag |= AXSIG;
 	stats->ac_nice	 = task_nice(tsk);
 	stats->ac_sched	 = tsk->policy;

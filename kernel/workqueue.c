@@ -2377,9 +2377,9 @@ static void set_pf_worker(bool val)
 {
 	mutex_lock(&wq_pool_attach_mutex);
 	if (val)
-		current->flags |= PF_WQ_WORKER;
-	else
-		current->flags &= ~PF_WQ_WORKER;
+		task_flags(current) |= PF_WQ_WORKER;
+		else
+			task_flags(current) &= ~PF_WQ_WORKER;
 	mutex_unlock(&wq_pool_attach_mutex);
 }
 
@@ -2642,7 +2642,7 @@ static void check_flush_dependency(struct workqueue_struct *target_wq,
 
 	worker = current_wq_worker();
 
-	WARN_ONCE(current->flags & PF_MEMALLOC,
+	WARN_ONCE(task_flags(current) & PF_MEMALLOC,
 		  "workqueue: PF_MEMALLOC task %d(%s) is flushing !WQ_MEM_RECLAIM %s:%ps",
 		  current->pid, current->comm, target_wq->name, target_func);
 	WARN_ONCE(worker && ((worker->current_pwq->wq->flags &
@@ -4687,7 +4687,7 @@ void print_worker_info(const char *log_lvl, struct task_struct *task)
 	struct workqueue_struct *wq = NULL;
 	struct worker *worker;
 
-	if (!(task->flags & PF_WQ_WORKER))
+	if (!(task_flags(task) & PF_WQ_WORKER))
 		return;
 
 	/*
@@ -4935,7 +4935,7 @@ void wq_worker_comm(char *buf, size_t size, struct task_struct *task)
 	/* stabilize PF_WQ_WORKER and worker pool association */
 	mutex_lock(&wq_pool_attach_mutex);
 
-	if (task->flags & PF_WQ_WORKER) {
+	if (task_flags(task) & PF_WQ_WORKER) {
 		struct worker *worker = kthread_data(task);
 		struct worker_pool *pool = worker->pool;
 

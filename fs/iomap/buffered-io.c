@@ -1464,8 +1464,8 @@ iomap_do_writepage(struct page *page, struct writeback_control *wbc, void *data)
 	 * This should never happen except in the case of a VM regression so
 	 * warn about it.
 	 */
-	if (WARN_ON_ONCE((current->flags & (PF_MEMALLOC|PF_KSWAPD)) ==
-			PF_MEMALLOC))
+	if (WARN_ON_ONCE((task_flags(current) & (PF_MEMALLOC|PF_KSWAPD)) ==
+			 PF_MEMALLOC))
 		goto redirty;
 
 	/*

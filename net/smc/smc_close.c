@@ -197,7 +197,7 @@ int smc_close_active(struct smc_sock *smc)
 	int rc = 0;
 	int rc1 = 0;
 
-	timeout = current->flags & PF_EXITING ?
+	timeout = task_flags(current) & PF_EXITING ?
 		  0 : sock_flag(sk, SOCK_LINGER) ?
 		      sk->sk_lingertime : SMC_MAX_STREAM_WAIT_TIMEOUT;
 
@@ -445,7 +445,7 @@ int smc_close_shutdown_write(struct smc_sock *smc)
 	long timeout;
 	int rc = 0;
 
-	timeout = current->flags & PF_EXITING ?
+	timeout = task_flags(current) & PF_EXITING ?
 		  0 : sock_flag(sk, SOCK_LINGER) ?
 		      sk->sk_lingertime : SMC_MAX_STREAM_WAIT_TIMEOUT;
 

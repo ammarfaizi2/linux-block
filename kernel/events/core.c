@@ -4788,7 +4788,7 @@ retry:
 		 * If it has already passed perf_event_exit_task().
 		 * we must see PF_EXITING, it takes this mutex too.
 		 */
-		if (task->flags & PF_EXITING)
+		if (task_flags(task) & PF_EXITING)
 			err = -ESRCH;
 		else if (per_task(task, perf_event_ctxp)[ctxn])
 			err = -EAGAIN;
@@ -6544,7 +6544,7 @@ static void perf_sigtrap(struct perf_event *event)
 	/*
 	 * perf_pending_event() can race with the task exiting.
 	 */
-	if (current->flags & PF_EXITING)
+	if (task_flags(current) & PF_EXITING)
 		return;
 
 	force_sig_perf((void __user *)event->pending_addr,
@@ -6676,7 +6676,7 @@ static void perf_sample_regs_user(struct perf_regs *regs_user,
 	if (user_mode(regs)) {
 		regs_user->abi = perf_reg_abi(current);
 		regs_user->regs = regs;
-	} else if (!(current->flags & PF_KTHREAD)) {
+	} else if (!(task_flags(current) & PF_KTHREAD)) {
 		perf_get_regs_user(regs_user, regs);
 	} else {
 		regs_user->abi = PERF_SAMPLE_REGS_ABI_NONE;

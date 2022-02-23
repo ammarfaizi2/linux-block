@@ -340,7 +340,7 @@ void vtime_account_kernel(struct task_struct *tsk)
 
 	vtime_delta_kernel(acct, &stime, &stime_scaled);
 
-	if (tsk->flags & PF_VCPU) {
+	if (task_flags(tsk) & PF_VCPU) {
 		acct->gtime += stime;
 #ifdef CONFIG_ARCH_HAS_SCALED_CPUTIME
 		acct->utime_scaled += stime_scaled;

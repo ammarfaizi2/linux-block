@@ -833,7 +833,7 @@ static int bpf_send_signal_common(u32 sig, enum pid_type type)
 	 * permitted in order to send signal to the current
 	 * task.
 	 */
-	if (unlikely(current->flags & (PF_KTHREAD | PF_EXITING)))
+	if (unlikely(task_flags(current) & (PF_KTHREAD | PF_EXITING)))
 		return -EPERM;
 	if (unlikely(uaccess_kernel()))
 		return -EPERM;

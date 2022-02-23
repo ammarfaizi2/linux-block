@@ -104,7 +104,7 @@ static bool sig_task_ignored(struct task_struct *t, int sig, bool force)
 		return true;
 
 	/* Only allow kernel generated signals to this kthread */
-	if (unlikely((t->flags & PF_KTHREAD) &&
+	if (unlikely((task_flags(t) & PF_KTHREAD) &&
 		     (handler == SIG_KTHREAD_KERNEL) && !force))
 		return true;
 
@@ -300,7 +300,7 @@ bool task_set_jobctl_pending(struct task_struct *task, unsigned long mask)
 			JOBCTL_STOP_SIGMASK | JOBCTL_TRAPPING));
 	BUG_ON((mask & JOBCTL_TRAPPING) && !(mask & JOBCTL_PENDING_MASK));
 
-	if (unlikely(fatal_signal_pending(task) || (task->flags & PF_EXITING)))
+	if (unlikely(fatal_signal_pending(task) || (task_flags(task) & PF_EXITING)))
 		return false;
 
 	if (mask & JOBCTL_STOP_SIGMASK)
@@ -991,7 +991,7 @@ static inline bool wants_signal(int sig, struct task_struct *p)
 	if (sigismember(&per_task(p, blocked), sig))
 		return false;
 
-	if (p->flags & PF_EXITING)
+	if (task_flags(p) & PF_EXITING)
 		return false;
 
 	if (sig == SIGKILL)
@@ -1114,7 +1114,7 @@ static int __send_signal(int sig, struct kernel_siginfo *info, struct task_struc
 	/*
 	 * Skip useless siginfo allocation for SIGKILL and kernel threads.
 	 */
-	if ((sig == SIGKILL) || (t->flags & PF_KTHREAD))
+	if ((sig == SIGKILL) || (task_flags(t) & PF_KTHREAD))
 		goto out_set;
 
 	/*
@@ -2848,7 +2848,7 @@ relock:
 		/*
 		 * Anything else is fatal, maybe with a core dump.
 		 */
-		current->flags |= PF_SIGNALED;
+		task_flags(current) |= PF_SIGNALED;
 
 		if (sig_kernel_coredump(signr)) {
 			if (print_fatal_signals)
@@ -2870,7 +2870,7 @@ relock:
 		 * themselves. They have cleanup that must be performed, so
 		 * we cannot call do_exit() on their behalf.
 		 */
-		if (current->flags & PF_IO_WORKER)
+		if (task_flags(current) & PF_IO_WORKER)
 			goto out;
 
 		/*
@@ -2942,7 +2942,7 @@ static void retarget_shared_pending(struct task_struct *tsk, sigset_t *which)
 
 	t = tsk;
 	while_each_thread(tsk, t) {
-		if (t->flags & PF_EXITING)
+		if (task_flags(t) & PF_EXITING)
 			continue;
 
 		if (!has_pending_signals(&retarget, &per_task(t, blocked)))
@@ -2970,7 +2970,7 @@ void exit_signals(struct task_struct *tsk)
 	cgroup_threadgroup_change_begin(tsk);
 
 	if (thread_group_empty(tsk) || (tsk->signal->flags & SIGNAL_GROUP_EXIT)) {
-		tsk->flags |= PF_EXITING;
+		task_flags(tsk) |= PF_EXITING;
 		cgroup_threadgroup_change_end(tsk);
 		return;
 	}
@@ -2980,7 +2980,7 @@ void exit_signals(struct task_struct *tsk)
 	 * From now this task is not visible for group-wide signals,
 	 * see wants_signal(), do_signal_stop().
 	 */
-	tsk->flags |= PF_EXITING;
+	task_flags(tsk) |= PF_EXITING;
 
 	cgroup_threadgroup_change_end(tsk);
 

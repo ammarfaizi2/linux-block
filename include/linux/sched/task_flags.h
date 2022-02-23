@@ -61,7 +61,7 @@
 #define conditional_used_math(condition)	conditional_stopped_child_used_math(condition, current)
 
 #define copy_to_stopped_child_used_math(child) \
-	do { (child)->flags &= ~PF_USED_MATH, (child)->flags |= current->flags & PF_USED_MATH; } while (0)
+	do { (child)->flags &= ~PF_USED_MATH, (child)->flags |= task_flags(current) & PF_USED_MATH; } while (0)
 
 /* NOTE: this will return 0 or PF_USED_MATH, it will never return 1 */
 #define tsk_used_math(p)			((p)->flags & PF_USED_MATH)
@@ -70,7 +70,7 @@
 static __always_inline bool is_percpu_thread(void)
 {
 #ifdef CONFIG_SMP
-	return (current->flags & PF_NO_SETAFFINITY) &&
+	return (task_flags(current) & PF_NO_SETAFFINITY) &&
 		(current->nr_cpus_allowed  == 1);
 #else
 	return true;
@@ -131,8 +131,8 @@ TASK_PFA_SET(SPEC_IB_FORCE_DISABLE, spec_ib_force_disable)
 static inline void
 current_restore_flags(unsigned long orig_flags, unsigned long flags)
 {
-	current->flags &= ~flags;
-	current->flags |= orig_flags & flags;
+	task_flags(current) &= ~flags;
+	task_flags(current) |= orig_flags & flags;
 }
 
 /**
@@ -143,7 +143,7 @@ current_restore_flags(unsigned long orig_flags, unsigned long flags)
  */
 static __always_inline bool is_idle_task(const struct task_struct *p)
 {
-	return !!(p->flags & PF_IDLE);
+	return !!(task_flags(p) & PF_IDLE);
 }
 
 #endif /* _LINUX_SCHED_TASK_FLAGS_H */

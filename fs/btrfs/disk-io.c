@@ -4734,7 +4734,7 @@ static void __btrfs_btree_balance_dirty(struct btrfs_fs_info *fs_info,
 	 */
 	int ret;
 
-	if (current->flags & PF_MEMALLOC)
+	if (task_flags(current) & PF_MEMALLOC)
 		return;
 
 	if (flush_delayed)

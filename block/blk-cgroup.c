@@ -1765,7 +1765,7 @@ out:
  */
 void blkcg_schedule_throttle(struct request_queue *q, bool use_memdelay)
 {
-	if (unlikely(current->flags & PF_KTHREAD))
+	if (unlikely(task_flags(current) & PF_KTHREAD))
 		return;
 
 	if (current->throttle_queue != q) {

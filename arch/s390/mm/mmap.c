@@ -21,7 +21,7 @@
 
 static unsigned long stack_maxrandom_size(void)
 {
-	if (!(current->flags & PF_RANDOMIZE))
+	if (!(task_flags(current) & PF_RANDOMIZE))
 		return 0;
 	return STACK_RND_MASK << PAGE_SHIFT;
 }
@@ -173,7 +173,7 @@ void arch_pick_mmap_layout(struct mm_struct *mm, struct rlimit *rlim_stack)
 {
 	unsigned long random_factor = 0UL;
 
-	if (current->flags & PF_RANDOMIZE)
+	if (task_flags(current) & PF_RANDOMIZE)
 		random_factor = arch_mmap_rnd();
 
 	/*

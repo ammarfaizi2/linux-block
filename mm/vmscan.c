@@ -993,7 +993,7 @@ static inline int is_page_cache_freeable(struct page *page)
 
 static int may_write_to_inode(struct inode *inode)
 {
-	if (current->flags & PF_SWAPWRITE)
+	if (task_flags(current) & PF_SWAPWRITE)
 		return 1;
 	if (!inode_write_congested(inode))
 		return 1;
@@ -2381,7 +2381,7 @@ static unsigned int move_pages_to_lru(struct lruvec *lruvec,
  */
 static int current_may_throttle(void)
 {
-	return !(current->flags & PF_LOCAL_THROTTLE) ||
+	return !(task_flags(current) & PF_LOCAL_THROTTLE) ||
 		current->backing_dev_info == NULL ||
 		bdi_write_congested(current->backing_dev_info);
 }
@@ -3723,7 +3723,7 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
 	 * committing a transaction where throttling it could forcing other
 	 * processes to block on log_wait_commit().
 	 */
-	if (current->flags & PF_KTHREAD)
+	if (task_flags(current) & PF_KTHREAD)
 		goto out;
 
 	/*
@@ -4476,7 +4476,7 @@ static int kswapd(void *p)
 	 * us from recursively trying to free more memory as we're
 	 * trying to free the first piece of memory in the first place).
 	 */
-	tsk->flags |= PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD;
+	task_flags(tsk) |= PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD;
 	set_freezable();
 
 	WRITE_ONCE(pgdat->kswapd_order, 0);
@@ -4527,7 +4527,7 @@ kswapd_try_sleep:
 			goto kswapd_try_sleep;
 	}
 
-	tsk->flags &= ~(PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD);
+	task_flags(tsk) &= ~(PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD);
 
 	return 0;
 }
@@ -4772,7 +4772,7 @@ static int __node_reclaim(struct pglist_data *pgdat, gfp_t gfp_mask, unsigned in
 	 * and RECLAIM_UNMAP.
 	 */
 	noreclaim_flag = memalloc_noreclaim_save();
-	p->flags |= PF_SWAPWRITE;
+	task_flags(p) |= PF_SWAPWRITE;
 	set_task_reclaim_state(p, &sc.reclaim_state);
 
 	if (node_pagecache_reclaimable(pgdat) > pgdat->min_unmapped_pages) {
@@ -4786,7 +4786,7 @@ static int __node_reclaim(struct pglist_data *pgdat, gfp_t gfp_mask, unsigned in
 	}
 
 	set_task_reclaim_state(p, NULL);
-	current->flags &= ~PF_SWAPWRITE;
+	task_flags(current) &= ~PF_SWAPWRITE;
 	memalloc_noreclaim_restore(noreclaim_flag);
 	fs_reclaim_release(sc.gfp_mask);
 	psi_memstall_leave(&pflags);
@@ -4818,7 +4818,7 @@ int node_reclaim(struct pglist_data *pgdat, gfp_t gfp_mask, unsigned int order)
 	/*
 	 * Do not scan if the allocation should not be delayed.
 	 */
-	if (!gfpflags_allow_blocking(gfp_mask) || (current->flags & PF_MEMALLOC))
+	if (!gfpflags_allow_blocking(gfp_mask) || (task_flags(current) & PF_MEMALLOC))
 		return NODE_RECLAIM_NOSCAN;
 
 	/*

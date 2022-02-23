@@ -375,7 +375,7 @@ static bool ns_capable_common(struct user_namespace *ns,
 
 	capable = security_capable(current_cred(), ns, cap, opts);
 	if (capable == 0) {
-		current->flags |= PF_SUPERPRIV;
+		task_flags(current) |= PF_SUPERPRIV;
 		return true;
 	}
 	return false;

@@ -238,7 +238,7 @@ enum res_type {
 static inline bool task_is_dying(void)
 {
 	return tsk_is_oom_victim(current) || fatal_signal_pending(current) ||
-		(current->flags & PF_EXITING);
+		(task_flags(current) & PF_EXITING);
 }
 
 /* Some nice accessors for the vmpressure. */
@@ -951,7 +951,7 @@ static __always_inline bool memcg_kmem_bypass(void)
 		return false;
 
 	/* Memcg to charge can't be determined. */
-	if (!in_task() || !current->mm || (current->flags & PF_KTHREAD))
+	if (!in_task() || !current->mm || (task_flags(current) & PF_KTHREAD))
 		return true;
 
 	return false;
@@ -2585,7 +2585,7 @@ retry:
 	 * but we prefer facilitating memory reclaim and getting back
 	 * under the limit over triggering OOM kills in these cases.
 	 */
-	if (unlikely(current->flags & PF_MEMALLOC))
+	if (unlikely(task_flags(current) & PF_MEMALLOC))
 		goto force;
 
 	if (unlikely(task_in_memcg_oom(current)))

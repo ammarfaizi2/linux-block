@@ -1785,7 +1785,7 @@ static void uprobe_warn(struct task_struct *t, const char *msg)
 
 static void dup_xol_work(struct callback_head *work)
 {
-	if (current->flags & PF_EXITING)
+	if (task_flags(current) & PF_EXITING)
 		return;
 
 	if (!__create_xol_area(current->utask->dup_xol_addr) &&

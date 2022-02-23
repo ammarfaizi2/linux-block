@@ -237,7 +237,7 @@ void vtime_account_kernel(struct task_struct *tsk)
 {
 	u64 delta = vtime_delta();
 
-	if (tsk->flags & PF_VCPU)
+	if (task_flags(tsk) & PF_VCPU)
 		S390_lowcore.guest_timer += delta;
 	else
 		S390_lowcore.system_timer += delta;

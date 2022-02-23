@@ -2439,7 +2439,7 @@ static void io_req_task_submit(struct io_kiocb *req, bool *locked)
 
 	io_tw_lock(ctx, locked);
 	/* req->task == current here, checking PF_EXITING is safe */
-	if (likely(!(req->task->flags & PF_EXITING)))
+	if (likely(!(task_flags(req->task) & PF_EXITING)))
 		__io_queue_sqe(req);
 	else
 		io_req_complete_failed(req, -EFAULT);
@@ -5516,7 +5516,7 @@ static int io_poll_check_events(struct io_kiocb *req)
 	int v;
 
 	/* req->task == current here, checking PF_EXITING is safe */
-	if (unlikely(req->task->flags & PF_EXITING))
+	if (unlikely(task_flags(req->task) & PF_EXITING))
 		io_poll_mark_cancelled(req);
 
 	do {
@@ -7008,7 +7008,7 @@ static void io_req_task_link_timeout(struct io_kiocb *req, bool *locked)
 	int ret = -ENOENT;
 
 	if (prev) {
-		if (!(req->task->flags & PF_EXITING))
+		if (!(task_flags(req->task) & PF_EXITING))
 			ret = io_try_cancel_userdata(req, prev->user_data);
 		io_req_complete_post(req, ret ?: -ETIME, 0);
 		io_put_req(prev);
@@ -7572,7 +7572,7 @@ static int io_sq_thread(void *data)
 		set_cpus_allowed_ptr(current, cpumask_of(sqd->sq_cpu));
 	else
 		set_cpus_allowed_ptr(current, cpu_online_mask);
-	current->flags |= PF_NO_SETAFFINITY;
+	task_flags(current) |= PF_NO_SETAFFINITY;
 
 	audit_alloc_kernel(current);
 

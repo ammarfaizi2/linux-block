@@ -159,7 +159,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
 		unsigned long arg, struct task_struct * p, unsigned long tls)
 {
 	void (*handler)(void);
-	int kthread = current->flags & (PF_KTHREAD | PF_IO_WORKER);
+	int kthread = task_flags(current) & (PF_KTHREAD | PF_IO_WORKER);
 	int ret = 0;
 
 	task_thread(p) = (struct thread_struct) INIT_THREAD;

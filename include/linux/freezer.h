@@ -25,7 +25,7 @@ extern unsigned int freeze_timeout_msecs;
  */
 static inline bool frozen(struct task_struct *p)
 {
-	return p->flags & PF_FROZEN;
+	return task_flags(p) & PF_FROZEN;
 }
 
 extern bool freezing_slow_path(struct task_struct *p);
@@ -63,7 +63,7 @@ static inline bool try_to_freeze_unsafe(void)
 
 static inline bool try_to_freeze(void)
 {
-	if (!(current->flags & PF_NOFREEZE))
+	if (!(task_flags(current) & PF_NOFREEZE))
 		debug_check_no_locks_held();
 	return try_to_freeze_unsafe();
 }
@@ -107,7 +107,7 @@ static inline bool cgroup_freezing(struct task_struct *task)
  */
 static inline void freezer_do_not_count(void)
 {
-	current->flags |= PF_FREEZER_SKIP;
+	task_flags(current) |= PF_FREEZER_SKIP;
 }
 
 /**
@@ -119,7 +119,7 @@ static inline void freezer_do_not_count(void)
  */
 static inline void freezer_count(void)
 {
-	current->flags &= ~PF_FREEZER_SKIP;
+	task_flags(current) &= ~PF_FREEZER_SKIP;
 	/*
 	 * If freezing is in progress, the following paired with smp_mb()
 	 * in freezer_should_skip() ensures that either we see %true
@@ -132,7 +132,7 @@ static inline void freezer_count(void)
 /* DO NOT ADD ANY NEW CALLERS OF THIS FUNCTION */
 static inline void freezer_count_unsafe(void)
 {
-	current->flags &= ~PF_FREEZER_SKIP;
+	task_flags(current) &= ~PF_FREEZER_SKIP;
 	smp_mb();
 	try_to_freeze_unsafe();
 }
@@ -157,7 +157,7 @@ static inline bool freezer_should_skip(struct task_struct *p)
 	 * clearing %PF_FREEZER_SKIP.
 	 */
 	smp_mb();
-	return p->flags & PF_FREEZER_SKIP;
+	return task_flags(p) & PF_FREEZER_SKIP;
 }
 
 /*
