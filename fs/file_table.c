@@ -374,7 +374,7 @@ void fput_many(struct file *file, unsigned int refs)
 	if (atomic_long_sub_and_test(refs, &file->f_count)) {
 		struct task_struct *task = current;
 
-		if (likely(!in_interrupt() && !(task->flags & PF_KTHREAD))) {
+		if (likely(!in_interrupt() && !(task_flags(task) & PF_KTHREAD))) {
 			init_task_work(&file->f_u.fu_rcuhead, ____fput);
 			if (!task_work_add(task, &file->f_u.fu_rcuhead, TWA_RESUME))
 				return;
@@ -407,7 +407,7 @@ void __fput_sync(struct file *file)
 {
 	if (atomic_long_dec_and_test(&file->f_count)) {
 		struct task_struct *task = current;
-		BUG_ON(!(task->flags & PF_KTHREAD));
+		BUG_ON(!(task_flags(task) & PF_KTHREAD));
 		__fput(file);
 	}
 }

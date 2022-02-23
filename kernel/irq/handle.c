@@ -66,7 +66,7 @@ void __irq_wake_thread(struct irq_desc *desc, struct irqaction *action)
 	 * we handled the interrupt. The hardirq handler has disabled the
 	 * device interrupt, so no irq storm is lurking.
 	 */
-	if (action->thread->flags & PF_EXITING)
+	if (task_flags(action->thread) & PF_EXITING)
 		return;
 
 	/*

@@ -50,21 +50,21 @@
  * child is not running and in turn not changing child->flags
  * at the same time the parent does it.
  */
-#define clear_stopped_child_used_math(child)	do { (child)->flags &= ~PF_USED_MATH; } while (0)
-#define set_stopped_child_used_math(child)	do { (child)->flags |= PF_USED_MATH; } while (0)
+#define clear_stopped_child_used_math(child)	do { task_flags(child) &= ~PF_USED_MATH; } while (0)
+#define set_stopped_child_used_math(child)	do { task_flags(child) |= PF_USED_MATH; } while (0)
 #define clear_used_math()			clear_stopped_child_used_math(current)
 #define set_used_math()				set_stopped_child_used_math(current)
 
 #define conditional_stopped_child_used_math(condition, child) \
-	do { (child)->flags &= ~PF_USED_MATH, (child)->flags |= (condition) ? PF_USED_MATH : 0; } while (0)
+	do { task_flags(child) &= ~PF_USED_MATH, task_flags(child) |= (condition) ? PF_USED_MATH : 0; } while (0)
 
 #define conditional_used_math(condition)	conditional_stopped_child_used_math(condition, current)
 
 #define copy_to_stopped_child_used_math(child) \
-	do { (child)->flags &= ~PF_USED_MATH, (child)->flags |= task_flags(current) & PF_USED_MATH; } while (0)
+	do { task_flags(child) &= ~PF_USED_MATH, task_flags(child) |= task_flags(current) & PF_USED_MATH; } while (0)
 
 /* NOTE: this will return 0 or PF_USED_MATH, it will never return 1 */
-#define tsk_used_math(p)			((p)->flags & PF_USED_MATH)
+#define tsk_used_math(p)			(task_flags(p) & PF_USED_MATH)
 #define used_math()				tsk_used_math(current)
 
 static __always_inline bool is_percpu_thread(void)

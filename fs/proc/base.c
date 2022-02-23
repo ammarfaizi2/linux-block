@@ -1123,7 +1123,7 @@ static int __set_oom_adj(struct file *file, int oom_adj, bool legacy)
 				continue;
 
 			/* do not touch kernel threads or the global init */
-			if (p->flags & PF_KTHREAD || is_global_init(p))
+			if (task_flags(p) & PF_KTHREAD || is_global_init(p))
 				continue;
 
 			task_lock(p);

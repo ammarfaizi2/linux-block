@@ -1068,7 +1068,7 @@ void reclaim_throttle(pg_data_t *pgdat, enum vmscan_throttle_state reason)
 	 * forward progress (e.g. journalling workqueues or kthreads).
 	 */
 	if (!current_is_kswapd() &&
-	    current->flags & (PF_IO_WORKER|PF_KTHREAD)) {
+	    task_flags(current) & (PF_IO_WORKER|PF_KTHREAD)) {
 		cond_resched();
 		return;
 	}

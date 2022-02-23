@@ -495,7 +495,7 @@ static int ptrace_traceme(void)
 		 * exit_ptrace(). Otherwise we don't report the error but
 		 * pretend ->real_parent untraces us right after return.
 		 */
-		if (!ret && !(current->real_parent->flags & PF_EXITING)) {
+		if (!ret && !(task_flags(current->real_parent) & PF_EXITING)) {
 			current->ptrace = PT_PTRACED;
 			ptrace_link(current, current->real_parent);
 		}

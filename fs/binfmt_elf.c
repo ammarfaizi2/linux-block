@@ -1010,7 +1010,7 @@ out_free_interp:
 		current->personality |= READ_IMPLIES_EXEC;
 
 	if (!(current->personality & ADDR_NO_RANDOMIZE) && randomize_va_space)
-		current->flags |= PF_RANDOMIZE;
+		task_flags(current) |= PF_RANDOMIZE;
 
 	setup_new_exec(bprm);
 
@@ -1120,7 +1120,7 @@ out_free_interp:
 			alignment = maximum_alignment(elf_phdata, elf_ex->e_phnum);
 			if (interpreter || alignment > ELF_MIN_ALIGN) {
 				load_bias = ELF_ET_DYN_BASE;
-				if (current->flags & PF_RANDOMIZE)
+				if (task_flags(current) & PF_RANDOMIZE)
 					load_bias += arch_mmap_rnd();
 				if (alignment)
 					load_bias &= ~(alignment - 1);
@@ -1291,7 +1291,7 @@ out_free_interp:
 	mm->end_data = end_data;
 	mm->start_stack = bprm->p;
 
-	if ((current->flags & PF_RANDOMIZE) && (randomize_va_space > 1)) {
+	if ((task_flags(current) & PF_RANDOMIZE) && (randomize_va_space > 1)) {
 		/*
 		 * For architectures with ELF randomization, when executing
 		 * a loader directly (i.e. no interpreter listed in ELF
@@ -1591,7 +1591,7 @@ static int fill_psinfo(struct elf_prpsinfo *psinfo, struct task_struct *p,
 	psinfo->pr_sname = (i > 5) ? '.' : "RSDTZW"[i];
 	psinfo->pr_zomb = psinfo->pr_sname == 'Z';
 	psinfo->pr_nice = task_nice(p);
-	psinfo->pr_flag = p->flags;
+	psinfo->pr_flag = task_flags(p);
 	rcu_read_lock();
 	cred = __task_cred(p);
 	SET_UID(psinfo->pr_uid, from_kuid_munged(cred->user_ns, cred->uid));

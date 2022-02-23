@@ -28,7 +28,7 @@ bool current_is_single_threaded(void)
 	ret = false;
 	rcu_read_lock();
 	for_each_process(p) {
-		if (unlikely(p->flags & PF_KTHREAD))
+		if (unlikely(task_flags(p) & PF_KTHREAD))
 			continue;
 		if (unlikely(p == task->group_leader))
 			continue;

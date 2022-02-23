@@ -84,7 +84,7 @@ static inline struct kthread *to_kthread(struct task_struct *k)
  *
  * Per construction; when:
  *
- *   (p->flags & PF_KTHREAD) && p->worker_private
+ *   (task_flags(p) & PF_KTHREAD) && p->worker_private
  *
  * the task is both a kthread and struct kthread is persistent. However
  * PF_KTHREAD on it's own is not, kernel_thread() can exec() (See umh.c and

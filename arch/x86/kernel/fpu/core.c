@@ -593,7 +593,7 @@ int fpu_clone(struct task_struct *dst, unsigned long clone_flags)
 	 * No FPU state inheritance for kernel threads and IO
 	 * worker threads.
 	 */
-	if (dst->flags & (PF_KTHREAD | PF_IO_WORKER)) {
+	if (task_flags(dst) & (PF_KTHREAD | PF_IO_WORKER)) {
 		/* Clear out the minimal state */
 		memcpy(&dst_fpu->fpstate->regs, &init_fpstate.regs,
 		       init_fpstate_copy_size());

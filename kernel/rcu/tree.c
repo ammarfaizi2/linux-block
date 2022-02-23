@@ -684,10 +684,10 @@ noinstr static void rcu_irq_work_resched(void)
 {
 	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
-	if (IS_ENABLED(CONFIG_GENERIC_ENTRY) && !(current->flags & PF_VCPU))
+	if (IS_ENABLED(CONFIG_GENERIC_ENTRY) && !(task_flags(current) & PF_VCPU))
 		return;
 
-	if (IS_ENABLED(CONFIG_KVM_XFER_TO_GUEST_WORK) && (current->flags & PF_VCPU))
+	if (IS_ENABLED(CONFIG_KVM_XFER_TO_GUEST_WORK) && (task_flags(current) & PF_VCPU))
 		return;
 
 	instrumentation_begin();

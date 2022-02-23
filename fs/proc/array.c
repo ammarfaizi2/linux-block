@@ -104,7 +104,7 @@ void proc_task_name(struct seq_file *m, struct task_struct *p, bool escape)
 
 	if (task_flags(p) & PF_WQ_WORKER)
 		wq_worker_comm(tcomm, sizeof(tcomm), p);
-	else if (p->flags & PF_KTHREAD)
+	else if (task_flags(p) & PF_KTHREAD)
 		get_kthread_comm(tcomm, sizeof(tcomm), p);
 	else
 		__get_task_comm(tcomm, sizeof(tcomm), p);

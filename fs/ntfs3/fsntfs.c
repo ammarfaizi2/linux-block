@@ -1448,7 +1448,7 @@ static inline struct bio *ntfs_alloc_bio(u32 nr_vecs)
 {
 	struct bio *bio = bio_alloc(GFP_NOFS | __GFP_HIGH, nr_vecs);
 
-	if (!bio && (current->flags & PF_MEMALLOC)) {
+	if (!bio && (task_flags(current) & PF_MEMALLOC)) {
 		while (!bio && (nr_vecs /= 2))
 			bio = bio_alloc(GFP_NOFS | __GFP_HIGH, nr_vecs);
 	}
