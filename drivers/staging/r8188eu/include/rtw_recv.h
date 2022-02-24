@@ -72,7 +72,6 @@ struct signal_stat {
 struct phy_info {
 	u8	RxPWDBAll;
 	u8	SignalQuality;	 /*  in 0-100 index. */
-	u8	RxMIMOSignalQuality[MAX_PATH_NUM_92CS]; /* EVM */
 	u8	RxMIMOSignalStrength[MAX_PATH_NUM_92CS];/*  in 0~100 index */
 	s8	RxPower; /*  in dBm Translate from PWdB */
 /*  Real power in dBm for this packet, no beautification and aggregation.
@@ -80,7 +79,6 @@ struct phy_info {
 	s8	recvpower;
 	u8	SignalStrength; /*  in 0-100 index. */
 	u8	RxPwr[MAX_PATH_NUM_92CS];/* per-path's pwdb */
-	u8	RxSNR[MAX_PATH_NUM_92CS];/* per-path's SNR */
 };
 
 struct rx_pkt_attrib {
@@ -294,15 +292,6 @@ static inline u8 *get_rxmem(struct recv_frame *precvframe)
 static inline u8 *get_rx_status(struct recv_frame *precvframe)
 {
 	return get_rxmem(precvframe);
-}
-
-static inline u8 *get_recvframe_data(struct recv_frame *precvframe)
-{
-	/* always return rx_data */
-	if (precvframe == NULL)
-		return NULL;
-
-	return precvframe->rx_data;
 }
 
 static inline u8 *recvframe_push(struct recv_frame *precvframe, int sz)
