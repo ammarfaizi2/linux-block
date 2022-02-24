@@ -496,21 +496,10 @@ static inline unsigned short cma_family(struct rdma_id_private *id_priv)
 	return id_priv->id.route.addr.src_addr.ss_family;
 }
 
-static int cma_set_qkey(struct rdma_id_private *id_priv, u32 qkey)
+static int cma_set_default_qkey(struct rdma_id_private *id_priv)
 {
 	struct ib_sa_mcmember_rec rec;
 	int ret = 0;
-
-	if (id_priv->qkey) {
-		if (qkey && id_priv->qkey != qkey)
-			return -EINVAL;
-		return 0;
-	}
-
-	if (qkey) {
-		id_priv->qkey = qkey;
-		return 0;
-	}
 
 	switch (id_priv->id.ps) {
 	case RDMA_PS_UDP:
@@ -528,7 +517,20 @@ static int cma_set_qkey(struct rdma_id_private *id_priv, u32 qkey)
 	default:
 		break;
 	}
+
 	return ret;
+}
+
+static int cma_set_qkey(struct rdma_id_private *id_priv, u32 qkey)
+{
+	if (!qkey)
+		return cma_set_default_qkey(id_priv);
+
+	if (id_priv->qkey && (id_priv->qkey != qkey))
+		return -EINVAL;
+
+	id_priv->qkey = qkey;
+	return 0;
 }
 
 static void cma_translate_ib(struct sockaddr_ib *sib, struct rdma_dev_addr *dev_addr)
@@ -1100,7 +1102,7 @@ static int cma_ib_init_qp_attr(struct rdma_id_private *id_priv,
 	*qp_attr_mask = IB_QP_STATE | IB_QP_PKEY_INDEX | IB_QP_PORT;
 
 	if (id_priv->id.qp_type == IB_QPT_UD) {
-		ret = cma_set_qkey(id_priv, 0);
+		ret = cma_set_default_qkey(id_priv);
 		if (ret)
 			return ret;
 
@@ -4428,14 +4430,10 @@ int rdma_accept(struct rdma_cm_id *id, struct rdma_conn_param *conn_param)
 
 	if (rdma_cap_ib_cm(id->device, id->port_num)) {
 		if (id->qp_type == IB_QPT_UD) {
-			if (conn_param)
-				ret = cma_send_sidr_rep(id_priv, IB_SIDR_SUCCESS,
-							conn_param->qkey,
-							conn_param->private_data,
-							conn_param->private_data_len);
-			else
-				ret = cma_send_sidr_rep(id_priv, IB_SIDR_SUCCESS,
-							0, NULL, 0);
+			ret = cma_send_sidr_rep(id_priv, IB_SIDR_SUCCESS,
+						conn_param->qkey,
+						conn_param->private_data,
+						conn_param->private_data_len);
 		} else {
 			if (conn_param)
 				ret = cma_accept_ib(id_priv, conn_param);
@@ -4683,7 +4681,7 @@ static int cma_join_ib_multicast(struct rdma_id_private *id_priv,
 	if (ret)
 		return ret;
 
-	ret = cma_set_qkey(id_priv, 0);
+	ret = cma_set_default_qkey(id_priv);
 	if (ret)
 		return ret;
 
@@ -4762,8 +4760,7 @@ static int cma_iboe_join_multicast(struct rdma_id_private *id_priv,
 	cma_iboe_set_mgid(addr, &ib.rec.mgid, gid_type);
 
 	ib.rec.pkey = cpu_to_be16(0xffff);
-	if (id_priv->id.ps == RDMA_PS_UDP)
-		ib.rec.qkey = cpu_to_be32(RDMA_UDP_QKEY);
+	ib.rec.qkey = cpu_to_be32(RDMA_UDP_QKEY);
 
 	if (dev_addr->bound_dev_if)
 		ndev = dev_get_by_index(dev_addr->net, dev_addr->bound_dev_if);
@@ -4813,6 +4810,9 @@ int rdma_join_multicast(struct rdma_cm_id *id, struct sockaddr *addr,
 	/* ULP is calling this wrong. */
 	if (!id->device || (READ_ONCE(id_priv->state) != RDMA_CM_ADDR_BOUND &&
 			    READ_ONCE(id_priv->state) != RDMA_CM_ADDR_RESOLVED))
+		return -EINVAL;
+
+	if (id_priv->id.qp_type != IB_QPT_UD)
 		return -EINVAL;
 
 	mc = kzalloc(sizeof(*mc), GFP_KERNEL);
