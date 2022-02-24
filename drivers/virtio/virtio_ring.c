@@ -158,6 +158,12 @@ struct vring_virtqueue {
 			/* DMA address and size information */
 			dma_addr_t queue_dma_addr;
 			size_t queue_size_in_bytes;
+
+			/* The parameters for creating vrings are reserved for
+			 * creating new vrings when enabling reset queue.
+			 */
+			u32 vring_align;
+			bool may_reduce_num;
 		} split;
 
 		/* Available for packed ring */
@@ -217,6 +223,12 @@ struct vring_virtqueue {
 #endif
 };
 
+static void vring_free(struct virtqueue *vq);
+static void __vring_virtqueue_init_split(struct vring_virtqueue *vq,
+					 struct virtio_device *vdev);
+static int __vring_virtqueue_attach_split(struct vring_virtqueue *vq,
+					  struct virtio_device *vdev,
+					  struct vring vring);
 
 /*
  * Helpers.
@@ -1012,11 +1024,66 @@ static struct virtqueue *vring_create_virtqueue_split(
 		return NULL;
 	}
 
+	to_vvq(vq)->split.vring_align = vring_align;
+	to_vvq(vq)->split.may_reduce_num = may_reduce_num;
 	to_vvq(vq)->split.queue_dma_addr = vring.dma_addr;
 	to_vvq(vq)->split.queue_size_in_bytes = vring.queue_size_in_bytes;
 	to_vvq(vq)->we_own_ring = true;
 
 	return vq;
+}
+
+static int virtqueue_reset_vring_split(struct virtqueue *_vq, u32 num)
+{
+	struct vring_virtqueue *vq = to_vvq(_vq);
+	struct virtio_device *vdev = _vq->vdev;
+	struct vring_split vring;
+	int err;
+
+	if (num > _vq->num_max)
+		return -E2BIG;
+
+	switch (vq->vq.reset) {
+	case VIRTIO_VQ_RESET_STEP_NONE:
+		return -ENOENT;
+
+	case VIRTIO_VQ_RESET_STEP_VRING_ATTACH:
+	case VIRTIO_VQ_RESET_STEP_DEVICE:
+		if (vq->split.vring.num == num || !num)
+			break;
+
+		vring_free(_vq);
+
+		fallthrough;
+
+	case VIRTIO_VQ_RESET_STEP_VRING_RELEASE:
+		if (!num)
+			num = vq->split.vring.num;
+
+		err = vring_create_vring_split(&vring, vdev,
+					       vq->split.vring_align,
+					       vq->weak_barriers,
+					       vq->split.may_reduce_num, num);
+		if (err)
+			return -ENOMEM;
+
+		err = __vring_virtqueue_attach_split(vq, vdev, vring.vring);
+		if (err) {
+			vring_free_queue(vdev, vring.queue_size_in_bytes,
+					 vring.queue,
+					 vring.dma_addr);
+			return -ENOMEM;
+		}
+
+		vq->split.queue_dma_addr = vring.dma_addr;
+		vq->split.queue_size_in_bytes = vring.queue_size_in_bytes;
+	}
+
+	__vring_virtqueue_init_split(vq, vdev);
+	vq->we_own_ring = true;
+	vq->vq.reset = VIRTIO_VQ_RESET_STEP_VRING_ATTACH;
+
+	return 0;
 }
 
 
@@ -2317,6 +2384,8 @@ err_state:
 static void __vring_virtqueue_init_split(struct vring_virtqueue *vq,
 					 struct virtio_device *vdev)
 {
+	vq->vq.reset = VIRTIO_VQ_RESET_STEP_NONE;
+
 	vq->packed_ring = false;
 	vq->we_own_ring = false;
 	vq->broken = false;
