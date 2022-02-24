@@ -1886,6 +1886,8 @@ err_desc_state:
 static void vring_virtqueue_init_packed(struct vring_virtqueue *vq,
 					struct virtio_device *vdev)
 {
+	vq->vq.reset = VIRTIO_VQ_RESET_STEP_NONE;
+
 	vq->we_own_ring = true;
 	vq->broken = false;
 	vq->last_used_idx = 0;
@@ -1967,6 +1969,50 @@ err:
 err_vq:
 	vring_free_vring_packed(&vring, vdev);
 	return NULL;
+}
+
+static int virtqueue_reset_vring_packed(struct virtqueue *_vq, u32 num)
+{
+	struct vring_virtqueue *vq = to_vvq(_vq);
+	struct virtio_device *vdev = _vq->vdev;
+	struct vring_packed vring;
+	int err;
+
+	if (num > _vq->num_max)
+		return -E2BIG;
+
+	switch (vq->vq.reset) {
+	case VIRTIO_VQ_RESET_STEP_NONE:
+		return -ENOENT;
+
+	case VIRTIO_VQ_RESET_STEP_VRING_ATTACH:
+	case VIRTIO_VQ_RESET_STEP_DEVICE:
+		if (vq->packed.vring.num == num || !num)
+			break;
+
+		vring_free(_vq);
+
+		fallthrough;
+
+	case VIRTIO_VQ_RESET_STEP_VRING_RELEASE:
+		if (!num)
+			num = vq->packed.vring.num;
+
+		err = vring_create_vring_packed(&vring, vdev, num);
+		if (err)
+			return -ENOMEM;
+
+		err = vring_virtqueue_attach_packed(vq, &vring, vdev);
+		if (err) {
+			vring_free_vring_packed(&vring, vdev);
+			return -ENOMEM;
+		}
+	}
+
+	vring_virtqueue_init_packed(vq, vdev);
+	vq->vq.reset = VIRTIO_VQ_RESET_STEP_VRING_ATTACH;
+
+	return 0;
 }
 
 
