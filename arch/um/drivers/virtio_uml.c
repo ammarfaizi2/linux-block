@@ -998,7 +998,7 @@ error_kzalloc:
 static int vu_find_vqs(struct virtio_device *vdev, unsigned nvqs,
 		       struct virtqueue *vqs[], vq_callback_t *callbacks[],
 		       const char * const names[], const bool *ctx,
-		       struct irq_affinity *desc)
+		       struct irq_affinity *desc, u32 sizes[])
 {
 	struct virtio_uml_device *vu_dev = to_virtio_uml_device(vdev);
 	int i, queue_idx = 0, rc;
