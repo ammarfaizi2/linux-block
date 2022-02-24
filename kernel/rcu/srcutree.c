@@ -707,13 +707,14 @@ static void srcu_gp_end(struct srcu_struct *ssp)
 	/* A new grace period can start at this point.  But only one. */
 
 	/* Initiate callback invocation as needed. */
-	if (smp_load_acquire(&ssp->srcu_size_state) < SRCU_SIZE_WAIT_BARRIER) {
+	ss_state = smp_load_acquire(&ssp->srcu_size_state);
+	if (ss_state < SRCU_SIZE_WAIT_BARRIER) {
 		srcu_schedule_cbs_sdp(per_cpu_ptr(ssp->sda, 0), cbdelay);
 	} else {
 		idx = rcu_seq_ctr(gpseq) % ARRAY_SIZE(snp->srcu_have_cbs);
 		srcu_for_each_node_breadth_first(ssp, snp) {
 			spin_lock_irq_rcu_node(snp);
-			cbs = false;
+			cbs = ss_state < SRCU_SIZE_BIG;
 			last_lvl = snp >= ssp->level[rcu_num_lvls - 1];
 			if (last_lvl)
 				cbs = snp->srcu_have_cbs[idx] == gpseq;
@@ -722,7 +723,10 @@ static void srcu_gp_end(struct srcu_struct *ssp)
 			sgsne = snp->srcu_gp_seq_needed_exp;
 			if (rcu_seq_state(sgsne) || ULONG_CMP_LT(sgsne, gpseq))
 				WRITE_ONCE(snp->srcu_gp_seq_needed_exp, gpseq);
-			mask = snp->srcu_data_have_cbs[idx];
+			if (ss_state < SRCU_SIZE_BIG)
+				mask = ~0;
+			else
+				mask = snp->srcu_data_have_cbs[idx];
 			snp->srcu_data_have_cbs[idx] = 0;
 			spin_unlock_irq_rcu_node(snp);
 			if (cbs)
@@ -758,7 +762,6 @@ static void srcu_gp_end(struct srcu_struct *ssp)
 	}
 
 	/* Transition to big if needed. */
-	ss_state = smp_load_acquire(&ssp->srcu_size_state);
 	if (ss_state && ss_state != SRCU_SIZE_BIG) {
 		if (ss_state == SRCU_SIZE_ALLOC)
 			init_srcu_struct_nodes(ssp, GFP_KERNEL);
