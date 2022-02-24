@@ -1899,7 +1899,7 @@ ath12k_dp_mon_tx_parse_status_tlv(struct ath12k_base *ab,
 
 		mon_mpdu = kzalloc(sizeof(*mon_mpdu), GFP_ATOMIC);
 		if (!mon_mpdu)
-			return HAL_RX_MON_STATUS_PPDU_NOT_DONE;
+			return HAL_TX_MON_STATUS_PPDU_NOT_DONE;
 		status = HAL_MON_TX_MPDU_START;
 		break;
 	}
@@ -1921,7 +1921,7 @@ ath12k_dp_mon_tx_parse_status_tlv(struct ath12k_base *ab,
 		if (unlikely(!msdu)) {
 			ath12k_warn(ab, "montior destination with invalid buf_id %d\n",
 				    buf_id);
-			return HAL_RX_MON_STATUS_PPDU_NOT_DONE;
+			return HAL_TX_MON_STATUS_PPDU_NOT_DONE;
 		}
 
 		rxcb = ATH12K_SKB_RXCB(msdu);
