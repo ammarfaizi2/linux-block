@@ -1002,7 +1002,7 @@ int __init rand_initialize(void)
 
 /* There is one of these per entropy source */
 struct timer_rand_state {
-	cycles_t last_time;
+	unsigned long last_time;
 	long last_delta, last_delta2;
 };
 
@@ -1016,7 +1016,7 @@ struct timer_rand_state {
  */
 void add_device_randomness(const void *buf, size_t size)
 {
-	unsigned long time = random_get_entropy() ^ jiffies;
+	cycles_t time = random_get_entropy() ^ jiffies;
 	unsigned long flags;
 
 	if (crng_init == 0 && size)
@@ -1041,17 +1041,18 @@ EXPORT_SYMBOL(add_device_randomness);
  */
 static void add_timer_randomness(struct timer_rand_state *state, unsigned int num)
 {
-	struct {
+	struct timer_sample {
+		cycles_t cycles;
 		long jiffies;
-		unsigned int cycles;
 		unsigned int num;
+		/* 4-byte hole on 64-bit */
 	} sample;
 	long delta, delta2, delta3;
 
 	sample.jiffies = jiffies;
 	sample.cycles = random_get_entropy();
 	sample.num = num;
-	mix_pool_bytes(&sample, sizeof(sample));
+	mix_pool_bytes(&sample, offsetofend(struct timer_sample, num));
 
 	/*
 	 * Calculate number of bits of randomness we probably added.
@@ -1356,7 +1357,7 @@ static void entropy_timer(struct timer_list *t)
 static void try_to_generate_entropy(void)
 {
 	struct {
-		unsigned long now;
+		cycles_t now;
 		struct timer_list timer;
 	} stack;
 
