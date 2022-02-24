@@ -2297,6 +2297,11 @@ int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
  * @downgrade: Set to true to attempt a write downgrade of the mmap_sem
  *
  * If @downgrade is true, check return code for potential release of the lock.
+ *
+ * Munmap is split into 2 main parts -- this part which finds
+ * what needs doing, and the areas themselves, which do the
+ * work.  This now handles partial unmappings.
+ * Jeremy Fitzhardinge <jeremy@goop.org>
  */
 static int
 do_mas_align_munmap(struct ma_state *mas, struct vm_area_struct *vma,
@@ -2368,10 +2373,8 @@ do_mas_align_munmap(struct ma_state *mas, struct vm_area_struct *vma,
 		BUG_ON(next->vm_start > end);
 #endif
 		vma_mas_store(next, &mas_detach);
-		if (next->vm_flags & VM_LOCKED) {
+		if (next->vm_flags & VM_LOCKED)
 			mm->locked_vm -= vma_pages(next);
-			munlock_vma_pages_all(next);
-		}
 	}
 
 	next = mas_find(mas, ULONG_MAX);
@@ -2901,10 +2904,8 @@ static int do_brk_munmap(struct ma_state *mas, struct vm_area_struct *vma,
 	}
 
 	unmap_pages = vma_pages(&unmap);
-	if (vma->vm_flags & VM_LOCKED) {
+	if (vma->vm_flags & VM_LOCKED)
 		mm->locked_vm -= unmap_pages;
-		munlock_vma_pages_range(&unmap, newbrk, oldbrk);
-	}
 
 	next = mas_next(mas, ULONG_MAX);
 	mmap_write_downgrade(mm);
@@ -3113,7 +3114,6 @@ void exit_mmap(struct mm_struct *mm)
 		 * reliably test it.
 		 */
 		(void)__oom_reap_task_mm(mm);
-
 		set_bit(MMF_OOM_SKIP, &mm->flags);
 	}
 
@@ -3126,10 +3126,8 @@ void exit_mmap(struct mm_struct *mm)
 	rwsem_acquire(&mm->mmap_lock.dep_map, 0, 0, _THIS_IP_);
 	if (mm->locked_vm) {
 		mas_for_each(&mas, vma, ULONG_MAX) {
-			if (vma->vm_flags & VM_LOCKED) {
+			if (vma->vm_flags & VM_LOCKED)
 				mm->locked_vm -= vma_pages(vma);
-				munlock_vma_pages_all(vma);
-			}
 		}
 		mas_set(&mas, 0);
 	}
