@@ -2164,9 +2164,7 @@ struct hal_sw_monitor_ring {
  *		request
  *
  *		<enum 14 rxdma_amsdu_fragment_err>Rx PCU reported A-MSDU
- *		present as well as a fragmented MPDU. A-MSDU defragmentation
- *		is not supported on all hardware so this might be treated as an
- *		error.
+ *		present as well as a fragmented MPDU.
  *
  * mpdu_fragment_number
  *		Field only valid when Reo_level_mpdu_frame_info.
