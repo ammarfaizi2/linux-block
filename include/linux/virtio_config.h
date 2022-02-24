@@ -234,6 +234,18 @@ int virtio_find_vqs_ctx(struct virtio_device *vdev, unsigned nvqs,
 				      desc, NULL);
 }
 
+static inline
+int virtio_find_vqs_ctx_size(struct virtio_device *vdev, u32 nvqs,
+				 struct virtqueue *vqs[],
+				 vq_callback_t *callbacks[],
+				 const char * const names[],
+				 const bool *ctx, struct irq_affinity *desc,
+				 u32 sizes[])
+{
+	return vdev->config->find_vqs(vdev, nvqs, vqs, callbacks, names, ctx,
+				      desc, sizes);
+}
+
 /**
  * virtio_reset_vq - reset a queue individually
  * @vq: the virtqueue
