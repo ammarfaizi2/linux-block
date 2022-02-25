@@ -766,7 +766,7 @@ static u64 msdc_timeout_cal(struct msdc_host *host, u64 ns, u64 clks)
 		clk_ns  = 1000000000ULL;
 		do_div(clk_ns, mmc->actual_clock);
 		timeout = ns + clk_ns - 1;
-		do_div(timeout, clk_ns);
+		div64_u64(timeout, clk_ns);
 		timeout += clks;
 		/* in 1048576 sclk cycle unit */
 		timeout = DIV_ROUND_UP(timeout, BIT(20));
