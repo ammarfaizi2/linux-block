@@ -285,11 +285,13 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 		if (!s)
 			continue;
 
-		/* Mark stack accessible for KASAN. */
+		/* Reset stack metadata. */
 		kasan_unpoison_range(s->addr, THREAD_SIZE);
 
+		stack = kasan_reset_tag(s->addr);
+
 		/* Clear stale pointers from reused stack. */
-		memset(s->addr, 0, THREAD_SIZE);
+		memset(stack, 0, THREAD_SIZE);
 
 		if (memcg_charge_kernel_stack(s)) {
 			vfree(s->addr);
@@ -324,6 +326,7 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 	 * free_thread_stack() can be called in interrupt context,
 	 * so cache the vm_struct.
 	 */
+	stack = kasan_reset_tag(stack);
 	tsk->stack_vm_area = vm;
 	tsk->stack = stack;
 	return 0;
@@ -471,14 +474,19 @@ struct vm_area_struct *vm_area_dup(struct vm_area_struct *orig)
 		 */
 		*new = data_race(*orig);
 		INIT_LIST_HEAD(&new->anon_vma_chain);
+<<<<<<< HEAD
 		dup_vma_anon_name(orig, new);
+=======
+		new->vm_next = new->vm_prev = NULL;
+		dup_anon_vma_name(orig, new);
+>>>>>>> akpm-current/current
 	}
 	return new;
 }
 
 void vm_area_free(struct vm_area_struct *vma)
 {
-	free_vma_anon_name(vma);
+	free_anon_vma_name(vma);
 	kmem_cache_free(vm_area_cachep, vma);
 }
 
