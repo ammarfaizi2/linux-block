@@ -198,6 +198,8 @@ void netfs_readahead(struct readahead_control *ractl)
 
 	/* Set up the output buffer */
 	rreq->buffering = NETFS_BUFFER;
+	if (test_bit(NETFS_RREQ_CONTENT_ENCRYPTION, &rreq->flags))
+		rreq->buffering = NETFS_BUFFER_DEC;
 	rreq->first = readahead_index(ractl);
 	rreq->last  = rreq->first + readahead_count(ractl);
 	ret = netfs_set_up_buffer(&rreq->buffer, rreq->mapping, ractl, NULL,
@@ -255,6 +257,8 @@ int netfs_readpage(struct file *file, struct page *subpage)
 
 	/* Set up the output buffer */
 	rreq->buffering = NETFS_BUFFER;
+	if (test_bit(NETFS_RREQ_CONTENT_ENCRYPTION, &rreq->flags))
+		rreq->buffering = NETFS_BUFFER_DEC;
 	rreq->first = folio->index;
 	rreq->last  = rreq->first + folio_nr_pages(folio) - 1;
 	ret = netfs_set_up_buffer(&rreq->buffer, rreq->mapping, NULL, folio,
@@ -425,6 +429,8 @@ retry:
 
 	/* Set up the output buffer */
 	rreq->buffering = NETFS_BUFFER;
+	if (test_bit(NETFS_RREQ_CONTENT_ENCRYPTION, &rreq->flags))
+		rreq->buffering = NETFS_BUFFER_DEC;
 	rreq->first = readahead_index(&ractl);
 	rreq->last  = rreq->first + readahead_count(&ractl) - 1;
 	ret = netfs_set_up_buffer(&rreq->buffer, rreq->mapping, &ractl, folio,

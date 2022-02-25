@@ -61,6 +61,9 @@ struct netfs_io_subrequest *netfs_create_write_request(struct netfs_io_request *
 					subreq->start, subreq->len);
 			break;
 		case NETFS_BOUNCE:
+		case NETFS_ENC_DIRECT_TO_BOUNCE:
+		case NETFS_ENC_BUFFER_TO_BOUNCE:
+		case NETFS_COPY_ENC_BOUNCE:
 			iov_iter_xarray(&subreq->iter, WRITE, &wreq->bounce,
 					subreq->start, subreq->len);
 			break;
