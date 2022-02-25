@@ -443,7 +443,7 @@ static ssize_t sbprof_tb_read(struct file *filp, char __user *buf,
 	int cur_sample, sample_off, cur_count, sample_left;
 	char *src;
 	int   count   =	 0;
-	char __user *dest = buf;
+	char __user *dest    =	 buf;
 	long  cur_off = *offp;
 
 	if (!access_ok(buf, size))
