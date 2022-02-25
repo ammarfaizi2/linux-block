@@ -301,6 +301,7 @@ struct netfs_request_ops {
 	int (*check_write_begin)(struct file *file, loff_t pos, unsigned len,
 				 struct folio *folio, void **_fsdata);
 	void (*done)(struct netfs_io_request *rreq);
+	void (*update_i_size)(struct inode *inode, loff_t i_size);
 
 	/* Write request handling */
 	void (*create_write_requests)(struct netfs_io_request *wreq);
