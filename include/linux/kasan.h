@@ -3,10 +3,10 @@
 #define _LINUX_KASAN_H
 
 #include <linux/bug.h>
-#include <linux/kasan-enabled.h>
 #include <linux/kernel.h>
 #include <linux/static_key.h>
 #include <linux/types.h>
+#include <linux/kasan-enabled.h>
 
 struct kmem_cache;
 struct page;
@@ -83,54 +83,6 @@ static inline void kasan_enable_current(void) {}
 static inline void kasan_disable_current(void) {}
 
 #endif /* CONFIG_KASAN_GENERIC || CONFIG_KASAN_SW_TAGS */
-
-#ifdef CONFIG_KASAN_HW_TAGS
-
-<<<<<<< HEAD
-void kasan_alloc_pages(struct page *page, unsigned int order, gfp_t flags);
-void kasan_free_pages(struct page *page, unsigned int order);
-
-#else /* CONFIG_KASAN_HW_TAGS */
-
-static __always_inline void kasan_alloc_pages(struct page *page,
-					      unsigned int order, gfp_t flags)
-{
-	/* Only available for integrated init. */
-	BUILD_BUG();
-}
-
-static __always_inline void kasan_free_pages(struct page *page,
-					     unsigned int order)
-{
-	/* Only available for integrated init. */
-	BUILD_BUG();
-=======
-DECLARE_STATIC_KEY_FALSE(kasan_flag_enabled);
-
-static __always_inline bool kasan_enabled(void)
-{
-	return static_branch_likely(&kasan_flag_enabled);
-}
-
-static inline bool kasan_hw_tags_enabled(void)
-{
-	return kasan_enabled();
-}
-
-#else /* CONFIG_KASAN_HW_TAGS */
-
-static inline bool kasan_enabled(void)
-{
-	return IS_ENABLED(CONFIG_KASAN);
-}
-
-static inline bool kasan_hw_tags_enabled(void)
-{
-	return false;
->>>>>>> akpm-current/current
-}
-
-#endif /* CONFIG_KASAN_HW_TAGS */
 
 static inline bool kasan_has_integrated_init(void)
 {
