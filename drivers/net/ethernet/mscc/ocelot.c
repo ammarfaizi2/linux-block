@@ -1472,9 +1472,9 @@ ocelot_populate_ipv6_ptp_general_trap_key(struct ocelot_vcap_filter *trap)
 	trap->key.ipv6.dport.mask = 0xffff;
 }
 
-static int ocelot_trap_add(struct ocelot *ocelot, int port,
-			   unsigned long cookie,
-			   void (*populate)(struct ocelot_vcap_filter *f))
+int ocelot_trap_add(struct ocelot *ocelot, int port,
+		    unsigned long cookie, bool take_ts,
+		    void (*populate)(struct ocelot_vcap_filter *f))
 {
 	struct ocelot_vcap_block *block_vcap_is2;
 	struct ocelot_vcap_filter *trap;
@@ -1500,6 +1500,8 @@ static int ocelot_trap_add(struct ocelot *ocelot, int port,
 		trap->action.cpu_copy_ena = true;
 		trap->action.mask_mode = OCELOT_MASK_MODE_PERMIT_DENY;
 		trap->action.port_mask = 0;
+		trap->take_ts = take_ts;
+		list_add_tail(&trap->trap_list, &ocelot->traps);
 		new = true;
 	}
 
@@ -1511,16 +1513,17 @@ static int ocelot_trap_add(struct ocelot *ocelot, int port,
 		err = ocelot_vcap_filter_replace(ocelot, trap);
 	if (err) {
 		trap->ingress_port_mask &= ~BIT(port);
-		if (!trap->ingress_port_mask)
+		if (!trap->ingress_port_mask) {
+			list_del(&trap->trap_list);
 			kfree(trap);
+		}
 		return err;
 	}
 
 	return 0;
 }
 
-static int ocelot_trap_del(struct ocelot *ocelot, int port,
-			   unsigned long cookie)
+int ocelot_trap_del(struct ocelot *ocelot, int port, unsigned long cookie)
 {
 	struct ocelot_vcap_block *block_vcap_is2;
 	struct ocelot_vcap_filter *trap;
@@ -1533,39 +1536,42 @@ static int ocelot_trap_del(struct ocelot *ocelot, int port,
 		return 0;
 
 	trap->ingress_port_mask &= ~BIT(port);
-	if (!trap->ingress_port_mask)
+	if (!trap->ingress_port_mask) {
+		list_del(&trap->trap_list);
+
 		return ocelot_vcap_filter_del(ocelot, trap);
+	}
 
 	return ocelot_vcap_filter_replace(ocelot, trap);
 }
 
 static int ocelot_l2_ptp_trap_add(struct ocelot *ocelot, int port)
 {
-	unsigned long l2_cookie = ocelot->num_phys_ports + 1;
+	unsigned long l2_cookie = OCELOT_VCAP_IS2_L2_PTP_TRAP(ocelot);
 
-	return ocelot_trap_add(ocelot, port, l2_cookie,
+	return ocelot_trap_add(ocelot, port, l2_cookie, true,
 			       ocelot_populate_l2_ptp_trap_key);
 }
 
 static int ocelot_l2_ptp_trap_del(struct ocelot *ocelot, int port)
 {
-	unsigned long l2_cookie = ocelot->num_phys_ports + 1;
+	unsigned long l2_cookie = OCELOT_VCAP_IS2_L2_PTP_TRAP(ocelot);
 
 	return ocelot_trap_del(ocelot, port, l2_cookie);
 }
 
 static int ocelot_ipv4_ptp_trap_add(struct ocelot *ocelot, int port)
 {
-	unsigned long ipv4_gen_cookie = ocelot->num_phys_ports + 2;
-	unsigned long ipv4_ev_cookie = ocelot->num_phys_ports + 3;
+	unsigned long ipv4_gen_cookie = OCELOT_VCAP_IS2_IPV4_GEN_PTP_TRAP(ocelot);
+	unsigned long ipv4_ev_cookie = OCELOT_VCAP_IS2_IPV4_EV_PTP_TRAP(ocelot);
 	int err;
 
-	err = ocelot_trap_add(ocelot, port, ipv4_ev_cookie,
+	err = ocelot_trap_add(ocelot, port, ipv4_ev_cookie, true,
 			      ocelot_populate_ipv4_ptp_event_trap_key);
 	if (err)
 		return err;
 
-	err = ocelot_trap_add(ocelot, port, ipv4_gen_cookie,
+	err = ocelot_trap_add(ocelot, port, ipv4_gen_cookie, false,
 			      ocelot_populate_ipv4_ptp_general_trap_key);
 	if (err)
 		ocelot_trap_del(ocelot, port, ipv4_ev_cookie);
@@ -1575,8 +1581,8 @@ static int ocelot_ipv4_ptp_trap_add(struct ocelot *ocelot, int port)
 
 static int ocelot_ipv4_ptp_trap_del(struct ocelot *ocelot, int port)
 {
-	unsigned long ipv4_gen_cookie = ocelot->num_phys_ports + 2;
-	unsigned long ipv4_ev_cookie = ocelot->num_phys_ports + 3;
+	unsigned long ipv4_gen_cookie = OCELOT_VCAP_IS2_IPV4_GEN_PTP_TRAP(ocelot);
+	unsigned long ipv4_ev_cookie = OCELOT_VCAP_IS2_IPV4_EV_PTP_TRAP(ocelot);
 	int err;
 
 	err = ocelot_trap_del(ocelot, port, ipv4_ev_cookie);
@@ -1586,16 +1592,16 @@ static int ocelot_ipv4_ptp_trap_del(struct ocelot *ocelot, int port)
 
 static int ocelot_ipv6_ptp_trap_add(struct ocelot *ocelot, int port)
 {
-	unsigned long ipv6_gen_cookie = ocelot->num_phys_ports + 4;
-	unsigned long ipv6_ev_cookie = ocelot->num_phys_ports + 5;
+	unsigned long ipv6_gen_cookie = OCELOT_VCAP_IS2_IPV6_GEN_PTP_TRAP(ocelot);
+	unsigned long ipv6_ev_cookie = OCELOT_VCAP_IS2_IPV6_EV_PTP_TRAP(ocelot);
 	int err;
 
-	err = ocelot_trap_add(ocelot, port, ipv6_ev_cookie,
+	err = ocelot_trap_add(ocelot, port, ipv6_ev_cookie, true,
 			      ocelot_populate_ipv6_ptp_event_trap_key);
 	if (err)
 		return err;
 
-	err = ocelot_trap_add(ocelot, port, ipv6_gen_cookie,
+	err = ocelot_trap_add(ocelot, port, ipv6_gen_cookie, false,
 			      ocelot_populate_ipv6_ptp_general_trap_key);
 	if (err)
 		ocelot_trap_del(ocelot, port, ipv6_ev_cookie);
@@ -1605,8 +1611,8 @@ static int ocelot_ipv6_ptp_trap_add(struct ocelot *ocelot, int port)
 
 static int ocelot_ipv6_ptp_trap_del(struct ocelot *ocelot, int port)
 {
-	unsigned long ipv6_gen_cookie = ocelot->num_phys_ports + 4;
-	unsigned long ipv6_ev_cookie = ocelot->num_phys_ports + 5;
+	unsigned long ipv6_gen_cookie = OCELOT_VCAP_IS2_IPV6_GEN_PTP_TRAP(ocelot);
+	unsigned long ipv6_ev_cookie = OCELOT_VCAP_IS2_IPV6_EV_PTP_TRAP(ocelot);
 	int err;
 
 	err = ocelot_trap_del(ocelot, port, ipv6_ev_cookie);
@@ -1750,28 +1756,36 @@ void ocelot_get_strings(struct ocelot *ocelot, int port, u32 sset, u8 *data)
 EXPORT_SYMBOL(ocelot_get_strings);
 
 /* Caller must hold &ocelot->stats_lock */
-static void ocelot_update_stats(struct ocelot *ocelot)
+static int ocelot_port_update_stats(struct ocelot *ocelot, int port)
 {
-	int i, j;
+	unsigned int idx = port * ocelot->num_stats;
+	struct ocelot_stats_region *region;
+	int err, j;
 
-	for (i = 0; i < ocelot->num_phys_ports; i++) {
-		/* Configure the port to read the stats from */
-		ocelot_write(ocelot, SYS_STAT_CFG_STAT_VIEW(i), SYS_STAT_CFG);
+	/* Configure the port to read the stats from */
+	ocelot_write(ocelot, SYS_STAT_CFG_STAT_VIEW(port), SYS_STAT_CFG);
 
-		for (j = 0; j < ocelot->num_stats; j++) {
-			u32 val;
-			unsigned int idx = i * ocelot->num_stats + j;
+	list_for_each_entry(region, &ocelot->stats_regions, node) {
+		err = ocelot_bulk_read_rix(ocelot, SYS_COUNT_RX_OCTETS,
+					   region->offset, region->buf,
+					   region->count);
+		if (err)
+			return err;
 
-			val = ocelot_read_rix(ocelot, SYS_COUNT_RX_OCTETS,
-					      ocelot->stats_layout[j].offset);
+		for (j = 0; j < region->count; j++) {
+			u64 *stat = &ocelot->stats[idx + j];
+			u64 val = region->buf[j];
 
-			if (val < (ocelot->stats[idx] & U32_MAX))
-				ocelot->stats[idx] += (u64)1 << 32;
+			if (val < (*stat & U32_MAX))
+				*stat += (u64)1 << 32;
 
-			ocelot->stats[idx] = (ocelot->stats[idx] &
-					      ~(u64)U32_MAX) + val;
+			*stat = (*stat & ~(u64)U32_MAX) + val;
 		}
+
+		idx += region->count;
 	}
+
+	return err;
 }
 
 static void ocelot_check_stats_work(struct work_struct *work)
@@ -1779,10 +1793,18 @@ static void ocelot_check_stats_work(struct work_struct *work)
 	struct delayed_work *del_work = to_delayed_work(work);
 	struct ocelot *ocelot = container_of(del_work, struct ocelot,
 					     stats_work);
+	int i, err;
 
 	mutex_lock(&ocelot->stats_lock);
-	ocelot_update_stats(ocelot);
+	for (i = 0; i < ocelot->num_phys_ports; i++) {
+		err = ocelot_port_update_stats(ocelot, i);
+		if (err)
+			break;
+	}
 	mutex_unlock(&ocelot->stats_lock);
+
+	if (err)
+		dev_err(ocelot->dev, "Error %d updating ethtool stats\n",  err);
 
 	queue_delayed_work(ocelot->stats_queue, &ocelot->stats_work,
 			   OCELOT_STATS_CHECK_DELAY);
@@ -1790,18 +1812,21 @@ static void ocelot_check_stats_work(struct work_struct *work)
 
 void ocelot_get_ethtool_stats(struct ocelot *ocelot, int port, u64 *data)
 {
-	int i;
+	int i, err;
 
 	mutex_lock(&ocelot->stats_lock);
 
 	/* check and update now */
-	ocelot_update_stats(ocelot);
+	err = ocelot_port_update_stats(ocelot, port);
 
 	/* Copy all counters */
 	for (i = 0; i < ocelot->num_stats; i++)
 		*data++ = ocelot->stats[port * ocelot->num_stats + i];
 
 	mutex_unlock(&ocelot->stats_lock);
+
+	if (err)
+		dev_err(ocelot->dev, "Error %d updating ethtool stats\n", err);
 }
 EXPORT_SYMBOL(ocelot_get_ethtool_stats);
 
@@ -1813,6 +1838,41 @@ int ocelot_get_sset_count(struct ocelot *ocelot, int port, int sset)
 	return ocelot->num_stats;
 }
 EXPORT_SYMBOL(ocelot_get_sset_count);
+
+static int ocelot_prepare_stats_regions(struct ocelot *ocelot)
+{
+	struct ocelot_stats_region *region = NULL;
+	unsigned int last;
+	int i;
+
+	INIT_LIST_HEAD(&ocelot->stats_regions);
+
+	for (i = 0; i < ocelot->num_stats; i++) {
+		if (region && ocelot->stats_layout[i].offset == last + 1) {
+			region->count++;
+		} else {
+			region = devm_kzalloc(ocelot->dev, sizeof(*region),
+					      GFP_KERNEL);
+			if (!region)
+				return -ENOMEM;
+
+			region->offset = ocelot->stats_layout[i].offset;
+			region->count = 1;
+			list_add_tail(&region->node, &ocelot->stats_regions);
+		}
+
+		last = ocelot->stats_layout[i].offset;
+	}
+
+	list_for_each_entry(region, &ocelot->stats_regions, node) {
+		region->buf = devm_kcalloc(ocelot->dev, region->count,
+					   sizeof(*region->buf), GFP_KERNEL);
+		if (!region->buf)
+			return -ENOMEM;
+	}
+
+	return 0;
+}
 
 int ocelot_get_ts_info(struct ocelot *ocelot, int port,
 		       struct ethtool_ts_info *info)
@@ -1847,6 +1907,8 @@ static u32 ocelot_get_bond_mask(struct ocelot *ocelot, struct net_device *bond)
 	u32 mask = 0;
 	int port;
 
+	lockdep_assert_held(&ocelot->fwd_domain_lock);
+
 	for (port = 0; port < ocelot->num_phys_ports; port++) {
 		struct ocelot_port *ocelot_port = ocelot->ports[port];
 
@@ -1858,6 +1920,19 @@ static u32 ocelot_get_bond_mask(struct ocelot *ocelot, struct net_device *bond)
 	}
 
 	return mask;
+}
+
+/* The logical port number of a LAG is equal to the lowest numbered physical
+ * port ID present in that LAG. It may change if that port ever leaves the LAG.
+ */
+static int ocelot_bond_get_id(struct ocelot *ocelot, struct net_device *bond)
+{
+	int bond_mask = ocelot_get_bond_mask(ocelot, bond);
+
+	if (!bond_mask)
+		return -ENOENT;
+
+	return __ffs(bond_mask);
 }
 
 u32 ocelot_get_bridge_fwd_mask(struct ocelot *ocelot, int src_port)
@@ -2353,7 +2428,7 @@ static void ocelot_setup_logical_port_ids(struct ocelot *ocelot)
 
 		bond = ocelot_port->bond;
 		if (bond) {
-			int lag = __ffs(ocelot_get_bond_mask(ocelot, bond));
+			int lag = ocelot_bond_get_id(ocelot, bond);
 
 			ocelot_rmw_gix(ocelot,
 				       ANA_PORT_PORT_CFG_PORTID_VAL(lag),
@@ -2364,6 +2439,46 @@ static void ocelot_setup_logical_port_ids(struct ocelot *ocelot)
 				       ANA_PORT_PORT_CFG_PORTID_VAL(port),
 				       ANA_PORT_PORT_CFG_PORTID_VAL_M,
 				       ANA_PORT_PORT_CFG, port);
+		}
+	}
+}
+
+/* Documentation for PORTID_VAL says:
+ *     Logical port number for front port. If port is not a member of a LLAG,
+ *     then PORTID must be set to the physical port number.
+ *     If port is a member of a LLAG, then PORTID must be set to the common
+ *     PORTID_VAL used for all member ports of the LLAG.
+ *     The value must not exceed the number of physical ports on the device.
+ *
+ * This means we have little choice but to migrate FDB entries pointing towards
+ * a logical port when that changes.
+ */
+static void ocelot_migrate_lag_fdbs(struct ocelot *ocelot,
+				    struct net_device *bond,
+				    int lag)
+{
+	struct ocelot_lag_fdb *fdb;
+	int err;
+
+	lockdep_assert_held(&ocelot->fwd_domain_lock);
+
+	list_for_each_entry(fdb, &ocelot->lag_fdbs, list) {
+		if (fdb->bond != bond)
+			continue;
+
+		err = ocelot_mact_forget(ocelot, fdb->addr, fdb->vid);
+		if (err) {
+			dev_err(ocelot->dev,
+				"failed to delete LAG %s FDB %pM vid %d: %pe\n",
+				bond->name, fdb->addr, fdb->vid, ERR_PTR(err));
+		}
+
+		err = ocelot_mact_learn(ocelot, lag, fdb->addr, fdb->vid,
+					ENTRYTYPE_LOCKED);
+		if (err) {
+			dev_err(ocelot->dev,
+				"failed to migrate LAG %s FDB %pM vid %d: %pe\n",
+				bond->name, fdb->addr, fdb->vid, ERR_PTR(err));
 		}
 	}
 }
@@ -2392,13 +2507,22 @@ EXPORT_SYMBOL(ocelot_port_lag_join);
 void ocelot_port_lag_leave(struct ocelot *ocelot, int port,
 			   struct net_device *bond)
 {
+	int old_lag_id, new_lag_id;
+
 	mutex_lock(&ocelot->fwd_domain_lock);
+
+	old_lag_id = ocelot_bond_get_id(ocelot, bond);
 
 	ocelot->ports[port]->bond = NULL;
 
 	ocelot_setup_logical_port_ids(ocelot);
 	ocelot_apply_bridge_fwd_mask(ocelot, false);
 	ocelot_set_aggr_pgids(ocelot);
+
+	new_lag_id = ocelot_bond_get_id(ocelot, bond);
+
+	if (new_lag_id >= 0 && old_lag_id != new_lag_id)
+		ocelot_migrate_lag_fdbs(ocelot, bond, new_lag_id);
 
 	mutex_unlock(&ocelot->fwd_domain_lock);
 }
@@ -2408,12 +2532,73 @@ void ocelot_port_lag_change(struct ocelot *ocelot, int port, bool lag_tx_active)
 {
 	struct ocelot_port *ocelot_port = ocelot->ports[port];
 
+	mutex_lock(&ocelot->fwd_domain_lock);
+
 	ocelot_port->lag_tx_active = lag_tx_active;
 
 	/* Rebalance the LAGs */
 	ocelot_set_aggr_pgids(ocelot);
+
+	mutex_unlock(&ocelot->fwd_domain_lock);
 }
 EXPORT_SYMBOL(ocelot_port_lag_change);
+
+int ocelot_lag_fdb_add(struct ocelot *ocelot, struct net_device *bond,
+		       const unsigned char *addr, u16 vid)
+{
+	struct ocelot_lag_fdb *fdb;
+	int lag, err;
+
+	fdb = kzalloc(sizeof(*fdb), GFP_KERNEL);
+	if (!fdb)
+		return -ENOMEM;
+
+	ether_addr_copy(fdb->addr, addr);
+	fdb->vid = vid;
+	fdb->bond = bond;
+
+	mutex_lock(&ocelot->fwd_domain_lock);
+	lag = ocelot_bond_get_id(ocelot, bond);
+
+	err = ocelot_mact_learn(ocelot, lag, addr, vid, ENTRYTYPE_LOCKED);
+	if (err) {
+		mutex_unlock(&ocelot->fwd_domain_lock);
+		kfree(fdb);
+		return err;
+	}
+
+	list_add_tail(&fdb->list, &ocelot->lag_fdbs);
+	mutex_unlock(&ocelot->fwd_domain_lock);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(ocelot_lag_fdb_add);
+
+int ocelot_lag_fdb_del(struct ocelot *ocelot, struct net_device *bond,
+		       const unsigned char *addr, u16 vid)
+{
+	struct ocelot_lag_fdb *fdb, *tmp;
+
+	mutex_lock(&ocelot->fwd_domain_lock);
+
+	list_for_each_entry_safe(fdb, tmp, &ocelot->lag_fdbs, list) {
+		if (!ether_addr_equal(fdb->addr, addr) || fdb->vid != vid ||
+		    fdb->bond != bond)
+			continue;
+
+		ocelot_mact_forget(ocelot, addr, vid);
+		list_del(&fdb->list);
+		mutex_unlock(&ocelot->fwd_domain_lock);
+		kfree(fdb);
+
+		return 0;
+	}
+
+	mutex_unlock(&ocelot->fwd_domain_lock);
+
+	return -ENOENT;
+}
+EXPORT_SYMBOL_GPL(ocelot_lag_fdb_del);
 
 /* Configure the maximum SDU (L2 payload) on RX to the value specified in @sdu.
  * The length of VLAN tags is accounted for automatically via DEV_MAC_TAGS_CFG.
@@ -2709,6 +2894,7 @@ int ocelot_init(struct ocelot *ocelot)
 	INIT_LIST_HEAD(&ocelot->multicast);
 	INIT_LIST_HEAD(&ocelot->pgids);
 	INIT_LIST_HEAD(&ocelot->vlans);
+	INIT_LIST_HEAD(&ocelot->lag_fdbs);
 	ocelot_detect_features(ocelot);
 	ocelot_mact_init(ocelot);
 	ocelot_vlan_init(ocelot);
@@ -2813,6 +2999,13 @@ int ocelot_init(struct ocelot *ocelot)
 		ocelot_write_rix(ocelot, ANA_CPUQ_8021_CFG_CPUQ_GARP_VAL(6) |
 				 ANA_CPUQ_8021_CFG_CPUQ_BPDU_VAL(6),
 				 ANA_CPUQ_8021_CFG, i);
+
+	ret = ocelot_prepare_stats_regions(ocelot);
+	if (ret) {
+		destroy_workqueue(ocelot->stats_queue);
+		destroy_workqueue(ocelot->owq);
+		return ret;
+	}
 
 	INIT_DELAYED_WORK(&ocelot->stats_work, ocelot_check_stats_work);
 	queue_delayed_work(ocelot->stats_queue, &ocelot->stats_work,
