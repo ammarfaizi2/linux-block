@@ -198,6 +198,15 @@ enum netfs_buffering {
 	NETFS_DIRECT_BV,		/* Do I/O to/from ->direct_iter/bv[] */
 	NETFS_BUFFER,			/* Do I/O to/from ->buffer */
 	NETFS_BOUNCE,			/* Do I/O to/from ->bounce */
+	NETFS_ENC_DIRECT_TO_BOUNCE,	/* Encrypt from ->direct_iter to ->bounce */
+	NETFS_ENC_BUFFER_TO_BOUNCE,	/* Encrypt from ->buffer to ->bounce */
+	NETFS_COPY_ENC_BOUNCE,		/* Copy ->direct to ->bounce, then encrypt in place */
+	NETFS_BUFFER_DEC,		/* Decrypt ->buffer in place */
+	NETFS_BOUNCE_DEC_TO_BUFFER,	/* Decrypt from ->bounce to ->buffer */
+	NETFS_BOUNCE_DEC_TO_DIRECT,	/* Decrypt from ->bounce to ->direct_iter */
+	NETFS_BOUNCE_DEC_TO_DIRECT_BV,	/* Decrypt from ->bounce to ->direct_iter/bv[] */
+	NETFS_BOUNCE_DEC_COPY,		/* Decrypt ->bounce in place, then copy to ->direct */
+	NETFS_BOUNCE_DEC_COPY_BV,	/* Decrypt ->bounce in place, then copy to ->direct_bv */
 } __mode(byte);
 
 /*
@@ -250,6 +259,7 @@ struct netfs_io_request {
 #define NETFS_RREQ_BLOCKED		7	/* We blocked */
 #define NETFS_RREQ_WRITE_TO_CACHE	8	/* Need to write to the cache */
 #define NETFS_RREQ_UPLOAD_TO_SERVER	9	/* Need to write to the server */
+#define NETFS_RREQ_CONTENT_ENCRYPTION	10	/* Content encryption is in use */
 	const struct netfs_request_ops *netfs_ops;
 	void (*cleanup)(struct netfs_io_request *req);
 };

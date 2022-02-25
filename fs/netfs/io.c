@@ -708,10 +708,16 @@ netfs_rreq_prepare_read(struct netfs_io_request *rreq,
 		}
 		break;
 	case NETFS_BUFFER:
+	case NETFS_BUFFER_DEC:
 		iov_iter_xarray(&subreq->iter, READ, &rreq->buffer,
 				subreq->start, subreq->len);
 		goto limit_xarray;
 	case NETFS_BOUNCE:
+	case NETFS_BOUNCE_DEC_TO_BUFFER:
+	case NETFS_BOUNCE_DEC_TO_DIRECT:
+	case NETFS_BOUNCE_DEC_TO_DIRECT_BV:
+	case NETFS_BOUNCE_DEC_COPY:
+	case NETFS_BOUNCE_DEC_COPY_BV:
 		iov_iter_xarray(&subreq->iter, READ, &rreq->bounce,
 				subreq->start, subreq->len);
 	limit_xarray:
@@ -725,6 +731,9 @@ netfs_rreq_prepare_read(struct netfs_io_request *rreq,
 			}
 		}
 		break;
+	case NETFS_ENC_DIRECT_TO_BOUNCE:
+	case NETFS_ENC_BUFFER_TO_BOUNCE:
+	case NETFS_COPY_ENC_BOUNCE:
 	case NETFS_INVALID:
 		kdebug("Invalid buffering form %u", rreq->buffering);
 		BUG();
