@@ -1609,10 +1609,11 @@ int __mm_populate(unsigned long start, unsigned long len, int ignore_errors)
 		if (!locked) {
 			locked = 1;
 			mmap_read_lock(mm);
-			vma = find_vma(mm, nstart);
+			vma = find_vma_intersection(mm, nstart, end);
 		} else if (nstart >= vma->vm_end)
-			vma = vma->vm_next;
-		if (!vma || vma->vm_start >= end)
+			vma = find_vma_intersection(mm, vma->vm_end, end);
+
+		if (!vma)
 			break;
 		/*
 		 * Set [nstart; nend) to intersection of desired address
@@ -1763,7 +1764,7 @@ size_t fault_in_safe_writeable(const char __user *uaddr, size_t size)
 			mmap_read_lock(mm);
 			vma = find_vma(mm, nstart);
 		} else if (nstart >= vma->vm_end)
-			vma = vma->vm_next;
+			vma = find_vma(mm, vma->vm_end);
 		if (!vma || vma->vm_start >= end)
 			break;
 		nend = end ? min(end, vma->vm_end) : vma->vm_end;

@@ -19,7 +19,6 @@
 #include <linux/export.h>
 #include <linux/mm.h>
 #include <linux/sched/mm.h>
-#include <linux/vmacache.h>
 #include <linux/mman.h>
 #include <linux/swap.h>
 #include <linux/file.h>
@@ -551,9 +550,8 @@ static void put_nommu_region(struct vm_region *region)
  */
 static void add_vma_to_mm(struct mm_struct *mm, struct vm_area_struct *vma)
 {
-	struct vm_area_struct *pvma, *prev;
 	struct address_space *mapping;
-	struct rb_node **p, *parent, *rb_prev;
+	MA_STATE(mas, &mm->mm_mt, vma->vm_start, vma->vm_end);
 
 	BUG_ON(!vma->vm_region);
 
@@ -572,42 +570,7 @@ static void add_vma_to_mm(struct mm_struct *mm, struct vm_area_struct *vma)
 	}
 
 	/* add the VMA to the tree */
-	parent = rb_prev = NULL;
-	p = &mm->mm_rb.rb_node;
-	while (*p) {
-		parent = *p;
-		pvma = rb_entry(parent, struct vm_area_struct, vm_rb);
-
-		/* sort by: start addr, end addr, VMA struct addr in that order
-		 * (the latter is necessary as we may get identical VMAs) */
-		if (vma->vm_start < pvma->vm_start)
-			p = &(*p)->rb_left;
-		else if (vma->vm_start > pvma->vm_start) {
-			rb_prev = parent;
-			p = &(*p)->rb_right;
-		} else if (vma->vm_end < pvma->vm_end)
-			p = &(*p)->rb_left;
-		else if (vma->vm_end > pvma->vm_end) {
-			rb_prev = parent;
-			p = &(*p)->rb_right;
-		} else if (vma < pvma)
-			p = &(*p)->rb_left;
-		else if (vma > pvma) {
-			rb_prev = parent;
-			p = &(*p)->rb_right;
-		} else
-			BUG();
-	}
-
-	rb_link_node(&vma->vm_rb, parent, p);
-	rb_insert_color(&vma->vm_rb, &mm->mm_rb);
-
-	/* add VMA to the VMA list also */
-	prev = NULL;
-	if (rb_prev)
-		prev = rb_entry(rb_prev, struct vm_area_struct, vm_rb);
-
-	__vma_link_list(mm, vma, prev);
+	vma_mas_store(vma, &mas);
 }
 
 /*
@@ -615,22 +578,12 @@ static void add_vma_to_mm(struct mm_struct *mm, struct vm_area_struct *vma)
  */
 static void delete_vma_from_mm(struct vm_area_struct *vma)
 {
-	int i;
-	struct address_space *mapping;
-	struct mm_struct *mm = vma->vm_mm;
-	struct task_struct *curr = current;
+	MA_STATE(mas, &vma->vm_mm->mm_mt, 0, 0);
 
-	mm->map_count--;
-	for (i = 0; i < VMACACHE_SIZE; i++) {
-		/* if the vma is cached, invalidate the entire cache */
-		if (curr->vmacache.vmas[i] == vma) {
-			vmacache_invalidate(mm);
-			break;
-		}
-	}
-
+	vma->vm_mm->map_count--;
 	/* remove the VMA from the mapping */
 	if (vma->vm_file) {
+		struct address_space *mapping;
 		mapping = vma->vm_file->f_mapping;
 
 		i_mmap_lock_write(mapping);
@@ -641,9 +594,7 @@ static void delete_vma_from_mm(struct vm_area_struct *vma)
 	}
 
 	/* remove from the MM's tree and list */
-	rb_erase(&vma->vm_rb, &mm->mm_rb);
-
-	__vma_unlink_list(mm, vma);
+	vma_mas_remove(vma, &mas);
 }
 
 /*
@@ -659,31 +610,26 @@ static void delete_vma(struct mm_struct *mm, struct vm_area_struct *vma)
 	vm_area_free(vma);
 }
 
+struct vm_area_struct *find_vma_intersection(struct mm_struct *mm,
+					     unsigned long start_addr,
+					     unsigned long end_addr)
+{
+	unsigned long index = start_addr;
+
+	mmap_assert_locked(mm);
+	return mt_find(&mm->mm_mt, &index, end_addr - 1);
+}
+EXPORT_SYMBOL(find_vma_intersection);
+
 /*
  * look up the first VMA in which addr resides, NULL if none
  * - should be called with mm->mmap_lock at least held readlocked
  */
 struct vm_area_struct *find_vma(struct mm_struct *mm, unsigned long addr)
 {
-	struct vm_area_struct *vma;
+	MA_STATE(mas, &mm->mm_mt, addr, addr);
 
-	/* check the cache first */
-	vma = vmacache_find(mm, addr);
-	if (likely(vma))
-		return vma;
-
-	/* trawl the list (there may be multiple mappings in which addr
-	 * resides) */
-	for (vma = mm->mmap; vma; vma = vma->vm_next) {
-		if (vma->vm_start > addr)
-			return NULL;
-		if (vma->vm_end > addr) {
-			vmacache_update(addr, vma);
-			return vma;
-		}
-	}
-
-	return NULL;
+	return mas_walk(&mas);
 }
 EXPORT_SYMBOL(find_vma);
 
@@ -715,26 +661,17 @@ static struct vm_area_struct *find_vma_exact(struct mm_struct *mm,
 {
 	struct vm_area_struct *vma;
 	unsigned long end = addr + len;
+	MA_STATE(mas, &mm->mm_mt, addr, addr);
 
-	/* check the cache first */
-	vma = vmacache_find_exact(mm, addr, end);
-	if (vma)
-		return vma;
+	vma = mas_walk(&mas);
+	if (!vma)
+		return NULL;
+	if (vma->vm_start != addr)
+		return NULL;
+	if (vma->vm_end != end)
+		return NULL;
 
-	/* trawl the list (there may be multiple mappings in which addr
-	 * resides) */
-	for (vma = mm->mmap; vma; vma = vma->vm_next) {
-		if (vma->vm_start < addr)
-			continue;
-		if (vma->vm_start > addr)
-			return NULL;
-		if (vma->vm_end == end) {
-			vmacache_update(addr, vma);
-			return vma;
-		}
-	}
-
-	return NULL;
+	return vma;
 }
 
 /*
@@ -1439,6 +1376,7 @@ static int shrink_vma(struct mm_struct *mm,
  */
 int do_munmap(struct mm_struct *mm, unsigned long start, size_t len, struct list_head *uf)
 {
+	MA_STATE(mas, &mm->mm_mt, start, start);
 	struct vm_area_struct *vma;
 	unsigned long end;
 	int ret;
@@ -1450,7 +1388,7 @@ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len, struct list
 	end = start + len;
 
 	/* find the first potentially overlapping VMA */
-	vma = find_vma(mm, start);
+	vma = mas_find(&mas, end - 1);
 	if (!vma) {
 		static int limit;
 		if (limit < 5) {
@@ -1469,7 +1407,7 @@ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len, struct list
 				return -EINVAL;
 			if (end == vma->vm_end)
 				goto erase_whole_vma;
-			vma = vma->vm_next;
+			vma = mas_next(&mas, end - 1);
 		} while (vma);
 		return -EINVAL;
 	} else {
@@ -1518,6 +1456,7 @@ SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
  */
 void exit_mmap(struct mm_struct *mm)
 {
+	VMA_ITERATOR(vmi, mm, 0);
 	struct vm_area_struct *vma;
 
 	if (!mm)
@@ -1525,12 +1464,18 @@ void exit_mmap(struct mm_struct *mm)
 
 	mm->total_vm = 0;
 
-	while ((vma = mm->mmap)) {
-		mm->mmap = vma->vm_next;
+	/*
+	 * Lock the mm to avoid assert complaining even though this is the only
+	 * user of the mm
+	 */
+	mmap_write_lock(mm);
+	for_each_vma(vmi, vma) {
 		delete_vma_from_mm(vma);
 		delete_vma(mm, vma);
 		cond_resched();
 	}
+	mmap_write_unlock(mm);
+	__mt_destroy(&mm->mm_mt);
 }
 
 int vm_brk(unsigned long addr, unsigned long len)
