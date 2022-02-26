@@ -1695,8 +1695,8 @@ static int page_not_mapped(struct folio *folio)
 }
 
 /**
- * try_to_unmap - Try to remove all page table mappings to a folio.
- * @folio: The folio to unmap.
+ * try_to_unmap - try to remove all page table mappings to a page
+ * @folio: The folio we're currently operating on.
  * @flags: action and flags
  *
  * Tries to remove all the page table entries which are mapping this
@@ -2097,10 +2097,10 @@ static bool page_make_device_exclusive_one(struct folio *folio,
 }
 
 /**
- * folio_make_device_exclusive - Mark the folio exclusively owned by a device.
- * @folio: The folio to replace page table entries for.
- * @mm: The mm_struct where the folio is expected to be mapped.
- * @address: Address where the folio is expected to be mapped.
+ * folio_make_device_exclusive - mark the page exclusively owned by a device
+ * @folio: The folio we're currently operating on.
+ * @mm: the mm_struct where the page is expected to be mapped
+ * @address: address where the page is expected to be mapped
  * @owner: passed to MMU_NOTIFY_EXCLUSIVE range notifier callbacks
  *
  * Tries to remove all the page table entries which are mapping this
