@@ -128,7 +128,7 @@ static void damon_do_test_apply_three_regions(struct kunit *test,
 	struct damon_region *r;
 	int i;
 
-	t = damon_new_target(42);
+	t = damon_new_target();
 	for (i = 0; i < nr_regions / 2; i++) {
 		r = damon_new_region(regions[i * 2], regions[i * 2 + 1]);
 		damon_add_region(r, t);
@@ -240,7 +240,7 @@ static void damon_test_apply_three_regions4(struct kunit *test)
 static void damon_test_split_evenly_fail(struct kunit *test,
 		unsigned long start, unsigned long end, unsigned int nr_pieces)
 {
-	struct damon_target *t = damon_new_target(42);
+	struct damon_target *t = damon_new_target();
 	struct damon_region *r = damon_new_region(start, end);
 
 	damon_add_region(r, t);
@@ -259,7 +259,7 @@ static void damon_test_split_evenly_fail(struct kunit *test,
 static void damon_test_split_evenly_succ(struct kunit *test,
 	unsigned long start, unsigned long end, unsigned int nr_pieces)
 {
-	struct damon_target *t = damon_new_target(42);
+	struct damon_target *t = damon_new_target();
 	struct damon_region *r = damon_new_region(start, end);
 	unsigned long expected_width = (end - start) / nr_pieces;
 	unsigned long i = 0;
@@ -303,7 +303,7 @@ static struct kunit_case damon_test_cases[] = {
 };
 
 static struct kunit_suite damon_test_suite = {
-	.name = "damon-primitives",
+	.name = "damon-operations",
 	.test_cases = damon_test_cases,
 };
 kunit_test_suite(damon_test_suite);
