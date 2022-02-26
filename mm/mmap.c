@@ -2368,10 +2368,8 @@ do_mas_align_munmap(struct ma_state *mas, struct vm_area_struct *vma,
 		BUG_ON(next->vm_start > end);
 #endif
 		vma_mas_store(next, &mas_detach);
-		if (next->vm_flags & VM_LOCKED) {
+		if (next->vm_flags & VM_LOCKED)
 			mm->locked_vm -= vma_pages(next);
-			munlock_vma_pages_all(next);
-		}
 	}
 
 	next = mas_find(mas, ULONG_MAX);
@@ -2901,10 +2899,8 @@ static int do_brk_munmap(struct ma_state *mas, struct vm_area_struct *vma,
 	}
 
 	unmap_pages = vma_pages(&unmap);
-	if (vma->vm_flags & VM_LOCKED) {
+	if (vma->vm_flags & VM_LOCKED)
 		mm->locked_vm -= unmap_pages;
-		munlock_vma_pages_range(&unmap, newbrk, oldbrk);
-	}
 
 	next = mas_next(mas, ULONG_MAX);
 	mmap_write_downgrade(mm);
@@ -3113,7 +3109,6 @@ void exit_mmap(struct mm_struct *mm)
 		 * reliably test it.
 		 */
 		(void)__oom_reap_task_mm(mm);
-
 		set_bit(MMF_OOM_SKIP, &mm->flags);
 	}
 
@@ -3126,10 +3121,8 @@ void exit_mmap(struct mm_struct *mm)
 	rwsem_acquire(&mm->mmap_lock.dep_map, 0, 0, _THIS_IP_);
 	if (mm->locked_vm) {
 		mas_for_each(&mas, vma, ULONG_MAX) {
-			if (vma->vm_flags & VM_LOCKED) {
+			if (vma->vm_flags & VM_LOCKED)
 				mm->locked_vm -= vma_pages(vma);
-				munlock_vma_pages_all(vma);
-			}
 		}
 		mas_set(&mas, 0);
 	}
