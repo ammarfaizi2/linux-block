@@ -179,8 +179,6 @@ void __init sme_map_bootdata(char *real_mode_data)
 
 void __init sme_early_init(void)
 {
-	unsigned int i;
-
 	if (!sme_me_mask)
 		return;
 
