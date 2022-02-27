@@ -520,6 +520,18 @@ int main(int argc, char **argv, char **envp)
 	} else {
 		ret = run_syscalls(min, max);
 	}
+
+	if (getpid() == 1) {
+		/* we're running as init, there's no other process on the
+		 * system, thus likely started from a VM for a quick check.
+		 * Exiting will provoke a kernel panic that may be reported
+		 * as an error by Qemu or the hypervisor, while stopping
+		 * cleanly will often be reported as a success. This allows
+		 * to use the output of this program for bisecting kernels.
+		 */
+		if (ret == 0)
+			reboot(LINUX_REBOOT_CMD_POWER_OFF);
+	}
 	printf("Exiting with status %d\n", ret);
 	return ret;
 }
