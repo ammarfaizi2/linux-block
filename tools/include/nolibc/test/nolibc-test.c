@@ -394,6 +394,69 @@ int run_syscalls(int min, int max)
 		 * test numbers.
 		 */
 		switch (test + __LINE__ + 1) {
+		CASE_TEST(getpid);            EXPECT_SYSNE(getpid(), -1); break;
+		CASE_TEST(getppid);           EXPECT_SYSNE(getppid(), -1); break;
+		CASE_TEST(gettid);            EXPECT_SYSNE(gettid(), -1); break;
+		CASE_TEST(getpgid_self);      EXPECT_SYSNE(getpgid(0), -1); break;
+		CASE_TEST(getpgid_bad);       EXPECT_SYSER(getpgid(-1), -1, ESRCH); break;
+		CASE_TEST(kill_0);            EXPECT_SYSZR(kill(getpid(), 0)); break;
+		CASE_TEST(kill_CONT);         EXPECT_SYSZR(kill(getpid(), 0)); break;
+		CASE_TEST(kill_BADPID);       EXPECT_SYSER(kill(INT_MAX, 0), -1, ESRCH); break;
+		CASE_TEST(sbrk);              if ((p1=p2=sbrk(4096)) != (void *)-1) p2 = sbrk(-4096); EXPECT_SYSZR((p2 == (void*)-1) || p2 == p1); break;
+		CASE_TEST(brk);               EXPECT_SYSZR(brk(sbrk(0))); break;
+		CASE_TEST(chdir_root);        EXPECT_SYSZR(chdir("/")); break;
+		CASE_TEST(chdir_dot);         EXPECT_SYSZR(chdir(".")); break;
+		CASE_TEST(chdir_blah);        EXPECT_SYSER(chdir("/blah"), -1, ENOENT); break;
+		CASE_TEST(chmod_net);         EXPECT_SYSZR(chmod("/proc/self/net", 0555)); break;
+		CASE_TEST(chmod_self);        EXPECT_SYSER(chmod("/proc/self", 0555), -1, EPERM); break;
+		CASE_TEST(chown_self);        EXPECT_SYSER(chown("/proc/self", 0, 0), -1, EPERM); break;
+		CASE_TEST(chroot_root);       EXPECT_SYSZR(chroot("/")); break;
+		CASE_TEST(chroot_blah);       EXPECT_SYSER(chroot("/proc/self/blah"), -1, ENOENT); break;
+		CASE_TEST(chroot_exe);        EXPECT_SYSER(chroot("/proc/self/exe"), -1, ENOTDIR); break;
+		CASE_TEST(close_m1);          EXPECT_SYSER(close(-1), -1, EBADF); break;
+		CASE_TEST(close_dup);         EXPECT_SYSZR(close(dup(0))); break;
+		CASE_TEST(dup_0);             tmp = dup(0);  EXPECT_SYSNE(tmp, -1); close(tmp); break;
+		CASE_TEST(dup_m1);            tmp = dup(-1); EXPECT_SYSER(tmp, -1, EBADF); if (tmp != -1) close(tmp); break;
+		CASE_TEST(dup2_0);            tmp = dup2(0, 100);  EXPECT_SYSNE(tmp, -1); close(tmp); break;
+		CASE_TEST(dup2_m1);           tmp = dup2(-1, 100); EXPECT_SYSER(tmp, -1, EBADF); if (tmp != -1) close(tmp); break;
+		CASE_TEST(dup3_0);            tmp = dup3(0, 100, 0);  EXPECT_SYSNE(tmp, -1); close(tmp); break;
+		CASE_TEST(dup3_m1);           tmp = dup3(-1, 100, 0); EXPECT_SYSER(tmp, -1, EBADF); if (tmp != -1) close(tmp); break;
+		CASE_TEST(execve_root);       EXPECT_SYSER(execve("/", NULL, NULL), -1, EACCES); break;
+		CASE_TEST(getdents64_root);   EXPECT_SYSNE(test_getdents64("/"), -1); break;
+		CASE_TEST(getdents64_null);   EXPECT_SYSER(test_getdents64("/dev/null"), -1, ENOTDIR); break;
+		CASE_TEST(gettimeofday_null); EXPECT_SYSZR(gettimeofday(NULL, NULL)); break;
+		CASE_TEST(gettimeofday_bad1); EXPECT_SYSER(gettimeofday((void*)1, NULL), -1, EFAULT); break;
+		CASE_TEST(gettimeofday_bad2); EXPECT_SYSER(gettimeofday(NULL, (void*)1), -1, EFAULT); break;
+		CASE_TEST(gettimeofday_bad2); EXPECT_SYSER(gettimeofday(NULL, (void*)1), -1, EFAULT); break;
+		CASE_TEST(ioctl_tiocinq);     EXPECT_SYSZR(ioctl(0, TIOCINQ, &tmp)); break;
+		CASE_TEST(ioctl_tiocinq);     EXPECT_SYSZR(ioctl(0, TIOCINQ, &tmp)); break;
+		CASE_TEST(link_root1);        EXPECT_SYSER(link("/", "/"), -1, EEXIST); break;
+		CASE_TEST(link_blah);         EXPECT_SYSER(link("/proc/self/blah", "/blah"), -1, ENOENT); break;
+		CASE_TEST(link_dir);          EXPECT_SYSER(link("/", "/blah"), -1, EPERM); break;
+		CASE_TEST(link_cross);        EXPECT_SYSER(link("/proc/self/net", "/blah"), -1, EXDEV); break;
+		CASE_TEST(lseek_m1);          EXPECT_SYSER(lseek(-1, 0, SEEK_SET), -1, EBADF); break;
+		CASE_TEST(lseek_0);           EXPECT_SYSER(lseek(0, 0, SEEK_SET), -1, ESPIPE); break;
+		CASE_TEST(mkdir_root);        EXPECT_SYSER(mkdir("/", 0755), -1, EEXIST); break;
+		CASE_TEST(open_tty);          EXPECT_SYSNE(tmp = open("/dev/null", 0), -1); if (tmp != -1) close(tmp); break;
+		CASE_TEST(open_blah);         EXPECT_SYSER(tmp = open("/proc/self/blah", 0), -1, ENOENT); if (tmp != -1) close(tmp); break;
+		CASE_TEST(poll_null);         EXPECT_SYSZR(poll(NULL, 0, 0)); break;
+		CASE_TEST(poll_stdout);       EXPECT_SYSNE(({ struct pollfd fds = { 1, POLLOUT, 0}; poll(&fds, 1, 0); }), -1); break;
+		CASE_TEST(poll_fault);        EXPECT_SYSER(poll((void*)1, 1, 0), -1, EFAULT); break;
+		CASE_TEST(read_badf);         EXPECT_SYSER(read(-1, &tmp, 1), -1, EBADF); break;
+		CASE_TEST(sched_yield);       EXPECT_SYSZR(sched_yield()); break;
+		CASE_TEST(select_null);       EXPECT_SYSZR(({ struct timeval tv = { 0 }; select(0, NULL, NULL, NULL, &tv); })); break;
+		CASE_TEST(select_stdout);     EXPECT_SYSNE(({ fd_set fds = { 2 /* stdout=1 */ }; select(2, NULL, &fds, NULL, NULL); }), -1); break;
+		CASE_TEST(select_fault);      EXPECT_SYSER(select(1, (void*)1, NULL, NULL, 0), -1, EFAULT); break;
+		CASE_TEST(stat_blah);         EXPECT_SYSER(({ struct stat buf; stat("/proc/self/blah", &buf); }), -1, ENOENT); break;
+		CASE_TEST(stat_fault);        EXPECT_SYSER(({ struct stat buf; stat(NULL, &buf); }), -1, EFAULT); break;
+		CASE_TEST(symlink_root);      EXPECT_SYSER(symlink("/", "/"), -1, EEXIST); break;
+		CASE_TEST(unlink_root);       EXPECT_SYSER(unlink("/"), -1, EISDIR); break;
+		CASE_TEST(unlink_blah);       EXPECT_SYSER(unlink("/proc/self/blah"), -1, ENOENT); break;
+		CASE_TEST(wait_child);        EXPECT_SYSER(wait(&tmp), -1, ECHILD); break;
+		CASE_TEST(waitpid_min);       EXPECT_SYSER(waitpid(INT_MIN, &tmp, WNOHANG), -1, ESRCH); break;
+		CASE_TEST(waitpid_child);     EXPECT_SYSER(waitpid(getpid(), &tmp, WNOHANG), -1, ECHILD); break;
+		CASE_TEST(write_badf);        EXPECT_SYSER(write(-1, &tmp, 1), -1, EBADF); break;
+		CASE_TEST(write_zero);        EXPECT_SYSZR(write(1, &tmp, 0)); break;
 		case __LINE__:
 			return ret; /* must be last */
 		/* note: do not set any defaults so as to permit holes above */
