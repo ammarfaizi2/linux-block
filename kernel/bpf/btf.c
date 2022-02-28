@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018 Facebook */
 
 #include <uapi/linux/btf.h>
@@ -2547,7 +2547,7 @@ static int btf_ptr_resolve(struct btf_verifier_env *env,
 	 *
 	 * We now need to continue from the last-resolved-ptr to
 	 * ensure the last-resolved-ptr will not referring back to
-	 * the currenct ptr (t).
+	 * the current ptr (t).
 	 */
 	if (btf_type_is_modifier(next_type)) {
 		const struct btf_type *resolved_type;
@@ -6148,7 +6148,7 @@ int btf_type_snprintf_show(const struct btf *btf, u32 type_id, void *obj,
 
 	btf_type_show(btf, type_id, obj, (struct btf_show *)&ssnprintf);
 
-	/* If we encontered an error, return it. */
+	/* If we encountered an error, return it. */
 	if (ssnprintf.show.state.status)
 		return ssnprintf.show.state.status;
 
@@ -6706,7 +6706,7 @@ static int btf_populate_kfunc_set(struct btf *btf, enum btf_kfunc_hook hook,
 				  const struct btf_kfunc_id_set *kset)
 {
 	bool vmlinux_set = !btf_is_module(btf);
-	int type, ret;
+	int type, ret = 0;
 
 	for (type = 0; type < ARRAY_SIZE(kset->sets); type++) {
 		if (!kset->sets[type])
