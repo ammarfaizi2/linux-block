@@ -701,23 +701,49 @@ core_initcall(tagged_addr_init);
 #endif	/* CONFIG_ARM64_TAGGED_ADDR_ABI */
 
 #ifdef CONFIG_BINFMT_ELF
+static unsigned int bti_main;
+
 int arch_elf_adjust_prot(int prot, const struct arch_elf_state *state,
 			 bool has_interp, bool is_interp)
 {
-	/*
-	 * For dynamically linked executables the interpreter is
-	 * responsible for setting PROT_BTI on everything except
-	 * itself.
-	 */
-	if (is_interp != has_interp)
-		return prot;
-
-	if (!(state->flags & ARM64_ELF_BTI))
-		return prot;
-
-	if (prot & PROT_EXEC)
+	if ((prot & PROT_EXEC) &&
+	    (is_interp || !has_interp || bti_main) &&
+	    (state->flags & arm64_elf_bti_flag(is_interp)))
 		prot |= PROT_BTI;
 
 	return prot;
 }
-#endif
+
+#ifdef CONFIG_ARM64_BTI
+/*
+ * If this sysctl is enabled then we will apply PROT_BTI to the main
+ * executable as well as the dynamic linker if it has the appropriate
+ * ELF note.  It is disabled by default, in which case we will only
+ * apply PROT_BTI to the dynamic linker or static binaries.
+ */
+static struct ctl_table bti_main_sysctl_table[] = {
+	{
+		.procname	= "bti_main",
+		.mode		= 0644,
+		.data		= &bti_main,
+		.maxlen		= sizeof(int),
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= SYSCTL_ZERO,
+		.extra2		= SYSCTL_ONE,
+	},
+	{ }
+};
+
+static int __init bti_main_init(void)
+{
+	if (!system_supports_bti())
+		return 0;
+
+	if (!register_sysctl("abi", bti_main_sysctl_table))
+		return -EINVAL;
+	return 0;
+}
+core_initcall(bti_main_init);
+#endif /* CONFIG_ARM64_BTI */
+
+#endif /* CONFIG_BINFMT_ELF */
