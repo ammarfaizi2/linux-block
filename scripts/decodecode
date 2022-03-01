@@ -98,6 +98,8 @@ disas() {
 		fi
 	fi
 
+	OBJDUMPFLAGS="$OBJDUMPFLAGS -M suffix"
+
 	${CROSS_COMPILE}objdump $OBJDUMPFLAGS -S $t.o | \
 		grep -v "/tmp\|Disassembly\|\.text\|^$" > $t.dis 2>&1
 }
