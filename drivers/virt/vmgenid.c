@@ -10,6 +10,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/acpi.h>
+#include <linux/suspend.h>
 #include <linux/random.h>
 
 ACPI_MODULE_NAME("vmgenid");
@@ -75,6 +76,7 @@ static void vmgenid_notify(struct acpi_device *device, u32 event)
 	if (!memcmp(old_id, state->this_id, sizeof(old_id)))
 		return;
 	add_vmfork_randomness(state->this_id, sizeof(state->this_id));
+	pm_notify_vmfork();
 }
 
 static const struct acpi_device_id vmgenid_ids[] = {

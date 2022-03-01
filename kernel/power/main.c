@@ -94,6 +94,12 @@ int pm_notifier_call_chain(unsigned long val)
 	return blocking_notifier_call_chain(&pm_chain_head, val, NULL);
 }
 
+void pm_notify_vmfork(void)
+{
+	pm_notifier_call_chain(PM_POST_VMFORK);
+}
+EXPORT_SYMBOL_GPL(pm_notify_vmfork);
+
 /* If set, devices may be suspended and resumed asynchronously. */
 int pm_async_enabled = 1;
 

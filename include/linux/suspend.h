@@ -477,6 +477,7 @@ static inline int is_hibernate_resume_dev(dev_t dev) { return 0; }
 #define PM_POST_SUSPEND		0x0004 /* Suspend finished */
 #define PM_RESTORE_PREPARE	0x0005 /* Going to restore a saved image */
 #define PM_POST_RESTORE		0x0006 /* Restore failed */
+#define PM_POST_VMFORK		0x0007 /* Virtual machine has just forked */
 
 extern struct mutex system_transition_mutex;
 
@@ -487,6 +488,7 @@ void restore_processor_state(void);
 /* kernel/power/main.c */
 extern int register_pm_notifier(struct notifier_block *nb);
 extern int unregister_pm_notifier(struct notifier_block *nb);
+extern void pm_notify_vmfork(void);
 extern void ksys_sync_helper(void);
 
 #define pm_notifier(fn, pri) {				\
@@ -524,6 +526,8 @@ static inline int unregister_pm_notifier(struct notifier_block *nb)
 {
 	return 0;
 }
+
+static inline void pm_notify_vmfork(void) {}
 
 static inline void ksys_sync_helper(void) {}
 
