@@ -289,6 +289,14 @@
 						  *       XON1, XON2, XOFF1 and
 						  *       XOFF2
 						  */
+#define SC16IS7XX_EFR_FLOWCTRL_BITS	(SC16IS7XX_EFR_AUTORTS_BIT | \
+					SC16IS7XX_EFR_AUTOCTS_BIT | \
+					SC16IS7XX_EFR_XOFF2_DETECT_BIT | \
+					SC16IS7XX_EFR_SWFLOW3_BIT | \
+					SC16IS7XX_EFR_SWFLOW2_BIT | \
+					SC16IS7XX_EFR_SWFLOW1_BIT | \
+					SC16IS7XX_EFR_SWFLOW0_BIT)
+
 
 /* Misc definitions */
 #define SC16IS7XX_FIFO_SIZE		(64)
@@ -298,6 +306,7 @@ struct sc16is7xx_devtype {
 	char	name[10];
 	int	nr_gpio;
 	int	nr_uart;
+	int	has_mctrl;
 };
 
 #define SC16IS7XX_RECONF_MD		(1 << 0)
@@ -432,30 +441,35 @@ static const struct sc16is7xx_devtype sc16is74x_devtype = {
 	.name		= "SC16IS74X",
 	.nr_gpio	= 0,
 	.nr_uart	= 1,
+	.has_mctrl	= 0,
 };
 
 static const struct sc16is7xx_devtype sc16is750_devtype = {
 	.name		= "SC16IS750",
-	.nr_gpio	= 8,
+	.nr_gpio	= 4,
 	.nr_uart	= 1,
+	.has_mctrl	= 1,
 };
 
 static const struct sc16is7xx_devtype sc16is752_devtype = {
 	.name		= "SC16IS752",
-	.nr_gpio	= 8,
+	.nr_gpio	= 0,
 	.nr_uart	= 2,
+	.has_mctrl	= 1,
 };
 
 static const struct sc16is7xx_devtype sc16is760_devtype = {
 	.name		= "SC16IS760",
-	.nr_gpio	= 8,
+	.nr_gpio	= 4,
 	.nr_uart	= 1,
+	.has_mctrl	= 1,
 };
 
 static const struct sc16is7xx_devtype sc16is762_devtype = {
 	.name		= "SC16IS762",
-	.nr_gpio	= 8,
+	.nr_gpio	= 0,
 	.nr_uart	= 2,
+	.has_mctrl	= 1,
 };
 
 static bool sc16is7xx_regmap_volatile(struct device *dev, unsigned int reg)
@@ -523,8 +537,10 @@ static int sc16is7xx_set_baud(struct uart_port *port, int baud)
 
 	/* Enable enhanced features */
 	regcache_cache_bypass(s->regmap, true);
-	sc16is7xx_port_write(port, SC16IS7XX_EFR_REG,
-			     SC16IS7XX_EFR_ENABLE_BIT);
+	sc16is7xx_port_update(port, SC16IS7XX_EFR_REG,
+			      SC16IS7XX_EFR_ENABLE_BIT,
+			      SC16IS7XX_EFR_ENABLE_BIT);
+
 	regcache_cache_bypass(s->regmap, false);
 
 	/* Put LCR back to the normal mode */
@@ -777,19 +793,24 @@ static void sc16is7xx_reg_proc(struct kthread_work *ws)
 	spin_unlock_irqrestore(&one->port.lock, irqflags);
 
 	if (config.flags & SC16IS7XX_RECONF_MD) {
+		u8 mcr = 0;
+
+		/* Device ignores RTS setting when hardware flow is enabled */
+		if (one->port.mctrl & TIOCM_RTS)
+			mcr |= SC16IS7XX_MCR_RTS_BIT;
+
+		if (one->port.mctrl & TIOCM_DTR)
+			mcr |= SC16IS7XX_MCR_DTR_BIT;
+
+		if (one->port.mctrl & TIOCM_LOOP)
+			mcr |= SC16IS7XX_MCR_LOOP_BIT;
 		sc16is7xx_port_update(&one->port, SC16IS7XX_MCR_REG,
+				      SC16IS7XX_MCR_RTS_BIT |
+				      SC16IS7XX_MCR_DTR_BIT |
 				      SC16IS7XX_MCR_LOOP_BIT,
-				      (one->port.mctrl & TIOCM_LOOP) ?
-				      SC16IS7XX_MCR_LOOP_BIT : 0);
-		sc16is7xx_port_update(&one->port, SC16IS7XX_MCR_REG,
-				      SC16IS7XX_MCR_RTS_BIT,
-				      (one->port.mctrl & TIOCM_RTS) ?
-				      SC16IS7XX_MCR_RTS_BIT : 0);
-		sc16is7xx_port_update(&one->port, SC16IS7XX_MCR_REG,
-				      SC16IS7XX_MCR_DTR_BIT,
-				      (one->port.mctrl & TIOCM_DTR) ?
-				      SC16IS7XX_MCR_DTR_BIT : 0);
+				      mcr);
 	}
+
 	if (config.flags & SC16IS7XX_RECONF_IER)
 		sc16is7xx_port_update(&one->port, SC16IS7XX_IER_REG,
 				      config.ier_clear, 0);
@@ -935,7 +956,10 @@ static void sc16is7xx_set_termios(struct uart_port *port,
 	if (termios->c_iflag & IXOFF)
 		flow |= SC16IS7XX_EFR_SWFLOW1_BIT;
 
-	sc16is7xx_port_write(port, SC16IS7XX_EFR_REG, flow);
+	sc16is7xx_port_update(port,
+			      SC16IS7XX_EFR_REG,
+			      SC16IS7XX_EFR_FLOWCTRL_BITS,
+			      flow);
 	regcache_cache_bypass(s->regmap, false);
 
 	/* Update LCR register */
@@ -1010,8 +1034,9 @@ static int sc16is7xx_startup(struct uart_port *port)
 	regcache_cache_bypass(s->regmap, true);
 
 	/* Enable write access to enhanced features and internal clock div */
-	sc16is7xx_port_write(port, SC16IS7XX_EFR_REG,
-			     SC16IS7XX_EFR_ENABLE_BIT);
+	sc16is7xx_port_update(port, SC16IS7XX_EFR_REG,
+			      SC16IS7XX_EFR_ENABLE_BIT,
+			      SC16IS7XX_EFR_ENABLE_BIT);
 
 	/* Enable TCR/TLR */
 	sc16is7xx_port_update(port, SC16IS7XX_MCR_REG,
