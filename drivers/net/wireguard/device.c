@@ -59,7 +59,10 @@ out:
 	return ret;
 }
 
-#ifdef CONFIG_PM_SLEEP
+static int wg_pm_notification(struct notifier_block *nb, unsigned long action, void *data);
+static struct notifier_block pm_notifier = { .notifier_call = wg_pm_notification };
+static struct notifier_block vm_notifier = { .notifier_call = wg_pm_notification };
+
 static int wg_pm_notification(struct notifier_block *nb, unsigned long action,
 			      void *data)
 {
@@ -70,10 +73,10 @@ static int wg_pm_notification(struct notifier_block *nb, unsigned long action,
 	 * its normal operation rather than as a somewhat rare event, then we
 	 * don't actually want to clear keys.
 	 */
-	if (IS_ENABLED(CONFIG_PM_AUTOSLEEP) || IS_ENABLED(CONFIG_ANDROID))
+	if (nb == &pm_notifier && (IS_ENABLED(CONFIG_PM_AUTOSLEEP) || IS_ENABLED(CONFIG_ANDROID)))
 		return 0;
 
-	if (action != PM_HIBERNATION_PREPARE && action != PM_SUSPEND_PREPARE)
+	if (nb == &pm_notifier && action != PM_HIBERNATION_PREPARE && action != PM_SUSPEND_PREPARE)
 		return 0;
 
 	rtnl_lock();
@@ -87,12 +90,15 @@ static int wg_pm_notification(struct notifier_block *nb, unsigned long action,
 		mutex_unlock(&wg->device_update_lock);
 	}
 	rtnl_unlock();
-	rcu_barrier();
+
+	/* If we're called by PM, it means we're about to sleep, so make sure keys
+	 * are zeroed from memory. Otherwise, we don't mind not waiting for the
+	 * zeroing, so long as those keys are no longer used, which the above does.
+	 */
+	if (nb == &pm_notifier)
+		rcu_barrier();
 	return 0;
 }
-
-static struct notifier_block pm_notifier = { .notifier_call = wg_pm_notification };
-#endif
 
 static int wg_stop(struct net_device *dev)
 {
@@ -424,15 +430,17 @@ int __init wg_device_init(void)
 {
 	int ret;
 
-#ifdef CONFIG_PM_SLEEP
 	ret = register_pm_notifier(&pm_notifier);
 	if (ret)
 		return ret;
-#endif
+
+	ret = register_random_vmfork_notifier(&vm_notifier);
+	if (ret)
+		goto error_pm;
 
 	ret = register_pernet_device(&pernet_ops);
 	if (ret)
-		goto error_pm;
+		goto error_vm;
 
 	ret = rtnl_link_register(&link_ops);
 	if (ret)
@@ -442,10 +450,10 @@ int __init wg_device_init(void)
 
 error_pernet:
 	unregister_pernet_device(&pernet_ops);
+error_vm:
+	unregister_random_vmfork_notifier(&vm_notifier);
 error_pm:
-#ifdef CONFIG_PM_SLEEP
 	unregister_pm_notifier(&pm_notifier);
-#endif
 	return ret;
 }
 
@@ -453,8 +461,7 @@ void wg_device_uninit(void)
 {
 	rtnl_link_unregister(&link_ops);
 	unregister_pernet_device(&pernet_ops);
-#ifdef CONFIG_PM_SLEEP
+	unregister_random_vmfork_notifier(&vm_notifier);
 	unregister_pm_notifier(&pm_notifier);
-#endif
 	rcu_barrier();
 }
