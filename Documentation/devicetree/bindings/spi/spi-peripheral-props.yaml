@@ -83,6 +83,18 @@ properties:
     description:
       Delay, in microseconds, after a write transfer.
 
+  spi-cs-setup-delay-ns:
+    description:
+      Delay, in nanoseconds, after chip select is asserted.
+
+  spi-cs-hold-delay-ns:
+    description:
+      Delay, in nanoseconds, before chip select is de-asserted.
+
+  spi-cs-inactive-delay-ns:
+    description:
+      Delay, in nanoseconds, after chip select is de-asserted.
+
   stacked-memories:
     description: Several SPI memories can be wired in stacked mode.
       This basically means that either a device features several chip
