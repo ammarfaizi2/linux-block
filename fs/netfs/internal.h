@@ -16,6 +16,11 @@
 #define pr_fmt(fmt) "netfs: " fmt
 
 /*
+ * buffered_read.c
+ */
+void netfs_rreq_unlock_folios(struct netfs_io_request *rreq);
+
+/*
  * objects.c
  */
 struct netfs_io_request *netfs_alloc_request(struct address_space *mapping,
@@ -40,6 +45,9 @@ static inline void netfs_see_request(struct netfs_io_request *rreq,
 extern unsigned int netfs_debug;
 
 void netfs_rreq_work(struct work_struct *work);
+void netfs_rreq_assess(struct netfs_io_request *rreq, bool was_async);
+bool netfs_rreq_submit_slice(struct netfs_io_request *rreq,
+			     unsigned int *_debug_index);
 
 /*
  * stats.c
