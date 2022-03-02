@@ -1009,8 +1009,12 @@ This is a directory, with the following entries:
 * ``write_wakeup_threshold``: when the entropy count drops below this
   (as a number of bits), processes waiting to write to ``/dev/random``
   are woken up. This file is writable for compatibility purposes, but
-  writing to it has no effect on any RNG behavior.
+  writing to it has no effect on any RNG behavior;
 
+* ``fork_events``: a counter of the number of times the system, if it
+  is a virtual machine, has forked, which happens when rolling back
+  snapshots or similar. This file can be poll()'d on for notifications
+  delivered after the RNG reseeds following a virtual machine fork.
 
 randomize_va_space
 ==================
