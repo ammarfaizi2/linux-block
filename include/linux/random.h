@@ -11,6 +11,7 @@
 #include <uapi/linux/random.h>
 
 struct notifier_block;
+struct gendisk;
 
 extern void add_device_randomness(const void *, size_t);
 extern void add_bootloader_randomness(const void *, size_t);
@@ -28,6 +29,7 @@ static inline void add_latent_entropy(void) {}
 extern void add_input_randomness(unsigned int type, unsigned int code,
 				 unsigned int value) __latent_entropy;
 extern void add_interrupt_randomness(int irq) __latent_entropy;
+extern void add_disk_randomness(struct gendisk *disk) __latent_entropy;
 extern void add_hwgenerator_randomness(const void *buffer, size_t count,
 				       size_t entropy);
 #if IS_ENABLED(CONFIG_VMGENID)

@@ -23,6 +23,7 @@
 #include <linux/blk-mq.h>
 #include <linux/blk-integrity.h>
 #include <linux/ratelimit.h>
+#include <linux/random.h>
 #include <asm/unaligned.h>
 
 #include <scsi/scsi.h>

@@ -1159,112 +1159,61 @@ void add_interrupt_randomness(int irq)
 }
 EXPORT_SYMBOL_GPL(add_interrupt_randomness);
 
-/* There is one of these per entropy source */
-struct timer_rand_state {
-	unsigned long last_time;
-	long last_delta, last_delta2;
-};
-
-/*
- * This function adds entropy to the entropy "pool" by using timing
- * delays.  It uses the timer_rand_state structure to make an estimate
- * of how many bits of entropy this call has added to the pool.
- *
- * The number "num" is also added to the pool - it should somehow describe
- * the type of event which just happened.  This is currently 0-255 for
- * keyboard scan codes, and 256 upwards for interrupts.
- */
-static void add_timer_randomness(struct timer_rand_state *state, unsigned int num)
+static void add_ratelimited_randomness(unsigned int input, unsigned long *last_credit,
+				       unsigned int *num_events)
 {
-	unsigned long entropy = random_get_entropy(), now = jiffies, flags;
-	long delta, delta2, delta3;
+	unsigned long flags, entropy = random_get_entropy();
 
+	/*
+	 * If we're in a hard IRQ, add_interrupt_randomness() will be called
+	 * sometime after, so just mix into the fast pool and let it do the
+	 * entropy accounting.
+	 */
 	if (in_hardirq()) {
-		fast_mix(this_cpu_ptr(&irq_randomness)->pool, entropy, num);
+		fast_mix(this_cpu_ptr(&irq_randomness)->pool, entropy, input);
 		return;
 	}
 
 	spin_lock_irqsave(&input_pool.lock, flags);
 	_mix_pool_bytes(&entropy, sizeof(entropy));
-	_mix_pool_bytes(&num, sizeof(num));
+	_mix_pool_bytes(&input, sizeof(input));
 	spin_unlock_irqrestore(&input_pool.lock, flags);
 
-	if (crng_ready())
-		return;
-
-	/*
-	 * Calculate number of bits of randomness we probably added.
-	 * We take into account the first, second and third-order deltas
-	 * in order to make our estimate.
-	 */
-	delta = now - READ_ONCE(state->last_time);
-	WRITE_ONCE(state->last_time, now);
-
-	delta2 = delta - READ_ONCE(state->last_delta);
-	WRITE_ONCE(state->last_delta, delta);
-
-	delta3 = delta2 - READ_ONCE(state->last_delta2);
-	WRITE_ONCE(state->last_delta2, delta2);
-
-	if (delta < 0)
-		delta = -delta;
-	if (delta2 < 0)
-		delta2 = -delta2;
-	if (delta3 < 0)
-		delta3 = -delta3;
-	if (delta > delta2)
-		delta = delta2;
-	if (delta > delta3)
-		delta = delta3;
-
-	/*
-	 * delta is now minimum absolute delta.
-	 * Round down by 1 bit on general principles,
-	 * and limit entropy estimate to 12 bits.
-	 */
-	credit_init_bits(min_t(unsigned int, fls(delta >> 1), 11));
+	if (!crng_ready() && (!time_is_before_jiffies(*last_credit + HZ / 8) ||
+			      ++*num_events % 64 == 0)) {
+		*last_credit = jiffies;
+		credit_init_bits(1);
+	}
 }
 
 void add_input_randomness(unsigned int type, unsigned int code,
 			  unsigned int value)
 {
 	static unsigned char last_value;
-	static struct timer_rand_state input_timer_state = { INITIAL_JIFFIES };
+	static unsigned long last_credit = INITIAL_JIFFIES;
+	static unsigned int num_events;
 
 	/* Ignore autorepeat and the like. */
 	if (value == last_value)
 		return;
-
 	last_value = value;
-	add_timer_randomness(&input_timer_state,
-			     (type << 4) ^ code ^ (code >> 4) ^ value);
+	add_ratelimited_randomness((type << 4) ^ code ^ (code >> 4) ^ value,
+				   &last_credit, &num_events);
 }
 EXPORT_SYMBOL_GPL(add_input_randomness);
 
 #ifdef CONFIG_BLOCK
 void add_disk_randomness(struct gendisk *disk)
 {
-	if (!disk || !disk->random)
+	static unsigned long last_credit = INITIAL_JIFFIES;
+	static unsigned int num_events;
+
+	if (!disk)
 		return;
-	/* First major is 1, so we get >= 0x200 here. */
-	add_timer_randomness(disk->random, 0x100 + disk_devt(disk));
+	add_ratelimited_randomness(0x100 + disk_devt(disk),
+				   &last_credit, &num_events);
 }
 EXPORT_SYMBOL_GPL(add_disk_randomness);
-
-void rand_initialize_disk(struct gendisk *disk)
-{
-	struct timer_rand_state *state;
-
-	/*
-	 * If kzalloc returns null, we just won't use that entropy
-	 * source.
-	 */
-	state = kzalloc(sizeof(struct timer_rand_state), GFP_KERNEL);
-	if (state) {
-		state->last_time = INITIAL_JIFFIES;
-		disk->random = state;
-	}
-}
 #endif
 
 struct entropy_timer_state {

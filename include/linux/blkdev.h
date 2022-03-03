@@ -156,7 +156,6 @@ struct gendisk {
 #ifdef CONFIG_BLOCK_HOLDER_DEPRECATED
 	struct list_head slave_bdevs;
 #endif
-	struct timer_rand_state *random;
 	atomic_t sync_io;		/* RAID */
 	struct disk_events *ev;
 #ifdef  CONFIG_BLK_DEV_INTEGRITY
@@ -768,9 +767,6 @@ static inline int bdev_read_only(struct block_device *bdev)
 
 bool set_capacity_and_notify(struct gendisk *disk, sector_t size);
 bool disk_force_media_change(struct gendisk *disk, unsigned int events);
-
-void add_disk_randomness(struct gendisk *disk) __latent_entropy;
-void rand_initialize_disk(struct gendisk *disk);
 
 static inline sector_t get_start_sect(struct block_device *bdev)
 {
