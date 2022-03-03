@@ -675,7 +675,7 @@ int random_prepare_cpu(unsigned int cpu)
  * Return: A page aligned address within [start, start + range).  On error,
  * @start is returned.
  */
-unsigned long randomize_page(unsigned long start, unsigned long range)
+unsigned long randomize_page(unsigned long start, unsigned int range)
 {
 	if (!PAGE_ALIGNED(start)) {
 		range -= PAGE_ALIGN(start) - start;
@@ -690,7 +690,8 @@ unsigned long randomize_page(unsigned long start, unsigned long range)
 	if (range == 0)
 		return start;
 
-	return start + (get_random_long() % range << PAGE_SHIFT);
+	range = ((u64)get_random_int() * (u64)range) >> 32;
+	return start + (range << PAGE_SHIFT);
 }
 
 /*

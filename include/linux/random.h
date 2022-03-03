@@ -110,7 +110,7 @@ declare_get_random_var_wait(int)
 declare_get_random_var_wait(long)
 #undef declare_get_random_var
 
-unsigned long randomize_page(unsigned long start, unsigned long range);
+unsigned long randomize_page(unsigned long start, unsigned int range);
 
 /*
  * This is designed to be standalone for just prandom
