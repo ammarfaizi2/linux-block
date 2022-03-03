@@ -1,8 +1,8 @@
 .. SPDX-License-Identifier: GPL-2.0
 
-=================================
-Network Filesystem Helper Library
-=================================
+===================================
+Network Filesystem VM Layer Library
+===================================
 
 .. Contents:
 
