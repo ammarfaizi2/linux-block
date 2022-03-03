@@ -7,9 +7,10 @@
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/once.h>
-#include <linux/notifier.h>
 
 #include <uapi/linux/random.h>
+
+struct notifier_block;
 
 extern void add_device_randomness(const void *, size_t);
 extern void add_bootloader_randomness(const void *, size_t);
