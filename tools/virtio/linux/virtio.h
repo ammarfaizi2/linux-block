@@ -5,6 +5,13 @@
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
 
+enum virtio_vq_reset_step {
+	VIRTIO_VQ_RESET_STEP_NONE,
+	VIRTIO_VQ_RESET_STEP_DEVICE,
+	VIRTIO_VQ_RESET_STEP_VRING_RELEASE,
+	VIRTIO_VQ_RESET_STEP_VRING_ATTACH,
+};
+
 struct device {
 	void *parent;
 };
@@ -23,7 +30,9 @@ struct virtqueue {
 	struct virtio_device *vdev;
         unsigned int index;
         unsigned int num_free;
+	unsigned int num_max;
 	void *priv;
+	enum virtio_vq_reset_step reset;
 };
 
 /* Interfaces exported by virtio_ring. */
