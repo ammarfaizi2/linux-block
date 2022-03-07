@@ -84,6 +84,7 @@
 #include <linux/jhash.h>
 #include <net/dst.h>
 #include <net/dst_metadata.h>
+#include <net/inet_dscp.h>
 #include <net/net_namespace.h>
 #include <net/ip.h>
 #include <net/route.h>
@@ -457,7 +458,7 @@ static u32 *ip_tstamps __read_mostly;
  * if one generator is seldom used. This makes hard for an attacker
  * to infer how many packets were sent between two points in time.
  */
-u32 ip_idents_reserve(u32 hash, int segs)
+static u32 ip_idents_reserve(u32 hash, int segs)
 {
 	u32 bucket, old, now = (u32)jiffies;
 	atomic_t *p_id;
@@ -478,7 +479,6 @@ u32 ip_idents_reserve(u32 hash, int segs)
 	 */
 	return atomic_add_return(segs + delta, p_id) - segs;
 }
-EXPORT_SYMBOL(ip_idents_reserve);
 
 void __ip_select_ident(struct net *net, struct iphdr *iph, int segs)
 {
@@ -1485,6 +1485,7 @@ static bool rt_cache_route(struct fib_nh_common *nhc, struct rtable *rt)
 struct uncached_list {
 	spinlock_t		lock;
 	struct list_head	head;
+	struct list_head	quarantine;
 };
 
 static DEFINE_PER_CPU_ALIGNED(struct uncached_list, rt_uncached_list);
@@ -1506,7 +1507,7 @@ void rt_del_uncached_list(struct rtable *rt)
 		struct uncached_list *ul = rt->rt_uncached_list;
 
 		spin_lock_bh(&ul->lock);
-		list_del(&rt->rt_uncached);
+		list_del_init(&rt->rt_uncached);
 		spin_unlock_bh(&ul->lock);
 	}
 }
@@ -1521,20 +1522,24 @@ static void ipv4_dst_destroy(struct dst_entry *dst)
 
 void rt_flush_dev(struct net_device *dev)
 {
-	struct rtable *rt;
+	struct rtable *rt, *safe;
 	int cpu;
 
 	for_each_possible_cpu(cpu) {
 		struct uncached_list *ul = &per_cpu(rt_uncached_list, cpu);
 
+		if (list_empty(&ul->head))
+			continue;
+
 		spin_lock_bh(&ul->lock);
-		list_for_each_entry(rt, &ul->head, rt_uncached) {
+		list_for_each_entry_safe(rt, safe, &ul->head, rt_uncached) {
 			if (rt->dst.dev != dev)
 				continue;
 			rt->dst.dev = blackhole_netdev;
 			dev_replace_track(dev, blackhole_netdev,
 					  &rt->dst.dev_tracker,
 					  GFP_ATOMIC);
+			list_move(&rt->rt_uncached, &ul->quarantine);
 		}
 		spin_unlock_bh(&ul->lock);
 	}
@@ -3392,7 +3397,7 @@ static int inet_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 
 				if (fa->fa_slen == slen &&
 				    fa->tb_id == fri.tb_id &&
-				    fa->fa_tos == fri.tos &&
+				    fa->fa_dscp == inet_dsfield_to_dscp(fri.tos) &&
 				    fa->fa_info == res.fi &&
 				    fa->fa_type == fri.type) {
 					fri.offload = fa->offload;
@@ -3706,6 +3711,7 @@ int __init ip_rt_init(void)
 		struct uncached_list *ul = &per_cpu(rt_uncached_list, cpu);
 
 		INIT_LIST_HEAD(&ul->head);
+		INIT_LIST_HEAD(&ul->quarantine);
 		spin_lock_init(&ul->lock);
 	}
 #ifdef CONFIG_IP_ROUTE_CLASSID

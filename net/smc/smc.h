@@ -14,6 +14,7 @@
 #include <linux/socket.h>
 #include <linux/types.h>
 #include <linux/compiler.h> /* __aligned */
+#include <net/genetlink.h>
 #include <net/sock.h>
 
 #include "smc_ib.h"
@@ -139,6 +140,12 @@ enum smc_urg_state {
 	SMC_URG_READ	= 3,			/* data was already read */
 };
 
+struct smc_mark_woken {
+	bool woken;
+	void *key;
+	wait_queue_entry_t wait_entry;
+};
+
 struct smc_connection {
 	struct rb_node		alert_node;
 	struct smc_link_group	*lgr;		/* link group of connection */
@@ -228,8 +235,14 @@ struct smc_connection {
 struct smc_sock {				/* smc sock container */
 	struct sock		sk;
 	struct socket		*clcsock;	/* internal tcp socket */
+	void			(*clcsk_state_change)(struct sock *sk);
+						/* original stat_change fct. */
 	void			(*clcsk_data_ready)(struct sock *sk);
-						/* original data_ready fct. **/
+						/* original data_ready fct. */
+	void			(*clcsk_write_space)(struct sock *sk);
+						/* original write_space fct. */
+	void			(*clcsk_error_report)(struct sock *sk);
+						/* original error_report fct. */
 	struct smc_connection	conn;		/* smc connection */
 	struct smc_sock		*listen_smc;	/* listen parent */
 	struct work_struct	connect_work;	/* handle non-blocking connect*/
@@ -237,9 +250,14 @@ struct smc_sock {				/* smc sock container */
 	struct work_struct	smc_listen_work;/* prepare new accept socket */
 	struct list_head	accept_q;	/* sockets to be accepted */
 	spinlock_t		accept_q_lock;	/* protects accept_q */
+	bool			limit_smc_hs;	/* put constraint on handshake */
 	bool			use_fallback;	/* fallback to tcp */
 	int			fallback_rsn;	/* reason for fallback */
 	u32			peer_diagnosis; /* decline reason from peer */
+	atomic_t                queued_smc_hs;  /* queued smc handshakes */
+	struct inet_connection_sock_af_ops		af_ops;
+	const struct inet_connection_sock_af_ops	*ori_af_ops;
+						/* original af ops */
 	int			sockopt_defer_accept;
 						/* sockopt TCP_DEFER_ACCEPT
 						 * value
@@ -262,6 +280,12 @@ struct smc_sock {				/* smc sock container */
 static inline struct smc_sock *smc_sk(const struct sock *sk)
 {
 	return (struct smc_sock *)sk;
+}
+
+static inline struct smc_sock *smc_clcsock_user_data(const struct sock *clcsk)
+{
+	return (struct smc_sock *)
+	       ((uintptr_t)clcsk->sk_user_data & ~SK_USER_DATA_NOCOPY);
 }
 
 extern struct workqueue_struct	*smc_hs_wq;	/* wq for handshake work */
@@ -312,5 +336,10 @@ void smc_close_non_accepted(struct sock *sk);
 void smc_fill_gid_list(struct smc_link_group *lgr,
 		       struct smc_gidlist *gidlist,
 		       struct smc_ib_device *known_dev, u8 *known_gid);
+
+/* smc handshake limitation interface for netlink  */
+int smc_nl_dump_hs_limitation(struct sk_buff *skb, struct netlink_callback *cb);
+int smc_nl_enable_hs_limitation(struct sk_buff *skb, struct genl_info *info);
+int smc_nl_disable_hs_limitation(struct sk_buff *skb, struct genl_info *info);
 
 #endif	/* __SMC_H */

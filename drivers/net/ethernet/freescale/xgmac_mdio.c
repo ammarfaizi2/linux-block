@@ -276,7 +276,7 @@ static int xgmac_mdio_set_mdc_freq(struct mii_bus *bus)
 
 	div = ((clk_get_rate(priv->enet_clk) / priv->mdc_freq) - 1) / 2;
 	if (div < 5 || div > 0x1ff) {
-		dev_err(dev, "Requested MDC frequecy is out of range, ignoring");
+		dev_err(dev, "Requested MDC frequency is out of range, ignoring");
 		return -EINVAL;
 	}
 
@@ -335,8 +335,8 @@ static int xgmac_mdio_probe(struct platform_device *pdev)
 	priv = bus->priv;
 	priv->mdio_base = devm_ioremap(&pdev->dev, res->start,
 				       resource_size(res));
-	if (IS_ERR(priv->mdio_base))
-		return PTR_ERR(priv->mdio_base);
+	if (!priv->mdio_base)
+		return -ENOMEM;
 
 	/* For both ACPI and DT cases, endianness of MDIO controller
 	 * needs to be specified using "little-endian" property.
