@@ -7,12 +7,8 @@
 
 hpa_t kvm_tdp_mmu_get_vcpu_root_hpa(struct kvm_vcpu *vcpu);
 
-__must_check static inline bool kvm_tdp_mmu_get_root(struct kvm *kvm,
-						     struct kvm_mmu_page *root)
+__must_check static inline bool kvm_tdp_mmu_get_root(struct kvm_mmu_page *root)
 {
-	if (root->role.invalid)
-		return false;
-
 	return refcount_inc_not_zero(&root->tdp_mmu_root_count);
 }
 
@@ -71,6 +67,11 @@ bool kvm_tdp_mmu_write_protect_gfn(struct kvm *kvm,
 				   struct kvm_memory_slot *slot, gfn_t gfn,
 				   int min_level);
 
+void kvm_tdp_mmu_try_split_huge_pages(struct kvm *kvm,
+				      const struct kvm_memory_slot *slot,
+				      gfn_t start, gfn_t end,
+				      int target_level, bool shared);
+
 static inline void kvm_tdp_mmu_walk_lockless_begin(void)
 {
 	rcu_read_lock();
@@ -94,7 +95,7 @@ static inline bool is_tdp_mmu_page(struct kvm_mmu_page *sp) { return sp->tdp_mmu
 static inline bool is_tdp_mmu(struct kvm_mmu *mmu)
 {
 	struct kvm_mmu_page *sp;
-	hpa_t hpa = mmu->root_hpa;
+	hpa_t hpa = mmu->root.hpa;
 
 	if (WARN_ON(!VALID_PAGE(hpa)))
 		return false;
