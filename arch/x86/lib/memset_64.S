@@ -86,7 +86,7 @@ SYM_FUNC_START_LOCAL(memset_orig)
 
 	.p2align 4
 .Lloop_64:
-	decq  %rcx
+	subq  $1,%rcx
 	movq  %rax,(%rdi)
 	movq  %rax,8(%rdi)
 	movq  %rax,16(%rdi)
@@ -108,7 +108,7 @@ SYM_FUNC_START_LOCAL(memset_orig)
 	shrl	$3,%ecx
 	.p2align 4
 .Lloop_8:
-	decl   %ecx
+	subl  $1,%ecx
 	movq  %rax,(%rdi)
 	leaq  8(%rdi),%rdi
 	jnz    .Lloop_8
@@ -118,7 +118,7 @@ SYM_FUNC_START_LOCAL(memset_orig)
 	jz      .Lende
 	.p2align 4
 .Lloop_1:
-	decl    %edx
+	subl    $1,%edx
 	movb 	%al,(%rdi)
 	leaq	1(%rdi),%rdi
 	jnz     .Lloop_1

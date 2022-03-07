@@ -37,9 +37,9 @@ SYM_FUNC_START(copy_mc_fragile)
 	movb (%rsi), %al
 .L_write_leading_bytes:
 	movb %al, (%rdi)
-	incq %rsi
-	incq %rdi
-	decl %ecx
+	addq $1, %rsi
+	addq $1, %rdi
+	subl $1, %ecx
 	jnz .L_read_leading_bytes
 
 .L_8byte_aligned:
@@ -54,7 +54,7 @@ SYM_FUNC_START(copy_mc_fragile)
 	movq %r8, (%rdi)
 	addq $8, %rsi
 	addq $8, %rdi
-	decl %ecx
+	subl $1, %ecx
 	jnz .L_read_words
 
 	/* Any trailing bytes? */
@@ -68,9 +68,9 @@ SYM_FUNC_START(copy_mc_fragile)
 	movb (%rsi), %al
 .L_write_trailing_bytes:
 	movb %al, (%rdi)
-	incq %rsi
-	incq %rdi
-	decl %ecx
+	addq $1, %rsi
+	addq $1, %rdi
+	subl $1, %ecx
 	jnz .L_read_trailing_bytes
 
 	/* Copy successful. Return zero */

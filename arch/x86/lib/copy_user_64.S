@@ -27,9 +27,9 @@
 	subl %ecx,%edx
 100:	movb (%rsi),%al
 101:	movb %al,(%rdi)
-	incq %rsi
-	incq %rdi
-	decl %ecx
+	addq $1,%rsi
+	addq $1,%rdi
+	subl $1,%ecx
 	jnz 100b
 102:
 
@@ -77,7 +77,7 @@ SYM_FUNC_START(copy_user_generic_unrolled)
 16:	movq %r11,7*8(%rdi)
 	leaq 64(%rsi),%rsi
 	leaq 64(%rdi),%rdi
-	decl %ecx
+	subl $1,%ecx
 	jnz 1b
 .L_copy_short_string:
 	movl %edx,%ecx
@@ -88,16 +88,16 @@ SYM_FUNC_START(copy_user_generic_unrolled)
 19:	movq %r8,(%rdi)
 	leaq 8(%rsi),%rsi
 	leaq 8(%rdi),%rdi
-	decl %ecx
+	subl $1,%ecx
 	jnz 18b
 20:	andl %edx,%edx
 	jz 23f
 	movl %edx,%ecx
 21:	movb (%rsi),%al
 22:	movb %al,(%rdi)
-	incq %rsi
-	incq %rdi
-	decl %ecx
+	addq $1,%rsi
+	addq $1,%rdi
+	subl $1,%ecx
 	jnz 21b
 23:	xor %eax,%eax
 	ASM_CLAC
@@ -288,7 +288,7 @@ SYM_FUNC_START(__copy_user_nocache)
 16:	movnti %r11,7*8(%rdi)
 	leaq 64(%rsi),%rsi
 	leaq 64(%rdi),%rdi
-	decl %ecx
+	subl $1,%ecx
 	jnz .L_4x8b_nocache_copy_loop
 
 	/* Set 8-byte copy count and remainder */
@@ -304,7 +304,7 @@ SYM_FUNC_START(__copy_user_nocache)
 21:	movnti %r8,(%rdi)
 	leaq 8(%rsi),%rsi
 	leaq 8(%rdi),%rdi
-	decl %ecx
+	subl $1,%ecx
 	jnz .L_8b_nocache_copy_loop
 
 	/* If no byte left, we're done */
@@ -339,9 +339,9 @@ SYM_FUNC_START(__copy_user_nocache)
 .L_1b_cache_copy_loop:
 40:	movb (%rsi),%al
 41:	movb %al,(%rdi)
-	incq %rsi
-	incq %rdi
-	decl %ecx
+	addq $1,%rsi
+	addq $1,%rdi
+	subl $1,%ecx
 	jnz .L_1b_cache_copy_loop
 
 	/* Finished copying; fence the prior stores */

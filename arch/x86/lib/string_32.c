@@ -34,7 +34,7 @@ EXPORT_SYMBOL(strcpy);
 char *strncpy(char *dest, const char *src, size_t count)
 {
 	int d0, d1, d2, d3;
-	asm volatile("1:\tdecl %2\n\t"
+	asm volatile("1:\tsubl $1,%2\n\t"
 		"js 2f\n\t"
 		"lodsb\n\t"
 		"stosb\n\t"
@@ -56,7 +56,7 @@ char *strcat(char *dest, const char *src)
 	int d0, d1, d2, d3;
 	asm volatile("repne\n\t"
 		"scasb\n\t"
-		"decl %1\n"
+		"subl $1,%1\n"
 		"1:\tlodsb\n\t"
 		"stosb\n\t"
 		"testb %%al,%%al\n\t"
@@ -74,9 +74,9 @@ char *strncat(char *dest, const char *src, size_t count)
 	int d0, d1, d2, d3;
 	asm volatile("repne\n\t"
 		"scasb\n\t"
-		"decl %1\n\t"
+		"subl $1,%1\n\t"
 		"movl %8,%3\n"
-		"1:\tdecl %3\n\t"
+		"1:\tsubl $1,%3\n\t"
 		"js 2f\n\t"
 		"lodsb\n\t"
 		"stosb\n\t"
@@ -120,7 +120,7 @@ int strncmp(const char *cs, const char *ct, size_t count)
 {
 	int res;
 	int d0, d1, d2;
-	asm volatile("1:\tdecl %3\n\t"
+	asm volatile("1:\tsubl $1,%3\n\t"
 		"js 2f\n\t"
 		"lodsb\n\t"
 		"scasb\n\t"
@@ -153,7 +153,7 @@ char *strchr(const char *s, int c)
 		"jne 1b\n\t"
 		"movl $1,%1\n"
 		"2:\tmovl %1,%0\n\t"
-		"decl %0"
+		"subl $1,%0"
 		: "=a" (res), "=&S" (d0)
 		: "1" (s), "0" (c)
 		: "memory");
@@ -188,7 +188,7 @@ void *memchr(const void *cs, int c, size_t count)
 		"scasb\n\t"
 		"je 1f\n\t"
 		"movl $1,%0\n"
-		"1:\tdecl %0"
+		"1:\tsubl $1,%0"
 		: "=D" (res), "=&c" (d0)
 		: "a" (c), "0" (cs), "1" (count)
 		: "memory");
@@ -204,7 +204,7 @@ void *memscan(void *addr, int c, size_t size)
 		return addr;
 	asm volatile("repnz; scasb\n\t"
 	    "jnz 1f\n\t"
-	    "dec %%edi\n"
+	    "subl $1,%%edi\n"
 	    "1:"
 	    : "=D" (addr), "=c" (size)
 	    : "0" (addr), "1" (size), "a" (c)
@@ -223,8 +223,8 @@ size_t strnlen(const char *s, size_t count)
 		"jmp 2f\n"
 		"1:\tcmpb $0,(%0)\n\t"
 		"je 3f\n\t"
-		"incl %0\n"
-		"2:\tdecl %1\n\t"
+		"addl $1,%0\n"
+		"2:\tsubl $1,%1\n\t"
 		"cmpl $-1,%1\n\t"
 		"jne 1b\n"
 		"3:\tsubl %2,%0"
