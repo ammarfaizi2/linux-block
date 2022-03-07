@@ -8,6 +8,7 @@
 
 #include <linux/bitmap.h>
 #include <linux/ctype.h>
+#include <linux/libfdt.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <asm/alternative.h>
@@ -195,6 +196,8 @@ void __init riscv_fill_hwcap(void)
 			if (!ext_long) {
 				this_hwcap |= isa2hwcap[(unsigned char)(*ext)];
 				set_bit(*ext - 'a', this_isa);
+			} else {
+				SET_ISA_EXT_MAP("svpbmt", RISCV_ISA_EXT_SVPBMT);
 			}
 #undef SET_ISA_EXT_MAP
 		}
@@ -246,7 +249,22 @@ struct cpufeature_info {
 	bool (*check_func)(unsigned int stage);
 };
 
+static bool __init_or_module cpufeature_svpbmt_check_func(unsigned int stage)
+{
+	bool ret = false;
+
+#if defined(CONFIG_MMU) && defined(CONFIG_64BIT)
+	return riscv_isa_extension_available(NULL, SVPBMT);
+#endif
+
+	return ret;
+}
+
 static const struct cpufeature_info __initdata_or_module cpufeature_list[CPUFEATURE_NUMBER] = {
+	{
+		.name = "svpbmt",
+		.check_func = cpufeature_svpbmt_check_func
+	},
 };
 
 static u32 __init_or_module cpufeature_probe(unsigned int stage)

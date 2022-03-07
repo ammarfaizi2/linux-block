@@ -14,7 +14,8 @@
 #define	ERRATA_SIFIVE_NUMBER 2
 #endif
 
-#define	CPUFEATURE_NUMBER 0
+#define	CPUFEATURE_SVPBMT 0
+#define	CPUFEATURE_NUMBER 1
 
 #ifdef __ASSEMBLY__
 
@@ -35,6 +36,16 @@ ALTERNATIVE(__stringify(RISCV_PTR do_page_fault),			\
 asm(ALTERNATIVE("sfence.vma %0", "sfence.vma", SIFIVE_VENDOR_ID,	\
 		ERRATA_SIFIVE_CIP_1200, CONFIG_ERRATA_SIFIVE_CIP_1200)	\
 		: : "r" (addr) : "memory")
+
+/*
+ * _val is marked as "will be overwritten", so need to set it to 0
+ * in the default case.
+ */
+#define ALT_SVPBMT_SHIFT 61
+#define ALT_SVPBMT(_val, prot)						\
+asm(ALTERNATIVE("li %0, 0\t\nnop", "li %0, %1\t\nslli %0,%0,%2", 0,	\
+		CPUFEATURE_SVPBMT, CONFIG_64BIT)			\
+		: "=r"(_val) : "I"(prot##_SVPBMT >> ALT_SVPBMT_SHIFT), "I"(ALT_SVPBMT_SHIFT))
 
 #endif /* __ASSEMBLY__ */
 
