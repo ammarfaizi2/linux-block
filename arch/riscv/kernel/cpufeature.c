@@ -254,7 +254,12 @@ static bool __init_or_module cpufeature_svpbmt_check_func(unsigned int stage)
 	bool ret = false;
 
 #if defined(CONFIG_MMU) && defined(CONFIG_64BIT)
-	return riscv_isa_extension_available(NULL, SVPBMT);
+	switch (stage) {
+	case RISCV_ALTERNATIVES_EARLY_BOOT:
+		return false;
+	default:
+		return riscv_isa_extension_available(NULL, SVPBMT);
+	}
 #endif
 
 	return ret;
