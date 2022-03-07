@@ -53,7 +53,7 @@ xor_pII_mmx_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 
 	"       addl $128, %1         ;\n"
 	"       addl $128, %2         ;\n"
-	"       decl %0               ;\n"
+	"       subl $1, %0           ;\n"
 	"       jnz 1b                ;\n"
 	: "+r" (lines),
 	  "+r" (p1), "+r" (p2)
@@ -102,7 +102,7 @@ xor_pII_mmx_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	"       addl $128, %1         ;\n"
 	"       addl $128, %2         ;\n"
 	"       addl $128, %3         ;\n"
-	"       decl %0               ;\n"
+	"       subl $1, %0           ;\n"
 	"       jnz 1b                ;\n"
 	: "+r" (lines),
 	  "+r" (p1), "+r" (p2), "+r" (p3)
@@ -156,7 +156,7 @@ xor_pII_mmx_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	"       addl $128, %2         ;\n"
 	"       addl $128, %3         ;\n"
 	"       addl $128, %4         ;\n"
-	"       decl %0               ;\n"
+	"       subl $1, %0           ;\n"
 	"       jnz 1b                ;\n"
 	: "+r" (lines),
 	  "+r" (p1), "+r" (p2), "+r" (p3), "+r" (p4)
@@ -224,7 +224,7 @@ xor_pII_mmx_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	"       addl $128, %3         ;\n"
 	"       addl $128, %4         ;\n"
 	"       addl $128, %5         ;\n"
-	"       decl %0               ;\n"
+	"       subl $1, %0           ;\n"
 	"       jnz 1b                ;\n"
 	: "+r" (lines),
 	  "+r" (p1), "+r" (p2), "+r" (p3)
@@ -284,7 +284,7 @@ xor_p5_mmx_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 
 	"       addl $64, %1         ;\n"
 	"       addl $64, %2         ;\n"
-	"       decl %0              ;\n"
+	"       subl $1, %0          ;\n"
 	"       jnz 1b               ;\n"
 	: "+r" (lines),
 	  "+r" (p1), "+r" (p2)
@@ -341,7 +341,7 @@ xor_p5_mmx_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	"       addl $64, %1         ;\n"
 	"       addl $64, %2         ;\n"
 	"       addl $64, %3         ;\n"
-	"       decl %0              ;\n"
+	"       subl $1, %0          ;\n"
 	"       jnz 1b               ;\n"
 	: "+r" (lines),
 	  "+r" (p1), "+r" (p2), "+r" (p3)
@@ -407,7 +407,7 @@ xor_p5_mmx_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	"       addl $64, %2         ;\n"
 	"       addl $64, %3         ;\n"
 	"       addl $64, %4         ;\n"
-	"       decl %0              ;\n"
+	"       subl $1, %0          ;\n"
 	"       jnz 1b               ;\n"
 	: "+r" (lines),
 	  "+r" (p1), "+r" (p2), "+r" (p3), "+r" (p4)
@@ -490,7 +490,7 @@ xor_p5_mmx_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	"       addl $64, %3         ;\n"
 	"       addl $64, %4         ;\n"
 	"       addl $64, %5         ;\n"
-	"       decl %0              ;\n"
+	"       subl $1, %0          ;\n"
 	"       jnz 1b               ;\n"
 	: "+r" (lines),
 	  "+r" (p1), "+r" (p2), "+r" (p3)
