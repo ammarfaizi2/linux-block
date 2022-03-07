@@ -14,6 +14,8 @@
 #define	ERRATA_SIFIVE_NUMBER 2
 #endif
 
+#define	CPUFEATURE_NUMBER 0
+
 #ifdef __ASSEMBLY__
 
 #define ALT_INSN_FAULT(x)						\
