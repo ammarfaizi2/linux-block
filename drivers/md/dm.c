@@ -1202,6 +1202,8 @@ void dm_submit_bio_remap(struct bio *clone, struct bio *tgt_clone,
 	struct dm_target_io *tio = clone_to_tio(clone);
 	struct dm_io *io = tio->io;
 
+	WARN_ON(!tio->ti->accounts_remapped_io);
+
 	/* establish bio that will get submitted */
 	if (!tgt_clone)
 		tgt_clone = clone;
