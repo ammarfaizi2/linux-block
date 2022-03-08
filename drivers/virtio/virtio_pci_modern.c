@@ -34,6 +34,9 @@ static void vp_transport_features(struct virtio_device *vdev, u64 features)
 	if ((features & BIT_ULL(VIRTIO_F_SR_IOV)) &&
 			pci_find_ext_capability(pci_dev, PCI_EXT_CAP_ID_SRIOV))
 		__virtio_set_bit(vdev, VIRTIO_F_SR_IOV);
+
+	if (features & BIT_ULL(VIRTIO_F_RING_RESET))
+		__virtio_set_bit(vdev, VIRTIO_F_RING_RESET);
 }
 
 /* virtio config->finalize_features() implementation */
@@ -195,6 +198,82 @@ static int vp_active_vq(struct virtqueue *vq, u16 msix_vec)
 		if (msix_vec == VIRTIO_MSI_NO_VECTOR)
 			return -EBUSY;
 	}
+
+	return 0;
+}
+
+static int vp_modern_reset_vq(struct virtqueue *vq)
+{
+	struct virtio_pci_device *vp_dev = to_vp_device(vq->vdev);
+	struct virtio_pci_modern_device *mdev = &vp_dev->mdev;
+	struct virtio_pci_vq_info *info;
+	unsigned long flags;
+	unsigned int irq;
+
+	if (!virtio_has_feature(vq->vdev, VIRTIO_F_RING_RESET))
+		return -ENOENT;
+
+	vp_modern_set_queue_reset(mdev, vq->index);
+
+	info = vp_dev->vqs[vq->index];
+
+	/* delete vq from irq handler */
+	spin_lock_irqsave(&vp_dev->lock, flags);
+	list_del(&info->node);
+	spin_unlock_irqrestore(&vp_dev->lock, flags);
+
+	INIT_LIST_HEAD(&info->node);
+
+	vq->reset = VIRTIO_VQ_RESET_STEP_DEVICE;
+
+	/* sync irq callback. */
+	if (vp_dev->intx_enabled) {
+		irq = vp_dev->pci_dev->irq;
+
+	} else {
+		if (info->msix_vector == VIRTIO_MSI_NO_VECTOR)
+			return 0;
+
+		irq = pci_irq_vector(vp_dev->pci_dev, info->msix_vector);
+	}
+
+	synchronize_irq(irq);
+
+	return 0;
+}
+
+static int vp_modern_enable_reset_vq(struct virtqueue *vq)
+{
+	struct virtio_pci_device *vp_dev = to_vp_device(vq->vdev);
+	struct virtio_pci_modern_device *mdev = &vp_dev->mdev;
+	struct virtio_pci_vq_info *info;
+	unsigned long flags, index;
+	int err;
+
+	if (vq->reset != VIRTIO_VQ_RESET_STEP_VRING_ATTACH)
+		return -EBUSY;
+
+	index = vq->index;
+	info = vp_dev->vqs[index];
+
+	/* check queue reset status */
+	if (vp_modern_get_queue_reset(mdev, index) != 1)
+		return -EBUSY;
+
+	err = vp_active_vq(vq, info->msix_vector);
+	if (err)
+		return err;
+
+	if (vq->callback) {
+		spin_lock_irqsave(&vp_dev->lock, flags);
+		list_add(&info->node, &vp_dev->virtqueues);
+		spin_unlock_irqrestore(&vp_dev->lock, flags);
+	} else {
+		INIT_LIST_HEAD(&info->node);
+	}
+
+	vp_modern_set_queue_enable(&vp_dev->mdev, index, true);
+	vq->reset = VIRTIO_VQ_RESET_STEP_NONE;
 
 	return 0;
 }
@@ -407,6 +486,8 @@ static const struct virtio_config_ops virtio_pci_config_nodev_ops = {
 	.set_vq_affinity = vp_set_vq_affinity,
 	.get_vq_affinity = vp_get_vq_affinity,
 	.get_shm_region  = vp_get_shm_region,
+	.reset_vq	 = vp_modern_reset_vq,
+	.enable_reset_vq = vp_modern_enable_reset_vq,
 };
 
 static const struct virtio_config_ops virtio_pci_config_ops = {
@@ -425,6 +506,8 @@ static const struct virtio_config_ops virtio_pci_config_ops = {
 	.set_vq_affinity = vp_set_vq_affinity,
 	.get_vq_affinity = vp_get_vq_affinity,
 	.get_shm_region  = vp_get_shm_region,
+	.reset_vq	 = vp_modern_reset_vq,
+	.enable_reset_vq = vp_modern_enable_reset_vq,
 };
 
 /* the PCI probing function */
