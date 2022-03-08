@@ -92,6 +92,18 @@ struct vring_split {
 	struct vring vring;
 };
 
+struct vring_packed {
+	u32 num;
+	struct vring_packed_desc *ring;
+	struct vring_packed_desc_event *driver;
+	struct vring_packed_desc_event *device;
+	dma_addr_t ring_dma_addr;
+	dma_addr_t driver_event_dma_addr;
+	dma_addr_t device_event_dma_addr;
+	size_t ring_size_in_bytes;
+	size_t event_size_in_bytes;
+};
+
 struct vring_virtqueue {
 	struct virtqueue vq;
 
@@ -1666,6 +1678,84 @@ static struct vring_desc_extra *vring_alloc_desc_extra(struct vring_virtqueue *v
 	return desc_extra;
 }
 
+static void vring_free_vring_packed(struct vring_packed *vring,
+				    struct virtio_device *vdev)
+{
+	dma_addr_t ring_dma_addr, driver_event_dma_addr, device_event_dma_addr;
+	struct vring_packed_desc_event *driver, *device;
+	size_t ring_size_in_bytes, event_size_in_bytes;
+	struct vring_packed_desc *ring;
+
+	ring                  = vring->ring;
+	driver                = vring->driver;
+	device                = vring->device;
+	ring_size_in_bytes    = vring->ring_size_in_bytes;
+	event_size_in_bytes   = vring->event_size_in_bytes;
+	ring_dma_addr         = vring->ring_dma_addr;
+	driver_event_dma_addr = vring->driver_event_dma_addr;
+	device_event_dma_addr = vring->device_event_dma_addr;
+
+	if (device)
+		vring_free_queue(vdev, event_size_in_bytes, device, device_event_dma_addr);
+
+	if (driver)
+		vring_free_queue(vdev, event_size_in_bytes, driver, driver_event_dma_addr);
+
+	if (ring)
+		vring_free_queue(vdev, ring_size_in_bytes, ring, ring_dma_addr);
+}
+
+static int vring_create_vring_packed(struct vring_packed *vring,
+				    struct virtio_device *vdev,
+				    u32 num)
+{
+	struct vring_packed_desc *ring;
+	struct vring_packed_desc_event *driver, *device;
+	dma_addr_t ring_dma_addr, driver_event_dma_addr, device_event_dma_addr;
+	size_t ring_size_in_bytes, event_size_in_bytes;
+
+	memset(vring, 0, sizeof(*vring));
+
+	ring_size_in_bytes = num * sizeof(struct vring_packed_desc);
+
+	ring = vring_alloc_queue(vdev, ring_size_in_bytes,
+				 &ring_dma_addr,
+				 GFP_KERNEL|__GFP_NOWARN|__GFP_ZERO);
+	if (!ring)
+		goto err;
+
+	vring->num = num;
+	vring->ring = ring;
+	vring->ring_size_in_bytes = ring_size_in_bytes;
+	vring->ring_dma_addr = ring_dma_addr;
+
+	event_size_in_bytes = sizeof(struct vring_packed_desc_event);
+	vring->event_size_in_bytes = event_size_in_bytes;
+
+	driver = vring_alloc_queue(vdev, event_size_in_bytes,
+				   &driver_event_dma_addr,
+				   GFP_KERNEL|__GFP_NOWARN|__GFP_ZERO);
+	if (!driver)
+		goto err;
+
+	vring->driver = driver;
+	vring->driver_event_dma_addr = driver_event_dma_addr;
+
+	device = vring_alloc_queue(vdev, event_size_in_bytes,
+				   &device_event_dma_addr,
+				   GFP_KERNEL|__GFP_NOWARN|__GFP_ZERO);
+	if (!device)
+		goto err;
+
+	vring->device = device;
+	vring->device_event_dma_addr = device_event_dma_addr;
+	return 0;
+
+err:
+	vring_free_vring_packed(vring, vdev);
+	return -ENOMEM;
+}
+
 static struct virtqueue *vring_create_virtqueue_packed(
 	unsigned int index,
 	unsigned int num,
@@ -1679,32 +1769,10 @@ static struct virtqueue *vring_create_virtqueue_packed(
 	const char *name)
 {
 	struct vring_virtqueue *vq;
-	struct vring_packed_desc *ring;
-	struct vring_packed_desc_event *driver, *device;
-	dma_addr_t ring_dma_addr, driver_event_dma_addr, device_event_dma_addr;
-	size_t ring_size_in_bytes, event_size_in_bytes;
+	struct vring_packed vring;
 
-	ring_size_in_bytes = num * sizeof(struct vring_packed_desc);
-
-	ring = vring_alloc_queue(vdev, ring_size_in_bytes,
-				 &ring_dma_addr,
-				 GFP_KERNEL|__GFP_NOWARN|__GFP_ZERO);
-	if (!ring)
-		goto err_ring;
-
-	event_size_in_bytes = sizeof(struct vring_packed_desc_event);
-
-	driver = vring_alloc_queue(vdev, event_size_in_bytes,
-				   &driver_event_dma_addr,
-				   GFP_KERNEL|__GFP_NOWARN|__GFP_ZERO);
-	if (!driver)
-		goto err_driver;
-
-	device = vring_alloc_queue(vdev, event_size_in_bytes,
-				   &device_event_dma_addr,
-				   GFP_KERNEL|__GFP_NOWARN|__GFP_ZERO);
-	if (!device)
-		goto err_device;
+	if (vring_create_vring_packed(&vring, vdev, num))
+		goto err_vq;
 
 	vq = kmalloc(sizeof(*vq), GFP_KERNEL);
 	if (!vq)
@@ -1736,17 +1804,17 @@ static struct virtqueue *vring_create_virtqueue_packed(
 	if (virtio_has_feature(vdev, VIRTIO_F_ORDER_PLATFORM))
 		vq->weak_barriers = false;
 
-	vq->packed.ring_dma_addr = ring_dma_addr;
-	vq->packed.driver_event_dma_addr = driver_event_dma_addr;
-	vq->packed.device_event_dma_addr = device_event_dma_addr;
+	vq->packed.ring_dma_addr = vring.ring_dma_addr;
+	vq->packed.driver_event_dma_addr = vring.driver_event_dma_addr;
+	vq->packed.device_event_dma_addr = vring.device_event_dma_addr;
 
-	vq->packed.ring_size_in_bytes = ring_size_in_bytes;
-	vq->packed.event_size_in_bytes = event_size_in_bytes;
+	vq->packed.ring_size_in_bytes = vring.ring_size_in_bytes;
+	vq->packed.event_size_in_bytes = vring.event_size_in_bytes;
 
 	vq->packed.vring.num = num;
-	vq->packed.vring.desc = ring;
-	vq->packed.vring.driver = driver;
-	vq->packed.vring.device = device;
+	vq->packed.vring.desc = vring.ring;
+	vq->packed.vring.driver = vring.driver;
+	vq->packed.vring.device = vring.device;
 
 	vq->packed.next_avail_idx = 0;
 	vq->packed.avail_wrap_counter = 1;
@@ -1787,12 +1855,7 @@ err_desc_extra:
 err_desc_state:
 	kfree(vq);
 err_vq:
-	vring_free_queue(vdev, event_size_in_bytes, device, device_event_dma_addr);
-err_device:
-	vring_free_queue(vdev, event_size_in_bytes, driver, driver_event_dma_addr);
-err_driver:
-	vring_free_queue(vdev, ring_size_in_bytes, ring, ring_dma_addr);
-err_ring:
+	vring_free_vring_packed(&vring, vdev);
 	return NULL;
 }
 
