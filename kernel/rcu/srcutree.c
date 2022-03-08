@@ -502,6 +502,8 @@ static bool srcu_readers_active(struct srcu_struct *ssp)
 }
 
 #define SRCU_INTERVAL		1
+#define SRCU_MAX_INTERVAL	10
+#define SRCU_MAX_NODELAY	10
 
 /*
  * Return grace-period delay, zero if there are expedited grace
@@ -509,9 +511,18 @@ static bool srcu_readers_active(struct srcu_struct *ssp)
  */
 static unsigned long srcu_get_delay(struct srcu_struct *ssp)
 {
+	unsigned long jbase = SRCU_INTERVAL;
+
 	if (ULONG_CMP_LT(READ_ONCE(ssp->srcu_gp_seq), READ_ONCE(ssp->srcu_gp_seq_needed_exp)))
-		return 0;
-	return SRCU_INTERVAL;
+		jbase = 0;
+	if (rcu_seq_state(READ_ONCE(ssp->srcu_gp_seq)))
+		jbase += jiffies - READ_ONCE(ssp->srcu_gp_start);
+	if (!jbase) {
+		WRITE_ONCE(ssp->srcu_n_exp_nodelay, READ_ONCE(ssp->srcu_n_exp_nodelay) + 1);
+		if (READ_ONCE(ssp->srcu_n_exp_nodelay) > SRCU_MAX_NODELAY)
+			jbase = 1;
+	}
+	return jbase > SRCU_MAX_INTERVAL ? SRCU_MAX_INTERVAL : jbase;
 }
 
 /**
@@ -613,6 +624,8 @@ static void srcu_gp_start(struct srcu_struct *ssp)
 	(void)rcu_segcblist_accelerate(&sdp->srcu_cblist,
 				       rcu_seq_snap(&ssp->srcu_gp_seq));
 	spin_unlock_rcu_node(sdp);  /* Interrupts remain disabled. */
+	WRITE_ONCE(ssp->srcu_gp_start, jiffies);
+	WRITE_ONCE(ssp->srcu_n_exp_nodelay, 0);
 	smp_mb(); /* Order prior store to ->srcu_gp_seq_needed vs. GP start. */
 	rcu_seq_start(&ssp->srcu_gp_seq);
 	state = rcu_seq_state(ssp->srcu_gp_seq);
@@ -696,7 +709,7 @@ static void srcu_gp_end(struct srcu_struct *ssp)
 	spin_lock_irq_rcu_node(ssp);
 	idx = rcu_seq_state(ssp->srcu_gp_seq);
 	WARN_ON_ONCE(idx != SRCU_STATE_SCAN2);
-	cbdelay = srcu_get_delay(ssp);
+	cbdelay = !!srcu_get_delay(ssp);
 	WRITE_ONCE(ssp->srcu_last_gp_end, ktime_get_mono_fast_ns());
 	rcu_seq_end(&ssp->srcu_gp_seq);
 	gpseq = rcu_seq_current(&ssp->srcu_gp_seq);
@@ -883,7 +896,7 @@ static void srcu_funnel_gp_start(struct srcu_struct *ssp, struct srcu_data *sdp,
 		// the one boot CPU running with interrupts still disabled.
 		if (likely(srcu_init_done))
 			queue_delayed_work(rcu_gp_wq, &ssp->work,
-					   srcu_get_delay(ssp));
+					   !!srcu_get_delay(ssp));
 		else if (list_empty(&ssp->work.work.entry))
 			list_add(&ssp->work.work.entry, &srcu_boot_list);
 	}
@@ -1540,12 +1553,25 @@ static void srcu_reschedule(struct srcu_struct *ssp, unsigned long delay)
  */
 static void process_srcu(struct work_struct *work)
 {
+	unsigned long curdelay;
+	unsigned long j;
 	struct srcu_struct *ssp;
 
 	ssp = container_of(work, struct srcu_struct, work.work);
 
 	srcu_advance_state(ssp);
-	srcu_reschedule(ssp, srcu_get_delay(ssp));
+	curdelay = srcu_get_delay(ssp);
+	if (!curdelay) {
+		j = jiffies;
+		if (READ_ONCE(ssp->reschedule_jiffies) == j) {
+			WRITE_ONCE(ssp->reschedule_count, READ_ONCE(ssp->reschedule_count) + 1);
+			WARN_ON_ONCE(READ_ONCE(ssp->reschedule_count) > 20);
+		} else {
+			WRITE_ONCE(ssp->reschedule_count, 1);
+			WRITE_ONCE(ssp->reschedule_jiffies, j);
+		}
+	}
+	srcu_reschedule(ssp, curdelay);
 }
 
 void srcutorture_get_gp_data(enum rcutorture_type test_type,
