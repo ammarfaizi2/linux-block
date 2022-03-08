@@ -368,8 +368,6 @@ void __blk_queue_split(struct request_queue *q, struct bio **bio,
 		trace_block_split(split, (*bio)->bi_iter.bi_sector);
 		submit_bio_noacct(*bio);
 		*bio = split;
-
-		blk_throtl_charge_bio_split(*bio);
 	}
 }
 
@@ -784,13 +782,6 @@ static struct request *attempt_merge(struct request_queue *q,
 	    !blk_write_same_mergeable(req->bio, next->bio))
 		return NULL;
 
-	/*
-	 * Don't allow merge of different write hints, or for a hint with
-	 * non-hint IO.
-	 */
-	if (req->write_hint != next->write_hint)
-		return NULL;
-
 	if (req->ioprio != next->ioprio)
 		return NULL;
 
@@ -915,13 +906,6 @@ bool blk_rq_merge_ok(struct request *rq, struct bio *bio)
 	/* must be using the same buffer */
 	if (req_op(rq) == REQ_OP_WRITE_SAME &&
 	    !blk_write_same_mergeable(rq->bio, bio))
-		return false;
-
-	/*
-	 * Don't allow merge of different write hints, or for a hint with
-	 * non-hint IO.
-	 */
-	if (rq->write_hint != bio->bi_write_hint)
 		return false;
 
 	if (rq->ioprio != bio_prio(bio))
