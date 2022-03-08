@@ -232,6 +232,46 @@ int virtio_find_vqs_ctx(struct virtio_device *vdev, unsigned nvqs,
 }
 
 /**
+ * virtio_reset_vq - reset a queue individually
+ * @vq: the virtqueue
+ *
+ * returns 0 on success or error status
+ *
+ * The api process of reset under normal circumstances:
+ *	1. virtio_reset_vq()              - notify the device to reset the queue
+ *	2. virtqueue_detach_unused_buf()  - recycle the buffer submitted
+ *	3. virtqueue_reset_vring()        - reset the vring (may re-alloc)
+ *	4. virtio_enable_resetq()         - mmap vring to device, and enable the queue
+ *
+ * Caller should guarantee that the vring is not accessed by any functions
+ * of virtqueue.
+ */
+static inline
+int virtio_reset_vq(struct virtqueue *vq)
+{
+	if (!vq->vdev->config->reset_vq)
+		return -ENOENT;
+
+	return vq->vdev->config->reset_vq(vq);
+}
+
+/**
+ * virtio_enable_resetq - enable a reset queue
+ * @vq: the virtqueue
+ *
+ * returns 0 on success or error status
+ *
+ */
+static inline
+int virtio_enable_resetq(struct virtqueue *vq)
+{
+	if (!vq->vdev->config->enable_reset_vq)
+		return -ENOENT;
+
+	return vq->vdev->config->enable_reset_vq(vq);
+}
+
+/**
  * virtio_device_ready - enable vq use in probe function
  * @vdev: the device
  *
