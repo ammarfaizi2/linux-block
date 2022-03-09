@@ -1355,7 +1355,7 @@ static void io_kbuf_recycle(struct io_kiocb *req)
 		int ret;
 
 		/* if we fail, just leave buffer attached */
-		ret = xa_insert(&ctx->io_buffers, buf->bgid, buf, GFP_KERNEL);
+		ret = __xa_insert(&ctx->io_buffers, buf->bgid, buf, GFP_KERNEL);
 		if (unlikely(ret < 0))
 			return;
 	}
@@ -3330,7 +3330,7 @@ static struct io_buffer *io_buffer_select(struct io_kiocb *req, size_t *len,
 			list_del(&kbuf->list);
 		} else {
 			kbuf = head;
-			xa_erase(&req->ctx->io_buffers, bgid);
+			__xa_erase(&req->ctx->io_buffers, bgid);
 		}
 		if (*len > kbuf->len)
 			*len = kbuf->len;
@@ -4594,7 +4594,7 @@ static int __io_remove_buffers(struct io_ring_ctx *ctx, struct io_buffer *buf,
 		cond_resched();
 	}
 	i++;
-	xa_erase(&ctx->io_buffers, bgid);
+	__xa_erase(&ctx->io_buffers, bgid);
 
 	return i;
 }
@@ -4749,7 +4749,7 @@ static int io_provide_buffers(struct io_kiocb *req, unsigned int issue_flags)
 
 	ret = io_add_buffers(ctx, p, &head);
 	if (ret >= 0 && !list) {
-		ret = xa_insert(&ctx->io_buffers, p->bgid, head, GFP_KERNEL);
+		ret = __xa_insert(&ctx->io_buffers, p->bgid, head, GFP_KERNEL);
 		if (ret < 0)
 			__io_remove_buffers(ctx, head, p->bgid, -1U);
 	}
