@@ -1552,7 +1552,7 @@ static void process_srcu(struct work_struct *work)
 		j = jiffies;
 		if (READ_ONCE(ssp->reschedule_jiffies) == j) {
 			WRITE_ONCE(ssp->reschedule_count, READ_ONCE(ssp->reschedule_count) + 1);
-			WARN_ON_ONCE(READ_ONCE(ssp->reschedule_count) > 1000);
+			WARN_ON_ONCE(READ_ONCE(ssp->reschedule_count) > 50);
 		} else {
 			WRITE_ONCE(ssp->reschedule_count, 1);
 			WRITE_ONCE(ssp->reschedule_jiffies, j);
