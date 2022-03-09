@@ -3899,7 +3899,7 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 	struct netfs_io_request *rreq = subreq->rreq;
 	struct TCP_Server_Info *server;
 	struct cifs_io_subrequest *rdata = container_of(subreq, struct cifs_io_subrequest, subreq);
-	struct cifsFileInfo *open_file = rreq->netfs_priv;
+	struct cifs_io_request *req = container_of(subreq->rreq, struct cifs_io_request, rreq);
 	struct cifs_sb_info *cifs_sb = CIFS_SB(rreq->inode->i_sb);
 	unsigned int xid;
 	pid_t pid;
@@ -3909,19 +3909,19 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 	xid = get_xid();
 
 	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_RWPIDFORWARD)
-		pid = open_file->pid;
+		pid = req->cfile->pid;
 	else
 		pid = current->tgid; // Ummm...  This may be a workqueue
 
-	server = cifs_pick_channel(tlink_tcon(open_file->tlink)->ses);
+	server = cifs_pick_channel(tlink_tcon(req->cfile->tlink)->ses);
 
 	cifs_dbg(FYI, "%s: op=%08x[%x] mapping=%p len=%zu/%zu\n",
 		 __func__, rreq->debug_id, subreq->debug_index, rreq->mapping,
 		 subreq->transferred, subreq->len);
 
-	if (open_file->invalidHandle) {
+	if (req->cfile->invalidHandle) {
 		do {
-			rc = cifs_reopen_file(open_file, true);
+			rc = cifs_reopen_file(req->cfile, true);
 		} while (rc == -EAGAIN);
 		if (rc)
 			goto out;
@@ -3929,7 +3929,7 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 
 	if (cifs_sb->ctx->rsize == 0)
 		cifs_sb->ctx->rsize =
-			server->ops->negotiate_rsize(tlink_tcon(open_file->tlink),
+			server->ops->negotiate_rsize(tlink_tcon(req->cfile->tlink),
 						     cifs_sb->ctx);
 
 	rc = server->ops->wait_mtu_credits(server, cifs_sb->ctx->rsize, &rsize,
@@ -3938,7 +3938,6 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 		goto out;
 
 	__set_bit(NETFS_SREQ_CLEAR_TAIL, &subreq->flags);
-	rdata->cfile	= cifsFileInfo_get(open_file);
 	rdata->server	= server;
 	rdata->offset	= subreq->start + subreq->transferred;
 	rdata->bytes	= subreq->len   - subreq->transferred;
@@ -3946,7 +3945,7 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 
 	rc = adjust_credits(server, &rdata->credits, rdata->bytes);
 	if (!rc) {
-		if (rdata->cfile->invalidHandle)
+		if (rdata->req->cfile->invalidHandle)
 			rc = -EAGAIN;
 		else
 			rc = server->ops->async_readv(rdata);
@@ -3960,10 +3959,13 @@ out:
 
 static int cifs_init_request(struct netfs_io_request *rreq, struct file *file)
 {
+	struct cifs_io_request *req = container_of(rreq, struct cifs_io_request, rreq);
 	struct cifs_sb_info *cifs_sb = CIFS_SB(rreq->inode->i_sb);
+	struct cifsFileInfo *open_file = file->private_data;
 
 	rreq->netfs_priv = file->private_data;
 	rreq->rsize = cifs_sb->ctx->rsize;
+	req->cfile = cifsFileInfo_get(open_file);
 	return 0;
 }
 
@@ -4019,6 +4021,14 @@ static int cifs_begin_cache_operation(struct netfs_io_request *rreq)
 #endif
 }
 
+static void cifs_free_request(struct netfs_io_request *rreq)
+{
+	struct cifs_io_request *req = container_of(rreq, struct cifs_io_request, rreq);
+
+	if (req->cfile)
+		cifsFileInfo_put(req->cfile);
+}
+
 static void cifs_free_subrequest(struct netfs_io_subrequest *subreq)
 {
 	struct cifs_io_subrequest *rdata =
@@ -4033,14 +4043,14 @@ static void cifs_free_subrequest(struct netfs_io_subrequest *subreq)
 #endif
 
 		add_credits_and_wake_if(rdata->server, &rdata->credits, 0);
-		if (rdata->cfile)
-			cifsFileInfo_put(rdata->cfile);
 	}
 }
 
 const struct netfs_request_ops cifs_req_ops = {
+	.io_request_size	= sizeof(struct cifs_io_request),
 	.io_subrequest_size	= sizeof(struct cifs_io_subrequest),
 	.init_request		= cifs_init_request,
+	.free_request		= cifs_free_request,
 	.free_subrequest	= cifs_free_subrequest,
 	.begin_cache_operation	= cifs_begin_cache_operation,
 	.expand_readahead	= cifs_expand_readahead,
