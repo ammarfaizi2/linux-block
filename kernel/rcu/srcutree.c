@@ -503,7 +503,7 @@ static bool srcu_readers_active(struct srcu_struct *ssp)
 
 #define SRCU_INTERVAL		1
 #define SRCU_MAX_INTERVAL	10
-#define SRCU_MAX_NODELAY	10
+#define SRCU_MAX_NODELAY	100
 
 /*
  * Return grace-period delay, zero if there are expedited grace
