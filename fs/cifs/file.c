@@ -3773,35 +3773,6 @@ out:
 	return written;
 }
 
-static struct cifs_readdata *cifs_readdata_alloc(work_func_t complete)
-{
-	struct cifs_readdata *rdata;
-
-	rdata = kzalloc(sizeof(*rdata), GFP_KERNEL);
-	if (rdata)
-		kref_init(&rdata->refcount);
-
-	return rdata;
-}
-
-void
-cifs_readdata_release(struct kref *refcount)
-{
-	struct cifs_readdata *rdata = container_of(refcount,
-					struct cifs_readdata, refcount);
-
-#ifdef CONFIG_CIFS_SMB_DIRECT
-	if (rdata->mr) {
-		smbd_deregister_mr(rdata->mr);
-		rdata->mr = NULL;
-	}
-#endif
-	if (rdata->cfile)
-		cifsFileInfo_put(rdata->cfile);
-
-	kfree(rdata);
-}
-
 ssize_t
 cifs_strict_readv(struct kiocb *iocb, struct iov_iter *to)
 {
@@ -3927,7 +3898,7 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 {
 	struct netfs_io_request *rreq = subreq->rreq;
 	struct TCP_Server_Info *server;
-	struct cifs_readdata *rdata;
+	struct cifs_io_subrequest *rdata = container_of(subreq, struct cifs_io_subrequest, subreq);
 	struct cifsFileInfo *open_file = rreq->netfs_priv;
 	struct cifs_sb_info *cifs_sb = CIFS_SB(rreq->inode->i_sb);
 	struct cifs_credits credits_on_stack, *credits = &credits_on_stack;
@@ -3966,22 +3937,13 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 	if (rc)
 		goto out;
 
-	rdata = cifs_readdata_alloc(NULL);
-	if (!rdata) {
-		add_credits_and_wake_if(server, credits, 0);
-		rc = -ENOMEM;
-		goto out;
-	}
-
 	__set_bit(NETFS_SREQ_CLEAR_TAIL, &subreq->flags);
-	rdata->subreq	= subreq;
 	rdata->cfile	= cifsFileInfo_get(open_file);
 	rdata->server	= server;
 	rdata->offset	= subreq->start + subreq->transferred;
 	rdata->bytes	= subreq->len   - subreq->transferred;
 	rdata->pid	= pid;
 	rdata->credits	= credits_on_stack;
-	rdata->iter	= subreq->iter;
 
 	rc = adjust_credits(server, &rdata->credits, rdata->bytes);
 	if (!rc) {
@@ -3994,11 +3956,7 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 	if (rc) {
 		add_credits_and_wake_if(server, &rdata->credits, 0);
 		/* Fallback to the readpage in error/reconnect cases */
-		kref_put(&rdata->refcount, cifs_readdata_release);
-		goto out;
 	}
-
-	kref_put(&rdata->refcount, cifs_readdata_release);
 
 out:
 	free_xid(xid);
@@ -4067,8 +4025,27 @@ static int cifs_begin_cache_operation(struct netfs_io_request *rreq)
 #endif
 }
 
+static void cifs_free_subrequest(struct netfs_io_subrequest *subreq)
+{
+	struct cifs_io_subrequest *rdata =
+		container_of(subreq, struct cifs_io_subrequest, subreq);
+
+	if (rdata->subreq.source == NETFS_DOWNLOAD_FROM_SERVER) {
+#ifdef CONFIG_CIFS_SMB_DIRECT
+		if (rdata->mr) {
+			smbd_deregister_mr(rdata->mr);
+			rdata->mr = NULL;
+		}
+#endif
+		if (rdata->cfile)
+			cifsFileInfo_put(rdata->cfile);
+	}
+}
+
 const struct netfs_request_ops cifs_req_ops = {
+	.io_subrequest_size	= sizeof(struct cifs_io_subrequest),
 	.init_request		= cifs_init_request,
+	.free_subrequest	= cifs_free_subrequest,
 	.begin_cache_operation	= cifs_begin_cache_operation,
 	.expand_readahead	= cifs_expand_readahead,
 	.issue_read		= cifs_req_issue_read,
