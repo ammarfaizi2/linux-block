@@ -15,7 +15,6 @@
 #include <media/v4l2-event.h>
 #include <media/v4l2-mem2mem.h>
 #include <media/videobuf2-dma-contig.h>
-#include <linux/pm_runtime.h>
 
 #include "mtk_vcodec_drv.h"
 #include "mtk_vcodec_enc.h"
@@ -350,7 +349,7 @@ static int mtk_vcodec_probe(struct platform_device *pdev)
 	if (of_get_property(pdev->dev.of_node, "dma-ranges", NULL))
 		dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(34));
 
-	ret = video_register_device(vfd_enc, VFL_TYPE_VIDEO, 1);
+	ret = video_register_device(vfd_enc, VFL_TYPE_VIDEO, -1);
 	if (ret) {
 		mtk_v4l2_err("Failed to register video device");
 		goto err_enc_reg;
