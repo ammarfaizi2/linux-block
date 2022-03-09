@@ -3901,7 +3901,6 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 	struct cifs_io_subrequest *rdata = container_of(subreq, struct cifs_io_subrequest, subreq);
 	struct cifsFileInfo *open_file = rreq->netfs_priv;
 	struct cifs_sb_info *cifs_sb = CIFS_SB(rreq->inode->i_sb);
-	struct cifs_credits credits_on_stack, *credits = &credits_on_stack;
 	unsigned int xid;
 	pid_t pid;
 	int rc = 0;
@@ -3933,7 +3932,8 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 			server->ops->negotiate_rsize(tlink_tcon(open_file->tlink),
 						     cifs_sb->ctx);
 
-	rc = server->ops->wait_mtu_credits(server, cifs_sb->ctx->rsize, &rsize, credits);
+	rc = server->ops->wait_mtu_credits(server, cifs_sb->ctx->rsize, &rsize,
+					   &rdata->credits);
 	if (rc)
 		goto out;
 
@@ -3943,7 +3943,6 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 	rdata->offset	= subreq->start + subreq->transferred;
 	rdata->bytes	= subreq->len   - subreq->transferred;
 	rdata->pid	= pid;
-	rdata->credits	= credits_on_stack;
 
 	rc = adjust_credits(server, &rdata->credits, rdata->bytes);
 	if (!rc) {
@@ -3951,11 +3950,6 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 			rc = -EAGAIN;
 		else
 			rc = server->ops->async_readv(rdata);
-	}
-
-	if (rc) {
-		add_credits_and_wake_if(server, &rdata->credits, 0);
-		/* Fallback to the readpage in error/reconnect cases */
 	}
 
 out:
@@ -4037,6 +4031,8 @@ static void cifs_free_subrequest(struct netfs_io_subrequest *subreq)
 			rdata->mr = NULL;
 		}
 #endif
+
+		add_credits_and_wake_if(rdata->server, &rdata->credits, 0);
 		if (rdata->cfile)
 			cifsFileInfo_put(rdata->cfile);
 	}
