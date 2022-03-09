@@ -157,7 +157,7 @@ static int rproc_virtio_find_vqs(struct virtio_device *vdev, unsigned int nvqs,
 				 vq_callback_t *callbacks[],
 				 const char * const names[],
 				 const bool * ctx,
-				 struct irq_affinity *desc)
+				 struct irq_affinity *desc, u32 sizes[])
 {
 	int i, ret, queue_idx = 0;
 

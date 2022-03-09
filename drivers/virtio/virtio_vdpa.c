@@ -268,7 +268,7 @@ static int virtio_vdpa_find_vqs(struct virtio_device *vdev, unsigned nvqs,
 				vq_callback_t *callbacks[],
 				const char * const names[],
 				const bool *ctx,
-				struct irq_affinity *desc)
+				struct irq_affinity *desc, u32 sizes[])
 {
 	struct virtio_vdpa_device *vd_dev = to_virtio_vdpa_device(vdev);
 	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
