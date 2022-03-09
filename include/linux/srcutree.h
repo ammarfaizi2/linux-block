@@ -85,6 +85,8 @@ struct srcu_struct {
 	atomic_t srcu_barrier_cpu_cnt;		/* # CPUs not yet posting a */
 						/*  callback for the barrier */
 						/*  operation. */
+	unsigned long reschedule_jiffies;
+	unsigned long reschedule_count;
 	struct delayed_work work;
 	struct lockdep_map dep_map;
 };

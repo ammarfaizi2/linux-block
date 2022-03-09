@@ -1553,12 +1553,25 @@ static void srcu_reschedule(struct srcu_struct *ssp, unsigned long delay)
  */
 static void process_srcu(struct work_struct *work)
 {
+	unsigned long curdelay;
+	unsigned long j;
 	struct srcu_struct *ssp;
 
 	ssp = container_of(work, struct srcu_struct, work.work);
 
 	srcu_advance_state(ssp);
-	srcu_reschedule(ssp, srcu_get_delay(ssp));
+	curdelay = srcu_get_delay(ssp);
+	if (!curdelay) {
+		j = jiffies;
+		if (READ_ONCE(ssp->reschedule_jiffies) == j) {
+			WRITE_ONCE(ssp->reschedule_count, READ_ONCE(ssp->reschedule_count) + 1);
+			WARN_ON_ONCE(READ_ONCE(ssp->reschedule_count) > 1000);
+		} else {
+			WRITE_ONCE(ssp->reschedule_count, 1);
+			WRITE_ONCE(ssp->reschedule_jiffies, j);
+		}
+	}
+	srcu_reschedule(ssp, curdelay);
 }
 
 void srcutorture_get_gp_data(enum rcutorture_type test_type,
