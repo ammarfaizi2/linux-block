@@ -897,7 +897,7 @@ static int mtk_hsdma_probe(struct platform_device *pdev)
 	struct mtk_hsdma_vchan *vc;
 	struct dma_device *dd;
 	struct resource *res;
-	int i, err;
+	int i, err, irq;
 
 	hsdma = devm_kzalloc(&pdev->dev, sizeof(*hsdma), GFP_KERNEL);
 	if (!hsdma)
@@ -923,13 +923,11 @@ static int mtk_hsdma_probe(struct platform_device *pdev)
 		return PTR_ERR(hsdma->clk);
 	}
 
-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!res) {
-		dev_err(&pdev->dev, "No irq resource for %s\n",
-			dev_name(&pdev->dev));
-		return -EINVAL;
-	}
-	hsdma->irq = res->start;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
+
+	hsdma->irq = irq;
 
 	refcount_set(&hsdma->pc_refcnt, 0);
 	spin_lock_init(&hsdma->lock);
