@@ -917,23 +917,31 @@ rtw89_mac_get_req_pwr_state(struct rtw89_dev *rtwdev)
 }
 
 static void rtw89_mac_send_rpwm(struct rtw89_dev *rtwdev,
-				enum rtw89_rpwm_req_pwr_state req_pwr_state)
+				enum rtw89_rpwm_req_pwr_state req_pwr_state,
+				bool notify_wake)
 {
 	u16 request;
 
+	spin_lock_bh(&rtwdev->rpwm_lock);
+
 	request = rtw89_read16(rtwdev, R_AX_RPWM);
 	request ^= request | PS_RPWM_TOGGLE;
-
-	rtwdev->mac.rpwm_seq_num = (rtwdev->mac.rpwm_seq_num + 1) &
-				   RPWM_SEQ_NUM_MAX;
-	request |= FIELD_PREP(PS_RPWM_SEQ_NUM, rtwdev->mac.rpwm_seq_num);
-
 	request |= req_pwr_state;
 
-	if (req_pwr_state < RTW89_MAC_RPWM_REQ_PWR_STATE_CLK_GATED)
-		request |= PS_RPWM_ACK;
+	if (notify_wake) {
+		request |= PS_RPWM_NOTIFY_WAKE;
+	} else {
+		rtwdev->mac.rpwm_seq_num = (rtwdev->mac.rpwm_seq_num + 1) &
+					    RPWM_SEQ_NUM_MAX;
+		request |= FIELD_PREP(PS_RPWM_SEQ_NUM,
+				      rtwdev->mac.rpwm_seq_num);
 
+		if (req_pwr_state < RTW89_MAC_RPWM_REQ_PWR_STATE_CLK_GATED)
+			request |= PS_RPWM_ACK;
+	}
 	rtw89_write16(rtwdev, rtwdev->hci.rpwm_addr, request);
+
+	spin_unlock_bh(&rtwdev->rpwm_lock);
 }
 
 static int rtw89_mac_check_cpwm_state(struct rtw89_dev *rtwdev,
@@ -993,12 +1001,20 @@ void rtw89_mac_power_mode_change(struct rtw89_dev *rtwdev, bool enter)
 	else
 		state = RTW89_MAC_RPWM_REQ_PWR_STATE_ACTIVE;
 
-	rtw89_mac_send_rpwm(rtwdev, state);
+	rtw89_mac_send_rpwm(rtwdev, state, false);
 	ret = read_poll_timeout_atomic(rtw89_mac_check_cpwm_state, ret, !ret,
 				       1000, 15000, false, rtwdev, state);
 	if (ret)
 		rtw89_err(rtwdev, "firmware failed to ack for %s ps mode\n",
 			  enter ? "entering" : "leaving");
+}
+
+void rtw89_mac_notify_wake(struct rtw89_dev *rtwdev)
+{
+	enum rtw89_rpwm_req_pwr_state state;
+
+	state = rtw89_mac_get_req_pwr_state(rtwdev);
+	rtw89_mac_send_rpwm(rtwdev, state, true);
 }
 
 static int rtw89_mac_power_switch(struct rtw89_dev *rtwdev, bool on)
@@ -3129,6 +3145,57 @@ rtw89_mac_c2h_macid_pause(struct rtw89_dev *rtwdev, struct sk_buff *c2h, u32 len
 {
 }
 
+static bool rtw89_is_op_chan(struct rtw89_dev *rtwdev, u8 band, u8 channel)
+{
+	struct rtw89_hw_scan_info *scan_info = &rtwdev->scan_info;
+
+	return band == scan_info->op_band && channel == scan_info->op_pri_ch;
+}
+
+static void
+rtw89_mac_c2h_scanofld_rsp(struct rtw89_dev *rtwdev, struct sk_buff *c2h,
+			   u32 len)
+{
+	struct ieee80211_vif *vif = rtwdev->scan_info.scanning_vif;
+	struct rtw89_hal *hal = &rtwdev->hal;
+	u8 reason, status, tx_fail, band;
+	u16 chan;
+
+	tx_fail = RTW89_GET_MAC_C2H_SCANOFLD_TX_FAIL(c2h->data);
+	status = RTW89_GET_MAC_C2H_SCANOFLD_STATUS(c2h->data);
+	chan = RTW89_GET_MAC_C2H_SCANOFLD_PRI_CH(c2h->data);
+	reason = RTW89_GET_MAC_C2H_SCANOFLD_RSP(c2h->data);
+	band = RTW89_GET_MAC_C2H_SCANOFLD_BAND(c2h->data);
+
+	if (!(rtwdev->chip->support_bands & BIT(NL80211_BAND_6GHZ)))
+		band = chan > 14 ? RTW89_BAND_5G : RTW89_BAND_2G;
+
+	rtw89_debug(rtwdev, RTW89_DBG_HW_SCAN,
+		    "band: %d, chan: %d, reason: %d, status: %d, tx_fail: %d\n",
+		    band, chan, reason, status, tx_fail);
+
+	switch (reason) {
+	case RTW89_SCAN_LEAVE_CH_NOTIFY:
+		if (rtw89_is_op_chan(rtwdev, band, chan))
+			ieee80211_stop_queues(rtwdev->hw);
+		return;
+	case RTW89_SCAN_END_SCAN_NOTIFY:
+		rtw89_hw_scan_complete(rtwdev, vif, false);
+		break;
+	case RTW89_SCAN_ENTER_CH_NOTIFY:
+		if (rtw89_is_op_chan(rtwdev, band, chan))
+			ieee80211_wake_queues(rtwdev->hw);
+		break;
+	default:
+		return;
+	}
+
+	hal->prev_band_type = hal->current_band_type;
+	hal->prev_primary_channel = hal->current_channel;
+	hal->current_channel = chan;
+	hal->current_band_type = band;
+}
+
 static void
 rtw89_mac_c2h_rec_ack(struct rtw89_dev *rtwdev, struct sk_buff *c2h, u32 len)
 {
@@ -3172,6 +3239,7 @@ void (* const rtw89_mac_c2h_ofld_handler[])(struct rtw89_dev *rtwdev,
 	[RTW89_MAC_C2H_FUNC_PKT_OFLD_RSP] = NULL,
 	[RTW89_MAC_C2H_FUNC_BCN_RESEND] = NULL,
 	[RTW89_MAC_C2H_FUNC_MACID_PAUSE] = rtw89_mac_c2h_macid_pause,
+	[RTW89_MAC_C2H_FUNC_SCANOFLD_RSP] = rtw89_mac_c2h_scanofld_rsp,
 };
 
 static
