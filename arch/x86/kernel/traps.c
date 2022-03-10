@@ -213,7 +213,7 @@ DEFINE_IDTENTRY(exc_overflow)
 
 static __ro_after_init bool ibt_fatal = true;
 
-void ibt_selftest_ip(void); /* code label defined in asm below */
+extern void ibt_selftest_ip(void); /* code label defined in asm below */
 
 enum cp_error_code {
 	CP_EC        = (1 << 15) - 1,
@@ -237,7 +237,7 @@ DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
 	if (WARN_ON_ONCE(user_mode(regs) || (error_code & CP_EC) != CP_ENDBR))
 		return;
 
-	if (unlikely(regs->ip == (unsigned long)ibt_selftest_ip)) {
+	if (unlikely(regs->ip == (unsigned long)&ibt_selftest_ip)) {
 		regs->ax = 0;
 		return;
 	}
@@ -251,7 +251,8 @@ DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
 	BUG();
 }
 
-bool ibt_selftest(void)
+/* Must be noinline to ensure uniqueness of ibt_selftest_ip. */
+noinline bool ibt_selftest(void)
 {
 	unsigned long ret;
 
