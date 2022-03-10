@@ -3889,6 +3889,51 @@ int cifs_file_mmap(struct file *file, struct vm_area_struct *vma)
 }
 
 /*
+ * Split the read up according to how many credits we can get for each piece.
+ * It's okay to sleep here if we need to wait for more credit to become
+ * available.
+ *
+ * We also choose the server and allocate an operation ID to be cleaned up
+ * later.
+ */
+static bool cifs_clamp_length(struct netfs_io_subrequest *subreq)
+{
+	struct netfs_io_request *rreq = subreq->rreq;
+	struct TCP_Server_Info *server;
+	struct cifs_io_subrequest *rdata = container_of(subreq, struct cifs_io_subrequest, subreq);
+	struct cifs_io_request *req = container_of(subreq->rreq, struct cifs_io_request, rreq);
+	struct cifs_sb_info *cifs_sb = CIFS_SB(rreq->inode->i_sb);
+	unsigned int rsize = 0;
+	int rc;
+
+	rdata->xid = get_xid();
+
+	server = cifs_pick_channel(tlink_tcon(req->cfile->tlink)->ses);
+	rdata->server = server;
+
+	if (cifs_sb->ctx->rsize == 0)
+		cifs_sb->ctx->rsize =
+			server->ops->negotiate_rsize(tlink_tcon(req->cfile->tlink),
+						     cifs_sb->ctx);
+
+
+	rc = server->ops->wait_mtu_credits(server, cifs_sb->ctx->rsize, &rsize,
+					   &rdata->credits);
+	if (rc) {
+		subreq->error = rc;
+		return false;
+	}
+
+	rdata->have_credits = true;
+	subreq->len = min_t(size_t, subreq->len, rsize);
+#ifdef CONFIG_CIFS_SMB_DIRECT
+	if (server->smbd_conn)
+		subreq->max_nr_segs = server->smbd_conn->max_frmr_depth;
+#endif
+	return true;
+}
+
+/*
  * Issue a read operation on behalf of the netfs helper functions.  We're asked
  * to make a read of a certain size at a point in the file.  We are permitted
  * to only read a portion of that, but as long as we read something, the netfs
@@ -3897,23 +3942,16 @@ int cifs_file_mmap(struct file *file, struct vm_area_struct *vma)
 static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 {
 	struct netfs_io_request *rreq = subreq->rreq;
-	struct TCP_Server_Info *server;
 	struct cifs_io_subrequest *rdata = container_of(subreq, struct cifs_io_subrequest, subreq);
 	struct cifs_io_request *req = container_of(subreq->rreq, struct cifs_io_request, rreq);
 	struct cifs_sb_info *cifs_sb = CIFS_SB(rreq->inode->i_sb);
-	unsigned int xid;
 	pid_t pid;
 	int rc = 0;
-	unsigned int rsize;
-
-	xid = get_xid();
 
 	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_RWPIDFORWARD)
 		pid = req->cfile->pid;
 	else
 		pid = current->tgid; // Ummm...  This may be a workqueue
-
-	server = cifs_pick_channel(tlink_tcon(req->cfile->tlink)->ses);
 
 	cifs_dbg(FYI, "%s: op=%08x[%x] mapping=%p len=%zu/%zu\n",
 		 __func__, rreq->debug_id, subreq->debug_index, rreq->mapping,
@@ -3927,32 +3965,20 @@ static void cifs_req_issue_read(struct netfs_io_subrequest *subreq)
 			goto out;
 	}
 
-	if (cifs_sb->ctx->rsize == 0)
-		cifs_sb->ctx->rsize =
-			server->ops->negotiate_rsize(tlink_tcon(req->cfile->tlink),
-						     cifs_sb->ctx);
-
-	rc = server->ops->wait_mtu_credits(server, cifs_sb->ctx->rsize, &rsize,
-					   &rdata->credits);
-	if (rc)
-		goto out;
-
 	__set_bit(NETFS_SREQ_CLEAR_TAIL, &subreq->flags);
-	rdata->server	= server;
 	rdata->offset	= subreq->start + subreq->transferred;
 	rdata->bytes	= subreq->len   - subreq->transferred;
 	rdata->pid	= pid;
 
-	rc = adjust_credits(server, &rdata->credits, rdata->bytes);
+	rc = adjust_credits(rdata->server, &rdata->credits, rdata->bytes);
 	if (!rc) {
 		if (rdata->req->cfile->invalidHandle)
 			rc = -EAGAIN;
 		else
-			rc = server->ops->async_readv(rdata);
+			rc = rdata->server->ops->async_readv(rdata);
 	}
 
 out:
-	free_xid(xid);
 	if (rc)
 		netfs_subreq_terminated(subreq, rc, false);
 }
@@ -4033,6 +4059,7 @@ static void cifs_free_subrequest(struct netfs_io_subrequest *subreq)
 {
 	struct cifs_io_subrequest *rdata =
 		container_of(subreq, struct cifs_io_subrequest, subreq);
+	int rc;
 
 	if (rdata->subreq.source == NETFS_DOWNLOAD_FROM_SERVER) {
 #ifdef CONFIG_CIFS_SMB_DIRECT
@@ -4042,7 +4069,10 @@ static void cifs_free_subrequest(struct netfs_io_subrequest *subreq)
 		}
 #endif
 
-		add_credits_and_wake_if(rdata->server, &rdata->credits, 0);
+		if (rdata->have_credits)
+			add_credits_and_wake_if(rdata->server, &rdata->credits, 0);
+		rc = subreq->error;
+		free_xid(rdata->xid);
 	}
 }
 
@@ -4054,6 +4084,7 @@ const struct netfs_request_ops cifs_req_ops = {
 	.free_subrequest	= cifs_free_subrequest,
 	.begin_cache_operation	= cifs_begin_cache_operation,
 	.expand_readahead	= cifs_expand_readahead,
+	.clamp_length		= cifs_clamp_length,
 	.issue_read		= cifs_req_issue_read,
 	.done			= cifs_rreq_done,
 };

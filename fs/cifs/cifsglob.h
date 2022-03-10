@@ -1448,8 +1448,10 @@ struct cifs_io_subrequest {
 	__u64				offset;
 	ssize_t				got_bytes;
 	unsigned int			bytes;
+	unsigned int			xid;
 	pid_t				pid;
 	int				result;
+	bool				have_credits;
 	struct kvec			iov[2];
 	struct TCP_Server_Info		*server;
 #ifdef CONFIG_CIFS_SMB_DIRECT
