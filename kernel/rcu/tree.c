@@ -3839,17 +3839,20 @@ void synchronize_rcu(void)
 	if (rcu_blocking_is_gp()) {
 		struct rcu_node *rnp = rcu_get_root();
 
-		// Single-CPU !PREEMPT context allows vacuous grace periods.
-		raw_spin_lock_irq_rcu_node(rnp);
+		// Single-CPU !PREEMPT context allows vacuous grace periods,
+		if (rcu_state.n_online_cpus)
+			raw_spin_lock_irq_rcu_node(rnp);
 		if (!rcu_seq_state(rcu_state.gp_seq)) {
-			// Advance the grace-period sequence number for
-			// the benefit of purely polled grace periods.
+			// Advance the grace-period sequence number
+			// for the benefit of purely polled grace periods,
+			// but only if there is no grace period in progress.
 			rcu_seq_start(&rcu_state.gp_seq);
 			rcu_seq_end(&rcu_state.gp_seq);
 			ASSERT_EXCLUSIVE_WRITER(rcu_state.gp_seq);
 			trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq, TPS("UPquick"));
 		}
-		raw_spin_unlock_irq_rcu_node(rnp);
+		if (rcu_state.n_online_cpus)
+			raw_spin_unlock_irq_rcu_node(rnp);
 		return;
 	}
 	if (rcu_gp_is_expedited())
