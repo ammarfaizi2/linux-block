@@ -3753,6 +3753,12 @@ void __init kfree_rcu_scheduler_running(void)
 	}
 }
 
+/* Has the rcu_init() function been invoked? */
+static bool rcu_init_invoked(void)
+{
+	return !!rcu_state.n_online_cpus;
+}
+
 /*
  * During early boot, any blocking grace-period wait automatically
  * implies a grace period.  Later on, this is never the case for PREEMPTION.
@@ -3831,12 +3837,39 @@ static int rcu_blocking_is_gp(void)
  */
 void synchronize_rcu(void)
 {
+
 	RCU_LOCKDEP_WARN(lock_is_held(&rcu_bh_lock_map) ||
 			 lock_is_held(&rcu_lock_map) ||
 			 lock_is_held(&rcu_sched_lock_map),
 			 "Illegal synchronize_rcu() in RCU read-side critical section");
-	if (rcu_blocking_is_gp())
-		return;  // Context allows vacuous grace periods.
+	if (rcu_blocking_is_gp()) {
+		struct rcu_node *rnp = rcu_get_root();
+
+		// Single-CPU !PREEMPT context allows vacuous grace periods.
+		if (rcu_init_invoked())
+			raw_spin_lock_irq_rcu_node(rnp);
+		// Disabling interrupts excludes rcu_start_this_gp().
+		if (!rcu_seq_state(rcu_state.gp_seq)) {
+			// Advance the grace-period sequence number for
+			// the benefit of purely polled grace periods, but
+			// only if there is no grace period in progress.
+			// This code relies on the fact that rcu_gp_init()
+			// updates ->gp_seq at the beginning of the
+			// initialization process and that rcu_gp_cleanup()
+			// updates ->gp_seq at the end of the cleanup
+			// process.  This prevents the following code from
+			// interfering with initialization and cleanup,
+			// as well as preventing it from interfering with
+			// an ongoing grace period.
+			rcu_seq_start(&rcu_state.gp_seq);
+			rcu_seq_end(&rcu_state.gp_seq);
+			ASSERT_EXCLUSIVE_WRITER(rcu_state.gp_seq);
+			trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq, TPS("UPquick"));
+		}
+		if (rcu_init_invoked())
+			raw_spin_unlock_irq_rcu_node(rnp);
+		return;
+	}
 	if (rcu_gp_is_expedited())
 		synchronize_rcu_expedited();
 	else
