@@ -404,15 +404,8 @@ static void spi_remove(struct device *dev)
 {
 	const struct spi_driver		*sdrv = to_spi_driver(dev->driver);
 
-	if (sdrv->remove) {
-		int ret;
-
-		ret = sdrv->remove(to_spi_device(dev));
-		if (ret)
-			dev_warn(dev,
-				 "Failed to unbind driver (%pe), ignoring\n",
-				 ERR_PTR(ret));
-	}
+	if (sdrv->remove)
+		sdrv->remove(to_spi_device(dev));
 
 	dev_pm_domain_detach(dev, true);
 }
@@ -1019,10 +1012,10 @@ int spi_map_buf(struct spi_controller *ctlr, struct device *dev,
 	int i, ret;
 
 	if (vmalloced_buf || kmap_buf) {
-		desc_len = min_t(int, max_seg_size, PAGE_SIZE);
+		desc_len = min_t(unsigned int, max_seg_size, PAGE_SIZE);
 		sgs = DIV_ROUND_UP(len + offset_in_page(buf), desc_len);
 	} else if (virt_addr_valid(buf)) {
-		desc_len = min_t(int, max_seg_size, ctlr->max_dma_len);
+		desc_len = min_t(unsigned int, max_seg_size, ctlr->max_dma_len);
 		sgs = DIV_ROUND_UP(len, desc_len);
 	} else {
 		return -EINVAL;

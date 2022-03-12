@@ -285,7 +285,7 @@ static void macvlan_broadcast(struct sk_buff *skb,
 		if (likely(nskb))
 			err = macvlan_broadcast_one(nskb, vlan, eth,
 					mode == MACVLAN_MODE_BRIDGE) ?:
-			      netif_rx_ni(nskb);
+			      netif_rx(nskb);
 		macvlan_count_rx(vlan, skb->len + ETH_HLEN,
 				 err == NET_RX_SUCCESS, true);
 	}
@@ -371,7 +371,7 @@ static void macvlan_broadcast_enqueue(struct macvlan_port *port,
 free_nskb:
 	kfree_skb(nskb);
 err:
-	atomic_long_inc(&skb->dev->rx_dropped);
+	dev_core_stats_rx_dropped_inc(skb->dev);
 }
 
 static void macvlan_flush_sources(struct macvlan_port *port,
@@ -410,7 +410,7 @@ static void macvlan_forward_source_one(struct sk_buff *skb,
 	if (ether_addr_equal_64bits(eth_hdr(skb)->h_dest, dev->dev_addr))
 		nskb->pkt_type = PACKET_HOST;
 
-	ret = netif_rx(nskb);
+	ret = __netif_rx(nskb);
 	macvlan_count_rx(vlan, len, ret == NET_RX_SUCCESS, false);
 }
 
@@ -468,7 +468,7 @@ static rx_handler_result_t macvlan_handle_frame(struct sk_buff **pskb)
 			/* forward to original port. */
 			vlan = src;
 			ret = macvlan_broadcast_one(skb, vlan, eth, 0) ?:
-			      netif_rx(skb);
+			      __netif_rx(skb);
 			handle_res = RX_HANDLER_CONSUMED;
 			goto out;
 		}
