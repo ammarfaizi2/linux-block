@@ -65,6 +65,7 @@ TRACE_EVENT(rcu_utilization,
  *	"fqswaitsig": GP kthread awakened by signal from fqswait state.
  *	"end": End a grace period.
  *	"cpuend": CPU first notices a grace-period end.
+ *	"UPquick": Instantaneous grace period on a uniprocessor system.
  */
 TRACE_EVENT_RCU(rcu_grace_period,
 
