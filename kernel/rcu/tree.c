@@ -3753,6 +3753,12 @@ void __init kfree_rcu_scheduler_running(void)
 	}
 }
 
+/* Has the rcu_init() function been invoked? */
+static bool rcu_init_invoked(void)
+{
+	return !!rcu_state.n_online_cpus;
+}
+
 /*
  * During early boot, any blocking grace-period wait automatically
  * implies a grace period.  Later on, this is never the case for PREEMPTION.
@@ -3840,7 +3846,7 @@ void synchronize_rcu(void)
 		struct rcu_node *rnp = rcu_get_root();
 
 		// Single-CPU !PREEMPT context allows vacuous grace periods,
-		if (rcu_state.n_online_cpus)
+		if (rcu_init_invoked())
 			raw_spin_lock_irq_rcu_node(rnp);
 		if (!rcu_seq_state(rcu_state.gp_seq)) {
 			// Advance the grace-period sequence number
@@ -3851,7 +3857,7 @@ void synchronize_rcu(void)
 			ASSERT_EXCLUSIVE_WRITER(rcu_state.gp_seq);
 			trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq, TPS("UPquick"));
 		}
-		if (rcu_state.n_online_cpus)
+		if (rcu_init_invoked())
 			raw_spin_unlock_irq_rcu_node(rnp);
 		return;
 	}
