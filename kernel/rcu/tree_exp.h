@@ -922,7 +922,6 @@ static void sync_rcu_do_polled_gp(struct work_struct *wp)
  * If the needed grace period is not already slated to start, initiates
  * that grace period.
  */
-
 unsigned long start_poll_synchronize_rcu_expedited(void)
 {
 	unsigned long flags;
@@ -937,12 +936,15 @@ unsigned long start_poll_synchronize_rcu_expedited(void)
 	s = rcu_exp_gp_seq_snap();
 	rdp = per_cpu_ptr(&rcu_data, raw_smp_processor_id());
 	rnp = rdp->mynode;
-	raw_spin_lock_irqsave(&rnp->exp_poll_lock, flags);
+	if (rcu_init_invoked())
+		raw_spin_lock_irqsave(&rnp->exp_poll_lock, flags);
 	if ((rnp->exp_seq_poll_rq & 0x1) || ULONG_CMP_LT(rnp->exp_seq_poll_rq, s)) {
 		rnp->exp_seq_poll_rq = s;
-		queue_work(rcu_gp_wq, &rnp->exp_poll_wq);
+		if (rcu_init_invoked())
+			queue_work(rcu_gp_wq, &rnp->exp_poll_wq);
 	}
-	raw_spin_unlock_irqrestore(&rnp->exp_poll_lock, flags);
+	if (rcu_init_invoked())
+		raw_spin_unlock_irqrestore(&rnp->exp_poll_lock, flags);
 
 	return s | RCU_GET_STATE_FROM_EXPEDITED;
 }
