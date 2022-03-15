@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_IRQ_STACK_H
 #define _ASM_X86_IRQ_STACK_H
 
+#include <linux/hardirq.h>
 #include <asm/processor_api.h>
 #include <linux/ptrace.h>
 
