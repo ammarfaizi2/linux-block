@@ -9,6 +9,7 @@
 #ifndef _LINUX_MODULE_H
 #define _LINUX_MODULE_H
 
+#include <linux/rbtree_latch_types.h>
 #include <linux/mutex.h>
 #include <linux/kobject_types.h>
 #include <linux/err.h>
