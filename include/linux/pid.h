@@ -2,6 +2,7 @@
 #ifndef _LINUX_PID_H
 #define _LINUX_PID_H
 
+#include <linux/refcount_api.h>
 #include <linux/pid_types.h>
 
 #include <linux/rculist.h>

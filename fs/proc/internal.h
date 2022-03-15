@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/pid.h>
 #include <linux/proc_fs.h>
 #include <linux/proc_ns.h>

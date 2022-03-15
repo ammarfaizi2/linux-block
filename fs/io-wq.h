@@ -1,6 +1,7 @@
 #ifndef INTERNAL_IO_WQ_H
 #define INTERNAL_IO_WQ_H
 
+#include <linux/refcount_api.h>
 #include <linux/refcount.h>
 
 struct io_wq;

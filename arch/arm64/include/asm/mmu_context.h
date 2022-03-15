@@ -10,6 +10,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/refcount_api.h>
 #include <linux/mm_api.h>
 #include <asm/kvm_mmu.h>
 #include <linux/compiler.h>

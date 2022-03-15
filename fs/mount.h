@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/refcount_api.h>
 #include <linux/dcache.h>
 #include <linux/mount.h>
 #include <linux/seq_file.h>

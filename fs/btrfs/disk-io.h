@@ -6,6 +6,7 @@
 #ifndef BTRFS_DISK_IO_H
 #define BTRFS_DISK_IO_H
 
+#include <linux/refcount_api.h>
 #include <linux/types.h>
 
 #define BTRFS_SUPER_MIRROR_MAX	 3

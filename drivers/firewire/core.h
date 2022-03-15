@@ -2,6 +2,7 @@
 #ifndef _FIREWIRE_CORE_H
 #define _FIREWIRE_CORE_H
 
+#include <linux/refcount_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/compiler.h>
 #include <linux/device.h>

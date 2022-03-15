@@ -6,6 +6,7 @@
 #ifndef BTRFS_DELAYED_REF_H
 #define BTRFS_DELAYED_REF_H
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/refcount.h>
 

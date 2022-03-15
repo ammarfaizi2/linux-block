@@ -2,6 +2,7 @@
 #ifndef __IPC_NAMESPACE_H__
 #define __IPC_NAMESPACE_H__
 
+#include <linux/refcount_api.h>
 #include <linux/err.h>
 #include <linux/idr.h>
 #include <linux/rwsem.h>

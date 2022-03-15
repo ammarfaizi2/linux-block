@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/fs_api.h>
 #include <linux/compiler.h>
 #include <linux/kernel.h>
