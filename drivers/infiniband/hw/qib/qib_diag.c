@@ -42,6 +42,7 @@
  * through the /sys/bus/pci resource mmap interface.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/poll.h>

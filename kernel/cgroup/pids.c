@@ -28,6 +28,7 @@
  * Copyright (C) 2015 Aleksa Sarai <cyphar@cyphar.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/threads.h>
 #include <linux/atomic.h>

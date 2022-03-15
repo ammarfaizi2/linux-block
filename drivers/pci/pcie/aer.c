@@ -15,6 +15,7 @@
 #define pr_fmt(fmt) "AER: " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/cper.h>
 #include <linux/pci.h>

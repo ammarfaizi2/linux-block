@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_BASENAME ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/idr.h>

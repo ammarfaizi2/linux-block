@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 
 #include "mpi3mr.h"

@@ -20,6 +20,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

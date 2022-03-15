@@ -12,6 +12,7 @@
  * All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

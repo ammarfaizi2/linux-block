@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/atomic_api.h>
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
 #include <linux/module.h>

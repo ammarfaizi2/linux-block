@@ -10,6 +10,7 @@
  * Copyright (C) 2014 Texas Instruments Incorporated
  *    Aurelien Jacquiot <a-jacquiot@ti.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/cdev.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2014 Alexander Shiyan <shc_work@mail.ru>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/gpio/consumer.h>

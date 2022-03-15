@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/bug.h>
 #include <linux/atomic.h>

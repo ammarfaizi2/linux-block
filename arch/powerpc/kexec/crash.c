@@ -7,6 +7,7 @@
  * Created by: Haren Myneni
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/smp.h>
 #include <linux/reboot.h>

@@ -6,6 +6,7 @@
  */
 
 #define FSCACHE_DEBUG_LEVEL CACHE
+#include <linux/atomic_api.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include "internal.h"

@@ -3,6 +3,7 @@
  * Copyright (c) 2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>

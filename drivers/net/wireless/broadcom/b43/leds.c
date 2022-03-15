@@ -13,6 +13,8 @@
 
 */
 
+#include <linux/atomic_api.h>
+
 #include "b43.h"
 #include "leds.h"
 #include "rfkill.h"

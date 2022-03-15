@@ -7,6 +7,7 @@
  * TODO: Add ingress support (and socket redirect support)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

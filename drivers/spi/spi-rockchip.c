@@ -4,6 +4,7 @@
  * Author: Addy Ke <addy.ke@rock-chips.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/dmaengine.h>
 #include <linux/interrupt.h>

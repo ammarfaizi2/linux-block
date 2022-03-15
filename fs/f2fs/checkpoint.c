@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/bio.h>
 #include <linux/mpage.h>

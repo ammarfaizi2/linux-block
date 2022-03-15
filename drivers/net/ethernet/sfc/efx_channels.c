@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/filter.h>
 #include "efx_channels.h"

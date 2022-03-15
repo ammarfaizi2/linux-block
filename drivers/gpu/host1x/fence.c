@@ -5,6 +5,7 @@
  * Copyright (c) 2020, NVIDIA Corporation.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-fence.h>
 #include <linux/file.h>
 #include <linux/fs.h>

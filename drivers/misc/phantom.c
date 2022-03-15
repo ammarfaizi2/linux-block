@@ -8,6 +8,7 @@
  *  or alternatively, you might use OpenHaptics provided by Sensable.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/compat.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

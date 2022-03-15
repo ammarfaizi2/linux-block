@@ -5,6 +5,7 @@
  * Author: Alexander Duyck <alexander.h.duyck@intel.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <asm/io.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>

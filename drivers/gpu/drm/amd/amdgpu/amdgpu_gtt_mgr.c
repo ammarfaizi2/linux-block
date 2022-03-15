@@ -22,6 +22,7 @@
  * Authors: Christian König
  */
 
+#include <linux/atomic_api.h>
 #include <drm/ttm/ttm_range_manager.h>
 
 #include "amdgpu.h"

@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/migrate.h>

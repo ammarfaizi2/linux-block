@@ -11,6 +11,7 @@
 
 */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/drbd.h>
 #include <linux/sched/signal.h>

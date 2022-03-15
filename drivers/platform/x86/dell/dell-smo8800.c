@@ -10,6 +10,7 @@
 
 #define DRIVER_NAME "smo8800"
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

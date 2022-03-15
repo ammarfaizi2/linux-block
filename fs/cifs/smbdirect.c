@@ -4,6 +4,7 @@
  *
  *   Author(s): Long Li <longli@microsoft.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/highmem.h>
 #include "smbdirect.h"

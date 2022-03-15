@@ -17,6 +17,7 @@
  * Major updates contributed by GlobalLogic
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>

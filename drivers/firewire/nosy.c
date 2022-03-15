@@ -4,6 +4,7 @@
  * Copyright (C) 2002-2007 Kristian Høgsberg
  */
 
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

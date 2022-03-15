@@ -8,6 +8,7 @@
  * This file contains all of the code that is specific to the HFI chip
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

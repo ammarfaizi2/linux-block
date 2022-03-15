@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/etherdevice.h>
 #include <linux/if_vlan.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>

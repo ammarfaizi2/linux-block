@@ -6,6 +6,7 @@
  *
  *  Copyright (C) 2007  Hans Verkuil <hverkuil@xs4all.nl>
  */
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 

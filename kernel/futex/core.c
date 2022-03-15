@@ -31,6 +31,7 @@
  *  "The futexes are also cursed."
  *  "But they come in a choice of three flavours!"
  */
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/restart_block_api.h>
 #include <linux/plist.h>

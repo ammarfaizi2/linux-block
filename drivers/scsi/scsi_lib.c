@@ -9,6 +9,7 @@
  *                        of people at Linux Expo.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bio.h>
 #include <linux/bitops.h>
 #include <linux/blkdev.h>

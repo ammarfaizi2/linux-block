@@ -8,6 +8,7 @@
  *    Copyright (C) 2009 Integrated Device Technology, Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>
 #include <linux/ata.h>

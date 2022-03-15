@@ -6,6 +6,7 @@
  *      Suman Anna <s-anna@ti.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/platform_device.h>
 #include <linux/err.h>
 #include <linux/clk.h>

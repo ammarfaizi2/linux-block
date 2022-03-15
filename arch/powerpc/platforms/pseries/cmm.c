@@ -6,6 +6,7 @@
  * Author(s): Brian King (brking@linux.vnet.ibm.com),
  */
 
+#include <linux/atomic_api.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

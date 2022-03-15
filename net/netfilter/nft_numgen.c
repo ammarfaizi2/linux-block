@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Laura Garcia <nevola@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

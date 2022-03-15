@@ -10,6 +10,7 @@
  * Author: Dan Magenheimer
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mman.h>
 #include <linux/swap.h>
 #include <linux/swapops.h>

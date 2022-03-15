@@ -3,6 +3,7 @@
 
 /* Written 1995-2000 by Werner Almesberger, EPFL ICA */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/atm.h>
 #include <linux/atmdev.h>

@@ -29,6 +29,7 @@
  *    Dave Airlie
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/firmware.h>
 #include <linux/kref.h>

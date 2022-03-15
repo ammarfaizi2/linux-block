@@ -36,6 +36,7 @@
  * reverse-engineering activity
  */
 
+#include <linux/atomic_api.h>
 #include <sound/core.h>
 #include <sound/initval.h>
 #include <sound/ac97_codec.h>

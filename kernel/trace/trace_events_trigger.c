@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Tom Zanussi <tom.zanussi@linux.intel.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/security.h>
 #include <linux/module.h>
 #include <linux/ctype.h>

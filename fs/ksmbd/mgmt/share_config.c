@@ -3,6 +3,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/list.h>
 #include <linux/jhash.h>
 #include <linux/slab.h>

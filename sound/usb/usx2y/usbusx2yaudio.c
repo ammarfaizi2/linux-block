@@ -17,6 +17,7 @@
  */
 
 
+#include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>
 #include <linux/usb.h>

@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>
 #include <linux/pci.h>

@@ -10,6 +10,7 @@
  *    Ruslan Bilovol (ruslan.bilovol@gmail.com)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/usb/audio.h>
 #include <linux/usb/audio-v2.h>
 #include <linux/module.h>

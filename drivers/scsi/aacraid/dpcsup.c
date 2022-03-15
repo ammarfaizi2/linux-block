@@ -16,6 +16,7 @@
  * Abstract: All DPC processing routines for the cyclone board occur here.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>

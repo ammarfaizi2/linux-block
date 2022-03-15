@@ -6,6 +6,7 @@
  *	Author: Yoichi Yuasa <source@mvista.com>
  *  Copyright (C) 2003-2009  Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/fs.h>
 #include <linux/gpio/driver.h>

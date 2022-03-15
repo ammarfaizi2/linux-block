@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "zfcp"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include "zfcp_diag.h"
 #include "zfcp_ext.h"

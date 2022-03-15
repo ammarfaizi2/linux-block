@@ -8,6 +8,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kgdb.h>
 #include <linux/kdb.h>
 #include <linux/kdebug.h>

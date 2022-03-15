@@ -20,6 +20,7 @@
 #include "ivtv-gpio.h"
 #include "ivtv-controls.h"
 #include "ivtv-cards.h"
+#include <linux/atomic_api.h>
 #include <media/i2c/saa7127.h>
 #include <media/tveeprom.h>
 #include <media/v4l2-event.h>

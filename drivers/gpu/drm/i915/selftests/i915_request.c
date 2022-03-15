@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/prime_numbers.h>
 #include <linux/pm_qos.h>

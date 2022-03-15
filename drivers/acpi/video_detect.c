@@ -25,6 +25,7 @@
  * always return acpi_backlight_vendor.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/acpi.h>
 #include <linux/backlight.h>

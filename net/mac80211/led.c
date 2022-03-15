@@ -4,6 +4,7 @@
  */
 
 /* just for IFNAMSIZ */
+#include <linux/atomic_api.h>
 #include <linux/if.h>
 #include <linux/slab.h>
 #include <linux/export.h>

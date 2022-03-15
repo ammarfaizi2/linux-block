@@ -23,6 +23,7 @@
 /*
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/sysfs.h>
 #include <linux/device.h>

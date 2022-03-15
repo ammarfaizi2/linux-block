@@ -6,6 +6,7 @@
  *  Swap reorganised 29.12.95, Stephen Tweedie
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mm.h>
 #include <linux/sched/mm.h>

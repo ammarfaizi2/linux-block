@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "mobility: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/cpu.h>
 #include <linux/kernel.h>
 #include <linux/kobject.h>

@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "arm-smmu: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/acpi_iort.h>
 #include <linux/bitfield.h>

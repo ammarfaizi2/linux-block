@@ -4,6 +4,7 @@
  * Copyright(c) 2021 Cornelis Networks.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>

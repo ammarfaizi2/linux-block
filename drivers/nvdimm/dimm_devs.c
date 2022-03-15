@@ -3,6 +3,7 @@
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/atomic_api.h>
 #include <linux/moduleparam.h>
 #include <linux/vmalloc.h>
 #include <linux/device.h>

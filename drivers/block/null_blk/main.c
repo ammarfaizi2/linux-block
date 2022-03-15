@@ -3,6 +3,7 @@
  * Add configfs and memory store: Kyungchan Koh <kkc6196@fb.com> and
  * Shaohua Li <shli@fb.com>
  */
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>
 

@@ -8,6 +8,7 @@
  * Copyright 1997 -- 2000 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

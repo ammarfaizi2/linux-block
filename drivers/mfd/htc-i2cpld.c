@@ -12,6 +12,7 @@
  *  Copyright (C) 2008-2009 Angelo Arrifano <miknix@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

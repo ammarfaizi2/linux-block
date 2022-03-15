@@ -6,6 +6,7 @@
  *   Copyright (C) 2009 Renesas Technology Corp.
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/hash.h>
 #include <linux/circ_buf.h>
 #include <linux/if_arp.h>

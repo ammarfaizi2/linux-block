@@ -5,6 +5,7 @@
  * All Rights Reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <uapi/misc/habanalabs.h>
 #include "habanalabs.h"
 

@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/ctype.h>
 #include <linux/kthread.h>
 #include <linux/slab.h>

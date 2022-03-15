@@ -19,6 +19,7 @@
 #define KMSG_COMPONENT "cpu"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/workqueue.h>
 #include <linux/memblock.h>
 #include <linux/export.h>

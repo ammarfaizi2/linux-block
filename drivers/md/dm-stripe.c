@@ -5,6 +5,7 @@
  */
 
 #include "dm.h"
+#include <linux/atomic_api.h>
 #include <linux/device-mapper.h>
 
 #include <linux/module.h>

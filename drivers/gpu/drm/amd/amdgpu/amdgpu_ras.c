@@ -21,6 +21,7 @@
  *
  *
  */
+#include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/list.h>
 #include <linux/module.h>

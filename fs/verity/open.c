@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 
 static struct kmem_cache *fsverity_info_cachep;

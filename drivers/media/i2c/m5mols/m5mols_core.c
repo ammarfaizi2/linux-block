@@ -9,6 +9,7 @@
  * Author: Dongsoo Nathaniel Kim <dongsoo45.kim@samsung.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/irq.h>

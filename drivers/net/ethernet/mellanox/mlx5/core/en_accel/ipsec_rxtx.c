@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/aead.h>
 #include <net/xfrm.h>
 #include <net/esp.h>

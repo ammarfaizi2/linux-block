@@ -4,6 +4,7 @@
  * Author: Maxime Jourdan <mjourdan@baylibre.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/gcd.h>
 #include <media/v4l2-mem2mem.h>
 #include <media/v4l2-event.h>

@@ -3,6 +3,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/file.h>

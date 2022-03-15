@@ -5,6 +5,7 @@
  * Copyright 2006-2012 Solarflare Communications Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/netdevice.h>
 #include <linux/module.h>
 #include <linux/delay.h>

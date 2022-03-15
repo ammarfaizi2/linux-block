@@ -10,6 +10,7 @@
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>

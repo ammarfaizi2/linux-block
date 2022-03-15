@@ -36,6 +36,7 @@
  * Description: Main component of the bnxt_re driver
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/ethtool.h>

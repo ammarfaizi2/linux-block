@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/proc_fs.h>
 #include "ar-internal.h"
 

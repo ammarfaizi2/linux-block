@@ -4,6 +4,7 @@
  * Copyright (C) 2013, 2021 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

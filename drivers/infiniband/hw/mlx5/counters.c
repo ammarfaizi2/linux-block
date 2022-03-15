@@ -4,6 +4,7 @@
  */
 
 #include "mlx5_ib.h"
+#include <linux/atomic_api.h>
 #include <linux/mlx5/eswitch.h>
 #include "counters.h"
 #include "ib_rep.h"

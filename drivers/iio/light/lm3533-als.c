@@ -7,6 +7,7 @@
  * Author: Johan Hovold <jhovold@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/fs.h>
 #include <linux/interrupt.h>

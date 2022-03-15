@@ -9,6 +9,7 @@
  *		 Heiko Carstens <heiko.carstens@de.ibm.com>,
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mutex.h>
 #include <linux/kthread.h>
 #include <linux/init.h>

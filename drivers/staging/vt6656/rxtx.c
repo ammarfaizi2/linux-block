@@ -18,6 +18,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/etherdevice.h>
 #include "device.h"
 #include "rxtx.h"

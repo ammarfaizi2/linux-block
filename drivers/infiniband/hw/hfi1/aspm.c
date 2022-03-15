@@ -4,6 +4,8 @@
  *
  */
 
+#include <linux/atomic_api.h>
+
 #include "aspm.h"
 
 /* Time after which the timer interrupt will re-enable ASPM */

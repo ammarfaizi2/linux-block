@@ -7,6 +7,7 @@
  *  Copyright (C) 2005-2008 Pierre Ossman, All Rights Reserved.
  *  MMCv4 support Copyright (C) 2006 Philip Langdale, All Rights Reserved.
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Intel Corporation. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/highmem.h>
 #include <linux/module.h>

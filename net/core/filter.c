@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/module.h>
 #include <linux/types.h>

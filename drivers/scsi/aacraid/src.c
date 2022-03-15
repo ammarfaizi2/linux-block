@@ -16,6 +16,7 @@
  * Abstract: Hardware Device Interface for PMC SRC based controllers
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>

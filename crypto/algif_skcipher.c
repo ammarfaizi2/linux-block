@@ -23,6 +23,7 @@
  * the RX SGL release.
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/scatterwalk.h>
 #include <crypto/skcipher.h>
 #include <crypto/if_alg.h>

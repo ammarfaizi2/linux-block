@@ -7,6 +7,7 @@
  * Copyright (C) 2008      John Poet
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/init.h>

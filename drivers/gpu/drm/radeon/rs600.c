@@ -36,6 +36,7 @@
  * of the RS600 GART block).
  */
 
+#include <linux/atomic_api.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 #include <linux/pci.h>
 

@@ -21,6 +21,7 @@
  *
  *
  */
+#include <linux/atomic_api.h>
 #include <linux/list.h>
 #include "amdgpu.h"
 #include "amdgpu_xgmi.h"

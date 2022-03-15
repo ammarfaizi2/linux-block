@@ -4,6 +4,7 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 
 #include "efct_driver.h"

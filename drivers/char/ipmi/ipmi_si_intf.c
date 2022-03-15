@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt) "ipmi_si: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/sched.h>

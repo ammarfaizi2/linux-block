@@ -42,6 +42,7 @@
  * support is used (with mapping between virtual and hardware IRQs).
  */
 
+#include <linux/atomic_api.h>
 #include <linux/irq.h>
 #include <linux/pci.h>
 

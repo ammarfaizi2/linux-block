@@ -15,6 +15,7 @@
 #include "cifs_debug.h"
 #include "ntlmssp.h"
 #include "nterr.h"
+#include <linux/atomic_api.h>
 #include <linux/utsname.h>
 #include <linux/slab.h>
 #include <linux/version.h>

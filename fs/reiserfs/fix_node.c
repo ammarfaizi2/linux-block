@@ -2,6 +2,7 @@
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
+#include <linux/atomic_api.h>
 #include <linux/time.h>
 #include <linux/slab.h>
 #include <linux/string.h>

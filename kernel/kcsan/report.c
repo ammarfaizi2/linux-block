@@ -5,6 +5,7 @@
  * Copyright (C) 2019, Google LLC.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/debug_locks.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>

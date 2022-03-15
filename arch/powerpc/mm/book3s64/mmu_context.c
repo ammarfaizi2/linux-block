@@ -5,6 +5,7 @@
  *  Copyright (C) 2004 Anton Blanchard, IBM Corp. <anton@samba.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

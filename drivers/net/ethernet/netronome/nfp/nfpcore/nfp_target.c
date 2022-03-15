@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt)       "NFP target: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>

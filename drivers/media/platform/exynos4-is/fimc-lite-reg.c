@@ -6,6 +6,7 @@
  * Author: Sylwester Nawrocki <s.nawrocki@samsung.com>
 */
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/io.h>

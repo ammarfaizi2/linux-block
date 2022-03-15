@@ -4,6 +4,7 @@
  *
  * Copyright 2013 Philipp Zabel, Pengutronix
  */
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/device.h>
 #include <linux/err.h>

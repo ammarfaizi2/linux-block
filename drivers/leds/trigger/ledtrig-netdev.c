@@ -10,6 +10,7 @@
 //  Copyright 2005-2006 Openedhand Ltd.
 //  Author: Richard Purdie <rpurdie@openedhand.com>
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/ctype.h>
 #include <linux/device.h>

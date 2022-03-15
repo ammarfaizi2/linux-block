@@ -18,6 +18,7 @@
 #define pr_fmt(fmt) "PM: " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/export.h>
 #include <linux/mutex.h>

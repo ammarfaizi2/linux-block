@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

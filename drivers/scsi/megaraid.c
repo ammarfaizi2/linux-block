@@ -26,6 +26,7 @@
  * linux-scsi@vger.kernel.org .
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mm.h>
 #include <linux/fs.h>

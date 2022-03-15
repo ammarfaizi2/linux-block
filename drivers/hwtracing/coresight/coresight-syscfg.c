@@ -4,6 +4,7 @@
  * Author: Mike Leach <mike.leach@linaro.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 

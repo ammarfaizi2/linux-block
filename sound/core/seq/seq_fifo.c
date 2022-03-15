@@ -4,6 +4,7 @@
  *   Copyright (c) 1998 by Frank van de Pol <fvdpol@coil.demon.nl>
  */
 
+#include <linux/atomic_api.h>
 #include <sound/core.h>
 #include <linux/slab.h>
 #include <linux/sched/signal.h>

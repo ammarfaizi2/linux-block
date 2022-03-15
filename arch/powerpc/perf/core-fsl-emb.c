@@ -5,6 +5,7 @@
  * Copyright 2008-2009 Paul Mackerras, IBM Corporation.
  * Copyright 2010 Freescale Semiconductor, Inc.
  */
+#include <linux/atomic_api.h>
 #include <asm/local64_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

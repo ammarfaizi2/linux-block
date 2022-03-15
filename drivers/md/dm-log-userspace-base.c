@@ -4,6 +4,7 @@
  * This file is released under the LGPL.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bio.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

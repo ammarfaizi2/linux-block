@@ -7,6 +7,7 @@
  *             Christoph Lameter <cl@linux.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/rculist.h>
 #include <linux/mmu_notifier.h>
 #include <linux/export.h>

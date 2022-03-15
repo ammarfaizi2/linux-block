@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mutex.h>
 #include <linux/inetdevice.h>
 #include <linux/slab.h>

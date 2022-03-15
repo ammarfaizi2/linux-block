@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2017 - 2018 Covalent IO, Inc. http://covalent.io */
 
+#include <linux/atomic_api.h>
 #include <linux/skmsg.h>
 #include <linux/skbuff.h>
 #include <linux/scatterlist.h>

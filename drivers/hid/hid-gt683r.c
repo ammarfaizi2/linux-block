@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Janne Kanniainen <janne.kanniainen@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/hid.h>
 #include <linux/kernel.h>

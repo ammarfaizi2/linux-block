@@ -9,6 +9,7 @@
  * John Brooks <john.brooks@bluecherry.net>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/mempool.h>
 #include <linux/poll.h>

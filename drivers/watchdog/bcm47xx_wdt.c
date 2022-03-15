@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/bcm47xx_wdt.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>

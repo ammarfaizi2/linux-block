@@ -5,6 +5,7 @@
  *	Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/types.h>

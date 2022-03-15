@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/io.h>
 #include <linux/moduleparam.h>
 #include <linux/if_arp.h>

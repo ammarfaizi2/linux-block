@@ -10,6 +10,7 @@
 
 #undef DEBUG
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/fsnotify.h>
 #include <linux/mount.h>

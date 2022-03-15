@@ -22,6 +22,7 @@
  * Authors: Christian König
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <drm/ttm/ttm_range_manager.h>
 

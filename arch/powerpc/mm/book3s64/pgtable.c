@@ -3,6 +3,7 @@
  * Copyright 2015-2016, Aneesh Kumar K.V, IBM Corporation.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/mm_types.h>
 #include <linux/memblock.h>

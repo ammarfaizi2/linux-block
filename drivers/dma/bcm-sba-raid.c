@@ -37,6 +37,7 @@
  * by Broadcom SoC ring manager.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/debugfs.h>
 #include <linux/dma-mapping.h>

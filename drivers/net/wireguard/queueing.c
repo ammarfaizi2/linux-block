@@ -3,6 +3,8 @@
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
+#include <linux/atomic_api.h>
+
 #include "queueing.h"
 
 struct multicore_worker __percpu *

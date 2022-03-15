@@ -32,6 +32,7 @@
  */
 
 
+#include <linux/atomic_api.h>
 #include <linux/kref.h>
 #include <linux/random.h>
 #include <linux/debugfs.h>

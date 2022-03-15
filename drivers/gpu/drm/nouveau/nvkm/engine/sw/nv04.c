@@ -26,6 +26,7 @@
 #include "chan.h"
 #include "nvsw.h"
 
+#include <linux/atomic_api.h>
 #include <nvif/class.h>
 #include <nvif/if0004.h>
 #include <nvif/ioctl.h>

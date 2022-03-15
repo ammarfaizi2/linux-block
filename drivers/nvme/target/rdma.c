@@ -4,6 +4,7 @@
  * Copyright (c) 2015-2016 HGST, a Western Digital Company.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/blk-integrity.h>
 #include <linux/ctype.h>

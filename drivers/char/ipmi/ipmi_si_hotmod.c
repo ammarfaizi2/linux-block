@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ipmi_hotmod: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/moduleparam.h>
 #include <linux/ipmi.h>
 #include <linux/atomic.h>

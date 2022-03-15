@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
+
 #include "rsi_main.h"
 #include "rsi_coex.h"
 #include "rsi_mgmt.h"

@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

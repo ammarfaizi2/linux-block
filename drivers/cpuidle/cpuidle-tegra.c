@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt)	"tegra-cpuidle: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/cpuidle.h>
 #include <linux/cpumask.h>

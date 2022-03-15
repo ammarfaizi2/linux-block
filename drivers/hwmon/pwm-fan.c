@@ -7,6 +7,7 @@
  * Author: Kamil Debski <k.debski@samsung.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/hwmon.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

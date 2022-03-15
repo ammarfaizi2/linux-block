@@ -10,6 +10,7 @@
  * Copyright (C) 2009-2010 Motorola, Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/init.h>
 #include <linux/module.h>

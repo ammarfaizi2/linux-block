@@ -14,6 +14,7 @@
  *    Xin Long <lucien.xin@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/inet_diag.h>
 #include <linux/sock_diag.h>

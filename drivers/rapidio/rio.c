@@ -10,6 +10,7 @@
  * Alex Bounine <alexandre.bounine@idt.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 

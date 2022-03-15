@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2016 Smart Energy Instruments, Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/smp.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

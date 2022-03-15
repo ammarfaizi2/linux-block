@@ -11,6 +11,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include "be.h"
 #include "be_cmds.h"

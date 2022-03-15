@@ -4,6 +4,7 @@
  */
 /* ****************** SDIO CARD Interface Functions **************************/
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/netdevice.h>
 #include <linux/pci.h>

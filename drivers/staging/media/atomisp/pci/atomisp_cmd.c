@@ -17,6 +17,7 @@
  *
  *
  */
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/firmware.h>
 #include <linux/pci.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/bio.h>
 #include <linux/file.h>

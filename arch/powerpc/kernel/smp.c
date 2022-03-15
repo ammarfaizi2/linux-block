@@ -13,6 +13,7 @@
 
 #undef DEBUG
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/sched/mm.h>

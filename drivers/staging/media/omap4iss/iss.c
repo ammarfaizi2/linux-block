@@ -7,6 +7,7 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

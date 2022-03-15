@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/bpf.h>
 #include <linux/errno.h>
 #include <linux/types.h>

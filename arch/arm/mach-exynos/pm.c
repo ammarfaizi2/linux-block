@@ -9,6 +9,7 @@
 // Copyright (c) 2006 Simtec Electronics
 //	Ben Dooks <ben@simtec.co.uk>
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/suspend.h>
 #include <linux/cpu_pm.h>

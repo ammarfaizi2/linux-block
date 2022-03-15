@@ -29,6 +29,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/aead.h>
 #include <linux/highmem.h>
 #include <linux/module.h>

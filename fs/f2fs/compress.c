@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Chao Yu <chao@kernel.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>
 #include <linux/moduleparam.h>

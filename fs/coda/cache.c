@@ -8,6 +8,7 @@
  * to the Coda project http://www.coda.cs.cmu.edu/ <coda@cs.cmu.edu>.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/time.h>

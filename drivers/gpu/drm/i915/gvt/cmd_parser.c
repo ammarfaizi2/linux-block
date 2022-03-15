@@ -34,6 +34,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 
 #include "i915_drv.h"

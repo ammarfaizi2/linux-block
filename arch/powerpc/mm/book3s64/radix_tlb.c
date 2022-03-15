@@ -5,6 +5,7 @@
  * Copyright 2015-2016, Aneesh Kumar K.V, IBM Corporation.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/hugetlb.h>
 #include <linux/memblock.h>

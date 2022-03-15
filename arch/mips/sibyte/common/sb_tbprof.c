@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

@@ -2,6 +2,7 @@
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include "main.h"

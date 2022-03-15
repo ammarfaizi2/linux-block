@@ -12,6 +12,7 @@
  */
 
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/usb.h>

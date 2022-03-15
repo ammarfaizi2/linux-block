@@ -18,6 +18,7 @@
 
 #undef DEBUG
 
+#include <linux/atomic_api.h>
 #include <linux/console.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>

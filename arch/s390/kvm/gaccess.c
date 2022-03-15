@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/vmalloc.h>
 #include <linux/mm_types.h>
 #include <linux/err.h>

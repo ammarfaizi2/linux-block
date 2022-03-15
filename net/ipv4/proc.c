@@ -27,6 +27,7 @@
  *	Andi Kleen		:	Add support for /proc/net/netstat
  *	Arnaldo C. Melo		:	Convert to seq_file
  */
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <net/net_namespace.h>
 #include <net/icmp.h>

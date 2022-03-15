@@ -25,6 +25,7 @@
  * Tigran Aivazian <tigran@sco.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>
 #include <linux/kgdb.h>

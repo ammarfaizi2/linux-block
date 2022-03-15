@@ -4,6 +4,7 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include "rtl_core.h"
 #include "r8192E_hw.h"

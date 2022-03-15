@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/security.h>
 #include <linux/completion.h>
 #include <linux/list.h>

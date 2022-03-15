@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 
 #include <linux/types.h>

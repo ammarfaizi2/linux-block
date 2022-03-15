@@ -31,6 +31,7 @@
  * --
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/device.h>
 #include <linux/leds.h>

@@ -8,6 +8,7 @@
  * CBC and ECB mode.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/crypto.h>
 #include <linux/delay.h>
 #include <linux/io.h>

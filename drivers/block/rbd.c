@@ -28,6 +28,7 @@
 
  */
 
+#include <linux/atomic_api.h>
 #include <linux/ceph/libceph.h>
 #include <linux/ceph/osd_client.h>
 #include <linux/ceph/mon_client.h>

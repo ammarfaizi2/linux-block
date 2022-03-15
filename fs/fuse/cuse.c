@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) "CUSE: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/fuse.h>
 #include <linux/cdev.h>
 #include <linux/device.h>

@@ -9,6 +9,7 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
+#include <linux/atomic_api.h>
 #include <asm/cpu-type.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>

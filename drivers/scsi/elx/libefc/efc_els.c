@@ -8,6 +8,8 @@
  * Functions to build and send ELS/CT/BLS commands and responses.
  */
 
+#include <linux/atomic_api.h>
+
 #include "efc.h"
 #include "efc_els.h"
 #include "../libefc_sli/sli4.h"

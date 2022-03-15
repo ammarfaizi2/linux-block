@@ -23,6 +23,7 @@
  * Authors: Michel Dänzer
  */
 
+#include <linux/atomic_api.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 #include "amdgpu_uvd.h"

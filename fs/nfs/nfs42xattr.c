@@ -7,6 +7,7 @@
  *
  * Author: Frank van der Linden <fllinden@amazon.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/nfs_fs.h>
 #include <linux/hashtable.h>

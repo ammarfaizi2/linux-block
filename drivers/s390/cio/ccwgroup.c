@@ -7,6 +7,7 @@
  *  Author(s): Arnd Bergmann (arndb@de.ibm.com)
  *	       Cornelia Huck (cornelia.huck@de.ibm.com)
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

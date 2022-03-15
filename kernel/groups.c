@@ -2,6 +2,7 @@
 /*
  * Supplementary group IDs
  */
+#include <linux/atomic_api.h>
 #include <linux/cred.h>
 #include <linux/export.h>
 #include <linux/slab.h>

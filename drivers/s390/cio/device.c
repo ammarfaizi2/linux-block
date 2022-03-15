@@ -11,6 +11,7 @@
 #define KMSG_COMPONENT "cio"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/init.h>
 #include <linux/spinlock.h>

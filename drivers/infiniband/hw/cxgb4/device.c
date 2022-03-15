@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/debugfs.h>

@@ -9,6 +9,7 @@
  *  Copyright (c) 2008 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/proc_fs.h>
 #include <linux/device.h>
 #include <linux/seq_file.h>

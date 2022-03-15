@@ -6,6 +6,7 @@
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sched.h>
 #include <linux/firmware.h>

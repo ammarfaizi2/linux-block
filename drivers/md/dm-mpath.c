@@ -5,6 +5,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/device-mapper.h>
 
 #include "dm-rq.h"

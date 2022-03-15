@@ -9,6 +9,7 @@
  * Definition of functions for Linux PTP support.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/ptp_clock_kernel.h>
 #include <linux/ptp_classify.h>
 #include <linux/interrupt.h>

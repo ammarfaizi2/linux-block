@@ -18,6 +18,7 @@
  * the mutex locked.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/crc32.h>
 #include <linux/slab.h>
 #include "ubifs.h"

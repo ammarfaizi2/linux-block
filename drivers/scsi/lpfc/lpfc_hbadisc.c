@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>

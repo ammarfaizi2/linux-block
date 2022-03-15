@@ -8,6 +8,7 @@
  *  Derived from drivers/i2c/chips/pca9539.c
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/driver.h>

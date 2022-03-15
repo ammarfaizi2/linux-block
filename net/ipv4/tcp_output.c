@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/atomic_api.h>
 #include <net/tcp.h>
 #include <net/mptcp.h>
 

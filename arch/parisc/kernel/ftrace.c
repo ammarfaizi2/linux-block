@@ -10,6 +10,7 @@
  *	- add CONFIG_STACK_TRACER
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/ftrace.h>
 #include <linux/uaccess.h>

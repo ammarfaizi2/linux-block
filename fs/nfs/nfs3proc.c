@@ -7,6 +7,7 @@
  *  Copyright (C) 1997, Olaf Kirch
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/errno.h>
 #include <linux/string.h>

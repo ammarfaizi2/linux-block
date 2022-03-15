@@ -7,6 +7,7 @@
  * Copyright (C) IBM Corporation, 2008
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/dma-mapping.h>

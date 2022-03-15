@@ -4,6 +4,7 @@
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

@@ -3,6 +3,8 @@
  * Copyright(c) 2015 - 2018 Intel Corporation.
  */
 
+#include <linux/atomic_api.h>
+
 #include "hfi.h"
 #include "verbs_txreq.h"
 #include "qp.h"

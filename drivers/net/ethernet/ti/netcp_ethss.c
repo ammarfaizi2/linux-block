@@ -10,6 +10,7 @@
  *		Wingman Kwok <w-kwok2@ti.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of_mdio.h>

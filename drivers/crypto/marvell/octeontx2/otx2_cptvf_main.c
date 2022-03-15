@@ -6,6 +6,7 @@
 #include "otx2_cptlf.h"
 #include "otx2_cptvf_algs.h"
 #include "cn10k_cpt.h"
+#include <linux/atomic_api.h>
 #include <rvu_reg.h>
 
 #define OTX2_CPTVF_DRV_NAME "rvu_cptvf"

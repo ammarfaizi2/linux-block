@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/acpi.h>
 #include <linux/arm_sdei.h>

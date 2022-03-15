@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2007 FUJITA Tomonori <tomof@acm.org>
  */
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>

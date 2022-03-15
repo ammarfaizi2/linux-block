@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/pci.h>

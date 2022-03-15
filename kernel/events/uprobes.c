@@ -9,6 +9,7 @@
  * Copyright (C) 2011-2012 Red Hat, Inc., Peter Zijlstra
  */
 
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/highmem.h>

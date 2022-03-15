@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 /* See Fibre Channel protocol T11 FC-LS for details */
+#include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

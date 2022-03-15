@@ -99,6 +99,7 @@
  * where two different Write segments send portions of the same page.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <asm/unaligned.h>
 

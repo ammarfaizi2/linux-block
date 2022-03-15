@@ -18,6 +18,7 @@
  * allocated and used.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

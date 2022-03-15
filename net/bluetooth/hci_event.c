@@ -24,6 +24,7 @@
 
 /* Bluetooth HCI event handling. */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 
 #include <net/bluetooth/bluetooth.h>

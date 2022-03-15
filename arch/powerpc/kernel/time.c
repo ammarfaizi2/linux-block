@@ -27,6 +27,7 @@
  *             "A Kernel Model for Precision Timekeeping" by Dave Mills
  */
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/export.h>
 #include <linux/sched.h>

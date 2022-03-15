@@ -37,6 +37,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/types.h>
 #include <linux/spinlock.h>

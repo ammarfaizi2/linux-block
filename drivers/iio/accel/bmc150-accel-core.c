@@ -4,6 +4,7 @@
  * Copyright (c) 2014, Intel Corporation.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

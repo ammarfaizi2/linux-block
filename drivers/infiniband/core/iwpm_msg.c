@@ -31,6 +31,8 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
+
 #include "iwpm_util.h"
 
 static const char iwpm_ulib_name[IWPM_ULIBNAME_SIZE] = "iWarpPortMapperUser";

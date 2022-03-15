@@ -5,6 +5,8 @@
  * All rights reserved.
  */
 
+#include <linux/atomic_api.h>
+
 #include "xfs.h"
 #include "xfs_fs.h"
 #include "xfs_shared.h"

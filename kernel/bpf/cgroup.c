@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Daniel Mack
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/atomic.h>
 #include <linux/cgroup.h>

@@ -4,6 +4,7 @@
  * Copyright (c)  2003-2014 QLogic Corporation
  */
 #include "qla_def.h"
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/delay.h>
 #include <linux/ktime.h>

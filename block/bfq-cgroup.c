@@ -2,6 +2,7 @@
 /*
  * cgroups support for the BFQ I/O scheduler.
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/blkdev.h>

@@ -8,6 +8,7 @@
 #include "dm-bio-prison-v1.h"
 #include "dm.h"
 
+#include <linux/atomic_api.h>
 #include <linux/device-mapper.h>
 #include <linux/dm-io.h>
 #include <linux/dm-kcopyd.h>

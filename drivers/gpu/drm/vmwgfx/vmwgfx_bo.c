@@ -26,6 +26,7 @@
  *
  **************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <drm/drm_vma_manager_api_vm_lock.h>
 #include <drm/ttm/ttm_placement.h>
 

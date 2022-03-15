@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/suspend.h>
 
 #include "i915_drv.h"

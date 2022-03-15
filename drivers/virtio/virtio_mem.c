@@ -7,6 +7,7 @@
  * Author(s): David Hildenbrand <david@redhat.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/virtio.h>
 #include <linux/virtio_mem.h>

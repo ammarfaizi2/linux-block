@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/vmalloc.h>
 #include <rdma/rdma_vt.h>

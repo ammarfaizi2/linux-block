@@ -9,6 +9,7 @@
  * Author: Andreas Westin <andreas.westin@stericsson.com> for ST-Ericsson.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/device.h>

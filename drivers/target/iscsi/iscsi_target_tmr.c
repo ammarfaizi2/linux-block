@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <scsi/scsi_proto.h>
 #include <scsi/iscsi_proto.h>

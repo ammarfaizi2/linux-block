@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Chelsio Communications, Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/workqueue.h>
 #include <linux/kthread.h>
 #include <linux/sched/signal.h>

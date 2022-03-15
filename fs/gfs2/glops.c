@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <linux/completion.h>
 #include <linux/buffer_head.h>

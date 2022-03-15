@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/key.h>
 #include <linux/ctype.h>

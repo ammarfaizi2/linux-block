@@ -3,6 +3,8 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
+
 #include "gem/i915_gem_context.h"
 #include "gt/intel_ring.h"
 

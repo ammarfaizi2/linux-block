@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Broadcom Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/atomic.h>
 #include <linux/kernel.h>

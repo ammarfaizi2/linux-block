@@ -12,6 +12,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/etherdevice.h>
 #include <linux/if_vlan.h>
 #include <linux/random.h>

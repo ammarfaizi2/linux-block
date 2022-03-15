@@ -4,6 +4,7 @@
  * Test module for stress and analyze performance of vmalloc allocator.
  * (C) 2018 Uladzislau Rezki (Sony) <urezki@gmail.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

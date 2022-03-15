@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/etherdevice.h>
 #include <linux/timekeeping.h>

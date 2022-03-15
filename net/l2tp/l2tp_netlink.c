@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/atomic_api.h>
 #include <net/sock.h>
 #include <net/genetlink.h>
 #include <net/udp.h>

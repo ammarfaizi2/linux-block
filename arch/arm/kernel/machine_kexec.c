@@ -3,6 +3,7 @@
  * machine_kexec.c - handle transition of Linux booting another kernel
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/kexec.h>
 #include <linux/delay.h>

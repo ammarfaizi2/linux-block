@@ -44,6 +44,7 @@
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
 #include <linux/slab.h>

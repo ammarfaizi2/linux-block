@@ -5,6 +5,7 @@
  * Copyright 2009-2010 Analog Devices Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/errno.h>

@@ -4,6 +4,8 @@
  *
  */
 
+#include <linux/atomic_api.h>
+
 #include "hfi.h"
 #include "qp.h"
 #include "rc.h"

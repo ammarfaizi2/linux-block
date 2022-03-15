@@ -35,6 +35,7 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/bitops.h>

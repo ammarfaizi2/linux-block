@@ -6,6 +6,7 @@
  *     Anup Patel <anup.patel@wdc.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>
 #include <linux/err.h>

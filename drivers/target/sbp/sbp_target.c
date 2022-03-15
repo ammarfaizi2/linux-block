@@ -8,6 +8,7 @@
 #define KMSG_COMPONENT "sbp_target"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

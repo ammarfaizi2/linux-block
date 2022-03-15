@@ -10,6 +10,7 @@
 #include "bset.h"
 #include "debug.h"
 
+#include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 
 /* Bios with headers */

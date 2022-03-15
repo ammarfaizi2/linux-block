@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/proc_fs.h>

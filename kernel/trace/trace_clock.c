@@ -13,6 +13,7 @@
  *
  * Tracer plugins will chose a default from these clocks.
  */
+#include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <linux/irqflags.h>
 #include <linux/hardirq.h>

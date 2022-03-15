@@ -9,6 +9,7 @@
  *
  ****************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/configfs.h>
 #include <linux/ctype.h>
 #include <linux/export.h>

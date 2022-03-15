@@ -8,6 +8,7 @@
  * All rights reserved
  * www.qlogic.com
  */
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>

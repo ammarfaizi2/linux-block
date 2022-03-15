@@ -7,6 +7,7 @@
  *  Copyright 2006 Tejun Heo <htejun@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <scsi/scsi_cmnd.h>

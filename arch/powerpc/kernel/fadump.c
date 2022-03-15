@@ -14,6 +14,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "fadump: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/string.h>
 #include <linux/memblock.h>
 #include <linux/delay.h>

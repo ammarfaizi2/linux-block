@@ -33,6 +33,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/pci.h>
 

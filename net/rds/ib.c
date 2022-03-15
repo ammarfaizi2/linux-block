@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/in.h>
 #include <linux/if.h>

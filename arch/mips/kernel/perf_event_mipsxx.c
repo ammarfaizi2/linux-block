@@ -12,6 +12,7 @@
  * support references the code of MIPS stacktrace.c.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/local64_api.h>
 #include <asm/cpu-type.h>
 #include <linux/cpumask.h>

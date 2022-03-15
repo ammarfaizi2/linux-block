@@ -8,6 +8,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <net/mac80211.h>
 #include <linux/module.h>
 #include <linux/fips.h>

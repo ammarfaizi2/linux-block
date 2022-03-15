@@ -6,6 +6,7 @@
  *    Author(s): Jan Glauber <jan.glauber@de.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel_stat.h>
 #include <linux/sched/cputime.h>
 #include <linux/export.h>

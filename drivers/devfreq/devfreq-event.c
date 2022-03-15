@@ -8,6 +8,7 @@
  * This driver is based on drivers/devfreq/devfreq.c.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/devfreq-event.h>
 #include <linux/kernel.h>
 #include <linux/err.h>

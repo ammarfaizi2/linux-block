@@ -8,6 +8,7 @@
  * Linux driver for QLogic BR-series Fibre Channel Host Bus Adapter.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/export.h>
 

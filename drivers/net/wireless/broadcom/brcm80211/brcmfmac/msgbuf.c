@@ -8,6 +8,7 @@
  * For certain dcmd codes, the dongle interprets string data from the host.
  ******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>

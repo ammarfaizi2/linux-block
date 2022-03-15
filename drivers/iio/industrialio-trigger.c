@@ -4,6 +4,7 @@
  * Copyright (c) 2008 Jonathan Cameron
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/idr.h>
 #include <linux/err.h>

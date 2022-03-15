@@ -3,6 +3,8 @@
  * Copyright (c) 2020 Hewlett Packard Enterprise, Inc. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
+
 #include "rxe.h"
 
 int rxe_alloc_mw(struct ib_mw *ibmw, struct ib_udata *udata)

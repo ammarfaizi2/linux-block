@@ -3,6 +3,8 @@
 
 /* flow director ethtool support for ice */
 
+#include <linux/atomic_api.h>
+
 #include "ice.h"
 #include "ice_lib.h"
 #include "ice_fdir.h"

@@ -48,6 +48,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/ethtool.h>
 #include <linux/filter.h>
 #include <linux/types.h>

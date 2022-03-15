@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Jens Axboe
  *
  */
+#include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/sched/affinity.h>

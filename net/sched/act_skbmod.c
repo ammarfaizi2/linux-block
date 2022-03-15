@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Jamal Hadi Salim <jhs@mojatatu.com>
 */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/if_arp.h>
 #include <linux/init.h>

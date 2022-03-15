@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xive: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/threads.h>
 #include <linux/kernel.h>

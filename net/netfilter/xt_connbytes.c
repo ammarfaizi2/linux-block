@@ -2,6 +2,7 @@
  * GPL (C) 2002 Martin Devera (devik@cdi.cz).
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/bitops.h>
 #include <linux/skbuff.h>

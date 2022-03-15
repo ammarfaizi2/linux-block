@@ -3,6 +3,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pci_regs.h>
 #include <linux/pci_ids.h>
 #include <linux/device.h>

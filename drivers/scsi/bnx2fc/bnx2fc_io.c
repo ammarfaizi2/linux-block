@@ -12,6 +12,8 @@
  * Written by: Bhanu Prakash Gollapudi (bprakash@broadcom.com)
  */
 
+#include <linux/atomic_api.h>
+
 #include "bnx2fc.h"
 
 #define RESERVE_FREE_LIST_INDEX num_possible_cpus()

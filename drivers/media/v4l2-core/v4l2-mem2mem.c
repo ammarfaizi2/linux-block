@@ -9,6 +9,7 @@
  * Pawel Osciak, <pawel@osciak.com>
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

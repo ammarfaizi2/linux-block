@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "mmiotrace: " fmt
 
+#include <linux/atomic_api.h>
 #include <asm/ptrace.h>
 #include <linux/moduleparam.h>
 #include <linux/debugfs.h>

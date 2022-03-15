@@ -9,6 +9,7 @@
  * Copyright 2008 Pierre Ossman
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <uapi/linux/sched/types.h>

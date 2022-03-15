@@ -8,6 +8,7 @@
  *  All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <media/i2c/adv7604.h>
 #include <media/i2c/adv7842.h>

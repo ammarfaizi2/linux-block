@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+#include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/kthread.h>
 #include <linux/seq_file.h>

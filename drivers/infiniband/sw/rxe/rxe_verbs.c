@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <net/addrconf.h>
 #include <rdma/uverbs_ioctl.h>

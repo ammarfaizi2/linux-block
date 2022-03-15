@@ -10,6 +10,7 @@
 
 /* This file implements TNC functions for committing */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/random.h>
 #include "ubifs.h"

@@ -7,6 +7,7 @@
  *	Ajay Kumar <ajaykumar.rs@samsung.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/kernel.h>

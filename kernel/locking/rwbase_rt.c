@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+
+#include <linux/atomic_api.h>
+
 /*
  * RT-specific reader/writer semaphores and reader/writer locks
  *

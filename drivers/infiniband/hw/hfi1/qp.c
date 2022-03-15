@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2020 Intel Corporation.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/vmalloc.h>
 #include <linux/hash.h>

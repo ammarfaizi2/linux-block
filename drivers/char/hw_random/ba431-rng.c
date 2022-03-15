@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 Silex Insight
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/hw_random.h>
 #include <linux/io.h>

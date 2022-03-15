@@ -30,6 +30,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/mman.h>
 #include <linux/pci.h>

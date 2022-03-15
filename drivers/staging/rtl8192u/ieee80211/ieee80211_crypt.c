@@ -6,6 +6,7 @@
  * Portions Copyright (C) 2004, Intel Corporation <jketreno@linux.intel.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

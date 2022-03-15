@@ -3,6 +3,7 @@
  */
 /* Reiserfs block (de)allocator, bitmap-based. */
 
+#include <linux/atomic_api.h>
 #include <linux/time.h>
 #include "reiserfs.h"
 #include <linux/errno.h>

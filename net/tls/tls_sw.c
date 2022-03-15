@@ -35,6 +35,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bug.h>
 #include <linux/sched/signal.h>
 #include <linux/module.h>

@@ -30,6 +30,7 @@
  *    Dave Airlie
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/pagemap.h>
 #include <linux/pci.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014 Christoph Hellwig.
  */
+#include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/kmod.h>
 #include <linux/file.h>

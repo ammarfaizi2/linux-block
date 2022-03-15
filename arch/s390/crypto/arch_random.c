@@ -27,6 +27,7 @@
  * limited to 4k bytes per second.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/atomic.h>
 #include <linux/random.h>

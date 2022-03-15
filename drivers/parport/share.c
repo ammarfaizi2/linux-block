@@ -17,6 +17,7 @@
 
 #undef PARPORT_DEBUG_SHARING		/* undef for production */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/threads.h>

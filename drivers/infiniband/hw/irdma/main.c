@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 or Linux-OpenIB
 /* Copyright (c) 2015 - 2021 Intel Corporation */
+#include <linux/atomic_api.h>
+
 #include "main.h"
 #include "../../../net/ethernet/intel/ice/ice.h"
 

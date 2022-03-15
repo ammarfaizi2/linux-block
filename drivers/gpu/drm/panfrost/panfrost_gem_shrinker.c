@@ -6,6 +6,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/list.h>
 
 #include <drm/drm_device.h>

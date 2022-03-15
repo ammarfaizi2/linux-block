@@ -3,6 +3,7 @@
  * Copyright (C) 2021-2022 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/etherdevice.h>
 #include <linux/netdevice.h>
 #include <linux/ieee80211.h>

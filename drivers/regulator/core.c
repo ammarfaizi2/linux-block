@@ -7,6 +7,7 @@
 //
 // Author: Liam Girdwood <lrg@slimlogic.co.uk>
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/debugfs.h>

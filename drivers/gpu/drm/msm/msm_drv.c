@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/kthread.h>
 #include <linux/sched/mm.h>

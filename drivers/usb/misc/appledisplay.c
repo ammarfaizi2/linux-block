@@ -7,6 +7,7 @@
  * Thanks to Caskey L. Dickson for his work with acdctl.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/init.h>

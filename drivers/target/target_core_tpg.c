@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/net.h>
 #include <linux/string.h>
 #include <linux/timer.h>

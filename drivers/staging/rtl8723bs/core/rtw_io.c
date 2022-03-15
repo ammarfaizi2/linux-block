@@ -25,6 +25,7 @@ jackson@realtek.com.tw
 
 */
 
+#include <linux/atomic_api.h>
 #include <drv_types.h>
 #include <rtw_debug.h>
 

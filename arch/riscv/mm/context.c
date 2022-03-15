@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Western Digital Corporation or its affiliates.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/cpumask.h>
 #include <linux/mm.h>

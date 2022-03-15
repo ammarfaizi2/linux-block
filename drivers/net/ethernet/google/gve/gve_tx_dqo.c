@@ -8,6 +8,7 @@
 #include "gve_adminq.h"
 #include "gve_utils.h"
 #include "gve_dqo.h"
+#include <linux/atomic_api.h>
 #include <linux/tcp.h>
 #include <linux/slab.h>
 #include <linux/skbuff.h>

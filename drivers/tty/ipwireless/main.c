@@ -21,6 +21,7 @@
 #include "main.h"
 #include "tty.h"
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/io.h>

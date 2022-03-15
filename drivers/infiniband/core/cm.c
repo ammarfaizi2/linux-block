@@ -7,6 +7,7 @@
  * Copyright (c) 2019, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/completion.h>
 #include <linux/dma-mapping.h>
 #include <linux/device.h>

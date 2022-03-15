@@ -32,6 +32,8 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
+
 #include "qib.h"
 
 /* cut down ridiculously long IB macro names */

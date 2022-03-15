@@ -9,6 +9,7 @@
 #include "ps.h"
 #include "regd.h"
 #include "pci.h"
+#include <linux/atomic_api.h>
 #include <linux/ip.h>
 #include <linux/module.h>
 #include <linux/udp.h>

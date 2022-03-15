@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Christian Hohnstaedt <chohnstaedt@innominate.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>

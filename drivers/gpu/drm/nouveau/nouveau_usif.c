@@ -26,6 +26,7 @@
 #include "nouveau_usif.h"
 #include "nouveau_abi16.h"
 
+#include <linux/atomic_api.h>
 #include <nvif/notify.h>
 #include <nvif/unpack.h>
 #include <nvif/client.h>

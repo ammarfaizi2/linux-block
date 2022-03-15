@@ -17,6 +17,7 @@
  *    communication.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/crash_dump.h>

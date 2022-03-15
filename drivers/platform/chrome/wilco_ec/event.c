@@ -30,6 +30,7 @@
  * and then create an event by plugging/unplugging the battery.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/cdev.h>
 #include <linux/device.h>

@@ -17,6 +17,7 @@
  *    This is a platform dependent module for the pci cyclone board.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>

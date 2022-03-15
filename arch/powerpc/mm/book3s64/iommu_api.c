@@ -5,6 +5,7 @@
  *  Copyright (C) 2015 IBM Corp. <aik@ozlabs.ru>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/signal.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>

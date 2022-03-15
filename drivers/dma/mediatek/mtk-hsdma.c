@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/dmaengine.h>

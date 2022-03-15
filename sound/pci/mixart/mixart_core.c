@@ -7,6 +7,7 @@
  * Copyright (c) 2003 by Digigram <alsa@digigram.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/mutex.h>
 #include <linux/pci.h>

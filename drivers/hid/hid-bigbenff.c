@@ -10,6 +10,7 @@
  *  Copyright (c) 2018 Hanno Zulla <kontakt@hanno.de>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/input.h>
 #include <linux/slab.h>
 #include <linux/module.h>

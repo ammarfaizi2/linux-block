@@ -6,6 +6,7 @@
  * Copyright (c) 2004 Dmitry Torokhov
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kref.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

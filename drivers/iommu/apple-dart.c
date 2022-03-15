@@ -11,6 +11,7 @@
  *  Copyright (c) 2011,2016 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

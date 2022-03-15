@@ -9,6 +9,7 @@
  * Authors: Yu Chen <chenyu56@huawei.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/gpio/consumer.h>
 #include <linux/kernel.h>
 #include <linux/mod_devicetable.h>

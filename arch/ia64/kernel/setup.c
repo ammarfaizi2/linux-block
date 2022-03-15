@@ -23,6 +23,7 @@
  * 06/24/99 W.Drummond	added boot_cpu_data.
  * 05/28/05 Z. Menyhart	Dynamic stride size for "flush_icache_range()"
  */
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/init.h>

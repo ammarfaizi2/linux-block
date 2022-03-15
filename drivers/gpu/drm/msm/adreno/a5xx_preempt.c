@@ -2,6 +2,8 @@
 /* Copyright (c) 2017 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
+
 #include "msm_gem.h"
 #include "a5xx_gpu.h"
 

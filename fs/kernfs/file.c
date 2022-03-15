@@ -7,6 +7,7 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/seq_file.h>
 #include <linux/slab.h>

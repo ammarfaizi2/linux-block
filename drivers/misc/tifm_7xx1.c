@@ -5,6 +5,7 @@
  *  Copyright (C) 2006 Alex Dubov <oakad@yahoo.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/tifm.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

@@ -15,6 +15,7 @@
  *       ever removed or changed during the boot-cycle.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/rculist.h>
 #include <linux/slab.h>
 #include "ima.h"

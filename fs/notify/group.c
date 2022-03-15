@@ -3,6 +3,7 @@
  *  Copyright (C) 2008 Red Hat, Inc., Eric Paris <eparis@redhat.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/list.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>

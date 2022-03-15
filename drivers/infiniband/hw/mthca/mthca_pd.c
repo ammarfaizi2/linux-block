@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 
 #include "mthca_dev.h"

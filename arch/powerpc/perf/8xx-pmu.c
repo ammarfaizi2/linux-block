@@ -5,6 +5,7 @@
  * Copyright 2016 Christophe Leroy, CS Systemes d'Information
  */
 
+#include <linux/atomic_api.h>
 #include <asm/local64_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

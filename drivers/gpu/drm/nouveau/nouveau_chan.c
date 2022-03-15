@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/atomic_api.h>
 #include <nvif/push006c.h>
 
 #include <nvif/class.h>

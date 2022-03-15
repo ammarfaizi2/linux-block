@@ -3,6 +3,8 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
+
 #include "i915_drv.h"
 #include "intel_display_types.h"
 #include "intel_dpt.h"

@@ -7,6 +7,7 @@
 #include "soft-interface.h"
 #include "main.h"
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/byteorder/generic.h>
 #include <linux/cache.h>

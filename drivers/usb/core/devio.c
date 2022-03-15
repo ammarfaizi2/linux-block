@@ -21,6 +21,7 @@
 
 /*****************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/sched/signal.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

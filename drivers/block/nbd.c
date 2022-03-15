@@ -11,6 +11,7 @@
  * (part of code stolen from loop.c)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/major.h>
 
 #include <linux/blkdev.h>

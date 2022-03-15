@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT "zcrypt"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/err.h>

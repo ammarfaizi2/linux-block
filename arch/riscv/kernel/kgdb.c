@@ -3,6 +3,7 @@
  * Copyright (C) 2020 SiFive
  */
 
+#include <linux/atomic_api.h>
 #include <linux/ptrace.h>
 #include <linux/kdebug.h>
 #include <linux/bug.h>

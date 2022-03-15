@@ -28,6 +28,7 @@
  *	written out when the filesystem is unmounted by diUnmount().
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include <linux/pagemap.h>

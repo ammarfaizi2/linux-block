@@ -18,6 +18,7 @@
  * Balaji T K <balajitk@ti.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

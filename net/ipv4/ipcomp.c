@@ -9,6 +9,7 @@
  *   - Compression stats.
  *   - Adaptive compression.
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/rtnetlink.h>

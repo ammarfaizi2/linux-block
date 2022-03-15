@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitfield.h>
 #include <linux/bpf.h>
 #include <linux/filter.h>

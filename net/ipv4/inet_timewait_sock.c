@@ -9,6 +9,7 @@
  *		From code orinally in TCP
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

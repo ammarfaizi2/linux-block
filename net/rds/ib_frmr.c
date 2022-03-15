@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
+
 #include "ib_mr.h"
 
 static inline void

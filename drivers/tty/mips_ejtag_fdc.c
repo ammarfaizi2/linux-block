@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2015 Imagination Technologies Ltd
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bitops.h>
 #include <linux/completion.h>

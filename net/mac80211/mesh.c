@@ -6,6 +6,7 @@
  * 	       Javier Cardona <javier@cozybit.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <asm/unaligned.h>
 #include "ieee80211_i.h"

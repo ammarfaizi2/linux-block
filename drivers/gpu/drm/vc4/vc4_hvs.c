@@ -19,6 +19,7 @@
  * each CRTC.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/component.h>

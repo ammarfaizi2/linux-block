@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright IBM Corp 2019
 
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/fsi-occ.h>

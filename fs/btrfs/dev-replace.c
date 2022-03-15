@@ -3,6 +3,7 @@
  * Copyright (C) STRATO AG 2012.  All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/bio.h>
 #include <linux/slab.h>

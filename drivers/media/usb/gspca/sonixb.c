@@ -36,6 +36,7 @@ all:
 
 #define MODULE_NAME "sonixb"
 
+#include <linux/atomic_api.h>
 #include <linux/input.h>
 #include "gspca.h"
 

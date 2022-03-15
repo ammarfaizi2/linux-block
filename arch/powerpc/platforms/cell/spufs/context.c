@@ -7,6 +7,7 @@
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

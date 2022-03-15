@@ -5,6 +5,7 @@
  * Copyright (C) 2015, Marvell International Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <asm/unaligned.h>
 #include <linux/firmware.h>

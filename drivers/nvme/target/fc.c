@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Avago Technologies.  All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/blk-mq.h>

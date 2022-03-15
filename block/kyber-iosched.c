@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Facebook
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/blkdev.h>
 #include <linux/blk-mq.h>

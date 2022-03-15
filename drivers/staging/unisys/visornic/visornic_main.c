@@ -9,6 +9,7 @@
  * Partition via the IO channel.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/etherdevice.h>
 #include <linux/module.h>

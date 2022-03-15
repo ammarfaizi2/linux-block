@@ -31,6 +31,8 @@
  *
  */
 
+#include <linux/atomic_api.h>
+
 #include "i915_drv.h"
 #include "gvt.h"
 #include "i915_pvinfo.h"

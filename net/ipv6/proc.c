@@ -11,6 +11,7 @@
  * Authors:	David S. Miller (davem@caip.rutgers.edu)
  *		YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
  */
+#include <linux/atomic_api.h>
 #include <linux/socket.h>
 #include <linux/net.h>
 #include <linux/ipv6.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2019 Renesas Electronics Corp.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/io.h>

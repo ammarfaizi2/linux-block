@@ -6,6 +6,7 @@
  */
 
 #define FSCACHE_DEBUG_LEVEL COOKIE
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/slab.h>
 #include "internal.h"

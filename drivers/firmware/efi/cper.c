@@ -12,6 +12,7 @@
  * Specification version 2.4.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/time.h>

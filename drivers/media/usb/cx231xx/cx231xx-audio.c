@@ -7,6 +7,7 @@
  */
 
 #include "cx231xx.h"
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/sound.h>

@@ -13,6 +13,7 @@
 
  */
 
+#include <linux/atomic_api.h>
 #include <linux/drbd_limits.h>
 #include "drbd_int.h"
 #include "drbd_protocol.h"

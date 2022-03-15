@@ -25,6 +25,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/file.h>
 #include <linux/pagemap.h>
 #include <linux/sync_file.h>

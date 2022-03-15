@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 HiSilicon Limited. */
 
+#include <linux/atomic_api.h>
 #include <crypto/aes.h>
 #include <crypto/aead.h>
 #include <crypto/algapi.h>

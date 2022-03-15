@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/atomic_api.h>
 #include <subdev/bios.h>
 #include <subdev/bios/boost.h>
 #include <subdev/bios/cstep.h>

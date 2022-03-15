@@ -109,6 +109,7 @@
 #define PT_NAME		"pt"
 #define PT_UNITS	4
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 
 /* Here are things one can override from the insmod command.

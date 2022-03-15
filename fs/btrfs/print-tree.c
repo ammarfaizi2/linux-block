@@ -3,6 +3,8 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/atomic_api.h>
+
 #include "ctree.h"
 #include "disk-io.h"
 #include "print-tree.h"

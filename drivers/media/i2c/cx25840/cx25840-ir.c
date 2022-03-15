@@ -7,6 +7,7 @@
  *  Copyright (C) 2010  Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/kfifo.h>
 #include <linux/module.h>

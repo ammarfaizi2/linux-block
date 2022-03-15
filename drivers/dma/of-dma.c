@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
  */
 
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/module.h>

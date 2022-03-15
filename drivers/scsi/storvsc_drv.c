@@ -8,6 +8,7 @@
  *   K. Y. Srinivasan <kys@microsoft.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/wait.h>
 #include <linux/sched.h>

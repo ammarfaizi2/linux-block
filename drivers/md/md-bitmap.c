@@ -16,6 +16,7 @@
  * flush after percent set rather than just time based. (maybe both).
  */
 
+#include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/module.h>
 #include <linux/errno.h>

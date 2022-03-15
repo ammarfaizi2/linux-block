@@ -2,6 +2,7 @@
 /*
  * /proc/sys support
  */
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/sysctl.h>
 #include <linux/poll.h>

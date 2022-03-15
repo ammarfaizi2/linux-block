@@ -4,6 +4,7 @@
  * (c) 2015 - Jeff Layton <jeff.layton@primarydata.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/hash.h>
 #include <linux/slab.h>
 #include <linux/file.h>

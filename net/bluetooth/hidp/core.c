@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/atomic_api.h>
 #include <linux/kref.h>
 #include <linux/module.h>
 #include <linux/file.h>

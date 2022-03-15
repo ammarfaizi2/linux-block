@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <crypto/hash.h>
 #include <linux/module.h>
 #include <linux/string.h>

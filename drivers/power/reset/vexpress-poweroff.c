@@ -4,6 +4,7 @@
  * Copyright (C) 2012 ARM Limited
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/notifier.h>
 #include <linux/of.h>

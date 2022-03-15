@@ -6,6 +6,7 @@
  *  Copyright 2007 Sony Corp.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

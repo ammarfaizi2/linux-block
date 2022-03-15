@@ -13,6 +13,7 @@
  * Copyright (c) 2012  Bjørn Mork <bjorn@mork.no>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/ethtool.h>

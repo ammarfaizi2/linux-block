@@ -4,6 +4,7 @@
 #include "persistent-data/dm-bitset.h"
 #include "persistent-data/dm-space-map.h"
 
+#include <linux/atomic_api.h>
 #include <linux/dm-io.h>
 #include <linux/dm-kcopyd.h>
 #include <linux/init.h>

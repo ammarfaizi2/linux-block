@@ -9,6 +9,7 @@
  *          Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/align.h>
 #include <asm/unaligned.h>
 #include <linux/delay.h>

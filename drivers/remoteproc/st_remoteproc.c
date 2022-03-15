@@ -7,6 +7,7 @@
  * Author: Ludovic Barre <ludovic.barre@st.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
 #include <linux/err.h>

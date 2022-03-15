@@ -5,6 +5,7 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/list.h>
 #include <linux/module.h>

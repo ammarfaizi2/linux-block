@@ -15,6 +15,7 @@
  *
  ******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>
 #include <linux/if_arp.h>

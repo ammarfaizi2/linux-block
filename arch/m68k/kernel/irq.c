@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

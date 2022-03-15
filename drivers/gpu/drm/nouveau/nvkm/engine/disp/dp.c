@@ -26,6 +26,7 @@
 #include "head.h"
 #include "ior.h"
 
+#include <linux/atomic_api.h>
 #include <subdev/bios.h>
 #include <subdev/bios/init.h>
 #include <subdev/gpio.h>

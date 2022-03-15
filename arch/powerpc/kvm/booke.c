@@ -10,6 +10,7 @@
  *          Varun Sethi <varun.sethi@freescale.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <linux/kvm_host.h>

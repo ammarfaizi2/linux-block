@@ -3,6 +3,7 @@
  * Driver for Solarflare network controllers and boards
  * Copyright 2010-2012 Solarflare Communications Inc.
  */
+#include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/module.h>
 #include "net_driver.h"

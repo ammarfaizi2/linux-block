@@ -5,6 +5,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/list.h>
 #include <linux/workqueue.h>

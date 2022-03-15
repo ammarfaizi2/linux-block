@@ -28,6 +28,7 @@
  *   2. Emulating a reasonable SO_PEERSEC across machines
  *   3. Testing addition of sk_policy's with security context via setsockopt
  */
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/security.h>

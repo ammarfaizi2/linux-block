@@ -5,6 +5,7 @@
 /* Qualcomm Technologies, Inc. EMAC SGMII Controller driver.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/iopoll.h>
 #include <linux/acpi.h>

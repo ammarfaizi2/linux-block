@@ -17,6 +17,8 @@
  * this warranty disclaimer.
  */
 
+#include <linux/atomic_api.h>
+
 #include "main.h"
 #include "usb.h"
 

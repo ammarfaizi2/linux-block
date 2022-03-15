@@ -9,6 +9,7 @@
  * Author: Andrey Smirnov <andrew.smirnov@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

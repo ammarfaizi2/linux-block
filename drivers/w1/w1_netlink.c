@@ -3,6 +3,7 @@
  * Copyright (c) 2003 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff.h>
 #include <linux/netlink.h>

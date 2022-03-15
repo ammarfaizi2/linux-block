@@ -4,6 +4,7 @@
  *  Copyright (c) 1999 by Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <sound/core.h>
 #include "seq_lock.h"

@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <asm/cmpxchg.h>
 

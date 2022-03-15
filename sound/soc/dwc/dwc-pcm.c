@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/io.h>
 #include <linux/rcupdate.h>
 #include <sound/pcm.h>

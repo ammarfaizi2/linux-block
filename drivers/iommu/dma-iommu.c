@@ -8,6 +8,7 @@
  * Copyright (C) 2000-2004 Russell King
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi_iort.h>
 #include <linux/atomic.h>
 #include <linux/crash_dump.h>

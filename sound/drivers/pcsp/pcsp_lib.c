@@ -7,6 +7,7 @@
  * Copyright (C) 2001-2008  Stas Sergeev
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/gfp.h>
 #include <linux/moduleparam.h>

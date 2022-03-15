@@ -30,6 +30,7 @@
  * input devices.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/hid.h>
 #include <linux/input.h>

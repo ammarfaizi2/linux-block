@@ -4,6 +4,7 @@
  * Copyright (c)  2003-2013 QLogic Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <scsi/iscsi_if.h>
 #include "ql4_def.h"
 #include "ql4_glbl.h"

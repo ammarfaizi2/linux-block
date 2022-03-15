@@ -30,6 +30,7 @@
  *    Dave Airlie
  */
 
+#include <linux/atomic_api.h>
 #include <linux/io.h>
 #include <linux/list.h>
 #include <linux/slab.h>

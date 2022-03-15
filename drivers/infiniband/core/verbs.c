@@ -36,6 +36,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <linux/export.h>

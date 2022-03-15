@@ -7,6 +7,7 @@
  * Marcin Wojtas <mw@semihalf.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>

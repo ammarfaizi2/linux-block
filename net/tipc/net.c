@@ -34,6 +34,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/atomic_api.h>
+
 #include "core.h"
 #include "net.h"
 #include "name_distr.h"

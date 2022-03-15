@@ -12,6 +12,7 @@
  * who were very cooperative and answered my questions.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/signal.h>
 #include <linux/slab.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2015	Intel Deutschland GmbH
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kobject.h>
 #include <linux/slab.h>
 #include "ieee80211_i.h"

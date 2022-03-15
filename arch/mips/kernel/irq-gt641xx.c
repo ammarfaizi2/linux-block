@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2007	Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <linux/atomic_api.h>
 #include <linux/hardirq.h>
 #include <linux/init.h>
 #include <linux/irq.h>

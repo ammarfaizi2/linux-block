@@ -7,6 +7,7 @@
  *
  * Highly modified by Steven Rostedt (VMware).
  */
+#include <linux/atomic_api.h>
 #include <linux/sched/per_task.h>
 #include <linux/suspend.h>
 #include <linux/ftrace.h>

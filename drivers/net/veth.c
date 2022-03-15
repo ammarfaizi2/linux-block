@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/netdevice.h>
 #include <linux/slab.h>
 #include <linux/ethtool.h>

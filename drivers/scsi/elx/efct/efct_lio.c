@@ -4,6 +4,7 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <target/target_core_base.h>
 #include <target/target_core_fabric.h>

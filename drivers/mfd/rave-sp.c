@@ -8,6 +8,7 @@
  * Copyright (C) 2017 Zodiac Inflight Innovations
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/crc-ccitt.h>
 #include <linux/delay.h>

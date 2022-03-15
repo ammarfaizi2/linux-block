@@ -10,6 +10,7 @@
  *  mm/ksm.c (mm hashing).
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/list.h>
 #include <linux/hashtable.h>

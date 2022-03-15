@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) "rcu: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/mutex.h>
 #include <linux/percpu.h>

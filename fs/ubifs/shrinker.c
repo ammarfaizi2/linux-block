@@ -27,6 +27,7 @@
  * un-mounts, which is done by the 'ubifs_infos_lock' and 'c->umount_mutex'.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 
 #include "ubifs.h"

@@ -3,6 +3,7 @@
  * Copyright 2017 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/sched/types.h>

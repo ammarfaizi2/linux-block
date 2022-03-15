@@ -7,6 +7,7 @@
  * 460GX support by Chris Ahna <christopher.j.ahna@intel.com>
  * Clean up & simplification by David Mosberger-Tang <davidm@hpl.hp.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/init.h>

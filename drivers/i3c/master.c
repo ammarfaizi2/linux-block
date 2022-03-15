@@ -5,6 +5,7 @@
  * Author: Boris Brezillon <boris.brezillon@bootlin.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bug.h>
 #include <linux/device.h>

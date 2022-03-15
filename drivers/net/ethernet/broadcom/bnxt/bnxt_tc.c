@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/netdevice.h>
 #include <linux/inetdevice.h>

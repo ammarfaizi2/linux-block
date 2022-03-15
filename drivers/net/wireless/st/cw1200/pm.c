@@ -6,6 +6,7 @@
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/if_ether.h>
 #include "cw1200.h"

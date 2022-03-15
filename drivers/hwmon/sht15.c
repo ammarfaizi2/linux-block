@@ -13,6 +13,7 @@
  * For further information, see the Documentation/hwmon/sht15.rst file.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/module.h>

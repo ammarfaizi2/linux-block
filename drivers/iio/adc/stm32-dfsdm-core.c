@@ -6,6 +6,7 @@
  * Author(s): Arnaud Pouliquen <arnaud.pouliquen@st.com> for STMicroelectronics.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/iio/iio.h>
 #include <linux/iio/sysfs.h>

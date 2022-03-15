@@ -6,6 +6,7 @@
  * The NMI watchdog support and infrastructure is based almost
  * entirely upon the x86 NMI support code.
  */
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/param.h>
 #include <linux/init.h>

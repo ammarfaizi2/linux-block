@@ -50,6 +50,7 @@
  *   v.0.01 -- 30-NOV-1999 -- Initial release
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/mm.h>

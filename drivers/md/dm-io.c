@@ -7,6 +7,7 @@
 
 #include "dm-core.h"
 
+#include <linux/atomic_api.h>
 #include <linux/device-mapper.h>
 
 #include <linux/bio.h>

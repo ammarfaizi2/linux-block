@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <dt-bindings/firmware/imx/rsrc.h>
 #include <linux/firmware/imx/ipc.h>
 #include <linux/firmware/imx/sci.h>

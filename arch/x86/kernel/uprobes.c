@@ -7,6 +7,7 @@
  *	Srikar Dronamraju
  *	Jim Keniston
  */
+#include <linux/atomic_api.h>
 #include <asm/ptrace.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

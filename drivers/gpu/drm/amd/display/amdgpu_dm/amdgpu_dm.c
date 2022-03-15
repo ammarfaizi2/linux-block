@@ -26,6 +26,7 @@
 /* The caprices of the preprocessor require that this be declared right here */
 #define CREATE_TRACE_POINTS
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/types.h>

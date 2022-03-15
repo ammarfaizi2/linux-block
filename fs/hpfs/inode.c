@@ -7,6 +7,7 @@
  *  inode VFS functions
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/user_namespace.h>
 #include "hpfs_fn.h"

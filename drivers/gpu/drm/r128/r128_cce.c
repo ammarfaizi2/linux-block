@@ -29,6 +29,7 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/firmware.h>

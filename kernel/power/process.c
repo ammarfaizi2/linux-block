@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/oom.h>
 #include <linux/suspend.h>

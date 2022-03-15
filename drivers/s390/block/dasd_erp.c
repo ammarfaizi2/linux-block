@@ -11,6 +11,7 @@
 
 #define KMSG_COMPONENT "dasd"
 
+#include <linux/atomic_api.h>
 #include <linux/ctype.h>
 #include <linux/init.h>
 

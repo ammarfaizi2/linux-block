@@ -31,6 +31,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/atomic_api.h>
 #include <net/ipv6.h>
 
 #include "cxgb4.h"

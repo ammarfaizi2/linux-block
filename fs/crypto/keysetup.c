@@ -8,6 +8,7 @@
  * Heavily modified since then.
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/skcipher.h>
 #include <linux/key.h>
 #include <linux/random.h>

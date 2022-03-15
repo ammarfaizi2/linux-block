@@ -13,6 +13,7 @@
  * (c) Copyright Huw Davies <huw@codeweavers.com>, 2015
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/rcupdate.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <net/mac80211.h>
 #include <linux/etherdevice.h>
 #include "mac.h"

@@ -43,6 +43,7 @@
 #include "ivtv-cards.h"
 #include "ivtv-streams.h"
 #include "ivtv-firmware.h"
+#include <linux/atomic_api.h>
 #include <media/v4l2-event.h>
 
 static const struct v4l2_file_operations ivtv_v4l2_enc_fops = {

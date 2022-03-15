@@ -3,6 +3,7 @@
  * Copyright(c) 2015-2018 Intel Corporation.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/net.h>
 #include <rdma/opa_addr.h>
 #define OPA_NUM_PKEY_BLOCKS_PER_SMP (OPA_SMP_DR_DATA_SIZE \

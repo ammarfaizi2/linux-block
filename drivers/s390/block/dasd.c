@@ -11,6 +11,7 @@
 #define KMSG_COMPONENT "dasd"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/kmod.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

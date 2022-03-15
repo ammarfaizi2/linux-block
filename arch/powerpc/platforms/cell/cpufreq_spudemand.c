@@ -7,6 +7,7 @@
  * Author: Christian Krafft <krafft@de.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/cpufreq.h>
 #include <linux/sched.h>
 #include <linux/sched/loadavg.h>

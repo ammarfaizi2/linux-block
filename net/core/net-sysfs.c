@@ -5,6 +5,7 @@
  * Copyright (c) 2003 Stephen Hemminger <shemminger@osdl.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>

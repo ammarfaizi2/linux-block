@@ -7,6 +7,7 @@
 
 #include "dm-bio-record.h"
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/mempool.h>
 #include <linux/module.h>

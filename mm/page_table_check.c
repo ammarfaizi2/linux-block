@@ -4,6 +4,7 @@
  * Copyright (c) 2021, Google LLC.
  * Pasha Tatashin <pasha.tatashin@soleen.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/page_table_check.h>
 

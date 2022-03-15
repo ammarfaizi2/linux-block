@@ -10,6 +10,7 @@
 
 #define MODULE_NAME "sonixj"
 
+#include <linux/atomic_api.h>
 #include <linux/input.h>
 #include "gspca.h"
 #include "jpeg.h"

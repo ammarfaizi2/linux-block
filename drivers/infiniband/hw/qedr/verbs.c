@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/atomic_api.h>
 #include <asm/local_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/crc32.h>

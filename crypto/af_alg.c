@@ -7,6 +7,7 @@
  * Copyright (c) 2010 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <crypto/if_alg.h>
 #include <linux/crypto.h>

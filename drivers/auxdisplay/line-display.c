@@ -8,6 +8,7 @@
  * Copyright (C) 2021 Glider bv
  */
 
+#include <linux/atomic_api.h>
 #include <generated/utsrelease.h>
 
 #include <linux/device.h>

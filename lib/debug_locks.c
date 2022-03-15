@@ -9,6 +9,7 @@
  *
  *  Copyright (C) 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/rwsem.h>
 #include <linux/mutex.h>
 #include <linux/export.h>

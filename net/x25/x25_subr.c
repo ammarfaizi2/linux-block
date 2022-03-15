@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "X25: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

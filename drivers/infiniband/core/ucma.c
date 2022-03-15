@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/completion.h>
 #include <linux/file.h>
 #include <linux/mutex.h>

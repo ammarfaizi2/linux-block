@@ -13,6 +13,7 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/net.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue.h>

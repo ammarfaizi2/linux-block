@@ -18,6 +18,7 @@
  *		Vince Laviano	: Modified inet_del_protocol() to correctly
  *				  maintain copy bit.
  */
+#include <linux/atomic_api.h>
 #include <linux/cache.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

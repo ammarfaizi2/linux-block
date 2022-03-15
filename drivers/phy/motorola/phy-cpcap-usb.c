@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

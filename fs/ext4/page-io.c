@@ -7,6 +7,7 @@
  * Written by Theodore Ts'o, 2010.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/time.h>
 #include <linux/highuid.h>

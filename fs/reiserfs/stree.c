@@ -8,6 +8,7 @@
  *  Pereslavl-Zalessky Russia
  */
 
+#include <linux/atomic_api.h>
 #include <linux/time.h>
 #include <linux/string.h>
 #include <linux/pagemap.h>

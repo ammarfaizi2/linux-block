@@ -32,6 +32,7 @@
 
 #include "rdma_core.h"
 #include "uverbs.h"
+#include <linux/atomic_api.h>
 #include <rdma/uverbs_std_types.h>
 
 static int uverbs_free_flow_action(struct ib_uobject *uobject,

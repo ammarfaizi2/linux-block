@@ -27,6 +27,7 @@
 
 #define pr_fmt(fmt) "KGDB: " fmt
 
+#include <linux/atomic_api.h>
 #include <asm/sections.h>
 #include <linux/pid_namespace.h>
 #include <linux/clocksource.h>

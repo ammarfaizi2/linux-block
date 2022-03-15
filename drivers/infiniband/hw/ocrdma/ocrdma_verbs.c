@@ -40,6 +40,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <net/addrconf.h>
 #include <rdma/ib_verbs.h>

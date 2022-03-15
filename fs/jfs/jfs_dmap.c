@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Tino Reichardt, 2012
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
 #include "jfs_incore.h"

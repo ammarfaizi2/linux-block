@@ -11,6 +11,7 @@
  *		YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/types.h>
 #include <linux/sched.h>
