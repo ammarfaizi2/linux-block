@@ -6,6 +6,7 @@
  *  Justin Iurman <justin.iurman@uliege.be>
  */
 
+#include <net/dst_types.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
