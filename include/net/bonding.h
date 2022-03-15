@@ -15,6 +15,7 @@
 #ifndef _NET_BONDING_H
 #define _NET_BONDING_H
 
+#include <linux/etherdevice_api_addr.h>
 #include <linux/device/class.h>
 #include <linux/timer.h>
 #include <linux/proc_fs.h>

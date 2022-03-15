@@ -32,6 +32,7 @@
 #ifndef __QEDR_H__
 #define __QEDR_H__
 
+#include <linux/etherdevice_api_addr.h>
 #include <linux/pci.h>
 #include <linux/xarray.h>
 #include <rdma/ib_addr.h>

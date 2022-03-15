@@ -8,6 +8,8 @@
 #ifndef __INC_DOT11D_H
 #define __INC_DOT11D_H
 
+#include <linux/etherdevice_api_addr.h>
+
 #include "rtllib.h"
 
 struct chnl_txpow_triple {

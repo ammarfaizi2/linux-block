@@ -10,6 +10,7 @@
 #ifndef __QETH_CORE_H__
 #define __QETH_CORE_H__
 
+#include <linux/etherdevice_api_addr.h>
 #include <linux/completion.h>
 #include <linux/debugfs.h>
 #include <linux/if.h>

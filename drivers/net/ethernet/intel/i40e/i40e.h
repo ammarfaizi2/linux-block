@@ -4,6 +4,7 @@
 #ifndef _I40E_H_
 #define _I40E_H_
 
+#include <linux/etherdevice_api_addr.h>
 #include <net/tcp.h>
 #include <net/udp.h>
 #include <linux/types.h>
