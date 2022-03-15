@@ -17,6 +17,7 @@
 #include <linux/workqueue_types.h>
 #include <linux/seqcount_types.h>
 #include <linux/page-flags-layout.h>
+#include <linux/page-flags-defs.h>
 #include <linux/kref.h>
 
 #include <asm/mmu.h>
@@ -1040,6 +1041,69 @@ enum page_entry_size {
 	PE_SIZE_PMD,
 	PE_SIZE_PUD,
 };
+
+/* to align the pointer to the (next) page boundary */
+#define PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE)
+
+/* test whether an address (unsigned long or pointer) is aligned to PAGE_SIZE */
+#define PAGE_ALIGNED(addr)	IS_ALIGNED((unsigned long)(addr), PAGE_SIZE)
+
+static inline unsigned int compound_order(struct page *page)
+{
+	/* Safe to read the PG_head flag without bitops: */
+	if (!((1UL << PG_head) & page->flags))
+		return 0;
+	return page[1].compound_order;
+}
+
+/**
+ * folio_order - The allocation order of a folio.
+ * @folio: The folio.
+ *
+ * A folio is composed of 2^order pages.  See get_order() for the definition
+ * of order.
+ *
+ * Return: The order of the folio.
+ */
+static inline unsigned int folio_order(struct folio *folio)
+{
+	return compound_order(&folio->page);
+}
+
+/* Returns the number of bytes in this potentially compound page. */
+static inline unsigned long page_size(struct page *page)
+{
+	return PAGE_SIZE << compound_order(page);
+}
+
+/* Returns the number of bits needed for the number of bytes in a page */
+static inline unsigned int page_shift(struct page *page)
+{
+	return PAGE_SHIFT + compound_order(page);
+}
+
+static inline atomic_t *compound_mapcount_ptr(struct page *page)
+{
+	return &page[1].compound_mapcount;
+}
+
+static inline atomic_t *compound_pincount_ptr(struct page *page)
+{
+	return &page[2].hpage_pinned_refcount;
+}
+
+#define page_private(page)		((page)->private)
+
+static inline void set_page_private(struct page *page, unsigned long private)
+{
+	page->private = private;
+}
+
+/* Future-safe accessor for struct mm_struct's cpu_vm_mask. */
+static inline struct cpumask *mm_cpumask(struct mm_struct *mm)
+{
+	return (struct cpumask *)&mm->cpu_bitmap;
+}
 
 #endif /* !__ASSEMBLY__ */
 
