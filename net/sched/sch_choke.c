@@ -6,6 +6,7 @@
  * Copyright (c) 2011 Eric Dumazet <eric.dumazet@gmail.com>
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/mm_api_kvmalloc.h>

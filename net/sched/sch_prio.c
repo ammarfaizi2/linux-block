@@ -7,6 +7,7 @@
  *              Init --  EINVAL when opt undefined
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>

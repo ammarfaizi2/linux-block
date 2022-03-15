@@ -6,6 +6,7 @@
  *     Stefan Rompf <sux@loplof.de>
  */
 
+#include <net/sch_generic_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

@@ -4,6 +4,7 @@
  * Authors:     Jamal Hadi Salim 1999
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/module.h>
 #include <linux/types.h>

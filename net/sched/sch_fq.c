@@ -30,6 +30,7 @@
  *  or SLAB cache will reuse socket for another flow)
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <net/inet_ecn.h>
 #include <linux/timekeeping.h>

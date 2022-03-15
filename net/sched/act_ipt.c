@@ -7,6 +7,7 @@
  * Copyright:	Jamal Hadi Salim (2002-13)
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <net/act_api.h>
 #include <linux/spinlock_api.h>

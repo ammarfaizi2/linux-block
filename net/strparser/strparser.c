@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Tom Herbert <tom@herbertland.com>
  */
 
+#include <net/sch_generic_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/fs.h>
 #include <linux/bpf.h>

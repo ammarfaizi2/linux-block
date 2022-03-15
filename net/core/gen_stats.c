@@ -9,6 +9,7 @@
  * See Documentation/networking/gen_stats.rst
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/u64_stats_sync.h>
 #include <linux/u64_stats_sync_api.h>

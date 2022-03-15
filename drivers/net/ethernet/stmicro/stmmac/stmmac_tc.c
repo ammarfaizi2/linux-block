@@ -4,6 +4,7 @@
  * stmmac TC Handling (HW only)
  */
 
+#include <net/sch_generic_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

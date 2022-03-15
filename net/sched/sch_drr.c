@@ -5,6 +5,7 @@
  * Copyright (c) 2008 Patrick McHardy <kaber@trash.net>
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>

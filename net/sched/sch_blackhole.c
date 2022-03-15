@@ -7,6 +7,7 @@
  * Note: Quantum tunneling is not supported.
  */
 
+#include <net/sch_generic_api.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

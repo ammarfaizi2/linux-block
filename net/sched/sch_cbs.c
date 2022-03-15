@@ -50,6 +50,7 @@
  *	locredit = max_frame_size * (sendslope / port_transmit_rate)
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

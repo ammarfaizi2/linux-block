@@ -9,6 +9,7 @@
  * (C) 2013 Daniel Borkmann <dborkman@redhat.com>
  */
 
+#include <net/sch_generic_api.h>
 #include <net/pkt_cls_api_tcf_filter.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
