@@ -14,6 +14,7 @@
  * 	              Nauman Rafique <nauman@google.com>
  */
 
+#include <linux/cgroup_api.h>
 #include <linux/cgroup.h>
 #include <linux/percpu.h>
 #include <linux/percpu_counter.h>
