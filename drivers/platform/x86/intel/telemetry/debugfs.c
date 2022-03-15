@@ -13,6 +13,7 @@
  * /sys/kernel/debug/telemetry/ioss_race_verbosity: Write and Change Tracing
  *				Verbosity via firmware
  */
+#include <linux/notifier_types.h>
 #include <linux/notifier_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
