@@ -5,6 +5,7 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
+#include <asm/unaligned.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/usb.h>

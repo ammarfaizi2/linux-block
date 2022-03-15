@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <asm/unaligned.h>
 #include <linux/types.h>
 #include <asm/byteorder.h>
 #include <asm/param.h>

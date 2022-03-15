@@ -4,6 +4,8 @@
  * All rights reserved.
  */
 
+#include <asm/unaligned.h>
+
 #include "netdev.h"
 
 #define WILC_HIF_SCAN_TIMEOUT_MS                5000

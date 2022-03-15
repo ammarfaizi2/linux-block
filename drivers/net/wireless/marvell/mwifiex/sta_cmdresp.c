@@ -17,6 +17,8 @@
  * this warranty disclaimer.
  */
 
+#include <asm/unaligned.h>
+
 #include "decl.h"
 #include "ioctl.h"
 #include "util.h"

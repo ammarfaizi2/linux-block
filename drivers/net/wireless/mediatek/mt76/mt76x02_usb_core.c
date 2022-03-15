@@ -3,6 +3,8 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <asm/unaligned.h>
+
 #include "mt76x02_usb.h"
 
 static void mt76x02u_remove_dma_hdr(struct sk_buff *skb)

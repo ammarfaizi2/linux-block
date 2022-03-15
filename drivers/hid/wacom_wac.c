@@ -10,6 +10,7 @@
 
 #include "wacom_wac.h"
 #include "wacom.h"
+#include <asm/unaligned.h>
 #include <linux/input/mt.h>
 
 /* resolution for penabled devices */

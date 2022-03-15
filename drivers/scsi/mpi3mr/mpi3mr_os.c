@@ -7,6 +7,8 @@
  *
  */
 
+#include <asm/unaligned.h>
+
 #include "mpi3mr.h"
 
 /* global driver scop variables */

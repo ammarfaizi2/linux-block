@@ -4,6 +4,8 @@
  * All rights reserved.
  */
 
+#include <asm/unaligned.h>
+
 #include "cfg80211.h"
 
 struct wilc_wfi_radiotap_hdr {

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
+#include <asm/unaligned.h>
 #include <linux/of.h>
 #include <linux/of_net.h>
 #include <linux/mtd/mtd.h>

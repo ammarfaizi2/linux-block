@@ -4,6 +4,8 @@
  * All rights reserved.
  */
 
+#include <asm/unaligned.h>
+
 #include "cfg80211.h"
 
 #define GO_NEG_REQ			0x00

@@ -8,6 +8,7 @@
  * Based on the SuperH Ethernet driver
  */
 
+#include <asm/unaligned.h>
 #include <linux/cache.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

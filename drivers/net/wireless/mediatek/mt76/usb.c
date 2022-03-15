@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 #include "mt76.h"
 #include "usb_trace.h"

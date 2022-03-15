@@ -25,6 +25,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <asm/unaligned.h>
 #include <linux/etherdevice.h>
 
 #include <net/bluetooth/bluetooth.h>

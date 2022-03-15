@@ -21,6 +21,8 @@
  *
  * Authors: Ben Skeggs
  */
+#include <asm/unaligned.h>
+
 #include "mxms.h"
 
 #define ROM16(x) get_unaligned_le16(&(x))

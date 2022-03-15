@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "SCMI Notifications PERF - " fmt
 
+#include <asm/unaligned.h>
 #include <linux/bits.h>
 #include <linux/of.h>
 #include <linux/io.h>

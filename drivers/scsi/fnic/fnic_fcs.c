@@ -15,6 +15,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <asm/unaligned.h>
 #include <linux/errno.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

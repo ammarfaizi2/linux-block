@@ -3,6 +3,8 @@
 
 #define _RTW_MLME_EXT_C_
 
+#include <asm/unaligned.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/wifi.h"

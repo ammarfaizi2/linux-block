@@ -7,6 +7,7 @@
  * Copyright (C) 2007-2008 Luis R. Rodriguez <mcgrof@winlab.rutgers.edu>
  */
 
+#include <asm/unaligned.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/slab.h>

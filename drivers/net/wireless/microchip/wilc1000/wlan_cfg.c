@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <asm/unaligned.h>
 #include <linux/bitfield.h>
 #include "wlan_if.h"
 #include "wlan.h"

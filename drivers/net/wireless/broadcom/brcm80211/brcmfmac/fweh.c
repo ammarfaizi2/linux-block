@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012 Broadcom Corporation
  */
+#include <asm/unaligned.h>
 #include <linux/netdevice.h>
 
 #include "brcmu_wifi.h"

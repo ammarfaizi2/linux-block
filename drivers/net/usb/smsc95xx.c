@@ -5,6 +5,7 @@
  *
  *****************************************************************************/
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/netdevice.h>

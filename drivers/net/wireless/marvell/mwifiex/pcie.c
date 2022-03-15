@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <asm/unaligned.h>
 #include <linux/iopoll.h>
 #include <linux/firmware.h>
 

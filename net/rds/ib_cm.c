@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <asm/unaligned.h>
 #include <linux/kernel.h>
 #include <linux/in.h>
 #include <linux/slab.h>

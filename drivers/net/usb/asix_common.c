@@ -7,6 +7,8 @@
  * Copyright (c) 2002-2003 TiVo Inc.
  */
 
+#include <asm/unaligned.h>
+
 #include "asix.h"
 
 #define AX_HOST_EN_RETRIES	30

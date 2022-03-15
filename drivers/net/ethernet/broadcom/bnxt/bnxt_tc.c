@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <asm/unaligned.h>
 #include <linux/netdevice.h>
 #include <linux/inetdevice.h>
 #include <linux/if_vlan.h>

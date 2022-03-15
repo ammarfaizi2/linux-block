@@ -32,6 +32,7 @@
 *
 */
 
+#include <asm/unaligned.h>
 #include <crypto/hash.h>
 #include <linux/file.h>
 #include <linux/slab.h>

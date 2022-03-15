@@ -6,6 +6,7 @@
 #include "qla_def.h"
 #include "qla_target.h"
 
+#include <asm/unaligned.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>
 

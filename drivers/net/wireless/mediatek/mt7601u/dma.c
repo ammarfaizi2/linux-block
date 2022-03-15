@@ -3,6 +3,8 @@
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
+#include <asm/unaligned.h>
+
 #include "mt7601u.h"
 #include "dma.h"
 #include "usb.h"

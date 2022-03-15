@@ -6,6 +6,7 @@
 
 #include "mt7601u.h"
 #include "trace.h"
+#include <asm/unaligned.h>
 #include <linux/etherdevice.h>
 
 void mt7601u_set_macaddr(struct mt7601u_dev *dev, const u8 *addr)

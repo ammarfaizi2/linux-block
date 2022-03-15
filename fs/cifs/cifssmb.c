@@ -14,6 +14,7 @@
  /* treated slightly differently for reconnection purposes since we never     */
  /* want to reuse a stale file handle and only the caller knows the file info */
 
+#include <asm/unaligned.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
 #include <linux/vfs.h>

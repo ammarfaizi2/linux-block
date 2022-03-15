@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: ISC
 
+#include <asm/unaligned.h>
+
 #include "mt7615.h"
 
 static int

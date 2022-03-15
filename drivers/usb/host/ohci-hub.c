@@ -8,6 +8,7 @@
  * This file is licenced under GPL
  */
 
+#include <asm/unaligned.h>
 #include <linux/types.h>
 
 /*-------------------------------------------------------------------------*/

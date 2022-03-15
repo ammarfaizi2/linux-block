@@ -4,6 +4,7 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <asm/unaligned.h>
 #include <target/target_core_base.h>
 #include <target/target_core_fabric.h>
 #include "efct_driver.h"

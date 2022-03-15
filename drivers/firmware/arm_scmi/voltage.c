@@ -5,6 +5,7 @@
  * Copyright (C) 2020-2021 ARM Ltd.
  */
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/scmi_protocol.h>
 

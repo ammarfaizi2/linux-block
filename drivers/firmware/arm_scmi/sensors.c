@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "SCMI Notifications SENSOR - " fmt
 
+#include <asm/unaligned.h>
 #include <linux/bitfield.h>
 #include <linux/module.h>
 #include <linux/scmi_protocol.h>

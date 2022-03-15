@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Felix Fietkau <nbd@nbd.name> */
 
+#include <asm/unaligned.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>

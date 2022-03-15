@@ -10,6 +10,8 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #define MODULE_NAME "842_decompress"
 
+#include <asm/unaligned.h>
+
 #include "842.h"
 #include "842_debugfs.h"
 

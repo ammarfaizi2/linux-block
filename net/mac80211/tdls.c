@@ -9,6 +9,7 @@
  * Copyright (C) 2019, 2021 Intel Corporation
  */
 
+#include <asm/unaligned.h>
 #include <linux/ieee80211.h>
 #include <linux/log2.h>
 #include <net/cfg80211.h>

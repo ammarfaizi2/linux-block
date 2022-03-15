@@ -9,6 +9,7 @@
 #include "pch_gbe.h"
 #include "pch_gbe_phy.h"
 
+#include <asm/unaligned.h>
 #include <linux/gpio/consumer.h>
 #include <linux/gpio/machine.h>
 #include <linux/iopoll.h>
