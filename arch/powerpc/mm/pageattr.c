@@ -6,6 +6,7 @@
  * Copyright 2019-2021, IBM Corporation.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/vmalloc.h>

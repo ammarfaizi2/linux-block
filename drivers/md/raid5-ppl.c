@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Intel Corporation.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

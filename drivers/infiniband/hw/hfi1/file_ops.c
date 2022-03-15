@@ -4,6 +4,7 @@
  * Copyright(c) 2015-2020 Intel Corporation.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/jiffies.h>

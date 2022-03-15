@@ -10,6 +10,7 @@
  * Copyright (C) 2006 Rafael J. Wysocki <rjw@sisk.pl>
  */
 #define pr_fmt(x) "hibernate: " x
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/io.h>

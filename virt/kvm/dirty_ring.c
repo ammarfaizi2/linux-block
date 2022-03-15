@@ -4,6 +4,7 @@
  *
  * Copyright 2019 Red Hat, Inc.
  */
+#include <linux/mm_page_address.h>
 #include <linux/kvm_host.h>
 #include <linux/kvm.h>
 #include <linux/vmalloc.h>

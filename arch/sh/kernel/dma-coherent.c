@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2004 - 2007  Paul Mundt
  */
+#include <linux/mm_page_address.h>
 #include <linux/io_extra.h>
 #include <linux/mm.h>
 #include <linux/dma-map-ops.h>

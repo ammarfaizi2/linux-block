@@ -3,6 +3,7 @@
  * Copyright 2020 Noralf Trønnes
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

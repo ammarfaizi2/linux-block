@@ -16,6 +16,7 @@
  * and hooked into this driver.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/jiffies.h>
 #include <linux/irqnr.h>
 #include <linux/interrupt.h>

@@ -4,6 +4,7 @@
  */
 
 
+#include <linux/mm_page_address.h>
 #include <linux/kobject_api.h>
 #include <linux/highmem.h>
 #include <linux/module.h>

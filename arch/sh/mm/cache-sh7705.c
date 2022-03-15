@@ -9,6 +9,7 @@
  * for more details.
  *
  */
+#include <linux/mm_page_address.h>
 #include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/mman.h>

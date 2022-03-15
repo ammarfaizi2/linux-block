@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_page_address.h>
 #include <acpi/ghes.h>
 #include <linux/edac.h>
 #include <linux/dmi.h>

@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/llist_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

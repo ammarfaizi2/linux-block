@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xive: " fmt
 
+#include <linux/mm_page_address.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>

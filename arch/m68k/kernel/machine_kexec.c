@@ -2,6 +2,7 @@
 /*
  * machine_kexec.c - handle transition of Linux booting another kernel
  */
+#include <linux/mm_page_address.h>
 #include <linux/compiler.h>
 #include <linux/kexec.h>
 #include <linux/mm.h>

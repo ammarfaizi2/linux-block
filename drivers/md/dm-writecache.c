@@ -5,6 +5,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

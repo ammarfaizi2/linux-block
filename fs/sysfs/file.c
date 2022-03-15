@@ -9,6 +9,7 @@
  * Please see Documentation/filesystems/sysfs.rst for more information.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/minmax.h>
 #include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>

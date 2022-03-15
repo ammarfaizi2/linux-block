@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT "hugetlb"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <asm/pgalloc.h>

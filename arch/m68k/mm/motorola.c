@@ -9,6 +9,7 @@
  * Moved 8/20/1999 Sam Creasey
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

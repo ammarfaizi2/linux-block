@@ -10,6 +10,7 @@
 
 #define KMSG_COMPONENT "dasd"
 
+#include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/bvec_api.h>
 #include <linux/kernel_stat.h>

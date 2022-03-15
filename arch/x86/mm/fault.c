@@ -4,6 +4,7 @@
  *  Copyright (C) 2001, 2002 Andi Kleen, SuSE Labs.
  *  Copyright (C) 2008-2009, Red Hat Inc., Ingo Molnar
  */
+#include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

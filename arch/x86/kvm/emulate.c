@@ -18,6 +18,7 @@
  * From: xen-unstable 10676:af9809f51f81a3c43f276f00c81a52ef558afda4
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

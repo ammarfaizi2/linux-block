@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"opal: " fmt
 
+#include <linux/mm_page_address.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/printk.h>

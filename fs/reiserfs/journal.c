@@ -35,6 +35,7 @@
  *		        within kupdate, it will ignore the immediate flag
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/bitmap.h>

@@ -7,6 +7,7 @@
 
 #define KMSG_COMPONENT "dasd-fba"
 
+#include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/device/driver.h>
 #include <linux/bvec_api.h>

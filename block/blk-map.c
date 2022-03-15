@@ -2,6 +2,7 @@
 /*
  * Functions related to mapping data to requests
  */
+#include <linux/mm_page_address.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

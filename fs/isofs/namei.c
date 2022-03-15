@@ -7,6 +7,7 @@
  *  (C) 1991  Linus Torvalds - minix filesystem
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/dcache.h>
 #include <linux/gfp.h>

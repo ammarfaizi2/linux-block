@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-fence-api.h>

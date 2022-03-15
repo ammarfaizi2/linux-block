@@ -40,6 +40,7 @@
  * New MRs are created on demand.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/kref_api.h>
 #include <linux/capability.h>
 #include <linux/sunrpc/svc_rdma.h>

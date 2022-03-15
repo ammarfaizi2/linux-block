@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <clocksource/arm_arch_timer.h>

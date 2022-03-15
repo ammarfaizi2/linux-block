@@ -7,6 +7,7 @@
  * Author: Kent Yoder <yoder1@us.ibm.com>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/atomic_api.h>

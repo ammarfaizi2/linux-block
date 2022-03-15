@@ -7,6 +7,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

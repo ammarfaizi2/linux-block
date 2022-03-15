@@ -3,6 +3,7 @@
     Copyright (C) 2008 Glauber de Oliveira Costa, Red Hat Inc.
 */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

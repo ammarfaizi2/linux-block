@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/mm_page_address.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

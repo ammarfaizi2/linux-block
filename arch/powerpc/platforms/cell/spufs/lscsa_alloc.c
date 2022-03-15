@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/mm_page_address.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

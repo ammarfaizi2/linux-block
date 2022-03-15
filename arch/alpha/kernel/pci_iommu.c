@@ -3,6 +3,7 @@
  *	linux/arch/alpha/kernel/pci_iommu.c
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

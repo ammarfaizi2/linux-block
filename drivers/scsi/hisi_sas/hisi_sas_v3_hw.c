@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Hisilicon Limited.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>

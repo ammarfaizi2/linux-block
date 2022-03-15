@@ -31,6 +31,7 @@
  * cause they are rather slow compared to alloc_pages+map.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2004-2005 Anton Altaparmakov
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/slab.h>
 
 #include "aops.h"

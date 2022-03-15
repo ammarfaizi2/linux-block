@@ -15,6 +15,7 @@
  *	Oracle, 2004
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/irqflags.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

@@ -14,6 +14,7 @@
  *		Additions for address_space-based writeback
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

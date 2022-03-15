@@ -4,6 +4,7 @@
  *
  *   Author(s): Long Li <longli@microsoft.com>
  */
+#include <linux/mm_page_address.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

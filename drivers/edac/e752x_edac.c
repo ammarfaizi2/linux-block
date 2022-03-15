@@ -19,6 +19,7 @@
  *
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/dma-mapping.h>
 #include <asm/cpufeature.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

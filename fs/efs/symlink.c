@@ -7,6 +7,7 @@
  * Portions derived from work (c) 1995,1996 Christian Vogelgsang.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/string.h>
 #include <linux/pagemap.h>
 #include <linux/buffer_head.h>

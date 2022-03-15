@@ -4,6 +4,7 @@
  * Phillip Lougher <phillip@squashfs.org.uk>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/bvec_api.h>
 #include <linux/bio.h>
 #include <linux/mutex.h>

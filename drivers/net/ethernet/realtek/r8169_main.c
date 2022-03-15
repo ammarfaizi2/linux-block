@@ -9,6 +9,7 @@
  * See MAINTAINERS file for support contact information.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/if_vlan_api.h>

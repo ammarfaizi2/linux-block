@@ -28,6 +28,7 @@
 
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>

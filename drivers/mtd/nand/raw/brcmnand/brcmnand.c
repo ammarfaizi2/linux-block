@@ -3,6 +3,7 @@
  * Copyright © 2010-2015 Broadcom Corporation
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

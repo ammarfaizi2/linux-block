@@ -13,6 +13,7 @@
  * datablocks and metadata blocks.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/bvec_api.h>
 #include <linux/blkdev.h>

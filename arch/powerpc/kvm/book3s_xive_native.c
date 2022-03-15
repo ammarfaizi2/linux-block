@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xive-kvm: " fmt
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

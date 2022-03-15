@@ -11,6 +11,7 @@
  *
  ******************************************************************************/
 
+#include <linux/mm_page_address.h>
 #include <linux/math64.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

@@ -9,6 +9,7 @@
  * Added support RSX DMA Vivien Chappelier <vivien.chappelier@free.fr>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

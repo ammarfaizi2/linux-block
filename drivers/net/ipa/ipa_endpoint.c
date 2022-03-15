@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2021 Linaro Ltd.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
