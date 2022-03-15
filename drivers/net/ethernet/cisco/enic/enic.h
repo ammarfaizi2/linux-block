@@ -29,6 +29,7 @@
 #include "vnic_stats.h"
 #include "vnic_nic.h"
 #include "vnic_rss.h"
+#include <linux/pci-dma-compat.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/dev_printk.h>

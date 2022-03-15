@@ -11,6 +11,7 @@
 #ifndef CX18_DRIVER_H
 #define CX18_DRIVER_H
 
+#include <linux/pci-dma-compat.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

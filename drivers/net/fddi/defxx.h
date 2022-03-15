@@ -33,6 +33,7 @@
 #ifndef _DEFXX_H_
 #define _DEFXX_H_
 
+#include <linux/pci-dma-compat.h>
 #include <linux/types.h>
 
 /* Define basic types for unsigned chars, shorts, longs */

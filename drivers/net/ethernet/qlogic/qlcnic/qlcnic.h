@@ -7,6 +7,7 @@
 #ifndef _QLCNIC_H_
 #define _QLCNIC_H_
 
+#include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

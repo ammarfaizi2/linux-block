@@ -16,6 +16,7 @@
 // HWM (HardWare Module) Definitions
 // -----------------------
 
+#include <linux/pci-dma-compat.h>
 #include <asm/byteorder.h>
 
 #ifdef __LITTLE_ENDIAN

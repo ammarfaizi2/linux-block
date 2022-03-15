@@ -10,6 +10,7 @@
 #ifndef IVTV_QUEUE_H
 #define IVTV_QUEUE_H
 
+#include <linux/pci-dma-compat.h>
 #include <linux/types.h>
 
 #define IVTV_DMA_UNMAPPED	((u32) -1)
