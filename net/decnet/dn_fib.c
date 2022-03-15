@@ -18,6 +18,7 @@
  *                                 this code was copied from it.
  *
  */
+#include <net/neighbour_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <net/neighbour_api.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

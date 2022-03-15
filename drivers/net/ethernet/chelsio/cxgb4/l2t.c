@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <net/neighbour_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api_kvmalloc.h>
