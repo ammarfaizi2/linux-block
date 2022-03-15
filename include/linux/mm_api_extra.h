@@ -7,6 +7,7 @@
 #include <linux/sched/coredump.h>
 #include <linux/memremap.h>
 #include <linux/pgtable_api.h>
+#include <linux/mmzone_api.h>
 #include <linux/kref.h>
 
 struct anon_vma_name {
@@ -200,6 +201,35 @@ static inline bool page_needs_cow_for_dma(struct vm_area_struct *vma,
 		return false;
 
 	return page_maybe_dma_pinned(page);
+}
+
+static inline struct page *virt_to_head_page(const void *x)
+{
+	struct page *page = virt_to_page(x);
+
+	return compound_head(page);
+}
+
+static inline struct folio *virt_to_folio(const void *x)
+{
+	struct page *page = virt_to_page(x);
+
+	return page_folio(page);
+}
+
+
+/**
+ * folio_pfn - Return the Page Frame Number of a folio.
+ * @folio: The folio.
+ *
+ * A folio may contain multiple pages.  The pages have consecutive
+ * Page Frame Numbers.
+ *
+ * Return: The Page Frame Number of the first page in the folio.
+ */
+static inline unsigned long folio_pfn(struct folio *folio)
+{
+	return page_to_pfn(&folio->page);
 }
 
 #endif /* _LINUX_MM_API_EXTRA_H */

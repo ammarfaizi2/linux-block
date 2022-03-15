@@ -491,20 +491,6 @@ static inline int page_trans_huge_mapcount(struct page *page)
 }
 #endif
 
-static inline struct page *virt_to_head_page(const void *x)
-{
-	struct page *page = virt_to_page(x);
-
-	return compound_head(page);
-}
-
-static inline struct folio *virt_to_folio(const void *x)
-{
-	struct page *page = virt_to_page(x);
-
-	return page_folio(page);
-}
-
 void __put_page(struct page *page);
 
 void put_pages_list(struct list_head *pages);
@@ -987,20 +973,6 @@ static inline struct zone *folio_zone(const struct folio *folio)
 static inline pg_data_t *folio_pgdat(const struct folio *folio)
 {
 	return page_pgdat(&folio->page);
-}
-
-/**
- * folio_pfn - Return the Page Frame Number of a folio.
- * @folio: The folio.
- *
- * A folio may contain multiple pages.  The pages have consecutive
- * Page Frame Numbers.
- *
- * Return: The Page Frame Number of the first page in the folio.
- */
-static inline unsigned long folio_pfn(struct folio *folio)
-{
-	return page_to_pfn(&folio->page);
 }
 
 static inline void set_page_zone(struct page *page, enum zone_type zone)
