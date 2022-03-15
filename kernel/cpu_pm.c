@@ -6,6 +6,7 @@
  *	Colin Cross <ccross@android.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/notifier_api.h>
 #include <linux/kernel.h>
 #include <linux/cpu_pm.h>

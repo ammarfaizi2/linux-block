@@ -6,6 +6,7 @@
  * Written by Martin K. Petersen <martin.petersen@oracle.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

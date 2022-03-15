@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <linux/mm_api.h>
 #include <linux/pci.h>
 #include <asm/pci_x86.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rcupdate.h>
 #include <linux/ipv6.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
