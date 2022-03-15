@@ -11,6 +11,7 @@
 #ifndef _CXLFLASH_COMMON_H
 #define _CXLFLASH_COMMON_H
 
+#include <linux/cache.h>
 #include <linux/async.h>
 #include <linux/cdev.h>
 #include <linux/irq_poll.h>

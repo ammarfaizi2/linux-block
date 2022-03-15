@@ -2,6 +2,7 @@
 #ifndef _LINUX_IPC_H
 #define _LINUX_IPC_H
 
+#include <linux/cache.h>
 #include <linux/spinlock.h>
 #include <linux/uidgid.h>
 #include <linux/rhashtable-types.h>

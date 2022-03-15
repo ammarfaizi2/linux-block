@@ -2,6 +2,7 @@
 #ifndef ISCSI_PARAMETERS_H
 #define ISCSI_PARAMETERS_H
 
+#include <linux/cache.h>
 #include <linux/types.h>
 #include <scsi/iscsi_proto.h>
 

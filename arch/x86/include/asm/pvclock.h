@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_PVCLOCK_H
 #define _ASM_X86_PVCLOCK_H
 
+#include <linux/cache.h>
 #include <asm/clocksource.h>
 #include <asm/pvclock-abi.h>
 
