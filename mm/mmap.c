@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/dax.h>
 #include <linux/backing-dev-api.h>
 #include <linux/sched/cond_resched.h>
 #include <asm/pgalloc.h>
