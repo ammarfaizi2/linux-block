@@ -2,6 +2,7 @@
 // Copyright 2020 IBM Corp.
 // Copyright (c) 2019-2020 Intel Corporation
 
+#include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic.h>
 #include <linux/bitfield.h>

@@ -14,6 +14,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/export.h>
+
 #include "m5602_ov9650.h"
 #include "m5602_ov7660.h"
 #include "m5602_mt9m111.h"

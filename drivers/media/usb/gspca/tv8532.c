@@ -6,6 +6,7 @@
  */
 #define MODULE_NAME "tv8532"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "gspca.h"

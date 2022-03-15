@@ -14,6 +14,7 @@
 #include "cx23885.h"
 #include "cx23885-ioctl.h"
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

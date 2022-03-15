@@ -5,6 +5,8 @@
  * see flexcop.c for copyright information
  */
 #define FC_LOG_PREFIX "flexcop_usb"
+#include <linux/export.h>
+
 #include "flexcop-usb.h"
 #include "flexcop-common.h"
 

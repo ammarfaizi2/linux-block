@@ -6,6 +6,7 @@
  * Author: Maxime Ripard <maxime.ripard@bootlin.com>
  */
 
+#include <linux/export.h>
 #include <linux/device.h>
 #include <linux/pm_runtime.h>
 

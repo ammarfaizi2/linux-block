@@ -5,6 +5,7 @@
  * Copyright (C) 2010, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
+#include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

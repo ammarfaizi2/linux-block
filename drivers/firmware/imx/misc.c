@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/export.h>
 #include <linux/firmware/imx/svc/misc.h>
 
 struct imx_sc_msg_req_misc_set_ctrl {

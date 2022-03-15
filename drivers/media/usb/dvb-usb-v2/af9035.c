@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "af9035.h"

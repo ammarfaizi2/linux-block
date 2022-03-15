@@ -8,6 +8,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/export.h>
 #include <linux/device.h>
 #include <linux/gfp.h>
 

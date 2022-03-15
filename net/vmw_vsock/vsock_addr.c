@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2012 VMware, Inc. All rights reserved.
  */
 
+#include <linux/export.h>
 #include <linux/types.h>
 #include <linux/socket.h>
 #include <linux/stddef.h>

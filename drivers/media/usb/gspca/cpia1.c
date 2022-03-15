@@ -16,6 +16,7 @@
 
 #define MODULE_NAME "cpia1"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/input.h>

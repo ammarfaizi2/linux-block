@@ -29,6 +29,7 @@
  *   Reimplemented by Cassio Neri <cassio.neri@gmail.com>
  */
 
+#include <linux/export.h>
 #include <linux/time.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  * Author: Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
 
+#include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

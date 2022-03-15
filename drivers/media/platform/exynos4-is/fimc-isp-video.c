@@ -11,6 +11,7 @@
  * Younghwan Joo <yhwan.joo@samsung.com>.
  */
 
+#include <linux/export.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/delay.h>

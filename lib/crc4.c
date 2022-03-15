@@ -3,6 +3,7 @@
  * crc4.c - simple crc-4 calculations.
  */
 
+#include <linux/export.h>
 #include <linux/crc4.h>
 #include <linux/module.h>
 

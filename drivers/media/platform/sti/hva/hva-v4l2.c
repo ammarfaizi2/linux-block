@@ -5,6 +5,7 @@
  *          Hugues Fruchet <hugues.fruchet@st.com>
  */
 
+#include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>

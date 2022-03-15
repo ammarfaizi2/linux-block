@@ -9,6 +9,8 @@
 
 #define DVB_USB_LOG_PREFIX "opera"
 
+#include <linux/export.h>
+
 #include "dvb-usb.h"
 #include "stv0299.h"
 

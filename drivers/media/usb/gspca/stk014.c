@@ -9,6 +9,8 @@
 
 #define MODULE_NAME "stk014"
 
+#include <linux/export.h>
+
 #include "gspca.h"
 #include "jpeg.h"
 

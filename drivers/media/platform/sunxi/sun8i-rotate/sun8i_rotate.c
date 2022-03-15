@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Jernej Skrabec <jernej.skrabec@siol.net>
  */
 
+#include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>

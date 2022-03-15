@@ -5,6 +5,7 @@
  * Copyright (C) 1997 David S. Miller (davem@caip.rutgers.edu)
  */
 
+#include <linux/export.h>
 #include <linux/module.h>
 
 #include <asm/io.h>

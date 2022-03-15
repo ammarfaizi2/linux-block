@@ -27,6 +27,8 @@
  */
 
 #define DVB_USB_LOG_PREFIX "technisat-usb2"
+#include <linux/export.h>
+
 #include "dvb-usb.h"
 
 #include "stv6110x.h"

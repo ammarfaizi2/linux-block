@@ -9,6 +9,8 @@
 
 #define MODULE_NAME "benq"
 
+#include <linux/export.h>
+
 #include "gspca.h"
 
 MODULE_AUTHOR("Jean-Francois Moine <http://moinejf.free.fr>");

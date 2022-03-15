@@ -9,6 +9,7 @@
  * John Brooks <john.brooks@bluecherry.net>
  */
 
+#include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/kthread.h>

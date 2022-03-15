@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/input.h>
 #include "stv06xx_sensor.h"

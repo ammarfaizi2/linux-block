@@ -10,6 +10,8 @@
 
 #define MODULE_NAME "spca506"
 
+#include <linux/export.h>
+
 #include "gspca.h"
 
 MODULE_AUTHOR("Michel Xhaard <mxhaard@users.sourceforge.net>");

@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/export.h>
 #include <asm/io.h>
 #include <linux/ioport.h>
 #include <linux/pci.h>

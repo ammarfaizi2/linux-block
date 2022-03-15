@@ -6,6 +6,7 @@
  *          Guennadi Liakhovetski (guennadi.liakhovetski@intel.com)
  */
 
+#include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/module.h>

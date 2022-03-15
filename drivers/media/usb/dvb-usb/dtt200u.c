@@ -8,6 +8,8 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/export.h>
+
 #include "dtt200u.h"
 
 /* debug */

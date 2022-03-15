@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/export.h>
 #include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/init.h>

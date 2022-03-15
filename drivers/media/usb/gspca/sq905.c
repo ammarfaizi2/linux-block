@@ -24,6 +24,7 @@
 
 #define MODULE_NAME "sq905"
 
+#include <linux/export.h>
 #include <linux/workqueue.h>
 #include <linux/slab.h>
 #include "gspca.h"

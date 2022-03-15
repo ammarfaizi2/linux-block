@@ -10,6 +10,7 @@
 
 #define MODULE_NAME "sonixj"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/input.h>

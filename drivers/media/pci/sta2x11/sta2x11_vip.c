@@ -9,6 +9,7 @@
  *              Vlad Lungu   <vlad.lungu@windriver.com>
  */
 
+#include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

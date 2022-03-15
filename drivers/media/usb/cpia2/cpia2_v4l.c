@@ -18,6 +18,7 @@
 
 #define CPIA_VERSION "3.0.1"
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/time.h>
 #include <linux/sched.h>

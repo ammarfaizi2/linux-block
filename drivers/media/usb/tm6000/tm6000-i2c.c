@@ -6,6 +6,7 @@
 // Copyright (c) 2007 Michel Ludwig <michel.ludwig@gmail.com>
 //	- Fix SMBus Read Byte command
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/usb.h>

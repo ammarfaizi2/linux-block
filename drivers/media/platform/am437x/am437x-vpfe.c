@@ -8,6 +8,7 @@
  * Lad, Prabhakar <prabhakar.csengg@gmail.com>
  */
 
+#include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>

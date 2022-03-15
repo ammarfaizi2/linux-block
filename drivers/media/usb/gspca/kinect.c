@@ -15,6 +15,8 @@
 
 #define MODULE_NAME "kinect"
 
+#include <linux/export.h>
+
 #include "gspca.h"
 
 #define CTRL_TIMEOUT 500

@@ -7,6 +7,7 @@
  * Jon Oberheide <jon@oberheide.org>
  */
 
+#include <linux/export.h>
 #include <crypto/arc4.h>
 #include <linux/module.h>
 

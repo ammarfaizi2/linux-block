@@ -10,6 +10,7 @@
  * hashtables.
  */
 
+#include <linux/export.h>
 #include <linux/bitops.h>
 #include <linux/siphash.h>
 #include <asm/unaligned.h>

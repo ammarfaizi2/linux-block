@@ -14,6 +14,7 @@
 
 #include "cx88.h"
 
+#include <linux/export.h>
 #include <linux/init.h>
 #include <linux/list.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
+#include <linux/export.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

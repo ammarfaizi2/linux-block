@@ -4,6 +4,7 @@
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
 
+#include <linux/export.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <media/i2c/ir-kbd-i2c.h>

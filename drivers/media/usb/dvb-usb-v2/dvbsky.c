@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Max nibble <nibble.max@gmail.com>
  */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "dvb_usb.h"

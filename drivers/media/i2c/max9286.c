@@ -10,6 +10,7 @@
  * Copyright (C) 2015 Cogent Embedded, Inc.
  */
 
+#include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>

@@ -11,6 +11,7 @@
 
 #define MODULE_NAME "vc032x"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "gspca.h"

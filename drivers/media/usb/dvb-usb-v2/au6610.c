@@ -5,6 +5,8 @@
  * Copyright (C) 2006 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/export.h>
+
 #include "au6610.h"
 #include "zl10353.h"
 #include "qt1010.h"

@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/export.h>
 #include <linux/crc-t10dif.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

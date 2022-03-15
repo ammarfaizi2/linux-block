@@ -8,6 +8,7 @@
  *      Jason Baron       <jbaron@akamai.com>
  */
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/jump_label.h>
 

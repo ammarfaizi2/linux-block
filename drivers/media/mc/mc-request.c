@@ -10,6 +10,7 @@
  * Author: Sakari Ailus <sakari.ailus@linux.intel.com>
  */
 
+#include <linux/export.h>
 #include <linux/atomic_api.h>
 #include <linux/anon_inodes.h>
 #include <linux/file.h>

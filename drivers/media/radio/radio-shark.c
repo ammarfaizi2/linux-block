@@ -21,6 +21,7 @@
  * GNU General Public License for more details.
 */
 
+#include <linux/export.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

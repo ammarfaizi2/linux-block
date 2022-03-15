@@ -14,6 +14,7 @@
  * TODO: 1) Raw bayer parameter settings and bayer capture
  *	 2) Add support for control ioctl
  */
+#include <linux/export.h>
 #include <linux/align.h>
 #include <linux/delay.h>
 #include <linux/platform_device.h>

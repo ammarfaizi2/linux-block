@@ -16,6 +16,7 @@
  * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
  *
  */
+#include <linux/export.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

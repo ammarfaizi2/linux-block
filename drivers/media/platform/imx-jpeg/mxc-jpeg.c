@@ -40,6 +40,7 @@
  * Copyright 2018-2019 NXP
  */
 
+#include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -15,6 +15,7 @@
 #include "tda827x.h"
 #include "mt2060.h"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <media/tuner.h>
 #include "tuner-simple.h"

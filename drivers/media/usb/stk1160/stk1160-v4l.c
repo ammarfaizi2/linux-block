@@ -10,6 +10,7 @@
  *	<rmthomas--a.t--sciolus.org>
  */
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/usb.h>
 #include <linux/mm.h>

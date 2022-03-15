@@ -8,6 +8,7 @@
  *  All rights reserved.
  */
 
+#include <linux/export.h>
 #include <linux/sched/cond_resched.h>
 
 #include "cobalt-driver.h"

@@ -8,6 +8,7 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
+#include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/usb/ch9.h>
 

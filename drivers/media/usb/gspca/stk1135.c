@@ -12,6 +12,7 @@
 
 #define MODULE_NAME "stk1135"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "gspca.h"

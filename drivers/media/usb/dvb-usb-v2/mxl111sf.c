@@ -5,6 +5,7 @@
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/vmalloc.h>
 #include <linux/i2c.h>
