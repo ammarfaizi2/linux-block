@@ -7,6 +7,7 @@
  *  Copyright 1999 ARM Limited
  *  Copyright (C) 2000-2001 Deep Blue Solutions Ltd.
  */
+#include <linux/kdev_t.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>

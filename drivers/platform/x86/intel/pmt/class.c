@@ -8,6 +8,7 @@
  * Author: "Alexander Duyck" <alexander.h.duyck@linux.intel.com>
  */
 
+#include <linux/kdev_t.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device/class.h>

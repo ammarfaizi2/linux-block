@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)			"habanalabs: " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
