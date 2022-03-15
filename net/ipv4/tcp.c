@@ -243,6 +243,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <net/ip_extra.h>
 #include <net/dst_api.h>
 #include <linux/uio_api.h>
 #include <linux/topology.h>

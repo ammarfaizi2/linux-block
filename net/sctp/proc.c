@@ -12,6 +12,7 @@
  *    Sridhar Samudrala <sri@us.ibm.com>
  */
 
+#include <net/ip_extra.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/refcount_api.h>

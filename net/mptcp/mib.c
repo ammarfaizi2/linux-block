@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <net/ip_extra.h>
 #include <linux/percpu.h>
 #include <linux/atomic_api.h>
 #include <linux/seq_file.h>

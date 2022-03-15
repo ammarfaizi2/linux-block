@@ -36,6 +36,7 @@
  * SOFTWARE.
  */
 
+#include <net/ip_extra.h>
 #include <net/checksum.h>
 #include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>
