@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 #define CREATE_TRACE_POINTS
+#include <asm/local.h>
 #include <asm/local_api.h>
 #include <trace/events/mmap_lock.h>
 
