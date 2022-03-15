@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/hardirq.h>
 #include <rdma/ib_umem.h>
 #include <rdma/uverbs_ioctl.h>

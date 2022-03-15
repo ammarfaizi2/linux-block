@@ -8,6 +8,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/idr_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/ieee80211.h>

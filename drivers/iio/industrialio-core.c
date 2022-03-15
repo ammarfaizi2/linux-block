@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "iio-core: " fmt
 
+#include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/bus.h>

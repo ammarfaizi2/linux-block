@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/idr_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/slab.h>

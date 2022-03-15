@@ -10,6 +10,7 @@
  *          Jarkko Nikula <jarkko.nikula@linux.intel.com>
  */
 
+#include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

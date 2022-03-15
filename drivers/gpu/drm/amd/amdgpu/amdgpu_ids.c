@@ -22,6 +22,7 @@
  */
 #include "amdgpu_ids.h"
 
+#include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <linux/idr.h>

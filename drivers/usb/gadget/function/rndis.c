@@ -18,6 +18,7 @@
  *		updates to merge with Linux 2.6, better match RNDIS spec
  */
 
+#include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

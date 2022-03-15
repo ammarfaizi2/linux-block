@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

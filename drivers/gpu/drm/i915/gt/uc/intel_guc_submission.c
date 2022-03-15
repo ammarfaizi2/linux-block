@@ -3,6 +3,7 @@
  * Copyright © 2014 Intel Corporation
  */
 
+#include <linux/idr_api.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

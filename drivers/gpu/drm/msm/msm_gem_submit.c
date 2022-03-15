@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/idr_api.h>
 #include <linux/highmem.h>
 #include <linux/dma-fence-api.h>
 #include <linux/capability.h>

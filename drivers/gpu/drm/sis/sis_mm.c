@@ -31,6 +31,7 @@
  *    Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
+#include <linux/idr_api.h>
 #include <video/sisfb.h>
 
 #include <drm/drm_device.h>

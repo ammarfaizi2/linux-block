@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/idr_api.h>
 #include <linux/capability.h>
 #include <linux/pid.h>
 #include <linux/pid_namespace.h>

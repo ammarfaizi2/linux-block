@@ -13,6 +13,7 @@
 #include "wmi-tlv.h"
 #include "p2p.h"
 #include "testmode.h"
+#include <linux/idr_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/bitfield.h>
 

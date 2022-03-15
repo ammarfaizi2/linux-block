@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/uaccess.h>
 
 #include <drm/drm_drv.h>

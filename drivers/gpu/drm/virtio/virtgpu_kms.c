@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/virtio.h>
 #include <linux/virtio_config.h>

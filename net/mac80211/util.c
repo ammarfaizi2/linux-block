@@ -11,6 +11,7 @@
  * utilities for mac80211
  */
 
+#include <linux/idr_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>

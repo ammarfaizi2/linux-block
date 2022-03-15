@@ -5,6 +5,7 @@
  * Author:	Jamal Hadi Salim
  */
 
+#include <linux/idr_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

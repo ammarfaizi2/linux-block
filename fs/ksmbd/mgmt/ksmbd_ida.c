@@ -3,6 +3,8 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/idr_api.h>
+
 #include "ksmbd_ida.h"
 
 static inline int __acquire_id(struct ida *ida, int from, int to)

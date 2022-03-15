@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2018 Netronome Systems, Inc. */
 
+#include <linux/idr_api.h>
+
 #include "main.h"
 
 /* LAG group config flags. */

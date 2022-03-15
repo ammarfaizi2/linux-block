@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2006  Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/idr_api.h>
 #include <linux/device/bus.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

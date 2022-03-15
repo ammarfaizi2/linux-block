@@ -25,6 +25,7 @@
  * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
+#include <linux/idr_api.h>
 #include <linux/slab.h>
 
 #include <drm/drm_device.h>

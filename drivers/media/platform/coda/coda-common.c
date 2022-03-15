@@ -7,6 +7,7 @@
  *    Xavier Duret
  */
 
+#include <linux/idr_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

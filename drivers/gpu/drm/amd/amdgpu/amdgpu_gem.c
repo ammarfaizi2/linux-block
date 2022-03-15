@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/debugfs.h>
 #include <linux/ktime.h>

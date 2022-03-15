@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice.h>
 #include <linux/if_tap.h>

@@ -6,6 +6,7 @@
  *  Copyright (c) 2007 Eurotech S.p.A. <info@eurotech.it>
  */
 
+#include <linux/idr_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

@@ -8,6 +8,7 @@
  * With code from the mailing list:
  * Copyright (C) 2013 Xilinx, Inc.
  */
+#include <linux/idr_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

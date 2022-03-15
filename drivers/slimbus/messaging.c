@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2017, The Linux Foundation
  */
 
+#include <linux/idr_api.h>
 #include <linux/slab.h>
 #include <linux/pm_runtime.h>
 #include "slimbus.h"

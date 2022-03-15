@@ -2,6 +2,7 @@
 /*
  * Copyright © 2017 Keith Packard <keithp@keithp.com>
  */
+#include <linux/idr_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>

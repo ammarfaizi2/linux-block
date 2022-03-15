@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/idr_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/idr_api.h>
 #include <linux/device/bus.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

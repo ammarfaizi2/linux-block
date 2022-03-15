@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/idr_api.h>
 #include <linux/highmem.h>
 #include <linux/file.h>
 #include <linux/prime_numbers.h>

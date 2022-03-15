@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/idr_api.h>
 #include <linux/hashtable_api.h>
 #include <crypto/internal/geniv.h>
 #include <crypto/aead.h>

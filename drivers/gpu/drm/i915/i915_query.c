@@ -4,6 +4,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/idr_api.h>
 #include <linux/nospec.h>
 
 #include "i915_drv.h"

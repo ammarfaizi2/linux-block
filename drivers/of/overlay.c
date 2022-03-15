@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"OF: overlay: " fmt
 
+#include <linux/idr_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of.h>

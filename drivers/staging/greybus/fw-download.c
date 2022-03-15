@@ -6,6 +6,7 @@
  * Copyright 2016 Linaro Ltd.
  */
 
+#include <linux/idr_api.h>
 #include <linux/firmware.h>
 #include <linux/jiffies.h>
 #include <linux/mutex.h>

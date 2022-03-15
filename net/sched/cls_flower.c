@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <linux/idr_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

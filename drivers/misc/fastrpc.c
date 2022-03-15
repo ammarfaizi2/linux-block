@@ -2,6 +2,7 @@
 // Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
 // Copyright (c) 2018, Linaro Limited
 
+#include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/device.h>

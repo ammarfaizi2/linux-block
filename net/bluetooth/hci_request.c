@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/idr_api.h>
 #include <linux/sched/signal.h>
 
 #include <net/bluetooth/bluetooth.h>

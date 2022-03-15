@@ -25,6 +25,7 @@
 
 /* QXL cmd/ring handling */
 
+#include <linux/idr_api.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>
 

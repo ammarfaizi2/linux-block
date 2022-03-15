@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/idr_api.h>
 #include <linux/atomic_api.h>
 
 #include "mt76.h"
