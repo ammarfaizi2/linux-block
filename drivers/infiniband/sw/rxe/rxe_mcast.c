@@ -4,6 +4,8 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
+
 #include "rxe.h"
 #include "rxe_loc.h"
 

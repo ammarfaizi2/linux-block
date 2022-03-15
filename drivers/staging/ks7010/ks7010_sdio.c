@@ -7,6 +7,7 @@
  *   Copyright (C) 2016 Sang Engineering, Wolfram Sang
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>

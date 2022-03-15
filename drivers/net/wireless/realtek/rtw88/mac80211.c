@@ -2,6 +2,7 @@
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

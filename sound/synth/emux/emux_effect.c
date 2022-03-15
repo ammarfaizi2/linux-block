@@ -9,6 +9,7 @@
  */
 
 #include "emux_voice.h"
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 
 #ifdef SNDRV_EMUX_USE_RAW_EFFECT

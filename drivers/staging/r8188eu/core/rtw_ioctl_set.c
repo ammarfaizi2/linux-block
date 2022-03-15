@@ -3,6 +3,7 @@
 
 #define _RTW_IOCTL_SET_C_
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 

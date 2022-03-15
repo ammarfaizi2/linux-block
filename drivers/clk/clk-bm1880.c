@@ -6,6 +6,7 @@
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/math.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

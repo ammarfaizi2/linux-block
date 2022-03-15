@@ -14,6 +14,7 @@
  * for fast access, falling back on scanning the LPT as a last resort.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sort.h>
 #include "ubifs.h"
 

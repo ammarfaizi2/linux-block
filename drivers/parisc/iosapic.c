@@ -123,6 +123,7 @@
 **   o disable IRdT - call disable_irq(vector[line]->processor_irq)
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

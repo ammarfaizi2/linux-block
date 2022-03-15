@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2017-2018 Socionext Inc.
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/bitfield.h>
 #include <linux/circ_buf.h>

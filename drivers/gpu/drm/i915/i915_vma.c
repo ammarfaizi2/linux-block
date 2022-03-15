@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rbtree_api.h>

@@ -5,6 +5,7 @@
 //
 // https://www.handhelds.org/projects/h1940.html
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>

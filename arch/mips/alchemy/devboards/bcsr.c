@@ -8,6 +8,7 @@
  * All registers are 16bits wide with 32bit spacing.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/interrupt.h>
 #include <linux/irqchip/chained_irq.h>

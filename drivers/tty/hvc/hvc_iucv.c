@@ -12,6 +12,7 @@
 #define KMSG_COMPONENT		"hvc_iucv"
 #define pr_fmt(fmt)		KMSG_COMPONENT ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>

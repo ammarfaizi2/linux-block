@@ -10,6 +10,7 @@
  * archive for more details.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/mm_api.h>

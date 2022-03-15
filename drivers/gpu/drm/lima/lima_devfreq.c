@@ -5,6 +5,7 @@
  * Based on panfrost_devfreq.c:
  *   Copyright 2019 Collabora ltd.
  */
+#include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/clk.h>
 #include <linux/devfreq.h>

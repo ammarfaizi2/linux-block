@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/sem.h>
 #include <linux/sched/user.h>

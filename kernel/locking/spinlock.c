@@ -15,6 +15,7 @@
  * frame contact the architecture maintainers.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/linkage.h>
 #include <linux/preempt.h>

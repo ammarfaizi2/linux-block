@@ -18,6 +18,7 @@
  * program executing on an SPE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/export.h>
 #include <linux/errno.h>
 #include <linux/hardirq.h>

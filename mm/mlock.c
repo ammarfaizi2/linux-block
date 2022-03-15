@@ -6,6 +6,7 @@
  *  (C) Copyright 2002 Christoph Hellwig
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>

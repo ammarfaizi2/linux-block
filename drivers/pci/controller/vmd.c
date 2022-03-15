@@ -4,6 +4,7 @@
  * Copyright (c) 2015, Intel Corporation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

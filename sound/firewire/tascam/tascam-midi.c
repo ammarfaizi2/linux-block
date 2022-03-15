@@ -5,6 +5,8 @@
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
+#include <linux/spinlock_api.h>
+
 #include "tascam.h"
 
 static int midi_capture_open(struct snd_rawmidi_substream *substream)

@@ -10,6 +10,7 @@
 	Abstract: rt2x00 generic mac80211 routines.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>

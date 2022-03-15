@@ -5,6 +5,7 @@
  *  Copyright IBM Corp. 1999, 2013
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/mm_api.h>
 #include <linux/kallsyms.h>

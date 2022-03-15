@@ -7,6 +7,7 @@
  * 		From code originally in include/net/tcp.h
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/random.h>

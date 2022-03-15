@@ -6,6 +6,7 @@
  * Copyright (c) 2014 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 
 #include "dice.h"

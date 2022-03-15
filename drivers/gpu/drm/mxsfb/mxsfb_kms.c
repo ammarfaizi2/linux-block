@@ -8,6 +8,7 @@
  * Copyright (C) 2008 Embedded Alley Solutions, Inc All Rights Reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/io.h>

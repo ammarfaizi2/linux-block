@@ -4,6 +4,7 @@
  *
  *	Copyright (c) 2008 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

@@ -6,6 +6,7 @@
  *  Copyright (C) 2003-2006  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

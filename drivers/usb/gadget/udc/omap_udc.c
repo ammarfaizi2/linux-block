@@ -11,6 +11,7 @@
 #undef	DEBUG
 #undef	VERBOSE
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

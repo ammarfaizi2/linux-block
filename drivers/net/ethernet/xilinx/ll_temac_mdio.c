@@ -5,6 +5,7 @@
  * Copyright (c) 2009 Secret Lab Technologies, Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>

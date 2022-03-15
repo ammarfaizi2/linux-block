@@ -9,6 +9,7 @@
  *  Portions of this work were sponsored by ONELAN Limited.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -9,6 +9,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

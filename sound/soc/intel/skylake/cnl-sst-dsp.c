@@ -12,6 +12,7 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+#include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>
 #include "../common/sst-dsp.h"

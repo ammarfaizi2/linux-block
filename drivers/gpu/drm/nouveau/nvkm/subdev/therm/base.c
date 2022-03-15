@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <core/option.h>
 #include <subdev/pmu.h>

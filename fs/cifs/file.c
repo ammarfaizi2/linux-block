@@ -8,6 +8,7 @@
  *              Jeremy Allison (jra@samba.org)
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

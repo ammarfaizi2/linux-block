@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

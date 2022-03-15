@@ -13,6 +13,7 @@
  *      mpu->write to your own I/O functions.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/io.h>

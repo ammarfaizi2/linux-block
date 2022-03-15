@@ -40,6 +40,7 @@
 **       for PCI drivers devices which implement/use MMIO registers.
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/delay.h>

@@ -7,6 +7,7 @@
  * Simple multiplexer clock implementation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/device.h>

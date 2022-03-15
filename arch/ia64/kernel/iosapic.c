@@ -78,6 +78,7 @@
  * (isa_irq) is the only exception in this source code.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

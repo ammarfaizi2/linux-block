@@ -5,6 +5,7 @@
  *
  * Combiner irqchip for EXYNOS
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/err.h>

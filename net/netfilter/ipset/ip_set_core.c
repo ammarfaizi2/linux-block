@@ -6,6 +6,7 @@
 
 /* Kernel module for IP set management */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

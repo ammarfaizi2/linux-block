@@ -7,6 +7,7 @@
  * Author:  Chunfeng.Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/usb/composite.h>

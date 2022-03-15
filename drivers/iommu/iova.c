@@ -5,6 +5,7 @@
  * Author: Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>

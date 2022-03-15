@@ -8,6 +8,7 @@
  * Parts of this code adapted from David Chaw's adp94xx_seq.c.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/gfp.h>
 #include <linux/pci.h>

@@ -42,6 +42,7 @@
  * rings. We just wait for any of those fence to complete.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

@@ -9,6 +9,7 @@
  *   Authors	Victor Prupis
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

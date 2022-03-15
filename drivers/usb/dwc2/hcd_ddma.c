@@ -38,6 +38,7 @@
 /*
  * This file contains the Descriptor DMA implementation for Host mode
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

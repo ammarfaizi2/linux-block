@@ -4,6 +4,7 @@
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>

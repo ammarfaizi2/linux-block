@@ -9,6 +9,7 @@
  * Copyright 2017	Intel Deutschland GmbH
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

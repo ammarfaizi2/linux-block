@@ -54,6 +54,7 @@
  * other	DBRI low-level stuff
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>

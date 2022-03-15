@@ -8,6 +8,7 @@
  *  SSP driver for the HP Jornada 710/720/728
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/init.h>

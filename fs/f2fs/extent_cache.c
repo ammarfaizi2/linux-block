@@ -8,6 +8,7 @@
  *          Chao Yu <chao2.yu@samsung.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/rbtree_api.h>

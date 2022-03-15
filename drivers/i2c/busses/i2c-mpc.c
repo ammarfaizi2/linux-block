@@ -8,6 +8,7 @@
  * Copyright (C) 2021 Allied Telesis Labs
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>

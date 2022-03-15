@@ -39,6 +39,7 @@
 
 /* =============== End of user configurable parameters ============== */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/module.h>

@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2015 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  */
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>

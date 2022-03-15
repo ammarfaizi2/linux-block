@@ -35,6 +35,7 @@
 #define vgaarb_info(dev, fmt, arg...)	dev_info(dev, "vgaarb: " fmt, ##arg)
 #define vgaarb_err(dev, fmt, arg...)	dev_err(dev, "vgaarb: " fmt, ##arg)
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/notifier.h>
 #include <linux/ioport.h>

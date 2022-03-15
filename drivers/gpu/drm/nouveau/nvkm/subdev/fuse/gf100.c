@@ -21,6 +21,8 @@
  *
  * Authors: Martin Peres
  */
+#include <linux/spinlock_api.h>
+
 #include "priv.h"
 
 static u32

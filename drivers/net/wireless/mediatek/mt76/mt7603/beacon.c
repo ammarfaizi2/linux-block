@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/spinlock_api.h>
+
 #include "mt7603.h"
 
 struct beacon_bc_data {

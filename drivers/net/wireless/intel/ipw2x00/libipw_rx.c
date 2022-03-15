@@ -9,6 +9,7 @@
  * Copyright (c) 2004-2005, Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

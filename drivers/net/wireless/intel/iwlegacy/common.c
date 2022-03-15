@@ -8,6 +8,7 @@
  * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  *****************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

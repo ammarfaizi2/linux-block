@@ -7,6 +7,7 @@
  *		 Martin Schwidefsky (schwidefsky@de.ibm.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/jiffies.h>

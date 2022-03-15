@@ -24,6 +24,7 @@
 #include "priv.h"
 #include "chan.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <engine/fifo.h>
 

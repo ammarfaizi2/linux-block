@@ -10,6 +10,7 @@
  * will be cached in the mini data cache.  This prevents us thrashing
  * the main data cache on page faults.
  */
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/highmem_extra.h>
 #include <linux/init.h>

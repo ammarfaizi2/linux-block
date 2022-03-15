@@ -4,6 +4,7 @@
  * Driver to talk to a remote management controller on IPMB.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

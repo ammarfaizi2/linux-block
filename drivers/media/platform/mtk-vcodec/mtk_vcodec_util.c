@@ -5,6 +5,7 @@
 *	Tiffany Lin <tiffany.lin@mediatek.com>
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
 

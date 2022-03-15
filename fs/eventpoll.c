@@ -6,6 +6,7 @@
  *  Davide Libenzi <davidel@xmailserver.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/user.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>

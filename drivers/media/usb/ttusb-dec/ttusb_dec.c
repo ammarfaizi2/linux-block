@@ -6,6 +6,7 @@
  * IR support by Peter Beutner <p.beutner@gmx.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/export.h>
 #include <linux/list.h>

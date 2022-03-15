@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Chen-Yu Tsai <wens@csie.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>
 #include <linux/spinlock.h>

@@ -30,6 +30,7 @@
  * input devices.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

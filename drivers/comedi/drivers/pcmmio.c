@@ -63,6 +63,7 @@
  *		leave out if you don't need this feature)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

@@ -7,6 +7,7 @@
  * Copyright 2018 Lubomir Rintel <lkundrak@v3.sk>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

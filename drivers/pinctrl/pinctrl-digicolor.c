@@ -11,6 +11,7 @@
  * - Pin pad configuration (pull up/down, strength)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

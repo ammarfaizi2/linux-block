@@ -4,6 +4,7 @@
  * Description: CoreSight Trace Memory Controller driver
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/fs_api.h>

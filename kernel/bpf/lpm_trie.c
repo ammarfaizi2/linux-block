@@ -6,6 +6,7 @@
  * Copyright (c) 2016 David Herrmann
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/capability.h>
 #include <linux/bpf.h>

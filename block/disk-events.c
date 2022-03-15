@@ -2,6 +2,7 @@
 /*
  * Disk events - monitor disk events like media change and eject request.
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

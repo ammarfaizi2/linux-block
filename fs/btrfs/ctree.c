@@ -3,6 +3,7 @@
  * Copyright (C) 2007,2008 Oracle.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/atomic_api.h>

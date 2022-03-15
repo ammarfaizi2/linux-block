@@ -161,6 +161,7 @@
  * ioctlsize            - Initial size of the IOCTL buffer
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/notifier_api.h>

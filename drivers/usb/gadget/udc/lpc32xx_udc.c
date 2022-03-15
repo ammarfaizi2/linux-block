@@ -15,6 +15,7 @@
  *       the LPC3180.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

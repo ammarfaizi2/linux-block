@@ -16,6 +16,7 @@
  *   Cleaned up and rewrote lowlevel routines.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <asm/dma.h>
 #include <linux/init.h>

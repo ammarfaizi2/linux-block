@@ -35,6 +35,7 @@
  *   GPO 0 -> route line-in (0) or AC97 output (1) to CS5361 input
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

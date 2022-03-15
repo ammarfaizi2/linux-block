@@ -9,6 +9,7 @@
  */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/capability.h>
 #include <linux/uaccess.h>
 #include <linux/kernel.h>

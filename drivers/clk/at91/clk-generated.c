@@ -6,6 +6,7 @@
  * Based on clk-programmable & clk-peripheral drivers by Boris BREZILLON.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/bitfield.h>
 #include <linux/clk-provider.h>

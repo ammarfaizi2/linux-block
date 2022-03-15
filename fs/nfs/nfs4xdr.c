@@ -35,6 +35,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>
 #include <linux/fs_entry_types.h>

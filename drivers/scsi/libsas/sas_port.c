@@ -8,6 +8,7 @@
 
 #include "sas_internal.h"
 
+#include <linux/spinlock_api.h>
 #include <scsi/scsi_transport.h>
 #include <scsi/scsi_transport_sas.h>
 #include "scsi_sas_internal.h"

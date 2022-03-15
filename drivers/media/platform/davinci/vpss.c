@@ -4,6 +4,7 @@
  *
  * common vpss system module platform driver for all video drivers.
  */
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

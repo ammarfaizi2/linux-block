@@ -30,6 +30,7 @@
  *
  * Copyright (c) 2006-2010 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/types.h>

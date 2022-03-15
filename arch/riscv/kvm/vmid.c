@@ -6,6 +6,7 @@
  *     Anup Patel <anup.patel@wdc.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitops.h>
 #include <linux/cpumask.h>

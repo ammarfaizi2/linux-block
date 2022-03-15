@@ -5,6 +5,7 @@
  * Author: Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>

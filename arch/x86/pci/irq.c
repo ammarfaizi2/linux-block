@@ -5,6 +5,7 @@
  *	(c) 1999--2000 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/device_api.h>
 #include <asm/x86_irq.h>

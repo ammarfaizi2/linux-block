@@ -51,6 +51,7 @@
  *					prumpf	991016	
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/stdarg.h>
 
 #include <linux/delay.h>

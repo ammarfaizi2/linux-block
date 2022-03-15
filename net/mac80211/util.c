@@ -11,6 +11,7 @@
  * utilities for mac80211
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

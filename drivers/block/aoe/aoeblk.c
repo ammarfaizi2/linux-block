@@ -4,6 +4,7 @@
  * block device routines
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/sizes.h>
 #include <linux/seq_file.h>

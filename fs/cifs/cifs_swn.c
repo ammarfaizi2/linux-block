@@ -5,6 +5,7 @@
  * Copyright (c) 2020 Samuel Cabrero <scabrero@suse.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/mutex_api.h>

@@ -9,6 +9,7 @@
  *	   Xin Li <li.xin@linaro.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

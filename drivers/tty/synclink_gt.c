@@ -43,6 +43,7 @@
 /*#define DBGRBUF(info) dump_rbufs(info)*/
 
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched/signal.h>
 #include <linux/netdevice_api_lock.h>

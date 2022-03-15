@@ -3,6 +3,7 @@
  * Copyright (C) 2011 STRATO.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>

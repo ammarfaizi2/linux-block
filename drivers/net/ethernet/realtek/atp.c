@@ -122,6 +122,7 @@ static int xcvr[NUM_UNITS]; 			/* The data transfer mode. */
 	interpretations of the device registers.
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

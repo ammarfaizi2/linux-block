@@ -11,6 +11,7 @@
  */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>

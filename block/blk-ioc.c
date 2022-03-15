@@ -2,6 +2,7 @@
 /*
  * Functions related to io context handling
  */
+#include <linux/spinlock_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ioprio.h>

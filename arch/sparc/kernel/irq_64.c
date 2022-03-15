@@ -6,6 +6,7 @@
  * Copyright (C) 1998  Jakub Jelinek    (jj@ultra.linux.cz)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/softirq.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

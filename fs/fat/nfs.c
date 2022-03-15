@@ -2,6 +2,7 @@
 /* fs/fat/nfs.c
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/exportfs.h>

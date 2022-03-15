@@ -6,6 +6,7 @@
  *	Murali Karicheri <m-karicheri2@ti.com>
  *	Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>

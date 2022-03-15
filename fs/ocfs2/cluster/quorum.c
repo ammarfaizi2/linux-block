@@ -27,6 +27,7 @@
  * with a counter.  As they fall out of this transition they drop the count
  * and if they're the last, they fire off the decision.
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>

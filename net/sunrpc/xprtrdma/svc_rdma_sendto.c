@@ -99,6 +99,7 @@
  * where two different Write segments send portions of the same page.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>

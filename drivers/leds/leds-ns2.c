@@ -9,6 +9,7 @@
  * Based on leds-gpio.c by Raphael Assenat <raph@8d.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>

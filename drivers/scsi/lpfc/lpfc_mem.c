@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/mempool.h>
 #include <linux/slab.h>

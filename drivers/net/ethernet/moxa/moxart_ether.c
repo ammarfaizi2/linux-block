@@ -12,6 +12,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>

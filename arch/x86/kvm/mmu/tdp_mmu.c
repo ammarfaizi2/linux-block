@@ -7,6 +7,7 @@
 #include "tdp_mmu.h"
 #include "spte.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>

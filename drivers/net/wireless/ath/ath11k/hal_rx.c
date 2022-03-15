@@ -3,6 +3,8 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
+
 #include "debug.h"
 #include "hal.h"
 #include "hal_tx.h"

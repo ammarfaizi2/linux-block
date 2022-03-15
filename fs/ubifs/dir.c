@@ -28,6 +28,7 @@
  * write it, but just marks it as dirty.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_entry_types.h>

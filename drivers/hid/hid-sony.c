@@ -27,6 +27,7 @@
  * There will be no PIN request from the device.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

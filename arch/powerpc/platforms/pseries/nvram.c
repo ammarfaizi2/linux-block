@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>

@@ -7,6 +7,7 @@
  *  table of configured filesystems
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rcupdate.h>
 #include <linux/fs_api.h>
 #include <linux/syscalls.h>

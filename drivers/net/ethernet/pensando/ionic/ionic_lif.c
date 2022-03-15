@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/netdevice_api_lock.h>

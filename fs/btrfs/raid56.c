@@ -4,6 +4,7 @@
  * Copyright (C) 2012 Intel Corp. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

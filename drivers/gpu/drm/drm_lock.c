@@ -33,6 +33,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/mutex_api.h>

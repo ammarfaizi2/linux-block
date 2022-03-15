@@ -8,6 +8,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>

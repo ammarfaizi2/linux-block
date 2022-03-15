@@ -7,6 +7,7 @@
  * License: GPL as published by the FSF.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>

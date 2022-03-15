@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* SandyBridge-EP/IvyTown uncore support */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

@@ -4,6 +4,7 @@
  * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/reset-controller.h>

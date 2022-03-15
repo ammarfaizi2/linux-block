@@ -9,6 +9,7 @@
  *   Based on OSS ACI and ALSA OPTi9xx drivers
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/init.h>

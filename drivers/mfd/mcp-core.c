@@ -7,6 +7,7 @@
  *  Generic MCP (Multimedia Communications Port) layer.  All MCP locking
  *  is solely held within this file.
  */
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

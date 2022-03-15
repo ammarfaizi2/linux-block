@@ -3,6 +3,7 @@
  *  Implementation of operations over local quota file
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_api.h>

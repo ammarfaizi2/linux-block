@@ -12,6 +12,7 @@
  *  Copyright (C) 2008-2009 Angelo Arrifano <miknix@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

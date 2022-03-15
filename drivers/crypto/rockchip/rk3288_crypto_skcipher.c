@@ -8,6 +8,7 @@
  *
  * Some ideas are from marvell-cesa.c and s5p-sss.c driver.
  */
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/io_extra.h>

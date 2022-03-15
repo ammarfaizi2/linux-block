@@ -13,6 +13,7 @@
  *   Added full duplex UART mode for DSP version 2.0 and later.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/time.h>

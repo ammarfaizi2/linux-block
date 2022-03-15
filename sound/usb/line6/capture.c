@@ -5,6 +5,7 @@
  * Copyright (C) 2004-2010 Markus Grabner (grabner@icg.tugraz.at)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <sound/core.h>

@@ -66,6 +66,7 @@
  * Evgeniy Dushistov <dushistov@mail.ru>, 2007
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

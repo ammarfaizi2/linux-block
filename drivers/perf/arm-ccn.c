@@ -4,6 +4,7 @@
  * Copyright (C) 2014 ARM Limited
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>

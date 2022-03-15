@@ -2,6 +2,7 @@
 /* Copyright(c) 2007 - 2011 Realtek Corporation. */
 
 #define _RTL8188E_XMIT_C_
+#include <linux/spinlock_api.h>
 #include <linux/etherdevice_api.h>
 
 #include "../include/osdep_service.h"

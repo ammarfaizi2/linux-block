@@ -2,6 +2,7 @@
 /* Copyright (c) 2020, Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

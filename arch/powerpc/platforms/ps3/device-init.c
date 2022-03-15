@@ -6,6 +6,7 @@
  *  Copyright 2007 Sony Corp.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rcuwait_api.h>
 #include <linux/interrupt.h>

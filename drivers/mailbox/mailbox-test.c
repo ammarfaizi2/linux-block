@@ -5,6 +5,7 @@
  * Author: Lee Jones <lee.jones@linaro.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ioport.h>

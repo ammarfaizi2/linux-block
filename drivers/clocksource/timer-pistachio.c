@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/clk.h>

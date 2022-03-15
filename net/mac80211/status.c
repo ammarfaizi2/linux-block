@@ -7,6 +7,7 @@
  * Copyright 2013-2014  Intel Mobile Communications GmbH
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

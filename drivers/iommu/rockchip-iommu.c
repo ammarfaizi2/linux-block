@@ -6,6 +6,7 @@
  *			Daniel Kurtz <djkurtz@chromium.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>

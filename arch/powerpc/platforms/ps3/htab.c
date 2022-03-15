@@ -6,6 +6,7 @@
  *  Copyright 2006, 2007 Sony Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/memblock.h>
 

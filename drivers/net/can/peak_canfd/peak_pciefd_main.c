@@ -7,6 +7,7 @@
  * Copyright (C) 2001-2006  PEAK System-Technik GmbH
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

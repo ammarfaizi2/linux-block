@@ -9,6 +9,7 @@
  *
  * NOTE: PM support is not currently available.
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

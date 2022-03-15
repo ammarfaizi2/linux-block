@@ -7,6 +7,7 @@
  * for various media blocks are enabled/disabled.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/export.h>
 #include <linux/spinlock.h>
 #include <asm/mach-au1x00/au1000.h>

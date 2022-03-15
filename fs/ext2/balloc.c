@@ -13,6 +13,7 @@
  */
 
 #include "ext2.h"
+#include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/fs_api.h>

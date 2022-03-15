@@ -3,6 +3,7 @@
  * Copyright © 2015-2021 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/lockdep_api.h>

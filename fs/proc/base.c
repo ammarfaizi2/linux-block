@@ -48,6 +48,7 @@
  *  Overall revision about smaps.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

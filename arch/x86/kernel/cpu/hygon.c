@@ -6,6 +6,7 @@
  *
  * Author: Pu Wen <puwen@hygon.cn>
  */
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <asm/x86_init.h>
 #include <asm/processor_api.h>

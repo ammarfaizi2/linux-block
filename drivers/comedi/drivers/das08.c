@@ -9,6 +9,7 @@
  * Copyright (C) 2004 Salvador E. Tropea <set@users.sf.net> <set@ieee.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>

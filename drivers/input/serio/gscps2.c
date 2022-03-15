@@ -22,6 +22,7 @@
  *                 was usable/enabled ?)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/module.h>

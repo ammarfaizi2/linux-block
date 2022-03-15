@@ -5,6 +5,7 @@
  * (C) 2013 Astaro GmbH & Co KG
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/types.h>

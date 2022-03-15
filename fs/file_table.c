@@ -6,6 +6,7 @@
  *  Copyright (C) 1997 David S. Miller (davem@caip.rutgers.edu)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/user.h>
 #include <linux/pid.h>
 #include <linux/percpu_counter_api.h>

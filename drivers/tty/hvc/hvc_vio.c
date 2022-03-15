@@ -23,6 +23,7 @@
 
 #undef DEBUG
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/capability.h>
 #include <linux/types.h>

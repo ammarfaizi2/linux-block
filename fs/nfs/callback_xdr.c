@@ -6,6 +6,7 @@
  *
  * NFSv4 callback encode/decode procedures
  */
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/sunrpc/svc.h>
 #include <linux/nfs4.h>

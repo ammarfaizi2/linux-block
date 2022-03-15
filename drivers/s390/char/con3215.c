@@ -10,6 +10,7 @@
  *	      Dan Morrison, IBM Corporation <dmorriso@cse.buffalo.edu>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/notifier_api.h>
 #include <linux/jiffies.h>

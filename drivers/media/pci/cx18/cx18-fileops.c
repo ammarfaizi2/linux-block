@@ -20,6 +20,7 @@
 #include "cx18-controls.h"
 #include "cx18-ioctl.h"
 #include "cx18-cards.h"
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

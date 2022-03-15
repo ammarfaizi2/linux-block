@@ -16,6 +16,7 @@
 //#define DEBUG
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

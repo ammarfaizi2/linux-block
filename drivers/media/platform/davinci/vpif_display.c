@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/i2c.h>

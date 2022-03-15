@@ -118,6 +118,7 @@
 #define PF_NAME		"pf"
 #define PF_UNITS	4
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -8,6 +8,7 @@
  *
  * Copyright (C) 2012 Texas Instruments Incorporated - https://www.ti.com/
  */
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/errno.h>

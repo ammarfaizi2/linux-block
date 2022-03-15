@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>

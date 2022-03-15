@@ -21,6 +21,7 @@
  * BJD, 04-Nov-2004
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/highmem.h>

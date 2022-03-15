@@ -7,6 +7,7 @@
 
 /* * dedicated to the memory of Graham Gordon 1971-1998 * */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/sched.h>
 #include <linux/prefetch.h>

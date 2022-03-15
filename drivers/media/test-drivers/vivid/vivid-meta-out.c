@@ -3,6 +3,7 @@
  * vivid-meta-out.c - meta output support functions.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

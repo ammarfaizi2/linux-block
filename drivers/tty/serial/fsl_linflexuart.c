@@ -6,6 +6,7 @@
  * Copyright 2017-2019 NXP
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

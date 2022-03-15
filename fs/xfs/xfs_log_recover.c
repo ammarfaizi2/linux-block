@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2006 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/mm_api_kvmalloc.h>

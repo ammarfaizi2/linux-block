@@ -3,6 +3,7 @@
  * HD-audio core bus driver
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/io.h>

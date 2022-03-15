@@ -12,6 +12,7 @@
  * See the GNU General Public License for more details.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

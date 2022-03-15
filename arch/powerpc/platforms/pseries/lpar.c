@@ -10,6 +10,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "lpar: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/sched/cond_resched.h>

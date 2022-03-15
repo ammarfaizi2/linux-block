@@ -5,6 +5,7 @@
  *         Ryder Lee <ryder.lee@mediatek.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/percpu_rwsem_api.h>
 #include <linux/fs_api_sb.h>

@@ -4,6 +4,7 @@
  *  Copyright (c) 2015 FUJITSU LIMITED
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

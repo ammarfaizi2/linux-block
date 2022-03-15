@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Etnaviv Project
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

@@ -11,6 +11,7 @@
  * refining of this idea.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>

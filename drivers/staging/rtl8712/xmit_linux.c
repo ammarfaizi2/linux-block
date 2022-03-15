@@ -16,6 +16,7 @@
 
 #define _XMIT_OSDEP_C_
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/delay.h>
 #include <linux/usb.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2018 - 2021 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

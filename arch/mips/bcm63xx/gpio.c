@@ -7,6 +7,7 @@
  * Copyright (C) 2008-2011 Florian Fainelli <florian@openwrt.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/spinlock.h>

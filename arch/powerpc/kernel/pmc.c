@@ -8,6 +8,7 @@
  *    Copyright (c) 2004 Freescale Semiconductor, Inc
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/errno.h>
 #include <linux/bug.h>
 #include <linux/spinlock.h>

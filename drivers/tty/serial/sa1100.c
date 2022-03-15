@@ -7,6 +7,7 @@
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

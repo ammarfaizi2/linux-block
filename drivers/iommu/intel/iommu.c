@@ -13,6 +13,7 @@
 #define pr_fmt(fmt)     "DMAR: " fmt
 #define dev_fmt(fmt)    pr_fmt(fmt)
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/pgtable_api.h>

@@ -10,6 +10,7 @@
  * Please report both successes and troubles to the author at omninet@kroah.com
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

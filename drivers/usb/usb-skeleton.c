@@ -8,6 +8,7 @@
  * but has been rewritten to be easier to read and use.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

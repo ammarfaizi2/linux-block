@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/math64.h>

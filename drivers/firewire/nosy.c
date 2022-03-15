@@ -4,6 +4,7 @@
  * Copyright (C) 2002-2007 Kristian Høgsberg
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

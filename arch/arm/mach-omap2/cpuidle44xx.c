@@ -7,6 +7,7 @@
  * Rajendra Nayak <rnayak@ti.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched.h>
 #include <linux/cpuidle.h>

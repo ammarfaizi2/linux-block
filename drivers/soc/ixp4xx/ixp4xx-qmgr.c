@@ -5,6 +5,7 @@
  * Copyright (C) 2007 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2020 Intel Corporation.
  */
+#include <linux/spinlock_api.h>
 #include <linux/workqueue.h>
 #include "intel_pxp.h"
 #include "intel_pxp_irq.h"

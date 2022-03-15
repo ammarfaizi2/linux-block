@@ -22,6 +22,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/math64.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

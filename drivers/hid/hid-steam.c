@@ -33,6 +33,7 @@
  *   https://github.com/rodrigorc/steamctrl
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

@@ -63,6 +63,7 @@
  *		wrt receive and holding up unrelated socket operations.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/sched.h>
 #include <linux/fs_api.h>

@@ -8,6 +8,7 @@
  */
 
 #define pr_fmt(fmt) "watchq: " fmt
+#include <linux/spinlock_api.h>
 #include <linux/sched/user.h>
 #include <linux/rculist.h>
 #include <linux/mm_api.h>

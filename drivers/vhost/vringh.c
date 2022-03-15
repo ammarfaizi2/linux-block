@@ -4,6 +4,7 @@
  *
  * Since these may be in userspace, we use (inline) accessors.
  */
+#include <linux/spinlock_api.h>
 #include <linux/compiler.h>
 #include <linux/module.h>
 #include <linux/vringh.h>

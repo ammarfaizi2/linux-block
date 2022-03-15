@@ -9,6 +9,7 @@
  * Round-robin path selector.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device-mapper.h>
 
 #include "dm-path-selector.h"

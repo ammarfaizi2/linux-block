@@ -36,6 +36,7 @@
  * work correctly otherwise  (note: this is a pretty rare condition).
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

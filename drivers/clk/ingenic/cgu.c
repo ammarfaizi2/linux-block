@@ -6,6 +6,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

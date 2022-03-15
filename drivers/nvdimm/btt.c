@@ -3,6 +3,7 @@
  * Block Translation Table
  * Copyright (c) 2014-2015, Intel Corporation.
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

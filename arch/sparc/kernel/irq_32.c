@@ -12,6 +12,7 @@
  *  Copyright (C) 1998-2000 Anton Blanchard (anton@samba.org)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

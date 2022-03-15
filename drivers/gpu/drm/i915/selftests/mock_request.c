@@ -22,6 +22,8 @@
  *
  */
 
+#include <linux/spinlock_api.h>
+
 #include "gem/selftests/igt_gem_utils.h"
 #include "gt/mock_engine.h"
 

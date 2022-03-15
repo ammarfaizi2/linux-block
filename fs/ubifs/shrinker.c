@@ -27,6 +27,7 @@
  * un-mounts, which is done by the 'ubifs_infos_lock' and 'c->umount_mutex'.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/atomic_api.h>

@@ -3,6 +3,7 @@
  * Copyright © 2015 Broadcom Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

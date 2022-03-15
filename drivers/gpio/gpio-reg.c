@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 Russell King
  */
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/gpio/gpio-reg.h>

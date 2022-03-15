@@ -22,6 +22,7 @@
  * registers are banked per-cpu for these sources.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/cpumask_api.h>

@@ -7,6 +7,7 @@
  * Author: Mark Zhan <rongkai.zhan@windriver.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

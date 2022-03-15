@@ -69,6 +69,7 @@
  * If you need it, send me (Frank Hess) an email.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/math.h>
 #include <linux/ioport.h>
 #include <linux/module.h>

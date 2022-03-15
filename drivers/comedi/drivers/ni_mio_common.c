@@ -40,6 +40,7 @@
  * fully tested as yet. Terry Barnaby, BEAM Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/sched.h>

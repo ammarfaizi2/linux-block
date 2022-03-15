@@ -11,6 +11,7 @@
  *   David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>

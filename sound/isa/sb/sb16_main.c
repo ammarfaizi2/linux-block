@@ -18,6 +18,7 @@
  *        "16bit DMA Allocation" setting set to Playback or Capture.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <asm/dma.h>
 #include <linux/init.h>

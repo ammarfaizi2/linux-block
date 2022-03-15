@@ -10,6 +10,7 @@
  *
  * Ext4 extents status tree core functions.
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>

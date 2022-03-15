@@ -20,6 +20,7 @@
  * See also Documentation/block/ioprio.rst
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched/user.h>
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>

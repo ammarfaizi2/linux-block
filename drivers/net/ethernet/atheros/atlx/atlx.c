@@ -14,6 +14,7 @@
 #ifndef ATLX_C
 #define ATLX_C
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>

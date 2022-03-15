@@ -7,6 +7,7 @@
  *                                                                         *
  ***************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/hid.h>
 #include <linux/hid-debug.h>
 #include <linux/input.h>

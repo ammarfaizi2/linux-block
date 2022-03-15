@@ -42,6 +42,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

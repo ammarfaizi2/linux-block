@@ -10,6 +10,7 @@
   supported by this driver and makes no commitment to maintain it.
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>

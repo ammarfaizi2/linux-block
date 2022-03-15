@@ -6,6 +6,7 @@
 #include "../base.h"
 #include "../efuse.h"
 #include "fw_common.h"
+#include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 

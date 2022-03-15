@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <core/notify.h>
 #include <core/event.h>

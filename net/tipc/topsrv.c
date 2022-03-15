@@ -41,6 +41,7 @@
 #include "addr.h"
 #include "msg.h"
 #include "bearer.h"
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/net.h>
 #include <linux/mm_api.h>

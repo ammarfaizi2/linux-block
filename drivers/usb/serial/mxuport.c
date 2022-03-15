@@ -12,6 +12,7 @@
  *	16 ports : UPort 1610-16, UPort 1650-16
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

@@ -7,6 +7,7 @@
  *          Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/property.h>
 #include <linux/irqdesc.h>

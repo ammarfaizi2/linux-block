@@ -5,6 +5,7 @@
  * Copyright (C) 2008 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

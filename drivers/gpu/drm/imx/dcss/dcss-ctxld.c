@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

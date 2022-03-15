@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2015 Imagination Technologies Ltd.
  */
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/init.h>
 #include <linux/smp.h>

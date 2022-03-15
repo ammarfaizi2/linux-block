@@ -5,6 +5,7 @@
  * Copyright (C) 2014, Marvell International Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/device_api_lock.h>

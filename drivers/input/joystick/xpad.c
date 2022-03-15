@@ -61,6 +61,7 @@
  * Later changes can be tracked in SCM.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/kernel.h>

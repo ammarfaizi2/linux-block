@@ -2,6 +2,7 @@
 /*
  * (C) 2007 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

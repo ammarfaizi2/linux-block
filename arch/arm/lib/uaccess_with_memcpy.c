@@ -6,6 +6,7 @@
  *  Copyright (C) 2009 Marvell Semiconductor
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/pagefault_ctrl.h>

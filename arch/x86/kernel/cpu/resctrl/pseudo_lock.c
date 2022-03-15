@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/perf_event_api.h>

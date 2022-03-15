@@ -18,6 +18,7 @@
  * (c) Mellanox Technologies, 2016
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/lockdep_api.h>

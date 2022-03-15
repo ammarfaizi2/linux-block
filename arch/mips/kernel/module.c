@@ -8,6 +8,7 @@
 
 #undef DEBUG
 
+#include <linux/spinlock_api.h>
 #include <asm/fixmap.h>
 #include <linux/extable.h>
 #include <linux/moduleloader.h>

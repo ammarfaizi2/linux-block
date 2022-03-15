@@ -6,6 +6,7 @@
  *
  * Heavily based on Mediatek's pinctrl driver
  */
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

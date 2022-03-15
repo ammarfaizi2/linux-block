@@ -9,6 +9,7 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/delay.h>

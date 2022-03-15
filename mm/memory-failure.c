@@ -33,6 +33,7 @@
  * are rare we hope to get away with this. This avoids impacting the core 
  * VM.
  */
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>

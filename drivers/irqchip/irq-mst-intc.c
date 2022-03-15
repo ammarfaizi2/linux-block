@@ -3,6 +3,7 @@
  * Copyright (c) 2020 MediaTek Inc.
  * Author Mark-PK Tsai <mark-pk.tsai@mediatek.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

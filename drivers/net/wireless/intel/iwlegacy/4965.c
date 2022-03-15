@@ -9,6 +9,7 @@
  *
  *****************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

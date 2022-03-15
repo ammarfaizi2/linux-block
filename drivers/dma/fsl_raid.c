@@ -58,6 +58,7 @@
  *	clears the interrupt and leave the post interrupt processing to the irq
  *	thread.
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

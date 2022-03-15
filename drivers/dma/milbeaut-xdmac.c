@@ -3,6 +3,7 @@
 // Copyright (C) 2019 Linaro Ltd.
 // Copyright (C) 2019 Socionext Inc.
 
+#include <linux/spinlock_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

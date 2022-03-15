@@ -5,6 +5,7 @@
  */
 #include "qla_def.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/delay.h>

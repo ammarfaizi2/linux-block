@@ -26,6 +26,7 @@
 /*#define DEBUG 1 */
 /*#define UARTDELAY 1 */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>

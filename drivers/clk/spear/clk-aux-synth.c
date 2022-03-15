@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "clk-aux-synth: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/clk-provider.h>
 #include <linux/slab.h>
 #include <linux/io.h>

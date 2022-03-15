@@ -9,6 +9,7 @@
  * are to this RFC.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/timer.h>
 #include <linux/netfilter.h>

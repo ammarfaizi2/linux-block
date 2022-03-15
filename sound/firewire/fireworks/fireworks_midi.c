@@ -5,6 +5,7 @@
  * Copyright (c) 2009-2010 Clemens Ladisch
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 
 #include "fireworks.h"

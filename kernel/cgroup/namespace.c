@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 #include "cgroup-internal.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/cred.h>
 #include <linux/capability.h>

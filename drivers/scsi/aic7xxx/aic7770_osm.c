@@ -41,6 +41,7 @@
 
 #include "aic7xxx_osm.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>

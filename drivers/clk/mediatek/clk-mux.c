@@ -4,6 +4,7 @@
  * Author: Owen Chen <owen.chen@mediatek.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/slab.h>

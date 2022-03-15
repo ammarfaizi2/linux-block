@@ -4,6 +4,7 @@
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/perf_event_api.h>
 #include <linux/mm_api.h>

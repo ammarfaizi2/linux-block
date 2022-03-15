@@ -5,6 +5,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>

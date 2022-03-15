@@ -10,6 +10,7 @@
  * Copyright (C) 1998,2000 David A. Schleef <ds@schleef.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

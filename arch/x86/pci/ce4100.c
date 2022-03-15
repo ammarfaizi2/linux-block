@@ -14,6 +14,7 @@
  * fixup so it is a special case ATM
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/init.h>

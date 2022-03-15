@@ -6,6 +6,7 @@
  * Copyright (C) 2006-2011 Analog Devices, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>

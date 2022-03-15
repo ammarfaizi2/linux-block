@@ -4,6 +4,7 @@
  * Copyright (C) 2009 Hong H. Pham <hong.pham@windriver.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/export.h>
 #include <linux/slab.h>

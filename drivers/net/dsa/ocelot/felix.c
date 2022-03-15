@@ -5,6 +5,7 @@
  * register-compatible with Ocelot and that perform I/O to their host CPU
  * through an NPI (Node Processor Interface) Ethernet port.
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/of_api.h>

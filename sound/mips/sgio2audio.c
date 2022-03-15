@@ -8,6 +8,7 @@
  *   Copyright 2007 Thorben Jändling <tj.trevelyan@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/spinlock.h>

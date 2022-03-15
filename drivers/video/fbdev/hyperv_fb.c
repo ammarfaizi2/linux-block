@@ -45,6 +45,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

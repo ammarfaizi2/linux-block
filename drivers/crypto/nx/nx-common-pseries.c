@@ -8,6 +8,7 @@
  *          Seth Jennings <sjenning@linux.vnet.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

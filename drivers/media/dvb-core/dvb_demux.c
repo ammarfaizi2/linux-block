@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "dvb_demux: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

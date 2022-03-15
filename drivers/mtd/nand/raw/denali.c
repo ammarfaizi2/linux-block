@@ -7,6 +7,7 @@
  *   Reworked by Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>

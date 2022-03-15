@@ -21,6 +21,7 @@
  *	- G, Manjunath Kondaiah <manjugk@ti.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

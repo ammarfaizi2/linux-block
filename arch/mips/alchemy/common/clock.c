@@ -34,6 +34,7 @@
  *    later models it's called RCLK.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/clk.h>

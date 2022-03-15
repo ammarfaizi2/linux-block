@@ -23,6 +23,7 @@
  * Copyright 2009  by Karsten Keil <keil@isdn4linux.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

@@ -39,6 +39,7 @@
  * irq can be omitted, although the cmd interface will not work without it.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

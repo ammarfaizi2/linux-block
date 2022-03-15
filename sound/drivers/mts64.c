@@ -4,6 +4,7 @@
  *   Copyright (c) 2006 by Matthias König <mk@phasorlab.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/parport.h>

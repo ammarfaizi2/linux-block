@@ -6,6 +6,7 @@
  * Copyright 2010, 2011 David Jander <david@protonic.nl>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

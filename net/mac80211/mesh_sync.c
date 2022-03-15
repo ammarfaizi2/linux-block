@@ -6,6 +6,8 @@
  * Copyright (C) 2021 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
+
 #include "ieee80211_i.h"
 #include "mesh.h"
 #include "driver-ops.h"

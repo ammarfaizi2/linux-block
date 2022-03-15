@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

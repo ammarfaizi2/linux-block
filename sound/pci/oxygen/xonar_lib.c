@@ -5,6 +5,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <sound/core.h>
 #include <sound/control.h>

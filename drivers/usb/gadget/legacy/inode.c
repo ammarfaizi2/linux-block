@@ -9,6 +9,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

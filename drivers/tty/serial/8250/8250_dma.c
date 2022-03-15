@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2013 Intel Corporation
  */
+#include <linux/spinlock_api.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>
 #include <linux/serial_reg.h>

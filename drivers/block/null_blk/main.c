@@ -3,6 +3,7 @@
  * Add configfs and memory store: Kyungchan Koh <kkc6196@fb.com> and
  * Shaohua Li <shli@fb.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sizes.h>
 #include <linux/radix-tree-api.h>

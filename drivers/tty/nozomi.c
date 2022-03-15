@@ -28,6 +28,7 @@
 /* Enable this to have a lot of debug printouts */
 #define DEBUG
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

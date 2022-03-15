@@ -42,6 +42,7 @@
 
 /* Linux Foundation elects GPLv2 license only. */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

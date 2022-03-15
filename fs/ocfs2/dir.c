@@ -20,6 +20,7 @@
  *   Copyright (C) 1991, 1992 Linus Torvalds
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_entry_types.h>

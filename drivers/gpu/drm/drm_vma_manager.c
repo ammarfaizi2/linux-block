@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/kref_api.h>
 #include <drm/drm_vma_manager_api_vm_lock.h>

@@ -11,6 +11,7 @@
  *		Shiping Ji <shji@microsoft.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

@@ -24,6 +24,7 @@
  * semaphore.  If it's zero, there may be tasks waiting on the wait_list.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -13,6 +13,7 @@
 
 #define DEBUG_VARIABLE debug
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/i2c.h>
 #include <linux/fs.h>

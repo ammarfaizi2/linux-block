@@ -26,6 +26,7 @@
  *   Yaozu (Eddie) Dong <Eddie.dong@intel.com>
  *   Port from Qemu.
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

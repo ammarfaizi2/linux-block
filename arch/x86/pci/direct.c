@@ -3,6 +3,7 @@
  * direct.c - Low-level direct PCI config space access
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/pci.h>

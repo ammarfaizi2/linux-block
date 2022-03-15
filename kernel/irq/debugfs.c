@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright 2017 Thomas Gleixner <tglx@linutronix.de>
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>

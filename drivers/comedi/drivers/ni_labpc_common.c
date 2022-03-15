@@ -7,6 +7,7 @@
  * Copyright (C) 2001-2003 Frank Mori Hess <fmhess@users.sourceforge.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

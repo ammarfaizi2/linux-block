@@ -3,6 +3,7 @@
 
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
+#include <linux/spinlock_api.h>
 #include <linux/atm.h>
 #include <linux/atmdev.h>
 #include <linux/slab.h>

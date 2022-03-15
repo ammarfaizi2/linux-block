@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Texas Instruments
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/align.h>
 #include <linux/kernel.h>

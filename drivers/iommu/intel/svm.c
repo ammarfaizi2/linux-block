@@ -5,6 +5,7 @@
  * Authors: David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

@@ -23,6 +23,7 @@
  */
 #include "chan.h"
 
+#include <linux/spinlock_api.h>
 #include <core/notify.h>
 #include <engine/fifo.h>
 

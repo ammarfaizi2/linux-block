@@ -11,6 +11,7 @@
  * of the boot process, for example.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device.h>
 #include <linux/serial.h>
 #include <linux/tty.h>

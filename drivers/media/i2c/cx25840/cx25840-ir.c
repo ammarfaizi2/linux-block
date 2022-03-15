@@ -7,6 +7,7 @@
  *  Copyright (C) 2010  Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/i2c.h>
 #include <linux/device_api_lock.h>

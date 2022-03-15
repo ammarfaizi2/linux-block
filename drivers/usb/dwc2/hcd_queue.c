@@ -39,6 +39,7 @@
  * This file contains the functions to manage Queue Heads and Queue
  * Transfer Descriptors for Host mode
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

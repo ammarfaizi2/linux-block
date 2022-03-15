@@ -8,6 +8,7 @@
  * Documentation/core-api/genericirq.rst
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/cpumask_api.h>
 #include <linux/irq.h>

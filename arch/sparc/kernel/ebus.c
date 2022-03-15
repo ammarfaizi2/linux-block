@@ -5,6 +5,7 @@
  * Copyright (C) 1999  David S. Miller (davem@redhat.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2005-2009, 2010 Cavium Networks
  */
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/msi.h>

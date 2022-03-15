@@ -3,6 +3,7 @@
  * Copyright 2002 Andi Kleen, SuSE Labs.
  * Thanks to Ben LaHaise for precious feedback.
  */
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>

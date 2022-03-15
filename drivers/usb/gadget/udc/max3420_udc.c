@@ -13,6 +13,7 @@
  *		https://pdfserv.maximintegrated.com/en/an/AN3785.pdf
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>

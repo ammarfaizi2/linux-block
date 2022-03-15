@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pagemap.h>
 #include <linux/mm_api_truncate.h>

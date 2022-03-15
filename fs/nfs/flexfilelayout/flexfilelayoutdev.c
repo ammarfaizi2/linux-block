@@ -7,6 +7,7 @@
  * Tao Peng <bergwolf@primarydata.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/gfp_api.h>
 #include <linux/cred.h>

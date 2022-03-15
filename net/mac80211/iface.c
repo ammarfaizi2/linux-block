@@ -10,6 +10,7 @@
  * Copyright (c) 2016        Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>

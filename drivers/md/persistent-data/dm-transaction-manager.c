@@ -9,6 +9,7 @@
 #include "dm-space-map-metadata.h"
 #include "dm-persistent-data-internal.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/export.h>
 #include <linux/mutex.h>

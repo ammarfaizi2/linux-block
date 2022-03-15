@@ -11,6 +11,7 @@
  * Sebastian Andrzej Siewior < sebastian at breakpoint dot cc >
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

@@ -3,6 +3,7 @@
  * Copyright © 2018-2020 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/device_api.h>
 #include <drm/drm_atomic.h>

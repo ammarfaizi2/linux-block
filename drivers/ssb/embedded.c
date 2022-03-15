@@ -11,6 +11,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api.h>
 #include <linux/export.h>
 #include <linux/platform_device.h>

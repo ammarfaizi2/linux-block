@@ -4,6 +4,7 @@
  * Copyright (C) 2014 Fujitsu.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kthread.h>

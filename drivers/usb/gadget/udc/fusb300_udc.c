@@ -6,6 +6,7 @@
  *
  * Author : Yuan-hsin Chen <yhchen@faraday-tech.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>

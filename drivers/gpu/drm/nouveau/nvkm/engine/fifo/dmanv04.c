@@ -24,6 +24,7 @@
 #include "channv04.h"
 #include "regsnv04.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <core/client.h>

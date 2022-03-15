@@ -22,6 +22,7 @@
  * concurrent access to the same port.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

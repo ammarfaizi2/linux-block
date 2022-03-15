@@ -36,6 +36,7 @@
  * of the RS600 GART block).
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/delay.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Intel Corporation
  *****************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>

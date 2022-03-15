@@ -7,6 +7,7 @@
   Copyright:	2011 Azimut Ltd. <http://azimutrzn.ru/>
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/tty.h>
 #include <linux/module.h>

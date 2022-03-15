@@ -6,6 +6,7 @@
  *  Copyright (c) by Pavel Hofman <pavel.hofman@ivitera.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>

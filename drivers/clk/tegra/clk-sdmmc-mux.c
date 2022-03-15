@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/minmax.h>
 #include <linux/clk-provider.h>

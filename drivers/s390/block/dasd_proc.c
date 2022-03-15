@@ -13,6 +13,7 @@
 
 #define KMSG_COMPONENT "dasd"
 
+#include <linux/spinlock_api.h>
 #include <linux/ctype.h>
 #include <linux/slab.h>
 #include <linux/string.h>

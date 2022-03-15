@@ -33,6 +33,7 @@
  *              --  Chris Novakovic <chris@chrisn.me.uk>, April 2018
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 1997, 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>

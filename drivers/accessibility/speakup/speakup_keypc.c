@@ -8,6 +8,7 @@
  * package it's not a general device driver.
  * This driver is for the Keynote Gold internal synthesizer.
  */
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/jiffies.h>

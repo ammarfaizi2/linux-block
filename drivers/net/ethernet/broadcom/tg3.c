@@ -22,6 +22,7 @@
  */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>

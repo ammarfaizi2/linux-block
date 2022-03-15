@@ -4,6 +4,7 @@
 
 #include "smscoreapi.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/kref_api.h>

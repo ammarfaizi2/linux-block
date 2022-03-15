@@ -18,6 +18,7 @@
  *  Other errata and documentation available under NDA.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

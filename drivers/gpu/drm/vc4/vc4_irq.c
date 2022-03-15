@@ -45,6 +45,7 @@
  * current job can make progress.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/dma-fence-api.h>

@@ -6,6 +6,7 @@
  *
  *  Documentation: ARM DDI 0173B
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

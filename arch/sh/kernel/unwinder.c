@@ -9,6 +9,7 @@
  * Multiple stack unwinders can be available on a system, usually with
  * the most accurate unwinder being the currently active one.
  */
+#include <linux/spinlock_api.h>
 #include <linux/errno.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>

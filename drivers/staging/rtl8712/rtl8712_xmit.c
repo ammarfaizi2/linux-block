@@ -16,6 +16,7 @@
 
 #define _RTL8712_XMIT_C_
 
+#include <linux/spinlock_api.h>
 #include <linux/etherdevice_api.h>
 
 #include "osdep_service.h"

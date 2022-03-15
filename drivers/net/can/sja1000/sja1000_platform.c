@@ -4,6 +4,7 @@
  * Copyright (C) 2007 Wolfgang Grandegger <wg@grandegger.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>

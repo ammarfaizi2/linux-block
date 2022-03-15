@@ -4,6 +4,7 @@
  *
  * Sam Johnston <samj@samj.net>
  */
+#include <linux/spinlock_api.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Renesas Solutions Corp.
  * Copyright (C) 2010 NISHIMOTO Hiroki
  */
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

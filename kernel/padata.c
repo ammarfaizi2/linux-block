@@ -11,6 +11,7 @@
  * Author: Daniel Jordan <daniel.m.jordan@oracle.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>

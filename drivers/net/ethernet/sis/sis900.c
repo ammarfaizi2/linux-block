@@ -49,6 +49,7 @@
    Rev 1.05 Aug. 7 1999 Jim Huang (cmhuang@sis.com.tw) Initial release
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

@@ -15,6 +15,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/siphash_api.h>
 #include <linux/refcount_api.h>
 #include <linux/random.h>

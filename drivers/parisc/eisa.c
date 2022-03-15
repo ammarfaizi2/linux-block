@@ -22,6 +22,7 @@
  * irq levels 10 and 11.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/init.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2009-2012, NVIDIA Corporation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/clk/tegra.h>
 #include <linux/cpumask.h>
 #include <linux/cpu_pm.h>

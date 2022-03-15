@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>

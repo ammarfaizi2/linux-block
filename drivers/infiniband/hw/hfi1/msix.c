@@ -3,6 +3,7 @@
  * Copyright(c) 2018 - 2020 Intel Corporation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/hardirq.h>
 #include <linux/bitmap.h>

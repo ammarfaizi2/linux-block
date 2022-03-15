@@ -11,6 +11,7 @@
  * Copyright (C) 2003-2004 MontaVista Software, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

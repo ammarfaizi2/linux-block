@@ -9,6 +9,7 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>

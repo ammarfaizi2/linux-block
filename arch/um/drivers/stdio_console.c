@@ -3,6 +3,7 @@
  * Copyright (C) 2000, 2001 Jeff Dike (jdike@karaya.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/posix_types.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>

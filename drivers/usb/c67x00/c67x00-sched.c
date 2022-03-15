@@ -7,6 +7,7 @@
  *    based on multiple host controller drivers inside the linux kernel.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api.h>
 #include <linux/kthread.h>
 #include <linux/slab.h>

@@ -8,6 +8,7 @@
  * This file may be distributed under the terms of the GNU GPL license.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

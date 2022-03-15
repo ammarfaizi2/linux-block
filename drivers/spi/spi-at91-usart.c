@@ -6,6 +6,7 @@
 //
 // Author: Radu Pirea <radu.pirea@microchip.com>
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

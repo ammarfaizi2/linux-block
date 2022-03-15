@@ -92,6 +92,7 @@
  * are transferred from the svc_rdma_recv_ctxt to the second svc_rqst.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/llist_api.h>
 #include <linux/atomic_api.h>

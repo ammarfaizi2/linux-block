@@ -12,6 +12,7 @@
  * Based on sa1111.c
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

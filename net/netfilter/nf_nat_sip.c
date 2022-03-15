@@ -7,6 +7,7 @@
  * (C) 2007, 2008, 2011, 2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/inet.h>

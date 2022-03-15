@@ -71,6 +71,7 @@
  * by Adam Tla/lka <atlka@pg.gda.pl>, Aug 2006
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/ratelimit.h>
 #include <linux/pid.h>

@@ -120,6 +120,7 @@
  *	20011003 Fix multiple requests
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  *               Krzysztof Opasiak <k.opasiak@samsung.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/net.h>

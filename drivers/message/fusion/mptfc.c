@@ -43,6 +43,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+#include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>

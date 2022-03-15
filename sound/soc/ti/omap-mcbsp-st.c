@@ -9,6 +9,7 @@
  *          Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

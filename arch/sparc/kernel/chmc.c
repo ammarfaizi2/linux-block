@@ -4,6 +4,7 @@
  * Copyright (C) 2001, 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

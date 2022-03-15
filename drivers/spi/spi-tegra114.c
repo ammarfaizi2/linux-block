@@ -5,6 +5,7 @@
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

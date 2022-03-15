@@ -38,6 +38,7 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api_lock.h>

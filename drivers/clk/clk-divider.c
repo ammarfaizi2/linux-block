@@ -7,6 +7,7 @@
  * Adjustable divider clock implementation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/minmax.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>

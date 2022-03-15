@@ -6,6 +6,7 @@
  * Author: Lucy Liu <lucy.liu@intel.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/capability.h>
 #include <linux/netdevice.h>

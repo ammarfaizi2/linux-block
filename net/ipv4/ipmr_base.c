@@ -2,6 +2,7 @@
  * Common logic shared by IPv4 [ipmr] and IPv6 [ip6mr] implementation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file_net.h>
 #include <linux/seq_file.h>

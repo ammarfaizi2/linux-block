@@ -10,6 +10,7 @@
 #include "dm-uevent.h"
 #include "dm-ima.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/semaphore.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

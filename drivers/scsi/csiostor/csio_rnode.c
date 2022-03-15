@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/string.h>
 #include <scsi/scsi_device.h>
 #include <scsi/scsi_transport_fc.h>

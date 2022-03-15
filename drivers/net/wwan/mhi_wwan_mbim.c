@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

@@ -7,6 +7,7 @@
  * This work was sponsored by CIS(M) Sdn Bhd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

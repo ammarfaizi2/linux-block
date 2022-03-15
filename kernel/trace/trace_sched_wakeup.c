@@ -10,6 +10,7 @@
  *  Copyright (C) 2004-2006 Ingo Molnar
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched/thread_info_api.h>

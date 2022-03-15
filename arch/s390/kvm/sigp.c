@@ -9,6 +9,7 @@
  *               Christian Ehrhardt <ehrhardt@de.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kvm.h>
 #include <linux/kvm_host.h>
 #include <linux/slab.h>

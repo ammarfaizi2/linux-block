@@ -5,6 +5,7 @@
  */
 
 #include "opl4_local.h"
+#include <linux/spinlock_api.h>
 #include <sound/control.h>
 
 static int snd_opl4_ctl_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)

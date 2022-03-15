@@ -6,6 +6,7 @@
  * Author: Irina Tirdea <irina.tirdea@intel.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>

@@ -10,6 +10,7 @@
  * Author: Sakari Ailus <sakari.ailus@linux.intel.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/poll.h>

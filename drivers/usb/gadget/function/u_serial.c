@@ -14,6 +14,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

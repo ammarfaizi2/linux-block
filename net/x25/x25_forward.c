@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "X25: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/if_arp.h>
 #include <linux/init.h>
 #include <linux/slab.h>

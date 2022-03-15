@@ -5,6 +5,7 @@
  * Bugs this currently does not work under linuxBIOS.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

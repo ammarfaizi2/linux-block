@@ -8,6 +8,7 @@
  * Copyright (C) 2010 Thomas Langer, <thomas.langer@lantiq.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

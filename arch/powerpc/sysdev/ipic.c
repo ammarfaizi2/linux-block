@@ -6,6 +6,7 @@
  *
  * Copyright 2005 Freescale Semiconductor, Inc.
  */
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

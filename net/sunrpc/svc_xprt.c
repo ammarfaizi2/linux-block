@@ -5,6 +5,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/seq_file.h>
 #include <linux/sched/signal.h>

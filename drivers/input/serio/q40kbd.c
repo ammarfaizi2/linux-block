@@ -13,6 +13,7 @@
 /*
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/serio.h>
 #include <linux/interrupt.h>

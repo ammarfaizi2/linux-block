@@ -20,6 +20,7 @@
  *	SG DMA support (this will need *a lot* of work)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/dma-mapping.h>

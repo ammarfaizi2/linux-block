@@ -7,6 +7,7 @@
  *	Copyright (c) 2005  Maciej W. Rozycki
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

@@ -8,6 +8,7 @@
  * See Documentation/ABI/testing/sysfs-platform-wilco-ec for more information.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_types.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

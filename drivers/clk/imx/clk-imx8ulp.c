@@ -3,6 +3,7 @@
  * Copyright 2021 NXP
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/clock/imx8ulp-clock.h>
 #include <linux/err.h>

@@ -13,6 +13,7 @@
 #include "protocol.h"
 #include "orangefs-kernel.h"
 #include "orangefs-bufmap.h"
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

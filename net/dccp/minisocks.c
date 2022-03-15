@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/dccp.h>
 #include <linux/gfp.h>
 #include <linux/kernel.h>

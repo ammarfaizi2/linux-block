@@ -27,6 +27,7 @@
  * mapping lock dependencies runtime.
  */
 #define DISABLE_BRANCH_PROFILING
+#include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>

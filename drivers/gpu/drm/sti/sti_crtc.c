@@ -6,6 +6,7 @@
  *          for STMicroelectronics.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/clk.h>
 
 #include <drm/drm_atomic.h>

@@ -9,6 +9,7 @@
  *   Bryant G. Ly <bryantly@linux.vnet.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

@@ -20,6 +20,7 @@
 /*
  * This file contains functions for dynamic memory pool management
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>

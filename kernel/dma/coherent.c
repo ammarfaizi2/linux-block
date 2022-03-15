@@ -3,6 +3,7 @@
  * Coherent per-device memory handling.
  * Borrowed from i386
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/dma-mapping.h>

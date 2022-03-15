@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/etherdevice_api.h>
 

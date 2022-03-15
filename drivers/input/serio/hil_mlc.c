@@ -52,6 +52,7 @@
  *	and to initiate probes of the loop for new devices.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/hil_mlc.h>
 #include <linux/errno.h>

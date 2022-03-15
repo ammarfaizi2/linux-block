@@ -23,6 +23,7 @@
  *      of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>

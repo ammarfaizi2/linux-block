@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched/user.h>

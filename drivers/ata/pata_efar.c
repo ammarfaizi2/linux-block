@@ -12,6 +12,7 @@
  *    and doesn't require the funky clock selection.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

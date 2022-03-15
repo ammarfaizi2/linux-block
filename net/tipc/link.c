@@ -46,6 +46,7 @@
 #include "trace.h"
 #include "crypto.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>

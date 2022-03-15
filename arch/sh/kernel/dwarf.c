@@ -12,6 +12,7 @@
  */
 
 /* #define DEBUG */
+#include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

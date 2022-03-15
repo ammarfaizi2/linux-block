@@ -8,6 +8,7 @@
  *                    2003 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

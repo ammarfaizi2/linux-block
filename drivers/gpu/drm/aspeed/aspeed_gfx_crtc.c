@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright 2018 IBM Corporation
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

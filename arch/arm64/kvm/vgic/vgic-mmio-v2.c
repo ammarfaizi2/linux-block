@@ -3,6 +3,7 @@
  * VGICv2 MMIO handling functions
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/irqchip/arm-gic.h>
 #include <linux/kvm.h>

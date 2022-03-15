@@ -5,6 +5,7 @@
 
 /* These are all the functions necessary to implement itimers */
 
+#include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <asm/unistd.h>

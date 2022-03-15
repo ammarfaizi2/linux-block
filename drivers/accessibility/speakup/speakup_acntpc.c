@@ -11,6 +11,7 @@
  * This driver is for the Aicom Acent PC internal synthesizer.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/jiffies.h>
 #include <linux/sched.h>

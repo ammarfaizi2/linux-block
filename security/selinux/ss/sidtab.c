@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2018 Red Hat, Inc.
  */
+#include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/sched/cond_resched.h>

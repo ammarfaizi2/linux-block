@@ -14,6 +14,7 @@
  *	Abstract: rt2800 MMIO device routines.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/hrtimer_api.h>
 #include <linux/delay.h>

@@ -4,6 +4,7 @@
  *   Copyright (C) 2011 John Crispin <john@phrozen.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>

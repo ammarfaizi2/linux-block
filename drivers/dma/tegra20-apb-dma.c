@@ -5,6 +5,7 @@
  * Copyright (c) 2012-2013, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/device_api_lock.h>

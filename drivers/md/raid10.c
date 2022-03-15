@@ -9,6 +9,7 @@
  * Base on code in raid1.c.  See raid1.c for further copyright information.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mm_page_address.h>
 #include <linux/math64.h>

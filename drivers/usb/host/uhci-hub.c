@@ -13,6 +13,7 @@
  * (C) Copyright 2004 Alan Stern, stern@rowland.harvard.edu
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/types.h>
 

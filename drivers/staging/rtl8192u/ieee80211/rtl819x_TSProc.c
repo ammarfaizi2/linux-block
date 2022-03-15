@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 #include "ieee80211.h"
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>

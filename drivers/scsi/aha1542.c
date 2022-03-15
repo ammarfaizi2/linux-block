@@ -7,6 +7,7 @@
  *  Copyright (C) 2015 Ondrej Zary
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/highmem.h>
 #include <linux/dma-mapping.h>

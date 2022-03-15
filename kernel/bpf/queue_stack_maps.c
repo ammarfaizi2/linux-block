@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2018 Politecnico di Torino
  */
+#include <linux/spinlock_api.h>
 #include <linux/bpf.h>
 #include <linux/list.h>
 #include <linux/slab.h>

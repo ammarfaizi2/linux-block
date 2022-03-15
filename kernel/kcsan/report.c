@@ -5,6 +5,7 @@
  * Copyright (C) 2019, Google LLC.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/task.h>
 #include <linux/lockdep_api.h>

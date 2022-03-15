@@ -4,6 +4,7 @@
  * Copyright (C) 2012 Tony Prisk <linux@prisktech.co.nz>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/of.h>

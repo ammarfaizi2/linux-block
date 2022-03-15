@@ -24,6 +24,7 @@
 #include "nv10.h"
 #include "regs.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <core/client.h>
 #include <core/gpuobj.h>

@@ -3,6 +3,7 @@
  * Firmware loading and handling functions.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/firmware.h>
 #include <linux/module.h>

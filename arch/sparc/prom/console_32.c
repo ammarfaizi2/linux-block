@@ -7,6 +7,7 @@
  * Copyright (C) 1998 Pete Zaitcev <zaitcev@yahoo.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

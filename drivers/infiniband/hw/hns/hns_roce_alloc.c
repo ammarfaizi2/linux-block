@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/idr_api.h>

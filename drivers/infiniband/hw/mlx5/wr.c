@@ -3,6 +3,7 @@
  * Copyright (c) 2020, Mellanox Technologies inc. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp.h>
 #include <linux/mlx5/qp.h>

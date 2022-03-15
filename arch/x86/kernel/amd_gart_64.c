@@ -11,6 +11,7 @@
  * Copyright 2002 Andi Kleen, SuSE Labs.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/pci-dma-compat.h>

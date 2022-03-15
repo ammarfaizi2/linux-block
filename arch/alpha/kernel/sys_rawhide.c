@@ -9,6 +9,7 @@
  * Code supporting the RAWHIDE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

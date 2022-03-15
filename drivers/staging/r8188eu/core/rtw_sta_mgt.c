@@ -3,6 +3,8 @@
 
 #define _RTW_STA_MGT_C_
 
+#include <linux/spinlock_api.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/recv_osdep.h"

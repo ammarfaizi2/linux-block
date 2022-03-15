@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/list.h>
 #include <linux/rcupdate.h>

@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>

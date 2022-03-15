@@ -13,6 +13,7 @@
 #include "i915_drv.h"
 
 #if defined(CONFIG_X86)
+#include <linux/spinlock_api.h>
 #include <asm/smp.h>
 #else
 #define wbinvd_on_all_cpus() \

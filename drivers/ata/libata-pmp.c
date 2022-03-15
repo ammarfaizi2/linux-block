@@ -6,6 +6,7 @@
  * Copyright (c) 2007  Tejun Heo <teheo@suse.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

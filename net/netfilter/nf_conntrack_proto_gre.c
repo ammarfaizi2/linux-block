@@ -23,6 +23,7 @@
  * (C) 2006-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/module.h>
 #include <linux/types.h>

@@ -18,6 +18,7 @@
  *  available from http://developer.intel.com/
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

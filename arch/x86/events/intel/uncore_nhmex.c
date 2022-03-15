@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Nehalem-EX/Westmere-EX uncore support */
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <asm/msr.h>
 

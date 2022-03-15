@@ -9,6 +9,7 @@
 
 #define dev_fmt(fmt) "PME: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/hardirq.h>

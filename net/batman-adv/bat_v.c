@@ -7,6 +7,7 @@
 #include "bat_v.h"
 #include "main.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>

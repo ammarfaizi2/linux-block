@@ -4,6 +4,7 @@
  * Copyright 2005-2012 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/init.h>

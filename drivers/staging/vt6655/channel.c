@@ -5,6 +5,8 @@
  *
  */
 
+#include <linux/spinlock_api.h>
+
 #include "baseband.h"
 #include "channel.h"
 #include "device.h"

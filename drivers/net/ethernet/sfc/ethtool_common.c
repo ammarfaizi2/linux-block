@@ -7,6 +7,7 @@
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation, incorporated herein by reference.
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

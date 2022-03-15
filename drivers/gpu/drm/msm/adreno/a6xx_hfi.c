@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2017-2018 The Linux Foundation. All rights reserved. */
 
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/completion.h>
 #include <linux/circ_buf.h>

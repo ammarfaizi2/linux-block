@@ -7,6 +7,7 @@
 #define DRV_NAME "r852"
 #define pr_fmt(fmt)  DRV_NAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>

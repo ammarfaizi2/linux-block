@@ -9,6 +9,7 @@
  *  affs symlink handling code
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pagemap.h>
 #include <linux/mm_page_address.h>
 #include <linux/fs_api.h>

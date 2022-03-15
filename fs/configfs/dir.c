@@ -10,6 +10,7 @@
 
 #undef DEBUG
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

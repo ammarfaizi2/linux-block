@@ -4,6 +4,7 @@
  *  Routines for control of ICS 2101 chip and "mixer" in GF1 chip
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/minmax.h>
 #include <linux/io.h>
 #include <linux/time.h>

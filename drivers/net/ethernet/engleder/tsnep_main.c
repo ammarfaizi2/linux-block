@@ -18,6 +18,7 @@
 #include "tsnep.h"
 #include "tsnep_hw.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

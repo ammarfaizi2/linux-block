@@ -7,6 +7,7 @@
  *              Pavel Shilovsky (pshilovsky@samba.org) 2012
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/dcache.h>
 #include <linux/ctype.h>

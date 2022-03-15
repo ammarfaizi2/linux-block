@@ -16,6 +16,7 @@
 #define prx(num)  do { } while (0)
 #endif
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

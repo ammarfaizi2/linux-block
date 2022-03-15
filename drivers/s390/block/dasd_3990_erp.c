@@ -9,6 +9,7 @@
 
 #define KMSG_COMPONENT "dasd-eckd"
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/timer.h>

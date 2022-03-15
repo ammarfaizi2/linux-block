@@ -7,6 +7,7 @@
  *	      Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/gfp_api.h>
 #include <linux/kmod.h>

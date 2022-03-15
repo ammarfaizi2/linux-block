@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2001 Jens Axboe <axboe@kernel.dk>
  */
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>

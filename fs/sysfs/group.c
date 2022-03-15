@@ -8,6 +8,7 @@
  * Copyright (c) 2013 The Linux Foundation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kobject.h>
 #include <linux/module.h>

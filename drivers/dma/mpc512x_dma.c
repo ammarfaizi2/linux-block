@@ -30,6 +30,7 @@
  *     (chunk size * maxburst)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

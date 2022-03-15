@@ -11,6 +11,7 @@
  * m2m-deinterlace, and vsp1 drivers.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

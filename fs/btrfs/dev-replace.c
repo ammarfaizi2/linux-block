@@ -3,6 +3,7 @@
  * Copyright (C) STRATO AG 2012.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/mutex_api.h>

@@ -7,6 +7,7 @@
  * Jiang Liu <jiang.liu@linux.intel.com>
  *	Enable support of hierarchical irqdomains
  */
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/preempt.h>
 #include <linux/of_api.h>

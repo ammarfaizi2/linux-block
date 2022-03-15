@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/io.h>
 #include <linux/delay.h>

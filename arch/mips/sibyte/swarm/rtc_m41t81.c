@@ -5,6 +5,7 @@
  * Copyright (C) 2002 MontaVista Software Inc.
  * Author: jsun@mvista.com or jsun@junsun.net
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bcd.h>
 #include <linux/types.h>

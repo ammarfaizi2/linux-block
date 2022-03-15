@@ -6,6 +6,7 @@
  * Author: Roy Im <Roy.Im.Opensource@diasemi.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

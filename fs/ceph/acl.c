@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Guangliang Zhao, <lucienchao@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/ceph/ceph_debug.h>
 #include <linux/fs.h>

@@ -9,6 +9,7 @@
  * Handling of directories
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>

@@ -4,6 +4,7 @@
  *  Copyright (C) 2012 Thomas Langer <thomas.langer@lantiq.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>

@@ -24,6 +24,7 @@
 
 /* Bluetooth SCO sockets. */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/task_flags.h>
 #include <linux/jiffies.h>

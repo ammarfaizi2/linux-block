@@ -3,6 +3,7 @@
  * (c) 2017 Stefano Stabellini <stefano@aporeto.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/radix-tree-api.h>
 #include <linux/net.h>

@@ -4,6 +4,7 @@
  * Copyright © 2008-2015 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

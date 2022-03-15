@@ -171,6 +171,7 @@
  * by Ian Abbott.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/io.h>
 #include <linux/module.h>

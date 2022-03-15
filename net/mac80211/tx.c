@@ -10,6 +10,7 @@
  * Transmit and frame generation functions.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>

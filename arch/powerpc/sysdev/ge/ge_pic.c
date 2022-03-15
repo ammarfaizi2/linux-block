@@ -10,6 +10,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

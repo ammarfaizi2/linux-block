@@ -5,6 +5,7 @@
  *
  * Copyright © 2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/cache.h>
 #include <linux/spinlock.h>

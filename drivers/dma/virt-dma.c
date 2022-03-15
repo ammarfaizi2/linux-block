@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2012 Russell King
  */
+#include <linux/spinlock_api.h>
 #include <linux/device.h>
 #include <linux/dmaengine.h>
 #include <linux/module.h>

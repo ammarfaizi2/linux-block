@@ -18,6 +18,7 @@
 #undef DEBUG_IRQ
 #undef DEBUG_LOW
 
+#include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/gfp_api.h>

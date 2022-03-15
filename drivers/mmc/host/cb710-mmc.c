@@ -4,6 +4,7 @@
  *
  *  Copyright by Michał Mirosław, 2008-2009
  */
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

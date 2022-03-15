@@ -9,6 +9,7 @@
  * Copyright (C) 2000 David A. Schleef <ds@schleef.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/comedi/comedidev.h>

@@ -4,6 +4,7 @@
  *
  * (C) 2000 Nicolas Pitre <nico@fluxnic.net>
  */
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/ioport.h>

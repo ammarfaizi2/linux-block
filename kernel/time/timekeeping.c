@@ -3,6 +3,7 @@
  *  Kernel timekeeping code and accessor functions. Based on code from
  *  timer.c, moved in commit 8524070b7982.
  */
+#include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/math64.h>

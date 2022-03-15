@@ -9,6 +9,7 @@
  * Copyright (C) 2011 Renesas Solutions Corp.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

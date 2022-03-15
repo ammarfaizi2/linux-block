@@ -4,6 +4,7 @@
  *  Copyright (C) 2010 John Crispin <john@phrozen.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

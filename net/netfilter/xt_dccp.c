@@ -5,6 +5,7 @@
  * (C) 2005 by Harald Welte <laforge@netfilter.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>

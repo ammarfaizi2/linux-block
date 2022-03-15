@@ -9,6 +9,7 @@
  * Copyright (C) 2019 Gautam Ramakrishnan <gautamramk@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>

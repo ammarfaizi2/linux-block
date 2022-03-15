@@ -10,6 +10,7 @@
 	Please submit bugs to http://bugzilla.kernel.org/ .
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>

@@ -10,6 +10,7 @@
  * J Hadi Salim 980816:  ECN support
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/types.h>

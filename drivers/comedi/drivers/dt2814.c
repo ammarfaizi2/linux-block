@@ -25,6 +25,7 @@
  * addition, the clock does not seem to be very accurate.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

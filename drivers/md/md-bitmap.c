@@ -16,6 +16,7 @@
  * flush after percent set rather than just time based. (maybe both).
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>

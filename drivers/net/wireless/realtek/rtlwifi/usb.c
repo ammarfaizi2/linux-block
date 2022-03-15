@@ -7,6 +7,7 @@
 #include "base.h"
 #include "ps.h"
 #include "rtl8192c/fw_common.h"
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>

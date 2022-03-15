@@ -11,6 +11,7 @@
 
 /* #define DEBUG */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/bitops.h>

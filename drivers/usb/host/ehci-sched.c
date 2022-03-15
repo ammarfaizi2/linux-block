@@ -4,6 +4,7 @@
  * Copyright (c) 2003 Michal Sojka, for high-speed iso transfers
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/types.h>

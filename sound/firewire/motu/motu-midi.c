@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2015-2017 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 
 #include "motu.h"

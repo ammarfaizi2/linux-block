@@ -33,6 +33,7 @@
  *		David S. Miller	:	New socket lookup architecture.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/seq_file_net.h>
 #include <linux/sched.h>

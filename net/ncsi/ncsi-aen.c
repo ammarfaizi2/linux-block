@@ -3,6 +3,7 @@
  * Copyright Gavin Shan, IBM Corporation 2016.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

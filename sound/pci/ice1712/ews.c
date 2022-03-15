@@ -8,6 +8,7 @@
  *                    2002 Takashi Iwai <tiwai@suse.de>
  */      
 
+#include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

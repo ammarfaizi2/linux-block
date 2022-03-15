@@ -6,6 +6,7 @@
  *                        Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/errno.h>
 #include <linux/string.h>

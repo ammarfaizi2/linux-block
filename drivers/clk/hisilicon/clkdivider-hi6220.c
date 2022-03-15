@@ -7,6 +7,7 @@
  * Author: Bintian Wang <bintian.wang@huawei.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/clk-provider.h>
 #include <linux/slab.h>

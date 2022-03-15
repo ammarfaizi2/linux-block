@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

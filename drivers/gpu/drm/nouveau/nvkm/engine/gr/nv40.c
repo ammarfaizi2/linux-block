@@ -24,6 +24,7 @@
 #include "nv40.h"
 #include "regs.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/ioport.h>
 #include <core/client.h>

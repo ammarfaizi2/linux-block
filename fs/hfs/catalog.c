@@ -12,6 +12,7 @@
  *     re-shamelessly stolen Copyright (C) 1997 Linus Torvalds
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 
 #include "hfs_fs.h"

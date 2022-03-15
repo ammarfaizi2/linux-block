@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <linux/net.h>

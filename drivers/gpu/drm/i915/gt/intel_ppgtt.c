@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/slab.h>

@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>

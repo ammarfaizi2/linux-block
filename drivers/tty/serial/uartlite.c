@@ -6,6 +6,7 @@
  * Copyright (C) 2007 Secret Lab Technologies Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

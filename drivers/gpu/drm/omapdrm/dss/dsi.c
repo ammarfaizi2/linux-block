@@ -6,6 +6,7 @@
 
 #define DSS_SUBSYS_NAME "DSI"
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
