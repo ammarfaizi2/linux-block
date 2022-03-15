@@ -3,6 +3,7 @@
 #define _ASM_X86_DEBUGREG_H
 
 
+#include <asm/paravirt.h>
 #include <asm/cpufeature.h>
 #include <linux/bug.h>
 #include <uapi/asm/debugreg.h>
