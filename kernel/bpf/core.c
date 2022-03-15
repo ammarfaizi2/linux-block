@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

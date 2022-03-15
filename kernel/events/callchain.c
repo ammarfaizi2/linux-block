@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

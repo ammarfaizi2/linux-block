@@ -8,6 +8,7 @@
 #define KMSG_COMPONENT	"cpum_sf"
 #define pr_fmt(fmt)	KMSG_COMPONENT ": " fmt
 
+#include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>

@@ -5,6 +5,7 @@
  * Copyright 2008-2009 Paul Mackerras, IBM Corporation.
  * Copyright 2010 Freescale Semiconductor, Inc.
  */
+#include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

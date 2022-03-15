@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016,2017 Facebook
  */
+#include <linux/perf_event_api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

@@ -5,6 +5,7 @@
  * Copyright 2016 Christophe Leroy, CS Systemes d'Information
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/atomic_api.h>
 #include <asm/local64_api.h>
 #include <linux/kernel.h>

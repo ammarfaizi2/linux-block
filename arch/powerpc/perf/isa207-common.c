@@ -6,6 +6,8 @@
  * Copyright 2013 Michael Ellerman, IBM Corporation.
  * Copyright 2016 Madhavan Srinivasan, IBM Corporation.
  */
+#include <linux/perf_event_api.h>
+
 #include "isa207-common.h"
 
 PMU_FORMAT_ATTR(event,		"config:0-49");

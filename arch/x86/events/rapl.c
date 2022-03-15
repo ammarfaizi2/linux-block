@@ -55,6 +55,7 @@
 
 #define pr_fmt(fmt) "RAPL PMU: " fmt
 
+#include <linux/perf_event_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/cpumask_api.h>

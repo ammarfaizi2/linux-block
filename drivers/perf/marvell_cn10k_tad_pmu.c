@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "tad_pmu: " fmt
 
+#include <linux/perf_event_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -15,6 +15,7 @@
  * using the CPU's debug registers.
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/notifier_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>

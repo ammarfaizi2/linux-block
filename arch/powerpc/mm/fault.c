@@ -11,6 +11,7 @@
  *  Modified for PPC64 by Dave Engebretsen (engebret@ibm.com)
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

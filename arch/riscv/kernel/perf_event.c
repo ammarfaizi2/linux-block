@@ -21,6 +21,7 @@
  * The Copyright line includes x86 and tile ones.
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>

@@ -5,6 +5,7 @@
  * Copyright 2011 Linaro Ltd.
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/ktime_api.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>

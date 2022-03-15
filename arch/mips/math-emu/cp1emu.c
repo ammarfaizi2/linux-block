@@ -21,6 +21,7 @@
  * Note if you know that you won't have an FPU, then you'll get much
  * better performance by compiling with -msoft-float!
  */
+#include <linux/perf_event_api.h>
 #include <linux/sched.h>
 #include <linux/debugfs.h>
 #include <linux/percpu-defs.h>

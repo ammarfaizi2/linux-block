@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "hw-breakpoint: " fmt
 
+#include <linux/perf_event_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/cpuhotplug.h>

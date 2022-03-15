@@ -5,6 +5,7 @@
 //
 // Copyright (C) 2013-2018 Synopsys, Inc. (www.synopsys.com)
 
+#include <linux/perf_event_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/local64_api.h>

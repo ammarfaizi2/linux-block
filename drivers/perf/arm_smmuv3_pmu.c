@@ -34,6 +34,7 @@
  * are not supported.
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/io.h>
