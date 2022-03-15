@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/gfp_api.h>
 #include <linux/filter_api.h>

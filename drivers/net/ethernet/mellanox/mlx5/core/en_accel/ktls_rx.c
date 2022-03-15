@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 // Copyright (c) 2019 Mellanox Technologies.
 
+#include <linux/if_vlan_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <net/inet6_hashtables.h>

@@ -7,6 +7,7 @@
  *            Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -8,6 +8,7 @@
  * All rights reserved
  * www.qlogic.com
  */
+#include <linux/if_vlan_api.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

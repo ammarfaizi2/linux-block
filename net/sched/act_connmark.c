@@ -6,6 +6,7 @@
  * Copyright (c) 2011 Felix Fietkau <nbd@openwrt.org>
 */
 
+#include <linux/if_vlan_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

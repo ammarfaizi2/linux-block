@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2015-2018 Mellanox Technologies. All rights reserved */
 
+#include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

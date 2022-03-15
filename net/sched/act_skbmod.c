@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Jamal Hadi Salim <jhs@mojatatu.com>
 */
 
+#include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

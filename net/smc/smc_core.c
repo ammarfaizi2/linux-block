@@ -9,6 +9,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

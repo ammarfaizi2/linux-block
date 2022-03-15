@@ -3,6 +3,7 @@
  *  Copyright (c) 2014 Realtek Semiconductor Corp. All rights reserved.
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

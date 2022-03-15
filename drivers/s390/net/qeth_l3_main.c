@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "qeth"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/if_vlan_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

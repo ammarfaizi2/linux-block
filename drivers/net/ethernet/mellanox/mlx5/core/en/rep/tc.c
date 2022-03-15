@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies. */
 
+#include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <net/dst_metadata.h>
 #include <linux/netdevice.h>

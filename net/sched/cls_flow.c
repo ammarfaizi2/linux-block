@@ -5,6 +5,7 @@
  * Copyright (c) 2007, 2008 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/fs.h>
 #include <linux/cred.h>
 #include <linux/kernel.h>

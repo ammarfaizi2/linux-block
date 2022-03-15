@@ -6,6 +6,7 @@
  *	Stephen Hemminger		<shemminger@osdl.org>
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/filter_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>

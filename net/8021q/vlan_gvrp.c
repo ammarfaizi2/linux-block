@@ -4,6 +4,7 @@
  *
  * 	Copyright (c) 2008 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/if_vlan_api.h>
 #include <linux/types.h>
 #include <linux/if_vlan.h>
 #include <net/garp.h>

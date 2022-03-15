@@ -5,6 +5,7 @@
  *          Bart De Schuymer <bdschuym@pandora.be>
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/if_ether.h>
 #include <linux/if_vlan.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Cavium Inc.
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>

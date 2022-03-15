@@ -4,6 +4,7 @@
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/if_vlan.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/filter_api.h>
 #include <linux/bpf.h>
 #include <linux/bpf_trace.h>

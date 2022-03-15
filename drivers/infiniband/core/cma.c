@@ -6,6 +6,7 @@
  * Copyright (c) 2005-2006 Intel Corporation.  All rights reserved.
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/completion.h>

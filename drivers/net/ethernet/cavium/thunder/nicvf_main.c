@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Cavium, Inc.
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/hardirq.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>
