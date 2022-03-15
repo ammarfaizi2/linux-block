@@ -74,6 +74,7 @@
 
 #define pr_fmt(fmt) "UDP: " fmt
 
+#include <linux/skbuff_api_nf.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/seq_file_net.h>
 #include <linux/sched.h>

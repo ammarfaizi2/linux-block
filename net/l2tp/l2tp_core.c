@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/skbuff_api_nf.h>
 #include <linux/refcount_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ipv6.h>

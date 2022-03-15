@@ -108,6 +108,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/skbuff_api_nf.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
