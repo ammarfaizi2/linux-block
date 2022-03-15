@@ -77,6 +77,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/splice.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/sched.h>
