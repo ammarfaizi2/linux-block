@@ -19,6 +19,7 @@
  *   variants of Vybrid.
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/cpu_pm.h>
 #include <linux/io.h>

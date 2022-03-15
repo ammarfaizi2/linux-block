@@ -8,6 +8,7 @@
  * Copyright (C) 2015 STMicroelectronics (R&D) Limited
  */
 
+#include <linux/of_api.h>
 #include <linux/cpu.h>
 #include <linux/io.h>
 #include <linux/mfd/syscon.h>

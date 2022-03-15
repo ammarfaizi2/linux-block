@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Robert Jarzmik
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

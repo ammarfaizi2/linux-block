@@ -9,6 +9,7 @@
  * Based on sound/soc/codecs/wm8974 and TI driver for kernel 2.6.27.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

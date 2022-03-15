@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008, Marvell International Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -4,6 +4,7 @@
  * Versatile PB boards.
  * Copyright (C) 2012 Linus Walleij
  */
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/of.h>

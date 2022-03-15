@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>
 #include <linux/irqchip.h>

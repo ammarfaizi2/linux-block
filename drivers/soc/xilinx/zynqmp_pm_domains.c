@@ -9,6 +9,7 @@
  *  Rajan Vaja <rajan.vaja@xilinx.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/err.h>

@@ -6,6 +6,7 @@
  * Written by: Juri Lelli, ARM Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

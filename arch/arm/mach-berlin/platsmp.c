@@ -5,6 +5,7 @@
  * Antoine Ténart <antoine.tenart@free-electrons.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>

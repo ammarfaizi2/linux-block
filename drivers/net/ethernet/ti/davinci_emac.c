@@ -15,6 +15,7 @@
  *     PHY layer usage
  */
 
+#include <linux/of_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>

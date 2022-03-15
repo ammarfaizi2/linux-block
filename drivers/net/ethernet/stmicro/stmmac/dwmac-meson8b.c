@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

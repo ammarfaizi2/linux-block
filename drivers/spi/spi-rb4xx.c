@@ -9,6 +9,7 @@
  * MikroTik for their RouterBoard 4xx series devices.
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

@@ -25,6 +25,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>

@@ -5,6 +5,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/of_api.h>
 #include <linux/io_extra.h>
 #include <asm/io.h>
 #include <asm/opal.h>

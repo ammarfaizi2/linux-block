@@ -9,6 +9,7 @@
  * This driver is developed for Axi CAN IP and for Zynq CANPS Controller.
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

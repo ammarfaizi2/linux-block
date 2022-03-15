@@ -5,6 +5,7 @@
  * Author: Thierry Reding <treding@nvidia.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

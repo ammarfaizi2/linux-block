@@ -8,6 +8,7 @@
  *     Jasper St. Pierre <jstpierre@mecheye.net>
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

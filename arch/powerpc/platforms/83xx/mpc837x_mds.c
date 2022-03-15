@@ -7,6 +7,7 @@
  * MPC837x MDS board specific routines
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/of.h>

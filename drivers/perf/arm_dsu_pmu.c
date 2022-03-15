@@ -11,6 +11,7 @@
 #define DRVNAME		PMUNAME "_pmu"
 #define pr_fmt(fmt)	DRVNAME ": " fmt
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

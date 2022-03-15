@@ -5,6 +5,7 @@
  * Emilio López <emilio@elopez.com.ar>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2016, Robert Jarzmik <robert.jarzmik@free.fr>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/export.h>

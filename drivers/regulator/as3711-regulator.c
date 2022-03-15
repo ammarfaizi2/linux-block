@@ -6,6 +6,7 @@
  * Author: Guennadi Liakhovetski, <g.liakhovetski@gmx.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/mfd/as3711.h>

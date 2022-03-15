@@ -5,6 +5,7 @@
  *  Copyright 2012-2014 Freescale Semiconductor, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

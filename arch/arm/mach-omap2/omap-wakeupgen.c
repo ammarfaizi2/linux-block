@@ -13,6 +13,7 @@
  *	Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/cpuhotplug.h>
 #include <linux/kernel.h>

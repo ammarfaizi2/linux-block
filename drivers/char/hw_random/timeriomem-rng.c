@@ -17,6 +17,7 @@
  * TODO: add support for reading sizes other than 32bits and masking
  */
 
+#include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/hrtimer_api.h>

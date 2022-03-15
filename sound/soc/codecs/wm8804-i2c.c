@@ -7,6 +7,7 @@
  * Author: Charles Keepax <ckeepax@opensource.wolfsonmicro.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api.h>
 #include <linux/init.h>

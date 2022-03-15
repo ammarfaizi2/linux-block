@@ -3,6 +3,7 @@
  * Copyright 2012-2013 Freescale Semiconductor, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/of_address.h>
 #include <linux/bits.h>
 #include <linux/clk.h>

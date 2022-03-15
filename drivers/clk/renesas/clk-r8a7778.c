@@ -5,6 +5,7 @@
  * Copyright (C) 2014  Ulrich Hecht
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/clk/renesas.h>
 #include <linux/of_address.h>

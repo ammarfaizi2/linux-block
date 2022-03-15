@@ -6,6 +6,7 @@
  * Author: Long Cheng <long.cheng@mediatek.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>

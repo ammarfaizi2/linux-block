@@ -4,6 +4,7 @@
  *  Copyright (C) 2013 Daniel Tang <tangrs@tangrs.id.au>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/io.h>

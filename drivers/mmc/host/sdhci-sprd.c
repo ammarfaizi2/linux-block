@@ -5,6 +5,7 @@
 // Copyright (C) 2018 Spreadtrum, Inc.
 // Author: Chunyan Zhang <chunyan.zhang@unisoc.com>
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

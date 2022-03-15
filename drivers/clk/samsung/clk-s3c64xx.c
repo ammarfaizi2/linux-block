@@ -5,6 +5,7 @@
  * Common Clock Framework support for all S3C64xx SoCs.
 */
 
+#include <linux/of_api.h>
 #include <linux/slab.h>
 #include <linux/clk-provider.h>
 #include <linux/clk/samsung.h>

@@ -10,6 +10,7 @@
  * Based on the soc-camera rcar_vin driver
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/device_api_lock.h>

@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "mvebu-pmsu: " fmt
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/clk.h>
 #include <linux/cpu.h>

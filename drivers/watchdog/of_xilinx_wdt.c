@@ -6,6 +6,7 @@
  * (C) Copyright 2011 (Alejandro Cabrera <aldaya@gmail.com>)
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/clk.h>

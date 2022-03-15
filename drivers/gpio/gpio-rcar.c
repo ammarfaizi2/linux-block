@@ -6,6 +6,7 @@
  *  Copyright (C) 2013 Magnus Damm
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

@@ -18,6 +18,7 @@
  * this warranty disclaimer.
  **/
 
+#include <linux/of_api.h>
 #include <linux/kthread.h>
 #include <linux/module.h>
 #include <linux/of.h>

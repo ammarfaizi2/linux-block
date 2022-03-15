@@ -7,6 +7,7 @@
 //
 // TI Common Platform Interrupt Controller (cp_intc) driver
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/export.h>

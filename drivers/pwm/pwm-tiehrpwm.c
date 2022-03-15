@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Texas Instruments, Inc. - https://www.ti.com/
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

@@ -5,6 +5,7 @@
 // Copyright (C) 2022 Laurent Pinchart <laurent.pinchart@idesonboard.com>
 // Copyright (C) 2018 Avnet, Inc.
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/gpio.h>

@@ -4,6 +4,7 @@
  * Copyright © 2015 Broadcom Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

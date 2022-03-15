@@ -4,6 +4,7 @@
  * Copyright 2020 Paul Mackerras (paulus@ozlabs.org), IBM Corp.
  */
 
+#include <linux/of_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/stddef.h>

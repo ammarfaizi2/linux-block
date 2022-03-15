@@ -7,6 +7,7 @@
  * based on Blackfin On-Chip SPI Driver (spi_bfin5xx.c)
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

@@ -11,6 +11,7 @@
 // Regs infos taken from mc13xxx drivers from freescale and mc13xxx.pdf file
 // from freescale
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/mfd/mc13xxx.h>
 #include <linux/regulator/machine.h>

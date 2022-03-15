@@ -8,6 +8,7 @@
  * Lattice iCE40 FPGAs through slave SPI.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/fpga/fpga-mgr.h>
 #include <linux/gpio/consumer.h>

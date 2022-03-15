@@ -7,6 +7,7 @@
  * Author: Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/spinlock.h>

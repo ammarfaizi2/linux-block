@@ -5,6 +5,7 @@
  * Copyright 2021 Zev Weiss <zev@bewilderbeest.net>
  */
 
+#include <linux/of_api.h>
 #include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2011, Code Aurora Forum. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/atomic.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2010 NXP Semiconductors
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/platform_device.h>

@@ -9,6 +9,7 @@
  * Added OMAP4 support - Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

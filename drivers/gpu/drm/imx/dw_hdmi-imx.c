@@ -4,6 +4,7 @@
  * derived from imx-hdmi.c(renamed to bridge/dw_hdmi.c now)
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/component.h>

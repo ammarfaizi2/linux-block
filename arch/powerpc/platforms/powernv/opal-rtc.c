@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/time.h>
 #include <linux/bcd.h>

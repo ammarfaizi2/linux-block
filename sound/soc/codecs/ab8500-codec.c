@@ -16,6 +16,7 @@
  * License terms:
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

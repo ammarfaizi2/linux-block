@@ -2,6 +2,7 @@
 /*
  *  Copyright (C) 2012-2015 Altera Corporation
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/irqchip.h>
 #include <linux/of_address.h>

@@ -4,6 +4,7 @@
  * Author: Archit Taneja <archit@ti.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

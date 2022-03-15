@@ -9,6 +9,7 @@
  * based on pm-sh7372.c
  *  Copyright (C) 2011 Magnus Damm
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/fwnode.h>
 #include <linux/clk/renesas.h>

@@ -6,6 +6,7 @@
  *
  * Implements PM domains using the generic PM domain for ux500.
  */
+#include <linux/of_api.h>
 #include <linux/printk.h>
 #include <linux/slab.h>
 #include <linux/err.h>

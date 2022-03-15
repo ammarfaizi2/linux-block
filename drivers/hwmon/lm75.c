@@ -5,6 +5,7 @@
  * Copyright (c) 1998, 1999  Frodo Looijaard <frodol@dds.nl>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

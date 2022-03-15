@@ -6,6 +6,7 @@
  *
  * Driver allows to use AxB5xx unused pins to be used as GPIO
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

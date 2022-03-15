@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Wolfram Sang, Sang Engineering <wsa@sang-engineering.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/clk/renesas.h>
 #include <linux/init.h>

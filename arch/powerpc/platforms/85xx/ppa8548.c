@@ -10,6 +10,7 @@
  * Based on the MPC8548CDS support - Copyright 2005 Freescale Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

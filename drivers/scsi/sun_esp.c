@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

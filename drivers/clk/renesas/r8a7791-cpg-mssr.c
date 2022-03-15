@@ -9,6 +9,7 @@
  * Copyright (C) 2013 Ideas On Board SPRL
  */
 
+#include <linux/of_api.h>
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

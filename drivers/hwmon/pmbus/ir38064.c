@@ -11,6 +11,7 @@
  * this driver does not currently support them.
  */
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

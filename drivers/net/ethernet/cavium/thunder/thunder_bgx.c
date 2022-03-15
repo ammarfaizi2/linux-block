@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Cavium, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

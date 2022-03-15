@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "### dt-test ### " fmt
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/hashtable_api.h>

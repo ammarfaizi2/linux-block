@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) "kexec ranges: " fmt
 
+#include <linux/of_api.h>
 #include <linux/sort.h>
 #include <linux/kexec.h>
 #include <linux/of_device.h>

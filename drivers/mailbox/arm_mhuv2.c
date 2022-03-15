@@ -25,6 +25,7 @@
  * for each mailbox controller, a sender device and a receiver device.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/amba/bus.h>
 #include <linux/interrupt.h>

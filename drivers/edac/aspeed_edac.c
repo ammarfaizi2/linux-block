@@ -3,6 +3,7 @@
  * Copyright 2018, 2019 Cisco Systems
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/edac.h>
 #include <linux/module.h>

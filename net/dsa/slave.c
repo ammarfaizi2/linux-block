@@ -4,6 +4,7 @@
  * Copyright (c) 2008-2009 Marvell Semiconductor
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>

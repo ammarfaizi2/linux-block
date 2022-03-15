@@ -10,6 +10,7 @@
 // the DMA controller on Freescale 83xx, 85xx, and 86xx SOCs. In ALSA terms,
 // the PCM driver is what handles the DMA buffer.
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/init.h>

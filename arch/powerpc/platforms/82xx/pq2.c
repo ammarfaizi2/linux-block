@@ -10,6 +10,7 @@
  * Copyright (c) 2006 MontaVista Software, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/kprobes.h>
 
 #include <asm/cpm2.h>

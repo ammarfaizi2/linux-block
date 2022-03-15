@@ -10,6 +10,7 @@
  * Author: Michael Barkowski <michael.barkowski@freescale.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>
 #include <linux/spi/spi.h>

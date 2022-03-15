@@ -3,6 +3,7 @@
  * Copyright (C) IoT.bzh 2021
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/limits.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2021 Glider bv
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

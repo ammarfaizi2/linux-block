@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "secvar-sysfs: "fmt
 
+#include <linux/of_api.h>
 #include <linux/kobject_api.h>
 #include <linux/slab.h>
 #include <linux/compat.h>

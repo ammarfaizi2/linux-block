@@ -13,6 +13,7 @@
  *   actually do.
  */
 
+#include <linux/of_api.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/proc_fs.h>

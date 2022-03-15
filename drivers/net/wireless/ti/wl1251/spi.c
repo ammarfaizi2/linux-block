@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/module.h>

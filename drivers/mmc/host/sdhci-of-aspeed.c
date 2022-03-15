@@ -2,6 +2,7 @@
 /* Copyright (C) 2019 ASPEED Technology Inc. */
 /* Copyright (C) 2019 IBM Corp. */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

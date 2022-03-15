@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Guenter Roeck <linux@roeck-us.net>
  */
 
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/device_api_lock.h>

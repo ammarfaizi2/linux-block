@@ -6,6 +6,7 @@
  * Copyright (c) 2020 Cristian Ciocaltea <cristian.ciocaltea@gmail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

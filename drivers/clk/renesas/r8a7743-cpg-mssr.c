@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Cogent Embedded Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

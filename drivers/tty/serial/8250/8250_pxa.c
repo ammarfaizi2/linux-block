@@ -10,6 +10,7 @@
  *  Based on drivers/serial/8250.c by Russell King.
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

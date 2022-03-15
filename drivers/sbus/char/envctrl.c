@@ -19,6 +19,7 @@
  *              Daniele Bellucci <bellucda@tiscali.it>
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

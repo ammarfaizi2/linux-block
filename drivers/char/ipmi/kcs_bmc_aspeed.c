@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "aspeed-kcs-bmc: " fmt
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic.h>

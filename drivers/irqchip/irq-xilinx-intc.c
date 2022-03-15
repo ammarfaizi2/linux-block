@@ -9,6 +9,7 @@
  * for more details.
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irqdomain.h>
 #include <linux/irq.h>

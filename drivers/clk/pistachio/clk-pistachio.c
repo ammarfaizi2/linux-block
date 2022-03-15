@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Google, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/init.h>
 #include <linux/io.h>

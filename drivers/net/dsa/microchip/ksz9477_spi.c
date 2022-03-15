@@ -5,6 +5,7 @@
  * Copyright (C) 2017-2019 Microchip Technology Inc.
  */
 
+#include <linux/of_api.h>
 #include <asm/unaligned.h>
 
 #include <linux/delay.h>

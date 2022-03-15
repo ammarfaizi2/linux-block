@@ -5,6 +5,7 @@
  * Copyright (c) 2015, ROCKCHIP CORPORATION.  All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>

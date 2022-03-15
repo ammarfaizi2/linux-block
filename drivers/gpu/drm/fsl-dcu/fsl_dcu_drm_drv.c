@@ -5,6 +5,7 @@
  * Freescale DCU drm device driver
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

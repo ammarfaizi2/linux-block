@@ -3,6 +3,7 @@
  * Copyright (C) STMicroelectronics 2021 - All Rights Reserved
  * Author: Alexandre Torgue <alexandre.torgue@foss.st.com> for STMicroelectronics.
  */
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

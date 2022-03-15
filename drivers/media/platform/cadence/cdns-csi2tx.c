@@ -5,6 +5,7 @@
  * Copyright (C) 2017-2019 Cadence Design Systems Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>

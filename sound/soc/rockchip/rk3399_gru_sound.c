@@ -5,6 +5,7 @@
  * Copyright (c) 2016, ROCKCHIP CORPORATION.  All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

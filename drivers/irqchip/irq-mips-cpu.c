@@ -22,6 +22,7 @@
  * is present, or for old CPUs with an external FPU by convention it's the
  * FPU exception interrupt.
  */
+#include <linux/of_api.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

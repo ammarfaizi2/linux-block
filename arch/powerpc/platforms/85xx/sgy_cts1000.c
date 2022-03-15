@@ -7,6 +7,7 @@
  * Copyright 2012 by Servergy, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/platform_device.h>
 #include <linux/device.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  * Splited out the IPQ8064 soc specific from lpass-cpu.c
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/err.h>

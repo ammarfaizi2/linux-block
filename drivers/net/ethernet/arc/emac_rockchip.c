@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Romain Perier <romain.perier@gmail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>

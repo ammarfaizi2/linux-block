@@ -3,6 +3,7 @@
 // Copyright (c) 2014 MediaTek Inc.
 // Author: Flora Fu <flora.fu@mediatek.com>
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

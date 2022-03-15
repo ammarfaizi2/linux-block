@@ -5,6 +5,7 @@
  * Driver for NI Ettus Research USRP E3x0 Button Driver
  */
 
+#include <linux/of_api.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

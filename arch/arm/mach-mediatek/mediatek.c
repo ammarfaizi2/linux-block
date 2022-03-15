@@ -5,6 +5,7 @@
  * Copyright (c) 2014 MundoReader S.L.
  * Author: Matthias Brugger <matthias.bgg@gmail.com>
  */
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <asm/mach/arch.h>

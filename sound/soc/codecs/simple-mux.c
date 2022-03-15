@@ -4,6 +4,7 @@
  * Author: Alexandre Belloni <alexandre.belloni@bootlin.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>

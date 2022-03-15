@@ -6,6 +6,7 @@
  * Author: Heiko Stuebner <heiko@sntech.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/io.h>

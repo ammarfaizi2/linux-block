@@ -9,6 +9,7 @@
  * or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/err.h>

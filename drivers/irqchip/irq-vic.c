@@ -6,6 +6,7 @@
  *  Copyright (C) 2000 Deep Blue Solutions Ltd
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/export.h>
 #include <linux/init.h>

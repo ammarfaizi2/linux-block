@@ -13,6 +13,7 @@
  * Giuseppe De Robertis <Giuseppe.DeRobertis@ba.infn.it>
  * Gary Chen & Ch Hsu Storlink Semiconductor
  */
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/mm_page_address.h>

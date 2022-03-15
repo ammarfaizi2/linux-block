@@ -9,6 +9,7 @@
  *  Copyright (C) 2005 Stephen Rothwell, IBM Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/export.h>
 #include <linux/cache.h>
 #include <linux/of.h>

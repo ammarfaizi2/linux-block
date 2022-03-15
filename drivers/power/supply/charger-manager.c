@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

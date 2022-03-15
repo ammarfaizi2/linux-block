@@ -7,6 +7,7 @@
  * Allwinner PRCM (Power/Reset/Clock Management) driver
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/mfd/core.h>

@@ -10,6 +10,7 @@
  * Adapted to sparc64 by David S. Miller davem@davemloft.net
  */
 
+#include <linux/of_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device/driver.h>
 #include <linux/device_api_lock.h>

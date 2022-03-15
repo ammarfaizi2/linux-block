@@ -6,6 +6,7 @@
  * Author: Moritz Fischer <moritz.fischer@ettus.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/notifier.h>

@@ -35,6 +35,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2021 AngeloGioacchino Del Regno
  *                    <angelogioacchino.delregno@somainline.org>
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

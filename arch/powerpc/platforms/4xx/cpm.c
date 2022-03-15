@@ -17,6 +17,7 @@
  * project.
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/of_platform.h>
 #include <linux/sysfs.h>

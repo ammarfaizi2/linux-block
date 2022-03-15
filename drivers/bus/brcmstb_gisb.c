@@ -3,6 +3,7 @@
  * Copyright (C) 2014-2021 Broadcom
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

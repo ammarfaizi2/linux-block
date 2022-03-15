@@ -23,6 +23,7 @@
  * reprogramming the FPGA and re-enabled after the FPGA has been programmed.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/fpga/fpga-bridge.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
  * Description:
  * QE TDM API Set - TDM specific routines implementations.
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/of_address.h>

@@ -71,6 +71,7 @@
  * not recognised when matching.
  */
 
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

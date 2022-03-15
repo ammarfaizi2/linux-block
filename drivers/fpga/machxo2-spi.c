@@ -8,6 +8,7 @@
  * Copyright (C) 2018 Paolo Pisati <p.pisati@gmail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/fpga/fpga-mgr.h>
 #include <linux/gpio/consumer.h>

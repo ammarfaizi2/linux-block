@@ -9,6 +9,7 @@
 // Copyright (c) 2006 Simtec Electronics
 //	Ben Dooks <ben@simtec.co.uk>
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

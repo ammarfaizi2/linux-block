@@ -8,6 +8,7 @@
  * Author: Boris Brezillon <boris.brezillon@free-electrons.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mfd/syscon/atmel-smc.h>
 #include <linux/string.h>
 

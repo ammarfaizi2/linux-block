@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/backlight.h>
 #include <linux/err.h>

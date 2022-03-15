@@ -7,6 +7,7 @@
  * either be read from the "time" and "timeh" CSRs, and can use the SBI to
  * setup events, or directly accessed using MMIO registers.
  */
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/clocksource.h>

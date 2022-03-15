@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

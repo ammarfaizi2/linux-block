@@ -7,6 +7,7 @@
  * Copyright 2009 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

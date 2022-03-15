@@ -3,6 +3,7 @@
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

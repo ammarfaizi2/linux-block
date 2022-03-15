@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "mobility: " fmt
 
+#include <linux/of_api.h>
 #include <linux/kobject_api.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

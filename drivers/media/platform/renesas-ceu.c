@@ -11,6 +11,7 @@
  * Copyright (C) 2008, Guennadi Liakhovetski <kernel@pengutronix.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>

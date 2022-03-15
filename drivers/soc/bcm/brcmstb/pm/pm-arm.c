@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "brcmstb-pm: " fmt
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/io_extra.h>
 #include <asm/cacheflush.h>

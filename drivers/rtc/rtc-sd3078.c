@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Zoro Li
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/i2c.h>

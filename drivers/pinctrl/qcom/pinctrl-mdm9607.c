@@ -5,6 +5,7 @@
  * based on pinctrl-msm8916.c
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

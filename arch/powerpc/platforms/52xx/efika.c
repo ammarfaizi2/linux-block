@@ -9,6 +9,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <generated/utsrelease.h>
 #include <linux/pci.h>

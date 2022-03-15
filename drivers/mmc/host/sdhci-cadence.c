@@ -4,6 +4,7 @@
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>

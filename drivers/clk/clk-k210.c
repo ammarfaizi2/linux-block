@@ -5,6 +5,7 @@
  */
 #define pr_fmt(fmt)     "k210-clk: " fmt
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>

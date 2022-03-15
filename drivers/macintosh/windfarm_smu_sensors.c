@@ -6,6 +6,7 @@
  *                    <benh@kernel.crashing.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

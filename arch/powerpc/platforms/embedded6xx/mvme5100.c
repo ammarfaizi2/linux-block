@@ -12,6 +12,7 @@
  * Author: Stephen Chivers <schivers@csc.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/of_platform.h>

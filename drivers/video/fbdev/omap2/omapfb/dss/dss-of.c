@@ -4,6 +4,7 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/module.h>

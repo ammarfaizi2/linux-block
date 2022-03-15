@@ -5,6 +5,7 @@
  * Copyright (C) 2005 Paul Mackerras, IBM Corp. <paulus@samba.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

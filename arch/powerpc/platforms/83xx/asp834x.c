@@ -10,6 +10,7 @@
  * Maintainer: Bryan O'Donoghue <bodonoghue@codhermit.ie>
  */
 
+#include <linux/of_api.h>
 #include <linux/pci.h>
 #include <linux/of_platform.h>
 

@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Pengutronix, Lucas Stach <kernel@pengutronix.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api.h>
 #include <dt-bindings/clock/imx8mq-clock.h>
 #include <linux/clk-provider.h>

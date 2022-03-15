@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/of_api.h>
 #include <linux/device_api.h>
 #include <linux/component.h>
 #include <linux/export.h>

@@ -9,6 +9,7 @@
  * Derived from the lm83 driver by Jean Delvare
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

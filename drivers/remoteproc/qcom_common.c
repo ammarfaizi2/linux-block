@@ -7,6 +7,7 @@
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

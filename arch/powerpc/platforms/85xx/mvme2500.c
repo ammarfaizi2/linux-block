@@ -13,6 +13,7 @@
  * Author Alessio Igor Bogani <alessio.bogani@elettra.eu>
  */
 
+#include <linux/of_api.h>
 #include <linux/pci.h>
 #include <asm/udbg.h>
 #include <asm/mpic.h>

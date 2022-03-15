@@ -5,6 +5,7 @@
  * Copyright (c) 2013 Tony Prisk <linux@prisktech.co.nz>
  */
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/gpio/driver.h>
 #include <linux/interrupt.h>

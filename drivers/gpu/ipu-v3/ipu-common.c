@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Sascha Hauer <s.hauer@pengutronix.de>
  * Copyright (C) 2005-2009 Freescale Semiconductor, Inc.
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/irqdesc.h>

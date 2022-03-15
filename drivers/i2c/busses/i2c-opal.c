@@ -4,6 +4,7 @@
  * Copyright (C) 2014 IBM
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/i2c.h>

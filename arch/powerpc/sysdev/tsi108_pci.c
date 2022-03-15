@@ -8,6 +8,7 @@
  * 	   Add pci interrupt router host
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

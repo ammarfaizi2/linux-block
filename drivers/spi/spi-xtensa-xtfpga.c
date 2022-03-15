@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Cadence Design Systems Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2007 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/fb.h>

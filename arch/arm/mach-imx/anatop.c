@@ -4,6 +4,7 @@
  * Copyright 2017-2018 NXP.
  */
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/of.h>

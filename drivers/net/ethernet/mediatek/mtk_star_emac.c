@@ -6,6 +6,7 @@
  * Author: Bartosz Golaszewski <bgolaszewski@baylibre.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>

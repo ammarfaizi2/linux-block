@@ -6,6 +6,7 @@
  *	Dave Gerlach
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/cpuidle.h>
 #include <linux/platform_data/pm33xx.h>

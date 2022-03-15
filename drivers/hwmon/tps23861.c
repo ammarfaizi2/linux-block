@@ -7,6 +7,7 @@
  * Author: Robert Marko <robert.marko@sartura.hr>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/debugfs.h>

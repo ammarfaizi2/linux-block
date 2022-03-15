@@ -15,6 +15,7 @@
  * This device driver implements the TPM interface as defined in
  * the TCG TPM Interface Spec version 1.2, revision 1.0.
  */
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

@@ -6,6 +6,7 @@
  * Author(s): Olivier Moysan <olivier.moysan@st.com> for STMicroelectronics.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

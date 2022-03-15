@@ -3,6 +3,7 @@
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kmod.h>

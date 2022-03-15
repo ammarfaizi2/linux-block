@@ -9,6 +9,7 @@
  * Pankaj Dev <pankaj.dev@st.com>.
  */
 
+#include <linux/of_api.h>
 #include <linux/slab.h>
 #include <linux/of_address.h>
 #include <linux/clk.h>

@@ -8,6 +8,7 @@
  * Modified from mach-omap2/board-generic.c
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>

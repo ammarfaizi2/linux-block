@@ -139,6 +139,7 @@
  *	manuals-design-guides/hms-hmsi-27-275.pdf
  */
 
+#include <linux/of_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

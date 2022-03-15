@@ -5,6 +5,7 @@
  * Author: Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

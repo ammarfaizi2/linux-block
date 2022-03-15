@@ -10,6 +10,7 @@
  *           Julian Andres Klode <jak@jak-linux.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

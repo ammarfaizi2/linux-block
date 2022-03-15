@@ -9,6 +9,7 @@
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

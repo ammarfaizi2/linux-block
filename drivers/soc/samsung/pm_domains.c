@@ -9,6 +9,7 @@
 // conjunction with runtime-pm. Support for both device-tree and non-device-tree
 // based power domain support is included.
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/err.h>

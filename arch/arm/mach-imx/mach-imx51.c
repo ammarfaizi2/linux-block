@@ -4,6 +4,7 @@
  * Copyright 2011 Linaro Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/irq.h>
 #include <linux/of_address.h>

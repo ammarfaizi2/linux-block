@@ -9,6 +9,7 @@
  * Based on drivers/net/fs_enet/mii-bitbang.c.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/types.h>

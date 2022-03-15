@@ -13,6 +13,7 @@
  * Author: Carlo Caione <carlo@caione.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>

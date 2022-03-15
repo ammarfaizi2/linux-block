@@ -7,6 +7,7 @@
 // Author: SiFive, Inc.
 // sifive@sifive.com
 
+#include <linux/of_api.h>
 #include <linux/math.h>
 #include <linux/clk.h>
 #include <linux/module.h>

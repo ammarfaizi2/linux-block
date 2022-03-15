@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2021 MediaTek Inc.
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/iopoll.h>

@@ -16,6 +16,7 @@
  * SoCs IOMUX controller.
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

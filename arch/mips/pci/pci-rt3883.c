@@ -7,6 +7,7 @@
  *  Parts of this file are based on Ralink's 2.6.21 BSP
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

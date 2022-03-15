@@ -7,6 +7,7 @@
  * Author: Ludovic Barre <ludovic.barre@st.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/clk.h>

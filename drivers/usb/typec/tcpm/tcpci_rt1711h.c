@@ -5,6 +5,7 @@
  * Richtek RT1711H Type-C Chip Driver
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

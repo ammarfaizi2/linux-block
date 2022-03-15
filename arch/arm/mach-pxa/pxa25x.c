@@ -13,6 +13,7 @@
  * initialization stuff for PXA machines which can be overridden later if
  * need be.
  */
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/dmaengine.h>
 #include <linux/dma/pxa-dma.h>

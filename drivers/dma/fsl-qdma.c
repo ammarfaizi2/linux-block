@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

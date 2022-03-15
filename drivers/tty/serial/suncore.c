@@ -11,6 +11,7 @@
  * Copyright (C) 2002 David S. Miller (davem@redhat.com)
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/console.h>
 #include <linux/tty.h>

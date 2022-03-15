@@ -10,6 +10,7 @@
  *  Raphael Derosso Pereira <raphaelpereira@gmail.com>
  *  Copyright (C) 2009
  */
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

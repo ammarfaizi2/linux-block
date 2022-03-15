@@ -9,6 +9,7 @@
  * bootup setup stuff..
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

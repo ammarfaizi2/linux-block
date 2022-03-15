@@ -28,6 +28,7 @@
  *	 'card' pointer accessible to anyone who needs it instead
  *	 of hiding it in the aoa_snd_* functions...
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>

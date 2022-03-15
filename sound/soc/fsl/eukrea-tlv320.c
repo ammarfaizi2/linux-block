@@ -9,6 +9,7 @@
 // and on sound/soc/imx/phycore-ac97.c which is
 // Copyright 2009 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
 
+#include <linux/of_api.h>
 #include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

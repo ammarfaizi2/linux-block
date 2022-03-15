@@ -4,6 +4,7 @@
  * Author: Naveen Krishna Ch <naveenkrishna.ch@gmail.com>
 */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/of.h>
 

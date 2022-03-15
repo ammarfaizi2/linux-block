@@ -3,6 +3,7 @@
  * Copyright (c) 2016 MediaTek Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

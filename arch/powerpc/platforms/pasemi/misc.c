@@ -7,6 +7,7 @@
  * 2006 (c) MontaVista Software, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

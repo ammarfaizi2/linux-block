@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2021, NVIDIA Corporation.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

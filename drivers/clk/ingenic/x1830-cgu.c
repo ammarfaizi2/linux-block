@@ -4,6 +4,7 @@
  * Copyright (c) 2019 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/io.h>

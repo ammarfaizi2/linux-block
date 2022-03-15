@@ -8,6 +8,7 @@
  * Based on DA9055 ALSA SoC codec driver.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/of_device.h>

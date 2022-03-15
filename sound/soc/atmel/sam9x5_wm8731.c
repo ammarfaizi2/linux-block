@@ -12,6 +12,7 @@
  * Based on sam9g20_wm8731.c by:
  * Sedji Gaouaou <sedji.gaouaou@atmel.com>
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/of.h>
 #include <linux/export.h>

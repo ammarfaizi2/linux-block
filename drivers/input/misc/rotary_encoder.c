@@ -11,6 +11,7 @@
  * See file:Documentation/input/devices/rotary-encoder.rst for more information
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Pengutronix, Lucas Stach <kernel@pengutronix.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

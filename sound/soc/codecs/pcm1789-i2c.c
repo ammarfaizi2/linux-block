@@ -3,6 +3,7 @@
 // Copyright (C) 2018 Bootlin
 // Mylène Josserand <mylene.josserand@bootlin.com>
 
+#include <linux/of_api.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

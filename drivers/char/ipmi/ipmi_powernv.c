@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)        "ipmi-powernv: " fmt
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/ipmi_smi.h>
 #include <linux/list.h>

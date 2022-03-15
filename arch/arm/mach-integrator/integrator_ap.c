@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2000-2003 Deep Blue Solutions Ltd
  */
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/syscore_ops.h>

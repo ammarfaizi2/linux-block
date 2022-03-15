@@ -7,6 +7,7 @@
  *    - add MX31 specific definitions
  */
 
+#include <linux/of_api.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/err.h>

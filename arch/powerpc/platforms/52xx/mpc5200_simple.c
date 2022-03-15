@@ -22,6 +22,7 @@
  */
 
 #undef DEBUG
+#include <linux/of_api.h>
 #include <asm/time.h>
 #include <asm/prom.h>
 #include <asm/machdep.h>

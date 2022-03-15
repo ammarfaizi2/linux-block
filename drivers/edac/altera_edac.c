@@ -5,6 +5,7 @@
  *  Copyright 2011-2012 Calxeda, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

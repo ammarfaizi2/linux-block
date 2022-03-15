@@ -4,6 +4,7 @@
  *
  * Benjamin Herrenschmidt <benh@kernel.crashing.org>
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

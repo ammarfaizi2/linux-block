@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Cogent Embedded, Inc.
  * Copyright (C) 2013 Renesas Solutions Corp.
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>

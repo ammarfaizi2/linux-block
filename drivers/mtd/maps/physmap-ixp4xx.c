@@ -9,6 +9,7 @@
  * Copyright (C) 2002 Intel Corporation
  * Copyright (C) 2003-2004 MontaVista Software, Inc.
  */
+#include <linux/of_api.h>
 #include <linux/io_extra.h>
 #include <linux/export.h>
 #include <linux/of.h>

@@ -6,6 +6,7 @@
  * based on drivers/power/supply/jz4740-battery.c
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/iio/consumer.h>
 #include <linux/module.h>

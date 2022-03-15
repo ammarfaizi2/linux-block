@@ -5,6 +5,7 @@
  * Based on rpi_touchscreen.c by Eric Anholt <eric@anholt.net>
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/backlight.h>
 #include <linux/err.h>

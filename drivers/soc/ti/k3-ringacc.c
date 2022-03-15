@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

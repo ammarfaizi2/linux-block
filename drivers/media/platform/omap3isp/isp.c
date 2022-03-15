@@ -39,6 +39,7 @@
  *	Troy Laramy <t-laramy@ti.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/jiffies.h>

@@ -5,6 +5,7 @@
  * Copyright 2013 Freescale Semiconductor, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>

@@ -4,6 +4,7 @@
  * Author: Vincent Abriou <vincent.abriou@st.com> for STMicroelectronics.
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

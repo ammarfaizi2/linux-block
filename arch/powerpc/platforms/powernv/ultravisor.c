@@ -5,6 +5,7 @@
  * Copyright 2019, IBM Corporation.
  *
  */
+#include <linux/of_api.h>
 #include <linux/kobject_api.h>
 #include <linux/init.h>
 #include <linux/printk.h>

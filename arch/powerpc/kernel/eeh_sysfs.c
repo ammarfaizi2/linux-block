@@ -6,6 +6,7 @@
  *
  * Send comments and feedback to Linas Vepstas <linas@austin.ibm.com>
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/pci.h>
 #include <linux/stat.h>

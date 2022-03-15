@@ -9,6 +9,7 @@
  * published by the Free Software Foundation.
  *
  */
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/mfd/syscon.h>

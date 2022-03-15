@@ -6,6 +6,7 @@
 //
 // Copyright 2010 Freescale Semiconductor, Inc.
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/of_address.h>
 #include <sound/soc.h>

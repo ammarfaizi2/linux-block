@@ -7,6 +7,7 @@
  * Copyright (C) 2017 Johan Hovold <johan@kernel.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/usb/of.h>

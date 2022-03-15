@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/phy.h>
 #include <linux/module.h>

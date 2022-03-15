@@ -9,6 +9,7 @@
  *
  * Copyright (C) 1996 Paul Mackerras.
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/stdarg.h>
 #include <linux/types.h>

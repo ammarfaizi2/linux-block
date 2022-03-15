@@ -10,6 +10,7 @@
  * implement your own board.c file to accommodate it.
  */
 
+#include <linux/of_api.h>
 #include <asm/machdep.h>
 #include <asm/pci-bridge.h>
 #include <asm/ppc4xx.h>

@@ -6,6 +6,7 @@
  * Author: Sonny Rao <sonnyrao@us.ibm.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/ioport.h>

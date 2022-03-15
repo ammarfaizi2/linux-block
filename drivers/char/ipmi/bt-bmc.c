@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2016, IBM Corporation.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs.h>

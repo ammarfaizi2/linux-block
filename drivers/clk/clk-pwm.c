@@ -4,6 +4,7 @@
  *
  * PWM (mis)used as clock output
  */
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

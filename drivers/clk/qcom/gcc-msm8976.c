@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/kernel.h>

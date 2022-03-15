@@ -14,6 +14,7 @@
  *         graeme.gregory@wolfsonmicro.com or linux@wolfsonmicro.com
  */
 
+#include <linux/of_api.h>
 #include <linux/gpio/consumer.h>
 #include <linux/of.h>
 #include <linux/module.h>

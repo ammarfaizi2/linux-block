@@ -7,6 +7,7 @@
  * Based on ccu-sun8i-h3.c by Maxime Ripard.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>
 #include <linux/module.h>

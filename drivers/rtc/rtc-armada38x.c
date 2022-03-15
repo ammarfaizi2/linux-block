@@ -7,6 +7,7 @@
  * Gregory Clement <gregory.clement@free-electrons.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

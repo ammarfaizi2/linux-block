@@ -3,6 +3,7 @@
  * Copyright 2012 Linaro Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/cpuidle.h>
 #include <linux/of.h>
 #include <linux/of_device.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2015 EMAC Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/input.h>
 #include <linux/of.h>

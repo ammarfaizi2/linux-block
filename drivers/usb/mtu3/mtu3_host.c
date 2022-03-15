@@ -7,6 +7,7 @@
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/irq.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2021 Allied Telesis
  */
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

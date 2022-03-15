@@ -4,6 +4,7 @@
  * Author: Maxime Jourdan <mjourdan@baylibre.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2002-3 Open Source Development Labs
  */
 
+#include <linux/of_api.h>
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/memory.h>

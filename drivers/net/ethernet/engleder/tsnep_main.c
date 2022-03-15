@@ -18,6 +18,7 @@
 #include "tsnep.h"
 #include "tsnep_hw.h"
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

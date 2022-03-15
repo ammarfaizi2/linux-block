@@ -7,6 +7,7 @@
  * Copyright (C) 2010 Google, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/clk/tegra.h>
 #include <linux/dma-mapping.h>

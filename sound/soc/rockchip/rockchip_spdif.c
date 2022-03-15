@@ -9,6 +9,7 @@
  * Author: Sjoerd Simons <sjoerd.simons@collabora.co.uk>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

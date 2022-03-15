@@ -7,6 +7,7 @@
  * Licensed under the GNU/GPL. See COPYING for details.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>

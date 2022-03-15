@@ -3,6 +3,7 @@
  * Driver for MPS MP5023 Hot-Swap Controller
  */
 
+#include <linux/of_api.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

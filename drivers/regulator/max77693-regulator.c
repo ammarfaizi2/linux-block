@@ -8,6 +8,7 @@
 //
 // This driver is based on max77686.c
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/platform_device.h>

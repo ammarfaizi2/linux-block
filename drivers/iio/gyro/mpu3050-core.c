@@ -13,6 +13,7 @@
  * TODO: add support for setting up the low pass 3dB frequency.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>

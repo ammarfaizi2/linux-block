@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2014 LSI
  */
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/io.h>

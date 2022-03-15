@@ -4,6 +4,7 @@
  * Author: Youlin.Pei <youlin.pei@mediatek.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/irq.h>

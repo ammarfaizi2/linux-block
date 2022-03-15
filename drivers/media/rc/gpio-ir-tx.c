@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Sean Young <sean@mess.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/irqflags.h>
 #include <linux/device_api_lock.h>

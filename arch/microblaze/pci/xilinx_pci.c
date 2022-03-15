@@ -14,6 +14,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

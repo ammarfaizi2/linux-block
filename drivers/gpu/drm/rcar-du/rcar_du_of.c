@@ -8,6 +8,7 @@
  * Copyright (C) 2015 Texas Instruments
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/of.h>

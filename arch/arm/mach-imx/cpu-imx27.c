@@ -8,6 +8,7 @@
  * i.MX27 specific CPU detection code
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/of_address.h>
 #include <linux/module.h>

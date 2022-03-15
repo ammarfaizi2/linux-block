@@ -8,6 +8,7 @@
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

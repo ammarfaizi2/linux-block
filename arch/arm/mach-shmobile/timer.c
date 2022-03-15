@@ -5,6 +5,7 @@
  * Copyright (C) 2010  Magnus Damm
  * Copyright (C) 2002 - 2009  Paul Mundt
  */
+#include <linux/of_api.h>
 #include <linux/platform_device.h>
 #include <linux/clocksource.h>
 #include <linux/delay.h>

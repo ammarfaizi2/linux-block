@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Paul Mundt
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/rtc.h>

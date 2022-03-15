@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2016, The Linux Foundation. All rights reserved.
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

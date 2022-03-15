@@ -4,6 +4,7 @@
  * Based on gpio-mpc8xxx.c
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

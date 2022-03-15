@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/of_address.h>

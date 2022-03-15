@@ -9,6 +9,7 @@
  * information.
  */
 
+#include <linux/of_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

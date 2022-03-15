@@ -9,6 +9,7 @@
  * Author: Lars Povlsen <lars.povlsen@microchip.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/sizes.h>
 #include <linux/delay.h>
 #include <linux/module.h>

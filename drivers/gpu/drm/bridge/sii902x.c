@@ -12,6 +12,7 @@
  * Copyright (C) 2010-2011 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

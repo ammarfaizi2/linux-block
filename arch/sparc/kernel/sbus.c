@@ -5,6 +5,7 @@
  * Copyright (C) 1999 David S. Miller (davem@redhat.com)
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

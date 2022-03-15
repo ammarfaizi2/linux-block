@@ -6,6 +6,7 @@
  * Author:  Alexandre Torgue <alexandre.torgue@st.com> for STMicroelectronics.
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

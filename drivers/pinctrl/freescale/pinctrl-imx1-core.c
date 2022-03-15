@@ -10,6 +10,7 @@
 //	Copyright (C) 2012 Freescale Semiconductor, Inc.
 //	Copyright (C) 2012 Linaro Ltd.
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

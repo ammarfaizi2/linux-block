@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2018 Socionext Inc.
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 
 #include "aio.h"

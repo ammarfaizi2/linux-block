@@ -4,6 +4,7 @@
  *   Dong Aisheng <aisheng.dong@nxp.com>
  */
 
+#include <linux/of_api.h>
 #include <dt-bindings/firmware/imx/rsrc.h>
 #include <linux/arm-smccc.h>
 #include <linux/bsearch.h>

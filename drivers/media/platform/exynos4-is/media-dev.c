@@ -6,6 +6,7 @@
  * Author: Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/kmod.h>

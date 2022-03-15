@@ -9,6 +9,7 @@
  * Copyright (C) 2008 Wind River Systems
  */
 
+#include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

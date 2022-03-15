@@ -5,6 +5,7 @@
  * Copyright (c) 2003-2007 Cavium Networks
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/capability.h>

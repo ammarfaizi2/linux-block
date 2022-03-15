@@ -4,6 +4,7 @@
  * Author: Joe.C <yingjoe.chen@mediatek.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

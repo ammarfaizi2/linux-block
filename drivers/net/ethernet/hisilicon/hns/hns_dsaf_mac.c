@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/of_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

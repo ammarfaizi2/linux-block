@@ -15,6 +15,7 @@
  *	https://lore.kernel.org/lkml/4c9d6581478aa966698758c0420933f5defab4dd.1612335031.git.mchehab+huawei@kernel.org/
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

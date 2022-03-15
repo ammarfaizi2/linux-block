@@ -3,6 +3,7 @@
 // bd71828-regulator.c ROHM BD71828GW-DS1 regulator driver
 //
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/gpio.h>

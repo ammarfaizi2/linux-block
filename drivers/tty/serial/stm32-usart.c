@@ -9,6 +9,7 @@
  * Inspired by st-asc.c from STMicroelectronics (c)
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

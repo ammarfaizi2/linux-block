@@ -7,6 +7,7 @@
  * Authors: Artur Świgoń <a.swigon@samsung.com>
  *          Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

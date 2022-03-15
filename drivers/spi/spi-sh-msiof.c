@@ -7,6 +7,7 @@
  * Copyright (C) 2014-2017 Glider bvba
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>

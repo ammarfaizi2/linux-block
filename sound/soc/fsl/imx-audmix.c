@@ -10,6 +10,7 @@
  * https://www.gnu.org/copyleft/gpl.html
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/of_api.h>
 #include <linux/bits.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

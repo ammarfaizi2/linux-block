@@ -16,6 +16,7 @@
  * sdp3430 (Author: Misael Lopez Cruz <misael.lopez@ti.com>)
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/platform_data/omap-twl4030.h>

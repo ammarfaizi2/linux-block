@@ -2,6 +2,7 @@
 //
 // Copyright (C) 2019 Jason Yan <yanaijie@huawei.com>
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/string.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2019, Linaro Limited
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>

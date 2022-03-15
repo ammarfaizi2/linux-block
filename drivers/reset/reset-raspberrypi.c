@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2020 Nicolas Saenz Julienne <nsaenzjulienne@suse.de>
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>

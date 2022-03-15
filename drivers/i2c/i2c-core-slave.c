@@ -5,6 +5,7 @@
  * Copyright (C) 2014 by Wolfram Sang <wsa@sang-engineering.com>
  */
 
+#include <linux/of_api.h>
 #include <dt-bindings/i2c/i2c.h>
 #include <linux/acpi.h>
 #include <linux/device.h>

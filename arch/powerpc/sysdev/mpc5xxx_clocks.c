@@ -7,6 +7,7 @@
  * 	or 0 if the bus frequency cannot be found.
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/of_platform.h>
 #include <linux/export.h>

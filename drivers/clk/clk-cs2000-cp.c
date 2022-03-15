@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Renesas Electronics Corporation
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>

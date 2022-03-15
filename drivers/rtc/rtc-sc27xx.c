@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

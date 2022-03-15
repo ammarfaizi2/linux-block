@@ -8,6 +8,7 @@
  *	      Ajit Pal Singh <ajitpal.singh@st.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/clocksource.h>

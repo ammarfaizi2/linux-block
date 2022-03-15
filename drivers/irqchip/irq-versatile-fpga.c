@@ -2,6 +2,7 @@
 /*
  *  Support for Versatile FPGA-based IRQ controllers
  */
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/bitops.h>
 #include <linux/irq.h>

@@ -5,6 +5,7 @@
  *
  *      - loads keys and hashes stored and controlled by the firmware.
  */
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/cred.h>

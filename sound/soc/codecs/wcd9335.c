@@ -2,6 +2,7 @@
 // Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
 // Copyright (c) 2017-2018, Linaro Limited
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

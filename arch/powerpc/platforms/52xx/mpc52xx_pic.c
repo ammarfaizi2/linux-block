@@ -98,6 +98,7 @@
  */
 #undef DEBUG
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

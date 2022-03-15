@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Carlo Caione <carlo@caione.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

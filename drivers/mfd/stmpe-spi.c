@@ -7,6 +7,7 @@
  * Author: Viresh Kumar <vireshk@kernel.org> for ST Microelectronics
  */
 
+#include <linux/of_api.h>
 #include <linux/spi/spi.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

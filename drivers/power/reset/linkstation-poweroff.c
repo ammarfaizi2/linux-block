@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Daniel González Cabanelas <dgcbueu@gmail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <drm/drm_print.h>

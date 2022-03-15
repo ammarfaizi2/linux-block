@@ -4,6 +4,7 @@
  * Copyright 2011 Linaro Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/bits.h>

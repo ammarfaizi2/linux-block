@@ -10,6 +10,7 @@
  *		Mark Brown <markb@marvell.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

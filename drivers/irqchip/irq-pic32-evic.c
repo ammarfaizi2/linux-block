@@ -4,6 +4,7 @@
  * Joshua Henderson <joshua.henderson@microchip.com>
  * Copyright (C) 2016 Microchip Technology Inc.  All rights reserved.
  */
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

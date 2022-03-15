@@ -9,6 +9,7 @@
  * This driver is powered by bad coffee and bombay mix.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>

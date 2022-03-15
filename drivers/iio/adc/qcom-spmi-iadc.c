@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitops.h>

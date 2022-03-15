@@ -8,6 +8,7 @@
  * Copyright (C) 1996 David S. Miller (davem@caip.rutgers.edu)
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/threads.h>
 #include <linux/string.h>

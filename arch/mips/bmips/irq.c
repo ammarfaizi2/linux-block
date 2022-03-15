@@ -5,6 +5,7 @@
  * Author: Kevin Cernekee <cernekee@gmail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/of.h>
 #include <linux/irqchip.h>
 

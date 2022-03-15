@@ -3,6 +3,7 @@
  * Copyright (C) 2001 Mike Corrigan & Dave Engebretsen IBM Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/init.h>

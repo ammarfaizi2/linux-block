@@ -3,6 +3,7 @@
 // Cadence PCIe host controller driver.
 // Author: Cyrille Pitchen <cyrille.pitchen@free-electrons.com>
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

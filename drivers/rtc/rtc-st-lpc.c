@@ -10,6 +10,7 @@
  * Based on the original driver written by Stuart Menefy.
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

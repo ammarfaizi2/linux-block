@@ -12,6 +12,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/of_address.h>

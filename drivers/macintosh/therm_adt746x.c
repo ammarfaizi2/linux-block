@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/of_api.h>
 #include <linux/kmod.h>
 #include <linux/device_api_lock.h>
 #include <linux/types.h>

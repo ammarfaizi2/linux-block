@@ -4,6 +4,7 @@
  * Copyright (C) 2018-2021 Linaro Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/types.h>

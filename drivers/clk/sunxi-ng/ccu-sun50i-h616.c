@@ -5,6 +5,7 @@
  *   Copyright (c) 2017 Icenowy Zheng <icenowy@aosc.io>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>
 #include <linux/module.h>

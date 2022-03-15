@@ -3,6 +3,7 @@
 // Copyright (c) 2017 MediaTek Inc.
 // Author: Chenglin Xu <chenglin.xu@mediatek.com>
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

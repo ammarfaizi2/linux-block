@@ -3,6 +3,7 @@
  * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/arm-smccc.h>
 #include <linux/kernel.h>

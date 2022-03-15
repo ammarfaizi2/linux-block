@@ -4,6 +4,7 @@
  * Author: Vincent Abriou <vincent.abriou@st.com> for STMicroelectronics.
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

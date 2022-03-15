@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com
  *
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

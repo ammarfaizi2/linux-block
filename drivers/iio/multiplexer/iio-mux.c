@@ -7,6 +7,7 @@
  * Author: Peter Rosin <peda@axentia.se>
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_types.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

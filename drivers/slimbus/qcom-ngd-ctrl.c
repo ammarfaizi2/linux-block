@@ -2,6 +2,7 @@
 // Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
 // Copyright (c) 2018, Linaro Limited
 
+#include <linux/of_api.h>
 #include <linux/notifier_types.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>

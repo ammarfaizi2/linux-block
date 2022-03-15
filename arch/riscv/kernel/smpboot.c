@@ -8,6 +8,7 @@
  * Copyright (C) 2017 SiFive
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/arch_topology.h>

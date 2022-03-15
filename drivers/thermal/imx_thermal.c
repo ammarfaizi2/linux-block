@@ -2,6 +2,7 @@
 //
 // Copyright 2013 Freescale Semiconductor, Inc.
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/cpufreq.h>

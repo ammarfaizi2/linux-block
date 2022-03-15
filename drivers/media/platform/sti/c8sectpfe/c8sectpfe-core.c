@@ -8,6 +8,7 @@
  *	    Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

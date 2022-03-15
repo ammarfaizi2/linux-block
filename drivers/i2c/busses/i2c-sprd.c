@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

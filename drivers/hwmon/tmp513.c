@@ -19,6 +19,7 @@
  * the Free Software Foundation; version 2 of the License.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/err.h>

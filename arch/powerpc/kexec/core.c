@@ -7,6 +7,7 @@
  * Copyright (C) 2005 IBM Corporation.
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

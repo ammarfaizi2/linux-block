@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

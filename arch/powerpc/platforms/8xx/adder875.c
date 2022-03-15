@@ -6,6 +6,7 @@
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/fs_enet_pd.h>
 #include <linux/of_platform.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2019 Microchip Technology Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/device/driver.h>
 #include <linux/i2c.h>
 #include <linux/kernel.h>

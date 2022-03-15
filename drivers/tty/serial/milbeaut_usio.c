@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Socionext Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

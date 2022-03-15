@@ -5,6 +5,7 @@
  * Copyright (C) 2013 ARM Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/acpi.h>
 #include <linux/cache.h>
 #include <linux/errno.h>

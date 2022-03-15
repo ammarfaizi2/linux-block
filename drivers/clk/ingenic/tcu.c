@@ -4,6 +4,7 @@
  * Copyright (C) 2019 Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/clockchips.h>

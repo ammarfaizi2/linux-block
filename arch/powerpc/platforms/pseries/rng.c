@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt)	"pseries-rng: " fmt
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/of.h>
 #include <asm/archrandom.h>

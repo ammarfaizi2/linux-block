@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Heiko Stuebner <heiko@sntech.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/mfd/syscon.h>
 #include <linux/of_device.h>

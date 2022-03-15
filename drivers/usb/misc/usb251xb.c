@@ -10,6 +10,7 @@
  * https://patchwork.kernel.org/patch/9257715/
  */
 
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

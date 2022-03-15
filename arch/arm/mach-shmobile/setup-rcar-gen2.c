@@ -7,6 +7,7 @@
  * Copyright (C) 2014  Ulrich Hecht
  */
 
+#include <linux/of_api.h>
 #include <linux/clocksource.h>
 #include <linux/device.h>
 #include <linux/dma-map-ops.h>

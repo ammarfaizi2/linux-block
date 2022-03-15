@@ -14,6 +14,7 @@
  * Inspired by dwc3-omap.c and dwc3-exynos.c.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

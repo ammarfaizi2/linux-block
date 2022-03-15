@@ -18,6 +18,7 @@
 
 #undef DEBUG
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/atomic_api.h>

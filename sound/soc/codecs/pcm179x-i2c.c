@@ -7,6 +7,7 @@
  *     Jacob Siverskog <jacob@teenage.engineering>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/of.h>

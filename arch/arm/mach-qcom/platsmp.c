@@ -6,6 +6,7 @@
  *  Copyright (c) 2014 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/errno.h>

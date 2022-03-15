@@ -7,6 +7,7 @@
  * Based on mtk_wdt.c
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/arm-smccc.h>
 #include <linux/err.h>

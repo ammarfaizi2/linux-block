@@ -17,6 +17,7 @@
  * your bootloader for now.
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/jiffies.h>

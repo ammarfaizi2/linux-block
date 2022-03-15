@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2013,2014 Samsung Electornics
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

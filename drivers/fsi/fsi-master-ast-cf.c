@@ -4,6 +4,7 @@
  * A FSI master controller, using a simple GPIO bit-banging interface
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

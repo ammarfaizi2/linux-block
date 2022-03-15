@@ -11,6 +11,7 @@
  * Copyright 2012 Freescale Semiconductor Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/of_fdt.h>
 #include <linux/pgtable.h>

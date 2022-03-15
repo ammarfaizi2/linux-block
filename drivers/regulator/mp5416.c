@@ -6,6 +6,7 @@
 //
 // Author: Saravanan Sekar <sravanhome@gmail.com>
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

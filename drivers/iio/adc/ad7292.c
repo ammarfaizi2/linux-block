@@ -5,6 +5,7 @@
  * Copyright 2019 Analog Devices Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/device.h>

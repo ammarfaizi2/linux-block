@@ -6,6 +6,7 @@
 //
 // Author: David Rhodes	<david.rhodes@cirrus.com>
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>

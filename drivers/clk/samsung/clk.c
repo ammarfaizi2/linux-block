@@ -8,6 +8,7 @@
  * clock framework for Samsung platforms.
 */
 
+#include <linux/of_api.h>
 #include <linux/slab.h>
 #include <linux/clkdev.h>
 #include <linux/clk.h>

@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/of_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/cpumask_api.h>
 #include <linux/kexec.h>

@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/clocksource.h>
 #include <linux/of_address.h>

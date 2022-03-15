@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)	"board_staging: "  fmt
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/clkdev.h>
 #include <linux/init.h>

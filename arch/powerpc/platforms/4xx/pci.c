@@ -18,6 +18,7 @@
 
 #undef DEBUG
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/highmem.h>

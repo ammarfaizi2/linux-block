@@ -6,6 +6,7 @@
  * Copyright (C) 1997 Paul Mackerras (paulus@samba.org)
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

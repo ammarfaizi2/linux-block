@@ -5,6 +5,7 @@
  * Copyright (C) 2008-2010 Michael Hennerich, Analog Devices Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/input.h>	/* BUS_I2C */
 #include <linux/i2c.h>
 #include <linux/module.h>

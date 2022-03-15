@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2005,2006 Mauro Carvalho Chehab <mchehab@kernel.org>
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/media/tvp5150.h>
 #include <linux/i2c.h>

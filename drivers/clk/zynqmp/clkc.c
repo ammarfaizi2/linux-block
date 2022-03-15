@@ -7,6 +7,7 @@
  * Based on drivers/clk/zynq/clkc.c
  */
 
+#include <linux/of_api.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

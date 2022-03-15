@@ -5,6 +5,7 @@
  *  Copyright 2015 Yoshinori Sato <ysato@users.sourcefoge.jp>
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/clocksource.h>

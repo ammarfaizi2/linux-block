@@ -11,6 +11,7 @@
  * Storlink (C) 2003
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>

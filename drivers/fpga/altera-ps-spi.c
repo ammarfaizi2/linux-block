@@ -13,6 +13,7 @@
  * May work on other Altera FPGAs.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitrev.h>
 #include <linux/delay.h>

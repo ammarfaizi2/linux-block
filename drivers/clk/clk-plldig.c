@@ -5,6 +5,7 @@
  * Clock driver for LS1028A Display output interfaces(LCD, DPHY).
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/device.h>

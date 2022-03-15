@@ -9,6 +9,7 @@
  * Inspired by Benjamin Gaignard's stm32-timer-trigger driver
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/iio/timer/stm32-lptim-trigger.h>
 #include <linux/mfd/stm32-lptimer.h>

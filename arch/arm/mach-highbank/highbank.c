@@ -2,6 +2,7 @@
 /*
  * Copyright 2010-2011 Calxeda, Inc.
  */
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

@@ -14,6 +14,7 @@
  * Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/of_device.h>
 #include <linux/spinlock.h>

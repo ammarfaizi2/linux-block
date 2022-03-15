@@ -5,6 +5,7 @@
 // Copyright (C) 2017 Spreadtrum, Inc.
 // Author: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
 
+#include <linux/of_api.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>
 #include <linux/of_address.h>

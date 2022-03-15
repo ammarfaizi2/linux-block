@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Johan Hovold <johan@kernel.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/errno.h>
 #include <linux/gnss.h>
 #include <linux/init.h>

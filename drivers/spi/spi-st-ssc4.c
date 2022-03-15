@@ -9,6 +9,7 @@
  *  SPI master mode controller driver, used in STMicroelectronics devices.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

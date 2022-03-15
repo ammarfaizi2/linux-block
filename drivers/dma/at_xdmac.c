@@ -7,6 +7,7 @@
  * Author: Ludovic Desroches <ludovic.desroches@atmel.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/barrier.h>
 #include <dt-bindings/dma/at91.h>

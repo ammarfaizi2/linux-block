@@ -5,6 +5,7 @@
 // Copyright (C) 2016 Ondřej Jirman <megous@megous.com>
 // Copyright (c) 2017-2018 Icenowy Zheng <icenowy@aosc.io>
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

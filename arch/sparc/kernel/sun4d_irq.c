@@ -6,6 +6,7 @@
  *  Heavily based on arch/sparc/kernel/irq.c.
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

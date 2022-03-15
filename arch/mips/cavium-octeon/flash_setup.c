@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2007, 2008 Cavium Networks
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

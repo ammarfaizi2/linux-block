@@ -6,6 +6,7 @@
  * 2010 (c) MontaVista Software, LLC.
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 1999, 2007 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/string.h>
 #include <linux/slab.h>

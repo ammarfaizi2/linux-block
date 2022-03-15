@@ -9,6 +9,7 @@
  * Copyright 2014 Freescale Semiconductor Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/of_platform.h>
 #include <linux/pci.h>
 #include <asm/mpic.h>

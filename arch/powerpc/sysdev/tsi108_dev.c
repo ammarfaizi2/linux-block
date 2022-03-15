@@ -5,6 +5,7 @@
  * Maintained by Roy Zang < tie-fei.zang@freescale.com >
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/stddef.h>

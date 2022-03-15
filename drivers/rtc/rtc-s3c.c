@@ -11,6 +11,7 @@
  * S3C2410/S3C2440/S3C24XX Internal RTC Driver
 */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/fs.h>

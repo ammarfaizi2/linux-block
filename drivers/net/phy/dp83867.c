@@ -4,6 +4,7 @@
  * Copyright (C) 2015 Texas Instruments Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

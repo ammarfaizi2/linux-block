@@ -6,6 +6,7 @@
  * Alexandre Belloni <alexandre.belloni@free-electrons.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

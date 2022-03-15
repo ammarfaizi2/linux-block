@@ -6,6 +6,7 @@
  * Author: Beomho Seo <beomho.seo@samsung.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/regulator/driver.h>

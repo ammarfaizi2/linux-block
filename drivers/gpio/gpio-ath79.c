@@ -8,6 +8,7 @@
  *  Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

@@ -4,6 +4,7 @@
  * Author: Lin Huang <hl@rock-chips.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/devfreq-event.h>

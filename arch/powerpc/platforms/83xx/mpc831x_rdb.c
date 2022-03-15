@@ -9,6 +9,7 @@
  * Copyright (C) Freescale Semiconductor, Inc. 2006. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/pci.h>
 #include <linux/of_platform.h>
 

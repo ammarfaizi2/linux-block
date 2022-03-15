@@ -8,6 +8,7 @@
  * MPC5121 ADS board setup
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/of_platform.h>

@@ -11,6 +11,7 @@
  * used for clockevents and HWTIMER is used for clocksource.
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 

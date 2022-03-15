@@ -18,6 +18,7 @@
 #undef DEBUG_IRQ
 #undef DEBUG_LOW
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/device_api.h>

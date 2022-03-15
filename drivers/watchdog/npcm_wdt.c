@@ -2,6 +2,7 @@
 // Copyright (c) 2018 Nuvoton Technology corporation.
 // Copyright (c) 2018 IBM Corp.
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

@@ -4,6 +4,7 @@
  * Copyright 2011 Linaro Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/irqchip.h>

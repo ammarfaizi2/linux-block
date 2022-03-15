@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"tegra-timer: " fmt
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/clk.h>

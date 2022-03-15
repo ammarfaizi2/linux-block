@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Takashi Yoshii <takashi.yoshii.ze@renesas.com>
  * Copyright (C) 2012 Magnus Damm
  */
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>
 #include <linux/io.h>

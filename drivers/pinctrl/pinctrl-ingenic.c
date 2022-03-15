@@ -7,6 +7,7 @@
  * Copyright (c) 2019, 2020 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

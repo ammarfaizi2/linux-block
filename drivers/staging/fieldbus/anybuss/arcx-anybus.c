@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Arcx Inc
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/device/class.h>

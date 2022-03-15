@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) DRVNAME ": " fmt
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/mm_api.h>
 #include <linux/irqdesc.h>

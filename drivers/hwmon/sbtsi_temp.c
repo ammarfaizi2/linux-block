@@ -7,6 +7,7 @@
  * Copyright (c) 2020, Kun Yi <kunyi@google.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

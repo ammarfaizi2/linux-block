@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"dlpar: " fmt
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/notifier.h>
 #include <linux/spinlock.h>

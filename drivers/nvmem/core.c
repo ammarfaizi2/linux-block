@@ -6,6 +6,7 @@
  * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

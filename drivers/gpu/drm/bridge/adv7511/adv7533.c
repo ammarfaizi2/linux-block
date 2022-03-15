@@ -3,6 +3,7 @@
  * Copyright (c) 2016, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/of_graph.h>
 
 #include "adv7511.h"

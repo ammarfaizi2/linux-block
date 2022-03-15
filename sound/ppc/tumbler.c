@@ -10,6 +10,7 @@
  */
 
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

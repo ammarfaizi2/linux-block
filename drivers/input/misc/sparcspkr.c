@@ -5,6 +5,7 @@
  *  Copyright (c) 2002 Vojtech Pavlik
  *  Copyright (c) 2002, 2006, 2008 David S. Miller (davem@davemloft.net)
  */
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

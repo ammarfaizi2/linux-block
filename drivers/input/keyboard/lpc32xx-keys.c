@@ -12,6 +12,7 @@
  * This controller supports square key matrices from 1x1 up to 8x8
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

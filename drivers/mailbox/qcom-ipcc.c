@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

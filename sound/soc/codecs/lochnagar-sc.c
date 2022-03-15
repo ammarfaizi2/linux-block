@@ -8,6 +8,7 @@
 // Author: Charles Keepax <ckeepax@opensource.cirrus.com>
 //         Piotr Stankiewicz <piotrs@opensource.cirrus.com>
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/module.h>

@@ -11,6 +11,7 @@
  * Copyright (c) 2009 Secret Lab Technologies Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/pci.h>

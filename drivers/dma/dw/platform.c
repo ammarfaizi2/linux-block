@@ -9,6 +9,7 @@
  * Some parts of this driver are derived from the original dw_dmac.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/device.h>

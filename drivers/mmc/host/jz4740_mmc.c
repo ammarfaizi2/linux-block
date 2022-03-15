@@ -6,6 +6,7 @@
  *  JZ4740 SD/MMC controller driver
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

@@ -9,6 +9,7 @@
  *
  * TODO: magnetometer, hardware FIFO
  */
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

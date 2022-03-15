@@ -3,6 +3,7 @@
  * Special GIC quirks for the ARM RealView
  * Copyright (C) 2015 Linus Walleij
  */
+#include <linux/of_api.h>
 #include <linux/of.h>
 #include <linux/regmap.h>
 #include <linux/mfd/syscon.h>

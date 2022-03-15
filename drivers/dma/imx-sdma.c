@@ -10,6 +10,7 @@
 //
 // Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

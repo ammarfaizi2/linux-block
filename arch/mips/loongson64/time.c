@@ -7,6 +7,7 @@
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
 
+#include <linux/of_api.h>
 #include <asm/time.h>
 #include <asm/hpet.h>
 

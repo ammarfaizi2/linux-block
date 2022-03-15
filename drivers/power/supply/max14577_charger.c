@@ -5,6 +5,7 @@
 // Copyright (C) 2013,2014 Samsung Electronics
 // Krzysztof Kozlowski <krzk@kernel.org>
 
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

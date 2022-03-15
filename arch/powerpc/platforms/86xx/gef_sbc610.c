@@ -12,6 +12,7 @@
  * NEC fixup adapted from arch/mips/pci/fixup-lm2e.c
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

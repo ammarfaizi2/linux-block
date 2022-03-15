@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

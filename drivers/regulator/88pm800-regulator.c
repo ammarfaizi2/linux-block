@@ -6,6 +6,7 @@
  * Joseph(Yossi) Hanin <yhanin@marvell.com>
  * Yi Zhang <yizhang@marvell.com>
  */
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

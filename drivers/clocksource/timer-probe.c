@@ -3,6 +3,7 @@
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/acpi.h>
 #include <linux/init.h>
 #include <linux/of.h>

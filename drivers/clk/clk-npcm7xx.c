@@ -7,6 +7,7 @@
  * Copyright (C) 2018 Nuvoton Technologies tali.perry@nuvoton.com
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/clk-provider.h>

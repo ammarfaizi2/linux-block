@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Texas Instruments, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

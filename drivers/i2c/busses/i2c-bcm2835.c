@@ -3,6 +3,7 @@
  * BCM2835 master mode driver
  */
 
+#include <linux/of_api.h>
 #include <linux/math.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

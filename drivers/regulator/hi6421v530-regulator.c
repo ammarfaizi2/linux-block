@@ -10,6 +10,7 @@
 // Author: Wang Xiaoyin <hw.wangxiaoyin@hisilicon.com>
 //         Guodong Xu <guodong.xu@linaro.org>
 
+#include <linux/of_api.h>
 #include <linux/mfd/hi6421-pmic.h>
 #include <linux/module.h>
 #include <linux/of.h>

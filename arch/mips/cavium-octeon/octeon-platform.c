@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Wind River Systems
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/etherdevice_api.h>

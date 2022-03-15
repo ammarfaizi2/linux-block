@@ -5,6 +5,7 @@
  * Copyright (C) 2013 IBM
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/of_platform.h>
 #include <asm/opal.h>

@@ -10,6 +10,7 @@
  * Based on code from Shlomi Gridish <gridish@freescale.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

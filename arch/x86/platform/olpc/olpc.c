@@ -6,6 +6,7 @@
  * Copyright © 2007-2008  Andres Salomon <dilinger@debian.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/export.h>

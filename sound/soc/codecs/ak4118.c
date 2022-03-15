@@ -5,6 +5,7 @@
  * Copyright 2018 DEVIALET
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2015, Sony Mobile Communications AB
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/hwspinlock.h>
 #include <linux/io.h>

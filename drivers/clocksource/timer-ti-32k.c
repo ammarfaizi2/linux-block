@@ -24,6 +24,7 @@
  * Copyright (C) 2015 Texas Instruments Incorporated - https://www.ti.com
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/init.h>

@@ -12,6 +12,7 @@
  * (the DT binding refers to this as "GPIO assisted NAND flash")
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

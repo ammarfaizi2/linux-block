@@ -3,6 +3,7 @@
 // Authors: Gabriel Fernandez <gabriel.fernandez@st.com>
 //          Pascal Paillet <p.paillet@st.com>.
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>

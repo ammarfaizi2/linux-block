@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt)	"powernv-rng: " fmt
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/of.h>

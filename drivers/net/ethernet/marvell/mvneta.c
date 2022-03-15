@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

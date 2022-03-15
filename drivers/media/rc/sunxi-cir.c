@@ -10,6 +10,7 @@
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/math.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

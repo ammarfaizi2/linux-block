@@ -8,6 +8,7 @@
  * Hanna Hawa <hannah@marvell.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/io.h>

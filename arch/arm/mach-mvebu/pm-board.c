@@ -10,6 +10,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
 #include <linux/init.h>

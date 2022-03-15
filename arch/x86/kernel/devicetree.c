@@ -2,6 +2,7 @@
 /*
  * Architecture specific OF callbacks.
  */
+#include <linux/of_api.h>
 #include <linux/export.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

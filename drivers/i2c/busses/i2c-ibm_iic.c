@@ -26,6 +26,7 @@
  *	and even Frodo Looijaard <frodol@dds.nl>
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

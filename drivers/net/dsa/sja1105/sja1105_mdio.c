@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2021 NXP
  */
+#include <linux/of_api.h>
 #include <linux/pcs/pcs-xpcs.h>
 #include <linux/of_mdio.h>
 #include "sja1105.h"

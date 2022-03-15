@@ -8,6 +8,7 @@
  *  - Copyright (C) 2008 WonderMedia Technologies, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

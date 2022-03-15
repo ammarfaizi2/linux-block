@@ -7,6 +7,7 @@
  * Marcin Wojtas <mw@semihalf.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>
