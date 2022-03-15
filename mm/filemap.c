@@ -10,6 +10,7 @@
  * most "normal" filesystems (but you don't /have/ to use this:
  * the NFS filesystem used to do this differently, for example)
  */
+#include <linux/page_ref_api_extra.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>
