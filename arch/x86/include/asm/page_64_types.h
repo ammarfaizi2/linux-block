@@ -3,6 +3,7 @@
 #define _ASM_X86_PAGE_64_DEFS_H
 
 #ifndef __ASSEMBLY__
+#include <uapi/linux/personality.h>
 #include <asm/kaslr.h>
 #endif
 
