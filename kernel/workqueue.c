@@ -25,6 +25,7 @@
  * Please read Documentation/core-api/workqueue.rst for details.
  */
 
+#include <linux/debugobjects.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
