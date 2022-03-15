@@ -10,6 +10,7 @@
 #ifdef __KERNEL__
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/printk.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

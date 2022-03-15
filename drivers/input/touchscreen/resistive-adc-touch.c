@@ -9,6 +9,7 @@
  * Author: Eugen Hristev <eugen.hristev@microchip.com>
  *
  */
+#include <linux/printk.h>
 #include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/input.h>

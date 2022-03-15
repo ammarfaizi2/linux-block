@@ -4,6 +4,7 @@
 #define pr_fmt(fmt) "MFA2: " fmt
 
 #include "mlxfw_mfa2_tlv_multi.h"
+#include <linux/printk.h>
 #include <linux/err.h>
 #include <uapi/linux/netlink.h>
 

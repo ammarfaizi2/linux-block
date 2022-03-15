@@ -9,6 +9,7 @@
  * Contact: Sakari Ailus <sakari.ailus@linux.intel.com>
  */
 
+#include <linux/printk.h>
 #include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/math64.h>

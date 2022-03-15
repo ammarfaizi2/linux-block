@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/printk.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/module.h>

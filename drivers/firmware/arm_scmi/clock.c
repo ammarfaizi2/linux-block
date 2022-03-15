@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2021 ARM Ltd.
  */
 
+#include <linux/printk.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>

@@ -5,6 +5,7 @@
  * Soundwire DMI quirks
  */
 
+#include <linux/printk.h>
 #include <linux/device.h>
 #include <linux/dmi.h>
 #include <linux/soundwire/sdw.h>

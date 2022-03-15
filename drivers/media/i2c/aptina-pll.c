@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/printk.h>
 #include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/device.h>

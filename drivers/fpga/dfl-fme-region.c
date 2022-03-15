@@ -13,6 +13,7 @@
  *   Henry Mitchel <henry.mitchel@intel.com>
  */
 
+#include <linux/printk.h>
 #include <linux/module.h>
 #include <linux/fpga/fpga-mgr.h>
 #include <linux/fpga/fpga-region.h>

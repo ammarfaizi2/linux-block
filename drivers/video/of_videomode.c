@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012 Steffen Trumtrar <s.trumtrar@pengutronix.de>, Pengutronix
  */
+#include <linux/printk.h>
 #include <linux/errno.h>
 #include <linux/export.h>
 #include <linux/of.h>
