@@ -10,6 +10,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #define MODULE_NAME "842_compress"
 
+#include <linux/hashtable_api.h>
 #include <linux/crc32.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>

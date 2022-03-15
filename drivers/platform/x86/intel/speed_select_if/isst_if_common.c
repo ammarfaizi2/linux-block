@@ -7,6 +7,7 @@
  * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <asm/msr.h>

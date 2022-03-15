@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2018 Mellanox Technologies */
 
+#include <linux/hashtable_api.h>
 #include <linux/jhash.h>
 #include <linux/slab.h>
 #include <linux/xarray.h>

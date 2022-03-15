@@ -23,6 +23,7 @@
  * - completely modularize elevator setup and teardown
  *
  */
+#include <linux/hashtable_api.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/blkdev.h>

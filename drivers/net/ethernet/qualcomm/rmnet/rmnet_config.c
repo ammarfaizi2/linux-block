@@ -4,6 +4,7 @@
  * RMNET configuration engine
  */
 
+#include <linux/hashtable_api.h>
 #include <net/sock.h>
 #include <linux/module.h>
 #include <linux/netlink.h>

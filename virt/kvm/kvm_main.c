@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

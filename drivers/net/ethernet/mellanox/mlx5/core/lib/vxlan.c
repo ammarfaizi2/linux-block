@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/refcount.h>

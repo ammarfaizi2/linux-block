@@ -25,6 +25,7 @@
  * Please read Documentation/core-api/workqueue.rst for details.
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/debugobjects.h>

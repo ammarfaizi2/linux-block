@@ -7,6 +7,7 @@
  *  Abhyuday Godhasara <abhyuday.godhasara@xilinx.com>
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/firmware/xlnx-event-manager.h>
 #include <linux/firmware/xlnx-zynqmp.h>

@@ -24,6 +24,7 @@
  * Fibre Channel SCSI LAN Device Driver CT support: FC Generic Services FC-GS
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/blkdev.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>

@@ -73,6 +73,7 @@
 #define dev_fmt(fmt) "SCMI Notifications - " fmt
 #define pr_fmt(fmt) "SCMI Notifications - " fmt
 
+#include <linux/hashtable_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/bug.h>

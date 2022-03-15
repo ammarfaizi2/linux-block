@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021 Mellanox Technologies. */
 
+#include <linux/hashtable_api.h>
 #include <net/fib_notifier.h>
 #include <net/nexthop.h>
 #include "tc_tun_encap.h"

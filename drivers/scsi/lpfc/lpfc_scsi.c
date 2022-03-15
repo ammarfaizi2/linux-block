@@ -20,6 +20,7 @@
  * more details, a copy of which can be found in the file COPYING  *
  * included with this package.                                     *
  *******************************************************************/
+#include <linux/hashtable_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/fs.h>

@@ -9,6 +9,7 @@
  * Re-worked by Ben Greear <greearb@candelatech.com>
  * ---
  */
+#include <linux/hashtable_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

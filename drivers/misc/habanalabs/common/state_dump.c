@@ -5,6 +5,7 @@
  * All Rights Reserved.
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/vmalloc.h>
 #include <uapi/misc/habanalabs.h>
 #include "habanalabs.h"

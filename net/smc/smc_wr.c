@@ -22,6 +22,7 @@
  * Author(s):  Steffen Maier <maier@linux.vnet.ibm.com>
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>

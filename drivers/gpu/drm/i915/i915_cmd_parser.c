@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/bitmap.h>
 
 #include "gt/intel_engine.h"

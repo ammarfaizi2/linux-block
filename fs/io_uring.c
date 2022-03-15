@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/hashtable_api.h>
 #include <linux/hash.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api_sb.h>

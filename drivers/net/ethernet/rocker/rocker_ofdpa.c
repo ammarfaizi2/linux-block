@@ -6,6 +6,7 @@
  * Copyright (c) 2014-2016 Jiri Pirko <jiri@mellanox.com>
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
