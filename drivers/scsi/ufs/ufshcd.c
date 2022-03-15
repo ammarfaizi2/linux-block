@@ -9,6 +9,7 @@
  *	Vinayak Holikatti <h.vinayak@samsung.com>
  */
 
+#include <linux/semaphore.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>

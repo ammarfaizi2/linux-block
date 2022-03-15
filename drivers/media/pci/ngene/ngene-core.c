@@ -10,6 +10,7 @@
  *                         support for new dual DVB-S2 card prototype
  */
 
+#include <linux/semaphore.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/io_extra.h>

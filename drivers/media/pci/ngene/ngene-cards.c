@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/semaphore.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>

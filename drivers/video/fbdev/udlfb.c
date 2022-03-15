@@ -13,6 +13,7 @@
  * from Florian Echtler, Henrik Bjerregaard Pedersen, and others.
  */
 
+#include <linux/semaphore.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

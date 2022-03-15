@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/semaphore.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/kmod.h>
