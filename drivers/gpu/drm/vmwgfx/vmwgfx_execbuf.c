@@ -24,6 +24,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+#include <linux/file.h>
 #include <linux/dma-fence-api.h>
 #include <linux/capability.h>
 #include <linux/sync_file.h>

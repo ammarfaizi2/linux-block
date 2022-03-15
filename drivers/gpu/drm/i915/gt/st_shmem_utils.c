@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: MIT
+
+#include <linux/file.h>
+
 /*
  * Copyright © 2020 Intel Corporation
  */

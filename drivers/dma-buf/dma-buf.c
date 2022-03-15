@@ -11,6 +11,7 @@
  * refining of this idea.
  */
 
+#include <linux/file.h>
 #include <linux/dma-fence-api.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>

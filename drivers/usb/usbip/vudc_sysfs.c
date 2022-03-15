@@ -6,6 +6,7 @@
  *               Krzysztof Opasiak <k.opasiak@samsung.com>
  */
 
+#include <linux/file.h>
 #include <linux/device.h>
 #include <linux/list.h>
 #include <linux/usb/gadget.h>

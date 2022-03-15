@@ -8,6 +8,7 @@
  * Copyright (c) 2018 Oleksandr Andrushchenko, EPAM Systems Inc.
  */
 
+#include <linux/file.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

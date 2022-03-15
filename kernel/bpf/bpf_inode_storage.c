@@ -4,6 +4,7 @@
  * Copyright 2020 Google LLC.
  */
 
+#include <linux/file.h>
 #include <linux/rculist.h>
 #include <linux/list.h>
 #include <linux/hash.h>

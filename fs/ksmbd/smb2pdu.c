@@ -4,6 +4,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/file.h>
 #include <linux/delay.h>
 #include <linux/cred.h>
 #include <linux/crc32.h>
