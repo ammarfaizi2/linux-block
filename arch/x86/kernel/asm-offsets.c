@@ -8,6 +8,7 @@
 
 #include "../../../kernel/sched/per_task_area_struct.h"
 
+#include <linux/signal.h>
 #include <linux/err.h>
 #include <linux/crypto.h>
 #include <linux/sched.h>

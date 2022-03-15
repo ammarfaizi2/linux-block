@@ -3,6 +3,7 @@
  * FPU signal frame handling routines.
  */
 
+#include <linux/signal.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/pagefault_ctrl.h>

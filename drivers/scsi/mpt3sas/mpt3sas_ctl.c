@@ -43,6 +43,7 @@
  * USA.
  */
 
+#include <linux/signal.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
