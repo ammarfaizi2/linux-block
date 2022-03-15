@@ -3,6 +3,7 @@
  * Block Translation Table
  * Copyright (c) 2014-2015, Intel Corporation.
  */
+#include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>

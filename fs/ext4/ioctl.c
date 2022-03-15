@@ -8,6 +8,7 @@
  * Universite Pierre et Marie Curie (Paris VI)
  */
 
+#include <linux/uuid_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/fs_api_sb.h>

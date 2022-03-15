@@ -9,6 +9,7 @@
  * https://github.com/microsoft/ms-tpm-20-ref/tree/master/Samples/ARM32-FirmwareTPM/optee_ta/fTPM
  */
 
+#include <linux/uuid_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2018, Intel Corporation
  */
 
+#include <linux/uuid_api.h>
 #include <linux/timekeeping.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

@@ -3,6 +3,7 @@
  * Copyright 2019 Broadcom.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/minmax.h>
 #include <linux/device/driver.h>
 #include <linux/kernel.h>

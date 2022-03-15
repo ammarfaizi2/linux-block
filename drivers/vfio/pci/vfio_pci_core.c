@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/uuid_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

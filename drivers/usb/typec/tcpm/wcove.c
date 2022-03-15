@@ -6,6 +6,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

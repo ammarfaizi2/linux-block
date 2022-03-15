@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

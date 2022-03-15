@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018-2019 HiSilicon Limited. */
+#include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/seq_file.h>

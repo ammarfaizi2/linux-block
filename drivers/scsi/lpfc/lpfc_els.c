@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 /* See Fibre Channel protocol T11 FC-LS for details */
+#include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

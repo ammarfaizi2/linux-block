@@ -3,6 +3,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/uuid_api.h>
 #include <linux/printk.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

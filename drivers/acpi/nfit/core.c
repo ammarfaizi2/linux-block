@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
+#include <linux/uuid_api.h>
 #include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

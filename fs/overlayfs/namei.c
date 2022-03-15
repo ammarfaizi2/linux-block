@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Red Hat, Inc.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>

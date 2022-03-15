@@ -8,6 +8,7 @@
  * Copyright (C) 2019 Mellanox Technologies
  */
 
+#include <linux/uuid_api.h>
 #include <linux/acpi.h>
 #include <linux/arm-smccc.h>
 #include <linux/module.h>

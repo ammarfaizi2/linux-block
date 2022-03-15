@@ -4,6 +4,8 @@
  * Copyright (c) 2012-2013 Red Hat, Inc.
  * All rights reserved.
  */
+#include <linux/uuid_api.h>
+
 #include "xfs.h"
 #include "xfs_fs.h"
 #include "xfs_format.h"

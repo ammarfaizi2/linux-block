@@ -10,6 +10,7 @@
  *          Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/fwnode.h>

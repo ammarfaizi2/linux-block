@@ -10,6 +10,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
+#include <linux/uuid_api.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

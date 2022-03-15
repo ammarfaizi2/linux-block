@@ -7,6 +7,7 @@
  *             Kirti Wankhede <kwankhede@nvidia.com>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device/bus.h>
 #include <linux/device_api_lock.h>
