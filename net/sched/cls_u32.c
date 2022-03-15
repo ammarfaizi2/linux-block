@@ -23,6 +23,7 @@
  *	nfmark match added by Catalin(ux aka Dino) BOIE <catab at umbrella.ro>
  */
 
+#include <net/pkt_cls_api_tcf_filter.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/net.h>

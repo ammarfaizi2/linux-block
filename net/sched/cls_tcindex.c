@@ -5,6 +5,7 @@
  * Written 1998,1999 by Werner Almesberger, EPFL ICA
  */
 
+#include <net/pkt_cls_api_tcf_filter.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/rtnetlink.h>

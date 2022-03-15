@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <net/pkt_cls_api_tcf_filter.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/rculist.h>
