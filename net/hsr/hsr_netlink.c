@@ -8,6 +8,7 @@
  */
 
 #include "hsr_netlink.h"
+#include <linux/etherdevice.h>
 #include <linux/kernel.h>
 #include <net/rtnetlink.h>
 #include <net/genetlink.h>
