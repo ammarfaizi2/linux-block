@@ -781,8 +781,7 @@ int3_exception_notify(struct notifier_block *self, unsigned long val, void *data
 	return NOTIFY_STOP;
 }
 
-/* Must be noinline to ensure uniqueness of int3_selftest_ip. */
-static noinline void __init int3_selftest(void)
+static void __init int3_selftest(void)
 {
 	static __initdata struct notifier_block int3_exception_nb = {
 		.notifier_call	= int3_exception_notify,
@@ -795,8 +794,9 @@ static noinline void __init int3_selftest(void)
 	/*
 	 * Basically: int3_magic(&val); but really complicated :-)
 	 *
-	 * INT3 padded with NOP to CALL_INSN_SIZE. The int3_exception_nb
-	 * notifier above will emulate CALL for us.
+	 * Stick the address of the INT3 instruction into int3_selftest_ip,
+	 * then trigger the INT3, padded with NOPs to match a CALL instruction
+	 * length.
 	 */
 	asm volatile ("int3_selftest_ip:\n\t"
 		      ANNOTATE_NOENDBR
