@@ -7,6 +7,7 @@
  *   Portions from AMD's original 2.4 driver:
  *     Copyright (C) 2004 Advanced Micro Devices, Inc.
  */
+#include <asm/cpufeature.h>
 #include <linux/fb.h>
 #include <linux/delay.h>
 #include <asm/io.h>

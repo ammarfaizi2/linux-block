@@ -6,6 +6,7 @@
  * Copyright 1997 Andi Kleen <ak@muc.de>
  * Copyright 1997 Linus Torvalds
  */
+#include <asm/cpufeature.h>
 #include <linux/export.h>
 #include <linux/uaccess.h>
 #include <asm/asm.h>

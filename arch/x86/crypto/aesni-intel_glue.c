@@ -15,6 +15,7 @@
  *    Copyright (c) 2010, Intel Corporation.
  */
 
+#include <asm/cpufeature.h>
 #include <linux/hardirq.h>
 #include <linux/types.h>
 #include <linux/module.h>

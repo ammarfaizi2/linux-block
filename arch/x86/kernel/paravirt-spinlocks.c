@@ -3,6 +3,7 @@
  * Split spinlock implementation out into its own file, so it can be
  * compiled in a FTRACE-compatible way.
  */
+#include <asm/cpufeature.h>
 #include <linux/spinlock.h>
 #include <linux/export.h>
 #include <linux/jump_label.h>

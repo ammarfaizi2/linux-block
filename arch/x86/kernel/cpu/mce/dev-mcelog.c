@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <asm/cpufeature.h>
 #include <linux/miscdevice.h>
 #include <linux/slab.h>
 #include <linux/kmod.h>

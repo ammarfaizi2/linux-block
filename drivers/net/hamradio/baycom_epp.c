@@ -25,6 +25,7 @@
 
 /*****************************************************************************/
 
+#include <asm/cpufeature.h>
 #include <linux/crc-ccitt.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
