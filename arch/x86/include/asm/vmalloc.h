@@ -1,6 +1,7 @@
 #ifndef _ASM_X86_VMALLOC_H
 #define _ASM_X86_VMALLOC_H
 
+#include <asm/pgtable_types.h>
 #include <asm/cpufeature.h>
 #include <asm/page.h>
 #include <asm/pgtable_areas.h>

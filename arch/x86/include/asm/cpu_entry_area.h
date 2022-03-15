@@ -3,6 +3,7 @@
 #ifndef _ASM_X86_CPU_ENTRY_AREA_H
 #define _ASM_X86_CPU_ENTRY_AREA_H
 
+#include <asm/pgtable_types.h>
 #include <asm/percpu.h>
 #include <linux/percpu-defs.h>
 #include <asm/processor.h>

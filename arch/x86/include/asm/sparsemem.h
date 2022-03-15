@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_SPARSEMEM_H
 #define _ASM_X86_SPARSEMEM_H
 
+#include <asm/pgtable_types.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_SPARSEMEM
