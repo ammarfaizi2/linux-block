@@ -5,6 +5,7 @@
  *  Copyright (C) 2016-2018 Xilinx
  */
 
+#include <linux/minmax.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/slab.h>

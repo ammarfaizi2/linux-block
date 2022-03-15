@@ -8,6 +8,7 @@
 // Copyright 2011 Wolfson Microelectronics plc
 // Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
 
+#include <linux/minmax.h>
 #include <linux/regmap.h>
 #include <linux/spmi.h>
 #include <linux/module.h>

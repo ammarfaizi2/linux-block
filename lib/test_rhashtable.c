@@ -10,6 +10,7 @@
  * Self Test
  **************************************************************************/
 
+#include <linux/minmax.h>
 #include <linux/ktime_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

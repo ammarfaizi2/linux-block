@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2020 Synaptics Incorporated
  */
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

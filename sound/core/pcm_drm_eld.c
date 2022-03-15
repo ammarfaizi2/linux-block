@@ -2,6 +2,7 @@
 /*
  *  PCM DRM helpers
  */
+#include <linux/minmax.h>
 #include <linux/export.h>
 #include <drm/drm_edid.h>
 #include <sound/pcm.h>

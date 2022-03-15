@@ -24,6 +24,7 @@
  * by writing to the out values of temp and humidityrelative.
  */
 
+#include <linux/minmax.h>
 #include <linux/delay.h>
 #include <linux/crc8.h>
 #include <linux/module.h>

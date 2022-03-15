@@ -5,6 +5,7 @@
  * Copyright (c) 2011, Google, Inc.
  */
 
+#include <linux/minmax.h>
 #include <linux/debugfs.h>
 #include <linux/err.h>
 #include <linux/init.h>

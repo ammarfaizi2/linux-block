@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/minmax.h>
 #include <linux/math64.h>
 #include <linux/slab.h>
 

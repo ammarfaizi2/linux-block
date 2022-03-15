@@ -21,6 +21,7 @@
  * driver.
  */
 
+#include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/slab.h>

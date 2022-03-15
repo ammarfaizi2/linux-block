@@ -6,6 +6,7 @@
 // Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 //
 
+#include <linux/minmax.h>
 #include <sound/soc.h>
 #include <sound/soc-dai.h>
 #include <sound/soc-link.h>

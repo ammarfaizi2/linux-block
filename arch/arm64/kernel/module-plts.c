@@ -3,6 +3,7 @@
  * Copyright (C) 2014-2017 Linaro Ltd. <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/minmax.h>
 #include <linux/elf.h>
 #include <linux/ftrace.h>
 #include <linux/kernel.h>

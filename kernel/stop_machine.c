@@ -7,6 +7,7 @@
  * Copyright (C) 2010		SUSE Linux Products GmbH
  * Copyright (C) 2010		Tejun Heo <tj@kernel.org>
  */
+#include <linux/minmax.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

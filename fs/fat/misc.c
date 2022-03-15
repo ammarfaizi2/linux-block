@@ -8,6 +8,7 @@
  */
 
 #include "fat.h"
+#include <linux/minmax.h>
 #include <linux/math64.h>
 #include <linux/fs_api.h>
 #include <linux/iversion.h>

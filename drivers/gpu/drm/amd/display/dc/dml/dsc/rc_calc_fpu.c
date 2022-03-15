@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/minmax.h>
+
 #include "rc_calc_fpu.h"
 
 #include "qp_tables.h"

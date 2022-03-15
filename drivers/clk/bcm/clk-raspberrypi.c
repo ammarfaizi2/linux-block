@@ -10,6 +10,7 @@
  * Copyright (C) 2019 Nicolas Saenz Julienne <nsaenzjulienne@suse.de>
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/clkdev.h>
 #include <linux/clk-provider.h>

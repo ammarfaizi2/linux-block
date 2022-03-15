@@ -7,6 +7,7 @@
  * Author: Saravanan Sekar <sravanhome@gmail.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/iio/consumer.h>

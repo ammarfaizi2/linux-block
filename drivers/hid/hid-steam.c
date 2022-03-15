@@ -33,6 +33,7 @@
  *   https://github.com/rodrigorc/steamctrl
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/input.h>

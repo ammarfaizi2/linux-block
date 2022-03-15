@@ -30,6 +30,7 @@
  *     (https://cr.yp.to/mac/poly1305-20050329.pdf)
  */
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <asm/unaligned.h>
 #include <crypto/algapi.h>

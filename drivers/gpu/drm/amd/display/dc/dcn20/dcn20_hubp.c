@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/minmax.h>
+
 #include "dcn20_hubp.h"
 
 #include "dm_services.h"

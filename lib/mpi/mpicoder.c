@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/bitops.h>
 #include <linux/count_zeros.h>

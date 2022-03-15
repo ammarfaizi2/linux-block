@@ -42,6 +42,7 @@
  * Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
+#include <linux/minmax.h>
 #include <linux/math64.h>
 #include <linux/log2.h>
 #include <linux/export.h>

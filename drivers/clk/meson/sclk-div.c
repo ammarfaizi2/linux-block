@@ -16,6 +16,7 @@
  * duty_cycle = (1 + hi) / (1 + val)
  */
 
+#include <linux/minmax.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>
 

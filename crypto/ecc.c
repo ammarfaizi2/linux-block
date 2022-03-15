@@ -24,6 +24,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/minmax.h>
 #include <crypto/ecc_curve.h>
 #include <linux/module.h>
 #include <linux/random.h>

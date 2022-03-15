@@ -22,6 +22,7 @@
  * Author: AMD
  */
 
+#include <linux/minmax.h>
 #include <drm/drm_dsc.h>
 #include "dc_hw_types.h"
 #include "dsc.h"

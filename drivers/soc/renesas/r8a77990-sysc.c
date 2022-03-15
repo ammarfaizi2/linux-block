@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Renesas Electronics Corp.
  */
 
+#include <linux/minmax.h>
 #include <linux/bits.h>
 #include <linux/kernel.h>
 #include <linux/sys_soc.h>

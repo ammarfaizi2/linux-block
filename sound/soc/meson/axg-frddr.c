@@ -7,6 +7,7 @@
  * This driver implements the frontend playback DAI of AXG and G12A based SoCs
  */
 
+#include <linux/minmax.h>
 #include <linux/clk.h>
 #include <linux/regmap.h>
 #include <linux/module.h>

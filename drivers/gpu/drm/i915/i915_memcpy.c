@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/align.h>
 #include <linux/string.h>

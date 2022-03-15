@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2020 Gateworks Corporation
  */
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/hwmon.h>
 #include <linux/hwmon-sysfs.h>

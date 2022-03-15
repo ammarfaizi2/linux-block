@@ -3,6 +3,7 @@
 // Copyright (C) 2019 Texas Instruments Incorporated - https://www.ti.com/
 // https://www.ti.com/lit/ds/symlink/lm3532.pdf
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/leds.h>

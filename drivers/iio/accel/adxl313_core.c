@@ -7,6 +7,7 @@
  * Datasheet: https://www.analog.com/media/en/technical-documentation/data-sheets/ADXL313.pdf
  */
 
+#include <linux/minmax.h>
 #include <linux/bitfield.h>
 #include <linux/iio/iio.h>
 #include <linux/module.h>

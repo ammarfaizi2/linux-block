@@ -4,6 +4,7 @@
  * Copyright (c) 2021, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
+#include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/clk-provider.h>

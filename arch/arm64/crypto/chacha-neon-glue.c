@@ -19,6 +19,7 @@
  * (at your option) any later version.
  */
 
+#include <linux/minmax.h>
 #include <crypto/algapi.h>
 #include <crypto/internal/chacha.h>
 #include <crypto/internal/simd.h>

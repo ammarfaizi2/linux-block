@@ -8,6 +8,7 @@
  * You can do whatever you want with this file.
  */
 
+#include <linux/minmax.h>
 #include <asm/unaligned.h>
 
 #include "xz_private.h"

@@ -6,6 +6,7 @@
  * Supported models: W83773G
  */
 
+#include <linux/minmax.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/i2c.h>

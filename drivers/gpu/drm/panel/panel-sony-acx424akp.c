@@ -8,6 +8,7 @@
  * Based on code and know-how from Marcus Lorentzon
  * Copyright (C) ST-Ericsson SA 2010
  */
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>

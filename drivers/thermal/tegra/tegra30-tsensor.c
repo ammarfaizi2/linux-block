@@ -9,6 +9,7 @@
  * Copyright (C) 2021 GRATE-DRIVER project
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

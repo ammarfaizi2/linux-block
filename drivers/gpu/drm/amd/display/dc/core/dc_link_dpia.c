@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/minmax.h>
 #include <linux/delay.h>
 
 #include "dc.h"

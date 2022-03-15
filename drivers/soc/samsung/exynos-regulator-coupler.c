@@ -9,6 +9,7 @@
  * if consumers didn't apply their constraints yet.
  */
 
+#include <linux/minmax.h>
 #include <linux/math64.h>
 #include <linux/lockdep.h>
 #include <linux/lockdep_api.h>

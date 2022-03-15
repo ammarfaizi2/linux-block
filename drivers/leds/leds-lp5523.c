@@ -9,6 +9,7 @@
  *          Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>

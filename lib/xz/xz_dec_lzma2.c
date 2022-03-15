@@ -8,6 +8,8 @@
  * You can do whatever you want with this file.
  */
 
+#include <linux/minmax.h>
+
 #include "xz_private.h"
 #include "xz_lzma2.h"
 

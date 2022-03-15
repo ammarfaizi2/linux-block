@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/minmax.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/debugfs.h>

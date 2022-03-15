@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/minmax.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/errno.h>

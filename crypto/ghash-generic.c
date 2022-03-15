@@ -34,6 +34,7 @@
  *     (https://csrc.nist.gov/publications/detail/sp/800-38d/final)
  */
 
+#include <linux/minmax.h>
 #include <crypto/algapi.h>
 #include <crypto/gf128mul.h>
 #include <crypto/ghash.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Red Hat, Inc., Johannes Weiner
  */
 
+#include <linux/minmax.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/page_counter.h>

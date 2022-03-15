@@ -97,6 +97,7 @@
  * Just mix both scenarios above.
  */
 
+#include <linux/minmax.h>
 #include <crypto/drbg.h>
 #include <crypto/internal/cipher.h>
 #include <linux/kernel.h>

@@ -8,6 +8,7 @@
  * effect LEDs.
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

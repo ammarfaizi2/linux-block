@@ -4,6 +4,7 @@
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/init.h>

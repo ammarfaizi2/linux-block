@@ -10,6 +10,7 @@
 #define pr_fmt(fmt)  "Hyper-V: " fmt
 
 
+#include <linux/minmax.h>
 #include <linux/types.h>
 #include <asm/hyperv-tlfs.h>
 #include <asm/mshyperv.h>

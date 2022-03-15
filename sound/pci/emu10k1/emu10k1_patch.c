@@ -9,6 +9,8 @@
  * chip specific here.  Just the actual writing to the board.
  */
 
+#include <linux/minmax.h>
+
 #include "emu10k1_synth_local.h"
 
 /*

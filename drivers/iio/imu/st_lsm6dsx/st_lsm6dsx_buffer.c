@@ -29,6 +29,7 @@
  * Lorenzo Bianconi <lorenzo.bianconi@st.com>
  * Denis Ciocca <denis.ciocca@st.com>
  */
+#include <linux/minmax.h>
 #include <linux/align.h>
 #include <linux/module.h>
 #include <linux/iio/kfifo_buf.h>

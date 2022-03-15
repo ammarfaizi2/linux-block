@@ -6,6 +6,7 @@
  * Author: Matthew Wilcox <willy@infradead.org>
  */
 
+#include <linux/minmax.h>
 #include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/export.h>

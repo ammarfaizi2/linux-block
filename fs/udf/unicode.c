@@ -20,6 +20,7 @@
 
 #include "udfdecl.h"
 
+#include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/string.h>	/* for memset */
 #include <linux/nls.h>

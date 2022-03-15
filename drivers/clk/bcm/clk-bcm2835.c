@@ -24,6 +24,7 @@
  * generator).
  */
 
+#include <linux/minmax.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
