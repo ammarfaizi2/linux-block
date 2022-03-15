@@ -863,8 +863,8 @@ static void collect_posix_cputimers(struct posix_cputimers *pct, u64 *samples,
 
 static inline void check_dl_overrun(struct task_struct *tsk)
 {
-	if (tsk->dl.dl_overrun) {
-		tsk->dl.dl_overrun = 0;
+	if (per_task(tsk, dl).dl_overrun) {
+		per_task(tsk, dl).dl_overrun = 0;
 		__group_send_sig_info(SIGXCPU, SEND_SIG_PRIV, tsk);
 	}
 }
@@ -1146,7 +1146,7 @@ static inline bool fastpath_timer_check(struct task_struct *tsk)
 			return true;
 	}
 
-	if (dl_task(tsk) && tsk->dl.dl_overrun)
+	if (dl_task(tsk) && per_task(tsk, dl).dl_overrun)
 		return true;
 
 	return false;

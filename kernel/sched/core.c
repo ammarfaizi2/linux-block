@@ -91,6 +91,8 @@
 #include "../../fs/io-wq.h"
 #include "../smpboot.h"
 
+DEFINE_PER_TASK(struct sched_dl_entity, dl);
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.
@@ -192,7 +194,7 @@ static inline bool prio_less(struct task_struct *a, struct task_struct *b, bool 
 		return false;
 
 	if (pa == -1) /* dl_prio() doesn't work because of stop_class above */
-		return !dl_time_before(a->dl.deadline, b->dl.deadline);
+		return !dl_time_before(per_task(a, dl).deadline, per_task(b, dl).deadline);
 
 	if (pa == MAX_RT_PRIO + MAX_NICE)	/* fair */
 		return cfs_prio_less(a, b, in_fi);
@@ -489,7 +491,7 @@ int sysctl_sched_rt_runtime = 950000;
  *  - set_user_nice():		p->se.load, p->*prio
  *  - __sched_setscheduler():	p->sched_class, p->policy, p->*prio,
  *				p->se.load, p->rt_priority,
- *				p->dl.dl_{runtime, deadline, period, flags, bw, density}
+ *				per_task(p, dl).dl_{runtime, deadline, period, flags, bw, density}
  *  - sched_setnuma():		p->numa_preferred_nid
  *  - sched_move_task()/
  *    cpu_cgroup_fork():	p->sched_task_group
@@ -4325,9 +4327,9 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 	memset(&p->stats, 0, sizeof(p->stats));
 #endif
 
-	RB_CLEAR_NODE(&p->dl.rb_node);
-	init_dl_task_timer(&p->dl);
-	init_dl_inactive_task_timer(&p->dl);
+	RB_CLEAR_NODE(&per_task(p, dl).rb_node);
+	init_dl_task_timer(&per_task(p, dl));
+	init_dl_inactive_task_timer(&per_task(p, dl));
 	__dl_clear_params(p);
 
 	INIT_LIST_HEAD(&p->rt.run_list);
@@ -6822,20 +6824,20 @@ void rt_mutex_setprio(struct task_struct *p, struct task_struct *pi_task)
 	if (dl_prio(prio)) {
 		if (!dl_prio(p->normal_prio) ||
 		    (pi_task && dl_prio(pi_task->prio) &&
-		     dl_entity_preempt(&pi_task->dl, &p->dl))) {
-			p->dl.pi_se = pi_task->dl.pi_se;
+		     dl_entity_preempt(&per_task(pi_task, dl), &per_task(p, dl)))) {
+			per_task(p, dl).pi_se = per_task(pi_task, dl).pi_se;
 			queue_flag |= ENQUEUE_REPLENISH;
 		} else {
-			p->dl.pi_se = &p->dl;
+			per_task(p, dl).pi_se = &per_task(p, dl);
 		}
 	} else if (rt_prio(prio)) {
 		if (dl_prio(oldprio))
-			p->dl.pi_se = &p->dl;
+			per_task(p, dl).pi_se = &per_task(p, dl);
 		if (oldprio < prio)
 			queue_flag |= ENQUEUE_HEAD;
 	} else {
 		if (dl_prio(oldprio))
-			p->dl.pi_se = &p->dl;
+			per_task(p, dl).pi_se = &per_task(p, dl);
 		if (rt_prio(oldprio))
 			p->rt.timeout = 0;
 	}

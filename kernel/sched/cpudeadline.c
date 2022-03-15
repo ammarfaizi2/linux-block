@@ -116,7 +116,7 @@ static inline int cpudl_maximum(struct cpudl *cp)
 int cpudl_find(struct cpudl *cp, struct task_struct *p,
 	       struct cpumask *later_mask)
 {
-	const struct sched_dl_entity *dl_se = &p->dl;
+	const struct sched_dl_entity *dl_se = &per_task(p, dl);
 
 	if (later_mask &&
 	    cpumask_and(later_mask, cp->free_cpus, &p->cpus_mask)) {
