@@ -30,6 +30,7 @@
  * do with ioremap() though.
  */
 
+#include <linux/ioport.h>
 #include <linux/device.h>
 
 #ifdef __KERNEL__

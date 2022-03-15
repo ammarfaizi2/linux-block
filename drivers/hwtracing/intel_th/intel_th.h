@@ -8,6 +8,7 @@
 #ifndef __INTEL_TH_H__
 #define __INTEL_TH_H__
 
+#include <linux/ioport.h>
 #include <linux/irqreturn.h>
 
 /* intel_th_device device types */

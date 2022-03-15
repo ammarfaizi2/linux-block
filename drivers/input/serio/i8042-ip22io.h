@@ -2,6 +2,7 @@
 #ifndef _I8042_IP22_H
 #define _I8042_IP22_H
 
+#include <linux/ioport.h>
 #include <asm/sgi/ioc.h>
 #include <asm/sgi/ip22.h>
 

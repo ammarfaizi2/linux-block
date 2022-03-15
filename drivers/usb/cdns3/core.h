@@ -11,6 +11,7 @@
 #ifndef __LINUX_CDNS3_CORE_H
 #define __LINUX_CDNS3_CORE_H
 
+#include <linux/ioport.h>
 #include <linux/usb/otg.h>
 #include <linux/usb/role.h>
 

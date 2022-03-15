@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/ioport.h>
 #include <subdev/fb/regsnv04.h>
 
 #define NV04_PFB_DEBUG_0					0x00100080

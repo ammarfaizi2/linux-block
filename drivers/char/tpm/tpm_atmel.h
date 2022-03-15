@@ -26,6 +26,7 @@ struct tpm_atmel_priv {
 
 #ifdef CONFIG_PPC64
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <asm/prom.h>
 

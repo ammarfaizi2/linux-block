@@ -3,6 +3,7 @@
 #define __MACIO_ASIC_H__
 #ifdef __KERNEL__
 
+#include <linux/ioport.h>
 #include <linux/of_device.h>
 
 extern struct bus_type macio_bus_type;

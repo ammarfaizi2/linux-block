@@ -7,6 +7,7 @@
 #ifndef __LINUX_NET_DSA_H
 #define __LINUX_NET_DSA_H
 
+#include <linux/ioport.h>
 #include <linux/if.h>
 #include <linux/if_ether.h>
 #include <linux/list.h>

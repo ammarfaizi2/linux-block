@@ -8,6 +8,7 @@
 #ifndef __SND_SOC_INTEL_CATPT_CORE_H
 #define __SND_SOC_INTEL_CATPT_CORE_H
 
+#include <linux/ioport.h>
 #include <linux/dma/dw.h>
 #include <linux/irqreturn.h>
 #include "messages.h"

@@ -8,6 +8,7 @@
 #ifndef __LINUX_DFL_H
 #define __LINUX_DFL_H
 
+#include <linux/ioport.h>
 #include <linux/device.h>
 #include <linux/mod_devicetable.h>
 

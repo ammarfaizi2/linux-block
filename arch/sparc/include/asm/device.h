@@ -5,6 +5,7 @@
 #ifndef _ASM_SPARC_DEVICE_H
 #define _ASM_SPARC_DEVICE_H
 
+#include <linux/ioport.h>
 #include <asm/openprom.h>
 
 struct device_node;

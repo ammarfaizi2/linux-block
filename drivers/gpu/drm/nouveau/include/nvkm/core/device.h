@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_DEVICE_H__
 #define __NVKM_DEVICE_H__
+#include <linux/ioport.h>
 #include <core/oclass.h>
 #include <core/event.h>
 enum nvkm_subdev_type;

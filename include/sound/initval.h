@@ -2,6 +2,7 @@
 #ifndef __SOUND_INITVAL_H
 #define __SOUND_INITVAL_H
 
+#include <linux/ioport.h>
 #include <linux/types.h>
 
 /*

@@ -10,6 +10,7 @@
 #ifndef MFD_CORE_H
 #define MFD_CORE_H
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 
 #define MFD_RES_SIZE(arr) (sizeof(arr) / sizeof(struct resource))
