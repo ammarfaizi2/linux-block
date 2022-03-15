@@ -3,6 +3,7 @@
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/netdevice_types.h>
 #include <linux/overflow.h>
 #include <rdma/uverbs_std_types.h>
 #include "rdma_core.h"
