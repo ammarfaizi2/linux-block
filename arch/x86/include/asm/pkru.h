@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_PKRU_H
 #define _ASM_X86_PKRU_H
 
+#include <asm/special_insns.h>
 #include <asm/cpufeature.h>
 
 #define PKRU_AD_BIT 0x1u

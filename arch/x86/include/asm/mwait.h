@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_MWAIT_H
 #define _ASM_X86_MWAIT_H
 
+#include <asm/special_insns.h>
 #include <linux/sched.h>
 #include <linux/sched/idle.h>
 
