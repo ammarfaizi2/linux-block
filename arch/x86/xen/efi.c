@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Oracle Co., Daniel Kiper
  */
 
+#include <linux/crc32.h>
 #include <linux/bitops.h>
 #include <linux/efi.h>
 #include <linux/init.h>

@@ -103,6 +103,7 @@
       a repeat code (16, 17, or 18) to go across the boundary between
       the two sets of lengths.
  */
+#include <linux/crc32.h>
 #include <linux/compiler.h>
 #ifdef NO_INFLATE_MALLOC
 #include <linux/slab.h>

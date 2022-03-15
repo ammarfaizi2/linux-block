@@ -5,6 +5,7 @@
  * Antoine Tenart <antoine.tenart@free-electrons.com>
  */
 
+#include <linux/crc32.h>
 #include <crypto/aes.h>
 #include <crypto/hmac.h>
 #include <crypto/md5.h>

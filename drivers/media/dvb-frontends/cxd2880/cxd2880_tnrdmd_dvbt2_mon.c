@@ -11,6 +11,7 @@
 #include "cxd2880_tnrdmd_dvbt2.h"
 #include "cxd2880_tnrdmd_dvbt2_mon.h"
 
+#include <linux/crc32.h>
 #include <media/dvb_math.h>
 
 static const int ref_dbm_1000[4][8] = {

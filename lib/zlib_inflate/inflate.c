@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/crc32.h>
 #include <linux/zutil.h>
 #include "inftrees.h"
 #include "inflate.h"

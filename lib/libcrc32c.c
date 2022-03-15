@@ -26,6 +26,7 @@
  * Copyright (c) 2004 Cisco Systems, Inc.
  */
 
+#include <linux/crc32.h>
 #include <crypto/hash.h>
 #include <linux/err.h>
 #include <linux/init.h>

@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/crc32.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
