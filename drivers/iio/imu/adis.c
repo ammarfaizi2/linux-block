@@ -6,6 +6,7 @@
  *   Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/mutex.h>

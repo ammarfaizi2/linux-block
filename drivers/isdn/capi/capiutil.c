@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/ctype.h>

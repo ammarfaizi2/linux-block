@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/gcd.h>
 #include <linux/export.h>

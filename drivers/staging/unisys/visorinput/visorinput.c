@@ -11,6 +11,7 @@
  * standard way the Linux expects for input drivers.
  */
 
+#include <linux/bitops.h>
 #include <linux/fb.h>
 #include <linux/input.h>
 #include <linux/kernel.h>

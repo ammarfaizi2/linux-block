@@ -6,6 +6,7 @@
  *   Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/bitops.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>
 #include <linux/mutex.h>

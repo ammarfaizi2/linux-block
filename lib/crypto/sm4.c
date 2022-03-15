@@ -7,6 +7,7 @@
  * Copyright (c) 2021 Tianjia Zhang <tianjia.zhang@linux.alibaba.com>
  */
 
+#include <linux/bitops.h>
 #include <linux/module.h>
 #include <asm/unaligned.h>
 #include <crypto/sm4.h>

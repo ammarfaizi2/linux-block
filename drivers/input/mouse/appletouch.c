@@ -14,6 +14,7 @@
  * Thanks to Alex Harper <basilisk@foobox.net> for his inputs.
  */
 
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

@@ -6,6 +6,7 @@
  *
  * Copyright (c) 2004 Jouni Malinen <j@w1.fi>
  */
+#include <linux/bitops.h>
 #include <crypto/internal/hash.h>
 #include <asm/unaligned.h>
 #include <linux/init.h>

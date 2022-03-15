@@ -10,6 +10,7 @@
  * "rfkill-input: remove unused code".
  */
 
+#include <linux/bitops.h>
 #include <linux/input.h>
 #include <linux/slab.h>
 #include <linux/moduleparam.h>

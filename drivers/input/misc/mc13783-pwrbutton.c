@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA 02110-1335  USA
  */
 
+#include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

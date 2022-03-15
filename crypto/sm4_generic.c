@@ -7,6 +7,7 @@
  * All rights reserved.
  */
 
+#include <linux/bitops.h>
 #include <crypto/sm4.h>
 #include <linux/module.h>
 #include <linux/init.h>

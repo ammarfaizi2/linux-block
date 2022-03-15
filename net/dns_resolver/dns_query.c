@@ -35,6 +35,7 @@
  *   along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/cred.h>

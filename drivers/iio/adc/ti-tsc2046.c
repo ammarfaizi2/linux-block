@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Oleksij Rempel <kernel@pengutronix.de>, Pengutronix
  */
 
+#include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>

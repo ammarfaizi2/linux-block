@@ -5,6 +5,7 @@
  *  Copyright 2008 Wolfson Microelectronics
  */
 
+#include <linux/bitops.h>
 #include <linux/input.h>
 #include <linux/slab.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2020 Synaptics Incorporated
  */
 
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/rmi.h>
 #include <linux/input.h>

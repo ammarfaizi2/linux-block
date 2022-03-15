@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"nand: " fmt
 
+#include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/mtd/nand.h>
 

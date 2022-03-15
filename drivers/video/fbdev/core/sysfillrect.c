@@ -11,6 +11,7 @@
  *  License.  See the file COPYING in the main directory of this archive for
  *  more details.
  */
+#include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/fb.h>

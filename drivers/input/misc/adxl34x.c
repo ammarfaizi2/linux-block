@@ -7,6 +7,7 @@
  * Copyright (C) 2009 Michael Hennerich, Analog Devices Inc.
  */
 
+#include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/delay.h>
 #include <linux/input.h>

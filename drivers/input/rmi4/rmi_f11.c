@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Unixphere
  */
 
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/device.h>

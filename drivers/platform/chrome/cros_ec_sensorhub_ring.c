@@ -5,6 +5,7 @@
  * Copyright 2020 Google LLC
  */
 
+#include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/device.h>

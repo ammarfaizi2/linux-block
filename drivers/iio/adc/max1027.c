@@ -12,6 +12,7 @@
   * Partial support for max1027 and similar chips.
   */
 
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

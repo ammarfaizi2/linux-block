@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 
 #include <linux/delay.h>

@@ -5,6 +5,7 @@
  * Copyright 2010-2015 Samuel Thibault <samuel.thibault@ens-lyon.org>
  */
 
+#include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

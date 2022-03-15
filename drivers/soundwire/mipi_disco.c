@@ -17,6 +17,7 @@
  *    here
  */
 
+#include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/property.h>
