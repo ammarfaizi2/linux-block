@@ -9,6 +9,7 @@
 #ifndef SPUFS_H
 #define SPUFS_H
 
+#include <linux/mutex_api.h>
 #include <linux/kref.h>
 #include <linux/mutex.h>
 #include <linux/spinlock.h>

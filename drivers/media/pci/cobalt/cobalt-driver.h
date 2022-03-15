@@ -11,6 +11,7 @@
 #ifndef COBALT_DRIVER_H
 #define COBALT_DRIVER_H
 
+#include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/pci.h>

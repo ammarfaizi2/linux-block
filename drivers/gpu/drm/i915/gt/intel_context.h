@@ -6,6 +6,7 @@
 #ifndef __INTEL_CONTEXT_H__
 #define __INTEL_CONTEXT_H__
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/bitops.h>

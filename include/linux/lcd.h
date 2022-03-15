@@ -9,6 +9,7 @@
 #ifndef _LINUX_LCD_H
 #define _LINUX_LCD_H
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/notifier.h>

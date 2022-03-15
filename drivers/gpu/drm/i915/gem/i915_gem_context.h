@@ -7,6 +7,7 @@
 #ifndef __I915_GEM_CONTEXT_H__
 #define __I915_GEM_CONTEXT_H__
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 

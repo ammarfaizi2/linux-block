@@ -6,6 +6,7 @@
  */
 #ifndef __NFIT_H__
 #define __NFIT_H__
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/workqueue.h>

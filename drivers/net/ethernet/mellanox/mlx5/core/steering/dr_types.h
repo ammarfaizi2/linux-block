@@ -4,6 +4,7 @@
 #ifndef	_DR_TYPES_
 #define	_DR_TYPES_
 
+#include <linux/mutex_api.h>
 #include <linux/mlx5/vport.h>
 #include <linux/refcount.h>
 #include "fs_core.h"

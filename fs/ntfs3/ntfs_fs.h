@@ -9,6 +9,7 @@
 #ifndef _LINUX_NTFS3_NTFS_FS_H
 #define _LINUX_NTFS3_NTFS_FS_H
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/types.h>
 

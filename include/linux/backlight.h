@@ -9,6 +9,7 @@
 #ifndef _LINUX_BACKLIGHT_H
 #define _LINUX_BACKLIGHT_H
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/fb.h>
 #include <linux/mutex.h>

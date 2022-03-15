@@ -8,6 +8,7 @@
 #ifndef _ZD_CHIP_H
 #define _ZD_CHIP_H
 
+#include <linux/mutex_api.h>
 #include <net/mac80211.h>
 
 #include "zd_rf.h"

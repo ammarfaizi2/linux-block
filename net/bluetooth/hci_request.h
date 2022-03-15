@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/mutex_api.h>
 #include <asm/unaligned.h>
 
 #define HCI_REQ_DONE	  0

@@ -6,6 +6,7 @@
 #ifndef __XFS_DQUOT_H__
 #define __XFS_DQUOT_H__
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 
 /*

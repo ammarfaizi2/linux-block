@@ -13,6 +13,7 @@
 #ifndef U_FFS_H
 #define U_FFS_H
 
+#include <linux/mutex_api.h>
 #include <linux/usb/composite.h>
 #include <linux/list.h>
 #include <linux/mutex.h>

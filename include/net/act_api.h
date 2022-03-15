@@ -6,6 +6,7 @@
  * Public action API for classifiers/qdiscs
 */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/refcount.h>
 #include <net/flow_offload.h>

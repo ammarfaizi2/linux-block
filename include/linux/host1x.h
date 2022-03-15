@@ -6,6 +6,7 @@
 #ifndef __LINUX_HOST1X_H
 #define __LINUX_HOST1X_H
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/dma-direction.h>
 #include <linux/spinlock.h>

@@ -11,6 +11,7 @@
 #ifndef __LOCK_DOT_H__
 #define __LOCK_DOT_H__
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 
 void dlm_dump_rsb(struct dlm_rsb *r);

@@ -11,6 +11,7 @@
 #ifndef ST_LSM6DSX_H
 #define ST_LSM6DSX_H
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/iio/iio.h>
 #include <linux/regulator/consumer.h>

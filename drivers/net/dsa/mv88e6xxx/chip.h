@@ -8,6 +8,7 @@
 #ifndef _MV88E6XXX_CHIP_H
 #define _MV88E6XXX_CHIP_H
 
+#include <linux/mutex_api.h>
 #include <linux/idr.h>
 #include <linux/if_vlan.h>
 #include <linux/irq.h>

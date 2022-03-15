@@ -3,6 +3,7 @@
 #ifndef HISI_ACC_QM_H
 #define HISI_ACC_QM_H
 
+#include <linux/mutex_api.h>
 #include <linux/idr_types.h>
 #include <linux/bitfield.h>
 #include <linux/debugfs.h>

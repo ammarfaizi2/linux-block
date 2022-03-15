@@ -24,6 +24,7 @@
 #ifndef KFD_DEVICE_QUEUE_MANAGER_H_
 #define KFD_DEVICE_QUEUE_MANAGER_H_
 
+#include <linux/mutex_api.h>
 #include <linux/rwsem.h>
 #include <linux/list.h>
 #include <linux/mutex.h>

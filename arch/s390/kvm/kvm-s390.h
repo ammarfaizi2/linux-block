@@ -12,6 +12,7 @@
 #ifndef ARCH_S390_KVM_S390_H
 #define ARCH_S390_KVM_S390_H
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/hrtimer.h>
 #include <linux/kvm.h>

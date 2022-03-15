@@ -2,6 +2,7 @@
 #ifndef _LINUX_FUTEX_H
 #define _LINUX_FUTEX_H
 
+#include <linux/mutex_api.h>
 #include <linux/sched/per_task.h>
 #include <linux/sched.h>
 #include <linux/ktime.h>

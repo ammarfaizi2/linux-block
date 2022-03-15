@@ -14,6 +14,7 @@
 #ifndef __FPGA_DFL_H
 #define __FPGA_DFL_H
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/bitfield.h>
 #include <linux/cdev.h>

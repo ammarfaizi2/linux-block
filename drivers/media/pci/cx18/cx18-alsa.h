@@ -5,6 +5,7 @@
  *  Copyright (C) 2009  Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 
 struct snd_card;

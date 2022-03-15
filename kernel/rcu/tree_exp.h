@@ -7,6 +7,7 @@
  * Authors: Paul E. McKenney <paulmck@linux.ibm.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
