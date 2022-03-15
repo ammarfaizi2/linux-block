@@ -54,6 +54,7 @@
  * (C) Copyright 1994 - 1997 Marco van Wieringen
  */
 
+#include <linux/quota.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
