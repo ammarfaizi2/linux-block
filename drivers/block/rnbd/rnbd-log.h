@@ -9,6 +9,8 @@
 #ifndef RNBD_LOG_H
 #define RNBD_LOG_H
 
+#include <linux/ratelimit.h>
+
 #include "rnbd-clt.h"
 #include "rnbd-srv.h"
 

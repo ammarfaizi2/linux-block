@@ -12,6 +12,7 @@
 #undef pr_fmt
 #endif
 
+#include <linux/ratelimit.h>
 #include <linux/types.h>
 
 #define pr_fmt(fmt) "CIFS: " fmt

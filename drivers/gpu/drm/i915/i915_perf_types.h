@@ -6,6 +6,7 @@
 #ifndef _I915_PERF_TYPES_H_
 #define _I915_PERF_TYPES_H_
 
+#include <linux/ratelimit.h>
 #include <linux/atomic.h>
 #include <linux/device.h>
 #include <linux/hrtimer.h>

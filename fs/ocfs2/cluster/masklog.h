@@ -62,6 +62,7 @@
  */
 
 /* for task_struct */
+#include <linux/ratelimit.h>
 #include <linux/fs.h>
 #include <linux/sched.h>
 

@@ -3,6 +3,7 @@
  * Debugging printout:
  */
 
+#include <linux/ratelimit.h>
 #include <linux/interrupt.h>
 #include <linux/types.h>
 
