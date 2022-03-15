@@ -8,6 +8,7 @@
  */
 
 #include "hsr_slave.h"
+#include <linux/netlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>
