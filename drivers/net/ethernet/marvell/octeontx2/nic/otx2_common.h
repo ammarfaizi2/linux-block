@@ -8,6 +8,7 @@
 #ifndef OTX2_COMMON_H
 #define OTX2_COMMON_H
 
+#include <linux/rhashtable-types.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/ethtool.h>
