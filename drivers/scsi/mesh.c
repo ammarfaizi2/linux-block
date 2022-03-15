@@ -19,6 +19,7 @@
  * - retry arbitration if lost (unless higher levels do this for us)
  * - power down the chip when no device is detected
  */
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

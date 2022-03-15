@@ -18,6 +18,7 @@
 #include "qi.h"
 #include "jr.h"
 #include "caamalg_desc.h"
+#include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 #include <crypto/xts.h>
 #include <asm/unaligned.h>

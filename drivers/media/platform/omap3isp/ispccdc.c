@@ -11,6 +11,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

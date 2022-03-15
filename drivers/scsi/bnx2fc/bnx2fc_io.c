@@ -12,6 +12,7 @@
  * Written by: Bhanu Prakash Gollapudi (bprakash@broadcom.com)
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>

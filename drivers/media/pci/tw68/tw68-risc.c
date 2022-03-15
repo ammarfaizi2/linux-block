@@ -17,6 +17,7 @@
  *  Copyright (C) 2014 Hans Verkuil <hverkuil@xs4all.nl>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 
 #include "tw68.h"

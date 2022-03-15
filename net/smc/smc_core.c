@@ -9,6 +9,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>

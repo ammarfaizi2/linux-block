@@ -23,6 +23,7 @@
  * indication of where the hardware is currently working.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ioport.h>

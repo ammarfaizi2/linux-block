@@ -3,6 +3,7 @@
  *	linux/arch/alpha/kernel/pci_iommu.c
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mm_page_address.h>

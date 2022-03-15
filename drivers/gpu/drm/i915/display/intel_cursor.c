@@ -2,6 +2,7 @@
 /*
  * Copyright © 2020 Intel Corporation
  */
+#include <linux/scatterlist_api.h>
 #include <linux/kernel.h>
 
 #include <drm/drm_atomic_helper.h>

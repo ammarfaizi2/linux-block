@@ -10,6 +10,7 @@
  * Copyright (c) 2006-2007, 2011-2012 Freescale Semiconductor, Inc.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

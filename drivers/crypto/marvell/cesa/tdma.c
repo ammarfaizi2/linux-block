@@ -10,6 +10,7 @@
  * Sebastian Andrzej Siewior < sebastian at breakpoint dot cc >
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 

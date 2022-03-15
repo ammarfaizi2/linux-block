@@ -67,6 +67,7 @@
  *  peter fuerst <post@pfrst.de>  February 2007
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/module.h>

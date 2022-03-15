@@ -4,6 +4,7 @@
  * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>

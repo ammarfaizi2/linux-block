@@ -5,6 +5,7 @@
 
 /* XXX TBD some includes may be extraneous */
 
+#include <linux/scatterlist_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/utsname.h>

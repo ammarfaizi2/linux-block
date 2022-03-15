@@ -6,6 +6,7 @@
  *   Author: Angelo Dureghello <angelo.dureghello@timesys.it>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>

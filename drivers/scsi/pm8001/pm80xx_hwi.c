@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGES.
  *
  */
+#include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

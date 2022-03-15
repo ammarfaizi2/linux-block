@@ -9,6 +9,7 @@
  *         Pierre-Yves Mordret <pierre-yves.mordret@st.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

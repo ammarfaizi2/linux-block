@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Intel Corporation.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/math.h>
 #include <linux/intel_th.h>
 #include <linux/module.h>

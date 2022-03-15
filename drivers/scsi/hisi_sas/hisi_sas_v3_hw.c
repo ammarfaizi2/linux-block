@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Hisilicon Limited.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

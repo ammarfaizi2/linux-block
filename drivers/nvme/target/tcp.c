@@ -4,6 +4,7 @@
  * Copyright (c) 2018 Lightbits Labs. All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>

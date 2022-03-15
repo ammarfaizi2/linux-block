@@ -18,6 +18,7 @@
 // Based on spi-stmp.c, which is:
 // Author: Dmitry Pervushin <dimka@embeddedalley.com>
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>

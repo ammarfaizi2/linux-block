@@ -10,6 +10,7 @@
  *  for more details.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/sched/cond_resched.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2016 - 2020 Intel Corporation.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/property.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Linaro Limited
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

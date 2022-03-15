@@ -7,6 +7,7 @@
  * Copyright 2009-2011 Freescale Semiconductor, Inc.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

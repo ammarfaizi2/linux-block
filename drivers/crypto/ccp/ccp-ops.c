@@ -8,6 +8,7 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <rdma/uverbs_ioctl.h>

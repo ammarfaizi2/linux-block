@@ -14,6 +14,7 @@
  * This driver is based on dw_dmac and amba-pl08x drivers.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/clk.h>

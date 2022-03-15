@@ -7,6 +7,7 @@
  * Copyright (C) 2013-2015 Renesas Solutions Corp.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

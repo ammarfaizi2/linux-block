@@ -9,6 +9,7 @@
  *     - JMicron (hardware and technical support)
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>

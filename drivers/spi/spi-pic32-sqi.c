@@ -6,6 +6,7 @@
  * Copyright (c) 2016, Microchip Technology Inc.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

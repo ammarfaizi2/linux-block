@@ -8,6 +8,7 @@
 /*
  * Core code for the Via multifunction framebuffer device.
  */
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

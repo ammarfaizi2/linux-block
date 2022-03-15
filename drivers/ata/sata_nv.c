@@ -20,6 +20,7 @@
  *  sent through the legacy interface.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>

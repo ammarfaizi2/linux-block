@@ -4,6 +4,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/gfp_api.h>
 
 #include "i915_scatterlist.h"

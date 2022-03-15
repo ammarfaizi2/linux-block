@@ -10,6 +10,7 @@
  *	Calculates md5/sha1 file hash, template hash, boot-aggreate hash
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>

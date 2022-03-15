@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/scatterlist_api.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

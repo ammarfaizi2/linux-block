@@ -3,6 +3,7 @@
  * Copyright © 2019-2021 Intel Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/idr_api.h>

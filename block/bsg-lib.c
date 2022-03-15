@@ -6,6 +6,7 @@
  *  Copyright (C) 2011   Red Hat, Inc.  All rights reserved.
  *  Copyright (C) 2011   Mike Christie
  */
+#include <linux/scatterlist_api.h>
 #include <linux/kref_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

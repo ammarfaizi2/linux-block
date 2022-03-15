@@ -10,6 +10,7 @@
  * Copyright (C) 2009-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>

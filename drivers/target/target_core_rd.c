@@ -11,6 +11,7 @@
  *
  ******************************************************************************/
 
+#include <linux/scatterlist_api.h>
 #include <linux/gfp_api.h>
 #include <linux/string.h>
 #include <linux/parser.h>

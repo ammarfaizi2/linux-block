@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mm_api.h>
 #include <linux/llist_api.h>
 #include <linux/dma-mapping.h>

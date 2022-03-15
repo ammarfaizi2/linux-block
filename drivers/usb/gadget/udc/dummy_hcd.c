@@ -23,6 +23,7 @@
  * Note: The emulation does not include isochronous transfers!
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>

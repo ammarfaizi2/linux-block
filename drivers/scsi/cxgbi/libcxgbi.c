@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/scatterlist_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

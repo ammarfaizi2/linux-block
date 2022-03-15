@@ -14,6 +14,7 @@
 
 /* XXX TBD some includes may be extraneous */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

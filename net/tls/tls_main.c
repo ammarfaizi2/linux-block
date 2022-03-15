@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

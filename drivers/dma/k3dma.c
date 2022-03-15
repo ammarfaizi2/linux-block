@@ -3,6 +3,7 @@
  * Copyright (c) 2013 - 2015 Linaro Ltd.
  * Copyright (c) 2013 HiSilicon Limited.
  */
+#include <linux/scatterlist_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>

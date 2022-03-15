@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>

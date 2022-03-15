@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Christian Hohnstaedt <chohnstaedt@innominate.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/atomic_api.h>
 #include <linux/platform_device.h>

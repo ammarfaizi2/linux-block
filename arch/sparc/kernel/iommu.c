@@ -5,6 +5,7 @@
  * Copyright (C) 1999, 2000 Jakub Jelinek (jakub@redhat.com)
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

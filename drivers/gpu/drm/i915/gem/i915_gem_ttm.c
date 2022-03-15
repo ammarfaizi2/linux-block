@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

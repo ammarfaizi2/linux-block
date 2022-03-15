@@ -10,6 +10,7 @@
  *     Robert Jennings <rcjenn@us.ibm.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>

@@ -22,6 +22,7 @@
 #define DRIVER_NAME "ARM FF-A"
 #define pr_fmt(fmt) DRIVER_NAME ": " fmt
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

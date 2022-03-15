@@ -7,6 +7,7 @@
  * Copyright (c) 2016 Texas Instruments Incorporated
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/errno.h>
 #include <linux/scatterlist.h>
 #include <linux/dma-mapping.h>

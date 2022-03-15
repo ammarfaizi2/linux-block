@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"libsrp: " fmt
 
+#include <linux/scatterlist_api.h>
 #include <linux/printk.h>
 #include <linux/err.h>
 #include <linux/slab.h>

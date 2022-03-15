@@ -3,6 +3,7 @@
  * Copyright © 2016-2019 Intel Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/module.h>
 #include <linux/mm_page_address.h>
 #include <linux/io.h>

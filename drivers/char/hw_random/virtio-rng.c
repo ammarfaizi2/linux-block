@@ -4,6 +4,7 @@
  *  Copyright (C) 2007, 2008 Rusty Russell IBM Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/minmax.h>
 #include <linux/idr_api.h>
 #include <linux/err.h>

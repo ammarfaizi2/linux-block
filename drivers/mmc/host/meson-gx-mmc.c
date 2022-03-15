@@ -5,6 +5,7 @@
  * Copyright (c) 2016 BayLibre, SAS.
  * Author: Kevin Hilman <khilman@baylibre.com>
  */
+#include <linux/scatterlist_api.h>
 #include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

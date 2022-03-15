@@ -5,6 +5,7 @@
  * Copyright (c) 2009, 2014 Intel Corporation.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/capability.h>
 #include <linux/completion.h>
 #include <linux/dma-mapping.h>

@@ -8,6 +8,7 @@
  * Linux driver for QLogic BR-series Fibre Channel Host Bus Adapter.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/uaccess.h>

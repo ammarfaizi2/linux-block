@@ -3,6 +3,7 @@
 /*
  * Copyright (C) 2021, Linaro Limited. All rights reserved.
  */
+#include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>
 #include <crypto/gcm.h>

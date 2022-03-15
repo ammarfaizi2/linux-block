@@ -3,6 +3,7 @@
  * Copyright 2016 Broadcom
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/random.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

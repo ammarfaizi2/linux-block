@@ -25,6 +25,7 @@
  * Do not depend on ABI/API stability.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

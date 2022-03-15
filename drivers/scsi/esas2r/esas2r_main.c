@@ -41,6 +41,7 @@
  * USA.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/delay.h>

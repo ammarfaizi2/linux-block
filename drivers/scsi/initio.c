@@ -65,6 +65,7 @@
  *		- Re-add reset_bus support
  **************************************************************************/
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/hardirq.h>

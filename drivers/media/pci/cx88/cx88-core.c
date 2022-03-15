@@ -13,6 +13,7 @@
 
 #include "cx88.h"
 
+#include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>

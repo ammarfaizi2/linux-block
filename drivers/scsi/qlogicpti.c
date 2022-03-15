@@ -13,6 +13,7 @@
  * May, 2, 1997: Added support for QLGC,isp --jj
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/capability.h>

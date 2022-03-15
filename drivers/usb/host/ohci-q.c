@@ -8,6 +8,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/delay.h>
 #include <linux/irq.h>
 #include <linux/slab.h>

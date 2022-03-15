@@ -5,6 +5,7 @@
  * Copyright (c) 2008 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/highmem.h>
 #include <crypto/scatterwalk.h>
 #include <crypto/internal/hash.h>

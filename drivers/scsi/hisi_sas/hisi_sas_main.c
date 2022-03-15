@@ -4,6 +4,7 @@
  * Copyright (c) 2015 Hisilicon Limited.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/property.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

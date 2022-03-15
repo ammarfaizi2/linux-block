@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2013 QLogic Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 
 #include "ql4_def.h"

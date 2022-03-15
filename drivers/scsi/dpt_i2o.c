@@ -26,6 +26,7 @@
 /*#define DEBUG 1 */
 /*#define UARTDELAY 1 */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

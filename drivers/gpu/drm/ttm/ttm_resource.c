@@ -22,6 +22,7 @@
  * Authors: Christian König
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/dma-fence-api.h>

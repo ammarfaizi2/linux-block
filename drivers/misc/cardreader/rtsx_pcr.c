@@ -7,6 +7,7 @@
  *   Wei WANG <wei_wang@realsil.com.cn>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>

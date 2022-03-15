@@ -4,6 +4,7 @@
  * Author: Jacob Chen <jacob-chen@iotwrt.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/dma-mapping.h>

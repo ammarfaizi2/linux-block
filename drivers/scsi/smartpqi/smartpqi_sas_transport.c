@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/kernel.h>
 #include <linux/bsg-lib.h>
 #include <scsi/scsi_host.h>

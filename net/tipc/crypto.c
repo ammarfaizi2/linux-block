@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>
 #include <linux/ratelimit.h>
 #include <linux/random.h>

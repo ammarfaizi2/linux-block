@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/pid.h>
 #include <linux/pgtable_api.h>
 #include <linux/pagemap.h>

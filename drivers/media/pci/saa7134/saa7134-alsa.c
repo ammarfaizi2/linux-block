@@ -6,6 +6,7 @@
 #include "saa7134.h"
 #include "saa7134-reg.h"
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/export.h>

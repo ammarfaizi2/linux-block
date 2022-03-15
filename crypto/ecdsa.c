@@ -3,6 +3,7 @@
  * Copyright (c) 2021 IBM Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/module.h>
 #include <crypto/internal/akcipher.h>
 #include <crypto/internal/ecc.h>

@@ -8,6 +8,7 @@
  *
  *  DMA support added by Chip Coldwell.
  */
+#include <linux/scatterlist_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

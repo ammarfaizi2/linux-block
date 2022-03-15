@@ -5,6 +5,7 @@
  * This is a text format reader.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
