@@ -13,6 +13,7 @@
 #ifndef _NF_CONNTRACK_H
 #define _NF_CONNTRACK_H
 
+#include <linux/netfilter/nf_conntrack_common_api.h>
 #include <linux/bitops.h>
 #include <linux/compiler.h>
 

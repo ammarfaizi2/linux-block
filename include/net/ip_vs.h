@@ -6,6 +6,7 @@
 #ifndef _NET_IP_VS_H
 #define _NET_IP_VS_H
 
+#include <linux/netfilter/nf_conntrack_common_api.h>
 #include <linux/indirect_call_wrapper.h>
 #include <linux/ip_vs.h>                /* definitions shared with userland */
 
