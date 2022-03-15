@@ -9,6 +9,7 @@
  *           Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/list.h>

@@ -2,6 +2,7 @@
 // BQ256XX Battery Charger Driver
 // Copyright (C) 2020 Texas Instruments Incorporated - http://www.ti.com/
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

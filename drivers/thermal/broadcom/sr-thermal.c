@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Broadcom
  */
 
+#include <linux/property.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

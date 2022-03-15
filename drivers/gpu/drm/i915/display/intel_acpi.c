@@ -5,6 +5,7 @@
  * _DSM related code stolen from nouveau_acpi.c.
  */
 
+#include <linux/property.h>
 #include <linux/pci.h>
 #include <linux/acpi.h>
 

@@ -5,6 +5,7 @@
  * Author: Thierry Reding <treding@nvidia.com>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>

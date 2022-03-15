@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

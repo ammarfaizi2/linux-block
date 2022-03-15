@@ -8,6 +8,7 @@
  *     - JMicron (hardware and technical support)
  */
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

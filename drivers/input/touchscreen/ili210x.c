@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/property.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/crc-ccitt.h>

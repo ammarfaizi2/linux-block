@@ -16,6 +16,7 @@
  * - power mode switching (SGPC3)
  */
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/crc8.h>

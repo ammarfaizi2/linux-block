@@ -4,6 +4,7 @@
  * Copyright 2015 Andrew Lunn <andrew@lunn.ch>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2012-2013, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/debugfs.h>

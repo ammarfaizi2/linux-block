@@ -4,6 +4,7 @@
  * Digital to Analog Converters driver
  * Copyright 2019-2020 Analog Devices Inc.
  */
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>

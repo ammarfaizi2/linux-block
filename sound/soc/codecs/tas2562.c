@@ -4,6 +4,7 @@
 // Copyright (C) 2019 Texas Instruments Inc.
 
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

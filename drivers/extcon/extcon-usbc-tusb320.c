@@ -6,6 +6,7 @@
  * Author: Michael Auchter <michael.auchter@ni.com>
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/extcon-provider.h>

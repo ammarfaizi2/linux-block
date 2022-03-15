@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Oleksij Rempel <kernel@pengutronix.de>, Pengutronix
  */
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/interrupt.h>

@@ -4,6 +4,7 @@
  *
  * Kuninori Morimoto <morimoto.kuninori@renesas.com>
  */
+#include <linux/property.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

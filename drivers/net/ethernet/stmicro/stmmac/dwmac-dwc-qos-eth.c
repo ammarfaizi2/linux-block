@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Joao Pinto <jpinto@synopsys.com>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2016 Mentor Graphics Inc.
  */
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/dma-mapping.h>

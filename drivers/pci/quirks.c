@@ -12,6 +12,7 @@
  * file, where their drivers can use them.
  */
 
+#include <linux/property.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

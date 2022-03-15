@@ -7,6 +7,7 @@
  * Copyright (c) 2017 Microsemi Corporation
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

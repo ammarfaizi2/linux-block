@@ -5,6 +5,7 @@
  * License: Dual MIT/GPL
  * Copyright (c) 2017 Microsemi Corporation
  */
+#include <linux/property.h>
 #include <linux/notifier_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

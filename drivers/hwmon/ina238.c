@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Nathan Rossi <nathan.rossi@digi.com>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

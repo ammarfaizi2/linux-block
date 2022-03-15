@@ -6,6 +6,7 @@
  * based on the AHCI SATA platform driver by Jeff Garzik and Anton Vorontsov
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

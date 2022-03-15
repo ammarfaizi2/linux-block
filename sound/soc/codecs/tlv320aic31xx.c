@@ -12,6 +12,7 @@
  * and mono/stereo Class-D speaker driver.
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

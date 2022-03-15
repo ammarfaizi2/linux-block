@@ -17,6 +17,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/property.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/acpi.h>

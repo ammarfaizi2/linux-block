@@ -7,6 +7,7 @@
  * Copyright (C) 2011 - 2014 Intel Corporation. All rights reserved.
  */
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/irqdesc.h>

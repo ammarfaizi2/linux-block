@@ -7,6 +7,7 @@
 //	Author: Tracy Yi <tracy-yi@ti.com>
 //	Frank Shi <shifu0704@thundersoft.com>
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2014 Sony Mobile Communications AB
  * Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  */
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

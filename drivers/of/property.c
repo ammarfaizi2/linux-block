@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt)	"OF: " fmt
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/fwnode.h>
 #include <linux/device_api_lock.h>

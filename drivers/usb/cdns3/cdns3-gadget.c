@@ -56,6 +56,7 @@
  *
  */
 
+#include <linux/property.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>

@@ -17,6 +17,7 @@
  * for these chip can bind to the it.
  */
 
+#include <linux/property.h>
 #include <linux/acpi.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

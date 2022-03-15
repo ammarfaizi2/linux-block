@@ -5,6 +5,7 @@
 // TI LMU LED common framework, based on previous work from
 // Milo Kim <milo.kim@ti.com>
 
+#include <linux/property.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/of_device.h>

@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2012 Jamie Lentin
  */
+#include <linux/property.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/delay.h>

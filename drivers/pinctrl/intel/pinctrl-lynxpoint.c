@@ -7,6 +7,7 @@
  *          Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
+#include <linux/property.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

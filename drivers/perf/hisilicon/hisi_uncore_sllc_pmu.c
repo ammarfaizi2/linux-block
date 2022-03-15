@@ -7,6 +7,7 @@
  *
  * This code is based on the uncore PMUs like arm-cci and arm-ccn.
  */
+#include <linux/property.h>
 #include <linux/perf_event_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

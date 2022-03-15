@@ -5,6 +5,7 @@
  * Peter Korsgaard <peter.korsgaard@barco.com>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

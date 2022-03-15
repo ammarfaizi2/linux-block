@@ -6,6 +6,7 @@
  * Author(s): Amelie Delaunay <amelie.delaunay@st.com>
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/i2c.h>

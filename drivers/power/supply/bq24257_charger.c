@@ -10,6 +10,7 @@
  * https://www.ti.com/product/bq24257
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

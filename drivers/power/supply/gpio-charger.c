@@ -4,6 +4,7 @@
  *  Driver for chargers which report their online status through a GPIO pin
  */
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>

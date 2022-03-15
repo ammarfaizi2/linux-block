@@ -6,6 +6,7 @@
  *			Daniel Kurtz <djkurtz@chromium.org>
  */
 
+#include <linux/property.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

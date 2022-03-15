@@ -7,6 +7,7 @@
  * Copyright 2018 Lubomir Rintel <lkundrak@v3.sk>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

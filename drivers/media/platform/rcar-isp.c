@@ -10,6 +10,7 @@
  * due to lack of documentation.
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2011, NVIDIA Corporation.
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/init.h>

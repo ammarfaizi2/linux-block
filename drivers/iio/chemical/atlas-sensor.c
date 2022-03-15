@@ -6,6 +6,7 @@
  * Author: Matt Ranostay <matt.ranostay@konsulko.com>
  */
 
+#include <linux/property.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

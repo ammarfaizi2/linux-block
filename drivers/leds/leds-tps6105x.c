@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Sven Van Asbroeck
  */
 
+#include <linux/property.h>
 #include <linux/of.h>
 #include <linux/device_api_lock.h>
 #include <linux/leds.h>

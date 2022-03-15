@@ -7,6 +7,7 @@
  *	    Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/property.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api_lock.h>

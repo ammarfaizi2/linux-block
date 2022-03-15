@@ -2,6 +2,7 @@
 // TI LP50XX LED chip family driver
 // Copyright (C) 2018-20 Texas Instruments Incorporated - https://www.ti.com/
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>

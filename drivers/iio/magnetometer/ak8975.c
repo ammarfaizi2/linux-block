@@ -7,6 +7,7 @@
  * Copyright (c) 2010, NVIDIA Corporation.
  */
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

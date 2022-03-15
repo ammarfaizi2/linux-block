@@ -12,6 +12,7 @@
  * Hardware interface for audio DSP on Broadwell
  */
 
+#include <linux/property.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt)	"ACPI: IORT: " fmt
 
+#include <linux/property.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>

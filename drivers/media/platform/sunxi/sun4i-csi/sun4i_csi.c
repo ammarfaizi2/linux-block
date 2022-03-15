@@ -6,6 +6,7 @@
  * Author: Maxime Ripard <maxime.ripard@bootlin.com>
  */
 
+#include <linux/property.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/export.h>

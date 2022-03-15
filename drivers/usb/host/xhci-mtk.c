@@ -7,6 +7,7 @@
  *  Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

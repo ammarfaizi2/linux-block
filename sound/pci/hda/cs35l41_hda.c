@@ -6,6 +6,7 @@
 //
 // Author: Lucas Tanure <tanureal@opensource.cirrus.com>
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/acpi.h>

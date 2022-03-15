@@ -8,6 +8,7 @@
  * Copyright (c) 2006 Novell, Inc.
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

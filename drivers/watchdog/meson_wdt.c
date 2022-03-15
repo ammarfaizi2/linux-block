@@ -5,6 +5,7 @@
  *      Copyright (c) 2014 Carlo Caione
  */
 
+#include <linux/property.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

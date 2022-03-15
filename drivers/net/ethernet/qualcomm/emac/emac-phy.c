@@ -5,6 +5,7 @@
 /* Qualcomm Technologies, Inc. EMAC PHY Controller driver.
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

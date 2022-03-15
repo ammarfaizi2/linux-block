@@ -12,6 +12,7 @@
 // helping backtrack its historical background
 //
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

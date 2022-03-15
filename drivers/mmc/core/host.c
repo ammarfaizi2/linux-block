@@ -9,6 +9,7 @@
  *  MMC host class device management
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

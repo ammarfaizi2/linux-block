@@ -5,6 +5,7 @@
  * Copyright 2011 Analog Devices Inc.
  */
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

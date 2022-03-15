@@ -3,6 +3,7 @@
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
