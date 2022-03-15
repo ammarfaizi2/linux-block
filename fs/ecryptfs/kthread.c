@@ -6,6 +6,7 @@
  *   Author(s): Michael A. Halcrow <mahalcro@us.ibm.com>
  */
 
+#include <linux/cred.h>
 #include <linux/kthread.h>
 #include <linux/freezer.h>
 #include <linux/slab.h>

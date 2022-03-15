@@ -35,6 +35,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/delay.h>

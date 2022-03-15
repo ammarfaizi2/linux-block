@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>

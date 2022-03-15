@@ -15,6 +15,7 @@
  * none of the bugs are Pavel's now.
  */
 
+#include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/types.h>

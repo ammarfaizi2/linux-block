@@ -4,6 +4,7 @@
  * Copyright 2008 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/miscdevice.h>

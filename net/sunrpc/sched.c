@@ -10,6 +10,7 @@
  * (C) 1999 Dave Airlie, University of Limerick, Ireland <airlied@linux.ie>
  */
 
+#include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>

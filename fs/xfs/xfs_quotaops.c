@@ -3,6 +3,8 @@
  * Copyright (c) 2008, Christoph Hellwig
  * All Rights Reserved.
  */
+#include <linux/cred.h>
+
 #include "xfs.h"
 #include "xfs_shared.h"
 #include "xfs_format.h"

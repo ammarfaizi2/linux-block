@@ -10,6 +10,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/cred.h>
 #include <linux/backing-dev-api.h>
 #include <linux/idr.h>
 #include <linux/fs_parser.h>

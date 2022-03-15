@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2019 Western Digital Corporation or its affiliates.
  */
+#include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/pagemap.h>

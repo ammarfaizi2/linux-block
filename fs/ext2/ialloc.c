@@ -13,6 +13,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/cred.h>
 #include <linux/backing-dev-api.h>
 #include <linux/quotaops.h>
 #include <linux/sched.h>

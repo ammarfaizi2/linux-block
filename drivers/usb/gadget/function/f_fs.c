@@ -14,6 +14,7 @@
 /* #define DEBUG */
 /* #define VERBOSE_DEBUG */
 
+#include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/pagemap.h>

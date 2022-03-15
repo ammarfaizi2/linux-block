@@ -23,6 +23,7 @@
  * formats.
  */
 
+#include <linux/cred.h>
 #include <linux/capability.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>

@@ -21,6 +21,7 @@
  * hopefully all marked.  This should be fixed.
  */
 
+#include <linux/cred.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/fs.h>

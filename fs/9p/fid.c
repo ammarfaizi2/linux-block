@@ -6,6 +6,7 @@
  *  Copyright (C) 2005, 2006 by Eric Van Hensbergen <ericvh@gmail.com>
  */
 
+#include <linux/cred.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

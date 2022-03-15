@@ -5,6 +5,7 @@
  *  Copyright (C) 2012 Simo Sorce <simo@redhat.com>
  */
 
+#include <linux/cred.h>
 #include <linux/sunrpc/svcauth.h>
 #include "gss_rpc_xdr.h"
 

@@ -44,6 +44,7 @@
  *  see sem_lock().
  */
 
+#include <linux/cred.h>
 #include <linux/mm.h>
 #include <linux/shm.h>
 #include <linux/init.h>

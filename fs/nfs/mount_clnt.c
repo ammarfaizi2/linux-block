@@ -5,6 +5,7 @@
  * Copyright (C) 1997, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/cred.h>
 #include <linux/types.h>
 #include <linux/socket.h>
 #include <linux/kernel.h>

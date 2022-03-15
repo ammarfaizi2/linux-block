@@ -9,6 +9,7 @@
  * tracefs is the file system that is used by the tracing infrastructure.
  */
 
+#include <linux/cred.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/mount.h>

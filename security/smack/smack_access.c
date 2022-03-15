@@ -6,6 +6,7 @@
  *      Casey Schaufler <casey@schaufler-ca.com>
  */
 
+#include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/audit.h>
 #include <linux/sched/task_flags.h>

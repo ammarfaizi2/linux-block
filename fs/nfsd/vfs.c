@@ -14,6 +14,7 @@
  * Zerocpy NFS support (C) 2002 Hirokazu Takahashi <taka@valinux.co.jp>
  */
 
+#include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/file.h>

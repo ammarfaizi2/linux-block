@@ -5,6 +5,7 @@
  *   Author(s): Steve French <stfrench@microsoft.com>
  *              David Howells <dhowells@redhat.com>
  */
+#include <linux/cred.h>
 #include <linux/ctype.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>

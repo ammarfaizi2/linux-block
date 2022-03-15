@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/pagemap.h>

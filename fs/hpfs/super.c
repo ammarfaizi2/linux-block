@@ -8,6 +8,7 @@
  */
 
 #include "hpfs_fn.h"
+#include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/parser.h>
