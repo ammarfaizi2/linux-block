@@ -6,6 +6,7 @@
  * Copyright (c) 2001-2006 Anton Altaparmakov
  */
 
+#include <linux/stringhash.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/exportfs.h>

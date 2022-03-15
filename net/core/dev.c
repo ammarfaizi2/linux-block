@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/stringhash.h>
 #include <linux/spinlock_api.h>
 #include <linux/softirq.h>
 #include <linux/skbuff_api_nf.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2020 Red Hat, Inc.
  */
 
+#include <linux/stringhash.h>
 #include <linux/jhash.h>
 
 #include "context.h"

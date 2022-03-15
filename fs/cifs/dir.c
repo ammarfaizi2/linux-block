@@ -7,6 +7,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/stringhash.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
