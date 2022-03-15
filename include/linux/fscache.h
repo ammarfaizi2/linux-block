@@ -14,6 +14,7 @@
 #ifndef _LINUX_FSCACHE_H
 #define _LINUX_FSCACHE_H
 
+#include <linux/radix-tree.h>
 #include <linux/fs.h>
 #include <linux/netfs.h>
 #include <linux/writeback.h>

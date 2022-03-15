@@ -12,6 +12,7 @@
 #ifndef __LINUX_CDNSP_GADGET_H
 #define __LINUX_CDNSP_GADGET_H
 
+#include <linux/radix-tree.h>
 #include <linux/io.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 #include <linux/usb/gadget.h>
