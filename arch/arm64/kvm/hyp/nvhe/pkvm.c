@@ -4,6 +4,7 @@
  * Author: Fuad Tabba <tabba@google.com>
  */
 
+#include <asm/kvm_arm.h>
 #include <linux/kvm_host.h>
 #include <linux/mm.h>
 #include <nvhe/fixed_config.h>
