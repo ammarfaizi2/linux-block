@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/iocontext.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
