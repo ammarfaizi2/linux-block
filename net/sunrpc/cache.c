@@ -8,6 +8,7 @@
  * Copyright (C) 2002 Neil Brown <neilb@cse.unsw.edu.au>
  */
 
+#include <linux/prandom.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
