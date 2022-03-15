@@ -23,6 +23,7 @@
 #ifndef _EM28XX_H
 #define _EM28XX_H
 
+#include <media/dvbdev.h>
 #include <linux/bitfield.h>
 
 #define EM28XX_VERSION "0.2.2"

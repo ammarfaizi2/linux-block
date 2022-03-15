@@ -10,6 +10,7 @@
 #ifndef _C8SECTPFE_COMMON_H_
 #define _C8SECTPFE_COMMON_H_
 
+#include <media/dvbdev.h>
 #include <linux/dvb/dmx.h>
 #include <linux/dvb/frontend.h>
 #include <linux/gpio.h>

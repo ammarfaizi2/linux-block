@@ -11,6 +11,7 @@
 #ifndef __DVB_USB_H__
 #define __DVB_USB_H__
 
+#include <media/dvbdev.h>
 #include <linux/i2c.h>
 #include <linux/input.h>
 #include <linux/usb.h>

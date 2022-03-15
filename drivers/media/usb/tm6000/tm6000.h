@@ -8,6 +8,7 @@
  *	- DVB-T support
  */
 
+#include <media/dvbdev.h>
 #include <linux/fs.h>
 #include <linux/videodev2.h>
 #include <media/v4l2-common.h>
