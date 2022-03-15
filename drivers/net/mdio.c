@@ -4,6 +4,7 @@
  * Copyright 2006-2009 Solarflare Communications Inc.
  */
 
+#include <uapi/linux/sockios.h>
 #include <linux/kernel.h>
 #include <linux/capability.h>
 #include <linux/errno.h>

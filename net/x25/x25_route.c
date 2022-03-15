@@ -12,6 +12,7 @@
  *	X.25 001	Jonathan Naylor	Started coding.
  */
 
+#include <uapi/linux/sockios.h>
 #include <linux/uaccess.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

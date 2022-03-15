@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <uapi/linux/sockios.h>
 #include <net/net_namespace_types.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/percpu.h>
