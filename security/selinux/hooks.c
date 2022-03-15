@@ -21,6 +21,7 @@
  *  Copyright (C) 2016 Mellanox Technologies
  */
 
+#include <linux/perf_event.h>
 #include <linux/perf_event_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
