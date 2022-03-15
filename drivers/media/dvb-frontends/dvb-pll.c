@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <media/dvbdev.h>
 #include <linux/idr_api.h>
 #include <linux/i2c.h>
 #include <linux/device_api.h>

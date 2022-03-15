@@ -30,6 +30,7 @@
 
 */
 
+#include <media/dvbdev.h>
 #include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/i2c.h>

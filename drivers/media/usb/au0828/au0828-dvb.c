@@ -7,6 +7,7 @@
 
 #include "au0828.h"
 
+#include <media/dvbdev.h>
 #include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>

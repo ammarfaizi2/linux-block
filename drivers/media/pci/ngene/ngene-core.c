@@ -10,6 +10,7 @@
  *                         support for new dual DVB-S2 card prototype
  */
 
+#include <media/dvbdev.h>
 #include <linux/wait_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

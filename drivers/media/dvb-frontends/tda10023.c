@@ -13,6 +13,7 @@
 
 */
 
+#include <media/dvbdev.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

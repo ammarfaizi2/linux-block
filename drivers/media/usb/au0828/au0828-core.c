@@ -8,6 +8,7 @@
 #include "au0828.h"
 #include "au8522.h"
 
+#include <media/dvbdev.h>
 #include <linux/mutex_api.h>
 #include <linux/export.h>
 #include <linux/module.h>

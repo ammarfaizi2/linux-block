@@ -8,6 +8,7 @@
    This "tda8290" module was split apart from the original "tuner" module.
 */
 
+#include <media/dvbdev.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>

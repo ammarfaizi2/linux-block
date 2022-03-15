@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Antti Palosaari <crope@iki.fi>
  */
 
+#include <media/dvbdev.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

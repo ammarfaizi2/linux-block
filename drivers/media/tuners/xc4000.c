@@ -9,6 +9,7 @@
  *  Copyright (c) 2010 Istvan Varga <istvan_v@mailbox.hu>
  */
 
+#include <media/dvbdev.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

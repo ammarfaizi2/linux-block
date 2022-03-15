@@ -15,6 +15,7 @@
 #include "tda827x.h"
 #include "mt2060.h"
 
+#include <media/dvbdev.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

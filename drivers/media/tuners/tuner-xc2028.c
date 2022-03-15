@@ -6,6 +6,7 @@
 // Copyright (c) 2007 Michel Ludwig (michel.ludwig@gmail.com)
 //       - frontend interface
 
+#include <media/dvbdev.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/export.h>

@@ -5,6 +5,7 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <media/dvbdev.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>
