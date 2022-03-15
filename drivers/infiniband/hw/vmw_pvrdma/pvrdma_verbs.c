@@ -43,6 +43,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/atomic_api.h>
 #include <asm/page.h>
 #include <linux/inet.h>

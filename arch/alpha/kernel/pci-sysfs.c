@@ -10,6 +10,7 @@
  * drivers/pci/pci-sysfs.c
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/sched.h>

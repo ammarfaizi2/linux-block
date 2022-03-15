@@ -5,6 +5,7 @@
  *  Copyright (C) 2015  Red Hat, Inc.
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/memcontrol.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

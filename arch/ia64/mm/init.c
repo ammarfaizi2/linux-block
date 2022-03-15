@@ -5,6 +5,7 @@
  * Copyright (C) 1998-2003 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
+#include <linux/mm_api_extra.h>
 #include <linux/memory_hotplug.h>
 #include <asm/cacheflush.h>
 #include <linux/kernel.h>

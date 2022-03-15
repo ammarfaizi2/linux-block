@@ -10,6 +10,7 @@
  * most "normal" filesystems (but you don't /have/ to use this:
  * the NFS filesystem used to do this differently, for example)
  */
+#include <linux/mm_api_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api_mapping.h>

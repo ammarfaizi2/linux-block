@@ -2,6 +2,7 @@
 /* Copyright 2014-2016 Freescale Semiconductor Inc.
  * Copyright 2016-2020 NXP
  */
+#include <linux/mm_api_extra.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/io_extra.h>

@@ -23,6 +23,7 @@
  * actual ministack invocation is in entry_64.S.
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/gfp_api.h>
 #include <asm/msr.h>
 #include <linux/init.h>

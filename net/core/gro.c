@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <linux/mm_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

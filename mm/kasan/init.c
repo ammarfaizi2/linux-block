@@ -6,6 +6,7 @@
  * Author: Andrey Ryabinin <ryabinin.a.a@gmail.com>
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/memblock.h>
 #include <linux/init.h>
 #include <linux/kasan.h>

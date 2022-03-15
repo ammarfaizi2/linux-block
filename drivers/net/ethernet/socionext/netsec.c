@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <linux/mm_api_extra.h>
 #include <linux/ioport.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>

@@ -4,6 +4,7 @@
  * Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All rights reserved.
  * Copyright 2019 Marvell. All rights reserved.
  */
+#include <linux/mm_api_extra.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs.h>

@@ -6,6 +6,7 @@
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sysctl.h>

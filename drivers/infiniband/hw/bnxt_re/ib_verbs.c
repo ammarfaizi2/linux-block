@@ -36,6 +36,7 @@
  * Description: IB Verbs interpreter
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/if_vlan_api.h>
