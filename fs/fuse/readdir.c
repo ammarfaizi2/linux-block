@@ -8,6 +8,7 @@
 
 
 #include "fuse_i.h"
+#include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/iversion.h>
 #include <linux/posix_acl.h>

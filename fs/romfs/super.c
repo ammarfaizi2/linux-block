@@ -58,6 +58,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>

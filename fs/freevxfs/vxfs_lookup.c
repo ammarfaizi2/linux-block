@@ -31,6 +31,7 @@
 /*
  * Veritas filesystem driver - lookup and other directory related code.
  */
+#include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/time.h>

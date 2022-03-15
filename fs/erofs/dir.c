@@ -3,6 +3,8 @@
  * Copyright (C) 2017-2018 HUAWEI, Inc.
  *             https://www.huawei.com/
  */
+#include <linux/fs_api_dir_context.h>
+
 #include "internal.h"
 
 static void debug_one_dentry(unsigned char d_type, const char *de_name,

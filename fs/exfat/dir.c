@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/slab.h>
 #include <linux/compat.h>
 #include <linux/bio.h>

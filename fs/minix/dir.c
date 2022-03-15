@@ -10,6 +10,7 @@
  */
 
 #include "minix.h"
+#include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/buffer_head.h>
 #include <linux/highmem.h>

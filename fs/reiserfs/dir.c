@@ -2,6 +2,7 @@
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/string.h>
 #include <linux/errno.h>

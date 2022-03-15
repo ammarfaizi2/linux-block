@@ -4,6 +4,8 @@
  *
  *  Copyright (C) 1997-1999 Russell King
  */
+#include <linux/fs_api_dir_context.h>
+
 #include "adfs.h"
 #include "dir_fplus.h"
 

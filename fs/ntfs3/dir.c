@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/fs.h>
 #include <linux/nls.h>
 

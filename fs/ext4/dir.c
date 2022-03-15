@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/buffer_head.h>

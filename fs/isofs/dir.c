@@ -11,6 +11,7 @@
  *
  *  isofs directory handling functions
  */
+#include <linux/fs_api_dir_context.h>
 #include <linux/gfp.h>
 #include "isofs.h"
 

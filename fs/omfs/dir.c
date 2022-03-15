@@ -4,6 +4,7 @@
  * Copyright (C) 2005 Bob Copeland <me@bobcopeland.com>
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/ctype.h>
