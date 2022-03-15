@@ -4,6 +4,7 @@
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
+#include <linux/math64.h>
 #include <linux/clk.h>
 #include <linux/pm_runtime.h>
 #include <linux/spinlock.h>

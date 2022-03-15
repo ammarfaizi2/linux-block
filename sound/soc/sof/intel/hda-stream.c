@@ -15,6 +15,7 @@
  * Hardware interface for generic Intel audio DSP HDA IP
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/pm_runtime.h>
 #include <sound/hdaudio_ext.h>

@@ -5,6 +5,7 @@
  * Copyright 2012 Analog Devices Inc.
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>

@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)			"habanalabs: " fmt
 
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/kdev_t.h>

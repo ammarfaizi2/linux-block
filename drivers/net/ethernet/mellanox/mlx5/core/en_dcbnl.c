@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/math64.h>
 #include <linux/device.h>
 #include <linux/netdevice.h>
 #include "en.h"

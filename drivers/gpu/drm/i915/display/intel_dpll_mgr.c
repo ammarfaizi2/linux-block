@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/math64.h>
 #include <linux/bitmap.h>
 
 #include "intel_de.h"

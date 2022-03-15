@@ -64,6 +64,7 @@
  *
  * Copyright (C) 2018 Josef Bacik
  */
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

@@ -78,6 +78,7 @@
    2.26.02.014 - Force 60 second timeout default.
 */
 
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

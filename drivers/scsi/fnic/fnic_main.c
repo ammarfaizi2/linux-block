@@ -15,6 +15,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

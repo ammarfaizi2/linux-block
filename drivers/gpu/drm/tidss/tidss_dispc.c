@@ -4,6 +4,7 @@
  * Author: Jyri Sarha <jsarha@ti.com>
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

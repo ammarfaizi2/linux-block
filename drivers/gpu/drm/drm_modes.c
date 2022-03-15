@@ -30,6 +30,7 @@
  * authorization from the copyright holder(s) and author(s).
  */
 
+#include <linux/math64.h>
 #include <linux/log2.h>
 #include <linux/ctype.h>
 #include <linux/list.h>

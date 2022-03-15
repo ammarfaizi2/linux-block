@@ -3,6 +3,7 @@
  * Copyright (c) 2016, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

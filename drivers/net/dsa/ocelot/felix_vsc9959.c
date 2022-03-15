@@ -2,6 +2,7 @@
 /* Copyright 2017 Microsemi Corporation
  * Copyright 2018-2019 NXP
  */
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

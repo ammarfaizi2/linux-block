@@ -2,6 +2,7 @@
 
 #define dev_fmt(fmt) "mtdoops-pstore: " fmt
 
+#include <linux/math64.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pstore_blk.h>

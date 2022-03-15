@@ -30,6 +30,7 @@
  *  or SLAB cache will reuse socket for another flow)
  */
 
+#include <linux/math64.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

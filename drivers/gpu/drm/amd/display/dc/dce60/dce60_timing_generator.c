@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/math64.h>
+
 #include "dm_services.h"
 
 /* include DCE6 register header files */

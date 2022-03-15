@@ -3,6 +3,7 @@
  * Copyright (c) 2019 Broadcom
  */
 
+#include <linux/math64.h>
 #include <asm/unaligned.h>
 
 #include <linux/math.h>

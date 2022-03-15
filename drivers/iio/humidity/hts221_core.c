@@ -7,6 +7,7 @@
  * Lorenzo Bianconi <lorenzo.bianconi@st.com>
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

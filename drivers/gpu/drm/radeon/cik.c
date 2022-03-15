@@ -22,6 +22,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/delay.h>

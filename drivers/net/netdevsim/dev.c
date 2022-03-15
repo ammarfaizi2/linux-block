@@ -15,6 +15,7 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
+#include <linux/math64.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

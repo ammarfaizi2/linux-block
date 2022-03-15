@@ -13,6 +13,7 @@
 /* enable print of values on fifo access */
 #undef DEBUG_FIFO_ACCESS
 
+#include <linux/math64.h>
 #include <linux/types.h>
 #include <linux/spi/spi.h>
 

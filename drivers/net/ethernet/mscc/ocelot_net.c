@@ -8,6 +8,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

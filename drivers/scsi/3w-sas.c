@@ -50,6 +50,7 @@
    3.26.02.000 - Initial driver release.
 */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

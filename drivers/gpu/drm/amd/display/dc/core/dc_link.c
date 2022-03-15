@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/math64.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/slab.h>

@@ -24,6 +24,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 
+#include <linux/math64.h>
 #include <linux/llist_api.h>
 #include <linux/io.h>
 #include <linux/dma-fence-api.h>

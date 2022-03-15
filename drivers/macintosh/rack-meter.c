@@ -14,6 +14,7 @@
  */
 #undef DEBUG
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>

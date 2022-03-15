@@ -7,6 +7,7 @@
 
   Author: Rayagond Kokatanur <rayagond@vayavyalabs.com>
 *******************************************************************************/
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

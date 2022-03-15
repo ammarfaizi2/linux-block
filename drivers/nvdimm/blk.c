@@ -4,6 +4,7 @@
  * Copyright (c) 2014, Intel Corporation.
  */
 
+#include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/highmem.h>
 #include <linux/device_api_lock.h>

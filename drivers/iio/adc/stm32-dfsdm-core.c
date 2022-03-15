@@ -6,6 +6,7 @@
  * Author(s): Arnaud Pouliquen <arnaud.pouliquen@st.com> for STMicroelectronics.
  */
 
+#include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

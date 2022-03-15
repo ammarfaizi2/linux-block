@@ -7,6 +7,7 @@
  * maximum 255 bytes at a time. If a larger transfer is attempted, error code
  * (-EINVAL) is returned.
  */
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>

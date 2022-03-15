@@ -16,6 +16,7 @@
  * Copyright (C) 2021 Daniel Bristot de Oliveira, Red Hat, Inc. <bristot@redhat.com>
  */
 
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/interrupt.h>
 #include <linux/hrtimer_api.h>

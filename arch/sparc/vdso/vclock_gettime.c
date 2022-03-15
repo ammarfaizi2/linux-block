@@ -12,6 +12,7 @@
  * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
  */
 
+#include <linux/math64.h>
 #include <linux/kernel.h>
 #include <linux/time.h>
 #include <linux/string.h>

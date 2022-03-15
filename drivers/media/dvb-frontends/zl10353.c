@@ -5,6 +5,7 @@
  * Copyright (C) 2006, 2007 Christopher Pascoe <c.pascoe@itee.uq.edu.au>
  */
 
+#include <linux/math64.h>
 #include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

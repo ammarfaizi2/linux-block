@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/math64.h>
 #include <linux/types.h>
 #include "qed.h"
 #include "qed_dev_api.h"

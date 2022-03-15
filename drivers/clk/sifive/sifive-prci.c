@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Zong Li
  */
 
+#include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clkdev.h>

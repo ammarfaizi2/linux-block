@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

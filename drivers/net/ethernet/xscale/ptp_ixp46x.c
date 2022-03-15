@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/module.h>

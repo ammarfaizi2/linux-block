@@ -3,6 +3,7 @@
  * Block Translation Table
  * Copyright (c) 2014-2015, Intel Corporation.
  */
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>

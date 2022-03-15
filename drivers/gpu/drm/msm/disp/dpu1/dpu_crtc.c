@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>

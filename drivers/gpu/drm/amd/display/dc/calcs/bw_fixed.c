@@ -22,6 +22,8 @@
  * Authors: AMD
  *
  */
+#include <linux/math64.h>
+
 #include "dm_services.h"
 #include "bw_fixed.h"
 

@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2018 Socionext Inc.
 
+#include <linux/math64.h>
 #include <linux/i2c.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

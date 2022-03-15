@@ -16,6 +16,7 @@
  *   Ben-Ami Yassour <benami@il.ibm.com>
  */
 
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

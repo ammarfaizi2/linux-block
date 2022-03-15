@@ -5,6 +5,7 @@
  * Portions Copyright (C) 2020 Christoph Hellwig
  */
 
+#include <linux/math64.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include <linux/math64.h>
 #include <linux/bug.h>
 #include <linux/errno.h>
 #include <linux/export.h>

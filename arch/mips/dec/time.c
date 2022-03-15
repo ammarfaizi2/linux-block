@@ -7,6 +7,7 @@
  * found in some MIPS systems.
  *
  */
+#include <linux/math64.h>
 #include <linux/bcd.h>
 #include <linux/init.h>
 #include <linux/mc146818rtc.h>

@@ -7,6 +7,7 @@
 // Author: Cezary Rojewski <cezary.rojewski@intel.com>
 //
 
+#include <linux/math64.h>
 #include <sound/soc.h>
 #include "ops.h"
 #include "sof-priv.h"

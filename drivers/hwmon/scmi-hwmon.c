@@ -6,6 +6,7 @@
  * Sudeep Holla <sudeep.holla@arm.com>
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/hwmon.h>
 #include <linux/module.h>

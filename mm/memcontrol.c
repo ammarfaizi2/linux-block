@@ -25,6 +25,7 @@
  * Copyright (C) 2020 Alibaba, Inc, Alex Shi
  */
 
+#include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/list_lru_api.h>
 #include <linux/jiffies.h>

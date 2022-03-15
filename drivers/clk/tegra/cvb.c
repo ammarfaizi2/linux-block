@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2012-2019 NVIDIA Corporation.  All rights reserved.
  */
+#include <linux/math64.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <linux/pm_opp.h>

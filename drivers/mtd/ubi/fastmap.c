@@ -5,6 +5,7 @@
  * Author: Richard Weinberger <richard@nod.at>
  */
 
+#include <linux/math64.h>
 #include <linux/crc32.h>
 #include <linux/bitmap.h>
 #include "ubi.h"

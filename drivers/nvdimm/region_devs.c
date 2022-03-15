@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
+#include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/ioport.h>
 #include <linux/idr_api.h>

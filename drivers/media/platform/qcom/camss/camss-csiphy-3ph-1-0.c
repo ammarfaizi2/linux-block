@@ -11,6 +11,7 @@
 #include "camss.h"
 #include "camss-csiphy.h"
 
+#include <linux/math64.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

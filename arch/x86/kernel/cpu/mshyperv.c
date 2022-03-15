@@ -6,6 +6,7 @@
  * Author : K. Y. Srinivasan <ksrinivasan@novell.com>
  */
 
+#include <linux/math64.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>

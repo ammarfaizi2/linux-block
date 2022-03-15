@@ -5,6 +5,7 @@
  *          for STMicroelectronics.
  */
 
+#include <linux/math64.h>
 #include <linux/interrupt.h>
 #include <linux/clk.h>
 #include <linux/mfd/syscon.h>

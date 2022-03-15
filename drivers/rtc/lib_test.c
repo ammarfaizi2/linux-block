@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: LGPL-2.1+
 
+#include <linux/math64.h>
 #include <kunit/test.h>
 #include <linux/rtc.h>
 

@@ -11,6 +11,7 @@
  *  (C) 2011 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/export.h>

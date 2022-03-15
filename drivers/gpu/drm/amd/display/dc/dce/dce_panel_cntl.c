@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/math64.h>
+
 #include "reg_helper.h"
 #include "core_types.h"
 #include "dc_dmub_srv.h"

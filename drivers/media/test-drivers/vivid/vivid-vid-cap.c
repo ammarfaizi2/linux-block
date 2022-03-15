@@ -5,6 +5,7 @@
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/math64.h>
 #include <linux/io_extra.h>
 #include <linux/fs.h>
 #include <linux/capability.h>

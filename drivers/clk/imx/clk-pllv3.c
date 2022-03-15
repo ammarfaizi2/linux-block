@@ -4,6 +4,7 @@
  * Copyright 2012 Linaro Ltd.
  */
 
+#include <linux/math64.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/io.h>
