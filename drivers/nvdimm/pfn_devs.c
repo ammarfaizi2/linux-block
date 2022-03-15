@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2016 Intel Corporation. All rights reserved.
  */
+#include <linux/huge_mm.h>
 #include <linux/device_api_lock.h>
 #include <linux/memremap.h>
 #include <linux/blkdev.h>

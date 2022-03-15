@@ -31,6 +31,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/huge_mm.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>
