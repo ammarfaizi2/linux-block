@@ -40,6 +40,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/rtnetlink_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

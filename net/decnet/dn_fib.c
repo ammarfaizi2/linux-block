@@ -18,6 +18,7 @@
  *                                 this code was copied from it.
  *
  */
+#include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <net/neighbour_api.h>
 #include <linux/spinlock_api.h>

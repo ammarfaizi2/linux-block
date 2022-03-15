@@ -10,6 +10,7 @@
  *	YOSHIFUJI Hideaki @ USAGI/WIDE Project <yoshfuji@linux-ipv6.org>
  */
 
+#include <net/rtnetlink_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_api.h>

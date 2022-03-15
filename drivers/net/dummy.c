@@ -29,6 +29,7 @@
 			Alan Cox, 30th May 1994
 */
 
+#include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/percpu.h>

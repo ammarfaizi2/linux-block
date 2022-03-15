@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Vincent Mailhol <mailhol.vincent@wanadoo.fr>
  */
 
+#include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

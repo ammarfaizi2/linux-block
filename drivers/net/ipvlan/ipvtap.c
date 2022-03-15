@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <net/rtnetlink_api.h>
 #include <linux/sysfs.h>
 #include <linux/poll.h>
 #include <linux/notifier_api.h>

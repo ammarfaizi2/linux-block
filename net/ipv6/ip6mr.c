@@ -11,6 +11,7 @@
  *		YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
  */
 
+#include <net/rtnetlink_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/l3mdev.h>

@@ -11,6 +11,7 @@
 #include "peer.h"
 #include "messages.h"
 
+#include <net/rtnetlink_api.h>
 #include <net/net_namespace_api.h>
 #include <net/dst_api.h>
 #include <linux/workqueue_api.h>

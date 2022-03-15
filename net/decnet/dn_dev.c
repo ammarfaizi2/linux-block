@@ -25,6 +25,7 @@
  *                             devices. All mtu based now.
  */
 
+#include <net/rtnetlink_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/neighbour_api.h>

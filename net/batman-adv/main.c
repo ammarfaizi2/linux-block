@@ -6,6 +6,7 @@
 
 #include "main.h"
 
+#include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <net/inet_sock_api.h>
 #include <linux/workqueue_api.h>

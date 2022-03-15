@@ -5,6 +5,7 @@
  * Copyright (c) 2017-19 David Ahern <dsa@cumulusnetworks.com>
  */
 
+#include <net/rtnetlink_api.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>

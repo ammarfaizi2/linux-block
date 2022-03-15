@@ -4,6 +4,7 @@
  * Copyright (C) 2008-2009 Wolfgang Grandegger <wg@grandegger.com>
  */
 
+#include <net/rtnetlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

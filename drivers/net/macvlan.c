@@ -9,6 +9,7 @@
  * Re-worked by Ben Greear <greearb@candelatech.com>
  * ---
  */
+#include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>
