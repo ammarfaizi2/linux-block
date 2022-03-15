@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/percpu.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

@@ -60,6 +60,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/percpu.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

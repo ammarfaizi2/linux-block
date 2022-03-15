@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/percpu.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>

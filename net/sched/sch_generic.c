@@ -7,6 +7,7 @@
  *              - Ingress support
  */
 
+#include <linux/percpu.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api_lock.h>

@@ -10,6 +10,7 @@
  * Copyright (c) 2016        Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

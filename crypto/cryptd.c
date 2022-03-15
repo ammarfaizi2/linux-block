@@ -12,6 +12,7 @@
  *    Copyright (c) 2010, Intel Corporation.
  */
 
+#include <linux/percpu.h>
 #include <linux/minmax.h>
 #include <linux/cpumask_api.h>
 #include <linux/bottom_half.h>

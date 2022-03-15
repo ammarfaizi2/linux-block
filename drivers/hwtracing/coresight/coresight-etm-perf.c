@@ -4,6 +4,7 @@
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
+#include <linux/percpu.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/coresight.h>

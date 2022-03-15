@@ -27,6 +27,7 @@
  * mapping lock dependencies runtime.
  */
 #define DISABLE_BRANCH_PROFILING
+#include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>

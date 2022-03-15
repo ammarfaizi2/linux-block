@@ -37,6 +37,7 @@
 #define DRV_NAME "libcxgb"
 #define pr_fmt(fmt) DRV_NAME ": " fmt
 
+#include <linux/percpu.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api.h>

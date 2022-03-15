@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/cpufreq.h>
 #include <linux/init.h>

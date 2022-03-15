@@ -29,6 +29,7 @@
 			Alan Cox, 30th May 1994
 */
 
+#include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>

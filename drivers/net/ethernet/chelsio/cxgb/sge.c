@@ -38,6 +38,7 @@
 
 #include "common.h"
 
+#include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

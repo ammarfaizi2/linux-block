@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
+#include <linux/percpu.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>
 #include <linux/stddef.h>

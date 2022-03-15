@@ -10,6 +10,7 @@
  * (C) 2011 Linux Foundation, Christoph Lameter
  */
 
+#include <linux/percpu.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>

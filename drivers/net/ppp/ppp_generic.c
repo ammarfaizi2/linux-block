@@ -18,6 +18,7 @@
  * ==FILEVERSION 20041108==
  */
 
+#include <linux/percpu.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

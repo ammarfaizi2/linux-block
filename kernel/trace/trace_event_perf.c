@@ -6,6 +6,7 @@
  * Copyright (C) 2009-2010 Frederic Weisbecker <fweisbec@gmail.com>
  */
 
+#include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/kallsyms.h>
 #include <linux/cpumask_api.h>

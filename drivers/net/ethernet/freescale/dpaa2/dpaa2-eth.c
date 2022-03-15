@@ -2,6 +2,7 @@
 /* Copyright 2014-2016 Freescale Semiconductor Inc.
  * Copyright 2016-2020 NXP
  */
+#include <linux/percpu.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

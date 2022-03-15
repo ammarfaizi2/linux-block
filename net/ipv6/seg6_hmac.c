@@ -6,6 +6,7 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  */
 
+#include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api.h>
 #include <linux/ipv6.h>

@@ -5,6 +5,7 @@
  * 	- Added _PDC for SMP C-states on Intel CPUs
  */
 
+#include <linux/percpu.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <linux/kernel.h>

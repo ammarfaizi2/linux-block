@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
