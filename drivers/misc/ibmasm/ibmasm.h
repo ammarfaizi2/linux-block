@@ -8,6 +8,7 @@
  * Author: Max Asböck <amax@us.ibm.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

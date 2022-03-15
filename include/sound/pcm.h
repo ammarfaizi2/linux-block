@@ -8,6 +8,7 @@
  *                   Abramo Bagnara <abramo@alsa-project.org>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/fs.h>
 #include <linux/dev_printk.h>
 #include <linux/atomic_api.h>

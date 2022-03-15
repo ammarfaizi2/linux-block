@@ -6,6 +6,7 @@
 #ifndef _WG_TIMERS_H
 #define _WG_TIMERS_H
 
+#include <linux/ktime_api.h>
 #include <linux/ktime.h>
 
 struct wg_peer;

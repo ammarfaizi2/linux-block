@@ -12,6 +12,7 @@
 #ifndef __JFFS2_OS_LINUX_H__
 #define __JFFS2_OS_LINUX_H__
 
+#include <linux/ktime_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/types.h>

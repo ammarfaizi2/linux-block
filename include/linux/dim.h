@@ -4,6 +4,7 @@
 #ifndef DIM_H
 #define DIM_H
 
+#include <linux/ktime_api.h>
 #include <linux/bits.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
