@@ -6,6 +6,8 @@
 #ifndef ATH11K_DP_H
 #define ATH11K_DP_H
 
+#include <linux/idr_api.h>
+
 #include "hal_rx.h"
 
 #define MAX_RXDMA_PER_PDEV     2

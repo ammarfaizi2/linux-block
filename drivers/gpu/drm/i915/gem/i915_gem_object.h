@@ -7,6 +7,7 @@
 #ifndef __I915_GEM_OBJECT_H__
 #define __I915_GEM_OBJECT_H__
 
+#include <linux/idr_api.h>
 #include <linux/dma-resv.h>
 #include <drm/drm_gem.h>
 #include <drm/drm_file.h>

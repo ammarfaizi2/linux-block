@@ -11,6 +11,7 @@
 #include "../include/common/cpucp_if.h"
 #include "../include/common/qman_if.h"
 #include "../include/hw_ip/mmu/mmu_general.h"
+#include <linux/idr_api.h>
 #include <uapi/misc/habanalabs.h>
 
 #include <linux/cdev.h>

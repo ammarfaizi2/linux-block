@@ -33,6 +33,7 @@
 #ifndef _GVT_H_
 #define _GVT_H_
 
+#include <linux/idr_api.h>
 #include <uapi/linux/pci_regs.h>
 
 #include "i915_drv.h"
