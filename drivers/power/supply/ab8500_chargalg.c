@@ -12,6 +12,7 @@
  *	Author: Imre Sunyi <imre.sunyi@sonymobile.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

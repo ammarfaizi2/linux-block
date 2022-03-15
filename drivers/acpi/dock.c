@@ -7,6 +7,7 @@
  *          Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/moduleparam.h>

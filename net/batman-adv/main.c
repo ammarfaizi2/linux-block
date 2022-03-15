@@ -6,6 +6,7 @@
 
 #include "main.h"
 
+#include <linux/kobject_api.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/build_bug.h>

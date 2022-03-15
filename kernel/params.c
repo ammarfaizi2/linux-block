@@ -3,6 +3,7 @@
    Copyright (C) 2001 Rusty Russell.
 
 */
+#include <linux/kobject_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/errno.h>

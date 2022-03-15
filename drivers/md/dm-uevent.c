@@ -5,6 +5,7 @@
  * Copyright IBM Corporation, 2007
  * 	Author: Mike Anderson <andmike@linux.vnet.ibm.com>
  */
+#include <linux/kobject_api.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/kobject.h>

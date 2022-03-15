@@ -3,6 +3,7 @@
  *
  * This code is licenced under the GPL.
  */
+#include <linux/kobject_api.h>
 #include <linux/irqdesc.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device/bus.h>

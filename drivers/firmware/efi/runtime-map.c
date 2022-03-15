@@ -4,6 +4,7 @@
  * Copyright (C) 2013 Red Hat, Inc., Dave Young <dyoung@redhat.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

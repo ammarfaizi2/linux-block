@@ -10,6 +10,7 @@
  * about using the kobject interface.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kobject.h>
 #include <linux/string.h>
 #include <linux/export.h>

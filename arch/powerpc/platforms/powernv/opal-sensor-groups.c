@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)     "opal-sensor-groups: " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/of.h>
 #include <linux/kobject.h>
 #include <linux/slab.h>

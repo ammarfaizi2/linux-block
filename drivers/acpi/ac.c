@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ACPI: AC: " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

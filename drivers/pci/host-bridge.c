@@ -3,6 +3,7 @@
  * Host bridge related code
  */
 
+#include <linux/kobject_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

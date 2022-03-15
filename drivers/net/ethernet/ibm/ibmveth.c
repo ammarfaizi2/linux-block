@@ -11,6 +11,7 @@
  *	    Anton Blanchard <anton@au.ibm.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>

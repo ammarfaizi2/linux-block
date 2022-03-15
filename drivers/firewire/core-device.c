@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2006  Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kdev_t.h>
 #include <linux/idr_api.h>
 #include <linux/device/bus.h>

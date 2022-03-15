@@ -9,6 +9,7 @@
  *  exports them via sysfs
  */
 
+#include <linux/kobject_api.h>
 #include <linux/capability.h>
 #include <linux/efi.h>
 #include <linux/module.h>

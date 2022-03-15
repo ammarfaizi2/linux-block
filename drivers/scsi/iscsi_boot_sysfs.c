@@ -6,6 +6,7 @@
  * Copyright (C) 2010 Mike Christie
  */
 
+#include <linux/kobject_api.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/slab.h>

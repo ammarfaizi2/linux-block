@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"opal: " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/printk.h>
 #include <linux/types.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2016 SuSE.  All rights reserved.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>

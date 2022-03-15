@@ -12,6 +12,7 @@
  * attribute 'rci2' under /sys/firmware/efi/tables directory.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kobject.h>
 #include <linux/device.h>
 #include <linux/sysfs.h>

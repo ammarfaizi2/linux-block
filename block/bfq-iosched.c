@@ -113,6 +113,7 @@
  *
  * http://www.cs.berkeley.edu/~istoica/papers/eevdf-tr-95.pdf
  */
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/iocontext.h>
 #include <linux/hrtimer_api.h>

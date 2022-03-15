@@ -7,6 +7,7 @@
  * as defined in MIPI STPv2 specification.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kmod.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

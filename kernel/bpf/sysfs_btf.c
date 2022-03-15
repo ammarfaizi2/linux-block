@@ -2,6 +2,7 @@
 /*
  * Provide kernel BTF information for introspection and use by eBPF tools.
  */
+#include <linux/kobject_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/kobject.h>

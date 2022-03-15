@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"OF: " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/fwnode.h>
 #include <linux/of.h>
 #include <linux/spinlock.h>

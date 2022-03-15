@@ -14,6 +14,7 @@
  * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/device/bus.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

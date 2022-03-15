@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>

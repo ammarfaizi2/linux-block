@@ -37,6 +37,7 @@
 	pr_debug("(%s:%d) " fmt "\n",			\
 		 __func__, __LINE__, ##__VA_ARGS__)
 
+#include <linux/kobject_api.h>
 #include <linux/device/bus.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

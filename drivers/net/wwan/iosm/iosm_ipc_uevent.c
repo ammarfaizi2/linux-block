@@ -3,6 +3,7 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/device.h>
 #include <linux/kobject.h>
 #include <linux/slab.h>

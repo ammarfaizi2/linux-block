@@ -41,6 +41,7 @@
 #define DPRINTK(fmt, args...)
 #endif
 
+#include <linux/kobject_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

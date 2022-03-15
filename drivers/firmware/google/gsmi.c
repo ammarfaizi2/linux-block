@@ -8,6 +8,7 @@
  * EFI SMI interface for Google platforms
  */
 
+#include <linux/kobject_api.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -8,6 +8,7 @@
  *      Dave Young <dyoung@redhat.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kobject.h>
 #include <linux/string.h>
 #include <linux/sysfs.h>

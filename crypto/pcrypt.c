@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Steffen Klassert <steffen.klassert@secunet.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <crypto/algapi.h>

@@ -13,6 +13,7 @@
 #include "writeback.h"
 #include "features.h"
 
+#include <linux/kobject_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>

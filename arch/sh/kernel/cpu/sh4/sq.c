@@ -7,6 +7,7 @@
  * Copyright (C) 2001 - 2006  Paul Mundt
  * Copyright (C) 2001, 2002  M. R. Brown
  */
+#include <linux/kobject_api.h>
 #include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/init.h>

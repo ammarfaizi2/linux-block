@@ -7,6 +7,7 @@
  * Copyright (c) 2007 Greg Kroah-Hartman <gregkh@suse.de>
  * Copyright (c) 2007 Novell Inc.
  */
+#include <linux/kobject_api.h>
 #include <linux/kobject.h>
 #include <linux/module.h>
 #include <linux/init.h>

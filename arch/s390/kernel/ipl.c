@@ -8,6 +8,7 @@
  *		 Volker Sameske <sameske@de.ibm.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/gfp_api.h>
 #include <linux/types.h>
 #include <linux/export.h>

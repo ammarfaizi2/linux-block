@@ -4,6 +4,7 @@
  * Copyright(c) 2004 - 2015 Intel Corporation.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/dmaengine.h>

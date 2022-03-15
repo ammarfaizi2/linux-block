@@ -16,6 +16,7 @@
  * Copyright 2011 Google, Inc.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

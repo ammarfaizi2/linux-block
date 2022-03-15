@@ -25,6 +25,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <drm/drm_mipi_dsi.h>

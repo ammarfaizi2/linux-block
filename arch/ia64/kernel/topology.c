@@ -12,6 +12,7 @@
  *	Populate cpu cache entries in sysfs for cpu cache info
  */
 
+#include <linux/kobject_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpu.h>

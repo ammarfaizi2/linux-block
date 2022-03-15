@@ -50,6 +50,7 @@
  * Documentation/powerpc/hvcs.rst.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/gfp_api.h>
 #include <linux/device.h>
 #include <linux/init.h>

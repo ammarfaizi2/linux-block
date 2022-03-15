@@ -25,6 +25,7 @@
  * Please read Documentation/core-api/workqueue.rst for details.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/hashtable_api.h>

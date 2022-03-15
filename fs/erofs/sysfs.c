@@ -3,6 +3,7 @@
  * Copyright (C), 2008-2021, OPPO Mobile Comm Corp., Ltd.
  *             https://www.oppo.com/
  */
+#include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/sysfs.h>
 #include <linux/kobject.h>

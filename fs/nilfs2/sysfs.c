@@ -8,6 +8,7 @@
  * Written by Vyacheslav Dubeyko <Vyacheslav.Dubeyko@hgst.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kobject.h>

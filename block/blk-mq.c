@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  * Copyright (C) 2013-2014 Christoph Hellwig
  */
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioprio.h>
 #include <linux/iocontext.h>

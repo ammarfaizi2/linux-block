@@ -3,6 +3,7 @@
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

@@ -9,6 +9,7 @@
  *  Modified: 2004, Oct     Szabolcs Gyurko
  */
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
