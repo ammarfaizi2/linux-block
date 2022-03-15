@@ -18,6 +18,7 @@
 #ifndef _ASM_GENERIC_MSHYPERV_H
 #define _ASM_GENERIC_MSHYPERV_H
 
+#include <linux/preempt.h>
 #include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/atomic.h>

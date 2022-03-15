@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_SWITCH_TO_H
 #define _ASM_X86_SWITCH_TO_H
 
+#include <linux/preempt.h>
 #include <asm/processor.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

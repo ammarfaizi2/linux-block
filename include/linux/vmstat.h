@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/preempt.h>
 #include <linux/cpumask_api.h>
 #include <linux/mm.h>
 

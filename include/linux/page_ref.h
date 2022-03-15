@@ -2,6 +2,7 @@
 #ifndef _LINUX_PAGE_REF_H
 #define _LINUX_PAGE_REF_H
 
+#include <linux/preempt.h>
 #include <linux/irqflags.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
