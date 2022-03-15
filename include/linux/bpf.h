@@ -4,6 +4,7 @@
 #ifndef _LINUX_BPF_H
 #define _LINUX_BPF_H 1
 
+#include <linux/sched.h>
 #include <uapi/linux/bpf.h>
 
 #include <linux/workqueue.h>

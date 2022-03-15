@@ -5,6 +5,7 @@
 /*
  * Linux wait-bit related types and methods:
  */
+#include <linux/sched.h>
 #include <linux/wait.h>
 #include <linux/kernel.h>
 

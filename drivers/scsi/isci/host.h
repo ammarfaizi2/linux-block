@@ -55,6 +55,7 @@
 #ifndef _SCI_HOST_H_
 #define _SCI_HOST_H_
 
+#include <linux/sched.h>
 #include <scsi/sas_ata.h>
 #include "remote_device.h"
 #include "phy.h"

@@ -17,6 +17,7 @@
 #ifndef __RSI_COMMON_H__
 #define __RSI_COMMON_H__
 
+#include <linux/sched.h>
 #include <linux/kthread.h>
 
 #define EVENT_WAIT_FOREVER              0

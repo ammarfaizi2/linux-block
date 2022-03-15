@@ -9,6 +9,7 @@
 #ifndef _SECURITY_LANDLOCK_CRED_H
 #define _SECURITY_LANDLOCK_CRED_H
 
+#include <linux/sched.h>
 #include <linux/cred.h>
 #include <linux/init.h>
 #include <linux/rcupdate.h>
