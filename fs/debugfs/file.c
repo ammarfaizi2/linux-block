@@ -9,6 +9,7 @@
  *  See Documentation/filesystems/ for more details.
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>

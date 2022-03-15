@@ -7,6 +7,7 @@
  * Portions derived from work (c) 1995,1996 Christian Vogelgsang.
  */
 
+#include <linux/dcache.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/exportfs.h>

@@ -2,6 +2,7 @@
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
+#include <linux/dcache.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/task_flags.h>
 #include <linux/time.h>

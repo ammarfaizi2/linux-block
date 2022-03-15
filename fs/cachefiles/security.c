@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/cred.h>
 #include "internal.h"

@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2011 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>

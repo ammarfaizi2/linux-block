@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <asm/switch_to.h>
 #include <linux/ipc.h>

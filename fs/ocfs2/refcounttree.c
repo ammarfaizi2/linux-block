@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Oracle.  All rights reserved.
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/sort.h>

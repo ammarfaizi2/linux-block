@@ -4,6 +4,7 @@
  * Copyright (c) 2014 Christoph Hellwig.
  * All Rights Reserved.
  */
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 
 #include "xfs.h"

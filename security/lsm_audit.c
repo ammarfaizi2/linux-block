@@ -8,6 +8,7 @@
  * Author : Etienne Basset, <etienne.basset@ensta.org>
  */
 
+#include <linux/dcache.h>
 #include <linux/types.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

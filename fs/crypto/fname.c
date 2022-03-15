@@ -11,6 +11,7 @@
  * This has not yet undergone a rigorous security audit.
  */
 
+#include <linux/dcache.h>
 #include <linux/namei.h>
 #include <linux/scatterlist.h>
 #include <crypto/hash.h>

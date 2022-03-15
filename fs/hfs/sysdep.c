@@ -8,6 +8,7 @@
  * This file contains the code to do various system dependent things.
  */
 
+#include <linux/dcache.h>
 #include <linux/namei.h>
 #include "hfs_fs.h"
 

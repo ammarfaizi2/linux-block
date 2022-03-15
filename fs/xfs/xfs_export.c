@@ -3,6 +3,8 @@
  * Copyright (c) 2004-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/dcache.h>
+
 #include "xfs.h"
 #include "xfs_shared.h"
 #include "xfs_format.h"

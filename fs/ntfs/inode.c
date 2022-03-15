@@ -5,6 +5,7 @@
  * Copyright (c) 2001-2014 Anton Altaparmakov and Tuxera Inc.
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/buffer_head.h>
 #include <linux/fs.h>

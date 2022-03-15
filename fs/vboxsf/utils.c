@@ -6,6 +6,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/dcache.h>
 #include <linux/namei.h>
 #include <linux/nls.h>
 #include <linux/sizes.h>

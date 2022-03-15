@@ -58,6 +58,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/dcache.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/string.h>

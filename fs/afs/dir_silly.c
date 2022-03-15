@@ -6,6 +6,7 @@
  * - Derived from NFS's sillyrename.
  */
 
+#include <linux/dcache.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/namei.h>

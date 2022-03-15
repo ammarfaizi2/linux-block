@@ -8,6 +8,7 @@
  */
 
 #define pr_fmt(fmt) "watchq: " fmt
+#include <linux/dcache.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

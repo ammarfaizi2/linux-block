@@ -11,6 +11,7 @@
  *	Max Cohan: Fixed invalid FSINFO offset when info_sector is 0
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/module.h>
 #include <linux/pagemap.h>

@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/dcache.h>
 #include <linux/export.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>

@@ -6,6 +6,7 @@
  */
 
 #include "common.h"
+#include <linux/dcache.h>
 #include <linux/slab.h>
 
 /*

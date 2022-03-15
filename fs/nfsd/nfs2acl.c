@@ -7,6 +7,7 @@
 
 #include "nfsd.h"
 /* FIXME: nfsacl.h is a broken header */
+#include <linux/dcache.h>
 #include <linux/nfsacl.h>
 #include <linux/gfp.h>
 #include "cache.h"

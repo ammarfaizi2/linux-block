@@ -3,6 +3,7 @@
  * Copyright (C) 2006 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/module.h>
 #include <linux/nfs_fs.h>

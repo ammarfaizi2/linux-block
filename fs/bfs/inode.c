@@ -7,6 +7,7 @@
  *	Made endianness-clean by Andrew Stribblehill <ads@wompom.org>, 2005.
  */
 
+#include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

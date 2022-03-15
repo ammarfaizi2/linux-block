@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/dcache.h>
 #include <linux/tty.h>
 #include <linux/fdtable.h>
 #include <linux/file.h>

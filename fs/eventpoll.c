@@ -6,6 +6,7 @@
  *  Davide Libenzi <davidel@xmailserver.org>
  */
 
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

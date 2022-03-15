@@ -9,6 +9,7 @@
  * Copyright (C) 2001-2003 Andreas Gruenbacher, <agruen@suse.de>
  */
 
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/fs.h>
 #include <linux/types.h>

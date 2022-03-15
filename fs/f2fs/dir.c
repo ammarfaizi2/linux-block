@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/dcache.h>
 #include <linux/bitmap.h>
 #include <asm/unaligned.h>
 #include <linux/fs.h>

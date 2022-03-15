@@ -4,6 +4,7 @@
  * (c) 2015 - Jeff Layton <jeff.layton@primarydata.com>
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

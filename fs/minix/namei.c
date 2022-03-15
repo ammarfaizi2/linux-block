@@ -5,6 +5,8 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/dcache.h>
+
 #include "minix.h"
 
 static int add_nondir(struct dentry *dentry, struct inode *inode)

@@ -6,6 +6,7 @@
  * adapted from Remy Card's ext2/ioctl.c
  */
 
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/fs.h>
 #include <linux/mount.h>

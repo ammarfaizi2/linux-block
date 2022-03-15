@@ -17,6 +17,7 @@
  * Evgeniy Dushistov <dushistov@mail.ru> based on ext2 code base.
  */
 
+#include <linux/dcache.h>
 #include <linux/time.h>
 #include <linux/fs.h>
 #include <linux/swap.h>

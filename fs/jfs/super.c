@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

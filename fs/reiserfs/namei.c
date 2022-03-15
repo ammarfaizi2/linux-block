@@ -11,6 +11,7 @@
  * NO WARRANTY
  */
 
+#include <linux/dcache.h>
 #include <linux/bitmap.h>
 #include <linux/time.h>
 #include <linux/bitops.h>

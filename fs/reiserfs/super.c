@@ -11,6 +11,7 @@
  * NO WARRANTY
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>

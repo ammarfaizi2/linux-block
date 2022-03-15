@@ -9,6 +9,8 @@
  *  Linux VFS namei operations.
  */
 
+#include <linux/dcache.h>
+
 #include "protocol.h"
 #include "orangefs-kernel.h"
 

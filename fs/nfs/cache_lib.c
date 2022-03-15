@@ -6,6 +6,7 @@
  *
  * Copyright (c) 2009 Trond Myklebust <Trond.Myklebust@netapp.com>
  */
+#include <linux/dcache.h>
 #include <linux/kmod.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

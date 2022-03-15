@@ -7,6 +7,7 @@
  *  regular file handling primitives for fat-based filesystems
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/backing-dev-api.h>
 #include <linux/capability.h>

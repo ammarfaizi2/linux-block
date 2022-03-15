@@ -28,6 +28,7 @@
  * write it, but just marks it as dirty.
  */
 
+#include <linux/dcache.h>
 #include <linux/sched/cond_resched.h>
 
 #include "ubifs.h"

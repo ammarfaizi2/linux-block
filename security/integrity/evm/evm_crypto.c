@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "EVM: "fmt
 
+#include <linux/dcache.h>
 #include <linux/export.h>
 #include <linux/crypto.h>
 #include <linux/xattr.h>

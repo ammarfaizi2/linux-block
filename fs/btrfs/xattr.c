@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Red Hat.  All rights reserved.
  */
 
+#include <linux/dcache.h>
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/slab.h>

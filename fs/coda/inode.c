@@ -9,6 +9,7 @@
  * Copyright (C) Carnegie Mellon University
  */
 
+#include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

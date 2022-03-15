@@ -7,6 +7,8 @@
  *  dcache operations
  */
 
+#include <linux/dcache.h>
+
 #include "hpfs_fn.h"
 
 /*

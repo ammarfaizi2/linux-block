@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/dcache.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

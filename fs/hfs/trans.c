@@ -9,6 +9,7 @@
  * with ':' vs. '/' as the path-element separator.
  */
 
+#include <linux/dcache.h>
 #include <linux/types.h>
 #include <linux/nls.h>
 

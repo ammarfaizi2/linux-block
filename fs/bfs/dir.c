@@ -6,6 +6,7 @@
  *  Made endianness-clean by Andrew Stribblehill <ads@wompom.org> 2005
  */
 
+#include <linux/dcache.h>
 #include <linux/bitmap.h>
 #include <linux/time.h>
 #include <linux/string.h>

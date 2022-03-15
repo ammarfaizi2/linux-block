@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/dcache.h>
 #include <linux/xattr.h>
 #include <linux/posix_acl_xattr.h>
 

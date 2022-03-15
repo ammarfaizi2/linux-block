@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/dcache.h>
 #include <linux/namei.h>
 #include <linux/vbox_utils.h>
 #include "vfsmod.h"

@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/fs_context.h>

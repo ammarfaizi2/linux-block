@@ -6,6 +6,7 @@
  */
 
 #include "common.h"
+#include <linux/dcache.h>
 #include <linux/magic.h>
 #include <linux/proc_fs.h>
 

@@ -4,6 +4,7 @@
  * Copyright (C) 2005 Bob Copeland <me@bobcopeland.com>
  */
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/ctype.h>
 #include <linux/buffer_head.h>

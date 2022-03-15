@@ -7,6 +7,8 @@
  *  minix regular file handling primitives
  */
 
+#include <linux/dcache.h>
+
 #include "minix.h"
 
 /*

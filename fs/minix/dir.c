@@ -10,6 +10,7 @@
  */
 
 #include "minix.h"
+#include <linux/dcache.h>
 #include <linux/buffer_head.h>
 #include <linux/highmem.h>
 #include <linux/swap.h>

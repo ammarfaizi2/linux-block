@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT "hypfs"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/types.h>
 #include <linux/errno.h>

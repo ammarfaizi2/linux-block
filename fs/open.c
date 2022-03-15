@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/string.h>
 #include <linux/mm.h>

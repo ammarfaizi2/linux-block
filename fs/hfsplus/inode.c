@@ -9,6 +9,7 @@
  * Inode handling routines
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/mm.h>

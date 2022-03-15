@@ -3,6 +3,7 @@
  * (C) 1997 Linus Torvalds
  * (C) 1999 Andrea Arcangeli <andrea@suse.de> (dynamic inode allocation)
  */
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

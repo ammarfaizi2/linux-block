@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/cache.h>
 #include <linux/time.h>

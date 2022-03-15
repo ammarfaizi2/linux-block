@@ -9,6 +9,8 @@
  *  Implementation of dentry (directory cache) functions.
  */
 
+#include <linux/dcache.h>
+
 #include "protocol.h"
 #include "orangefs-kernel.h"
 

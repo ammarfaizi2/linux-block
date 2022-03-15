@@ -5,6 +5,7 @@
  * Copyright (C) 2017-2018 SUSE
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/statfs.h>
 

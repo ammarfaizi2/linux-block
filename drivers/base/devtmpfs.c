@@ -13,6 +13,7 @@
  * overwrite the default setting if needed.
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/syscalls.h>

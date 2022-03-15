@@ -16,6 +16,7 @@
  *				OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>
  */
 
+#include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/ctype.h>
 #include <linux/slab.h>
