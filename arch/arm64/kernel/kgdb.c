@@ -8,6 +8,7 @@
  * Author: Vijaya Kumar K <vijaya.kumar@caviumnetworks.com>
  */
 
+#include <uapi/asm/signal.h>
 #include <linux/sched/thread.h>
 #include <linux/notifier_api.h>
 #include <linux/atomic_api.h>
