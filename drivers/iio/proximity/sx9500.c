@@ -7,6 +7,7 @@
  * <http://www.semtech.com/images/datasheet/sx9500.pdf>.
  */
 
+#include <linux/interrupt.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

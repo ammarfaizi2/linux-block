@@ -8,6 +8,7 @@
  *  Wei Liu <wei.liu@kernel.org>
  */
 
+#include <linux/interrupt.h>
 #include <linux/cpumask_api.h>
 #include <asm/x86_irq.h>
 #include <linux/pci.h>

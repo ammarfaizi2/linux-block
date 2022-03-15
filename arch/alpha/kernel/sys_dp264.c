@@ -13,6 +13,7 @@
  * Code supporting the DP264 (EV6+TSUNAMI).
  */
 
+#include <linux/interrupt.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

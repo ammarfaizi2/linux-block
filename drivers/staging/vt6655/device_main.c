@@ -31,6 +31,7 @@
  * Revision History:
  */
 
+#include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/crc32.h>
 #include <linux/file.h>

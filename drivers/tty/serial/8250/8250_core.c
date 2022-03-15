@@ -14,6 +14,7 @@
  *	      serial8250_register_8250_port() ports
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/module.h>

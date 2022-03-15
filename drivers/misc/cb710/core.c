@@ -4,6 +4,7 @@
  *
  *  Copyright by Michał Mirosław, 2008-2009
  */
+#include <linux/interrupt.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

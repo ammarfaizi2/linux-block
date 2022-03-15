@@ -165,6 +165,7 @@
  *  - use MMIO (memory-mapped I/O)? Slightly faster access, e.g. for gameport.
  */
 
+#include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/bug.h> /* WARN_ONCE */

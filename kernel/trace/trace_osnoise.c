@@ -16,6 +16,7 @@
  * Copyright (C) 2021 Daniel Bristot de Oliveira, Red Hat, Inc. <bristot@redhat.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hardirq.h>
 #include <linux/fs_api.h>

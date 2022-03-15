@@ -7,6 +7,7 @@
  *  Copyright 1999 ARM Limited
  *  Copyright (C) 2000-2001 Deep Blue Solutions Ltd.
  */
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>

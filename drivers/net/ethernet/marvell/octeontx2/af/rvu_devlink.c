@@ -7,6 +7,8 @@
 
 #include<linux/bitfield.h>
 
+#include <linux/interrupt.h>
+
 #include "rvu.h"
 #include "rvu_reg.h"
 #include "rvu_struct.h"

@@ -18,6 +18,7 @@
 #include "aq_ptp.h"
 #include "aq_filters.h"
 
+#include <linux/interrupt.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

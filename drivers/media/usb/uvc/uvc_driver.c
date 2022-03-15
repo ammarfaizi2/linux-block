@@ -6,6 +6,7 @@
  *          Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/interrupt.h>
 #include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>

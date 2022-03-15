@@ -9,6 +9,7 @@
  *		 Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/irq.h>
 #include <linux/kernel_stat.h>

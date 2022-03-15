@@ -9,6 +9,7 @@
  *          Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/pci.h>
 
 #include <drm/drm_drv.h>

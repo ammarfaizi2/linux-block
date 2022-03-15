@@ -16,6 +16,7 @@
 #define KMSG_COMPONENT "setup"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/interrupt.h>
 #include <linux/gfp_api.h>
 #include <linux/errno.h>
 #include <linux/export.h>

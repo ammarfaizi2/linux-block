@@ -11,6 +11,7 @@
 #include "ax88796c_main.h"
 #include "ax88796c_ioctl.h"
 
+#include <linux/interrupt.h>
 #include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

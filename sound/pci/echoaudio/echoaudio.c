@@ -5,6 +5,7 @@
  *  Copyright (C) 2020 Mark Hills <mark@xwax.org>
  */
 
+#include <linux/interrupt.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 

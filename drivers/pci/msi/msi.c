@@ -6,6 +6,7 @@
  * Copyright (C) Tom Long Nguyen (tom.l.nguyen@intel.com)
  * Copyright (C) 2016 Christoph Hellwig.
  */
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/export.h>

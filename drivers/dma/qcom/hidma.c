@@ -42,6 +42,7 @@
 
 /* Linux Foundation elects GPLv2 license only. */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>

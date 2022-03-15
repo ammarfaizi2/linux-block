@@ -16,6 +16,7 @@
  *   David S. Miller (davem@davemloft.net), 2002-Jul-29
  */
 
+#include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>

@@ -21,6 +21,7 @@
  *  -check if sysreq works
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/serial.h>

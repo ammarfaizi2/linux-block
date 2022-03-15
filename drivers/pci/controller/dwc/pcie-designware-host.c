@@ -8,6 +8,7 @@
  * Author: Jingoo Han <jg1.han@samsung.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/irqchip/chained_irq.h>

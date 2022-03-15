@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

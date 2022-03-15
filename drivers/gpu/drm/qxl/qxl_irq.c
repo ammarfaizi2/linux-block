@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/interrupt.h>
 #include <linux/atomic_api.h>
 #include <linux/pci.h>
 

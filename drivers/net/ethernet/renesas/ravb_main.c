@@ -8,6 +8,7 @@
  * Based on the SuperH Ethernet driver
  */
 
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

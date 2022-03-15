@@ -8,6 +8,7 @@
  * Copyright (C) 2009-2010 Marvell International Ltd.
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/i2c.h>

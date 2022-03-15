@@ -21,6 +21,7 @@
  * BJD, 04-Nov-2004
  */
 
+#include <linux/interrupt.h>
 #include <linux/highmem.h>
 #include <linux/device_api_lock.h>
 #include <linux/dmaengine.h>

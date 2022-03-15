@@ -9,6 +9,7 @@
  * Code supporting the ALCOR and XLT (XL-300/366/433).
  */
 
+#include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

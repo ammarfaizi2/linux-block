@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/filter_api.h>

@@ -4,6 +4,7 @@
 //
 // RTC driver for ROHM BD71828 and BD71815 PMIC
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/mfd/rohm-bd71815.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2011 Joshua Kinard <kumba@gentoo.org>
  */
 
+#include <linux/interrupt.h>
 #include <linux/clocksource.h>
 #include <linux/cpumask.h>
 #include <linux/init.h>

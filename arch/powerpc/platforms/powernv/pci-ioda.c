@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/interrupt.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

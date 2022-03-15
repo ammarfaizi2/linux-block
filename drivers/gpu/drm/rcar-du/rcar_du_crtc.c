@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/interrupt.h>
 #include <linux/clk.h>
 #include <linux/mutex.h>
 #include <linux/platform_device.h>

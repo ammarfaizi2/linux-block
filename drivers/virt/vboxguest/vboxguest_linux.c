@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2016 Oracle Corporation
  */
 
+#include <linux/interrupt.h>
 #include <linux/fs.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

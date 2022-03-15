@@ -20,6 +20,7 @@
  *      Copyright 2002 MontaVista Softare Inc.
  */
 
+#include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

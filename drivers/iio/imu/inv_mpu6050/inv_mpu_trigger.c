@@ -3,6 +3,7 @@
 * Copyright (C) 2012 Invensense, Inc.
 */
 
+#include <linux/interrupt.h>
 #include <linux/pm_runtime.h>
 #include "inv_mpu_iio.h"
 

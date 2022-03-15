@@ -7,6 +7,7 @@
  * IRQ Code common to all PYXIS core logic chips.
  */
 
+#include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/irq.h>

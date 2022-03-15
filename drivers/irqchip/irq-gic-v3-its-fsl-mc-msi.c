@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/interrupt.h>
 #include <linux/acpi.h>
 #include <linux/acpi_iort.h>
 #include <linux/of_device.h>

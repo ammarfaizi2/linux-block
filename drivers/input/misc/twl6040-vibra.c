@@ -11,6 +11,7 @@
  *				Felipe Balbi <felipe.balbi@nokia.com>
  *				Jari Vanhala <ext-javi.vanhala@nokia.com>
  */
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

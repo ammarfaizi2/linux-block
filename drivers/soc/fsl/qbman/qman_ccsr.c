@@ -28,6 +28,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/interrupt.h>
+
 #include "qman_priv.h"
 
 u16 qman_ip_rev;

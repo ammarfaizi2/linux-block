@@ -9,6 +9,7 @@
  * SDHCI (HSMMC) support for Samsung SoC
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/spinlock.h>
 #include <linux/delay.h>

@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/interrupt.h>
 #include <linux/highmem.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

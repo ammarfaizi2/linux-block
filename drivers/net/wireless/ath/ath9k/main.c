@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

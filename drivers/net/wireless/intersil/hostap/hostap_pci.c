@@ -5,6 +5,7 @@
  * driver patches from Reyk Floeter <reyk@vantronix.net> and
  * Andy Warner <andyw@pobox.com> */
 
+#include <linux/interrupt.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>

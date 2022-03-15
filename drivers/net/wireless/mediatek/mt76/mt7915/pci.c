@@ -4,6 +4,7 @@
  * Author: Ryder Lee <ryder.lee@mediatek.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

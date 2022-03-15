@@ -15,6 +15,7 @@
  *		Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/tty.h>

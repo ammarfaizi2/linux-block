@@ -6,6 +6,7 @@
  *  Copyright 2006 Sony Corp.
  */
 
+#include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/smp.h>
 

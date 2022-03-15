@@ -5,6 +5,7 @@
  * Copyright 2014-2015 Advanced Micro Devices, Inc.
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>

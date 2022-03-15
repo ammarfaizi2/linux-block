@@ -8,6 +8,7 @@
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

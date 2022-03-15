@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/interrupt.h>
 #include <linux/device.h>
 #include <linux/hrtimer.h>
 #include <linux/kernel.h>

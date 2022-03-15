@@ -4,6 +4,7 @@
  * Author: Joe.C <yingjoe.chen@mediatek.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>
 #include <linux/irqdomain.h>

@@ -7,6 +7,7 @@
  *
  * TODO: Proximity
  */
+#include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/align.h>
 #include <linux/bitops.h>

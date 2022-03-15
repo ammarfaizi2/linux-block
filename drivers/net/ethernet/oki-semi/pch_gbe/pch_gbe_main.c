@@ -9,6 +9,7 @@
 #include "pch_gbe.h"
 #include "pch_gbe_phy.h"
 
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

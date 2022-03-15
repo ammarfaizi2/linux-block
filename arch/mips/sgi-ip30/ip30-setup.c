@@ -7,6 +7,7 @@
  *               2009 Johannes Dickgreber <tanzy@gmx.de>
  */
 
+#include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

@@ -8,6 +8,7 @@
  *          Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>

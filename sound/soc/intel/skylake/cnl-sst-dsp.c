@@ -12,6 +12,7 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+#include <linux/interrupt.h>
 #include <linux/device.h>
 #include "../common/sst-dsp.h"
 #include "../common/sst-ipc.h"

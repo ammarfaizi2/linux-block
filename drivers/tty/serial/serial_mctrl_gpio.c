@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Paratronic S.A.
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/device.h>

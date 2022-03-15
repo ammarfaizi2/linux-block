@@ -6,6 +6,7 @@
  * Copyright (C) 2001 by various other people who didn't put their name here.
  */
 
+#include <linux/interrupt.h>
 #include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/memblock.h>

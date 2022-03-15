@@ -12,6 +12,7 @@
  * Copyright:   (C) 2009  Texas Instruments, India
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>

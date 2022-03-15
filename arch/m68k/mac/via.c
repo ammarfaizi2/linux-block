@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/interrupt.h>
 #include <linux/clocksource.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

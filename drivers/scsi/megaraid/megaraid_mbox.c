@@ -65,6 +65,7 @@
  * For history of changes, see Documentation/scsi/ChangeLog.megaraid
  */
 
+#include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/capability.h>

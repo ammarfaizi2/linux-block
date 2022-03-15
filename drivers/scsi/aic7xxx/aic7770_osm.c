@@ -41,6 +41,7 @@
 
 #include "aic7xxx_osm.h"
 
+#include <linux/interrupt.h>
 #include <linux/device.h>
 #include <linux/eisa.h>
 

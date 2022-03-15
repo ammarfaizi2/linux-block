@@ -7,6 +7,7 @@
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/ioport.h>

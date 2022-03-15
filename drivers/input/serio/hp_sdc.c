@@ -61,6 +61,7 @@
  * sure it doesn't freeze up and to allow for bad reads to time out.
  */
 
+#include <linux/interrupt.h>
 #include <linux/capability.h>
 #include <linux/hp_sdc.h>
 #include <linux/errno.h>

@@ -19,6 +19,7 @@
 
 */
 
+#include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>

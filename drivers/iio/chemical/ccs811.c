@@ -15,6 +15,7 @@
  * 4. Read error register and put the information in logs
  */
 
+#include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>

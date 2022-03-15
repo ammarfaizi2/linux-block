@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Mellanox Technologies
  */
 
+#include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

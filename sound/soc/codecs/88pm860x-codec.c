@@ -6,6 +6,7 @@
  * Author: Haojian Zhuang <haojian.zhuang@marvell.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

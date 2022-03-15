@@ -23,6 +23,7 @@
  * Copyright 1995, Russell King
  */
 
+#include <linux/interrupt.h>
 #include <linux/types.h>
 #include <linux/delay.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  *			* mixer group handlers
  */
 
+#include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/isa.h>

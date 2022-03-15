@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "GICv3: " fmt
 
+#include <linux/interrupt.h>
 #include <linux/bitmap.h>
 #include <linux/dma-iommu.h>
 #include <linux/irq.h>
