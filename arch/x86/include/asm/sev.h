@@ -8,6 +8,7 @@
 #ifndef __ASM_ENCRYPTED_STATE_H
 #define __ASM_ENCRYPTED_STATE_H
 
+#include <linux/mm_types.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <asm/insn.h>
