@@ -23,6 +23,7 @@
 #define KMSG_COMPONENT "iucv"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/capability.h>
 #include <linux/kernel_stat.h>
 #include <linux/module.h>

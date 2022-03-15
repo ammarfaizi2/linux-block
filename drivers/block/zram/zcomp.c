@@ -3,6 +3,7 @@
  * Copyright (C) 2014 Sergey Senozhatsky.
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/err.h>

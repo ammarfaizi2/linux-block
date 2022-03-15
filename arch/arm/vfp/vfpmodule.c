@@ -5,6 +5,7 @@
  *  Copyright (C) 2004 ARM Limited.
  *  Written by Deep Blue Solutions Limited.
  */
+#include <linux/cpuhotplug.h>
 #include <linux/types.h>
 #include <linux/cpu.h>
 #include <linux/cpu_pm.h>

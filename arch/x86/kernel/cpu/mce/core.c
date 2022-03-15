@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/ptrace.h>

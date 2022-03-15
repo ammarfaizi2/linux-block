@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) DRVNAME ": " fmt
 
+#include <linux/cpuhotplug.h>
 #include <asm/barrier.h>
 #include <asm/cpufeature.h>
 

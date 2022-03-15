@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "hv-24x7: " fmt
 
+#include <linux/cpuhotplug.h>
 #include <asm/local64_api.h>
 #include <linux/perf_event.h>
 #include <linux/rbtree.h>

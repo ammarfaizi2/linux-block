@@ -3,6 +3,7 @@
  * Copyright (C) 2015, 2016 ARM Ltd.
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/interrupt.h>

@@ -5,6 +5,7 @@
  * Author: Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/iova.h>

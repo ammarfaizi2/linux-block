@@ -19,6 +19,7 @@
  * 03/24/2004	Ashok Raj	updated to work with CPU Hotplug
  * 10/26/2006   Russ Anderson	updated processor features to rev 2.2 spec
  */
+#include <linux/cpuhotplug.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/init.h>

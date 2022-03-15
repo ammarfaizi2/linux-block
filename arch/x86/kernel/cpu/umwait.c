@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/cpuhotplug.h>
 #include <linux/syscore_ops.h>
 #include <linux/suspend.h>
 #include <linux/cpu.h>

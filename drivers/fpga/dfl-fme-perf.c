@@ -16,6 +16,7 @@
  *   Mitchel, Henry <henry.mitchel@intel.com>
  */
 
+#include <linux/cpuhotplug.h>
 #include <asm/local64_api.h>
 #include <linux/perf_event.h>
 #include "dfl.h"

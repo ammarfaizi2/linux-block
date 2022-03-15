@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2007 ARM Limited
  */
+#include <linux/cpuhotplug.h>
 #include <linux/cpu.h>
 #include <linux/err.h>
 #include <linux/init.h>

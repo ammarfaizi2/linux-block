@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) "numa: " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/threads.h>
 #include <linux/memblock.h>
 #include <linux/init.h>

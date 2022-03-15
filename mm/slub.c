@@ -10,6 +10,7 @@
  * (C) 2011 Linux Foundation, Christoph Lameter
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>

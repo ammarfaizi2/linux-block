@@ -5,6 +5,7 @@
  * Copyright 2011 Linaro Ltd.
  */
 
+#include <linux/cpuhotplug.h>
 #include <asm/local64_api.h>
 #include <linux/clk.h>
 #include <linux/hrtimer.h>

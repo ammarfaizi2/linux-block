@@ -6,6 +6,7 @@
  * Copyright (c) 2006-2009, Intel Corporation
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <asm/halt.h>
 #include <linux/intel-iommu.h>

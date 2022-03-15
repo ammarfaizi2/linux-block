@@ -4,6 +4,7 @@
  * Copyright 2016 Freescale Semiconductor, Inc.
  */
 
+#include <linux/cpuhotplug.h>
 #include <asm/local64_api.h>
 #include <linux/bitfield.h>
 #include <linux/init.h>

@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "mvebu-coherency: " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/of_address.h>

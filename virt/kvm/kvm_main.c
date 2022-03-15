@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <kvm/iodev.h>

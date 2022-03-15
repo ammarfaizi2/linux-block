@@ -9,6 +9,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/mshyperv.h>

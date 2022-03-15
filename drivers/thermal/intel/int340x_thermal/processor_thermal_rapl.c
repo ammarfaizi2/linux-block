@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Intel Corporation.
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

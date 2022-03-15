@@ -12,6 +12,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/ptrace.h>

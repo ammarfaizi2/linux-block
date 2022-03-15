@@ -15,6 +15,7 @@
  * by Alexander Graf <agraf@suse.de>.
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/kvm_host.h>

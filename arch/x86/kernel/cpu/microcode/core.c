@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "microcode: " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

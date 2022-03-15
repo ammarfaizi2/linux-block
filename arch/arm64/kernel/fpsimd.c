@@ -6,6 +6,7 @@
  * Author: Catalin Marinas <catalin.marinas@arm.com>
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/bottom_half.h>

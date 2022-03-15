@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/capability.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>

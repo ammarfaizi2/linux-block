@@ -16,6 +16,7 @@
 
 #include "bnx2fc.h"
 
+#include <linux/cpuhotplug.h>
 #include <linux/ethtool.h>
 
 static struct list_head adapter_list;

@@ -6,6 +6,7 @@
  * Copyright (C) 2021 HiSilicon Limited
  * Author: Qi Liu <liuqi115@huawei.com>
  */
+#include <linux/cpuhotplug.h>
 #include <asm/local64_api.h>
 #include <linux/bitfield.h>
 #include <linux/bitmap.h>

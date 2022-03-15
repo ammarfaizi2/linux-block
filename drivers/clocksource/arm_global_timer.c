@@ -7,6 +7,7 @@
  * Author: Srinivas Kandagatla <srinivas.kandagatla@st.com>
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/clocksource.h>

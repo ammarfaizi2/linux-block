@@ -24,6 +24,7 @@
  * Copyright (C) 2006, Intel Corp.  All rights reserved.
  *
  */
+#include <linux/cpuhotplug.h>
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/mm.h>
