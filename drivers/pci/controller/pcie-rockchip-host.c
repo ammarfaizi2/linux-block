@@ -11,6 +11,7 @@
  * ARM PCI Host generic driver.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

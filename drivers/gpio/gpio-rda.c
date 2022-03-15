@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Manivannan Sadhasivam
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

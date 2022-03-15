@@ -13,6 +13,7 @@
  *  Note that all locks are private to this file.  Nothing else may
  *  touch them.
  */
+#include <linux/irqdesc.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

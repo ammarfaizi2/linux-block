@@ -9,6 +9,7 @@
  *              Haojian Zhuang <haojian.zhuang@gmail.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/init.h>

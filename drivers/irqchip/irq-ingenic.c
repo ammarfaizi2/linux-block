@@ -4,6 +4,7 @@
  *  Ingenic XBurst platform IRQ support
  */
 
+#include <linux/irqdesc.h>
 #include <linux/irq_api_io.h>
 #include <linux/io.h>
 #include <linux/errno.h>

@@ -26,6 +26,7 @@
  * which register to use and which bit in the register to use.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/stddef.h>
 #include <linux/sched.h>
 #include <linux/signal.h>

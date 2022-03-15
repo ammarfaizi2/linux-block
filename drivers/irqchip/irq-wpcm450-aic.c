@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright 2021 Jonathan Neuschäfer
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/irqchip.h>
 #include <linux/of_address.h>

@@ -12,6 +12,7 @@
  * bootup setup stuff..
  */
 
+#include <linux/irqdesc.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/errno.h>

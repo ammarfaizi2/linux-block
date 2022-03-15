@@ -5,6 +5,7 @@
  * Copyright 2008 - 2013 Xilinx, Inc.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

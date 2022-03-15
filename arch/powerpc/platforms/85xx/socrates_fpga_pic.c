@@ -3,6 +3,7 @@
  *  Copyright (C) 2008 Ilya Yanok, Emcraft Systems
  */
 
+#include <linux/irqdesc.h>
 #include <linux/irq.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>

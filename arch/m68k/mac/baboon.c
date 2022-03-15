@@ -7,6 +7,7 @@
  * Nubus slot $C interrupt.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/irq.h>

@@ -4,6 +4,7 @@
  * Copyright 2012 Benjamin Herrenschmidt, IBM Corporation
  */
 
+#include <linux/irqdesc.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2005 IBM Corporation.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/kexec.h>
 #include <linux/reboot.h>

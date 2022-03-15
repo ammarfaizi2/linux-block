@@ -5,6 +5,7 @@
  *  Copyright (C) 2013 Daniel Tang <tangrs@tangrs.id.au>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io_extra.h>
 #include <linux/io.h>
 #include <linux/irq.h>

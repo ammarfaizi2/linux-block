@@ -10,6 +10,7 @@
  */
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

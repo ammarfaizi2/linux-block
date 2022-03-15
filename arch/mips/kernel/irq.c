@@ -8,6 +8,7 @@
  * Copyright (C) 1992 Linus Torvalds
  * Copyright (C) 1994 - 2000 Ralf Baechle
  */
+#include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

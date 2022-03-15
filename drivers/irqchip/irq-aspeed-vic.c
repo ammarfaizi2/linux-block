@@ -10,6 +10,7 @@
  *  Copyright (C) 2000 Deep Blue Solutions Ltd
  */
 
+#include <linux/irqdesc.h>
 #include <linux/export.h>
 #include <linux/init.h>
 #include <linux/list.h>

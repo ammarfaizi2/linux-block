@@ -9,6 +9,7 @@
  * for more details.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/irqdomain.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>

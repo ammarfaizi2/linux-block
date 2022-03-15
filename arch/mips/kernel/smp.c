@@ -6,6 +6,7 @@
  * Copyright (C) 2000, 2001 Silicon Graphics, Inc.
  * Copyright (C) 2000, 2001, 2003 Broadcom Corporation
  */
+#include <linux/irqdesc.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

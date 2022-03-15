@@ -1,3 +1,4 @@
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

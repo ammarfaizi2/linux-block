@@ -5,6 +5,7 @@
  *
  * This file contains the dummy interrupt chip implementation
  */
+#include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

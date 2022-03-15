@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/irqchip.h>
 #include <linux/irqchip/chained_irq.h>

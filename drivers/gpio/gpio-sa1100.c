@@ -4,6 +4,7 @@
  *
  * Generic SA-1100 GPIO handling
  */
+#include <linux/irqdesc.h>
 #include <linux/gpio/driver.h>
 #include <linux/init.h>
 #include <linux/module.h>

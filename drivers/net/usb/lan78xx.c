@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2015 Microchip Technology
  */
+#include <linux/irqdesc.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

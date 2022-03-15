@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2017 Microsemi Corporation
  */
+#include <linux/irqdesc.h>
 #include <linux/irq_api_io.h>
 #include <linux/irq_api_gc_lock.h>
 #include <linux/irq_api_free.h>

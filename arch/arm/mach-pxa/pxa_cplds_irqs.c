@@ -7,6 +7,7 @@
  * Cplds motherboard driver, supporting lubbock and mainstone SoC board.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

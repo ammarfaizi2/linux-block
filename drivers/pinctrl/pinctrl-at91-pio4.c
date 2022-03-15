@@ -6,6 +6,7 @@
  *               2015 Ludovic Desroches <ludovic.desroches@atmel.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

@@ -4,6 +4,7 @@
  *  Loongson-1 platform IRQ support
  */
 
+#include <linux/irqdesc.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/types.h>

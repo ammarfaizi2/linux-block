@@ -10,6 +10,7 @@
 
 #undef DEBUG
 
+#include <linux/irqdesc.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

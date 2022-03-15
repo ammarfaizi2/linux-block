@@ -8,6 +8,7 @@
  * Author: Hezi Shahmoon <hezi.shahmoon@marvell.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

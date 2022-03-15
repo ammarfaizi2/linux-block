@@ -11,6 +11,7 @@
  *   Pat Gefre <pfg@sgi.com> - IOC3 serial port IRQ demuxer
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

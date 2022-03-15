@@ -5,6 +5,7 @@
 //
 // http://www.simtec.co.uk/products/EB2410ITX/
 
+#include <linux/irqdesc.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/ioport.h>

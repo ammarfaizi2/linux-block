@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/kernel.h>
 #include <linux/sched/debug.h>
 #include <asm/registers.h>

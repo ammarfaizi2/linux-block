@@ -5,6 +5,7 @@
  *	Add Alphascale ASM9260 support.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/irq.h>

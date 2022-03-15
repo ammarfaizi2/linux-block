@@ -9,6 +9,7 @@
  */
 #define pr_fmt(fmt) "intc: " fmt
 
+#include <linux/irqdesc.h>
 #include <linux/slab.h>
 #include <linux/irq.h>
 #include <linux/list.h>

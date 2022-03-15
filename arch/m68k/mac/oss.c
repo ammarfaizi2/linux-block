@@ -15,6 +15,7 @@
  *		  since we now have a functional IOP manager.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

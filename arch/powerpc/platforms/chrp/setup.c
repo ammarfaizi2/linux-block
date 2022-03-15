@@ -9,6 +9,7 @@
  * bootup setup stuff..
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/errno.h>

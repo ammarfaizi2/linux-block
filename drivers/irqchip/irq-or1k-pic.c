@@ -4,6 +4,7 @@
  * Copyright (C) 2014 Stefan Kristansson <stefan.kristiansson@saunalahti.fi>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>
 #include <linux/of.h>

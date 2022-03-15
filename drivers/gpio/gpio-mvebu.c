@@ -33,6 +33,7 @@
  *   interrupts.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/irq_api_gc_lock.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 1994 - 2000 Ralf Baechle
  * Copyright (C) 2006 Thomas Bogendoerfer
  */
+#include <linux/irqdesc.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

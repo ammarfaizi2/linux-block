@@ -9,6 +9,7 @@
  * Created:	Nov 05, 2002
  * Copyright:	MontaVista Software Inc.
  */
+#include <linux/irqdesc.h>
 #include <linux/gpio.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

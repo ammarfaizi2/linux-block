@@ -19,6 +19,7 @@
  * PCMCIA interface logic
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

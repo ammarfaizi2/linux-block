@@ -8,6 +8,7 @@
  *
  * Data sheet: ARM DDI 0190B, September 2000
  */
+#include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/spinlock.h>
