@@ -7,6 +7,7 @@
 #ifndef HINIC_HW_QP_H
 #define HINIC_HW_QP_H
 
+#include <linux/cpumask_types.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/sizes.h>
