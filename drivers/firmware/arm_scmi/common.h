@@ -9,6 +9,7 @@
 #ifndef _SCMI_COMMON_H
 #define _SCMI_COMMON_H
 
+#include <linux/hashtable_api.h>
 #include <linux/bitfield.h>
 #include <linux/completion.h>
 #include <linux/device.h>
