@@ -99,6 +99,7 @@
  * where two different Write segments send portions of the same page.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/llist_api.h>

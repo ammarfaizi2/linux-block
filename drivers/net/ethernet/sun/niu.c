@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api_lock.h>

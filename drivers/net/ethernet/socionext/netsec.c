@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

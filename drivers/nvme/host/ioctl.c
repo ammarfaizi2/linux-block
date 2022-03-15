@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  * Copyright (c) 2017-2021 Christoph Hellwig.
  */
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

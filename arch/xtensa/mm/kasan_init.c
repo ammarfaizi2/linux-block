@@ -8,6 +8,7 @@
  * Copyright (C) 2017 Cadence Design Systems Inc.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/memblock.h>
 #include <linux/init_task.h>
 #include <linux/kasan.h>

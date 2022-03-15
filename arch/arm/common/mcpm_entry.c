@@ -6,6 +6,7 @@
  * Copyright:   (C) 2012-2013  Linaro Limited
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/export.h>

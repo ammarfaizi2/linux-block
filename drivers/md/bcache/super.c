@@ -15,6 +15,7 @@
 #include "writeback.h"
 #include "features.h"
 
+#include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

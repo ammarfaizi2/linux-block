@@ -13,6 +13,7 @@
  *      Sachin Verma <sachin.verma@st.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>

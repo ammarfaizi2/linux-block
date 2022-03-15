@@ -5,6 +5,7 @@
  * Copyright (C) 1998-2002 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
+#include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/pagemap.h>
 #include <linux/pagefault_ctrl.h>

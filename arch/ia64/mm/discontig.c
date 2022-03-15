@@ -15,6 +15,7 @@
  * Platform initialization for Discontig Memory
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>

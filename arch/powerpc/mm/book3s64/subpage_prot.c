@@ -3,6 +3,7 @@
  * Copyright 2007-2008 Paul Mackerras, IBM Corp.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

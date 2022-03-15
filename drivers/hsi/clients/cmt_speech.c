@@ -8,6 +8,7 @@
  * Original author: Peter Ujfalusi <peter.ujfalusi@nokia.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

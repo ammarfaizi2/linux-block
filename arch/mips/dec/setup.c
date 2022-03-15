@@ -8,6 +8,7 @@
  * Copyright (C) 1998 Harald Koerfgen
  * Copyright (C) 2000, 2001, 2002, 2003, 2005, 2020  Maciej W. Rozycki
  */
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/irqdesc.h>
 #include <linux/console.h>

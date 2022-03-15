@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2003 by Ralf Baechle
  */
+#include <linux/pgtable_api.h>
 #include <linux/init.h>
 #include <linux/mm.h>
 #include <linux/memblock.h>

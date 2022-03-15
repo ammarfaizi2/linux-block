@@ -5,6 +5,7 @@
  * Copyright (C) 2002, Rohit Seth <rohit.seth@intel.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <asm/processor_api.h>
 #include <asm/elf_api.h>

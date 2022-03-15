@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "SVM: " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/mm_page_address.h>

@@ -4,6 +4,7 @@
  *
  * Extracted from init.c
  */
+#include <linux/pgtable_api.h>
 #include <linux/memblock.h>
 #include <linux/percpu.h>
 #include <linux/init.h>

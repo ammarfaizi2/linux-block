@@ -43,6 +43,7 @@
  */
 #include "priv.h"
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

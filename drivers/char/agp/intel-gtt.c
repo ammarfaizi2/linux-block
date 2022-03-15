@@ -15,6 +15,7 @@
  * /fairy-tale-mode off
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/memory_hotplug.h>
 #include <linux/jiffies.h>

@@ -9,6 +9,7 @@
  *                        of people at Linux Expo.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

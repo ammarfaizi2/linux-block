@@ -11,6 +11,7 @@
  * state in 'asm.s'.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

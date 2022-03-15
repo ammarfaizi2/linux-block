@@ -18,6 +18,7 @@
  * Mostly rewritten by Thomas Gleixner <tglx@linutronix.de> and
  *		       Andy Lutomirsky <luto@amacapital.net>
  */
+#include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

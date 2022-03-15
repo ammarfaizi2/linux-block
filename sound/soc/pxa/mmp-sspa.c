@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2011 Marvell International Ltd.
  */
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

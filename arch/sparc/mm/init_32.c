@@ -8,6 +8,7 @@
  *  Copyright (C) 2000 Anton Blanchard (anton@samba.org)
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/module.h>

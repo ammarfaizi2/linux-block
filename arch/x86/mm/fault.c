@@ -4,6 +4,7 @@
  *  Copyright (C) 2001, 2002 Andi Kleen, SuSE Labs.
  *  Copyright (C) 2008-2009, Red Hat Inc., Ingo Molnar
  */
+#include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mm_page_address.h>

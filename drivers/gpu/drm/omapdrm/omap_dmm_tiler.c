@@ -7,6 +7,7 @@
  *         Andy Gross <andy.gross@ti.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

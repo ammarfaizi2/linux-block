@@ -46,6 +46,7 @@
  *   Grant Grundler <grundler@cup.hp.com>: PCI write posting fixes.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

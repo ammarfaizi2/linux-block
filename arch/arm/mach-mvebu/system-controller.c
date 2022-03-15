@@ -22,6 +22,7 @@
  * soft-reset, but it might be extended in the future.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>

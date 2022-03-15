@@ -11,6 +11,7 @@
  * Copyright 2007 Jiri Kosina, SUSE Labs.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

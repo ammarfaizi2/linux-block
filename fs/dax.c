@@ -6,6 +6,7 @@
  * Author: Ross Zwisler <ross.zwisler@linux.intel.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/pagemap.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>

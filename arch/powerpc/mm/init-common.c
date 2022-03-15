@@ -16,6 +16,7 @@
 
 #undef DEBUG
 
+#include <linux/pgtable_api.h>
 #include <linux/string.h>
 #include <linux/pgtable.h>
 #include <asm/pgalloc.h>

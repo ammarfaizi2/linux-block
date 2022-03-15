@@ -16,6 +16,7 @@
  *      Rework for PPC64 port.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/signal.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

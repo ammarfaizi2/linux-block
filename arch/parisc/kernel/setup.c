@@ -12,6 +12,7 @@
  *    Initial PA-RISC Version: 04-23-1999 by Helge Deller
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/ioport.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

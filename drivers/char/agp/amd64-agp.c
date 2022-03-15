@@ -9,6 +9,7 @@
  * work is done in the northbridge(s).
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/ioport.h>

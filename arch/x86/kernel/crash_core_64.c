@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/pgtable_api.h>
 #include <linux/mmzone.h>
 #include <linux/mmzone_api.h>
 #include <linux/crash_core.h>

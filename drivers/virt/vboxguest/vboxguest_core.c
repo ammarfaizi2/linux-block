@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2016 Oracle Corporation
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

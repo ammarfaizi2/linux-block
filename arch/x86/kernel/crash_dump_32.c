@@ -6,6 +6,7 @@
  *	Copyright (C) IBM Corporation, 2004. All rights reserved
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/slab.h>
 #include <linux/errno.h>
 #include <linux/highmem.h>

@@ -10,6 +10,7 @@
  * Copyright (c) 2017 Andreas Färber
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/delay.h>

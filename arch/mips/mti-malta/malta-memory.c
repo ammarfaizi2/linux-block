@@ -11,6 +11,7 @@
  * Authors: Carsten Langgaard <carstenl@mips.com>
  *          Steven J. Hill <sjhill@mips.com>
  */
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/memblock.h>

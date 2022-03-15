@@ -5,6 +5,7 @@
  *  Copyright (C) 2004 Anton Blanchard, IBM Corp. <anton@samba.org>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/idr_api.h>

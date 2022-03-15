@@ -9,6 +9,7 @@
  * Copyright (c) 2011 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <drm/drm_vma_manager_api_vm_lock.h>

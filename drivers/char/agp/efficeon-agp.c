@@ -20,6 +20,7 @@
  *   - tested with c3/c4 enabled (with the mobility m9 card)
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/io.h>

@@ -14,6 +14,7 @@
  * Routines used by ia64 machines with contiguous (or virtually contiguous)
  * memory.
  */
+#include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

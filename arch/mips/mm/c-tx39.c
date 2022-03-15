@@ -9,6 +9,7 @@
  * Copyright (C) 1998, 1999, 2000 Harald Koerfgen
  * Copyright (C) 1998 Gleb Raiko & Vladimir Roganov
  */
+#include <linux/pgtable_api.h>
 #include <asm/cpu-type.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
 //
 // http://armlinux.simtec.co.uk/
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

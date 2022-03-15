@@ -29,6 +29,7 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  * 	    Jerome Glisse
  */
+#include <linux/pgtable_api.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/pgtable.h>

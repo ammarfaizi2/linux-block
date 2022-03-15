@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/init.h>

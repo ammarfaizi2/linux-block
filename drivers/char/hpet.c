@@ -8,6 +8,7 @@
  *	Bob Picco <robert.picco@hp.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>

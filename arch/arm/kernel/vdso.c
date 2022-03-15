@@ -6,6 +6,7 @@
  * Copyright (C) 2015 Mentor Graphics Corporation.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/cache.h>

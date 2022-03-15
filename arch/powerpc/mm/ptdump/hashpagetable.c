@@ -9,6 +9,7 @@
  * If radix is enabled then there is no hash page table and so no debugfs file
  * is generated.
  */
+#include <linux/pgtable_api.h>
 #include <linux/debugfs.h>
 #include <linux/fs.h>
 #include <linux/io.h>

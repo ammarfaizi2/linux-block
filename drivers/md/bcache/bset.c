@@ -11,6 +11,7 @@
 #include "util.h"
 #include "bset.h"
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/ktime_api.h>
 #include <linux/gfp_api.h>

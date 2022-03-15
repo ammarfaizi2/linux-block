@@ -6,6 +6,7 @@
  * Copyright (C) 1992 Linus Torvalds
  * Copyright (C) 1994 - 2001, 2003, 07 Ralf Baechle
  */
+#include <linux/pgtable_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/clockchips.h>
 #include <linux/i8253.h>

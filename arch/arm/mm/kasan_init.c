@@ -8,6 +8,7 @@
  */
 
 #define pr_fmt(fmt) "kasan: " fmt
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/kasan.h>
 #include <linux/kernel.h>

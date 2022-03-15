@@ -4,6 +4,7 @@
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>

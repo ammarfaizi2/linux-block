@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api_pcpu_stats.h>

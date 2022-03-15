@@ -4,6 +4,7 @@
 //
 // Based on arch/arm/mach-vexpress/dcscb.c
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/arm-cci.h>

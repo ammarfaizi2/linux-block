@@ -9,6 +9,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 
 #include "rnbd-srv-dev.h"

@@ -13,6 +13,7 @@
 
 #undef DEBUG
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/hardirq.h>

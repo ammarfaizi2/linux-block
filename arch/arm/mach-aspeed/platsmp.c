@@ -2,6 +2,7 @@
 // Copyright (C) ASPEED Technology Inc.
 // Copyright IBM Corp.
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/of_address.h>

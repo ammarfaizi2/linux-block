@@ -5,6 +5,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_kvmalloc.h>

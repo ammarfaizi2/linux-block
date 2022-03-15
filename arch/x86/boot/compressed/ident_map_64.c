@@ -23,6 +23,7 @@
 #include "misc.h"
 
 /* These actually do the work of building the kernel identity maps. */
+#include <linux/pgtable_api.h>
 #include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <linux/pgtable.h>

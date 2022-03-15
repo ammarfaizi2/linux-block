@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "zfcp"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

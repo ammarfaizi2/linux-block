@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Annapurna Labs Ltd.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/errno.h>

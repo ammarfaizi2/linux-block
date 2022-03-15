@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/highmem.h>
 #include <linux/genalloc.h>

@@ -7,6 +7,7 @@
  * (C) Copyright 1995 1996 Linus Torvalds
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>

@@ -9,6 +9,7 @@
  */
 
 
+#include <linux/pgtable_api.h>
 #include <linux/module.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>

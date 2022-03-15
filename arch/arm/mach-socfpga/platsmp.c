@@ -5,6 +5,7 @@
  * Based on platsmp.c, Copyright (C) 2002 ARM Ltd.
  * Copyright (C) 2012 Altera Corporation
  */
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>
