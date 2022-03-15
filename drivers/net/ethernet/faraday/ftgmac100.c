@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/rtnetlink.h>
 #include <linux/of_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>

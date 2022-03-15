@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2021 Corigine, Inc. */
 
+#include <linux/rtnetlink.h>
+
 #include "conntrack.h"
 #include "../nfp_port.h"
 

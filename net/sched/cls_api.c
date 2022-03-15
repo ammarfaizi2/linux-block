@@ -9,6 +9,7 @@
  * Eduardo J. Blanco <ejbs@netlabs.com.uy> :990222: kmod support
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

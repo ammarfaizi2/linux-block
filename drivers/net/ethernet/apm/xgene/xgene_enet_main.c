@@ -7,6 +7,7 @@
  *	    Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/property.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>

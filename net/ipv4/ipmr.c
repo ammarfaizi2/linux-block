@@ -21,6 +21,7 @@
  *					Relax this requirement to work with older peers.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/net.h>

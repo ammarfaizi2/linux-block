@@ -9,6 +9,7 @@
  * See MAINTAINERS file for support contact information.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_pcpu_stats.h>

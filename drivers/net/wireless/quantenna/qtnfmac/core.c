@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (c) 2015-2016 Quantenna Communications. All rights reserved. */
 
+#include <linux/rtnetlink.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api_pcpu_stats.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
+#include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netlink.h>
 #include <linux/netdevice_api_prefetch.h>

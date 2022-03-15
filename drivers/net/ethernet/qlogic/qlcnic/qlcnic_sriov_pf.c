@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_link.h>
 #include <linux/etherdevice_api.h>

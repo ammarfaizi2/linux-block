@@ -10,6 +10,7 @@
  *	Lennert dedicates this file to Kerstin Wurdinger.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>

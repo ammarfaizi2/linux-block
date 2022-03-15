@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/init.h>
 #include <linux/fs_api.h>

@@ -22,6 +22,7 @@
  */
 
 
+#include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api_lock.h>

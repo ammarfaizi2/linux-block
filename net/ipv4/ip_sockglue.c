@@ -16,6 +16,7 @@
  *		Mike McLagan	:	Routing by source
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Cavium Inc.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

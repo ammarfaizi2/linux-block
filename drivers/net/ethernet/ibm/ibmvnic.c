@@ -32,6 +32,7 @@
 /*                                                                        */
 /**************************************************************************/
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

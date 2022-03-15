@@ -14,6 +14,7 @@
 	https://bugzilla.stlinux.com/
 *******************************************************************************/
 
+#include <linux/rtnetlink.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pgtable_api.h>

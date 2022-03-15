@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Nandita Dukkipati <nanditad@google.com>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/random.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/bitmap.h>

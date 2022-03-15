@@ -24,6 +24,7 @@
  *		Alexey Kuznetsov:	Potential hang under some extreme
  *					cases removed.
  */
+#include <linux/rtnetlink.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>

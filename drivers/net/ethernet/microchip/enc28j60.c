@@ -9,6 +9,7 @@
  * $Id: enc28j60.c,v 1.22 2007/12/20 10:47:01 claudio Exp $
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

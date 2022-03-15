@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

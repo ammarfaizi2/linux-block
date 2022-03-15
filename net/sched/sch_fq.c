@@ -30,6 +30,7 @@
  *  or SLAB cache will reuse socket for another flow)
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/rbtree_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api_kvmalloc.h>

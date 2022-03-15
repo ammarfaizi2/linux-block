@@ -9,6 +9,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/rculist.h>
 #include <linux/random.h>
 #include <linux/netdevice_api.h>

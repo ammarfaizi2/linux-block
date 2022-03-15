@@ -4,6 +4,7 @@
  * Copyright 2007 Rusty Russell <rusty@rustcorp.com.au> IBM Corporation
  */
 //#define DEBUG
+#include <linux/rtnetlink.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

@@ -10,6 +10,7 @@
  * Maxim Osipov <maxim.osipov@siemens.com>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/device_api_lock.h>

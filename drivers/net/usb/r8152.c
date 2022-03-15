@@ -3,6 +3,7 @@
  *  Copyright (c) 2014 Realtek Semiconductor Corp. All rights reserved.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/rtnetlink.h>
 #include <net/switchdev.h>
 
 #include "br_private_mrp.h"

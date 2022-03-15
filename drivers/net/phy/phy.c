@@ -8,6 +8,7 @@
  * Copyright (c) 2006, 2007  Maciej W. Rozycki
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
