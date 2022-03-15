@@ -6,6 +6,7 @@
  * Copyright (c) 2014 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 
 #include "dice.h"

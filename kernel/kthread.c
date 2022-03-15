@@ -7,6 +7,7 @@
  * even if we're invoked from userspace (think modprobe, hotplug cpu,
  * etc.).
  */
+#include <linux/sched/signal.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

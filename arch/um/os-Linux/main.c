@@ -4,6 +4,7 @@
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/sched/signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

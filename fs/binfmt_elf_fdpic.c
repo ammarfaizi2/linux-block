@@ -6,6 +6,7 @@
  * Derived from binfmt_elf.c
  */
 
+#include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

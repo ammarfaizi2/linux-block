@@ -11,6 +11,7 @@
  *  Modified for PPC64 by Dave Engebretsen (engebret@ibm.com)
  */
 
+#include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>

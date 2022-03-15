@@ -9,6 +9,7 @@
 /*
  * This file handles the architecture-dependent parts of process handling..
  */
+#include <linux/sched/signal.h>
 #include <linux/sched/affinity.h>
 #include <linux/ptrace_api.h>
 #include <linux/preempt.h>

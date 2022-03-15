@@ -13,6 +13,7 @@
  * This file handles the architecture-dependent parts of hardware exceptions
  */
 
+#include <linux/sched/signal.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/signal.h>

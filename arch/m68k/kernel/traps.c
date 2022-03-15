@@ -18,6 +18,7 @@
  * Sets up all exception vectors
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>
 #include <linux/signal.h>

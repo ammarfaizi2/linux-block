@@ -9,6 +9,7 @@
  *  2000-12-*   x86-64 compatibility mode signal handling by Andi Kleen
  */
 
+#include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <asm/segment_api.h>
 #include <asm/processor_api.h>

@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>

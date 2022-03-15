@@ -9,6 +9,7 @@
  * I like traps on v9, :))))
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>

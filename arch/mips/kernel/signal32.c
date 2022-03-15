@@ -8,6 +8,7 @@
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 2016, Imagination Technologies Ltd.
  */
+#include <linux/sched/signal.h>
 #include <linux/compat.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>

@@ -20,6 +20,7 @@
  * See also Documentation/block/ioprio.rst
  *
  */
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/iocontext.h>

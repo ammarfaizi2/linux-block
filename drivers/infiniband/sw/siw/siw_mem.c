@@ -3,6 +3,7 @@
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
+#include <linux/sched/signal.h>
 #include <linux/random.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

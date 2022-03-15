@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/sched/signal.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/device_api_lock.h>

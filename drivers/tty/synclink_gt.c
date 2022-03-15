@@ -43,6 +43,7 @@
 /*#define DBGRBUF(info) dump_rbufs(info)*/
 
 
+#include <linux/sched/signal.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

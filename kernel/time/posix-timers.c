@@ -9,6 +9,7 @@
  *
  * These are all the functions necessary to implement POSIX clocks & timers
  */
+#include <linux/sched/signal.h>
 #include <linux/rculist.h>
 #include <linux/pid.h>
 #include <linux/lockdep_api.h>

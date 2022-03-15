@@ -13,6 +13,7 @@
  * 3.lock/unlock stream
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 
 #include "ff.h"

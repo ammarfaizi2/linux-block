@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Regents of the University of California
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/restart_block_api.h>

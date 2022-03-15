@@ -10,6 +10,7 @@
  * Copyright (C) 2014 Texas Instruments Incorporated
  *    Aurelien Jacquiot <a-jacquiot@ti.com>
  */
+#include <linux/sched/signal.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 2012 Simo Sorce <simo@redhat.com>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2016 Andrew Lunn <andrew@lunn.ch>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>

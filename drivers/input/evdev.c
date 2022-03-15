@@ -12,6 +12,7 @@
 #define EVDEV_MIN_BUFFER_SIZE	64U
 #define EVDEV_BUF_PACKETS	8
 
+#include <linux/sched/signal.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

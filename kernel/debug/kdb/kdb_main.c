@@ -11,6 +11,7 @@
  * Copyright (c) 2009 Wind River Systems, Inc.  All Rights Reserved.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

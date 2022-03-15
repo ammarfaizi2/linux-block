@@ -9,6 +9,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/sched/signal.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

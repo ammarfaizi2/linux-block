@@ -53,6 +53,7 @@
  *			 :  base.c too.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/pid.h>

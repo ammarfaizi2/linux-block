@@ -23,6 +23,7 @@
  * Pavel Emelianov <xemul@openvz.org>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pid.h>

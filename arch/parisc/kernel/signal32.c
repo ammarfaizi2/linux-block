@@ -8,6 +8,7 @@
  *    See kernel/signal.c for additional Copyrights.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/compat.h>
 #include <linux/module.h>
 #include <linux/unistd.h>

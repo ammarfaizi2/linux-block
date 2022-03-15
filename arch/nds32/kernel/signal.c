@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
+#include <linux/sched/signal.h>
 #include <linux/preempt.h>
 #include <linux/restart_block_api.h>
 #include <linux/errno.h>

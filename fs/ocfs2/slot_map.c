@@ -5,6 +5,7 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>

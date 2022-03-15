@@ -11,6 +11,7 @@
 
 #include "ext4_jbd2.h"
 #include "mballoc.h"
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/rculist.h>

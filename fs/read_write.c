@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/sched/signal.h>
 #include <linux/ratelimit.h>
 #include <linux/ptrace_api.h>
 #include <linux/fs_api_sb.h>

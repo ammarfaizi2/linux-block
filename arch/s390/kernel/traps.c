@@ -15,6 +15,7 @@
  */
 #include "asm/irqflags.h"
 #include "asm/ptrace.h"
+#include <linux/sched/signal.h>
 #include <linux/kprobes.h>
 #include <linux/kdebug.h>
 #include <linux/randomize_kstack.h>

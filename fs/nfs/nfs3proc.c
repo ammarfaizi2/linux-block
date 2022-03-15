@@ -7,6 +7,7 @@
  *  Copyright (C) 1997, Olaf Kirch
  */
 
+#include <linux/sched/signal.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

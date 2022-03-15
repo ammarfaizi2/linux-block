@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2018 MediaTek Inc.
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

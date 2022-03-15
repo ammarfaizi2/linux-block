@@ -8,6 +8,7 @@
  *	(C) Copyright 2002 Red Hat Inc, All Rights Reserved
  */
 
+#include <linux/sched/signal.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>

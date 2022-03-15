@@ -44,6 +44,7 @@
  * a struct file opened for write. Fixed. 2/6/2000, AV.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>

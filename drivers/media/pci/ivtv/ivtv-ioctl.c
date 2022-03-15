@@ -20,6 +20,7 @@
 #include "ivtv-gpio.h"
 #include "ivtv-controls.h"
 #include "ivtv-cards.h"
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

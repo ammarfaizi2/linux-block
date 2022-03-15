@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/sched/signal.h>
 #include <linux/rbtree_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/fs_api_sb.h>

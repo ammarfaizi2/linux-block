@@ -38,6 +38,7 @@
  * subsequent patch.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>

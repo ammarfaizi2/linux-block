@@ -11,6 +11,7 @@
  * their supports.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>

@@ -13,6 +13,7 @@
  *	Hugh Dickins
  */
 
+#include <linux/sched/signal.h>
 #include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>

@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>
