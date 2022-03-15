@@ -19,6 +19,7 @@
 #define JBD2_DEBUG
 #else
 
+#include <linux/percpu_counter.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/types.h>
