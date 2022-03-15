@@ -12,6 +12,7 @@
 #define DRVNAME					PMUNAME "_pmu"
 #define pr_fmt(fmt)				DRVNAME ": " fmt
 
+#include <asm/local64_api.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/capability.h>

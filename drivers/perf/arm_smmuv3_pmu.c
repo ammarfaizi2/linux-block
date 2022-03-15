@@ -34,6 +34,7 @@
  * are not supported.
  */
 
+#include <asm/local64_api.h>
 #include <linux/acpi.h>
 #include <linux/acpi_iort.h>
 #include <linux/bitfield.h>

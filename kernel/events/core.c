@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <asm/local64_api.h>
 #include <linux/sched/per_task.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/fs.h>

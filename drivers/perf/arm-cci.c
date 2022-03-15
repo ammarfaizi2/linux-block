@@ -3,6 +3,7 @@
 // Copyright (C) 2013-2018 Arm Ltd.
 // Author: Punit Agrawal <punit.agrawal@arm.com>, Suzuki Poulose <suzuki.poulose@arm.com>
 
+#include <asm/local64_api.h>
 #include <linux/arm-cci.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

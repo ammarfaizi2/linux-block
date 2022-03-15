@@ -21,6 +21,7 @@
  * The Copyright line includes x86 and tile ones.
  */
 
+#include <asm/local64_api.h>
 #include <linux/kprobes.h>
 #include <linux/kernel.h>
 #include <linux/kdebug.h>

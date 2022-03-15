@@ -6,6 +6,7 @@
  * 2010 (c) MontaVista Software, LLC.
  */
 
+#include <asm/local64_api.h>
 #include <linux/perf_event.h>
 #include <linux/bitmap.h>
 #include <linux/export.h>

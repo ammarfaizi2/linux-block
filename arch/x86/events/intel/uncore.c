@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <asm/local64_api.h>
 #include <linux/module.h>
 
 #include <asm/cpu_device_id.h>

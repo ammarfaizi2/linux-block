@@ -5,6 +5,7 @@
  * Copyright 2008-2009 Paul Mackerras, IBM Corporation.
  * Copyright 2010 Freescale Semiconductor, Inc.
  */
+#include <asm/local64_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/perf_event.h>
