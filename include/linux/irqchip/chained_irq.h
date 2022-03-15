@@ -7,6 +7,7 @@
 #ifndef __IRQCHIP_CHAINED_IRQ_H
 #define __IRQCHIP_CHAINED_IRQ_H
 
+#include <linux/irqdesc.h>
 #include <linux/irq.h>
 
 /*
