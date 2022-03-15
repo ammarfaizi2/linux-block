@@ -38,6 +38,7 @@
  *	zspage->lock
  */
 
+#include <linux/bit_spinlock.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>

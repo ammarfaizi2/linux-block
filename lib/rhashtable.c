@@ -11,6 +11,7 @@
  * pointer as suggested by Josh Triplett
  */
 
+#include <linux/bit_spinlock.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/atomic.h>
