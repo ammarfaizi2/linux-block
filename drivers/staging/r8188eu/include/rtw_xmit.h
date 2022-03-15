@@ -4,6 +4,7 @@
 #ifndef _RTW_XMIT_H_
 #define _RTW_XMIT_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #include "osdep_service.h"

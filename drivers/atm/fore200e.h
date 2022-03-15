@@ -4,6 +4,7 @@
 
 #ifdef __KERNEL__
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 /* rx buffer sizes */

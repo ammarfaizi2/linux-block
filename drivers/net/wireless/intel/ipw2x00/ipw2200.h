@@ -13,6 +13,7 @@
 #ifndef __ipw2200_h__
 #define __ipw2200_h__
 
+#include <linux/tasklet_types.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/interrupt.h>

@@ -2,6 +2,7 @@
 #ifndef __RK3288_CRYPTO_H__
 #define __RK3288_CRYPTO_H__
 
+#include <linux/tasklet_types.h>
 #include <crypto/aes.h>
 #include <crypto/internal/des.h>
 #include <crypto/algapi.h>

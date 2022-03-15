@@ -8,6 +8,7 @@
 #ifndef _CTCM_MAIN_H_
 #define _CTCM_MAIN_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <asm/ccwdev.h>

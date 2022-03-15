@@ -14,6 +14,8 @@
 #ifndef __RTL871X_CMD_H_
 #define __RTL871X_CMD_H_
 
+#include <linux/tasklet_types.h>
+
 #include "wlan_bssdef.h"
 #include "rtl871x_rf.h"
 #define C2H_MEM_SZ (16*1024)

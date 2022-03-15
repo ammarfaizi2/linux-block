@@ -11,6 +11,7 @@
 #define INTERN_H
 
 #include "ctrl.h"
+#include <linux/tasklet_types.h>
 #include <crypto/engine.h>
 
 /* Currently comes from Kconfig param as a ^2 (driver-required) */

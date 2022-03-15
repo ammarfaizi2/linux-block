@@ -40,6 +40,7 @@
 #ifndef __BNXT_RE_H__
 #define __BNXT_RE_H__
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #include "hw_counters.h"

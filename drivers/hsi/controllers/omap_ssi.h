@@ -10,6 +10,7 @@
 #ifndef __LINUX_HSI_OMAP_SSI_H__
 #define __LINUX_HSI_OMAP_SSI_H__
 
+#include <linux/tasklet_types.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

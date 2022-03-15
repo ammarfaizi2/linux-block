@@ -9,6 +9,7 @@
 #ifndef _AIC94XX_HWI_H_
 #define _AIC94XX_HWI_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/spinlock_api.h>
 #include <linux/bitmap.h>
 #include <linux/interrupt.h>

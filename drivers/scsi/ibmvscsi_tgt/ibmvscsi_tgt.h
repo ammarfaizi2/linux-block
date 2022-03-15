@@ -17,6 +17,7 @@
 #ifndef __H_IBMVSCSI_TGT
 #define __H_IBMVSCSI_TGT
 
+#include <linux/tasklet_types.h>
 #include <linux/interrupt.h>
 #include "libsrp.h"
 

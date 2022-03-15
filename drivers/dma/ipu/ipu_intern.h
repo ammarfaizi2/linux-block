@@ -9,6 +9,7 @@
 #ifndef _IPU_INTERN_H_
 #define _IPU_INTERN_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/dmaengine.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>

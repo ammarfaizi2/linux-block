@@ -13,6 +13,7 @@
 #ifndef CNIC_H
 #define CNIC_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #define HC_INDEX_ISCSI_EQ_CONS			6

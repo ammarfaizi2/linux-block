@@ -19,6 +19,7 @@
 #ifndef R8192U_H
 #define R8192U_H
 
+#include <linux/tasklet_types.h>
 #include <linux/compiler.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

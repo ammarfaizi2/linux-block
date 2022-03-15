@@ -7,6 +7,7 @@
 #ifndef _QED_INT_H
 #define _QED_INT_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include "qed.h"

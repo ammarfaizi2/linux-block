@@ -8,6 +8,7 @@
 #ifndef QCOM_HIDMA_H
 #define QCOM_HIDMA_H
 
+#include <linux/tasklet_types.h>
 #include <linux/kfifo.h>
 #include <linux/interrupt.h>
 #include <linux/dmaengine.h>

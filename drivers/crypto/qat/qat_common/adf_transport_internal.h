@@ -3,6 +3,7 @@
 #ifndef ADF_TRANSPORT_INTRN_H
 #define ADF_TRANSPORT_INTRN_H
 
+#include <linux/tasklet_types.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock_types.h>
 #include "adf_transport.h"

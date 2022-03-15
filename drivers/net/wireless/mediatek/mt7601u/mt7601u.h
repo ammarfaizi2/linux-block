@@ -7,6 +7,7 @@
 #ifndef MT7601U_H
 #define MT7601U_H
 
+#include <linux/tasklet_types.h>
 #include <linux/bitfield.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

@@ -6,6 +6,7 @@
 
 #ifndef	PEGASUS_DEV
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #define	PEGASUS_II		0x80000000

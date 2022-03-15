@@ -10,6 +10,7 @@
 #ifndef ZFCP_QDIO_H
 #define ZFCP_QDIO_H
 
+#include <linux/tasklet_types.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <asm/qdio.h>

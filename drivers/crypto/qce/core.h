@@ -6,6 +6,8 @@
 #ifndef _CORE_H_
 #define _CORE_H_
 
+#include <linux/tasklet_types.h>
+
 #include "dma.h"
 
 /**

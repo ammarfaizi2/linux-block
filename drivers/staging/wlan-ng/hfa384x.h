@@ -59,6 +59,7 @@
 
 #define HFA384x_FIRMWARE_VERSION(a, b, c) (((a) << 16) + ((b) << 8) + (c))
 
+#include <linux/tasklet_types.h>
 #include <linux/if_ether.h>
 #include <linux/usb.h>
 

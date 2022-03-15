@@ -7,6 +7,7 @@
 #ifndef LINUX_CB710_MMC_H
 #define LINUX_CB710_MMC_H
 
+#include <linux/tasklet_types.h>
 #include <linux/cb710.h>
 
 /* per-MMC-reader structure */

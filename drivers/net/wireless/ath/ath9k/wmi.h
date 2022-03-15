@@ -17,6 +17,7 @@
 #ifndef WMI_H
 #define WMI_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 struct wmi_event_txrate {

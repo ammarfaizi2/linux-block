@@ -14,6 +14,7 @@
 #ifndef TMIO_MMC_H
 #define TMIO_MMC_H
 
+#include <linux/tasklet_types.h>
 #include <linux/dmaengine.h>
 #include <linux/highmem.h>
 #include <linux/mutex.h>

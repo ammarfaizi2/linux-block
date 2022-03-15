@@ -11,6 +11,7 @@
 #ifndef __OTX_CPTVF_H
 #define __OTX_CPTVF_H
 
+#include <linux/tasklet_types.h>
 #include <linux/list.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>

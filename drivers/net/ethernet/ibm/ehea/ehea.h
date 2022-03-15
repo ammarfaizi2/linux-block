@@ -15,6 +15,7 @@
 #ifndef __EHEA_H__
 #define __EHEA_H__
 
+#include <linux/tasklet_types.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/ethtool.h>

@@ -43,6 +43,7 @@
 #ifndef _HE_H_
 #define _HE_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #define DEV_LABEL       "he"

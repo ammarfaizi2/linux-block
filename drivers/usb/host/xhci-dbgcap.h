@@ -9,6 +9,7 @@
 #ifndef __LINUX_XHCI_DBGCAP_H
 #define __LINUX_XHCI_DBGCAP_H
 
+#include <linux/tasklet_types.h>
 #include <linux/tty.h>
 #include <linux/kfifo.h>
 

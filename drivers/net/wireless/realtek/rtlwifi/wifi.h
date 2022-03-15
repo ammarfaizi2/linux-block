@@ -7,6 +7,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/tasklet_types.h>
 #include <linux/jiffies.h>
 #include <linux/sched.h>
 #include <linux/firmware.h>

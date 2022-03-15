@@ -18,6 +18,7 @@
 #ifndef _AT76_USB_H
 #define _AT76_USB_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 /* Board types */

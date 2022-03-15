@@ -9,6 +9,7 @@
 
 #define DRIVER_VERSION "0.15"
 
+#include <linux/tasklet_types.h>
 #include <linux/notifier_types.h>
 #include <linux/interrupt.h>
 #include <linux/suspend.h>

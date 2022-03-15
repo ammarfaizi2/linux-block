@@ -9,6 +9,7 @@
 #ifndef __DMA_FSLDMA_H
 #define __DMA_FSLDMA_H
 
+#include <linux/tasklet_types.h>
 #include <linux/device.h>
 #include <linux/dmapool.h>
 #include <linux/dmaengine.h>

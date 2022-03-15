@@ -4,6 +4,7 @@
 
 #include "b43legacy.h"
 
+#include <linux/tasklet_types.h>
 #include <linux/interrupt.h>
 #include <linux/list.h>
 #include <linux/skbuff.h>

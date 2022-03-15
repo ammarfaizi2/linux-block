@@ -44,6 +44,7 @@
 #define DASD_STATE_READY  4
 #define DASD_STATE_ONLINE 5
 
+#include <linux/tasklet_types.h>
 #include <linux/module.h>
 #include <linux/wait.h>
 #include <linux/blkdev.h>

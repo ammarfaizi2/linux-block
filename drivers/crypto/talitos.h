@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2006-2011 Freescale Semiconductor, Inc.
  */
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #define TALITOS_TIMEOUT 100000

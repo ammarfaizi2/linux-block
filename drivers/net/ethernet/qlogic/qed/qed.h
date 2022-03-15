@@ -7,6 +7,7 @@
 #ifndef _QED_H
 #define _QED_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 #include <linux/io.h>
 #include <linux/delay.h>

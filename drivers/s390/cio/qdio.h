@@ -7,6 +7,7 @@
 #ifndef _CIO_QDIO_H
 #define _CIO_QDIO_H
 
+#include <linux/tasklet_types.h>
 #include <asm/page.h>
 #include <asm/schid.h>
 #include <asm/debug.h>

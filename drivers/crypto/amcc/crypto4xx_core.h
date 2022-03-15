@@ -13,6 +13,7 @@
 #ifndef __CRYPTO4XX_CORE_H__
 #define __CRYPTO4XX_CORE_H__
 
+#include <linux/tasklet_types.h>
 #include <linux/ratelimit.h>
 #include <linux/mutex.h>
 #include <linux/scatterlist.h>

@@ -13,6 +13,7 @@
 #ifndef _MEGA_COMMON_H_
 #define _MEGA_COMMON_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/pci.h>

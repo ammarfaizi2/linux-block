@@ -8,6 +8,7 @@
 #ifndef __TSI721_H
 #define __TSI721_H
 
+#include <linux/tasklet_types.h>
 #include <linux/dev_printk.h>
 #include <linux/types.h>
 

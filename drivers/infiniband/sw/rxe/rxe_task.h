@@ -7,6 +7,7 @@
 #ifndef RXE_TASK_H
 #define RXE_TASK_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 enum {

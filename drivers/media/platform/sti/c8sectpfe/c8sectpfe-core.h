@@ -11,6 +11,7 @@
 #ifndef _C8SECTPFE_CORE_H_
 #define _C8SECTPFE_CORE_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #define C8SECTPFEI_MAXCHANNEL 16

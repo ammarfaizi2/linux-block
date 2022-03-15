@@ -11,6 +11,7 @@
 #ifndef __il_core_h__
 #define __il_core_h__
 
+#include <linux/tasklet_types.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

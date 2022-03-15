@@ -38,6 +38,7 @@
 #ifndef _LINUX_HP_SDC_H
 #define _LINUX_HP_SDC_H
 
+#include <linux/tasklet_types.h>
 #include <linux/interrupt.h>
 #include <linux/types.h>
 #include <linux/time.h>

@@ -14,6 +14,8 @@
 #ifndef _RTL871X_XMIT_H_
 #define _RTL871X_XMIT_H_
 
+#include <linux/tasklet_types.h>
+
 #include "osdep_service.h"
 #include "drv_types.h"
 #include "xmit_osdep.h"

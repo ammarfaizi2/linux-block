@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/tasklet_types.h>
 #include <linux/hil.h>
 #include <linux/time.h>
 #include <linux/interrupt.h>

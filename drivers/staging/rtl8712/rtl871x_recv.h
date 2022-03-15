@@ -2,6 +2,8 @@
 #ifndef _RTL871X_RECV_H_
 #define _RTL871X_RECV_H_
 
+#include <linux/tasklet_types.h>
+
 #include "osdep_service.h"
 #include "drv_types.h"
 

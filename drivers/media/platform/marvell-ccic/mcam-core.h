@@ -7,6 +7,7 @@
 #ifndef _MCAM_CORE_H
 #define _MCAM_CORE_H
 
+#include <linux/tasklet_types.h>
 #include <linux/list.h>
 #include <linux/clk-provider.h>
 #include <media/v4l2-common.h>
