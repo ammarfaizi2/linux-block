@@ -503,7 +503,7 @@ static bool srcu_readers_active(struct srcu_struct *ssp)
 
 #define SRCU_INTERVAL		1
 #define SRCU_MAX_INTERVAL	10
-#define SRCU_MAX_NODELAY	10
+#define SRCU_MAX_NODELAY	1
 
 /*
  * Return grace-period delay, zero if there are expedited grace
@@ -1449,6 +1449,7 @@ static void srcu_advance_state(struct srcu_struct *ssp)
 		srcu_flip(ssp);
 		spin_lock_irq_rcu_node(ssp);
 		rcu_seq_set_state(&ssp->srcu_gp_seq, SRCU_STATE_SCAN2);
+		ssp->srcu_n_exp_nodelay = 0;
 		spin_unlock_irq_rcu_node(ssp);
 	}
 
@@ -1463,6 +1464,7 @@ static void srcu_advance_state(struct srcu_struct *ssp)
 			mutex_unlock(&ssp->srcu_gp_mutex);
 			return; /* readers present, retry later. */
 		}
+		ssp->srcu_n_exp_nodelay = 0;
 		srcu_gp_end(ssp);  /* Releases ->srcu_gp_mutex. */
 	}
 }
@@ -1565,7 +1567,7 @@ static void process_srcu(struct work_struct *work)
 		j = jiffies;
 		if (READ_ONCE(ssp->reschedule_jiffies) == j) {
 			WRITE_ONCE(ssp->reschedule_count, READ_ONCE(ssp->reschedule_count) + 1);
-			WARN_ON_ONCE(READ_ONCE(ssp->reschedule_count) > 20);
+			WARN_ON_ONCE(READ_ONCE(ssp->reschedule_count) > 50);
 		} else {
 			WRITE_ONCE(ssp->reschedule_count, 1);
 			WRITE_ONCE(ssp->reschedule_jiffies, j);

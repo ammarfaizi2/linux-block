@@ -75,7 +75,7 @@ struct srcu_struct {
 	unsigned long srcu_last_gp_end;		/* Last GP end timestamp (ns) */
 	unsigned long srcu_size_jiffies;	/* Current contention-measurement interval. */
 	unsigned long srcu_n_lock_retries;	/* Contention events in current interval. */
-	unsigned long srcu_n_exp_nodelay;	/* Number of expedited no-delays in current GP. */
+	unsigned long srcu_n_exp_nodelay;	/* # expedited no-delays in current GP phase. */
 	struct srcu_data __percpu *sda;		/* Per-CPU srcu_data array. */
 	bool sda_is_static;			/* May ->sda be passed to free_percpu()? */
 	unsigned long srcu_barrier_seq;		/* srcu_barrier seq #. */
