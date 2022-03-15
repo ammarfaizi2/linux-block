@@ -2,6 +2,7 @@
 #ifndef _TRACE_SYSCALL_H
 #define _TRACE_SYSCALL_H
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/tracepoint.h>
 #include <linux/unistd.h>
 #include <linux/trace_events.h>
