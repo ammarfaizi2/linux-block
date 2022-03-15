@@ -5,6 +5,7 @@
 #ifndef WRITEBACK_H
 #define WRITEBACK_H
 
+#include <linux/timer.h>
 #include <linux/sched.h>
 #include <linux/workqueue.h>
 #include <linux/fs.h>
