@@ -5,6 +5,7 @@
  * Modified from arch/mips/pnx833x/common/prom.c.
  */
 
+#include <linux/string.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/memblock.h>

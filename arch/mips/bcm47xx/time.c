@@ -22,6 +22,7 @@
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/ssb/ssb.h>
 #include <asm/time.h>

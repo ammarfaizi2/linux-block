@@ -14,6 +14,7 @@
  * Authors:  Mitch Lichtenberg, Chris Demetriou
  */
 
+#include <linux/string.h>
 #include <asm/fw/cfe/cfe_api.h>
 #include "cfe_api_int.h"
 

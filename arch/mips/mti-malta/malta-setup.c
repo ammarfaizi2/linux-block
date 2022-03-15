@@ -4,6 +4,7 @@
  * Copyright (C) 2000 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2008 Dmitri Vorobiev
  */
+#include <linux/string.h>
 #include <linux/io.h>
 #include <linux/cpu.h>
 #include <linux/init.h>

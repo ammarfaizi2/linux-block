@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2009 Zhang Le <r0bertz@gentoo.org>
  */
+#include <linux/string.h>
 #include <linux/errno.h>
 #include <asm/bootinfo.h>
 

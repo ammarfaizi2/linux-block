@@ -6,6 +6,7 @@
  * and possibly other systems. Also allow for the gradual elimination of
  * outb_p/inb_p API uses.
  */
+#include <linux/string.h>
 #include <linux/cache.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

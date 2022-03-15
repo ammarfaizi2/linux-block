@@ -8,6 +8,7 @@
  * Copyright (C) 2001, 2004, 2011, 2012	 MIPS Technologies, Inc.
  */
 
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 

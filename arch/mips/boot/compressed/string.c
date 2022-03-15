@@ -5,6 +5,7 @@
  * Very small subset of simple string routines
  */
 
+#include <linux/string.h>
 #include <linux/compiler_attributes.h>
 #include <linux/types.h>
 

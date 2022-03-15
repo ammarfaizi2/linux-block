@@ -30,6 +30,7 @@
  * application start time.
  */
 
+#include <linux/string.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 

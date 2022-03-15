@@ -1,4 +1,5 @@
 /* Declare dependencies between CPUIDs */
+#include <linux/string.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

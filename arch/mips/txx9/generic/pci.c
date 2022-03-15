@@ -13,6 +13,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/string.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/capability.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2000 - 2001 by Kanoj Sarcar (kanoj@sgi.com)
  * Copyright (C) 2000 - 2001 by Silicon Graphics, Inc.
  */
+#include <linux/string.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>

@@ -107,6 +107,7 @@ wait_loop:
 
  */
 
+#include <linux/string.h>
 #include <asm/octeon/cvmx-boot-vector.h>
 
 static unsigned long long _cvmx_bootvector_data[16] = {

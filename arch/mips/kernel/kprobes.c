@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/string.h>
 #include <linux/sched/signal.h>
 #include <linux/kprobes.h>
 #include <linux/preempt.h>

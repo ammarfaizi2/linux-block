@@ -4,6 +4,7 @@
  * Copyright (C) 2010 John Crispin <john@phrozen.org>
  */
 
+#include <linux/string.h>
 #include <linux/export.h>
 #include <linux/clk.h>
 #include <linux/memblock.h>

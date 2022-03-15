@@ -5,6 +5,7 @@
  * Copyright (C) 1998 Harald Koerfgen, Frieder Streffer and Paul M. Antoine
  * Copyright (C) 2000, 2002  Maciej W. Rozycki
  */
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
  */
 
+#include <linux/string.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/init.h>

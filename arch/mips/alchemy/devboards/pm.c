@@ -5,6 +5,7 @@
  * (c) 2008 Manuel Lauss <mano@roarinelk.homelinux.net>
  */
 
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/kobject.h>
 #include <linux/suspend.h>

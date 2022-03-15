@@ -8,6 +8,7 @@
  * Copyright (C) 1996, 97, 98, 2000, 03, 04, 06 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2006,2007 Thomas Bogendoerfer (tsbogend@alpha.franken.de)
  */
+#include <linux/string.h>
 #include <linux/eisa.h>
 #include <linux/init.h>
 #include <linux/export.h>
