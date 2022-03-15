@@ -11,6 +11,7 @@
 #ifndef __UBIFS_DEBUG_H__
 #define __UBIFS_DEBUG_H__
 
+#include <linux/rwsem_api.h>
 #include <linux/types.h>
 
 /* Checking helper functions */

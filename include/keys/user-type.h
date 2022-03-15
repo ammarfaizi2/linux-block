@@ -8,6 +8,7 @@
 #ifndef _KEYS_USER_TYPE_H
 #define _KEYS_USER_TYPE_H
 
+#include <linux/rwsem_api.h>
 #include <linux/key.h>
 #include <linux/rcupdate.h>
 

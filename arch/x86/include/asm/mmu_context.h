@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_MMU_CONTEXT_H
 #define _ASM_X86_MMU_CONTEXT_H
 
+#include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <asm/desc.h>
 #include <linux/atomic.h>

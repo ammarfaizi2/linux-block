@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/rwsem_api.h>
 #include <linux/quota.h>
 #include <linux/dcache.h>
 #include <linux/reiserfs_xattr.h>

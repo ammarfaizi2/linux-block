@@ -4,6 +4,7 @@
  * licensing and copyright details
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math.h>
 #include <linux/bitmap.h>
