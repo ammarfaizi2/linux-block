@@ -14,6 +14,7 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2008
  */
 
+#include <net/ipv6_api.h>
 #include <linux/rculist.h>
 #include <linux/types.h>
 #include <linux/rcupdate.h>

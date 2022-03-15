@@ -13,6 +13,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>

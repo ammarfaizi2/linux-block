@@ -3,6 +3,7 @@
  * Copyright 2021 Marvell. All rights reserved.
  */
 
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

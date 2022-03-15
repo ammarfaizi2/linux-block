@@ -3,6 +3,7 @@
  * IPv6 library code, needed by static components when full IPv6 support is
  * not configured or static.
  */
+#include <net/ipv6_api.h>
 #include <linux/ipv6.h>
 #include <linux/export.h>
 #include <net/ipv6.h>

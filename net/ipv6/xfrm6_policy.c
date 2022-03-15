@@ -12,6 +12,7 @@
  *
  */
 
+#include <net/ipv6_api.h>
 #include <net/dst_ops_api.h>
 #include <net/dst_api.h>
 #include <linux/sysctl.h>

@@ -2,6 +2,7 @@
 /* Copyright(c) 2018 Oracle and/or its affiliates. All rights reserved. */
 
 #include "ixgbevf.h"
+#include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

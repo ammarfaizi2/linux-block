@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2014 Intel Mobile Communications GmbH
  * Copyright (C) 2015 Intel Deutschland GmbH
  */
+#include <net/ipv6_api.h>
 #include <net/ipv6.h>
 #include <net/addrconf.h>
 #include <linux/bitops.h>

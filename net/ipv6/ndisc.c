@@ -25,6 +25,7 @@
 
 #define pr_fmt(fmt) "ICMPv6: " fmt
 
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>

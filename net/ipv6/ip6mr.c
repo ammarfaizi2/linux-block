@@ -11,6 +11,7 @@
  *		YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
  */
 
+#include <net/ipv6_api.h>
 #include <net/ip_fib_api.h>
 #include <net/dst_api_tunnel.h>
 #include <net/dst_api.h>

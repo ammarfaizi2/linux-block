@@ -21,6 +21,7 @@
  *   of another (see nfs_lookup())
  */
 
+#include <net/ipv6_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/rculist.h>
 #include <linux/jiffies.h>

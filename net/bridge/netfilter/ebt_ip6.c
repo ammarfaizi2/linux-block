@@ -14,6 +14,7 @@
  *
  *  Jan, 2008
  */
+#include <net/ipv6_api.h>
 #include <linux/ipv6.h>
 #include <net/ipv6.h>
 #include <linux/in.h>

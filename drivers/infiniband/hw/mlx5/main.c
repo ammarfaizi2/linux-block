@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Intel Corporation. All rights reserved.
  */
 
+#include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

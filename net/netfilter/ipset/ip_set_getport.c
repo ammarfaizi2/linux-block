@@ -8,6 +8,7 @@
 
 /* Get Layer-4 data from the packets */
 
+#include <net/ipv6_api.h>
 #include <linux/ipv6.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>

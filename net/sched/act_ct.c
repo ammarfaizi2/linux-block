@@ -7,6 +7,7 @@
  *            Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
  */
 
+#include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2011, 2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <net/ipv6_api.h>
 #include <net/checksum.h>
 #include <linux/icmpv6.h>
 #include <linux/module.h>

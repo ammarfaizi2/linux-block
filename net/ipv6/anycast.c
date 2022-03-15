@@ -9,6 +9,7 @@
  *	based heavily on net/ipv6/mcast.c
  */
 
+#include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/rtnetlink.h>

@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <net/ipv6_api.h>
 #include <net/checksum.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>

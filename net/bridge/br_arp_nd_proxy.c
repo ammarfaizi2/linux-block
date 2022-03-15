@@ -9,6 +9,7 @@
  *	Roopa Prabhu <roopa@cumulusnetworks.com>
  */
 
+#include <net/ipv6_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>

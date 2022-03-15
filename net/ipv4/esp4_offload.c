@@ -9,6 +9,7 @@
  * ESP GRO support
  */
 
+#include <net/ipv6_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/skbuff.h>
 #include <linux/init.h>

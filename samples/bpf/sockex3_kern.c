@@ -4,6 +4,7 @@
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  */
+#include <net/ipv6_api.h>
 #include <uapi/linux/bpf.h>
 #include <uapi/linux/in.h>
 #include <uapi/linux/if.h>

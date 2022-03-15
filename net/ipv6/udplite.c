@@ -8,6 +8,7 @@
  *  Changes:
  *  Fixes:
  */
+#include <net/ipv6_api.h>
 #include <linux/export.h>
 #include <linux/proc_fs.h>
 #include "udp_impl.h"

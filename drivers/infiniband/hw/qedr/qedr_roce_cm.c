@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/etherdevice_api.h>

@@ -7,6 +7,7 @@
  *	Pedro Roque		<roque@di.fc.ul.pt>
  */
 
+#include <net/ipv6_api.h>
 #include <linux/seq_file.h>
 #include <linux/refcount_api.h>
 #include <linux/net.h>

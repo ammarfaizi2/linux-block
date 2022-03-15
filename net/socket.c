@@ -52,6 +52,7 @@
  *	Based upon Swansea University Computer Society NET3.039
  */
 
+#include <net/ipv6_api.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>

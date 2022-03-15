@@ -2,6 +2,7 @@
 /* Copyright(c) 2017 Oracle and/or its affiliates. All rights reserved. */
 
 #include "ixgbe.h"
+#include <net/ipv6_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>

@@ -9,6 +9,7 @@
  * Authors:	Lotsa people, from code originally in tcp
  */
 
+#include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>

@@ -22,6 +22,7 @@
  *		- MLDv2 support
  */
 
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>

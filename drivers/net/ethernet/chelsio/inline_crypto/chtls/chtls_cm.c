@@ -5,6 +5,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <net/ipv6_api.h>
 #include <net/inet_ecn.h>
 #include <net/dst_api.h>
 #include <linux/workqueue_api.h>

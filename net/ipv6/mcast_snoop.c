@@ -5,6 +5,7 @@
  * Based on the MLD support added to br_multicast.c by YOSHIFUJI Hideaki.
  */
 
+#include <net/ipv6_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/ipv6.h>
 #include <linux/skbuff.h>
