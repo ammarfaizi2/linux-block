@@ -8,6 +8,7 @@
 #ifndef _LINUX_SUNRPC_ADDR_H
 #define _LINUX_SUNRPC_ADDR_H
 
+#include <net/ipv6_api.h>
 #include <linux/socket.h>
 #include <linux/in.h>
 #include <linux/in6.h>

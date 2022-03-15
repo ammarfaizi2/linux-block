@@ -9,6 +9,7 @@
 #ifndef _BR_PRIVATE_H
 #define _BR_PRIVATE_H
 
+#include <net/ipv6_api.h>
 #include <linux/netlink.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

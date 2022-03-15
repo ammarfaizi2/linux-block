@@ -2,6 +2,7 @@
 #ifndef _NET_IP6_TUNNEL_H
 #define _NET_IP6_TUNNEL_H
 
+#include <net/ipv6_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/ipv6.h>
 #include <linux/netdevice.h>

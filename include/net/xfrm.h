@@ -2,6 +2,7 @@
 #ifndef _NET_XFRM_H
 #define _NET_XFRM_H
 
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/compiler.h>

@@ -7,6 +7,7 @@
 #if !defined(_MLX5_TC_TP_) || defined(TRACE_HEADER_MULTI_READ)
 #define _MLX5_TC_TP_
 
+#include <net/ipv6_api.h>
 #include <linux/tracepoint.h>
 #include <linux/trace_seq.h>
 #include <net/flow_offload.h>

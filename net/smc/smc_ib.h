@@ -12,6 +12,7 @@
 #ifndef _SMC_IB_H
 #define _SMC_IB_H
 
+#include <net/ipv6_api.h>
 #include <linux/tasklet_types.h>
 #include <linux/interrupt.h>
 #include <linux/if_ether.h>

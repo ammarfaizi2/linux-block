@@ -11,6 +11,7 @@
 #define __QETH_L3_H__
 
 #include "qeth_core.h"
+#include <net/ipv6_api.h>
 #include <linux/hashtable.h>
 
 enum qeth_ip_types {

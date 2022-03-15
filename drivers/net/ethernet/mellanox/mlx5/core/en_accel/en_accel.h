@@ -34,6 +34,7 @@
 #ifndef __MLX5E_EN_ACCEL_H__
 #define __MLX5E_EN_ACCEL_H__
 
+#include <net/ipv6_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/skbuff.h>

@@ -10,6 +10,7 @@
 #ifndef __QETH_CORE_H__
 #define __QETH_CORE_H__
 
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/refcount_api.h>
