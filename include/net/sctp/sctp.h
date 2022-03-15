@@ -40,6 +40,7 @@
  *   and will continue to evolve.
  */
 
+#include <net/sock_api.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/types.h>

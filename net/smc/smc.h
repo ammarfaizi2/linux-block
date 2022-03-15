@@ -11,6 +11,7 @@
 #ifndef __SMC_H
 #define __SMC_H
 
+#include <net/sock_api.h>
 #include <linux/tasklet_types.h>
 #include <linux/net.h>
 #include <linux/socket.h>
