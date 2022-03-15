@@ -13,6 +13,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/irq_api_gc_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/mm.h>

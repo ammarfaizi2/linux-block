@@ -2,6 +2,7 @@
 /*
  * Marvell Dove PMU support
  */
+#include <linux/irq_api_gc_lock.h>
 #include <linux/io.h>
 #include <linux/irq.h>
 #include <linux/irqdomain.h>
