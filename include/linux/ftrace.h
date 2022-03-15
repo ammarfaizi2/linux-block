@@ -7,6 +7,7 @@
 #ifndef _LINUX_FTRACE_H
 #define _LINUX_FTRACE_H
 
+#include <linux/smp_api.h>
 #include <linux/trace_recursion.h>
 #include <linux/sched/per_task.h>
 #include <linux/trace_clock.h>

@@ -11,6 +11,7 @@
 #ifndef _ASM_MMU_CONTEXT_H
 #define _ASM_MMU_CONTEXT_H
 
+#include <linux/smp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

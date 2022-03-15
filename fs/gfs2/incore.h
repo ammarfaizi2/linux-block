@@ -7,6 +7,7 @@
 #ifndef __INCORE_DOT_H__
 #define __INCORE_DOT_H__
 
+#include <linux/smp_api.h>
 #include <linux/fs.h>
 #include <linux/kobject.h>
 #include <linux/workqueue.h>

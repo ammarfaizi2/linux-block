@@ -7,6 +7,7 @@
 #ifndef _VIRTIO_CRYPTO_COMMON_H
 #define _VIRTIO_CRYPTO_COMMON_H
 
+#include <linux/smp_api.h>
 #include <linux/virtio.h>
 #include <linux/crypto.h>
 #include <linux/spinlock.h>

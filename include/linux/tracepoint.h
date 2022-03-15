@@ -12,6 +12,7 @@
  * Heavily inspired from the Linux Kernel Markers.
  */
 
+#include <linux/smp_api.h>
 #include <linux/smp.h>
 #include <linux/srcu.h>
 #include <linux/errno.h>

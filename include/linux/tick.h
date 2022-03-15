@@ -5,6 +5,7 @@
 #ifndef _LINUX_TICK_H
 #define _LINUX_TICK_H
 
+#include <linux/smp_api.h>
 #include <linux/ktime_api.h>
 #include <linux/clockchips.h>
 #include <linux/irqflags.h>
