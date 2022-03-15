@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>

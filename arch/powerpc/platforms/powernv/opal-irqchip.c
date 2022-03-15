@@ -7,6 +7,7 @@
  *
  * Copyright Alistair Popple, IBM Corporation 2014.
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

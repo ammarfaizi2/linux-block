@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2018 Christoph Hellwig.
  * All Rights Reserved.
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_page_address.h>

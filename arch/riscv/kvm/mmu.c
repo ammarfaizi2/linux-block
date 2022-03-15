@@ -6,6 +6,7 @@
  *     Anup Patel <anup.patel@wdc.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

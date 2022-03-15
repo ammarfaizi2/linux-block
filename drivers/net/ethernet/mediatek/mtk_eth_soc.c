@@ -6,6 +6,7 @@
  *   Copyright (C) 2013-2016 Michael Lee <igvtee@gmail.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/of_api.h>

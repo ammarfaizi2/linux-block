@@ -14,6 +14,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "fadump: " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

@@ -20,6 +20,7 @@
  * This code is GPL
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

@@ -6,6 +6,7 @@
  *
  *    Author(s): David Hildenbrand <dahi@linux.vnet.ibm.com>
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/radix-tree-api.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>

@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/ktime_api.h>
 #include <linux/init.h>
 #include <linux/ktime.h>
