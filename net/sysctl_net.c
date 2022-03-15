@@ -12,6 +12,7 @@
  *
  */
 
+#include <net/net_namespace.h>
 #include <net/net_namespace_api.h>
 #include <linux/sched.h>
 #include <linux/module.h>

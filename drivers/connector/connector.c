@@ -6,6 +6,7 @@
  * All rights reserved.
  */
 
+#include <net/net_namespace.h>
 #include <net/netlink_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
