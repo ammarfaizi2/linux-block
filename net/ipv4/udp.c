@@ -74,6 +74,7 @@
 
 #define pr_fmt(fmt) "UDP: " fmt
 
+#include <linux/udp_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/skbuff_api_extra.h>
