@@ -7,6 +7,7 @@
  *  (C) Neil Horman <nhorman@tuxdriver.com>
  */
 
+#include <linux/spinlock.h>
 #include <linux/spinlock_api.h>
 #include <crypto/internal/cipher.h>
 #include <crypto/internal/rng.h>
