@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
+#include <linux/vmstat.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>

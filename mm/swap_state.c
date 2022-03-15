@@ -7,6 +7,7 @@
  *
  *  Rewritten to use page cache, (C) 1998 Stephen Tweedie
  */
+#include <linux/vmstat.h>
 #include <linux/sysfs.h>
 #include <linux/swap_api_device.h>
 #include <linux/pgtable_api.h>

@@ -3,6 +3,7 @@
  * Generic hugetlb support.
  * (C) Nadia Yvette Chambers, April 2004
  */
+#include <linux/vmstat.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

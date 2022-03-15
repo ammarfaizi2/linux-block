@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/vmstat.h>
 #include <linux/mm_page_address.h>
 #include <linux/bvec_api.h>
 #include <asm/cacheflush.h>

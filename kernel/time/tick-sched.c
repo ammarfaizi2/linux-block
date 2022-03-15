@@ -8,6 +8,7 @@
  *
  *  Started by: Thomas Gleixner and Ingo Molnar
  */
+#include <linux/vmstat.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/softirq.h>

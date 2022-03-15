@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/vmstat.h>
 #include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

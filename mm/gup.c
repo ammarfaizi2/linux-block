@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/vmstat.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>

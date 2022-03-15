@@ -39,6 +39,7 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
+#include <linux/vmstat.h>
 #include <linux/topology.h>
 #include <linux/swap_api_device.h>
 #include <linux/spinlock_api.h>

@@ -8,6 +8,7 @@
  * Author: Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
+#include <linux/vmstat.h>
 #include <linux/mm_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
