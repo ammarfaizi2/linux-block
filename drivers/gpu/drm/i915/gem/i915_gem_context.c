@@ -64,6 +64,7 @@
  *
  */
 
+#include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>

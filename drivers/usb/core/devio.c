@@ -21,6 +21,7 @@
 
 /*****************************************************************************/
 
+#include <linux/pid.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

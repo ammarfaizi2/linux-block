@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/pid.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/kmod.h>
 #include <linux/fs.h>

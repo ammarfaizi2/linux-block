@@ -8,6 +8,7 @@
  *     Copyright IBM Corp. 2003, 2009
  */
 
+#include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

@@ -25,6 +25,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/pid.h>
 #include <linux/notifier_api.h>
 #include <linux/mm_api.h>
 #include <linux/capability.h>

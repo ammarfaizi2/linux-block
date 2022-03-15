@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/pid.h>
 #include <linux/kref_api.h>
 
 #include "msm_drv.h"

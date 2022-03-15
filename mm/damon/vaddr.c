@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "damon-va: " fmt
 
+#include <linux/pid.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

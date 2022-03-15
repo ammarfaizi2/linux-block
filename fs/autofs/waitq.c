@@ -4,6 +4,7 @@
  * Copyright 2001-2006 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>

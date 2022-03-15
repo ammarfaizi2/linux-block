@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  */
+#include <linux/pid.h>
 #include <linux/perf_event.h>
 #include <linux/perf_event_api.h>
 #include <linux/percpu.h>
