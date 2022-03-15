@@ -6,6 +6,7 @@
  *          for STMicroelectronics.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/types.h>
 

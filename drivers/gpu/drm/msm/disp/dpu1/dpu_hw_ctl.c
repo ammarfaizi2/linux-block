@@ -2,6 +2,7 @@
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/ktime_api.h>
 #include <linux/delay.h>

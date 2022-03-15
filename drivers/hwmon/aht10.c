@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Johannes Cornelis Draaijer
  */
 
+#include <linux/timekeeping.h>
 #include <linux/stat.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

@@ -7,6 +7,7 @@
  *              Takao Orito <orito.takao@socionext.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>

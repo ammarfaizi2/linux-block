@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>

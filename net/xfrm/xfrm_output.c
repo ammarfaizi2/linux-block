@@ -5,6 +5,7 @@
  * Copyright (c) 2007 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/net.h>

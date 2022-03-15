@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/timekeeping.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/mutex_api.h>
 #include <linux/highmem_extra.h>

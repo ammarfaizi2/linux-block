@@ -52,6 +52,7 @@
  *		- Support for STREAMON before QBUF
  *		- Support for control ioctls
  */
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

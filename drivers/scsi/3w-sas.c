@@ -50,6 +50,7 @@
    3.26.02.000 - Initial driver release.
 */
 
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

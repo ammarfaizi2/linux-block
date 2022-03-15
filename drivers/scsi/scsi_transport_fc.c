@@ -8,6 +8,7 @@
  *    statistics, and service functions...
  *    Add vports, etc
  */
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

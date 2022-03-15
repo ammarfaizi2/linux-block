@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2017 Helen Koike <helen.fornazier@gmail.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/math64.h>
 #include <linux/v4l2-mediabus.h>

@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) "rcu: " fmt
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/notifier.h>
 #include <linux/mutex_api.h>

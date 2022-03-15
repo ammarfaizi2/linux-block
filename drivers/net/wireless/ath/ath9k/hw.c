@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>

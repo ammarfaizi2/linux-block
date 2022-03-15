@@ -24,6 +24,7 @@
 
 #include "em28xx.h"
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

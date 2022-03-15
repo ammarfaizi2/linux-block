@@ -5,6 +5,7 @@
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

@@ -10,6 +10,7 @@
 #include "ratelimiter.h"
 #include "timers.h"
 
+#include <linux/timekeeping.h>
 #include <linux/rwsem_api.h>
 #include <linux/random.h>
 #include <linux/net.h>

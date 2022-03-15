@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/random.h>

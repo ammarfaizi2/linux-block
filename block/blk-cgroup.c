@@ -15,6 +15,7 @@
  * Copyright (C) 2015 Paolo Valente <paolo.valente@unimore.it>
  *                    Arianna Avanzini <avanzini.arianna@gmail.com>
  */
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched/thread_info_api.h>

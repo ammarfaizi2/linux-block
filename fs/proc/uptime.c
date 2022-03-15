@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/timekeeping.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/cpumask_api.h>

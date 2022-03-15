@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "PM: hibernation: " fmt
 
+#include <linux/timekeeping.h>
 #include <linux/swap.h>
 #include <linux/string.h>
 #include <linux/pgtable_api.h>

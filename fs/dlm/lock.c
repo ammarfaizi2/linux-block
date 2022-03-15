@@ -53,6 +53,7 @@
                                    R: do_xxxx()
    L: receive_xxxx_reply()     <-  R: send_xxxx_reply()
 */
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem.h>

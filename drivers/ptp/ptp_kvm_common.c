@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2017 Red Hat Inc.
  */
+#include <linux/timekeeping.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>

@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

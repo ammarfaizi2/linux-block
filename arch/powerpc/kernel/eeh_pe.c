@@ -9,6 +9,7 @@
  * Copyright Benjamin Herrenschmidt & Gavin Shan, IBM Corporation 2012.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/delay.h>

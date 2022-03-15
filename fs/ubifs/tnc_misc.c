@@ -15,6 +15,7 @@
  * putting it all in one file would make that file too big and unreadable.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/ktime_api.h>
 #include <linux/atomic_api.h>

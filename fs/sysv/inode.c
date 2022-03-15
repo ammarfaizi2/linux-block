@@ -22,6 +22,7 @@
  *  the superblock.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/ktime_api.h>

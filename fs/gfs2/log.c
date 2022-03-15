@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2007 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/rwsem_api.h>

@@ -15,6 +15,7 @@
  *		Alan Cox <alan@lxorguk.ukuu.org.uk>
  ****************************************************************************/
 
+#include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>

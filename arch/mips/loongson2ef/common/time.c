@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Lemote Inc.
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
+#include <linux/timekeeping.h>
 #include <asm/mc146818-time.h>
 #include <asm/time.h>
 #include <asm/hpet.h>

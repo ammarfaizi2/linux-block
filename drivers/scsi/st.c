@@ -20,6 +20,7 @@
 
 static const char *verstr = "20160209";
 
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

@@ -8,6 +8,7 @@
 
 #include "e1000.h"
 
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/math64.h>

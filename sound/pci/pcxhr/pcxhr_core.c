@@ -7,6 +7,7 @@
  * Copyright (c) 2004 by Digigram <alsa@digigram.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

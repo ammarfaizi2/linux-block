@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/ktime_api.h>
 #include <linux/fs_api.h>

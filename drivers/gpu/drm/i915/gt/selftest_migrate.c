@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/sched/task.h>
 #include <linux/math64.h>

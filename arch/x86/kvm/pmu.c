@@ -10,6 +10,7 @@
  *   Wei Huang    <wei@redhat.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/srcu.h>
 #include <linux/slab.h>
 #include <linux/perf_event_api.h>

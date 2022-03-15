@@ -7,6 +7,7 @@
  * Author: Vidya Sagar <vidyas@nvidia.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>

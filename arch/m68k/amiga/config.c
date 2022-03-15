@@ -12,6 +12,7 @@
  * Miscellaneous Amiga stuff
  */
 
+#include <linux/timekeeping.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

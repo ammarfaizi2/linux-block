@@ -22,6 +22,7 @@
 #include "../dccp.h"
 #include "ccid3.h"
 
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <asm/unaligned.h>

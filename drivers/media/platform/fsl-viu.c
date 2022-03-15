@@ -9,6 +9,7 @@
  *	     Anatolij Gustschin <agust@denx.de>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/poll.h>

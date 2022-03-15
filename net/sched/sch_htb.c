@@ -21,6 +21,7 @@
  *			fixed requeue routine
  *		and many others. thanks.
  */
+#include <linux/timekeeping.h>
 #include <linux/rtnetlink.h>
 #include <linux/rbtree_api.h>
 #include <linux/netdevice_api.h>

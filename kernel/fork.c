@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/timekeeping.h>
 #include <linux/syscalls_api.h>
 #include <linux/stackprotector.h>
 #include <linux/spinlock_api.h>

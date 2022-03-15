@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/timekeeping.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

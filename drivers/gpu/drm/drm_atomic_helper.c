@@ -25,6 +25,7 @@
  * Daniel Vetter <daniel.vetter@ffwll.ch>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

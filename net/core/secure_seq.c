@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/siphash_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

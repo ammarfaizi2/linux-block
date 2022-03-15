@@ -3,6 +3,7 @@
  * Copyright (C) 2005-2006 Micronas USA Inc.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

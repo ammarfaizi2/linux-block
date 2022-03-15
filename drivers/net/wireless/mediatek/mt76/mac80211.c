@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

@@ -4,6 +4,7 @@
  * Copyright 2008 Luotao Fu, kernel@pengutronix.de
  */
 
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

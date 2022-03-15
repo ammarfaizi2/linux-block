@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2012 Google, Inc
 
+#include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

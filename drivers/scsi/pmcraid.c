@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2008, 2009 PMC Sierra Inc
  */
+#include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

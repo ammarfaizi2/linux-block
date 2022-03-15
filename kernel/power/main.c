@@ -6,6 +6,7 @@
  * Copyright (c) 2003 Open Source Development Lab
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/syscalls_api.h>
 #include <linux/rwsem_api.h>

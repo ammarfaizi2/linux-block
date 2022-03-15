@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>

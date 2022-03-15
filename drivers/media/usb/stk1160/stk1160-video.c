@@ -10,6 +10,7 @@
  *	<rmthomas--a.t--sciolus.org>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/usb.h>

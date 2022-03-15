@@ -20,6 +20,7 @@
  *   Copyright (C) 1991, 1992 Linux Torvalds
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/mutex_api.h>

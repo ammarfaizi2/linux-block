@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/sysctl.h>
 #include <linux/syscalls_api.h>

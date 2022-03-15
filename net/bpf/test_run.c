@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2017 Facebook
  */
+#include <linux/timekeeping.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>

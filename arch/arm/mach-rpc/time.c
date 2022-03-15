@@ -10,6 +10,7 @@
  *   04-Dec-1997	RMK	Updated for new arch/arm/time.c
  *   13=Jun-2004	DS	Moved to arch/arm/common b/c shared w/CLPS7500
  */
+#include <linux/timekeeping.h>
 #include <linux/clocksource.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

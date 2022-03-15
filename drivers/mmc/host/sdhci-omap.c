@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

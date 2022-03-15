@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/delay.h>
 #include <linux/gfp.h>

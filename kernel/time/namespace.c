@@ -4,6 +4,7 @@
  * Author: Dmitry Safonov <dima@arista.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

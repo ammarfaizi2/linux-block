@@ -3,6 +3,7 @@
  * Copyright © 2017-2018 Intel Corporation
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/radix-tree-api.h>

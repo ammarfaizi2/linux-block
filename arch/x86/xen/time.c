@@ -8,6 +8,7 @@
  *
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/smp_api.h>
 #include <linux/preempt.h>

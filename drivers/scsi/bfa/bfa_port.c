@@ -8,6 +8,8 @@
  * Linux driver for QLogic BR-series Fibre Channel Host Bus Adapter.
  */
 
+#include <linux/timekeeping.h>
+
 #include "bfad_drv.h"
 #include "bfa_defs_svc.h"
 #include "bfa_port.h"

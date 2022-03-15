@@ -7,6 +7,7 @@
  *	    Rajmohan Mani <rajmohan.mani@intel.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/string.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>

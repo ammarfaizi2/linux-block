@@ -3,6 +3,7 @@
  *  Copyright 2007-2008 Pierre Ossman
  */
 
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

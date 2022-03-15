@@ -7,6 +7,7 @@
 //
 // Author: Liam Girdwood <lrg@slimlogic.co.uk>
 
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>

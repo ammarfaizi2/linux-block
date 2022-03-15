@@ -10,6 +10,7 @@
  *      Dane Wagner <dane.wagner@ni.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

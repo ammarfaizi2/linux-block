@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2020 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>

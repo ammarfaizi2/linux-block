@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Oracle.  All rights reserved.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/percpu_counter_api.h>

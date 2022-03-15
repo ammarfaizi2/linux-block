@@ -11,6 +11,7 @@
  * special parameter blocks..
  */
 
+#include <linux/timekeeping.h>
 #include <linux/syscalls_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/task.h>

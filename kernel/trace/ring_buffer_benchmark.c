@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2009 Steven Rostedt <srostedt@redhat.com>
  */
+#include <linux/timekeeping.h>
 #include <linux/smp_api.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2017 Mentor Graphics Inc.
  * Copyright (C) 2017 Pengutronix, Philipp Zabel <kernel@pengutronix.de>
  */
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

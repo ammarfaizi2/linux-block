@@ -7,6 +7,7 @@
  *  This file contains the HP300-specific time handling code.
  */
 
+#include <linux/timekeeping.h>
 #include <asm/ptrace.h>
 #include <linux/clocksource.h>
 #include <linux/types.h>

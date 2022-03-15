@@ -58,6 +58,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

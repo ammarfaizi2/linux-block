@@ -57,6 +57,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/types.h>
 #include <linux/jiffies.h>

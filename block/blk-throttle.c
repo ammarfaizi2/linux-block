@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Vivek Goyal <vgoyal@redhat.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

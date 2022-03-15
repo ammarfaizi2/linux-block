@@ -9,6 +9,7 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/preempt.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

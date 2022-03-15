@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/slab.h>
 #include <linux/seqlock_api.h>

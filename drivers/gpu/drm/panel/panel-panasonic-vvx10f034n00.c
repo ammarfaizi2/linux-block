@@ -7,6 +7,7 @@
  * Based on AUO panel driver by Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

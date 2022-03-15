@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ACPI: button: " fmt
 
+#include <linux/timekeeping.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>
 #include <linux/device/driver.h>

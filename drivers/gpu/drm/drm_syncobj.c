@@ -183,6 +183,7 @@
  * point 0 to mean take/replace the fence in the syncobj.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

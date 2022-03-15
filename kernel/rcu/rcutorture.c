@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/softirq.h>
 #include <linux/sched/thread_info_api.h>

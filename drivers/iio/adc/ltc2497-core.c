@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Analog Devices Inc.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>

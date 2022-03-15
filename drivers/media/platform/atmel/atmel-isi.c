@@ -8,6 +8,7 @@
  * Based on the bttv driver for Bt848 with respective copyright holders
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

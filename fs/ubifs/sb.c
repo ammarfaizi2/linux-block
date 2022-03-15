@@ -15,6 +15,7 @@
  */
 
 #include "ubifs.h"
+#include <linux/timekeeping.h>
 #include <linux/stat.h>
 #include <linux/ktime_api.h>
 #include <linux/slab.h>

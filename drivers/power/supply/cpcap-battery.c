@@ -18,6 +18,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/math64.h>

@@ -9,6 +9,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>

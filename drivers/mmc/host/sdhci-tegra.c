@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Google, Inc.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/property.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>

@@ -25,6 +25,7 @@
 #include "hyperv.h"
 #include "xen.h"
 
+#include <linux/timekeeping.h>
 #include <linux/srcu.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>

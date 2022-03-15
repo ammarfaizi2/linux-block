@@ -9,6 +9,7 @@
  * - Melexis MLX90640 Thermal Cameras
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>

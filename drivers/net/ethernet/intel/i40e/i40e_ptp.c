@@ -2,6 +2,7 @@
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
 #include "i40e.h"
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

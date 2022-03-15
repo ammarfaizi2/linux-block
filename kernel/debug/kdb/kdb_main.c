@@ -11,6 +11,7 @@
  * Copyright (c) 2009 Wind River Systems, Inc.  All Rights Reserved.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/syscalls_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched/thread_info_api.h>

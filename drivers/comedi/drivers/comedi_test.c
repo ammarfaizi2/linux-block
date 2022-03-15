@@ -44,6 +44,7 @@
  * zero volts).
  */
 
+#include <linux/timekeeping.h>
 #include <linux/preempt.h>
 #include <linux/ktime_api.h>
 #include <linux/interrupt.h>

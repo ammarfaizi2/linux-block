@@ -8,6 +8,7 @@
  * Setup code for the SWARM board
  */
 
+#include <linux/timekeeping.h>
 #include <linux/io.h>
 #include <linux/spinlock.h>
 #include <linux/mm.h>

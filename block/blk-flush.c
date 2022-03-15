@@ -63,6 +63,7 @@
  * merged in the usual way.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>

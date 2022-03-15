@@ -13,6 +13,7 @@
  * Vojtech Pavlik, Simunkova 1594, Prague 8, 182 00 Czech Republic
  */
 
+#include <linux/timekeeping.h>
 #include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/ktime_api.h>
