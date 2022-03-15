@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/uaccess.h>
 #include <linux/srcu.h>
 #include <linux/slab.h>
 #include <linux/radix-tree-api.h>

@@ -5,6 +5,7 @@
  *  Routines for OPL2/OPL3/OPL4 control
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/export.h>
 #include <linux/nospec.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2004-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT "pkey"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/uaccess.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/init.h>

@@ -4,6 +4,7 @@
 //
 // Author: Daniel Baluta <daniel.baluta@nxp.com>
 
+#include <linux/uaccess.h>
 #include <sound/soc.h>
 #include <sound/sof.h>
 #include <sound/compress_driver.h>

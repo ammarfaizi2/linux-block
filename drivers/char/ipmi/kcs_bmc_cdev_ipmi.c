@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "kcs-bmc: " fmt
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem.h>
 #include <linux/mutex_api.h>

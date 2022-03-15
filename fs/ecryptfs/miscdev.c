@@ -6,6 +6,7 @@
  *   Author(s): Michael A. Halcrow <mhalcrow@us.ibm.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

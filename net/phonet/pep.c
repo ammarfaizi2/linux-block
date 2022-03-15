@@ -9,6 +9,7 @@
  * Author: Rémi Denis-Courmont
  */
 
+#include <linux/uaccess.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/net.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Avionic Design GmbH
  */
 
+#include <linux/uaccess.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

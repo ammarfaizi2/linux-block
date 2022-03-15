@@ -5,6 +5,8 @@
 
  */
 
+#include <linux/uaccess.h>
+
 #include "ivtv-driver.h"
 #include "ivtv-i2c.h"
 #include "ivtv-ioctl.h"

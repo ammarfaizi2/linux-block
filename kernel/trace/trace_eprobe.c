@@ -9,6 +9,7 @@
  * Copyright (C) 2021, VMware Inc, Tzvetomir Stoyanov tz.stoyanov@gmail.com>
  *
  */
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/rculist.h>

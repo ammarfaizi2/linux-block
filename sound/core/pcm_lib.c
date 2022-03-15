@@ -5,6 +5,7 @@
  *                   Abramo Bagnara <abramo@alsa-project.org>
  */
 
+#include <linux/uaccess.h>
 #include <linux/time64_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

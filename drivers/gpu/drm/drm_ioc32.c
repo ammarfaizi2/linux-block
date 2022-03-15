@@ -27,6 +27,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/kdev_t.h>
 #include <linux/fs.h>

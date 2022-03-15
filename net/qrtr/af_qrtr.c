@@ -3,6 +3,7 @@
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>

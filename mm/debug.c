@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/uaccess.h>
 #include <linux/tracepoint.h>
 #include <linux/pagemap.h>
 #include <linux/mmzone_api.h>

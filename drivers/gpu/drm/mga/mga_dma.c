@@ -35,6 +35,7 @@
  * \author Gareth Hughes <gareth@valinux.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/io.h>

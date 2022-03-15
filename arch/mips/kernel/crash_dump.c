@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/uaccess.h>
 #include <linux/string.h>
 #include <linux/highmem.h>
 #include <linux/crash_dump.h>

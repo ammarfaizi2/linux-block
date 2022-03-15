@@ -12,6 +12,7 @@
  *	James Morris <jmorris@redhat.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>

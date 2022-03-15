@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) "dvb_ca_en50221: " fmt
 
+#include <linux/uaccess.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/poll.h>

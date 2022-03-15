@@ -21,6 +21,7 @@
  *
  *
  */
+#include <linux/uaccess.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/pm_runtime.h>

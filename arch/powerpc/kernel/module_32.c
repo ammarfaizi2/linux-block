@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/uaccess.h>
 #include <linux/module.h>
 #include <linux/moduleloader.h>
 #include <linux/elf.h>

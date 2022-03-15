@@ -6,6 +6,7 @@
 
 /* This file is included from hwdep.c */
 
+#include <linux/uaccess.h>
 #include <linux/fs.h>
 #include <linux/compat.h>
 

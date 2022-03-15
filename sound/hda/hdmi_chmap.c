@@ -3,6 +3,7 @@
  * HDMI Channel map support helpers
  */
 
+#include <linux/uaccess.h>
 #include <linux/module.h>
 #include <sound/control.h>
 #include <sound/tlv.h>

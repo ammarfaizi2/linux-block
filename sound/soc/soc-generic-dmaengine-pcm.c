@@ -3,6 +3,7 @@
 //  Copyright (C) 2013, Analog Devices Inc.
 //	Author: Lars-Peter Clausen <lars@metafoo.de>
 
+#include <linux/uaccess.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/dmaengine.h>

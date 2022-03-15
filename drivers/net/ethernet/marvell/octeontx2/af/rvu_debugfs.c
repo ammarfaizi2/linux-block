@@ -7,6 +7,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/mutex_api.h>

@@ -31,6 +31,7 @@
  *		Changed API to V4L2
  */
 
+#include <linux/uaccess.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -11,6 +11,7 @@
 // for firmware debugging.
 //
 
+#include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/ktime_api.h>

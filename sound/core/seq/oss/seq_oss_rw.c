@@ -11,6 +11,7 @@
 #include "seq_oss_readq.h"
 #include "seq_oss_writeq.h"
 #include "seq_oss_synth.h"
+#include <linux/uaccess.h>
 #include <linux/sched/signal.h>
 #include <linux/io.h>
 #include <sound/seq_oss_legacy.h>

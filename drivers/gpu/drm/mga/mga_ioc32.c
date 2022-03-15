@@ -31,6 +31,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/kdev_t.h>
 #include <linux/fs.h>

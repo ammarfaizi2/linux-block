@@ -4,6 +4,7 @@
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>

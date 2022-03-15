@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <linux/uaccess.h>
 #include <linux/capability.h>
 
 #include "gem/i915_gem_mman.h"

@@ -5,6 +5,7 @@
  * Copyright (c) 2007 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/uaccess.h>
 #include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/slab.h>

@@ -6,6 +6,7 @@
  *  EMU10K1 memory page allocation (PTB area)
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/pci.h>

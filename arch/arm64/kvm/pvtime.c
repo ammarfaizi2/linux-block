@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2019 Arm Ltd.
 
+#include <linux/uaccess.h>
 #include <linux/srcu.h>
 #include <linux/arm-smccc.h>
 #include <linux/kvm_host.h>

@@ -12,6 +12,7 @@
  * Base Functions
  */
 
+#include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

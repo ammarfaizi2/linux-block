@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

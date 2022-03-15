@@ -12,6 +12,7 @@
 #define KMSG_COMPONENT "trng"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>

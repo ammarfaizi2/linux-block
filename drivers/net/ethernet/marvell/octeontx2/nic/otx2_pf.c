@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/pgtable_api.h>

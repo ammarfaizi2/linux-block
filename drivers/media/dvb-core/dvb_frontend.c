@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) "dvb_frontend: " fmt
 
+#include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

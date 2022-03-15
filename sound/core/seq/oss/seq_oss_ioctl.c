@@ -7,6 +7,7 @@
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/uaccess.h>
 #include <linux/sched/signal.h>
 #include <linux/io.h>
 

@@ -5,6 +5,8 @@
 
  */
 
+#include <linux/uaccess.h>
+
 #include "global.h"
 
 int viafb_ioctl_get_viafb_info(u_long arg)

@@ -6,6 +6,7 @@
  *
  * This file contains date handling.
  */
+#include <linux/uaccess.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

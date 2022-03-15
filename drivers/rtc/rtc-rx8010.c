@@ -6,6 +6,7 @@
  * Copyright(C) General Electric Company 2015
  */
 
+#include <linux/uaccess.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>

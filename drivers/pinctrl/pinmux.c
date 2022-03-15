@@ -12,6 +12,7 @@
  */
 #define pr_fmt(fmt) "pinmux core: " fmt
 
+#include <linux/uaccess.h>
 #include <linux/radix-tree-api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

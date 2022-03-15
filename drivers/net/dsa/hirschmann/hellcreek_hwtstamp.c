@@ -9,6 +9,7 @@
  *	    Kurt Kanzenbach <kurt@linutronix.de>
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>

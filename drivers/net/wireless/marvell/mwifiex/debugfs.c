@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/gfp_api.h>

@@ -18,6 +18,7 @@
 
 #include "cpia2.h"
 
+#include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>

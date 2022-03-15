@@ -14,6 +14,7 @@
 #include "global2.h"
 #include "hwtstamp.h"
 #include "ptp.h"
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>

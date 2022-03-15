@@ -9,6 +9,7 @@
  * Maxim Gorbachyov <maxim.gorbachev@siemens.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

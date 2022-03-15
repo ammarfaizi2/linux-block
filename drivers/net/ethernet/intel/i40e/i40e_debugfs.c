@@ -3,6 +3,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

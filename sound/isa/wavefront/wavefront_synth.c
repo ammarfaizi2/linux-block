@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

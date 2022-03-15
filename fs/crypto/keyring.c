@@ -18,6 +18,7 @@
  * information about these ioctls.
  */
 
+#include <linux/uaccess.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

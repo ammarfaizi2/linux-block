@@ -21,6 +21,7 @@
  * including ioctls to map and unmap acceleration parameters and buffers.
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/idr_api.h>

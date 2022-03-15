@@ -3,6 +3,7 @@
  * (C) 1997 Linus Torvalds
  * (C) 1999 Andrea Arcangeli <andrea@suse.de> (dynamic inode allocation)
  */
+#include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/sysctl.h>

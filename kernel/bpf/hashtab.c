@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  */
+#include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>

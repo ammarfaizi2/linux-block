@@ -3,6 +3,7 @@
  * Copyright 2018-2020 Broadcom.
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

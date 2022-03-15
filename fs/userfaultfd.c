@@ -10,6 +10,7 @@
  *  mm/ksm.c (mm hashing).
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched.h>

@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT	"cpum_cf"
 #define pr_fmt(fmt)	KMSG_COMPONENT ": " fmt
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>

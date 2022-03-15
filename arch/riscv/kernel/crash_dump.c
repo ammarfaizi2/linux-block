@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Linaro Limited
  */
 
+#include <linux/uaccess.h>
 #include <linux/crash_dump.h>
 #include <linux/io.h>
 

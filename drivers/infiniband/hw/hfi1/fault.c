@@ -3,6 +3,7 @@
  * Copyright(c) 2018 Intel Corporation.
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

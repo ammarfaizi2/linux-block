@@ -6,6 +6,7 @@
  * Copyright (c) 2006-2009, Intel Corporation
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>

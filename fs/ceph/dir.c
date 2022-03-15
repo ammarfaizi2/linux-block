@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/pagemap.h>

@@ -3,6 +3,7 @@
  *
  * Copyright (C) Intel Corporation 2017
  */
+#include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <asm/segment_api.h>
 #include <asm/ptrace.h>

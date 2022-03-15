@@ -5,6 +5,7 @@
  * test virtio server in host kernel.
  */
 
+#include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/compat.h>

@@ -10,6 +10,7 @@
 
 /* Mixer Controls */
 
+#include <linux/uaccess.h>
 #include <linux/pm_runtime.h>
 #include <linux/leds.h>
 #include "sof-priv.h"

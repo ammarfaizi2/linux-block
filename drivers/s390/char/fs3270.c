@@ -8,6 +8,7 @@
  *     Copyright IBM Corp. 2003, 2009
  */
 
+#include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>

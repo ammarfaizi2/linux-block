@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  * - Better memory allocation techniques?
  * - Alternative access techniques?
  */
+#include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

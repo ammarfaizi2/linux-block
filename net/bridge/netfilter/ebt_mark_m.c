@@ -8,6 +8,7 @@
  *  July, 2002
  *
  */
+#include <linux/uaccess.h>
 #include <linux/module.h>
 #include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_bridge/ebtables.h>
