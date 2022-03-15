@@ -5,6 +5,7 @@
  */
 #ifndef _LINUX_RESOURCE_EXT_H
 #define _LINUX_RESOURCE_EXT_H
+#include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/ioport.h>

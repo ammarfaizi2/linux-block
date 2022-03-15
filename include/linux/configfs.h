@@ -19,6 +19,7 @@
 #ifndef _CONFIGFS_H_
 #define _CONFIGFS_H_
 
+#include <linux/kernel.h>
 #include <linux/build_bug.h>
 #include <linux/stat.h>   /* S_IRUGO */
 #include <linux/types.h>  /* ssize_t */

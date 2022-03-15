@@ -25,6 +25,7 @@
 #ifndef __I915_GEM_H__
 #define __I915_GEM_H__
 
+#include <linux/kernel.h>
 #include <linux/bug.h>
 #include <linux/interrupt.h>
 

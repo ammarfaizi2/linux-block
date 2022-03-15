@@ -6,6 +6,7 @@
 #ifndef __I915_TTM_BUDDY_MANAGER_H__
 #define __I915_TTM_BUDDY_MANAGER_H__
 
+#include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/types.h>
 

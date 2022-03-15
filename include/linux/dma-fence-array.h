@@ -12,6 +12,7 @@
 #ifndef __LINUX_DMA_FENCE_ARRAY_H
 #define __LINUX_DMA_FENCE_ARRAY_H
 
+#include <linux/kernel.h>
 #include <linux/dma-fence.h>
 #include <linux/irq_work.h>
 
