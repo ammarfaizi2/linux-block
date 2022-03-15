@@ -5,6 +5,7 @@
  *  Copyright (C)
  */
 
+#include <linux/writeback_api.h>
 #include <linux/vmstat.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

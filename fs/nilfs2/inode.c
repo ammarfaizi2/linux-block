@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/writeback_api.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

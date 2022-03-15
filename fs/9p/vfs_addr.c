@@ -6,6 +6,7 @@
  *  Copyright (C) 2002 by Ron Minnich <rminnich@lanl.gov>
  */
 
+#include <linux/writeback_api.h>
 #include <linux/uio_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/refcount_api.h>

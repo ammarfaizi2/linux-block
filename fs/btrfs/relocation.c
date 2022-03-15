@@ -3,6 +3,7 @@
  * Copyright (C) 2009 Oracle.  All rights reserved.
  */
 
+#include <linux/writeback_api.h>
 #include <linux/wait_bit.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>

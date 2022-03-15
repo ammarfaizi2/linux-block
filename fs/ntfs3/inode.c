@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/writeback_api.h>
 #include <linux/uio_api.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>

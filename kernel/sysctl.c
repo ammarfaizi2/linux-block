@@ -19,6 +19,7 @@
  *  Removed it and replaced it with older style, 03/23/00, Bill Wendling
  */
 
+#include <linux/writeback_api.h>
 #include <linux/vfs_pressure.h>
 #include <linux/utsname.h>
 #include <linux/sched.h>

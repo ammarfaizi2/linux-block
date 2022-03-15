@@ -4,6 +4,7 @@
  * Copyright (C) 2001  Andrea Arcangeli <andrea@suse.de> SuSE
  * Copyright (C) 2016 - 2020 Christoph Hellwig
  */
+#include <linux/writeback_api.h>
 #include <linux/uio_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

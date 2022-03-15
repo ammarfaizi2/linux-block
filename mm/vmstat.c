@@ -10,6 +10,7 @@
  *		Christoph Lameter <christoph@lameter.com>
  *  Copyright (C) 2008-2014 Christoph Lameter
  */
+#include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/sysctl.h>
