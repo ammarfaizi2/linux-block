@@ -2,6 +2,7 @@
 #ifndef __LINUX_COOKIE_H
 #define __LINUX_COOKIE_H
 
+#include <asm/local_api.h>
 #include <linux/atomic.h>
 #include <linux/percpu.h>
 #include <asm/local.h>
