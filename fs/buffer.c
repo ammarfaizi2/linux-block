@@ -19,6 +19,7 @@
  * async buffer flushing, 1999 Andrea Arcangeli <andrea@suse.de>
  */
 
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/ratelimit.h>
 #include <linux/pagemap.h>

@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>

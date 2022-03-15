@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
+#include <linux/sched/task.h>
 #include <linux/ptrace_api.h>
 #include <linux/module.h>
 #include <linux/version.h>

@@ -13,6 +13,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/ktime_api.h>

@@ -3,6 +3,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/sched/task.h>
 #include <linux/interrupt.h>
 #include <linux/workqueue.h>
 #include <linux/sched.h>

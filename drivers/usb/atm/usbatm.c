@@ -50,6 +50,7 @@
 
 #include "usbatm.h"
 
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/netdevice_api.h>

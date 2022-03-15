@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2016 Nobuo Iwata
  */
 
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kthread.h>

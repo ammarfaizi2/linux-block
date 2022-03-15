@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/sched/task.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>

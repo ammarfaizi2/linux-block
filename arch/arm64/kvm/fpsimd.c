@@ -5,6 +5,7 @@
  * Copyright 2018 Arm Limited
  * Author: Dave Martin <Dave.Martin@arm.com>
  */
+#include <linux/sched/task.h>
 #include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/kvm_host.h>
