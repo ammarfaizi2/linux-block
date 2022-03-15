@@ -2,6 +2,7 @@
 /*
  * Interrupt descriptor table related code
  */
+#include <linux/sched/task_stack.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>

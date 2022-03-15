@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/sched/task_stack.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>

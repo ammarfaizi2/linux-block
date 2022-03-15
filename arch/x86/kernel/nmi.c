@@ -11,6 +11,7 @@
 /*
  * Handle hardware traps and faults.
  */
+#include <linux/sched/task_stack.h>
 #include <linux/rculist.h>
 #include <linux/preempt.h>
 #include <linux/io.h>
