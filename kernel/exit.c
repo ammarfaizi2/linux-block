@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/cgroup_api.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/atomic_api.h>
 #include <linux/rcu_internal.h>

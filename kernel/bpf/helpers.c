@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  */
+#include <linux/cgroup_api.h>
 #include <linux/capability.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/atomic_api.h>
