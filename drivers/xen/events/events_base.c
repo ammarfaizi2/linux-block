@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>

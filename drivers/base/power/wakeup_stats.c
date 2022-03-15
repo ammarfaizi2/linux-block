@@ -7,6 +7,7 @@
  * Copyright (c) 2019 Google Inc.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/device.h>

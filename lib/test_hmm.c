@@ -5,6 +5,7 @@
  * Userspace programs can register with the driver to mirror their own address
  * space and can use the device to read/write any valid virtual address.
  */
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/highmem_extra.h>

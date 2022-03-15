@@ -13,6 +13,7 @@
  * Giuseppe De Robertis <Giuseppe.DeRobertis@ba.infn.it>
  * Gary Chen & Ch Hsu Storlink Semiconductor
  */
+#include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>

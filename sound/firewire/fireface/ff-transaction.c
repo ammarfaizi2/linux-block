@@ -5,6 +5,8 @@
  * Copyright (c) 2015-2017 Takashi Sakamoto
  */
 
+#include <linux/ktime_api.h>
+
 #include "ff.h"
 
 static void finish_transmit_midi_msg(struct snd_ff *ff, unsigned int port,

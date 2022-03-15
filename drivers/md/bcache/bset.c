@@ -11,6 +11,7 @@
 #include "util.h"
 #include "bset.h"
 
+#include <linux/ktime_api.h>
 #include <linux/gfp_api.h>
 #include <linux/console.h>
 #include <linux/sched/clock.h>

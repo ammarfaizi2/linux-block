@@ -5,6 +5,7 @@
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

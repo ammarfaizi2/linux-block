@@ -18,6 +18,7 @@
  * the mutex locked.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/atomic_api.h>
 #include <linux/crc32.h>
 #include <linux/slab.h>

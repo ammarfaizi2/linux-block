@@ -10,6 +10,7 @@
  * Since rtnetlink, no real bus is used.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/hrtimer_api.h>
 #include <net/sock.h>

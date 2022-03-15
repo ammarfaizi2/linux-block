@@ -3,6 +3,7 @@
  * Copyright (C) 2011, 2012 STRATO.  All rights reserved.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/gfp_api.h>
 #include <linux/crc32.h>
 #include <linux/bitmap.h>

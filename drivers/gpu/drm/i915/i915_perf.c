@@ -191,6 +191,7 @@
  *   with the rest of the i915 driver.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>

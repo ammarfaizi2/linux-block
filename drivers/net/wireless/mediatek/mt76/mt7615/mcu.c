@@ -5,6 +5,7 @@
  *         Ryder Lee <ryder.lee@mediatek.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/firmware.h>

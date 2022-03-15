@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (C) 2014-2018 Broadcom */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>

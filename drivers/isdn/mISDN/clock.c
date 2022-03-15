@@ -24,6 +24,7 @@
  * counts the number of samples since. Time since last clock event is added.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/stddef.h>

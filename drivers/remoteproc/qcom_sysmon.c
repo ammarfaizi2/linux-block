@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2017, Linaro Ltd.
  */
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/firmware.h>
 #include <linux/module.h>

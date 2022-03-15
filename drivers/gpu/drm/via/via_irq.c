@@ -35,6 +35,7 @@
  * The refresh rate is also calculated for video playback sync purposes.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_device.h>
 #include <drm/drm_vblank.h>

@@ -10,6 +10,7 @@
 /*
  */
 
+#include <linux/ktime_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

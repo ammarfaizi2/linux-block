@@ -11,6 +11,7 @@
  * to 100us to include some safety margin.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

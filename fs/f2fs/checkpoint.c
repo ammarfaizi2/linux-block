@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/ktime_api.h>
 #include <linux/ioprio.h>
 #include <linux/iocontext.h>
 #include <linux/fs_api.h>

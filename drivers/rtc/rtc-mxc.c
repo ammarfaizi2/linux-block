@@ -2,6 +2,7 @@
 //
 // Copyright 2004-2008 Freescale Semiconductor, Inc. All Rights Reserved.
 
+#include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/rtc.h>

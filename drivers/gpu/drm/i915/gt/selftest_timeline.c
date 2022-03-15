@@ -3,6 +3,7 @@
  * Copyright © 2017-2018 Intel Corporation
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

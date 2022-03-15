@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/ktime_api.h>
 #include <linux/cred.h>
 #include <linux/sched/task_flags.h>
 #include <linux/init.h>

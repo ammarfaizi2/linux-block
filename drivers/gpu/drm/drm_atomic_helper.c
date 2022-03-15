@@ -25,6 +25,7 @@
  * Daniel Vetter <daniel.vetter@ffwll.ch>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>

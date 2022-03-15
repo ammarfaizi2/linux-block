@@ -58,6 +58,7 @@
  * they are read from the flash media.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/crc32.h>

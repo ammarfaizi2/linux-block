@@ -7,6 +7,7 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>

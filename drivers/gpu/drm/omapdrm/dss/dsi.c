@@ -6,6 +6,7 @@
 
 #define DSS_SUBSYS_NAME "DSI"
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/hrtimer_api.h>

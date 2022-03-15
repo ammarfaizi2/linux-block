@@ -34,6 +34,7 @@
  */
 
 #define CREATE_TRACE_POINTS
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 
 #include "trace.h"

@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

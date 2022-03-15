@@ -8,6 +8,7 @@
  * based on arch/arm/common/rtctime.c
  */
 
+#include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

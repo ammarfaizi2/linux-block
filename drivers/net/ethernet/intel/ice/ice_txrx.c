@@ -3,6 +3,7 @@
 
 /* The driver transmit and receive code */
 
+#include <linux/ktime_api.h>
 #include <linux/ipv6.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>

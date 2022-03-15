@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/ktime_api.h>
 #include <linux/interrupt.h>
 #include <linux/hrtimer_api.h>
 #include <linux/cpumask_api.h>

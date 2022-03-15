@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kthread.h>
 #include <linux/hrtimer_api.h>
 #include <drm/drm_atomic_uapi.h>

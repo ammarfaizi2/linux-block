@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_BASENAME ": " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

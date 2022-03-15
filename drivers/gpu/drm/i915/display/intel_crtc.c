@@ -2,6 +2,7 @@
 /*
  * Copyright © 2020 Intel Corporation
  */
+#include <linux/ktime_api.h>
 #include <linux/kernel.h>
 #include <linux/pm_qos.h>
 #include <linux/slab.h>

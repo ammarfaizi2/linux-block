@@ -9,6 +9,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>

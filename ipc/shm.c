@@ -25,6 +25,7 @@
  * Davidlohr Bueso <davidlohr.bueso@hp.com>, June 2013.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>

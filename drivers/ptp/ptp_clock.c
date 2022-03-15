@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
+#include <linux/ktime_api.h>
 #include <linux/kthread.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

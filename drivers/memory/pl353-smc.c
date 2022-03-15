@@ -7,6 +7,7 @@
  * Author: Naga Sureshkumar Relli <nagasure@xilinx.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>

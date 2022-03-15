@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Analog Devices Inc.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/iio/iio.h>

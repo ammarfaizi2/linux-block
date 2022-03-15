@@ -11,6 +11,7 @@
  * Special thanks to Video BG4 project team.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/ktime.h>

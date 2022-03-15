@@ -5,6 +5,7 @@
  *          Hugues Fruchet <hugues.fruchet@st.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/debugfs.h>
 
 #include "hva.h"

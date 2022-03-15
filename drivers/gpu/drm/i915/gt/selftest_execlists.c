@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

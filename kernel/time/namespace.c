@@ -4,6 +4,7 @@
  * Author: Dmitry Safonov <dima@arista.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/gfp_api.h>
 #include <linux/capability.h>
 #include <linux/time_namespace.h>

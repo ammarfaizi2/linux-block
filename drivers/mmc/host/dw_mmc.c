@@ -7,6 +7,7 @@
  * Copyright (C) 2009, 2010 Imagination Technologies Ltd.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>

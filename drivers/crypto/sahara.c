@@ -11,6 +11,7 @@
  * Based on omap-aes.c and tegra-aes.c
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <crypto/aes.h>

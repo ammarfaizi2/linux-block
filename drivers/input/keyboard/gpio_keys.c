@@ -6,6 +6,7 @@
  * Copyright 2010, 2011 David Jander <david@protonic.nl>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>

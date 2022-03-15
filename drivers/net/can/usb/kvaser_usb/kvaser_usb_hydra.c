@@ -13,6 +13,7 @@
  *  - Hardware timestamps are not set for CAN Tx frames.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/completion.h>
 #include <linux/device.h>
 #include <linux/gfp.h>

@@ -25,6 +25,7 @@
 #include "hyperv.h"
 #include "xen.h"
 
+#include <linux/ktime_api.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/cpumask_api.h>

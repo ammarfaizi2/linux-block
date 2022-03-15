@@ -16,6 +16,7 @@
  * - sparse bitmap with few set bits at random positions.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>

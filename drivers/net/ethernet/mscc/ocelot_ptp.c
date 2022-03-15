@@ -4,6 +4,7 @@
  * Copyright (c) 2017 Microsemi Corporation
  * Copyright 2020 NXP
  */
+#include <linux/ktime_api.h>
 #include <linux/time64.h>
 
 #include <soc/mscc/ocelot_ptp.h>

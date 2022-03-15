@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/ktime_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/atomic_api.h>

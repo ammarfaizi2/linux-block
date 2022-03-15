@@ -12,6 +12,7 @@
  *   Author: Huang Ying <ying.huang@intel.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

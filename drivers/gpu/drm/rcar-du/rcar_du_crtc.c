@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/clk.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Oleksij Rempel <kernel@pengutronix.de>, Pengutronix
  */
 
+#include <linux/ktime_api.h>
 #include <linux/interrupt.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>

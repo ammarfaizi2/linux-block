@@ -37,6 +37,7 @@
  */
 #define pr_fmt(fmt) "ii_dev: " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched/affinity.h>

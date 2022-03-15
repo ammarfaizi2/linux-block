@@ -44,6 +44,7 @@ asynchronous and synchronous parts of the kernel.
 
 */
 
+#include <linux/ktime_api.h>
 #include <linux/atomic_api.h>
 #include <linux/async.h>
 #include <linux/atomic.h>

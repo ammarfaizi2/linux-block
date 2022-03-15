@@ -5,6 +5,7 @@
  * Copyright (C) Jay Lan,	<jlan@sgi.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/mm.h>

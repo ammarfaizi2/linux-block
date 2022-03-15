@@ -23,6 +23,7 @@
  */
 #include "head.h"
 
+#include <linux/ktime_api.h>
 #include <core/client.h>
 
 #include <nvif/cl0046.h>

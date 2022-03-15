@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Linaro Limited
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

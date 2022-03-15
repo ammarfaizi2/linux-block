@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/ktime_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>

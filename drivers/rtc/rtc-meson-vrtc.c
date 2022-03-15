@@ -4,6 +4,7 @@
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  * Copyright (C) 2015 Amlogic, Inc. All rights reserved.
  */
+#include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

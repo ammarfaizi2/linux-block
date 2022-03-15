@@ -35,6 +35,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2003-2015, 2017 Cavium, Inc.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

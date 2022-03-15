@@ -5,6 +5,7 @@
  * Copyright (C) 2016  PEAK System-Technik GmbH
  */
 
+#include <linux/ktime_api.h>
 #include <linux/can.h>
 #include <linux/can/dev.h>
 

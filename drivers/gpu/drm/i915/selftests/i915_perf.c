@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/atomic_api.h>

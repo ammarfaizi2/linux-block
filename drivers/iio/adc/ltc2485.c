@@ -7,6 +7,7 @@
  * Datasheet: http://cds.linear.com/docs/en/datasheet/2485fd.pdf
  */
 
+#include <linux/ktime_api.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

@@ -25,6 +25,7 @@
 #define pr_fmt(fmt) "ipmi_ssif: " fmt
 #define dev_fmt(fmt) "ipmi_ssif: " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

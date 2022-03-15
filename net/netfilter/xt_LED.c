@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Adam Nielsen <a.nielsen@shikadi.net>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

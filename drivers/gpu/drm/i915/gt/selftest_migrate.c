@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kthread.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>

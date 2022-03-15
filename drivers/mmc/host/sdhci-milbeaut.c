@@ -7,6 +7,7 @@
  *              Takao Orito <orito.takao@socionext.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>

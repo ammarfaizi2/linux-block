@@ -3,6 +3,7 @@
  * Copyright (C) 2012 by Alan Stern
  */
 
+#include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/bitmap.h>
 #include <linux/types.h>

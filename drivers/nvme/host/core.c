@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

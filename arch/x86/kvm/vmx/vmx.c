@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/hrtimer_api.h>

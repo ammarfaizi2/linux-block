@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/ktime_api.h>
 #include <linux/delay.h>
 
 #include "intel_context.h"

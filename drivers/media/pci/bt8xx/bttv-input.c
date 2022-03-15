@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>

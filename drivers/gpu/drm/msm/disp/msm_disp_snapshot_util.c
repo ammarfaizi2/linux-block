@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
+#include <linux/ktime_api.h>
 #include <generated/utsrelease.h>
 
 #include "msm_disp_snapshot.h"

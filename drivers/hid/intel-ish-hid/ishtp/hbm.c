@@ -5,6 +5,7 @@
  * Copyright (c) 2003-2016, Intel Corporation.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/bitmap.h>
 #include <linux/export.h>
 #include <linux/slab.h>

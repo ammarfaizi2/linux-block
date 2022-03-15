@@ -11,6 +11,7 @@
  *          Luke Diamand @ Broadcom
  */
 
+#include <linux/ktime_api.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

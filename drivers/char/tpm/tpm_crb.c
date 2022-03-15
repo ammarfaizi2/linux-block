@@ -11,6 +11,7 @@
  * the TCG CRB 2.0 TPM specification.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

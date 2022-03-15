@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/clocksource.h>

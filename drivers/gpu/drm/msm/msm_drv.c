@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

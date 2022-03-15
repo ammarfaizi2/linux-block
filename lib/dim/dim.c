@@ -3,6 +3,7 @@
  * Copyright (c) 2019, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/bitops_types.h>
 #include <linux/dim.h>
 

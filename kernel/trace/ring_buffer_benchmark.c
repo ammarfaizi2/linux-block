@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2009 Steven Rostedt <srostedt@redhat.com>
  */
+#include <linux/ktime_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/local_api.h>
 #include <linux/ring_buffer.h>

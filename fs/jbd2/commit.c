@@ -10,6 +10,7 @@
  * part of the ext2fs journaling system.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

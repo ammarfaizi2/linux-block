@@ -11,6 +11,7 @@
 
 #include "cx88.h"
 
+#include <linux/ktime_api.h>
 #include <linux/i2c.h>
 #include <linux/hrtimer_api.h>
 #include <linux/init.h>

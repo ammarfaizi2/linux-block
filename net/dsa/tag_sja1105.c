@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019, Vladimir Oltean <olteanv@gmail.com>
  */
+#include <linux/ktime_api.h>
 #include <linux/kthread.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>

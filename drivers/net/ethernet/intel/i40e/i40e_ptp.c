@@ -2,6 +2,7 @@
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
 #include "i40e.h"
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ptp_classify.h>
 #include <linux/posix-clock.h>

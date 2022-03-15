@@ -20,6 +20,7 @@
  *  Copyright (c) 2005 Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include "packet_history.h"
