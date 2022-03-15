@@ -13,6 +13,7 @@
  *
  * The SDRAM type can be passed on the command line as cpu_sa1110.sdram=type
  */
+#include <linux/timex.h>
 #include <linux/cpufreq.h>
 #include <linux/delay.h>
 #include <linux/init.h>

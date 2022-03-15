@@ -5,6 +5,7 @@
 //  Copyright (C) 2006-2007 Pavel Pisa (ppisa@pikron.com)
 //  Copyright (C) 2008 Juergen Beisert (kernel@pengutronix.de)
 
+#include <linux/timex.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

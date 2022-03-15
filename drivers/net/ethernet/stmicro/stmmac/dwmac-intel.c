@@ -2,6 +2,7 @@
 /* Copyright (c) 2020, Intel Corporation
  */
 
+#include <linux/timex.h>
 #include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/netdevice_api.h>

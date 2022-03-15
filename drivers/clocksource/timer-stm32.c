@@ -6,6 +6,7 @@
  * Inspired by time-efm32.c from Uwe Kleine-Koenig
  */
 
+#include <linux/timex.h>
 #include <linux/kernel.h>
 #include <linux/clocksource.h>
 #include <linux/clockchips.h>

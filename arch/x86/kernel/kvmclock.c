@@ -3,6 +3,7 @@
     Copyright (C) 2008 Glauber de Oliveira Costa, Red Hat Inc.
 */
 
+#include <linux/timex.h>
 #include <linux/preempt.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

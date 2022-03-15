@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Alessandro Rubini
  * Copyright (C) 2010 Linus Walleij for ST-Ericsson
  */
+#include <linux/timex.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

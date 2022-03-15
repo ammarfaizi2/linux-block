@@ -15,6 +15,7 @@
  */
 #define pr_fmt(fmt) "seccomp: " fmt
 
+#include <linux/timex.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/semaphore.h>

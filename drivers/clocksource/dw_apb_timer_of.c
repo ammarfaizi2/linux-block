@@ -5,6 +5,7 @@
  *
  * Modified from mach-picoxcell/time.c
  */
+#include <linux/timex.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>

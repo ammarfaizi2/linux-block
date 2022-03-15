@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/timex.h>
 #include <linux/timekeeping.h>
 #include <linux/of_api.h>
 #include <linux/cpumask_api.h>

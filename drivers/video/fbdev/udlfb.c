@@ -13,6 +13,7 @@
  * from Florian Echtler, Henrik Bjerregaard Pedersen, and others.
  */
 
+#include <linux/timex.h>
 #include <linux/spinlock_api.h>
 #include <linux/semaphore.h>
 #include <linux/mutex_api.h>

@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/timex.h>
 #include <asm/tsc.h>
 #include <linux/cpufreq.h>
 

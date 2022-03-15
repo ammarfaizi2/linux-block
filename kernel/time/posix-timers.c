@@ -9,6 +9,7 @@
  *
  * These are all the functions necessary to implement POSIX clocks & timers
  */
+#include <linux/timex.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>

@@ -7,6 +7,7 @@
  * Author: Srinivas Kandagatla <srinivas.kandagatla@st.com>
  */
 
+#include <linux/timex.h>
 #include <linux/percpu.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
