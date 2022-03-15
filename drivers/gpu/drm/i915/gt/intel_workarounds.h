@@ -6,6 +6,7 @@
 #ifndef _INTEL_WORKAROUNDS_H_
 #define _INTEL_WORKAROUNDS_H_
 
+#include <linux/string.h>
 #include <linux/slab.h>
 
 #include "intel_workarounds_types.h"

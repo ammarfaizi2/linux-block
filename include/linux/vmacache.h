@@ -2,6 +2,7 @@
 #ifndef __LINUX_VMACACHE_H
 #define __LINUX_VMACACHE_H
 
+#include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/sched/per_task.h>
 #include <linux/mm.h>

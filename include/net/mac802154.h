@@ -7,6 +7,7 @@
 #ifndef NET_MAC802154_H
 #define NET_MAC802154_H
 
+#include <linux/string.h>
 #include <linux/skbuff_api.h>
 #include <asm/unaligned.h>
 #include <net/af_ieee802154.h>

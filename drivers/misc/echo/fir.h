@@ -14,6 +14,7 @@
 #if !defined(_FIR_H_)
 #define _FIR_H_
 
+#include <linux/string.h>
 #include <linux/types.h>
 
 /*

@@ -2,6 +2,7 @@
 #ifndef _LINUX_CLOSURE_H
 #define _LINUX_CLOSURE_H
 
+#include <linux/string.h>
 #include <linux/atomic_api.h>
 #include <linux/llist.h>
 #include <linux/sched.h>

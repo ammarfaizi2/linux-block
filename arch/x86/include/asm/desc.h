@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_DESC_H
 #define _ASM_X86_DESC_H
 
+#include <linux/string.h>
 #include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <asm/processor.h>

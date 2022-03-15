@@ -7,6 +7,7 @@
  *  Copyright (c) by Abramo Bagnara <abramo@alsa-project.org>
  */
 
+#include <linux/string.h>
 #include <sound/pcm.h>
 
 int snd_pcm_hw_param_first(struct snd_pcm_substream *pcm, 

@@ -15,6 +15,7 @@
 #ifndef _NETLABEL_H
 #define _NETLABEL_H
 
+#include <linux/string.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/net.h>

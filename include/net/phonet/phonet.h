@@ -10,6 +10,7 @@
 #ifndef AF_PHONET_H
 #define AF_PHONET_H
 
+#include <linux/string.h>
 #include <linux/skbuff_api.h>
 #include <linux/types.h>
 
