@@ -12,6 +12,7 @@
 
 #define DEBUG		/* Enable initcall_debug */
 
+#include <linux/sched/rt.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/radix-tree-api.h>
