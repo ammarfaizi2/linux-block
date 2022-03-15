@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <asm/x86_irq.h>
 #include <linux/init.h>
 #include <linux/acpi.h>
 #include <linux/acpi_pmtmr.h>

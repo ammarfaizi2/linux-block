@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <asm/x86_irq.h>
 #include <linux/linkage.h>
 #include <linux/errno.h>
 #include <linux/signal.h>

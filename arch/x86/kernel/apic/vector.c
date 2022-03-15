@@ -7,6 +7,7 @@
  * Jiang Liu <jiang.liu@linux.intel.com>
  *	Enable support of hierarchical irqdomains
  */
+#include <asm/x86_irq.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/seq_file.h>

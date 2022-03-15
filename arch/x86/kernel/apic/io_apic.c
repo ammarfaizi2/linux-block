@@ -31,6 +31,7 @@
  *	workaround has been removed.
  */
 
+#include <asm/x86_irq.h>
 #include <asm/msr.h>
 #include <linux/mm.h>
 #include <linux/interrupt.h>
