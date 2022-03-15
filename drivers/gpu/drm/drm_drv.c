@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/mm.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>

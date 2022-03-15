@@ -2,6 +2,7 @@
 
 /* Copyright (C) 2021 Linaro Ltd. */
 
+#include <linux/mm.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/device.h>

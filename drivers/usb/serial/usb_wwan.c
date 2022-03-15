@@ -19,6 +19,7 @@
 #define DRIVER_AUTHOR "Matthias Urlichs <smurf@smurf.noris.de>"
 #define DRIVER_DESC "USB Driver for GSM modems"
 
+#include <linux/mm.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>

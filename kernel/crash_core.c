@@ -4,6 +4,7 @@
  * Copyright (C) 2002-2004 Eric Biederman  <ebiederm@xmission.com>
  */
 
+#include <linux/mm.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/gfp_api.h>

@@ -13,6 +13,7 @@
  * Based on smia-sensor.c by Tuukka Toivonen <tuukkat76@gmail.com>
  */
 
+#include <linux/mm.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/math64.h>
 #include <linux/i2c.h>
