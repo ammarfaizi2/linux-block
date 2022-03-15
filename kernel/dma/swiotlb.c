@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "software IO TLB: " fmt
 
+#include <linux/page-flags.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>
