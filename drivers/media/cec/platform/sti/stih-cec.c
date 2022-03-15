@@ -4,6 +4,7 @@
  * Copyright (C) STMicroelectronics SA 2016
  *
  */
+#include <asm/io.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

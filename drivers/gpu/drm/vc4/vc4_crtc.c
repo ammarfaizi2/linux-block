@@ -29,6 +29,7 @@
  * ones that set the clock.
  */
 
+#include <asm/io.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/of_device.h>

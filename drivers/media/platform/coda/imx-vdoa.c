@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Pengutronix, Michael Tretter <kernel@pengutronix.de>
  */
 
+#include <asm/io.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright 2010-2011 Calxeda, Inc.
  */
+#include <asm/io.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
 #include <linux/kernel.h>

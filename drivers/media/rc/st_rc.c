@@ -3,6 +3,7 @@
  * Copyright (C) 2013 STMicroelectronics Limited
  * Author: Srinivas Kandagatla <srinivas.kandagatla@st.com>
  */
+#include <asm/io.h>
 #include <linux/kernel.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>

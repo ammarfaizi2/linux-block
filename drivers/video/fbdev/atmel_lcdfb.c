@@ -8,6 +8,7 @@
  * more details.
  */
 
+#include <asm/io.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>

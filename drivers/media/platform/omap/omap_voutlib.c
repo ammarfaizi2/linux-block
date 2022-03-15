@@ -18,6 +18,7 @@
  *
  */
 
+#include <asm/io.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

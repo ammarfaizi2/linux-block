@@ -4,6 +4,7 @@
  *  ATI Mach64 Hardware Acceleration
  */
 
+#include <asm/io.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/fb.h>

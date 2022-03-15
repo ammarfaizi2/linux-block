@@ -10,6 +10,7 @@
  * Copyright (C) 2002 David McCullough
  * Copyright (C) 2003 - 2007 Paul Mundt
  */
+#include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

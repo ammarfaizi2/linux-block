@@ -34,6 +34,7 @@
  * information.
  */
 
+#include <asm/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
