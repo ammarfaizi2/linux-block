@@ -2,6 +2,7 @@
 #ifndef __LINUX_BOOTMEM_INFO_H
 #define __LINUX_BOOTMEM_INFO_H
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 
 /*

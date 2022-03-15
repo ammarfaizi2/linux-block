@@ -5,6 +5,7 @@
 /*
  * Copyright 1995 Linus Torvalds
  */
+#include <linux/mm_api.h>
 #include <linux/huge_mm.h>
 #include <linux/fs_api.h>
 #include <linux/mm.h>

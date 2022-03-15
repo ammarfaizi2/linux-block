@@ -5,6 +5,7 @@
 #if !defined(_TRACE_PAGE_POOL_H) || defined(TRACE_HEADER_MULTI_READ)
 #define      _TRACE_PAGE_POOL_H
 
+#include <linux/mm_api.h>
 #include <linux/types.h>
 #include <linux/tracepoint.h>
 

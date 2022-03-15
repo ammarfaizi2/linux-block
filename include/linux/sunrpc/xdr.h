@@ -11,6 +11,7 @@
 #ifndef _SUNRPC_XDR_H_
 #define _SUNRPC_XDR_H_
 
+#include <linux/mm_api.h>
 #include <linux/uio.h>
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>

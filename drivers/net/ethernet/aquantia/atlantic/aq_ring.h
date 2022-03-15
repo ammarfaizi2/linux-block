@@ -12,6 +12,7 @@
 
 #include "aq_common.h"
 
+#include <linux/mm_api.h>
 #include <linux/types.h>
 
 struct page;

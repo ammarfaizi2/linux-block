@@ -6,6 +6,7 @@
 #ifndef __XFS_SUPPORT_KMEM_H__
 #define __XFS_SUPPORT_KMEM_H__
 
+#include <linux/mm_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mm.h>

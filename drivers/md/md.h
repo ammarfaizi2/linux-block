@@ -8,6 +8,7 @@
 #ifndef _MD_MD_H
 #define _MD_MD_H
 
+#include <linux/mm_api.h>
 #include <linux/blkdev.h>
 #include <linux/backing-dev.h>
 #include <linux/badblocks.h>

@@ -10,6 +10,7 @@
 #define _ASM_CACHEFLUSH_H
 
 /* Keep includes the same across arches.  */
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <asm/cpu-features.h>
 

@@ -7,6 +7,7 @@
 #ifndef __iwl_trans_h__
 #define __iwl_trans_h__
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/ieee80211.h>
 #include <linux/mm.h> /* for page_address */

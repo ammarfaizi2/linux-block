@@ -2,6 +2,7 @@
 #ifndef _LINUX_MMU_CONTEXT_H
 #define _LINUX_MMU_CONTEXT_H
 
+#include <linux/mm_api.h>
 #include <asm/mmu_context.h>
 #include <asm/mmu.h>
 

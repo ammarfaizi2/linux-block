@@ -11,6 +11,7 @@
 #ifndef __il_core_h__
 #define __il_core_h__
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dev_printk.h>
