@@ -7,6 +7,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/compiler_attributes.h>
 #include <linux/types.h>
 
 /* REP NOP (PAUSE) is a good thing to insert into busy-wait loops. */
