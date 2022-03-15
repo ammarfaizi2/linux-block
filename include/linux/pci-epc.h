@@ -9,6 +9,7 @@
 #ifndef __LINUX_PCI_EPC_H
 #define __LINUX_PCI_EPC_H
 
+#include <linux/notifier.h>
 #include <linux/notifier_api.h>
 #include <linux/pci-epf.h>
 

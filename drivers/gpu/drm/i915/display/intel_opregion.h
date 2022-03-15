@@ -25,6 +25,7 @@
 #ifndef _INTEL_OPREGION_H_
 #define _INTEL_OPREGION_H_
 
+#include <linux/notifier.h>
 #include <linux/workqueue.h>
 #include <linux/pci.h>
 

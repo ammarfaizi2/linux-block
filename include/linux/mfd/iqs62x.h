@@ -8,6 +8,7 @@
 #ifndef __LINUX_MFD_IQS62X_H
 #define __LINUX_MFD_IQS62X_H
 
+#include <linux/notifier.h>
 #include <linux/notifier_api.h>
 #include <linux/types.h>
 

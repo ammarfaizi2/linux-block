@@ -7,6 +7,7 @@
 #ifndef __RPM_INTERNAL_H__
 #define __RPM_INTERNAL_H__
 
+#include <linux/notifier.h>
 #include <linux/bitmap.h>
 #include <linux/wait.h>
 #include <soc/qcom/tcs.h>

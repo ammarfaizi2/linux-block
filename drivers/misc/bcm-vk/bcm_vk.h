@@ -6,6 +6,7 @@
 #ifndef BCM_VK_H
 #define BCM_VK_H
 
+#include <linux/notifier.h>
 #include <linux/io.h>
 #include <linux/atomic.h>
 #include <linux/firmware.h>

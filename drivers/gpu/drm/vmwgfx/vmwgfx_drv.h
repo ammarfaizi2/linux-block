@@ -28,6 +28,7 @@
 #ifndef _VMWGFX_DRV_H_
 #define _VMWGFX_DRV_H_
 
+#include <linux/notifier.h>
 #include <linux/io.h>
 #include <linux/suspend.h>
 #include <linux/sync_file.h>
