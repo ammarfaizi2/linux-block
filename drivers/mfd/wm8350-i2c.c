@@ -8,6 +8,7 @@
  *         linux@wolfsonmicro.com
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/i2c.h>

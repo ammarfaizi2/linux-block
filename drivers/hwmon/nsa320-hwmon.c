@@ -10,6 +10,7 @@
  * Copyright (C) 2012 Peter Schildmann <linux@schildmann.info>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/err.h>

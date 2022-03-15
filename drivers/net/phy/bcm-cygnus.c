@@ -5,6 +5,7 @@
 
 /* Broadcom Cygnus SoC internal transceivers support. */
 #include "bcm-phy-lib.h"
+#include <linux/device_api_lock.h>
 #include <linux/brcmphy.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

@@ -8,6 +8,7 @@
  * Copyright (c) 2017-2018 Brian Masney <masneyb@onstation.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/i2c.h>

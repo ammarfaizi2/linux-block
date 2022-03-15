@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/slab.h>
 #include <linux/module.h>

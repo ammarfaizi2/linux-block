@@ -8,6 +8,7 @@
  * Jaehoon Chung <jh80.chung@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/mfd/syscon.h>
 #include <linux/of_platform.h>

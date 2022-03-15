@@ -8,6 +8,7 @@
  * more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/io.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

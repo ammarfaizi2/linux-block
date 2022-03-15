@@ -3,6 +3,7 @@
  * Driver for the RTC in Marvell SoCs.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/rtc.h>

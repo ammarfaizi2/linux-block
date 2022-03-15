@@ -4,6 +4,7 @@
  * Copyright (C) 2010 EF Johnson Technologies
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/gpio/consumer.h>

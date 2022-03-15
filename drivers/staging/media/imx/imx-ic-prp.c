@@ -8,6 +8,7 @@
  *
  * Copyright (c) 2012-2017 Mentor Graphics Inc.
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * as defined in MIPI STPv2 specification.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/pm_runtime.h>
 #include <linux/uaccess.h>

@@ -10,6 +10,7 @@
  * Copyright 2004-2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>, et al.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

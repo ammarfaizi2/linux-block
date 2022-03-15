@@ -5,6 +5,7 @@
  * Copyright (c) 2019, Cadence Design Systems
  * Author: Tom Joseph <tjoseph@cadence.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/of_address.h>

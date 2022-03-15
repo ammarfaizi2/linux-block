@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2015 Microchip Technology Germany II GmbH & Co. KG
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/fs.h>

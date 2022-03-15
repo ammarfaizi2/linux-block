@@ -6,6 +6,7 @@
  * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/component.h>
 #include <linux/list.h>
 #include <linux/module.h>

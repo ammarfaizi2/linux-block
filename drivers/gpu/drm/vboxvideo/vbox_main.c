@@ -8,6 +8,7 @@
  *          Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/pci.h>
 #include <linux/vbox_err.h>

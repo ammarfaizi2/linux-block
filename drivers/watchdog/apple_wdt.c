@@ -5,6 +5,7 @@
  * Copyright (C) The Asahi Linux Contributors
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

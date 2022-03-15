@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Emil Renner Berthing
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/mfd/tps65086.h>

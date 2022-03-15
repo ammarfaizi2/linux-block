@@ -27,6 +27,7 @@
 /* Thanx to gkh and the rest of the usb dev group for all code I have
    assimilated :-) */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

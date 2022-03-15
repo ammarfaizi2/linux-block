@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
+#include <linux/device_api_lock.h>
+
 #include "mt7915.h"
 
 static u32 mt7915_reg_map_l1(struct mt7915_dev *dev, u32 addr)

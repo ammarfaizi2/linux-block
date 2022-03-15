@@ -7,6 +7,7 @@
  * It is based on tpm_tis_spi driver by Peter Huewe and Christophe Ricard.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/completion.h>
 #include <linux/interrupt.h>

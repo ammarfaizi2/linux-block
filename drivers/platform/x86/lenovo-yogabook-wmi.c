@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* WMI driver for Lenovo Yoga Book YB1-X90* / -X91* tablets */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/devm-helpers.h>

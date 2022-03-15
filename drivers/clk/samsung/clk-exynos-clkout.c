@@ -6,6 +6,7 @@
  * Clock driver for Exynos clock output
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

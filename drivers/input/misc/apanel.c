@@ -13,6 +13,7 @@
  *	http://apanel.sourceforge.net/tech.php
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/ioport.h>

@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/bitops.h>
 #include <linux/log2.h>

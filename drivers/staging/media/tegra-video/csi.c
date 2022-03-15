@@ -3,6 +3,7 @@
  * Copyright (C) 2020 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/clk/tegra.h>
 #include <linux/device.h>

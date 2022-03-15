@@ -2,6 +2,7 @@
 //
 // Copyright 2020 Google LLC.
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_data/cros_ec_proto.h>

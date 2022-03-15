@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Google, Inc
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/cpufreq.h>
 #include <linux/devfreq.h>

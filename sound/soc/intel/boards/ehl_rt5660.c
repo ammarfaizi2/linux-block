@@ -6,6 +6,7 @@
  * with rt5660 codec
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <sound/core.h>
 #include <linux/device.h>

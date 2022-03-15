@@ -3,6 +3,7 @@
 // pv88060-regulator.c - Regulator device driver for PV88060
 // Copyright (C) 2015  Powerventure Semiconductor Ltd.
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

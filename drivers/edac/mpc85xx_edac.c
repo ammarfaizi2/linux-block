@@ -11,6 +11,7 @@
  * or implied.
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

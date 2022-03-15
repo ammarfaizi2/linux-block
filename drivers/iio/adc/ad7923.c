@@ -6,6 +6,7 @@
  * Copyright 2012 CS Systemes d'Information
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/device.h>

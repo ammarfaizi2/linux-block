@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) "bmp280: " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/regmap.h>

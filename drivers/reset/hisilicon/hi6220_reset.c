@@ -8,6 +8,7 @@
  * Author: Feng Chen <puck.chen@hisilicon.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/module.h>

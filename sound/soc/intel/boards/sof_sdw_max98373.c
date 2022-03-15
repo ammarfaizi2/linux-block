@@ -4,6 +4,7 @@
 // sof_sdw_max98373 - Helpers to handle 2x MAX98373
 // codec devices from generic machine driver
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <sound/control.h>

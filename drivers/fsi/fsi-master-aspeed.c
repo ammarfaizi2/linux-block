@@ -2,6 +2,7 @@
 // Copyright (C) IBM Corporation 2018
 // FSI master driver for AST2600
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/fsi.h>

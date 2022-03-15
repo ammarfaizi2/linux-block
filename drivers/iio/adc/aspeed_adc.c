@@ -12,6 +12,7 @@
  * clock period = period of PCLK * 2 * (ADC0C[15:0] + 1)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

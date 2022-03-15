@@ -5,6 +5,7 @@
  * Copyright (C) 2014-2015 STMicroelectronics SAS. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/nfc.h>

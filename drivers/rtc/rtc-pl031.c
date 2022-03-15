@@ -11,6 +11,7 @@
  * Author: Mian Yousaf Kaukab <mian.yousaf.kaukab@stericsson.com>
  * Copyright 2010 (c) ST-Ericsson AB
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/rtc.h>
 #include <linux/init.h>

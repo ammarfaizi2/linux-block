@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Joao Pinto <jpinto@synopsys.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

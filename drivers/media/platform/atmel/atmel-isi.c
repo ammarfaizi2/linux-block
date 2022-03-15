@@ -8,6 +8,7 @@
  * Based on the bttv driver for Bt848 with respective copyright holders
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

@@ -10,6 +10,7 @@
  * Copyright (C) 2013, Samsung Electronics Co., Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>

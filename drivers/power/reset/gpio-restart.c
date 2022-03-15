@@ -6,6 +6,7 @@
  *
  * Based on the gpio-poweroff driver.
  */
+#include <linux/device_api_lock.h>
 #include <linux/reboot.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

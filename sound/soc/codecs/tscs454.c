@@ -3,6 +3,7 @@
 // Copyright 2018 Tempo Semiconductor, Inc.
 // Author: Steven Eckhoff <steven.eckhoff.opensource@gmail.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/clk.h>
 #include <linux/device.h>

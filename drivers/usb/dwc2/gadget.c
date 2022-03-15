@@ -11,6 +11,7 @@
  * S3C USB2.0 High-speed / OtG driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>

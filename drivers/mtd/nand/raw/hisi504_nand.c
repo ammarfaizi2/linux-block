@@ -9,6 +9,7 @@
  * The initial developer of the original code is Zhiyong Cai
  * <caizhiyong@huawei.com>
  */
+#include <linux/device_api_lock.h>
 #include <asm/io.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/of.h>

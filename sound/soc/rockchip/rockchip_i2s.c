@@ -7,6 +7,7 @@
  * Author: Jianqun <jay.xu@rock-chips.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/mfd/syscon.h>
 #include <linux/delay.h>

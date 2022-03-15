@@ -13,6 +13,7 @@
  * Access to the event log created by a system's firmware / BIOS
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/dcache.h>
 #include <linux/seq_file.h>

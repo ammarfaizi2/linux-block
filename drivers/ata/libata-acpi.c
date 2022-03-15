@@ -7,6 +7,7 @@
  * Copyright (C) 2006 Randy Dunlap
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/ata.h>
 #include <linux/delay.h>

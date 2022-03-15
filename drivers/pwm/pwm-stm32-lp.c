@@ -9,6 +9,7 @@
  * Inspired by Gerald Baeza's pwm-stm32 driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/mfd/stm32-lptimer.h>

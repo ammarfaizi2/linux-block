@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Intel Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/arm-smccc.h>
 #include <linux/bits.h>
 #include <linux/clk.h>

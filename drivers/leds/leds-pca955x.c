@@ -37,6 +37,7 @@
  *  bits the chip supports.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>
 #include <linux/err.h>

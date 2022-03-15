@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Pengutronix, Uwe Kleine-König <kernel@pengutronix.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/siox.h>
 #include <linux/gpio/driver.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2018-2021 GE Healthcare
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/gpio/consumer.h>

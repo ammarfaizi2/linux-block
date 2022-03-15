@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/tty.h>

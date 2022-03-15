@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Sascha Hauer, Pengutronix
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mfd/mc13xxx.h>
 #include <linux/platform_device.h>
 #include <linux/hwmon-sysfs.h>

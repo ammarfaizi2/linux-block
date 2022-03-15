@@ -5,6 +5,7 @@
  * Copyright (C) 2017-2019 Microchip Technology Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/export.h>
 #include <linux/gpio/consumer.h>

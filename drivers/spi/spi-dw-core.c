@@ -5,6 +5,7 @@
  * Copyright (c) 2009, Intel Corporation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>

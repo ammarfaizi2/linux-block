@@ -6,6 +6,7 @@
 // Author: Shane Chien <shane.chien@mediatek.com>
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/regmap.h>
 #include <sound/pcm_params.h>
 

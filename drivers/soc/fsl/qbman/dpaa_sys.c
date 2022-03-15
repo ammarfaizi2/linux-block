@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include "dpaa_sys.h"
 

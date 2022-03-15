@@ -18,6 +18,7 @@
  * Balaji T K <balajitk@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>

@@ -7,6 +7,7 @@
  * Author: Andrey Smirnov <andrew.smirnov@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

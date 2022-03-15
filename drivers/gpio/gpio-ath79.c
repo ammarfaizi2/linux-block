@@ -8,6 +8,7 @@
  *  Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/platform_data/gpio-ath79.h>

@@ -2,6 +2,7 @@
 // Copyright (c) 2017-2018 HiSilicon Limited.
 // Copyright (c) 2017-2018 Linaro Limited.
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/device.h>

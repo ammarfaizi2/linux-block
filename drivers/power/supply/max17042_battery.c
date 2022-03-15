@@ -8,6 +8,7 @@
 //
 // This driver is based on max17040_battery.c
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/init.h>
 #include <linux/module.h>

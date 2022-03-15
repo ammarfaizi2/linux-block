@@ -9,6 +9,7 @@
  * Based on drivers/acpi/pmic/intel_pmic* drivers
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/init.h>

@@ -7,6 +7,7 @@
  * Copyright 2018 Lubomir Rintel <lkundrak@v3.sk>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

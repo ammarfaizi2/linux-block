@@ -12,6 +12,7 @@
  * GNU General Public License version 2 for more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

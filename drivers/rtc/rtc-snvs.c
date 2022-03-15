@@ -2,6 +2,7 @@
 //
 // Copyright (C) 2011-2012 Freescale Semiconductor, Inc.
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

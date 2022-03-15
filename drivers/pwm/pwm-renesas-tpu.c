@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Renesas Solutions Corp.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/err.h>

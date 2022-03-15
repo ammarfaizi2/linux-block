@@ -7,6 +7,7 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/module.h>

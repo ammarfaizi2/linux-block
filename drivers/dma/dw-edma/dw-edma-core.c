@@ -6,6 +6,7 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/device.h>

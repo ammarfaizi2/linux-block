@@ -9,6 +9,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>

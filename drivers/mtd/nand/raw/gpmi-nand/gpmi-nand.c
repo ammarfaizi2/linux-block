@@ -5,6 +5,7 @@
  * Copyright (C) 2010-2015 Freescale Semiconductor, Inc.
  * Copyright (C) 2008 Embedded Alley Solutions, Inc.
  */
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

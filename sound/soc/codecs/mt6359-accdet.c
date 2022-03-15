@@ -6,6 +6,7 @@
 // Author: Argus Lin <argus.lin@mediatek.com>
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/of_gpio.h>
 #include <linux/of.h>
 #include <linux/of_irq.h>

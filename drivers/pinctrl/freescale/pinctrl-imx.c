@@ -7,6 +7,7 @@
 //
 // Author: Dong Aisheng <dong.aisheng@linaro.org>
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/io.h>

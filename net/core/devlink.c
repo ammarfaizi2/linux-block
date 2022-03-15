@@ -7,6 +7,7 @@
  * Copyright (c) 2016 Jiri Pirko <jiri@mellanox.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

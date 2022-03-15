@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2018 Cirrus Logic
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

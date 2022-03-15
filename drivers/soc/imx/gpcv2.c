@@ -8,6 +8,7 @@
  * Copyright 2015-2017 Pengutronix, Lucas Stach <kernel@pengutronix.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/of_device.h>

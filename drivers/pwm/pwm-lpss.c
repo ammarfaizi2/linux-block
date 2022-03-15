@@ -10,6 +10,7 @@
  * Author: Alan Cox <alan@linux.intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>

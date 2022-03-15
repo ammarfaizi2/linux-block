@@ -5,6 +5,7 @@
  * Counter driver for Texas Instruments Enhanced Quadrature Encoder Pulse (eQEP)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/counter.h>
 #include <linux/kernel.h>

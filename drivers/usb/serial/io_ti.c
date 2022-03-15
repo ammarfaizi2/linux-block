@@ -13,6 +13,7 @@
  * or Al Borchers <alborchers@steinerpoint.com>.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/jiffies.h>
 #include <linux/errno.h>

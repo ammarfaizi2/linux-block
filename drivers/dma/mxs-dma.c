@@ -4,6 +4,7 @@
 //
 // Refer to drivers/dma/imx-sdma.c
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/mm.h>

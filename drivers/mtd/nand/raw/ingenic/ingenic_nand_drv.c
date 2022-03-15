@@ -6,6 +6,7 @@
  * Author: Alex Smith <alex.smith@imgtec.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/io.h>

@@ -52,6 +52,7 @@
 #define OSC_R2V_BM	(1 << 1)
 #define OSC_RBG_BM	(1 << 0)
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/spi/spi.h>

@@ -5,6 +5,7 @@
  * Joshua Henderson, <joshua.henderson@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/gpio/driver.h>

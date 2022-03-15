@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2019 Integrated Device Technology, Inc., a Renesas Company.
  */
+#include <linux/device_api_lock.h>
 #include <linux/firmware.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>

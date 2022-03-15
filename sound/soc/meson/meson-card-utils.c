@@ -3,6 +3,7 @@
 // Copyright (c) 2020 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>
 #include <sound/soc.h>

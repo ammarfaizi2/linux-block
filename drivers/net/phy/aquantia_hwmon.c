@@ -6,6 +6,7 @@
  * Author: Heiner Kallweit <hkallweit1@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/phy.h>
 #include <linux/device.h>
 #include <linux/ctype.h>

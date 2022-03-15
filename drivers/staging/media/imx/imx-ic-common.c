@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2014-2016 Mentor Graphics Inc.
  */
+#include <linux/device_api_lock.h>
 #include <media/v4l2-device.h>
 #include <media/v4l2-subdev.h>
 #include "imx-media.h"

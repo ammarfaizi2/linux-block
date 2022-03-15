@@ -13,6 +13,7 @@
  * Datasheet: https://www.nxp.com/docs/en/data-sheet/PCF2127.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/spi/spi.h>

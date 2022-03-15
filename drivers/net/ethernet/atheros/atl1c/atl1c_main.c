@@ -6,6 +6,7 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2015, 2017, 2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/err.h>

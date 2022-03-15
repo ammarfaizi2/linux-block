@@ -5,6 +5,7 @@
 // Copyright (c) 2018 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/regmap.h>
 #include <sound/pcm_params.h>

@@ -9,6 +9,7 @@
  * TODO: Input ALC/limiter support
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

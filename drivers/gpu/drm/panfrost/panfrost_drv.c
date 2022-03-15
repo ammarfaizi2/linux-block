@@ -3,6 +3,7 @@
 /* Copyright 2019 Linaro, Ltd., Rob Herring <robh@kernel.org> */
 /* Copyright 2019 Collabora ltd. */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>

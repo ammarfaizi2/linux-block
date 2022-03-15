@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include "mt76.h"
 #include "dma.h"

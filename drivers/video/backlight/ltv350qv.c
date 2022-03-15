@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2006, 2007 Atmel Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/fb.h>

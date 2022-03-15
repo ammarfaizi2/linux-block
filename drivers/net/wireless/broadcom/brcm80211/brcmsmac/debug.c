@@ -14,6 +14,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/if_ether.h>
 #include <linux/if.h>

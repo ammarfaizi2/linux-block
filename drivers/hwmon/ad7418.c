@@ -9,6 +9,7 @@
  * Copyright (C) 1998-99 Frodo Looijaard <frodol@dds.nl>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>

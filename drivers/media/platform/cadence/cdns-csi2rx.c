@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Cadence Design Systems Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>

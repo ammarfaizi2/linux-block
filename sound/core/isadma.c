@@ -11,6 +11,7 @@
 
 #undef HAVE_REALLY_SLOW_DMA_CONTROLLER
 
+#include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <sound/core.h>
 #include <asm/dma.h>

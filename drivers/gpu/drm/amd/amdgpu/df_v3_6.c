@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/device_api_lock.h>
+
 #include "amdgpu.h"
 #include "df_v3_6.h"
 

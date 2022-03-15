@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2016-2018 Socionext Inc.
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

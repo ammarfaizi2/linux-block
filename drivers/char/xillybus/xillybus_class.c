@@ -5,6 +5,7 @@
  * Driver for the Xillybus class
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/module.h>
 #include <linux/device.h>

@@ -11,6 +11,7 @@
  * All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/uio_driver.h>
 #include <linux/spinlock.h>

@@ -41,6 +41,7 @@
  * consecutive packets.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/crc16.h>
 #include <linux/debugfs.h>

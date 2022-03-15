@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <net/genetlink.h>
 #include <linux/nfc.h>

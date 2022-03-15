@@ -3,6 +3,7 @@
  *  Copyright (c) 2016 Masaki Ota <masaki.ota@jp.alps.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/hid.h>
 #include <linux/input.h>

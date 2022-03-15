@@ -6,6 +6,7 @@
  * Author: John Garry <john.garry@huawei.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/console.h>
 #include <linux/delay.h>

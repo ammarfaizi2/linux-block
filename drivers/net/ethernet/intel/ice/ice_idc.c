@@ -2,6 +2,8 @@
 /* Copyright (C) 2021, Intel Corporation. */
 
 /* Inter-Driver Communication */
+#include <linux/device_api_lock.h>
+
 #include "ice.h"
 #include "ice_lib.h"
 #include "ice_dcb_lib.h"

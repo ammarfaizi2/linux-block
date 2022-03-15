@@ -9,6 +9,7 @@
  * Fei  Wang <w.f@huawei.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

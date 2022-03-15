@@ -6,6 +6,7 @@
  * Copyright 2016-2017 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/string.h>
 #include <linux/slab.h>

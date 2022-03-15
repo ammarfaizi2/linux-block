@@ -11,6 +11,7 @@
  * Based on omap-aes.c and tegra-aes.c
  */
 
+#include <linux/device_api_lock.h>
 #include <crypto/aes.h>
 #include <crypto/internal/hash.h>
 #include <crypto/internal/skcipher.h>

@@ -5,6 +5,7 @@
  * Author: Christian Gmeiner <christian.gmeiner@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/input.h>

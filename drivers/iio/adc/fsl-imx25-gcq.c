@@ -6,6 +6,7 @@
  * connected to the imx25 ADC.
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/iio/adc/fsl-imx25-gcq.h>
 #include <linux/clk.h>
 #include <linux/iio/iio.h>

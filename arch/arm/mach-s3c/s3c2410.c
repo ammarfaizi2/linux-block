@@ -5,6 +5,7 @@
 //
 // http://www.simtec.co.uk/products/EB2410ITX/
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

@@ -23,6 +23,7 @@
  * which is the same for all PHYs in a port.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>

@@ -4,6 +4,7 @@
  * Author: Maxime Jourdan <mjourdan@baylibre.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/of_device.h>

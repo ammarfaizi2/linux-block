@@ -9,6 +9,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>
 #include <linux/clk-provider.h>

@@ -6,6 +6,7 @@
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

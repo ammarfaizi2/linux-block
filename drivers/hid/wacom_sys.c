@@ -10,6 +10,7 @@
 
 #include "wacom_wac.h"
 #include "wacom.h"
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/input/mt.h>

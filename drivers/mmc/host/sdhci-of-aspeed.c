@@ -2,6 +2,7 @@
 /* Copyright (C) 2019 ASPEED Technology Inc. */
 /* Copyright (C) 2019 IBM Corp. */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

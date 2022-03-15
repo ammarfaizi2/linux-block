@@ -19,6 +19,7 @@
  * more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/hid.h>

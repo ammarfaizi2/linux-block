@@ -3,6 +3,7 @@
  * sgi_w1.c - w1 master driver for one wire support in SGI ASICs
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/io.h>

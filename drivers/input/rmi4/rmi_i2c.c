@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Unixphere
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/rmi.h>
 #include <linux/of.h>

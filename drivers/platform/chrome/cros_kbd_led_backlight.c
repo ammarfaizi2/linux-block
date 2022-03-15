@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2012 Google, Inc.
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/leds.h>
 #include <linux/delay.h>

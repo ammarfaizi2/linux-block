@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include "pinctrl-moore.h"
 

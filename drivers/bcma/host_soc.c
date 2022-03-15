@@ -7,6 +7,7 @@
 
 #include "bcma_private.h"
 #include "scan.h"
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/of_address.h>

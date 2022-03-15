@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/log2.h>
 #include <linux/module.h>

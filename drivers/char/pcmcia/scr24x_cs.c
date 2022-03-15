@@ -8,6 +8,7 @@
  * Derived from "scr24x_v4.2.6_Release.tar.gz" driver by TL Sudheendran.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/module.h>

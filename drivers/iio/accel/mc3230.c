@@ -7,6 +7,7 @@
  * IIO driver for mCube MC3230; 7-bit I2C address: 0x4c.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <linux/iio/iio.h>

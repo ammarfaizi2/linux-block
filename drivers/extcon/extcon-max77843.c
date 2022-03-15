@@ -6,6 +6,7 @@
 // Copyright (C) 2015 Samsung Electronics
 // Author: Jaewon Kim <jaewon02.kim@samsung.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/extcon-provider.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

@@ -10,6 +10,7 @@
  * MXC GPIO support. (c) 2008 Daniel Mack <daniel@caiaq.de>
  * Copyright 2008 Juergen Beisert, kernel@pengutronix.de
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/io.h>

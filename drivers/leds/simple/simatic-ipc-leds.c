@@ -10,6 +10,7 @@
  *  Gerd Haeussler <gerd.haeussler.ext@siemens.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/leds.h>

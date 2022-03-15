@@ -14,6 +14,7 @@
 // - chip must be strapped for "host boot": in this mode, firmware will be
 //   provided by this driver.
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/gpio/driver.h>

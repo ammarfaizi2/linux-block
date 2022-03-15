@@ -11,6 +11,7 @@
  * ALT2 function.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <asm/io.h>
 #include <drm/drm_atomic_helper.h>

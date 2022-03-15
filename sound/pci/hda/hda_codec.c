@@ -5,6 +5,7 @@
  * Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/init.h>

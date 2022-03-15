@@ -4,6 +4,7 @@
  * Copyright 2011 Linaro Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>

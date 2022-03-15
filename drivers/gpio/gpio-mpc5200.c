@@ -5,6 +5,7 @@
  * Copyright (c) 2008 Sascha Hauer <s.hauer@pengutronix.de>, Pengutronix
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/of.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

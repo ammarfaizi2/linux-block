@@ -5,6 +5,7 @@
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/mmc/sdio.h>
 #include <linux/mmc/sdio_func.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <net/ipv6.h>
 #include <linux/sort.h>

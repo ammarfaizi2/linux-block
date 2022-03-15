@@ -27,6 +27,7 @@
  *		Version 0.03: Rewritten for the new FB and TC APIs.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>
 #include <linux/fb.h>

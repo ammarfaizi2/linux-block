@@ -6,6 +6,7 @@
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/init.h>
 #include <linux/irq.h>

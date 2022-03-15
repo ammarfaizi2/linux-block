@@ -3,6 +3,7 @@
 // pv88080-regulator.c - Regulator device driver for PV88080
 // Copyright (C) 2016  Powerventure Semiconductor Ltd.
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

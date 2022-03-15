@@ -6,6 +6,7 @@
 // Author: Shane Chien <shane.chien@mediatek.com>
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/arm-smccc.h>
 #include <linux/clk.h>
 #include <linux/mfd/syscon.h>

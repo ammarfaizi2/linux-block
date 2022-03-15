@@ -6,6 +6,7 @@
  * Common Clock Framework support for Exynos5433 SoC.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/of.h>

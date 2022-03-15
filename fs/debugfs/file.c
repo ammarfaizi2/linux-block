@@ -9,6 +9,7 @@
  *  See Documentation/filesystems/ for more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

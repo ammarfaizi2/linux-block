@@ -3,6 +3,7 @@
  * Copyright (C) 2019 SiFive
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/errno.h>

@@ -9,6 +9,7 @@
 // Copyright 2008 SigmaTel, Inc
 // Copyright 2008 Embedded Alley Solutions, Inc
 
+#include <linux/device_api_lock.h>
 #include <linux/bitrev.h>
 #include <linux/clk.h>
 #include <linux/module.h>

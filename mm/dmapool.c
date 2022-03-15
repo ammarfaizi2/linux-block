@@ -19,6 +19,7 @@
  * keep a count of how many are currently allocated from each page.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>

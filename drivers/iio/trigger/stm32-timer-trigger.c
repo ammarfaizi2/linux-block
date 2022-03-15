@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/iio/iio.h>
 #include <linux/iio/sysfs.h>
 #include <linux/iio/timer/stm32-timer-trigger.h>

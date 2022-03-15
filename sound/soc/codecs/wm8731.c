@@ -10,6 +10,7 @@
  * Based on wm8753.c by Liam Girdwood
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

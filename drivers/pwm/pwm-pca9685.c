@@ -8,6 +8,7 @@
  * based on the pwm-twl-led.c driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/gpio/driver.h>
 #include <linux/i2c.h>

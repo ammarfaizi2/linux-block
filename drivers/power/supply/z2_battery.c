@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Peter Edwards <sweetlilmre@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>

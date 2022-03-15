@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/err.h>
 #include <linux/hwmon.h>

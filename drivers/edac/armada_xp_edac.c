@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Pengutronix, Jan Luebbe <kernel@pengutronix.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/edac.h>
 #include <linux/of_platform.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Lucas Stach, Pengutronix
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <drm/drm_fourcc.h>
 #include <linux/clk.h>

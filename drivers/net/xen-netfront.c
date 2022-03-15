@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

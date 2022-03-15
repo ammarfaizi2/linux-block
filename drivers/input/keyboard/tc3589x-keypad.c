@@ -8,6 +8,7 @@
  * TC35893 MFD Keypad Controller driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/input.h>

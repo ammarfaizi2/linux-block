@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/threads.h>
 #include <linux/interrupt.h>

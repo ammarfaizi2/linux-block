@@ -18,6 +18,7 @@
  * Copyright 2018 David Lechner <david@lechnology.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

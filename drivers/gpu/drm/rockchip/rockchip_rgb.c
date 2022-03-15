@@ -5,6 +5,7 @@
  *      Sandy Huang <hjc@rock-chips.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/component.h>
 #include <linux/of_graph.h>

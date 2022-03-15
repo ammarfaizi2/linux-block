@@ -6,6 +6,7 @@
  * Copyright (C) 2012-2013 Tieto Poland
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

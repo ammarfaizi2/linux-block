@@ -6,6 +6,7 @@
 //
 // Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/slab.h>
 #include <linux/export.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/pci.h>
 #include "rvu.h"
 

@@ -6,6 +6,7 @@
  * Donggeun Kim <dg77.kim@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/slab.h>

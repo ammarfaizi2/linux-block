@@ -9,6 +9,7 @@
  * the GPU in DRM API tests.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

@@ -7,6 +7,7 @@
  *  by Intel Corporation (http://developer.intel.com).
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/slab.h>

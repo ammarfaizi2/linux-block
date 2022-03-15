@@ -9,6 +9,7 @@
  * Copyright (C) 2019 Micro Crystal AG
  * Author: Alexandre Belloni <alexandre.belloni@bootlin.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/i2c.h>
 #include <linux/bcd.h>

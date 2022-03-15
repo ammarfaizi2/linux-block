@@ -3,6 +3,7 @@
  * Copyright © 2018-2020 Intel Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/of_graph.h>

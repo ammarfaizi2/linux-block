@@ -15,6 +15,7 @@
  *  Copyright (c) Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>

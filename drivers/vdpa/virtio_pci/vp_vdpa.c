@@ -8,6 +8,7 @@
  * Based on virtio_pci_modern.c.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/pci.h>

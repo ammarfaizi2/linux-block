@@ -9,6 +9,7 @@
  * - Better memory allocation techniques?
  * - Alternative access techniques?
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/anon_inodes.h>
 #include <linux/kernel.h>

@@ -3,6 +3,7 @@
 // Copyright (C) 2015-2017 Socionext Inc.
 //   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/list.h>
 #include <linux/mfd/syscon.h>
 #include <linux/of.h>

@@ -6,6 +6,7 @@
  * Author : Gyungoh Yoo <jack.yoo@skyworksinc.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/err.h>
 #include <linux/gpio/consumer.h>

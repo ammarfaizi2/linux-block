@@ -7,6 +7,7 @@
  * Author: Adam Thomson <Adam.Thomson.Opensource@diasemi.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>

@@ -3,6 +3,7 @@
   * Copyright (C) 2010 Brian King IBM Corporation
   */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/cpu.h>

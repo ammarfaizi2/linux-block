@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/netdevice.h>
 #include <net/dcbnl.h>
 

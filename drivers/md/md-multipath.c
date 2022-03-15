@@ -11,6 +11,7 @@
  * derived from raid1.c.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/module.h>

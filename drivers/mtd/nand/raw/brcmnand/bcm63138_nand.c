@@ -3,6 +3,7 @@
  * Copyright © 2015 Broadcom Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/io.h>
 #include <linux/ioport.h>

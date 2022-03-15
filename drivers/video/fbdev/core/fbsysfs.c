@@ -11,6 +11,7 @@
  * are converted to use it a sysfsification will open OOPSable races.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/fb.h>

@@ -10,6 +10,7 @@
  * https://www.ti.com/product/bq24257
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/power_supply.h>

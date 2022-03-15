@@ -6,6 +6,7 @@
  *
  * Conversion to hwmon from IIO done by Jonathan Cameron <jic23@cam.ac.uk>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

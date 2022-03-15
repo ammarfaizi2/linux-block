@@ -67,6 +67,7 @@
  * root@self# cat $DBG_DIR/run
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

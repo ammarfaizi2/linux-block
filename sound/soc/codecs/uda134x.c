@@ -10,6 +10,7 @@
  * Based on the WM87xx drivers by Liam Girdwood and Richard Purdie
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

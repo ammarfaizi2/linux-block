@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Texas Instruments Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ethtool.h>
 #include <linux/etherdevice.h>
 #include <linux/kernel.h>

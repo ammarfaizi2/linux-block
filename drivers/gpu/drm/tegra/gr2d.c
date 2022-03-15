@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2013, NVIDIA Corporation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/iommu.h>

@@ -4,6 +4,7 @@
 // Copyright (C) 2017 Google, Inc.
 // Author: Stephen Barber <smbarber@chromium.org>
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_data/cros_ec_commands.h>

@@ -17,6 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/devm-helpers.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 2010 Sameer Ahmad, Lantiq GmbH
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ioport.h>
 #include <linux/of_platform.h>
 

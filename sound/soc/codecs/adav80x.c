@@ -7,6 +7,7 @@
  * Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/regmap.h>

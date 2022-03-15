@@ -14,6 +14,7 @@
  *   to hold the GPIO3/LTX pin low.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/mfd/iqs62x.h>

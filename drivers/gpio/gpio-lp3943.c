@@ -7,6 +7,7 @@
  * Author: Milo Kim <milo.kim@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/gpio/driver.h>

@@ -7,6 +7,7 @@
  *  Copyright (C) 2015 Martin Schiller <mschiller@tdt.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/module.h>

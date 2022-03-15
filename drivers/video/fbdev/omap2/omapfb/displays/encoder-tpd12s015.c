@@ -6,6 +6,7 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/module.h>

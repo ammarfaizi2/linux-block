@@ -5,6 +5,7 @@
  * Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/iopoll.h>
 #include <linux/module.h>

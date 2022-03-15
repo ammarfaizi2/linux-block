@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Collabora Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

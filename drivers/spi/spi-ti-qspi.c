@@ -6,6 +6,7 @@
  * Author: Sourav Poddar <sourav.poddar@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

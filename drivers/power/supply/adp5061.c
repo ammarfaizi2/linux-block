@@ -5,6 +5,7 @@
  * Copyright 2018 Analog Devices Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/slab.h>

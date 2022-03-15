@@ -7,6 +7,7 @@
  * Aneesh V <aneesh@ti.com>
  * Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/err.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * Copyright (C) IBM Corporation 2016
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/fsi.h>
 #include <linux/module.h>

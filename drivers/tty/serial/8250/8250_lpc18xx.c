@@ -9,6 +9,7 @@
  * Matthias Brugger <matthias.bgg@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/module.h>

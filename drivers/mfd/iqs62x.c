@@ -14,6 +14,7 @@
  * Link to conversion tool: https://github.com/jlabundy/iqs62x-h2bin.git
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/device.h>

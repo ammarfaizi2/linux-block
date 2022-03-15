@@ -7,6 +7,7 @@
  *	Based on arch/arm/plat-omap/cpu-omap.c, (C) 2005 Nokia Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/cpu.h>
 #include <linux/err.h>

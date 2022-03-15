@@ -11,6 +11,7 @@
  *	Yuning Pu <yuning.pu@intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/mfd/tps68470.h>
 #include <linux/module.h>

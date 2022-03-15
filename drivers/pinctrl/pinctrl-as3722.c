@@ -20,6 +20,7 @@
  * 02111-1307, USA
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/driver.h>
 #include <linux/kernel.h>

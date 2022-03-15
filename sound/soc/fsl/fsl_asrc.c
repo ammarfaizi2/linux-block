@@ -6,6 +6,7 @@
 //
 // Author: Nicolin Chen <nicoleotsuka@gmail.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

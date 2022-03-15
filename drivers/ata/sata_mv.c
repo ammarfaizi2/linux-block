@@ -36,6 +36,7 @@
  * work correctly otherwise  (note: this is a pretty rare condition).
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

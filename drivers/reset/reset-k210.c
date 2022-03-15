@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2020 Western Digital Corporation or its affiliates.
  */
+#include <linux/device_api_lock.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>

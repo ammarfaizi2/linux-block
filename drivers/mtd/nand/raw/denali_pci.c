@@ -4,6 +4,7 @@
  * Copyright © 2009-2010, Intel Corporation and its suppliers.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  * Authors: Fabien Dessenne <fabien.dessenne@st.com> for STMicroelectronics.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>

@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/firmware/imx/ipc.h>
 #include <linux/firmware/imx/sci.h>

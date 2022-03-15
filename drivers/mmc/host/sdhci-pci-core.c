@@ -8,6 +8,7 @@
  *     - JMicron (hardware and technical support)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/string.h>
 #include <linux/delay.h>

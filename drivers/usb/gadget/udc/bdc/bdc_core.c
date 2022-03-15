@@ -6,6 +6,7 @@
  *
  * Author: Ashwini Pahuja
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

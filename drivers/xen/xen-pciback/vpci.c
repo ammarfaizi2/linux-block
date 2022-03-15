@@ -9,6 +9,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/pci.h>

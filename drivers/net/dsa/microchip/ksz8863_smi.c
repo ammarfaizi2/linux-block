@@ -5,6 +5,8 @@
  * Copyright (C) 2019 Pengutronix, Michael Grzeschik <kernel@pengutronix.de>
  */
 
+#include <linux/device_api_lock.h>
+
 #include "ksz8.h"
 #include "ksz_common.h"
 

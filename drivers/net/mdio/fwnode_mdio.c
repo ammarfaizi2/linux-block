@@ -6,6 +6,7 @@
  * out of the fwnode and using it to populate an mii_bus.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/fwnode_mdio.h>
 #include <linux/of.h>

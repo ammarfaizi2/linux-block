@@ -7,6 +7,7 @@
  * Some cleanups by Alan Cox <alan@linux.intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>

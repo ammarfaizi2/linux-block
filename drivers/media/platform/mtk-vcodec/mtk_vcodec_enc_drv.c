@@ -5,6 +5,7 @@
 *	Tiffany Lin <tiffany.lin@mediatek.com>
 */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

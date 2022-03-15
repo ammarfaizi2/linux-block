@@ -22,6 +22,8 @@
  * #define RSND_DEBUG_NO_IRQ_STATUS 1
  */
 
+#include <linux/device_api_lock.h>
+
 #include "rsnd.h"
 
 #define SRC_NAME "src"

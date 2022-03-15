@@ -12,6 +12,7 @@
  * Hardware interface for generic AMD ACP processor
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/module.h>

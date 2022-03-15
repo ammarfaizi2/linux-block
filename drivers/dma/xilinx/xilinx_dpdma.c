@@ -7,6 +7,7 @@
  * Author: Hyun Woo Kwon <hyun.kwon@xilinx.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>

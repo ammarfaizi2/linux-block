@@ -4,6 +4,7 @@
  *
  * This device driver implements MMIO TPM on SynQuacer Platform.
  */
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -10,6 +10,7 @@
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/io.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>

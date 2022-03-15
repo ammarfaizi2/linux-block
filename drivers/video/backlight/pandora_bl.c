@@ -7,6 +7,7 @@
  * Copyright 2009,2012 Gražvydas Ignotas <notasas@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

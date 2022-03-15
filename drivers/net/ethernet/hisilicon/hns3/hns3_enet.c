@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/dma-mapping.h>

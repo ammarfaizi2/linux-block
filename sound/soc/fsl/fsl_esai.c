@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2014 Freescale Semiconductor, Inc.
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/dmaengine.h>
 #include <linux/module.h>

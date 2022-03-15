@@ -3,6 +3,7 @@
 // Copyright (c) 2013 Samsung Electronics Co., Ltd
 //		http://www.samsung.com
 
+#include <linux/device_api_lock.h>
 #include <linux/bug.h>
 #include <linux/err.h>
 #include <linux/gpio.h>

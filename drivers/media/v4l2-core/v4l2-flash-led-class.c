@@ -6,6 +6,7 @@
  *	Author: Jacek Anaszewski <j.anaszewski@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/led-class-flash.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

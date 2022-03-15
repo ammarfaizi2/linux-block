@@ -14,6 +14,7 @@
  *	Antti Laakso <antti.laakso@intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>

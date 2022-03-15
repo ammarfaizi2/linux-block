@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2017, Fuzhou Rockchip Electronics Co., Ltd All rights reserved.
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

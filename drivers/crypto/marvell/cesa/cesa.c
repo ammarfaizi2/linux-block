@@ -11,6 +11,7 @@
  * Sebastian Andrzej Siewior < sebastian at breakpoint dot cc >
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>

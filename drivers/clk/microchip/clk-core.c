@@ -3,6 +3,7 @@
  * Purna Chandra Mandal,<purna.mandal@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/device.h>

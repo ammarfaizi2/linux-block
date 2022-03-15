@@ -3,6 +3,7 @@
  * Copyright 2015 Robert Jarzmik <robert.jarzmik@free.fr>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/init.h>

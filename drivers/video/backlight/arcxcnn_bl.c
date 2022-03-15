@@ -6,6 +6,7 @@
  * Author : Brian Dodge <bdodge@arcticsand.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

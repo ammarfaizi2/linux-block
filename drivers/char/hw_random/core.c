@@ -10,6 +10,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/err.h>

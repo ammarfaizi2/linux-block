@@ -28,6 +28,7 @@
 /* Enable this to have a lot of debug printouts */
 #define DEBUG
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * Author: Robert Love <rlove@google.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/hrtimer.h>
 #include <linux/delay.h>

@@ -9,6 +9,7 @@
  * Author: Eugen Hristev <eugen.hristev@microchip.com>
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/input.h>
 #include <linux/input/touchscreen.h>
 #include <linux/iio/consumer.h>

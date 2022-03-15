@@ -9,6 +9,7 @@
 
 #define DSS_SUBSYS_NAME "DSS"
 
+#include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

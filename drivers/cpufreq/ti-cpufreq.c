@@ -6,6 +6,7 @@
  *	 Dave Gerlach <d-gerlach@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpu.h>
 #include <linux/io.h>
 #include <linux/mfd/syscon.h>

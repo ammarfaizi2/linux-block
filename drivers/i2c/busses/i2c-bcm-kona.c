@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

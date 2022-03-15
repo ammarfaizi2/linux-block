@@ -7,6 +7,7 @@
  * Enter bugs at http://blackfin.uclinux.org/
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

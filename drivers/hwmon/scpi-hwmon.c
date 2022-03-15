@@ -6,6 +6,7 @@
  * Punit Agrawal <punit.agrawal@arm.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/hwmon.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

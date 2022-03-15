@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2004-2013 Texas Instruments
  */
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/err.h>

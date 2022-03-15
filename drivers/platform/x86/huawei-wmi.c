@@ -5,6 +5,7 @@
  *  Copyright (C) 2018	      Ayman Bagabas <ayman.bagabas@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>

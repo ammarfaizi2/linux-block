@@ -8,6 +8,7 @@
  * Baikal-T1 CM2 L2-cache Control Block driver.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/bitfield.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2015  Dialog Semiconductor Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/input.h>

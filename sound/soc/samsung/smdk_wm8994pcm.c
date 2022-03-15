@@ -3,6 +3,7 @@
 // Copyright (c) 2011 Samsung Electronics Co., Ltd
 //		http://www.samsung.com
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <sound/soc.h>
 #include <sound/pcm.h>

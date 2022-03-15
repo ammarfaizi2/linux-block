@@ -2,6 +2,7 @@
 // TI LM3692x LED chip family driver
 // Copyright (C) 2017-18 Texas Instruments Incorporated - https://www.ti.com/
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

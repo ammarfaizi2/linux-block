@@ -6,6 +6,7 @@
 // Copyright (c) 2018 MediaTek Inc.
 // Author: Shunli Wang <shunli.wang@mediatek.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

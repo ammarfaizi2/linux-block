@@ -5,6 +5,7 @@
  * Copyright 2020 Michael Walle <michael@walle.cc>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/gpio/regmap.h>
 #include <linux/kernel.h>

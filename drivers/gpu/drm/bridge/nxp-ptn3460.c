@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Google, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

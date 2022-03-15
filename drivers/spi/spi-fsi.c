@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (C) IBM Corporation 2020
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>
 #include <linux/fsi.h>

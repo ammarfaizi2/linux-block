@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2021 Intel Corporation
  */
+#include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 
 #include <linux/clk.h>

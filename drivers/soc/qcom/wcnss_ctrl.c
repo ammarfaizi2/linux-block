@@ -3,6 +3,7 @@
  * Copyright (c) 2016, Linaro Ltd.
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  */
+#include <linux/device_api_lock.h>
 #include <linux/firmware.h>
 #include <linux/module.h>
 #include <linux/slab.h>

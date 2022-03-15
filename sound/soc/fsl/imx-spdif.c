@@ -2,6 +2,7 @@
 //
 // Copyright (C) 2013 Freescale Semiconductor, Inc.
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>
 #include <sound/soc.h>

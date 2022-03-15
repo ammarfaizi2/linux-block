@@ -5,6 +5,7 @@
  * Copyright (c) 2003 Stephen Hemminger <shemminger@osdl.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

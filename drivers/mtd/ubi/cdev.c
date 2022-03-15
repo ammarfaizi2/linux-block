@@ -22,6 +22,7 @@
  * devices.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/stat.h>

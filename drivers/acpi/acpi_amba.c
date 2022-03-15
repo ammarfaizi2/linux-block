@@ -7,6 +7,7 @@
  * Author: Graeme Gregory <graeme.gregory@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/amba/bus.h>
 #include <linux/clkdev.h>

@@ -9,6 +9,7 @@
  * Based on: sound/soc/tegra/tegra_pcm.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <sound/core.h>
 #include <sound/pcm.h>

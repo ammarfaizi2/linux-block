@@ -5,6 +5,7 @@
  * (C) 2002, 2003 Marc Zyngier <maz@wild-wind.fr.eu.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

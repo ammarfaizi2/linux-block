@@ -10,6 +10,7 @@
  * Copyright (C) 2005 Hans Verkuil <hverkuil@xs4all.nl>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/slab.h>

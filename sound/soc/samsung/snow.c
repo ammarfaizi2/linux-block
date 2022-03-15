@@ -2,6 +2,7 @@
 //
 // ASoC machine driver for Snow boards
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

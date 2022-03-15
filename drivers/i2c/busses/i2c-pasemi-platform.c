@@ -5,6 +5,7 @@
  * PA Semi PWRficient SMBus host driver for Apple SoCs
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/i2c.h>
 #include <linux/io.h>

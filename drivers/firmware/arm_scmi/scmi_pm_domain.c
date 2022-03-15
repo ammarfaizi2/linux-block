@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2021 ARM Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/module.h>

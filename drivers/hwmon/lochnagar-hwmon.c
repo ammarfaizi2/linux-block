@@ -8,6 +8,7 @@
  * Author: Lucas Tanure <tanureal@opensource.cirrus.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/hwmon.h>
 #include <linux/hwmon-sysfs.h>

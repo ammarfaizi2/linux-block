@@ -6,6 +6,7 @@
  * Based on the TPS65912 driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

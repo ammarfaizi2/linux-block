@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2020 Tomasz Duszynski <tomasz.duszynski@octakon.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/crc16.h>
 #include <linux/device.h>
 #include <linux/errno.h>

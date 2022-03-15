@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Bootlin.
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>
 #include <linux/nvmem-provider.h>

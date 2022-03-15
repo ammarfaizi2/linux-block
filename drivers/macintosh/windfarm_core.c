@@ -21,6 +21,7 @@
  * instead which is a bit of an overkill imho
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

@@ -15,6 +15,7 @@
  * Copyright 2006 Tower Technologies, Alessandro Zummo <a.zummo at towertech.it>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>

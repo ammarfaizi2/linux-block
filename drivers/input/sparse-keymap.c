@@ -10,6 +10,7 @@
  * Copyright (C) 2005 Dmitry Torokhov <dtor@mail.ru>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/input.h>
 #include <linux/input/sparse-keymap.h>

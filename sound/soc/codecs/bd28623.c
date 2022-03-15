@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2018 Socionext Inc.
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>

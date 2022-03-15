@@ -7,6 +7,7 @@
  * Author: Saravanan Sekar <sravanhome@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/mfd/core.h>

@@ -28,6 +28,7 @@
  * cycle time to delay for a certain length of time.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/debugfs.h>

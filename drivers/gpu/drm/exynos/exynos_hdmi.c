@@ -9,6 +9,7 @@
  * Based on drivers/media/video/s5p-tv/hdmi_drv.c
  */
 
+#include <linux/device_api_lock.h>
 #include <drm/exynos_drm.h>
 #include <linux/clk.h>
 #include <linux/component.h>

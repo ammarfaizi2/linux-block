@@ -5,6 +5,7 @@
  * Author: Ganapatrao Kulkarni <gkulkarni@cavium.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <asm/local64_api.h>

@@ -9,6 +9,7 @@
  *          Pawel Laszczak <pawell@cadence.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include "core.h"

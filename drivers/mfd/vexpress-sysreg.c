@@ -4,6 +4,7 @@
  * Copyright (C) 2012 ARM Limited
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/err.h>
 #include <linux/io.h>

@@ -7,6 +7,7 @@
 // This is the driver for the imx25 TCQ (Touchscreen Conversion Queue)
 // connected to the imx25 ADC.
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/input.h>

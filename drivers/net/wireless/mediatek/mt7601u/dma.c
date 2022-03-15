@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 
 #include "mt7601u.h"

@@ -7,6 +7,7 @@
  * IIO driver for STK8312; 7-bit I2C address: 0x3D.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

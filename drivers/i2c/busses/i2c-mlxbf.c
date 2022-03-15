@@ -5,6 +5,7 @@
  *  Copyright (C) 2020 Mellanox Technologies, Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/err.h>

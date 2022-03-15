@@ -5,6 +5,7 @@
  * Intel SOF Machine driver for DA7219 + MAX98373/MAX98360A codec
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <sound/pcm.h>

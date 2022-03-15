@@ -11,6 +11,7 @@
  * Hans Ulli Kroll <ulli.kroll@googlemail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/rtc.h>
 #include <linux/io.h>
 #include <linux/slab.h>

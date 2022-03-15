@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2017 Microsemi Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/dsa/ocelot.h>
 #include <linux/interrupt.h>

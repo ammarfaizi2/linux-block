@@ -3,6 +3,7 @@
 * Simple driver for Texas Instruments LM3639 Backlight + Flash LED driver chip
 * Copyright (C) 2012 Texas Instruments
 */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/i2c.h>

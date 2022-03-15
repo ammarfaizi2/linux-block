@@ -20,6 +20,7 @@
  *   # spidev_test -D /dev/spidev2.0 -p $suspend # or $reboot, $poweroff, $halt
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/module.h>
 #include <linux/reboot.h>

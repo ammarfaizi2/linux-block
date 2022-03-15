@@ -3,6 +3,7 @@
  *  Copyright (C) 2016 Robert Jarzmik <robert.jarzmik@free.fr>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <sound/ac97/codec.h>

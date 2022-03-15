@@ -119,6 +119,7 @@
  *		- v0.1  start from toshiba_acpi driver written by John Belmonte
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

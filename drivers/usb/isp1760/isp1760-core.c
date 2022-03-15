@@ -12,6 +12,7 @@
  *	Rui Miguel Silva <rui.silva@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/io.h>

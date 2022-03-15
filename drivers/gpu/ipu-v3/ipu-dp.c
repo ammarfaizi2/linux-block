@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Sascha Hauer <s.hauer@pengutronix.de>
  * Copyright (C) 2005-2009 Freescale Semiconductor, Inc.
  */
+#include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

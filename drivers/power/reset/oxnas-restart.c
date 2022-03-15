@@ -9,6 +9,7 @@
  * Copyright (c) 2017 Microsemi Corporation
  * Copyright (c) 2020 Daniel Golle <daniel@makrotopia.org>
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/notifier.h>

@@ -11,6 +11,7 @@
 //         with code, comments and ideas from :-
 //         Richard Purdie <richard@openedhand.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>
 #include <linux/export.h>

@@ -16,6 +16,7 @@
  * http://www.fintek.com.tw/files/productfiles/F75387_V027P.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/hwmon.h>

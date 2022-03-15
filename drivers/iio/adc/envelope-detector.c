@@ -26,6 +26,7 @@
  *            '-------'
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/device.h>
 #include <linux/err.h>

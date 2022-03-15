@@ -13,6 +13,7 @@
  * H. Nikolaus Schaller <hns@goldelico.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/spi/spi.h>

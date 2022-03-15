@@ -11,6 +11,7 @@
  * and the TVP7002 driver in the TI LSP 2.10.00.14. Revisions by
  * Muralidharan Karicheri and Snehaprabha Narnakaje (TI).
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>

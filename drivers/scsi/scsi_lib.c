@@ -9,6 +9,7 @@
  *                        of people at Linux Expo.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/bio.h>
 #include <linux/bitops.h>

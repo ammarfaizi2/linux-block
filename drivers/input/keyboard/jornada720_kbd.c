@@ -11,6 +11,7 @@
  *     based on (C) 2004 jornada 720 kbd driver by
 		Alex Lange <chicken@handhelds.org>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>

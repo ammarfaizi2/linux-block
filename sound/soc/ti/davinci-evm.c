@@ -6,6 +6,7 @@
  * Copyright:   (C) 2007 MontaVista Software, Inc., <source@mvista.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/timer.h>

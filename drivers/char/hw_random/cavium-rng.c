@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Cavium, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/hw_random.h>
 #include <linux/io.h>

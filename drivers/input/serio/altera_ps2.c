@@ -8,6 +8,7 @@
  * Copyright (C) 2002 Russell King
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/input.h>
 #include <linux/serio.h>

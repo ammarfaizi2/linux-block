@@ -6,6 +6,7 @@
  * Copyright (C) 2020-2021 Advanced Micro Devices, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/hwmon.h>

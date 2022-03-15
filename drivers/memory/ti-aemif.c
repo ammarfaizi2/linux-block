@@ -9,6 +9,7 @@
  * Ivan Khoronzhuk <ivan.khoronzhuk@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/io.h>

@@ -8,6 +8,7 @@
  *  Gerd Haeussler <gerd.haeussler.ext@siemens.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/init.h>

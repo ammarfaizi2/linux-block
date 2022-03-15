@@ -13,6 +13,7 @@
  *     Copyright (C) 2004-2011 Comtrol, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

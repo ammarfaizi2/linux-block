@@ -8,6 +8,7 @@
 // Based on ssi.c
 // Copyright (c) 2007 Manuel Lauss <mano@roarinelk.homelinux.net>
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/pm_runtime.h>

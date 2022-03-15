@@ -7,6 +7,7 @@
  * Michel Pollet <michel.pollet@bp.renesas.com>, <buserror@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>

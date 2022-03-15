@@ -9,6 +9,7 @@
  * Brian Swetland <swetland@google.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dma-map-ops.h>
 #include <linux/export.h>
 #include <linux/of_reserved_mem.h>

@@ -5,6 +5,7 @@
  * Copyright 2014-2019 Analog Devices Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/iio/events.h>
 #include <linux/iio/iio.h>

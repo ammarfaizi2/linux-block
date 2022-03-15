@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright 2020 Cerno
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>

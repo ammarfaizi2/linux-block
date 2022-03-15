@@ -3,6 +3,7 @@
  * Copyright (C) 2014-2015 Pengutronix, Markus Pargmann <mpa@pengutronix.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/irqchip/chained_irq.h>

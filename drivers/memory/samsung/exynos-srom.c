@@ -6,6 +6,7 @@
 // Exynos - SROM Controller support
 // Author: Pankaj Dubey <pankaj.dubey@samsung.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/of.h>

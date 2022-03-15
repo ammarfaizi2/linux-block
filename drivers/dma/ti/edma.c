@@ -13,6 +13,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>

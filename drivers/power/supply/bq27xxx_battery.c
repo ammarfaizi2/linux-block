@@ -42,6 +42,7 @@
  * https://www.ti.com/product/bq78z100
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

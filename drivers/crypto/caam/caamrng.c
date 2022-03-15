@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/hw_random.h>
 #include <linux/completion.h>
 #include <linux/atomic.h>

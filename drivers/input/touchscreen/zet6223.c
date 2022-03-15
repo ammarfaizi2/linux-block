@@ -3,6 +3,7 @@
  * Copyright (C) 2016, Jelle van der Waa <jelle@vdwaa.nl>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/input.h>

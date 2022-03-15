@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/devm-helpers.h>
 #include <linux/gpio/consumer.h>

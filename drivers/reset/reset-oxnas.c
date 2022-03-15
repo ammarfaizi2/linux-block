@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Ma Haijun <mahaijuns@gmail.com>
  * Copyright (C) 2009 Oxford Semiconductor Ltd
  */
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/of.h>

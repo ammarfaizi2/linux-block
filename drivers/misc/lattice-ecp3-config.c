@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Stefan Roese <sr@denx.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/firmware.h>
 #include <linux/module.h>

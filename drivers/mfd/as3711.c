@@ -6,6 +6,7 @@
  * Author: Guennadi Liakhovetski, <g.liakhovetski@gmx.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

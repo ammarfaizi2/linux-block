@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/hw_random.h>
 #include <linux/io.h>
 #include <linux/module.h>

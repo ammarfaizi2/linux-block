@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Manivannan Sadhasivam
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

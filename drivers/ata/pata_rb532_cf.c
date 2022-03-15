@@ -15,6 +15,7 @@
  *  seems not to have a license.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gfp.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

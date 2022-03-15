@@ -6,6 +6,7 @@
  * Copyright (C) 2019, Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/gpio/consumer.h>

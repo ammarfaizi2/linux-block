@@ -5,6 +5,7 @@
  * Trademarks are the property of their respective owners.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/serio.h>

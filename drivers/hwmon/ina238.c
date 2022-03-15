@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Nathan Rossi <nathan.rossi@digi.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/hwmon.h>
 #include <linux/i2c.h>

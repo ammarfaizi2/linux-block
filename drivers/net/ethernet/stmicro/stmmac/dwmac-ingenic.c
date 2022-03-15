@@ -5,6 +5,7 @@
  * Copyright (c) 2021 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>

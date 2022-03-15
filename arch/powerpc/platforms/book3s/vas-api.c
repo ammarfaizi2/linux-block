@@ -4,6 +4,7 @@
  * Copyright (C) 2019 Haren Myneni, IBM Corp
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/cdev.h>

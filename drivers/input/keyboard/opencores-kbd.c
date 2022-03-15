@@ -6,6 +6,7 @@
  * Copyright 2007-2009 HV Sistemas S.L.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

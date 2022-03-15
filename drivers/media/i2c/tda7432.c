@@ -23,6 +23,7 @@
  * maxvol   - set maximum volume to +20db (1), default is 0db(0)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  *	Interface structure taken from omap-sham driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmaengine.h>

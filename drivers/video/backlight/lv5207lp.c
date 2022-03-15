@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/err.h>
 #include <linux/fb.h>

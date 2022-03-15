@@ -6,6 +6,7 @@
  * (Written by Alexandru Gagniuc <alex.g at adaptrum.com> for Adaptrum, Inc.)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/of_net.h>

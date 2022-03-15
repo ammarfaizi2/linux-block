@@ -16,6 +16,7 @@
 #include "phy.h"
 #include "radio.h"
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2017-18 Linaro Limited
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

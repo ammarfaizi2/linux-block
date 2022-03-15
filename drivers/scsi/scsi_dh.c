@@ -8,6 +8,7 @@
  *               Mike Anderson <andmike@linux.vnet.ibm.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <scsi/scsi_dh.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2009 Marek Vasut <marek.vasut@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

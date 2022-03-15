@@ -3,6 +3,7 @@
  * Copyright (c) 2018, NVIDIA CORPORATION.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/genalloc.h>
 #include <linux/mailbox_client.h>
 #include <linux/platform_device.h>

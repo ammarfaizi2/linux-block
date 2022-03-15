@@ -8,6 +8,7 @@
  * (C) Copyright 2004-2007 Alan Stern, stern@rowland.harvard.edu
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/of.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>

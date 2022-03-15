@@ -6,6 +6,7 @@
  * Implementation of the DSP IPC interface (host side)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/firmware/imx/dsp.h>
 #include <linux/kernel.h>
 #include <linux/mailbox_client.h>

@@ -6,6 +6,7 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/mISDNif.h>

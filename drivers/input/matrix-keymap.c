@@ -8,6 +8,7 @@
  *	Olof Johansson <olof@lixom.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/export.h>

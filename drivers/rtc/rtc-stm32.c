@@ -4,6 +4,7 @@
  * Author:  Amelie Delaunay <amelie.delaunay@st.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/clk.h>
 #include <linux/iopoll.h>

@@ -9,6 +9,7 @@
  * Copyright (C) Amazon Technologies Inc. All rights reserved.
  * Manish Lachwani (lachwani@lab126.com)
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/delay.h>

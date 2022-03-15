@@ -5,6 +5,7 @@
  * Copyright (c) 2017-2021 Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/dmaengine.h>

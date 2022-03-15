@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (C) 2019-2020 NVIDIA CORPORATION.  All rights reserved.
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/of.h>

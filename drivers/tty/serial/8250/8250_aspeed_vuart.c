@@ -5,6 +5,7 @@
  *    Copyright (C) 2016 Jeremy Kerr <jk@ozlabs.org>, IBM Corp.
  *    Copyright (C) 2006 Arnd Bergmann <arnd@arndb.de>, IBM Corp.
  */
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/of_address.h>

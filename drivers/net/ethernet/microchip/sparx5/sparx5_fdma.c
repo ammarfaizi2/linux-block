@@ -7,6 +7,7 @@
  * https://github.com/microchip-ung/sparx-5_reginfo
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>

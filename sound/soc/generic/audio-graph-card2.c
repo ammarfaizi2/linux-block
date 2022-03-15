@@ -6,6 +6,7 @@
 // Copyright (C) 2020 Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 //
 // based on ${LINUX}/sound/soc/generic/audio-graph-card.c
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/gpio.h>

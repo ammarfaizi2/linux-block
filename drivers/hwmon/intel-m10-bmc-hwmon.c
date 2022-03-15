@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2020 Intel Corporation. All rights reserved.
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/hwmon.h>
 #include <linux/mfd/intel-m10-bmc.h>

@@ -4,6 +4,7 @@
  * Based on code and know-how from the Samsung GT-S7710
  * Gareth Phillips <gareth.phillips@samsung.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>
 #include <linux/err.h>

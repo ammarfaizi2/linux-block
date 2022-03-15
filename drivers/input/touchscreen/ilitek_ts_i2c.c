@@ -7,6 +7,7 @@
  * Copyright (C) 2021 Joe Hung <joe_hung@ilitek.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/input.h>

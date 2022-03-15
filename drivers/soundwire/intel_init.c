@@ -7,6 +7,7 @@
  * Initializes and creates SDW devices based on ACPI and Hardware values
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>

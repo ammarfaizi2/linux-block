@@ -8,6 +8,7 @@
  *  Other hacks (DMA, SD, etc) by David Brownell
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

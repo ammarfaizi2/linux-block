@@ -9,6 +9,7 @@
  * Based on the pinctrl-as3722 driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

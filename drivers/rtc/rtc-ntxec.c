@@ -10,6 +10,7 @@
  * Copyright 2020 Jonathan Neuschäfer <j.neuschaefer@gmx.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mfd/ntxec.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

@@ -8,6 +8,7 @@
 
 #include "mcp251xfd.h"
 
+#include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 
 static const struct regmap_config mcp251xfd_regmap_crc;

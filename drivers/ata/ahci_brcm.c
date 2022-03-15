@@ -5,6 +5,7 @@
  * Copyright © 2009-2015 Broadcom Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/ahci_platform.h>
 #include <linux/compiler.h>

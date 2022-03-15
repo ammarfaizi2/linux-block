@@ -12,6 +12,7 @@
  */
 
 
+#include <linux/device_api_lock.h>
 #include <linux/input.h>
 #include <linux/usb.h>
 #include <linux/hid.h>

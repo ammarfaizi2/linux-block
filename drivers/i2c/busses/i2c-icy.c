@@ -33,6 +33,7 @@
  * For now, we never request an IRQ from the PCF8584, and poll it instead.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/io.h>

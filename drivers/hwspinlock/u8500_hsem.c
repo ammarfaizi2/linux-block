@@ -13,6 +13,7 @@
  *   Ohad Ben-Cohen <ohad@wizery.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/io.h>

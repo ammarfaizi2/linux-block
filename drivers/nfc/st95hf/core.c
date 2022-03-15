@@ -6,6 +6,7 @@
  * Copyright (C) 2015 STMicroelectronics Pvt. Ltd. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/gpio.h>

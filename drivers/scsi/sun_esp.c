@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/delay.h>

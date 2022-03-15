@@ -8,6 +8,7 @@
  *  Rajnikant Bhojani <rajnikant.bhojani@xilinx.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bits.h>
 #include <linux/bitfield.h>

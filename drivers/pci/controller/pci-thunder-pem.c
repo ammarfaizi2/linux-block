@@ -3,6 +3,7 @@
  * Copyright (C) 2015 - 2016 Cavium, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

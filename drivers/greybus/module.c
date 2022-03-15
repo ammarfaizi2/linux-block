@@ -6,6 +6,7 @@
  * Copyright 2016 Linaro Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/greybus.h>
 #include "greybus_trace.h"
 

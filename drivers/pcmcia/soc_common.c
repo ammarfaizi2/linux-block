@@ -31,6 +31,7 @@
 ======================================================================*/
 
 
+#include <linux/device_api_lock.h>
 #include <linux/cpufreq.h>
 #include <linux/gpio.h>
 #include <linux/gpio/consumer.h>

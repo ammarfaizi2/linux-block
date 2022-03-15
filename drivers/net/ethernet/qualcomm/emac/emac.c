@@ -4,6 +4,7 @@
 
 /* Qualcomm Technologies, Inc. EMAC Gigabit Ethernet Driver */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/if_ether.h>
 #include <linux/if_vlan.h>

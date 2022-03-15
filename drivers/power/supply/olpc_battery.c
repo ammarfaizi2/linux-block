@@ -5,6 +5,7 @@
  *	Copyright © 2006-2010  David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

@@ -7,6 +7,7 @@
  * Philip Edelbrock <phil@netroedge.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

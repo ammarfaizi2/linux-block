@@ -10,6 +10,7 @@
  * Balaji Rao <balajirrao@openmoko.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/param.h>
 #include <linux/delay.h>

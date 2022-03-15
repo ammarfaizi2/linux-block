@@ -8,6 +8,7 @@
  * Author: Chao Xie <xiechao.mail@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/of.h>

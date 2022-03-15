@@ -7,6 +7,7 @@
 #define DRV_NAME       "gpio-aggregator"
 #define pr_fmt(fmt)	DRV_NAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/ctype.h>

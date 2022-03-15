@@ -7,6 +7,7 @@
  *	Jaswinder Singh <jassi.brar@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

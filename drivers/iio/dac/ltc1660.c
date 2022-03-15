@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2018 Marcus Folkesson <marcus.folkesson@gmail.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/iio/iio.h>
 #include <linux/iio/sysfs.h>

@@ -8,6 +8,7 @@
  * 2007 - 2013 (c) Xilinx, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/uaccess.h>
 #include <linux/netdevice.h>

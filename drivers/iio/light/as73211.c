@@ -12,6 +12,7 @@
  * Datasheet: https://ams.com/documents/20143/36005/AS73211_DS000556_3-01.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

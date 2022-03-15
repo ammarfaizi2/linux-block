@@ -3,6 +3,7 @@
  * Copyright 2017 IBM Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/log2.h>
 #include <linux/mfd/syscon.h>

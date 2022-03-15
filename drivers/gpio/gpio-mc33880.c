@@ -8,6 +8,7 @@
  * Freescale MC33880 high-side/low-side switch
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/mutex.h>
 #include <linux/spi/spi.h>

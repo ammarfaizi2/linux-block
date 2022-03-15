@@ -6,6 +6,7 @@
  * This driver supports the following ACCES devices: 104-DIO-48E and
  * 104-DIO-24E.
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/device.h>

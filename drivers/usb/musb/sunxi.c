@@ -8,6 +8,7 @@
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/extcon.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2008-2009 Marvell Semiconductor
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include <linux/jiffies.h>

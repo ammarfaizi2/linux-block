@@ -9,6 +9,7 @@
  *     Jasper St. Pierre <jstpierre@mecheye.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 
 #include <drm/drm_atomic.h>

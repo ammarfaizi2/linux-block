@@ -7,6 +7,7 @@
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/clk.h>

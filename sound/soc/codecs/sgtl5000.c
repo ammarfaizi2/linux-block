@@ -4,6 +4,7 @@
 //
 // Copyright 2010-2011 Freescale Semiconductor, Inc. All Rights Reserved.
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

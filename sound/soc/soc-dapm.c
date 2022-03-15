@@ -17,6 +17,7 @@
 //    o Delayed power down of audio subsystem to reduce pops between a quick
 //      device reopen.
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/async.h>

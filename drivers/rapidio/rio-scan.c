@@ -14,6 +14,7 @@
  * - Added Input- Output- enable functionality, to allow full communication
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/types.h>

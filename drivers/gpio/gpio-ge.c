@@ -17,6 +17,7 @@
  * the I/O interrupt controllers mask to stop them propergating
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/slab.h>

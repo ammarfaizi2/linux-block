@@ -6,6 +6,7 @@
  * Author: Kamil Debski <k.debski@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>

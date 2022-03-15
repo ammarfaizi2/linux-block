@@ -9,6 +9,7 @@
  *   Wu Hao <hao.wu@intel.com>
  *   Xu Yilun <yilun.xu@intel.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/dfl.h>
 #include <linux/errno.h>

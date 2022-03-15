@@ -8,6 +8,7 @@
 // Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/firmware.h>
 #include <linux/dmi.h>
 #include <linux/module.h>

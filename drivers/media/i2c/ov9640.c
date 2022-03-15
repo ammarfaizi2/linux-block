@@ -17,6 +17,7 @@
  * Copyright (C) 2008, Guennadi Liakhovetski <kernel@pengutronix.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/module.h>

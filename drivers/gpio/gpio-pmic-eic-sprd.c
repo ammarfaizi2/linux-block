@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Linaro Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/interrupt.h>

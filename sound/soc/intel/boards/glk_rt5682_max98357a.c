@@ -8,6 +8,7 @@
  *   Intel Apollolake I2S Machine driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

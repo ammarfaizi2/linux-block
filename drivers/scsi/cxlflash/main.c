@@ -8,6 +8,7 @@
  * Copyright (C) 2015 IBM Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

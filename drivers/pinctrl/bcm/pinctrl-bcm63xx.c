@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Jonas Gorski <jonas.gorski@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/gpio/regmap.h>
 #include <linux/mfd/syscon.h>

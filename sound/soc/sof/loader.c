@@ -10,6 +10,7 @@
 // Generic firmware loader.
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/firmware.h>
 #include <sound/sof.h>
 #include <sound/sof/ext_manifest.h>

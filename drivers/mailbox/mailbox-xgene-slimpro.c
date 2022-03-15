@@ -5,6 +5,7 @@
  * Copyright (c) 2015, Applied Micro Circuits Corporation
  * Author: Feng Kan fkan@apm.com
  */
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

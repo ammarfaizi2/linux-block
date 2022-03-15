@@ -10,6 +10,7 @@
  * Device driver for vTPM (vTPM proxy driver)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/spinlock.h>

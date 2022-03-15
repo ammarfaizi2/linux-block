@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <asm/unaligned.h>

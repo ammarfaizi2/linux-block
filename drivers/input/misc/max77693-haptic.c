@@ -9,6 +9,7 @@
  * This program is not provided / owned by Maxim Integrated Products.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/i2c.h>

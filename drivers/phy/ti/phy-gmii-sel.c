@@ -7,6 +7,7 @@
  * Based on cpsw-phy-sel.c driver created by Mugunthan V N <mugunthanvnm@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>
 #include <linux/mfd/syscon.h>

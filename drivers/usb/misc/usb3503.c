@@ -5,6 +5,7 @@
  * Copyright (c) 2012-2013 Dongjin Kim (tobetter@gmail.com)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/i2c.h>

@@ -17,6 +17,7 @@
  * Michael A. Griffith <grif@acm.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -5,6 +5,7 @@
 // Copyright (c) 2018 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 
 #include "mt8183-afe-common.h"

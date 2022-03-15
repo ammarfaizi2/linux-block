@@ -4,6 +4,7 @@
  *  PWM beeper driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/input.h>
 #include <linux/regulator/consumer.h>

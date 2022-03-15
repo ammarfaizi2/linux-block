@@ -7,6 +7,7 @@
  * Initial development of this code was funded by
  * Phytec Messtechnik GmbH, https://www.phytec.de
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/of.h>

@@ -6,6 +6,7 @@
  * Chrome OS EC.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/acpi.h>
 #include <linux/list.h>

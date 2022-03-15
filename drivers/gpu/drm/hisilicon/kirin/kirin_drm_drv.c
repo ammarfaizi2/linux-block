@@ -11,6 +11,7 @@
  *	Xinwei Kong <kong.kongxinwei@hisilicon.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/of_platform.h>
 #include <linux/component.h>
 #include <linux/module.h>

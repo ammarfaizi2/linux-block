@@ -40,6 +40,7 @@
  * is half of that in the single stage mode.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 #include <linux/interrupt.h>

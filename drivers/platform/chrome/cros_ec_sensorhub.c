@@ -6,6 +6,7 @@
  * Copyright 2019 Google LLC
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/module.h>

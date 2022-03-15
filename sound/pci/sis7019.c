@@ -9,6 +9,7 @@
  *  All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/time.h>

@@ -3,6 +3,7 @@
  * Generic Counter sysfs interface
  * Copyright (C) 2020 William Breathitt Gray
  */
+#include <linux/device_api_lock.h>
 #include <linux/counter.h>
 #include <linux/device.h>
 #include <linux/err.h>

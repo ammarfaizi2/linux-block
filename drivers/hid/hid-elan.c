@@ -7,6 +7,7 @@
  * Copyright (c) 2016 Alexandrov Stanislav <neko@nya.ai>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/hid.h>
 #include <linux/input/mt.h>
 #include <linux/leds.h>

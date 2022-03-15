@@ -6,6 +6,7 @@
  * Author: Matti J. Aaltonen <matti.j.aaltonen@nokia.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/interrupt.h>

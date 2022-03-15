@@ -5,6 +5,7 @@
  * Copyright (C) 2008, Volker Weiss <dev@tintuc.de>
  * Copyright (C) 2007-2010 Florian Fainelli <florian@openwrt.org>
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

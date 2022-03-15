@@ -11,6 +11,7 @@
  * HDMI Transitter, Rev. A, October 2010
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

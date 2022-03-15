@@ -8,6 +8,8 @@
  *   Wu Hao <hao.wu@intel.com>
  *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
  */
+#include <linux/device_api_lock.h>
+
 #include "dfl-afu.h"
 
 /**

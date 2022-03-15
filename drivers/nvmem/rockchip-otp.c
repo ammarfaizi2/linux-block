@@ -6,6 +6,7 @@
  * Author: Finley Xiao <finley.xiao@rock-chips.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

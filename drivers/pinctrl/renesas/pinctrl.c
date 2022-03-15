@@ -7,6 +7,7 @@
 
 #define DRV_NAME "sh-pfc"
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/init.h>

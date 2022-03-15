@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Asahi Kasei Microdevices Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>

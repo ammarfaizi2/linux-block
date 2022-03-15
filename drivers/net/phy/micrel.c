@@ -19,6 +19,7 @@
  *			 ksz9477
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/ethtool_netlink.h>

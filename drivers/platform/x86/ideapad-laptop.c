@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/backlight.h>
 #include <linux/bitops.h>

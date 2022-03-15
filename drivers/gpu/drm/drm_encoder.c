@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/export.h>
 
 #include <drm/drm_bridge.h>

@@ -14,6 +14,7 @@
  * Actually, the TS-5500 and TS-5400 are supported.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

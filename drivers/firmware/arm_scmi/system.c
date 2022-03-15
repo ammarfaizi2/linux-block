@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "SCMI Notifications SYSTEM - " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/scmi_protocol.h>
 

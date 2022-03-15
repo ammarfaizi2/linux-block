@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2015-2016 HiSilicon Technologies Co., Ltd.
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

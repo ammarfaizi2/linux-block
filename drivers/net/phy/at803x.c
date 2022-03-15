@@ -7,6 +7,7 @@
  * Author: Matus Ujhelyi <ujhelyi.m@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/phy.h>

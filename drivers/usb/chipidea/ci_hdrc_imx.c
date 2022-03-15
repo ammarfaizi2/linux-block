@@ -5,6 +5,7 @@
  * on behalf of DENX Software Engineering GmbH
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>

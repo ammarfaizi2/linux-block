@@ -6,6 +6,7 @@
  * Copyright (c) 2004 Li Shaohua <shaohua.li@intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/acpi.h>
 #include <linux/pnp.h>

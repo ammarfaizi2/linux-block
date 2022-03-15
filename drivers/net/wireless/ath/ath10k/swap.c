@@ -8,6 +8,8 @@
  * memory to store some of the code segments.
  */
 
+#include <linux/device_api_lock.h>
+
 #include "core.h"
 #include "bmi.h"
 #include "debug.h"

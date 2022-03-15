@@ -8,6 +8,7 @@
  * level 2 interrupt for this must be explicitly acked.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/irqdomain.h>

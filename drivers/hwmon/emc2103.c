@@ -4,6 +4,7 @@
  * Copyright (c) 2010 SMSC
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

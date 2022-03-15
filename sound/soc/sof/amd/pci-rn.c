@@ -11,6 +11,7 @@
  * PCI interface for Renoir ACP device
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/platform_device.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Mellanox Technologies.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/arm-smccc.h>
 #include <linux/bitfield.h>

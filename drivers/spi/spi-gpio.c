@@ -5,6 +5,7 @@
  * Copyright (C) 2006,2008 David Brownell
  * Copyright (C) 2017 Linus Walleij
  */
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

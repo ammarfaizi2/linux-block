@@ -16,6 +16,7 @@
 ** FIXME: add DMA hint support programming in both sba and lba modules.
 */
 
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>

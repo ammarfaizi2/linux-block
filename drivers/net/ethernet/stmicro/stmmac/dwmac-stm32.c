@@ -6,6 +6,7 @@
  * Author:  Alexandre Torgue <alexandre.torgue@st.com> for STMicroelectronics.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>
 #include <linux/mfd/syscon.h>

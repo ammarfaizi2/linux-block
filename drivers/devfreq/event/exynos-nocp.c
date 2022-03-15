@@ -6,6 +6,7 @@
  * Author : Chanwoo Choi <cw00.choi@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/devfreq-event.h>

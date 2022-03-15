@@ -7,6 +7,7 @@
  *         Trevor Wu <trevor.wu@mediatek.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/regmap.h>
 #include "mt8195-afe-clk.h"

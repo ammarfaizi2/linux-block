@@ -23,6 +23,7 @@
  *	archive for more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>
 #include <linux/fb.h>

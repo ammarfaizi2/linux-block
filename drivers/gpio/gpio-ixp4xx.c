@@ -6,6 +6,7 @@
 // based on previous work and know-how from:
 // Deepak Saxena <dsaxena@plexity.net>
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/io.h>
 #include <linux/irq.h>

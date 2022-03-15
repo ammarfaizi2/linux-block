@@ -14,6 +14,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <sound/soc.h>
 #include <sound/tlv.h>

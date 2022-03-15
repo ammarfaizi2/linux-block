@@ -10,6 +10,7 @@
  * TODO: add support for writing OTP register via API in boot ROM.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/nvmem-provider.h>

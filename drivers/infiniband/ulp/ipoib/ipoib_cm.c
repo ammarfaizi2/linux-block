@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/device_api_lock.h>
 #include <rdma/ib_cm.h>
 #include <net/dst.h>
 #include <net/icmp.h>

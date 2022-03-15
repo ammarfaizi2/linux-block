@@ -9,6 +9,8 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/device_api_lock.h>
+
 #include "ptdma.h"
 #include "../dmaengine.h"
 #include "../virt-dma.h"

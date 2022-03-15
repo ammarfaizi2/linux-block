@@ -5,6 +5,7 @@
  * Author: Mattias Wallin <mattias.wallin@stericsson.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/err.h>

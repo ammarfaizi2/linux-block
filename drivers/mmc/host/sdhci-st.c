@@ -9,6 +9,7 @@
  * Based on sdhci-cns3xxx.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/module.h>

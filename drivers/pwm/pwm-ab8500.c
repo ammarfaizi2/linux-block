@@ -4,6 +4,7 @@
  *
  * Author: Arun R Murthy <arun.murthy@stericsson.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>

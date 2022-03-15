@@ -3,6 +3,7 @@
  * Copyright 2014  Google, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/fs.h>

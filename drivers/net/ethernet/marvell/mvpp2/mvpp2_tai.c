@@ -32,6 +32,7 @@
  *
  * Consequently, we support none of these.
  */
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/ptp_clock_kernel.h>
 #include <linux/slab.h>

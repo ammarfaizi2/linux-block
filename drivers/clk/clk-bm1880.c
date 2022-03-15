@@ -6,6 +6,7 @@
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

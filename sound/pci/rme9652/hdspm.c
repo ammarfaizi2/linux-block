@@ -118,6 +118,7 @@
  * :8421.8421:8421.8421:8421.8421:8421.8421: hex digit
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/delay.h>

@@ -7,6 +7,7 @@
  * Initially based on sound/soc/codecs/wm8350.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>

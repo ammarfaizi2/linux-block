@@ -6,6 +6,7 @@
  * Copyright © 2015 Broadcom
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include <linux/kref.h>
 #include <linux/mailbox_client.h>

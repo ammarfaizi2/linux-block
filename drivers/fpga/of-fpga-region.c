@@ -5,6 +5,7 @@
  *  Copyright (C) 2013-2016 Altera Corporation
  *  Copyright (C) 2017 Intel Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/fpga/fpga-bridge.h>
 #include <linux/fpga/fpga-mgr.h>

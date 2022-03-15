@@ -9,6 +9,7 @@
  *	Eric Miao <eric.miao@marvell.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

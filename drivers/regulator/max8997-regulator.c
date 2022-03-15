@@ -7,6 +7,7 @@
 //
 // This driver is based on max8998.c
 
+#include <linux/device_api_lock.h>
 #include <linux/bug.h>
 #include <linux/err.h>
 #include <linux/gpio.h>

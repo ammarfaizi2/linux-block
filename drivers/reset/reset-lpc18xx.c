@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

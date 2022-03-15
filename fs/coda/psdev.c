@@ -13,6 +13,7 @@
  *              Copyright (c) 1997 Carnegie-Mellon University
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/cred.h>
 #include <linux/module.h>

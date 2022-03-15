@@ -6,6 +6,7 @@
  * Common Clock Framework support for Audio Subsystem Clock Controller.
 */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/clk.h>

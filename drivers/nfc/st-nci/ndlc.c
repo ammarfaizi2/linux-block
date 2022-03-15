@@ -5,6 +5,7 @@
  * Copyright (C) 2014-2015  STMicroelectronics SAS. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/sched.h>
 #include <net/nfc/nci_core.h>
 

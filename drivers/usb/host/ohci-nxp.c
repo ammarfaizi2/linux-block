@@ -16,6 +16,7 @@
  *
  * 2005-2006 (c) MontaVista Software, Inc.
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

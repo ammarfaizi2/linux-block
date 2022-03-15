@@ -7,6 +7,7 @@
  * Author: Andrei Stefanescu <andrei.stefanescu@microchip.com>
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/gpio/driver.h>
 #include <linux/init.h>

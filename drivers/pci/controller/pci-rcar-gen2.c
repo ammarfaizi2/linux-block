@@ -8,6 +8,7 @@
  * Author: Valentine Barshak <valentine.barshak@cogentembedded.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

@@ -4,6 +4,7 @@
 //
 // sc7180.c -- ALSA SoC Machine driver for SC7180
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/sound/sc7180-lpass.h>
 #include <linux/gpio.h>
 #include <linux/gpio/consumer.h>

@@ -19,6 +19,7 @@
  * 9: ACK -> N.C.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/input.h>

@@ -5,6 +5,8 @@
 // Copyright (c) 2018 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
+#include <linux/device_api_lock.h>
+
 #include "mt6797-afe-common.h"
 
 /* dai component */

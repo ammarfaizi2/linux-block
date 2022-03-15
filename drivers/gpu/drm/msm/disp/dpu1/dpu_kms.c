@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/dma-buf.h>

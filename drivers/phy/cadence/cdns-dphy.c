@@ -3,6 +3,7 @@
  * Copyright: 2017-2018 Cadence Design Systems, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/io.h>

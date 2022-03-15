@@ -2,6 +2,7 @@
 /* Copyright (c) 2017, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

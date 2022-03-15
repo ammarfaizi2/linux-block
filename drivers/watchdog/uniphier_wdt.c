@@ -7,6 +7,7 @@
  * All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>

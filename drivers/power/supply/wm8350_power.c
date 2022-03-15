@@ -9,6 +9,7 @@
  * Copyright 2006  David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>

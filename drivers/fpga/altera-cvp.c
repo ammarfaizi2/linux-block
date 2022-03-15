@@ -10,6 +10,7 @@
  * Firmware must be in binary "rbf" format.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/fpga/fpga-mgr.h>

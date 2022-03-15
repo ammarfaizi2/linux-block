@@ -5,6 +5,7 @@
  * Joel Stanley <joel@jms.id.au>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <asm/div64.h>
 #include <linux/clk.h>

@@ -16,6 +16,7 @@
  *   Henry Mitchel <henry.mitchel@intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/align.h>
 #include <linux/types.h>
 #include <linux/device.h>

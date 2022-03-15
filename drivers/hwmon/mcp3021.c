@@ -12,6 +12,7 @@
  * can also display the input voltage.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/hwmon.h>

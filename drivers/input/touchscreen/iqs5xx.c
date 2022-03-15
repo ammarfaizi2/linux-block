@@ -11,6 +11,7 @@
  * Link to PC-based configuration tool and datasheet: https://www.azoteq.com/
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/delay.h>
 #include <linux/device.h>

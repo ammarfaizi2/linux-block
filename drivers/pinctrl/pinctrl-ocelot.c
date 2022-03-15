@@ -7,6 +7,7 @@
  * Copyright (c) 2017 Microsemi Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/interrupt.h>

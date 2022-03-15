@@ -9,6 +9,7 @@
  * Based on wm8994.c and wm_hubs.c by Mark Brown
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

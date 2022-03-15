@@ -12,6 +12,7 @@
  *  you can do only one measurement per read request.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/module.h>

@@ -10,6 +10,7 @@
  * Author: Laxman Dewangan <ldewangan@nvidia.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/errno.h>
 #include <linux/init.h>

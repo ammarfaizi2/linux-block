@@ -4,6 +4,8 @@
  * stmmac HW Interface Handling
  */
 
+#include <linux/device_api_lock.h>
+
 #include "common.h"
 #include "stmmac.h"
 #include "stmmac_ptp.h"

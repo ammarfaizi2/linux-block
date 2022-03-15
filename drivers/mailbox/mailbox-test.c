@@ -5,6 +5,7 @@
  * Author: Lee Jones <lee.jones@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/err.h>
 #include <linux/fs.h>

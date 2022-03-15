@@ -15,6 +15,7 @@
  * user-space applications to communicate with the card.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

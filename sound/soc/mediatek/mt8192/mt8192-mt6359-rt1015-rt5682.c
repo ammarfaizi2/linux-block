@@ -7,6 +7,7 @@
 // Author: Jiaxin Yu <jiaxin.yu@mediatek.com>
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

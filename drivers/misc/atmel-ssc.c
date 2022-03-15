@@ -5,6 +5,7 @@
  * Copyright (C) 2007 Atmel Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/list.h>

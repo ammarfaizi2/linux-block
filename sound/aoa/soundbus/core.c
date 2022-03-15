@@ -5,6 +5,7 @@
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include "soundbus.h"

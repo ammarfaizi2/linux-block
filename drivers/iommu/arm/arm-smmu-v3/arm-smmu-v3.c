@@ -9,6 +9,7 @@
  * This driver is powered by bad coffee and bombay mix.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

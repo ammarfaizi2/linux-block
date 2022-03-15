@@ -9,6 +9,7 @@
  * Copyright (C) 2015 Red Hat. Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/io.h>

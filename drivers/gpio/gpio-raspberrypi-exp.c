@@ -8,6 +8,7 @@
  *  Copyright (C) 2017 Raspberry Pi Trading Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/gpio/driver.h>
 #include <linux/module.h>

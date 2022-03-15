@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Theobroma Systems Design und Consulting GmbH
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/media-bus-format.h>

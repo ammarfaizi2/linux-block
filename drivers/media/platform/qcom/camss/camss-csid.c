@@ -7,6 +7,7 @@
  * Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/interrupt.h>

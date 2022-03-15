@@ -4,6 +4,7 @@
 // Copyright (C) 2017 Google, Inc.
 // Author: Benson Leung <bleung@chromium.org>
 
+#include <linux/device_api_lock.h>
 #include <linux/extcon-provider.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2018 Johannes Thumshirn <jth@kernel.org>
  */
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/mcb.h>

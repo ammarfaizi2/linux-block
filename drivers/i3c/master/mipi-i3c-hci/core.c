@@ -7,6 +7,7 @@
  * Core driver code with main interface to the I3C subsystem.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitfield.h>
 #include <linux/device.h>

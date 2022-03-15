@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Johan Hovold <johan@kernel.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/gnss.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2013-2015 Alexander Popov <alex.popov@linux.com>.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

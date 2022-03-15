@@ -6,6 +6,7 @@
  *
  * Simple eMMC hardware reset provider
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

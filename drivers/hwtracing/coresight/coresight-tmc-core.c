@@ -4,6 +4,7 @@
  * Description: CoreSight Trace Memory Controller driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>

@@ -7,6 +7,7 @@
  * Reference: https://www.ti.com/lit/ds/symlink/cdce706.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

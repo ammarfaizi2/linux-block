@@ -11,6 +11,7 @@
 
 #include "hid-ids.h"
 
+#include <linux/device_api_lock.h>
 #include <linux/hid.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>

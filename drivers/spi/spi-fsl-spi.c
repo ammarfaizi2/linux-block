@@ -15,6 +15,7 @@
  * Copyright (c) 2012 Aeroflex Gaisler AB.
  * Author: Andreas Larsson <andreas@gaisler.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/fsl_devices.h>

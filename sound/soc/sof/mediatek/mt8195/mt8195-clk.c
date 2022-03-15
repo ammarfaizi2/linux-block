@@ -6,6 +6,7 @@
 //
 // Hardware interface for mt8195 DSP clock
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/pm_runtime.h>
 #include <linux/io.h>

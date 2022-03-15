@@ -30,6 +30,7 @@
  * https://datasheets.maximintegrated.com/en/ds/MAX31953-MAX31963.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

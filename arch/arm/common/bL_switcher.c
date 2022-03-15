@@ -6,6 +6,7 @@
  * Copyright:	(C) 2012-2013  Linaro Limited
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic.h>

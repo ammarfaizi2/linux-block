@@ -7,6 +7,7 @@
  * This is the entry point for the drivers that control the Wilco EC.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/device.h>
 #include <linux/ioport.h>

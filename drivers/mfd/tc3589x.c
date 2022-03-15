@@ -6,6 +6,7 @@
  * Author: Rabin Vincent <rabin.vincent@stericsson.com> for ST-Ericsson
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

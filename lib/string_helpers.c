@@ -5,6 +5,7 @@
  * Copyright 31 August 2008 James Bottomley
  * Copyright (C) 2013, Intel Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/math64.h>

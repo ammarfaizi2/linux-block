@@ -5,6 +5,7 @@
 //
 // Nintendo Wii (Hollywood) GPIO driver
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/io.h>

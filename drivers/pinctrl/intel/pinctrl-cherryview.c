@@ -10,6 +10,7 @@
  *   Alan Cox <alan@linux.intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/acpi.h>

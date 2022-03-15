@@ -7,6 +7,7 @@
  * Author: Pradeep Goudagunta <pgoudagunta@nvidia.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/irq.h>

@@ -6,6 +6,7 @@
  * Author: Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/clk-provider.h>

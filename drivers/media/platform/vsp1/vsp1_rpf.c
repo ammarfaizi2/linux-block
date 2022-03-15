@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 
 #include <media/v4l2-subdev.h>

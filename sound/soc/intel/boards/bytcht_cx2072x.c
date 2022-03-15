@@ -4,6 +4,7 @@
 // CX2072X codec
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/device.h>
 #include <linux/gpio/consumer.h>

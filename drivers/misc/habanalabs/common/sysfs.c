@@ -7,6 +7,7 @@
 
 #include "habanalabs.h"
 
+#include <linux/device_api_lock.h>
 #include <linux/pci.h>
 
 long hl_get_frequency(struct hl_device *hdev, u32 pll_index, bool curr)

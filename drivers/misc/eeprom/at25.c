@@ -6,6 +6,7 @@
  * Copyright (C) 2006 David Brownell
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/delay.h>
 #include <linux/device.h>

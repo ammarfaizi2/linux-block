@@ -5,6 +5,7 @@
  * Copyright (C) 2019-2020 Antmicro <www.antmicro.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/console.h>
 #include <linux/litex.h>
 #include <linux/module.h>

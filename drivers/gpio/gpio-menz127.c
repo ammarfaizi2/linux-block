@@ -5,6 +5,7 @@
  * Copyright (C) 2016 MEN Mikroelektronik GmbH (www.men.de)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/io.h>

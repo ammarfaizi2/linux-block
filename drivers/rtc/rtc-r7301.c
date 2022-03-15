@@ -9,6 +9,7 @@
  * Datasheet: http://www5.epsondevice.com/en/products/parallel/rtc7301sf.html
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

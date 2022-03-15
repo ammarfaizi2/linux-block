@@ -7,6 +7,7 @@
  * This file based on panel-ilitek-ili9881c.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/err.h>

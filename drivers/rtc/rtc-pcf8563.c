@@ -11,6 +11,7 @@
  * https://www.nxp.com/docs/en/data-sheet/PCF8563.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/i2c.h>
 #include <linux/bcd.h>

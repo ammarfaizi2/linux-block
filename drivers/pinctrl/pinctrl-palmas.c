@@ -20,6 +20,7 @@
  * 02111-1307, USA
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/mfd/palmas.h>

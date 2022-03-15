@@ -51,6 +51,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/firmware/imx/rsrc.h>
 #include <linux/firmware/imx/sci.h>
 #include <linux/firmware/imx/svc/rm.h>

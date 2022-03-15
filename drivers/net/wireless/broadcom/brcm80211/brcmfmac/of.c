@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/of.h>
 #include <linux/of_irq.h>

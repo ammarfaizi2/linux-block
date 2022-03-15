@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2019 Microchip Technology Inc. and its subsidiaries
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

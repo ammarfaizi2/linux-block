@@ -4,6 +4,7 @@
 
 #define pr_fmt(fmt) "arm-smmu: " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/bitfield.h>
 #include <linux/of.h>

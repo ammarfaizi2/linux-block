@@ -3,6 +3,7 @@
 
 #include "otx2_cpt_common.h"
 #include "otx2_cptvf.h"
+#include <linux/device_api_lock.h>
 #include <rvu_reg.h>
 
 int otx2_cpt_mbox_bbuf_init(struct otx2_cptvf_dev *cptvf, struct pci_dev *pdev)

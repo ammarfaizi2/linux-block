@@ -5,6 +5,7 @@
  * Copyright (c) 2013, Carlo Caione <carlo.caione@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/fs.h>

@@ -6,6 +6,7 @@
  * Data sheet available at https://www.sensirion.com/file/datasheet_sht21
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

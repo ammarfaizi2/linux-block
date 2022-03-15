@@ -14,6 +14,7 @@
  * Copyright (C) 2018-2021 ARM Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/bitmap.h>
 #include <linux/device.h>

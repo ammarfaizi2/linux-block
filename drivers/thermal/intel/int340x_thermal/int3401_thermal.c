@@ -3,6 +3,7 @@
  * INT3401 processor thermal device
  * Copyright (c) 2020, Intel Corporation.
  */
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

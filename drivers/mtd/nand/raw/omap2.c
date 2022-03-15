@@ -5,6 +5,7 @@
  * Copyright © 2004 David Brownell
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/platform_device.h>
 #include <linux/dmaengine.h>

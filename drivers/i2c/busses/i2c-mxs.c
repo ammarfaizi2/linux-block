@@ -10,6 +10,7 @@
  * Copyright (C) 2009-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/slab.h>
 #include <linux/device.h>

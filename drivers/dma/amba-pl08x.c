@@ -60,6 +60,7 @@
  *    after the final transfer signalled by LBREQ or LSREQ.  The DMAC
  *    will then move to the next LLI entry. Unsupported by PL080S.
  */
+#include <linux/device_api_lock.h>
 #include <linux/amba/bus.h>
 #include <linux/amba/pl08x.h>
 #include <linux/debugfs.h>

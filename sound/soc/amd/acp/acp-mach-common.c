@@ -13,6 +13,7 @@
  * Machine Driver Interface for ACP HW block
  */
 
+#include <linux/device_api_lock.h>
 #include <sound/core.h>
 #include <sound/jack.h>
 #include <sound/pcm_params.h>

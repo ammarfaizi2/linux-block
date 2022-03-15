@@ -3,6 +3,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/rcupdate.h>
 #include <asm/errno.h>

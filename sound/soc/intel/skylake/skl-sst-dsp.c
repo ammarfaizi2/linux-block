@@ -7,6 +7,7 @@
  *	Jeeja KP <jeeja.kp@intel.com>
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+#include <linux/device_api_lock.h>
 #include <sound/pcm.h>
 
 #include "../common/sst-dsp.h"

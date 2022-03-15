@@ -20,6 +20,7 @@
  * Dorn and Kyleen Hall and Jarko Sakkinnen.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/completion.h>
 #include <linux/init.h>

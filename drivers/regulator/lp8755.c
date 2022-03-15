@@ -7,6 +7,7 @@
  * Author: Daniel(Geon Si) Jeong <daniel.jeong@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/i2c.h>

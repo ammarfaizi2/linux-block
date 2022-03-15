@@ -12,6 +12,7 @@
  *	Copyright 2005 Phil Blundell
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

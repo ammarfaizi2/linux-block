@@ -6,6 +6,7 @@
  * https://www.analog.com/media/en/technical-documentation/data-sheets/AD7949.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/iio/iio.h>
 #include <linux/module.h>

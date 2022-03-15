@@ -5,6 +5,7 @@
  * Author: Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/clocksource.h>

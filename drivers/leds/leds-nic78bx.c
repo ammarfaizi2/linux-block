@@ -3,6 +3,7 @@
  * Copyright (C) 2016 National Instruments Corp.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/leds.h>
 #include <linux/module.h>

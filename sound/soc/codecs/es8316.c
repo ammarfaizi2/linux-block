@@ -7,6 +7,7 @@
  *          Daniel Drake <drake@endlessm.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>

@@ -10,6 +10,7 @@
 // Author: Peter Rosin <peda@axentia.s>
 //         Copyright 2016 Axentia Technologies
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/clk.h>

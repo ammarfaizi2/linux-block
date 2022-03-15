@@ -9,6 +9,7 @@
  * Based on WM8753.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

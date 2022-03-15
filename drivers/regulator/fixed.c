@@ -14,6 +14,7 @@
  * systems with no controllable regulators.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/mutex.h>
 #include <linux/module.h>

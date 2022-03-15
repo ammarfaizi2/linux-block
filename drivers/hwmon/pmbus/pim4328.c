@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Flextronics International Sweden AB
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

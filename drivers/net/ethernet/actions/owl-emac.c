@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Cristian Ciocaltea <cristian.ciocaltea@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/circ_buf.h>
 #include <linux/clk.h>

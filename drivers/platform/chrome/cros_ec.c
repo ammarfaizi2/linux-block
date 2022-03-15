@@ -9,6 +9,7 @@
  * battery charging and regulator control, firmware update.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/of_platform.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>

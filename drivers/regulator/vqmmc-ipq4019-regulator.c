@@ -5,6 +5,7 @@
 //
 // Driver for IPQ4019 SD/MMC controller's I/O LDO voltage regulator
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of.h>

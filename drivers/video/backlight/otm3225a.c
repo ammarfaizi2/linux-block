@@ -12,6 +12,7 @@
  * TFT LC display using the OTM3225A controller.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

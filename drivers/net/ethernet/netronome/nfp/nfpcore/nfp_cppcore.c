@@ -9,6 +9,7 @@
  *          Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/align.h>
 #include <asm/unaligned.h>

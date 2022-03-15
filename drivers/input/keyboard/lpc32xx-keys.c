@@ -12,6 +12,7 @@
  * This controller supports square key matrices from 1x1 up to 8x8
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>

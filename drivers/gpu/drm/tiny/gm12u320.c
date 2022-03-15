@@ -3,6 +3,7 @@
  * Copyright 2019 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/usb.h>

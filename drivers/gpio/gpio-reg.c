@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 Russell King
  */
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/gpio/gpio-reg.h>
 #include <linux/io.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2020 MediaTek Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/iopoll.h>

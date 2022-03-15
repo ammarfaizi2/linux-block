@@ -8,6 +8,7 @@
  * Copyright (c) 2017 Andreas Färber
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/of_address.h>
 #include <linux/of_platform.h>
 #include <linux/pm_domain.h>

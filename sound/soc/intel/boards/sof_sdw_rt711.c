@@ -5,6 +5,7 @@
  *  sof_sdw_rt711 - Helpers to handle RT711 from generic machine driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/errno.h>

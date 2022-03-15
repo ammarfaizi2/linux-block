@@ -6,6 +6,7 @@
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>
 #include <sound/soc.h>

@@ -41,6 +41,7 @@
  * device with a drm_panel.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/fb.h>

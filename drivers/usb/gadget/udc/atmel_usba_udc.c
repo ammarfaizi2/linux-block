@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2005-2007 Atmel Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/clk.h>
 #include <linux/clk/at91_pmc.h>

@@ -5,6 +5,7 @@
  * Soundwire Intel Master Driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>

@@ -7,6 +7,7 @@
  *            Lv Zheng <lv.zheng@intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/acpi.h>

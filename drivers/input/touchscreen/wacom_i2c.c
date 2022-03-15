@@ -6,6 +6,7 @@
  * <tobita.tatsunosuke@wacom.co.jp>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/module.h>
 #include <linux/input.h>

@@ -5,6 +5,7 @@
  * Intel Cometlake I2S Machine driver for RT1011 + RT5682 codec
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

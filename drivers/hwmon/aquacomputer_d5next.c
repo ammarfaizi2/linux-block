@@ -9,6 +9,7 @@
  * Copyright 2021 Aleksa Savic <savicaleksa83@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/debugfs.h>
 #include <linux/hid.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2018 NVIDIA Corporation. All rights reserved.
  * Author: Ajay Gupta <ajayg@nvidia.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

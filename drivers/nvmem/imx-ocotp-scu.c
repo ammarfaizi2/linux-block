@@ -7,6 +7,7 @@
  * Peng Fan <peng.fan@nxp.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/arm-smccc.h>
 #include <linux/firmware/imx/sci.h>
 #include <linux/module.h>

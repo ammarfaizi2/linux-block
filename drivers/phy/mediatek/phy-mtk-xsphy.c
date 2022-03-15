@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/phy/phy.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

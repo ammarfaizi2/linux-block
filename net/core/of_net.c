@@ -4,6 +4,7 @@
  *
  * Initially copied out of arch/powerpc/kernel/prom_parse.c
  */
+#include <linux/device_api_lock.h>
 #include <linux/etherdevice.h>
 #include <linux/kernel.h>
 #include <linux/of_net.h>

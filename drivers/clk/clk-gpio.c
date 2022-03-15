@@ -9,6 +9,7 @@
  * Gpio controlled clock implementation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/export.h>
 #include <linux/slab.h>

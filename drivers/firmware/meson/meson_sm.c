@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "meson-sm: " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/arm-smccc.h>
 #include <linux/bug.h>
 #include <linux/io.h>

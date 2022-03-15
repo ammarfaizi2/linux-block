@@ -13,6 +13,7 @@
  *    sub-devices.
  */
  
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/string.h>
 #include <linux/kernel.h>

@@ -10,6 +10,7 @@
  * due to lack of documentation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

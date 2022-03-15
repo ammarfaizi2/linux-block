@@ -9,6 +9,7 @@
  * Copyright (c) 2011,2012 Toradex Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

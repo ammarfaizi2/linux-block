@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2018 Intel Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/fpga/fpga-mgr.h>
 #include <linux/firmware/intel/stratix10-svc-client.h>

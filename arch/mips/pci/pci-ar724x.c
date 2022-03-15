@@ -6,6 +6,7 @@
  *  Copyright (C) 2009-2011 Gabor Juhos <juhosg@openwrt.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/irq.h>
 #include <linux/pci.h>
 #include <linux/init.h>

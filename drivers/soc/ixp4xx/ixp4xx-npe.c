@@ -11,6 +11,7 @@
  *   Thanks, Christian.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/firmware.h>

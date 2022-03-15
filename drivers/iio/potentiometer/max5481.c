@@ -7,6 +7,7 @@
  * https://datasheets.maximintegrated.com/en/ds/MAX5481-MAX5484.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/iio/iio.h>
 #include <linux/iio/sysfs.h>
 #include <linux/module.h>

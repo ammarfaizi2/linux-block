@@ -9,6 +9,7 @@
  * NOTE: PM support is currently not available.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/acpi.h>

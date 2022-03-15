@@ -9,6 +9,7 @@
  * Derived from leds-lp5521.c, leds-lp5523.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>

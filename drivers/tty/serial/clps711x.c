@@ -8,6 +8,7 @@
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/console.h>

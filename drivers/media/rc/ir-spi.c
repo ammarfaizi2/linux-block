@@ -4,6 +4,7 @@
 // Copyright (c) 2016 Samsung Electronics Co., Ltd.
 // Copyright (c) Andi Shyti <andi@etezian.org>
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/fs.h>
 #include <linux/module.h>

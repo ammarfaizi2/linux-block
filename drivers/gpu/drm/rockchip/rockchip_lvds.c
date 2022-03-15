@@ -6,6 +6,7 @@
  *      Sandy Huang <hjc@rock-chips.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/mfd/syscon.h>

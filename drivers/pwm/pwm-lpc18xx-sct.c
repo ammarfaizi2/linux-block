@@ -19,6 +19,7 @@
  * values to it, unless there's only one channel requested.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>

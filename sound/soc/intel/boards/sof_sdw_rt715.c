@@ -5,6 +5,7 @@
  *  sof_sdw_rt715 - Helpers to handle RT715 from generic machine driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <sound/soc.h>

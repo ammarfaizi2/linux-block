@@ -14,6 +14,7 @@
  * - Low power mode
  * - USB wakeup
  */
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/device.h>

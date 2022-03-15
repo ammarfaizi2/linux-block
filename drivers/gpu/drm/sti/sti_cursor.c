@@ -6,6 +6,7 @@
  *          for STMicroelectronics.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include <linux/seq_file.h>
 

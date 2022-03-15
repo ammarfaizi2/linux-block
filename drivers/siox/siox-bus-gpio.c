@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2017 Pengutronix, Uwe Kleine-König <kernel@pengutronix.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2003-2014 STMicroelectronics (R&D) Limited
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/of.h>

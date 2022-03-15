@@ -11,6 +11,7 @@
  * can be configured for Bulk or Interrupt transfer mode.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>

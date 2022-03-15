@@ -9,6 +9,7 @@
  * NOTE: Interrupts are not supported yet.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/mfd/rohm-generic.h>
 #include <linux/module.h>

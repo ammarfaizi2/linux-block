@@ -9,6 +9,7 @@
  * can express various gestures.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

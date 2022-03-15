@@ -3,6 +3,7 @@
  *  Copyright (C) 2010, Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/of.h>

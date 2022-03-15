@@ -10,6 +10,7 @@
  * Copyright (c) 2011 Analog Devices Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/irq.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

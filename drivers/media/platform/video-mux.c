@@ -6,6 +6,7 @@
  * Copyright (C) 2016-2017 Pengutronix, Philipp Zabel <kernel@pengutronix.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

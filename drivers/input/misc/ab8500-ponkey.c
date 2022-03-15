@@ -7,6 +7,7 @@
  * AB8500 Power-On Key handler
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

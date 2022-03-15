@@ -5,6 +5,7 @@
  *  Copyright (C) 2004 Aurelien Alleaume <slts@free.fr>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include "pvrusb2-context.h"

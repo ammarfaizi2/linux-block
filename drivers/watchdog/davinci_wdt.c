@@ -9,6 +9,7 @@
  * 2007 (c) MontaVista Software, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/mod_devicetable.h>

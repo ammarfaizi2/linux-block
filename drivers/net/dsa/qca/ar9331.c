@@ -39,6 +39,7 @@
  * set and not related to switch internal registers.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>

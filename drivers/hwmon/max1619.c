@@ -12,6 +12,7 @@
  *   http://pdfserv.maxim-ic.com/en/ds/MAX1619.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

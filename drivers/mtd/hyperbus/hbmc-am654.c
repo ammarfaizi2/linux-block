@@ -3,6 +3,7 @@
 // Copyright (C) 2019 Texas Instruments Incorporated - https://www.ti.com/
 // Author: Vignesh Raghavendra <vigneshr@ti.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/dma-direction.h>
 #include <linux/dma-mapping.h>

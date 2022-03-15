@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mlx5/driver.h>
 #include <linux/mlx5/eswitch.h>
 #include <linux/mlx5/mlx5_ifc_vdpa.h>

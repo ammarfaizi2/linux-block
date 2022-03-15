@@ -11,6 +11,7 @@
  * Based on  LM95241 driver and LM90 driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/hwmon.h>

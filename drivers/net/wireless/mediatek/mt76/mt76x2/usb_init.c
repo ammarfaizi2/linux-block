@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/delay.h>
 

@@ -10,6 +10,7 @@
 //
 // Tested on SuperH Ecovec24 board with S16/S24 LE in 48KHz using I2S
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/spi/spi.h>

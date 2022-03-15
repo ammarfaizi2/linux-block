@@ -14,6 +14,8 @@
 //
 // Isochronous packets from the above models includes messages to report state of hardware meter.
 
+#include <linux/device_api_lock.h>
+
 #include "motu.h"
 
 enum msg_parser_state {

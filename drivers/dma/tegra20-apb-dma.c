@@ -5,6 +5,7 @@
  * Copyright (c) 2012-2013, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

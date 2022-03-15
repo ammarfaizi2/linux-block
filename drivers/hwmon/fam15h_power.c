@@ -6,6 +6,7 @@
  * Author: Andreas Herrmann <herrmann.der.user@googlemail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <linux/err.h>

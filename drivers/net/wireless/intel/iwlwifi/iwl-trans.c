@@ -4,6 +4,7 @@
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  * Copyright (C) 2019-2021 Intel Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/bsearch.h>

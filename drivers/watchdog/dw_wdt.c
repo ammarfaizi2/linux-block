@@ -12,6 +12,7 @@
  * heartbeat requests after the watchdog device has been closed.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/debugfs.h>

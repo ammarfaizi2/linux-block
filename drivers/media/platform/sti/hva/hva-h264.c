@@ -5,6 +5,8 @@
  *          Hugues Fruchet <hugues.fruchet@st.com>
  */
 
+#include <linux/device_api_lock.h>
+
 #include "hva.h"
 #include "hva-hw.h"
 

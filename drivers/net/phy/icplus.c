@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/errno.h>

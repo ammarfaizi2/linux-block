@@ -21,6 +21,7 @@
  * BJD, 04-Nov-2004
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>

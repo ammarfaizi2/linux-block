@@ -6,6 +6,7 @@
  * Copyright (c) 2016, Intel Corporation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/hwmon.h>
 #include <linux/hwmon-sysfs.h>
 #include <linux/kernel.h>

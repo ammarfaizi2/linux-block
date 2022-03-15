@@ -18,6 +18,7 @@
  * Derived from the USBcore related parts of Broadcom-SB
  * Copyright 2005-2011 Broadcom Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/bcma/bcma.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Zong Li
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clkdev.h>
 #include <linux/delay.h>
 #include <linux/io.h>

@@ -3,6 +3,7 @@
 /*
  * Copyright (C) 2021, Linaro Limited. All rights reserved.
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/irqdomain.h>

@@ -5,6 +5,7 @@
  *  sof_sdw - ASOC Machine driver for Intel SoundWire platforms
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/dmi.h>
 #include <linux/module.h>

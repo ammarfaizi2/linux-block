@@ -20,6 +20,7 @@
  * Geert Uytterhoeven.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

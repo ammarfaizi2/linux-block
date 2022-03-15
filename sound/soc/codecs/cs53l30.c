@@ -8,6 +8,7 @@
  *          Tim Howe <Tim.Howe@cirrus.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

@@ -14,6 +14,7 @@
  * da8xx.c would be merged to this file after testing.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/irq.h>
 #include <linux/err.h>

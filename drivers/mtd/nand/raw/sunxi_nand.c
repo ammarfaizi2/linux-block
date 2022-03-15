@@ -13,6 +13,7 @@
  *	Copyright (C) 2013 Sergey Lapin <slapin@ossfans.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/module.h>

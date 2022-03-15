@@ -7,6 +7,7 @@
  * Mohit Kumar <mohit.kumar.dhaka@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

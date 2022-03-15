@@ -8,6 +8,7 @@
  *	      Pierre Morel <pmorel@linux.ibm.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

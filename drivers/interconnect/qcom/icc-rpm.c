@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Linaro Ltd
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/interconnect-provider.h>

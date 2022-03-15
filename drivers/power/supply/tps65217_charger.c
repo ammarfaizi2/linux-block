@@ -7,6 +7,7 @@
 /*
  * Battery charger driver for TI's tps65217
  */
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/kthread.h>
 #include <linux/device.h>

@@ -9,6 +9,7 @@
  * NOTE: VD09 is missing
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mfd/rohm-generic.h>
 #include <linux/module.h>
 #include <linux/of.h>

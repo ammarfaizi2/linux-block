@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
+#include <linux/device_api_lock.h>
 #include <linux/sched.h>
 #include <linux/of.h>
 #include "mt76.h"

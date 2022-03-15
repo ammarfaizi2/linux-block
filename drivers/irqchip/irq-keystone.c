@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/irq.h>
 #include <linux/bitops.h>
 #include <linux/module.h>

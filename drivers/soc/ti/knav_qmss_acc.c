@@ -8,6 +8,7 @@
  *		Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/io.h>

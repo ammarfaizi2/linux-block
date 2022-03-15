@@ -3,6 +3,7 @@
  * Copyright (C) 2018 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/reset-controller.h>

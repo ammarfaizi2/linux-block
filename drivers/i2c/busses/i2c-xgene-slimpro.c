@@ -9,6 +9,7 @@
  * This driver provides support for X-Gene SLIMpro I2C device access
  * using the APM X-Gene SLIMpro mailbox driver.
  */
+#include <linux/device_api_lock.h>
 #include <acpi/pcc.h>
 #include <linux/acpi.h>
 #include <linux/dma-mapping.h>

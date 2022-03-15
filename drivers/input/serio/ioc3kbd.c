@@ -8,6 +8,7 @@
  *               Copyright (C) 2009 Johannes Dickgreber <tanzy@gmx.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/io.h>

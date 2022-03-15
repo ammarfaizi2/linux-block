@@ -4,6 +4,7 @@
  *   Copyright (C) 2011 John Crispin <john@phrozen.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/io.h>

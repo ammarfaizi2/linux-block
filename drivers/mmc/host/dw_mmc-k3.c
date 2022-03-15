@@ -4,6 +4,7 @@
  * Copyright (c) 2013 HiSilicon Limited.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/bitfield.h>

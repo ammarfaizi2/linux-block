@@ -4,6 +4,7 @@
  *  Written from the i915 driver.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

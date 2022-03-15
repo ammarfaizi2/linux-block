@@ -14,6 +14,7 @@
  * corresponding mfio pin group is selected as gpio.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/of.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Robert Jarzmik
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/errno.h>

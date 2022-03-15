@@ -7,6 +7,7 @@
  * Author: Martin Hostettler <martin@neutronstar.dyndns.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

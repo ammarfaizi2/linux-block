@@ -8,6 +8,7 @@
  *		Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

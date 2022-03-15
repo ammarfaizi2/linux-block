@@ -12,6 +12,7 @@
 // Copyright (c) 2019 Martin Sperl <kernel@martin.sperl.org>
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

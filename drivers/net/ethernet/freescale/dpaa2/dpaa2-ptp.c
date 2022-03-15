@@ -5,6 +5,7 @@
  * Copyright 2020 NXP
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

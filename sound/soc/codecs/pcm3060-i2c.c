@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2018 Kirill Marinushkin <kmarinushkin@birdec.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <sound/soc.h>

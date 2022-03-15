@@ -13,6 +13,7 @@
  *   suggest that it provides reasonable temperature values.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <asm/processor_api.h>
 #include <linux/bitops.h>

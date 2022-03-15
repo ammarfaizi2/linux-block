@@ -5,6 +5,7 @@
  * Copyright (C) 2013, Apelete Seketeli <apelete@seketeli.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
 #include <linux/errno.h>

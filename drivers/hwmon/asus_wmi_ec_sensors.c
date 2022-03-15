@@ -20,6 +20,7 @@
  * - CPU current
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>
 #include <linux/hwmon.h>

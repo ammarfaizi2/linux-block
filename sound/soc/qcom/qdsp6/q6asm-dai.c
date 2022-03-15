@@ -2,6 +2,7 @@
 // Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
 // Copyright (c) 2018, Linaro Limited
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/module.h>

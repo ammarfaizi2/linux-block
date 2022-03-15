@@ -5,6 +5,7 @@
  * Copyright (C) 2016  David Lechner
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/io.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Vayavya Labs Pvt. Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/io.h>

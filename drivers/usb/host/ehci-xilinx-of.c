@@ -11,6 +11,7 @@
  * and "ohci-ppc-of.c" by Sylvain Munaut <tnt@246tNt.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/signal.h>
 

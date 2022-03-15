@@ -10,6 +10,7 @@
  * family.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>
 #include <linux/io.h>

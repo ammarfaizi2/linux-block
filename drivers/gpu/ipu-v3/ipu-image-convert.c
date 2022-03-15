@@ -5,6 +5,7 @@
  * Queued image conversion support, with tiling and rotation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <video/imx-ipu-image-convert.h>

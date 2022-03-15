@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2007 FUJITA Tomonori <tomof@acm.org>
  */
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

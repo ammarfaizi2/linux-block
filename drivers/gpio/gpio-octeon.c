@@ -6,6 +6,7 @@
  * Copyright (C) 2011, 2012 Cavium Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

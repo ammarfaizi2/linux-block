@@ -10,6 +10,7 @@
  * The datasheet for the BMA150 chip can be found here:
  * http://www.bosch-sensortec.com/content/language1/downloads/BST-BMA150-DS000-07.pdf
  */
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

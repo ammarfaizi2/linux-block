@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "i2c-stub: " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/errno.h>
 #include <linux/i2c.h>
