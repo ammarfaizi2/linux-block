@@ -52,6 +52,7 @@
  *	Based upon Swansea University Computer Society NET3.039
  */
 
+#include <net/socket_alloc.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>
