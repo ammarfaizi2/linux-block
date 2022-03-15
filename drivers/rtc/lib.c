@@ -10,6 +10,7 @@
  * Author: Cassio Neri <cassio.neri@gmail.com> (rtc_time64_to_tm)
  */
 
+#include <linux/limits.h>
 #include <linux/ktime_api.h>
 #include <linux/export.h>
 #include <linux/rtc.h>

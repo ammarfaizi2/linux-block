@@ -1,3 +1,4 @@
+#include <linux/limits.h>
 #include <linux/bug.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -9,6 +9,7 @@
  * Contact: Sakari Ailus <sakari.ailus@linux.intel.com>
  */
 
+#include <linux/limits.h>
 #include <linux/device.h>
 #include <linux/gcd.h>
 #include <linux/lcm.h>
