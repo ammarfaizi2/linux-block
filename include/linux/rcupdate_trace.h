@@ -8,6 +8,7 @@
 #ifndef __LINUX_RCUPDATE_TRACE_H
 #define __LINUX_RCUPDATE_TRACE_H
 
+#include <linux/lockdep_api.h>
 #include <linux/sched.h>
 #include <linux/rcupdate.h>
 

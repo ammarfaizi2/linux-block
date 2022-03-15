@@ -7,6 +7,7 @@
 #ifndef __NET_TC_TUNNEL_KEY_H
 #define __NET_TC_TUNNEL_KEY_H
 
+#include <linux/lockdep_api.h>
 #include <net/act_api.h>
 #include <linux/tc_act/tc_tunnel_key.h>
 #include <net/dst_metadata.h>

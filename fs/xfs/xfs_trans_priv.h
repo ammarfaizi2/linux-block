@@ -6,6 +6,7 @@
 #ifndef __XFS_TRANS_PRIV_H__
 #define	__XFS_TRANS_PRIV_H__
 
+#include <linux/lockdep_api.h>
 #include <linux/types.h>
 
 struct xfs_log_item;

@@ -10,6 +10,7 @@
  *		<drew@colorado.edu>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitops.h>
 #include <linux/types.h>

@@ -2,6 +2,7 @@
 #ifndef __LINUX_ENTRYKVM_H
 #define __LINUX_ENTRYKVM_H
 
+#include <linux/lockdep_api.h>
 #include <linux/static_call_types.h>
 #include <linux/tracehook.h>
 #include <linux/syscalls.h>

@@ -1,6 +1,7 @@
 #ifndef _LINUX_MMAP_LOCK_H
 #define _LINUX_MMAP_LOCK_H
 
+#include <linux/lockdep_api.h>
 #include <linux/kernel.h>
 #include <linux/lockdep.h>
 #include <linux/mm_types.h>

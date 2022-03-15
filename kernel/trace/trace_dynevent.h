@@ -6,6 +6,7 @@
 #ifndef _TRACE_DYNEVENT_H
 #define _TRACE_DYNEVENT_H
 
+#include <linux/lockdep_api.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/mutex.h>

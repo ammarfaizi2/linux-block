@@ -2,6 +2,7 @@
 #ifndef __NET_TC_POLICE_H
 #define __NET_TC_POLICE_H
 
+#include <linux/lockdep_api.h>
 #include <net/act_api.h>
 
 struct tcf_police_params {

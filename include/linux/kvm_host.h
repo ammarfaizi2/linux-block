@@ -3,6 +3,7 @@
 #define __KVM_HOST_H
 
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/types.h>
 #include <linux/hardirq.h>

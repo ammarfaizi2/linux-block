@@ -20,6 +20,7 @@
 #ifndef __LINUX_RCUPDATE_H
 #define __LINUX_RCUPDATE_H
 
+#include <linux/lockdep_api.h>
 #include <linux/err.h>
 #include <linux/bug.h>
 #include <linux/types.h>

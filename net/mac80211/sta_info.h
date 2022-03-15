@@ -9,6 +9,7 @@
 #ifndef STA_INFO_H
 #define STA_INFO_H
 
+#include <linux/lockdep_api.h>
 #include <linux/list.h>
 #include <linux/types.h>
 #include <linux/if_ether.h>
