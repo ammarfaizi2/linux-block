@@ -7,6 +7,7 @@
 #ifndef _MALIDP_UTILS_
 #define _MALIDP_UTILS_
 
+#include <linux/bits.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 

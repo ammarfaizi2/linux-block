@@ -10,6 +10,7 @@
 #ifndef _LINUX_PSTORE_H
 #define _LINUX_PSTORE_H
 
+#include <linux/bits.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>
 #include <linux/kmsg_dump.h>

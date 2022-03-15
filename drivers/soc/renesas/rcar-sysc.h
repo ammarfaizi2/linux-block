@@ -7,6 +7,7 @@
 #ifndef __SOC_RENESAS_RCAR_SYSC_H__
 #define __SOC_RENESAS_RCAR_SYSC_H__
 
+#include <linux/bits.h>
 #include <linux/types.h>
 
 
