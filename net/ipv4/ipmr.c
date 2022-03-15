@@ -21,6 +21,7 @@
  *					Relax this requirement to work with older peers.
  */
 
+#include <net/dst_api_tunnel.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_nf.h>
