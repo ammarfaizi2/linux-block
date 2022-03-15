@@ -3,6 +3,7 @@
  * sysctl.c: General linux system control interface
  */
 
+#include <linux/errno.h>
 #include <linux/sysctl.h>
 #include <linux/printk.h>
 #include <linux/capability.h>

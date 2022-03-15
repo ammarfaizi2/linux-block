@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Stefani Seibold <stefani@seibold.net>
  */
 
+#include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/proc_fs.h>

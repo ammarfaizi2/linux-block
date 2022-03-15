@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/errno.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex.h>
