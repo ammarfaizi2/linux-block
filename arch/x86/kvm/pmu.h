@@ -2,6 +2,7 @@
 #ifndef __KVM_X86_PMU_H
 #define __KVM_X86_PMU_H
 
+#include <linux/perf_event_api.h>
 #include <linux/nospec.h>
 
 #define vcpu_to_pmu(vcpu) (&(vcpu)->arch.pmu)
