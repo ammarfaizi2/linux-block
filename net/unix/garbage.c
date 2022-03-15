@@ -63,6 +63,7 @@
  *		wrt receive and holding up unrelated socket operations.
  */
 
+#include <linux/fs_api_f_count.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

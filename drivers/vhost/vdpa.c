@@ -11,6 +11,7 @@
  * their supports.
  */
 
+#include <linux/fs_api_f_count.h>
 #include <linux/file.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  *              Alignment and value checking mods by Craig Metz
  */
 
+#include <linux/fs_api_f_count.h>
 #include <linux/cred.h>
 #include <linux/module.h>
 #include <linux/signal.h>

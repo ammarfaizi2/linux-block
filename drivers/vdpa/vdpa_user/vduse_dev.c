@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/fs_api_f_count.h>
 #include <linux/dma-mapping.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
