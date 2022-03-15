@@ -9,6 +9,7 @@
  *
  * Author: Arjan van de Ven <arjan@linux.intel.com>
  */
+#include <asm/processor.h>
 #include <linux/debugfs.h>
 #include <linux/errno.h>
 #include <linux/fs.h>
