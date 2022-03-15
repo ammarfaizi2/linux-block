@@ -4,6 +4,7 @@
 
 #ifdef __KERNEL__
 
+#include <net/net_namespace_types.h>
 #include <linux/netdevice_api.h>
 #include <linux/bitmap.h>
 #include <linux/if.h>

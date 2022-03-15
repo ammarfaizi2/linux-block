@@ -9,6 +9,7 @@
 #ifndef _NET_IOAM6_H
 #define _NET_IOAM6_H
 
+#include <net/net_namespace_types.h>
 #include <linux/net.h>
 #include <linux/ipv6.h>
 #include <linux/ioam6.h>
