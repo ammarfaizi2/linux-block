@@ -14,6 +14,8 @@
 #ifndef __UPC_H__
 #define __UPC_H__
 
+#include <linux/delay.h>
+
 #include "device.h"
 
 /*---------------------  Export Definitions -------------------------*/

@@ -5,6 +5,7 @@
  * Copyright (C) 2008      Janne Grunau (j@jannau.net)
  */
 
+#include <linux/delay.h>
 #include <linux/usb.h>
 #include <linux/i2c.h>
 #include <linux/mutex.h>
