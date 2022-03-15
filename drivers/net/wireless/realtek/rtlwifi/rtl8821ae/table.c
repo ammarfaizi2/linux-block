@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2010  Realtek Corporation.*/
 
+#include <linux/build_bug.h>
 #include <linux/kernel.h>
 #include "table.h"
 u32 RTL8812AE_PHY_REG_ARRAY[] = {

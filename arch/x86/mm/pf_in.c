@@ -11,6 +11,7 @@
  *  Bjorn Steinbrink (B.Steinbrink@gmx.de), 2007
  */
 
+#include <linux/build_bug.h>
 #include <linux/ptrace.h> /* struct pt_regs */
 #include "pf_in.h"
 

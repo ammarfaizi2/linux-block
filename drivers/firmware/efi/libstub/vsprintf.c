@@ -10,6 +10,7 @@
  * Oh, it's a waste of space, but oh-so-yummy for debugging.
  */
 
+#include <linux/build_bug.h>
 #include <linux/stdarg.h>
 
 #include <linux/compiler.h>
