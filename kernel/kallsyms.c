@@ -12,6 +12,7 @@
  *      Changed the compression method from stem compression to "table lookup"
  *      compression (see scripts/kallsyms.c for a more complete description)
  */
+#include <linux/security.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/filter_api.h>
 #include <linux/capability.h>
