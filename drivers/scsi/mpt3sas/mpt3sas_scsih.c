@@ -42,6 +42,7 @@
  * USA.
  */
 
+#include <linux/ioprio.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

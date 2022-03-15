@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/ioprio.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/iocontext.h>

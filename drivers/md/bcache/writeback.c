@@ -12,6 +12,7 @@
 #include "debug.h"
 #include "writeback.h"
 
+#include <linux/ioprio.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
