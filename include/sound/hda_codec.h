@@ -8,6 +8,7 @@
 #ifndef __SOUND_HDA_CODEC_H
 #define __SOUND_HDA_CODEC_H
 
+#include <linux/kref_api.h>
 #include <linux/device/driver.h>
 #include <linux/refcount.h>
 #include <linux/mod_devicetable.h>

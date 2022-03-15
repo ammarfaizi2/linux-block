@@ -5,6 +5,7 @@
 #ifndef __KVM_ARM_VGIC_NEW_H__
 #define __KVM_ARM_VGIC_NEW_H__
 
+#include <linux/kref_api.h>
 #include <linux/irqchip/arm-gic-common.h>
 
 #define PRODUCT_ID_KVM		0x4b	/* ASCII code K */

@@ -11,6 +11,7 @@
 #ifndef __AA_MATCH_H
 #define __AA_MATCH_H
 
+#include <linux/kref_api.h>
 #include <linux/align.h>
 #include <linux/kref.h>
 

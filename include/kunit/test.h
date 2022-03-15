@@ -9,6 +9,7 @@
 #ifndef _KUNIT_TEST_H
 #define _KUNIT_TEST_H
 
+#include <linux/kref_api.h>
 #include <kunit/assert.h>
 #include <kunit/try-catch.h>
 

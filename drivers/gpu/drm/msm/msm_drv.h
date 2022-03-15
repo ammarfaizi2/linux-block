@@ -8,6 +8,7 @@
 #ifndef __MSM_DRV_H__
 #define __MSM_DRV_H__
 
+#include <linux/kref_api.h>
 #include <linux/kernel.h>
 #include <linux/clk.h>
 #include <linux/cpufreq.h>

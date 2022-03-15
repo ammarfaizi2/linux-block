@@ -11,6 +11,7 @@
 #ifndef __POLICY_INTERFACE_H
 #define __POLICY_INTERFACE_H
 
+#include <linux/kref_api.h>
 #include <linux/list.h>
 #include <linux/kref.h>
 #include <linux/dcache.h>

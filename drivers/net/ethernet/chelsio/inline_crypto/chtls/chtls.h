@@ -6,6 +6,7 @@
 #ifndef __CHTLS_H__
 #define __CHTLS_H__
 
+#include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <crypto/aes.h>
 #include <crypto/algapi.h>

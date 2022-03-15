@@ -5,6 +5,7 @@
 #ifndef LINUX_DMAENGINE_H
 #define LINUX_DMAENGINE_H
 
+#include <linux/kref_api.h>
 #include <linux/idr_types.h>
 #include <linux/device.h>
 #include <linux/err.h>

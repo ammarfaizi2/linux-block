@@ -4,6 +4,7 @@
 #ifndef __LIMA_VM_H__
 #define __LIMA_VM_H__
 
+#include <linux/kref_api.h>
 #include <drm/drm_mm.h>
 #include <linux/kref.h>
 

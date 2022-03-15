@@ -7,6 +7,7 @@
 #ifndef RXE_POOL_H
 #define RXE_POOL_H
 
+#include <linux/kref_api.h>
 #include <linux/types.h>
 
 enum rxe_pool_flags {

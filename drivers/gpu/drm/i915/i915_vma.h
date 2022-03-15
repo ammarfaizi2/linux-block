@@ -25,6 +25,7 @@
 #ifndef __I915_VMA_H__
 #define __I915_VMA_H__
 
+#include <linux/kref_api.h>
 #include <linux/io-mapping.h>
 #include <linux/rbtree.h>
 

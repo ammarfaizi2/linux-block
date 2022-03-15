@@ -57,6 +57,7 @@
 #include "mpi/mpi2_pci.h"
 #include "mpi/mpi2_image.h"
 
+#include <linux/kref_api.h>
 #include <scsi/scsi.h>
 #include <scsi/scsi_cmnd.h>
 #include <scsi/scsi_device.h>

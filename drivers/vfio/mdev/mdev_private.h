@@ -10,6 +10,7 @@
 #ifndef MDEV_PRIVATE_H
 #define MDEV_PRIVATE_H
 
+#include <linux/kref_api.h>
 #include <linux/types.h>
 
 int  mdev_bus_register(void);

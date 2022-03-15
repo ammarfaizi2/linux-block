@@ -9,6 +9,7 @@
 #ifndef _V4L2_DEVICE_H
 #define _V4L2_DEVICE_H
 
+#include <linux/kref_api.h>
 #include <media/media-device.h>
 #include <media/v4l2-subdev.h>
 #include <media/v4l2-dev.h>

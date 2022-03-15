@@ -55,6 +55,7 @@
 
 #ifndef _ISCI_REMOTE_DEVICE_H_
 #define _ISCI_REMOTE_DEVICE_H_
+#include <linux/kref_api.h>
 #include <scsi/libsas.h>
 #include <linux/kref.h>
 #include "scu_remote_node_context.h"

@@ -2,6 +2,7 @@
 #ifndef __FS_CEPH_BUFFER_H
 #define __FS_CEPH_BUFFER_H
 
+#include <linux/kref_api.h>
 #include <linux/kref.h>
 #include <linux/mm.h>
 #include <linux/vmalloc.h>

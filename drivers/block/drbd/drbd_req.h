@@ -13,6 +13,7 @@
 #ifndef _DRBD_REQ_H
 #define _DRBD_REQ_H
 
+#include <linux/kref_api.h>
 #include <linux/module.h>
 
 #include <linux/slab.h>

@@ -28,6 +28,7 @@
 #ifndef DRM_ATOMIC_H_
 #define DRM_ATOMIC_H_
 
+#include <linux/kref_api.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_util.h>
 

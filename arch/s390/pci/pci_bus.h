@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/kref_api.h>
 #include <linux/types.h>
 
 int zpci_bus_device_register(struct zpci_dev *zdev, struct pci_ops *ops);

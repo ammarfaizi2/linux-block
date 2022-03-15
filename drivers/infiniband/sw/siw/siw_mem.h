@@ -6,6 +6,7 @@
 #ifndef _SIW_MEM_H
 #define _SIW_MEM_H
 
+#include <linux/kref_api.h>
 #include <linux/types.h>
 
 struct siw_umem *siw_umem_get(u64 start, u64 len, bool writable);

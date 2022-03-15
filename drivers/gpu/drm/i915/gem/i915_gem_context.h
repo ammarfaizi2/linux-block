@@ -7,6 +7,8 @@
 #ifndef __I915_GEM_CONTEXT_H__
 #define __I915_GEM_CONTEXT_H__
 
+#include <linux/kref_api.h>
+
 #include "i915_gem_context_types.h"
 
 #include "gt/intel_context.h"

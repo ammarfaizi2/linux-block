@@ -7,6 +7,7 @@
 #ifndef _I915_GPU_ERROR_H_
 #define _I915_GPU_ERROR_H_
 
+#include <linux/kref_api.h>
 #include <linux/atomic.h>
 #include <linux/kref.h>
 #include <linux/ktime.h>

@@ -10,6 +10,7 @@
 #ifndef MPI3MR_H_INCLUDED
 #define MPI3MR_H_INCLUDED
 
+#include <linux/kref_api.h>
 #include <linux/blkdev.h>
 #include <linux/blk-mq.h>
 #include <linux/blk-mq-pci.h>
