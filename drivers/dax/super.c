@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2017 Intel Corporation. All rights reserved.
  */
+#include <linux/memremap.h>
 #include <linux/lockdep_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
