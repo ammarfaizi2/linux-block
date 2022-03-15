@@ -5,6 +5,7 @@
  * Copyright (c) 2003 Stephen Hemminger <shemminger@osdl.org>
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -3,6 +3,7 @@
 
 #define _RTW_RECV_C_
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 
 #include "../include/osdep_service.h"

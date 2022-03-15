@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/capability.h>
 #include <asm/unaligned.h>
 #include <linux/ip.h>

@@ -4,6 +4,7 @@
 
 /* Kernel module implementing an IP set type: the hash:ip,mac type */
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/jhash.h>
 #include <linux/module.h>

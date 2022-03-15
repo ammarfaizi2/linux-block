@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>

@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/if_ether_api.h>
 #include <linux/fs.h>
 #include <linux/cred.h>
 #include <linux/kernel.h>

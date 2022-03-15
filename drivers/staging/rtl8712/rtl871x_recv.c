@@ -16,6 +16,7 @@
 
 #define _RTL871X_RECV_C_
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 #include <linux/ip.h>

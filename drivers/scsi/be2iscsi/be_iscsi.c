@@ -11,6 +11,7 @@
  * linux-drivers@broadcom.com
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <scsi/libiscsi.h>

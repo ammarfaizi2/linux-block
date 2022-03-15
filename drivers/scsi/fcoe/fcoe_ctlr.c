@@ -6,6 +6,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 #include <linux/types.h>

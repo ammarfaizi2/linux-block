@@ -40,6 +40,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/atomic_api.h>
 #include <net/neighbour.h>
 #include <net/netevent.h>

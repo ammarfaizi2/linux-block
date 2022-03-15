@@ -20,6 +20,7 @@ static const char driver_name[] = "sierra_net";
 /* if defined debug messages enabled */
 /*#define	DEBUG*/
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>

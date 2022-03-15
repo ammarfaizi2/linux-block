@@ -11,6 +11,7 @@
  *
  * See the GNU General Public License for more details.
  */
+#include <linux/if_ether_api.h>
 #include <linux/netdevice.h>
 #include <linux/slab.h>
 #include <linux/export.h>

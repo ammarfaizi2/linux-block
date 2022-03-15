@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Cavium Inc.
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

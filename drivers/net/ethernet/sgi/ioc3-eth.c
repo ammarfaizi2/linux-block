@@ -22,6 +22,7 @@
 #define IOC3_NAME	"ioc3-eth"
 #define IOC3_VERSION	"2.6.3-4"
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
