@@ -27,6 +27,7 @@
  * we can possibly sleep.
  */
 
+#include <linux/page-flags-thp.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/huge_mm.h>
