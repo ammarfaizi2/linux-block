@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <linux/lockdep.h>
 #include <linux/lockdep_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>

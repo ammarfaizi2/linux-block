@@ -9,6 +9,7 @@
  *	Yakui Zhao <yakui.zhao@intel.com>
  */
 
+#include <linux/lockdep.h>
 #include <linux/lockdep_api.h>
 #include <linux/eventfd.h>
 #include <linux/slab.h>
