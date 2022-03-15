@@ -3,6 +3,7 @@
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
+#include <linux/llist_api.h>
 #include <linux/kthread.h>
 #include <linux/cpumask_api.h>
 #include <linux/errno.h>

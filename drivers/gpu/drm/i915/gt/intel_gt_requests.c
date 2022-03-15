@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/llist_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <linux/workqueue.h>

@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/llist_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/capability.h>

@@ -6,6 +6,7 @@
  *  Copyright (C) 1997 David S. Miller (davem@caip.rutgers.edu)
  */
 
+#include <linux/llist_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>

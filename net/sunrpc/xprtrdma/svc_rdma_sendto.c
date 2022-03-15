@@ -99,6 +99,7 @@
  * where two different Write segments send portions of the same page.
  */
 
+#include <linux/llist_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock.h>

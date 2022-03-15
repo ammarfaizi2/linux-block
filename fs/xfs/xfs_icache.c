@@ -24,6 +24,7 @@
 #include "xfs_ialloc.h"
 #include "xfs_ag.h"
 
+#include <linux/llist_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2006 Pavel Emelyanov <xemul@openvz.org> OpenVZ, SWsoft Inc.
  */
 
+#include <linux/llist_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

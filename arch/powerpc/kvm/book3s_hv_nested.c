@@ -8,6 +8,7 @@
  * on Book3S processors (specifically POWER9 and later).
  */
 
+#include <linux/llist_api.h>
 #include <linux/kernel.h>
 #include <linux/kvm_host.h>
 #include <linux/llist.h>

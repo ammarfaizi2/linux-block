@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/llist_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

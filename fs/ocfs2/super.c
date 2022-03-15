@@ -7,6 +7,7 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/llist_api.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
