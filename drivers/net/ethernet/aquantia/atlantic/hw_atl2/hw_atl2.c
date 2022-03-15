@@ -3,6 +3,8 @@
  * Copyright (C) 2020 Marvell International Ltd.
  */
 
+#include <linux/netdev_features.h>
+
 #include "aq_hw.h"
 #include "aq_hw_utils.h"
 #include "aq_ring.h"
