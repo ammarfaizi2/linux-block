@@ -5,6 +5,7 @@
 #if !defined(_TRACE_IRQ_VECTORS_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_IRQ_VECTORS_H
 
+#include <linux/perf_event.h>
 #include <linux/tracepoint.h>
 #include <asm/trace/common.h>
 
