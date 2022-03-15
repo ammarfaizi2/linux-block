@@ -16,6 +16,7 @@
  *
  *  See Documentation/locking/rt-mutex-design.rst for details.
  */
+#include <linux/rbtree_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/atomic_api.h>

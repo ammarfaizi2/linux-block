@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/rbtree_api.h>
 #include <linux/ktime_api.h>
 #include <core/object.h>
 #include <core/client.h>

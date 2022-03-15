@@ -70,6 +70,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rbtree_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/pagemap.h>

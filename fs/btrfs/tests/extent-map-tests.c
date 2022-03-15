@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Oracle.  All rights reserved.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/types.h>
 #include "btrfs-tests.h"
 #include "../ctree.h"

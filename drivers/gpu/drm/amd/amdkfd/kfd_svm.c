@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/mmu_notifier.h>

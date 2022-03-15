@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

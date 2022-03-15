@@ -18,6 +18,7 @@
  * the mutex locked.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/atomic_api.h>

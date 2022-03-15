@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/module.h>
 #include <linux/ktime_api.h>
 #include <linux/fs_api.h>

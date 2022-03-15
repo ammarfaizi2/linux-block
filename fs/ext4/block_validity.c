@@ -9,6 +9,7 @@
  * should never be used as data blocks by files or directories.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs_api.h>
 #include <linux/sched/cond_resched.h>

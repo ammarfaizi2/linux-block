@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/rbtree_api.h>
 #include <linux/pid.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mutex_api.h>

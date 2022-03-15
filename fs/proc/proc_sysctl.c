@@ -2,6 +2,7 @@
 /*
  * /proc/sys support
  */
+#include <linux/rbtree_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>

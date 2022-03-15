@@ -22,6 +22,7 @@
 #define NVKM_VMM_LEVELS_MAX 5
 #include "vmm.h"
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/kref_api.h>

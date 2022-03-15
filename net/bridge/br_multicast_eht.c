@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2020, Nikolay Aleksandrov <nikolay@nvidia.com>
+#include <linux/rbtree_api.h>
 #include <linux/jiffies.h>
 #include <linux/err.h>
 #include <linux/export.h>

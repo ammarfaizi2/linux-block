@@ -14,6 +14,7 @@
  * The rest is copyright (C) 2010 Novell.  All rights reserved.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/fs.h>
 #include <linux/types.h>
 #include <linux/highmem.h>

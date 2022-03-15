@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>

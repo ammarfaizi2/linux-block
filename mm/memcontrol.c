@@ -25,6 +25,7 @@
  * Copyright (C) 2020 Alibaba, Inc, Alex Shi
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/percpu.h>

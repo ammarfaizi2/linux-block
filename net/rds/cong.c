@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/rbtree_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>

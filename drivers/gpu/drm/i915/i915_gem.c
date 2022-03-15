@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/llist_api.h>

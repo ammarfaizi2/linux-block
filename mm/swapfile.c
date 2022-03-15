@@ -6,6 +6,7 @@
  *  Swap reorganised 29.12.95, Stephen Tweedie
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/percpu.h>

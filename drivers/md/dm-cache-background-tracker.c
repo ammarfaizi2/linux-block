@@ -4,6 +4,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/atomic_api.h>
 
 #include "dm-cache-background-tracker.h"

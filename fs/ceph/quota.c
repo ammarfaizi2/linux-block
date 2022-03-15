@@ -5,6 +5,7 @@
  * Copyright (C) 2017-2018 SUSE
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

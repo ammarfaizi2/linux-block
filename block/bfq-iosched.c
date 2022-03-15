@@ -113,6 +113,7 @@
  *
  * http://www.cs.berkeley.edu/~istoica/papers/eevdf-tr-95.pdf
  */
+#include <linux/rbtree_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/kobject_api.h>

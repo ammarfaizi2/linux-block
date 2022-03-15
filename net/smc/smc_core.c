@@ -9,6 +9,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
