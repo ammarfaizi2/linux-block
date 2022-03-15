@@ -35,6 +35,7 @@
  */
 
 #include "reiserfs.h"
+#include <linux/fs_api_dio.h>
 #include <linux/capability.h>
 #include <linux/dcache.h>
 #include <linux/namei.h>

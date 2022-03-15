@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/fs_api_dio.h>
 #include <linux/delayed_call.h>
 #include <asm/cacheflush.h>
 #include <linux/buffer_head.h>

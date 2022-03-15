@@ -5,6 +5,7 @@
  *            Akira Fujita <a-fujita@rs.jp.nec.com>
  */
 
+#include <linux/fs_api_dio.h>
 #include <linux/fs.h>
 #include <linux/quotaops.h>
 #include <linux/slab.h>

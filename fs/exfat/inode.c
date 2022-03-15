@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/fs_api_dio.h>
 #include <linux/init.h>
 #include <linux/buffer_head.h>
 #include <linux/mpage.h>

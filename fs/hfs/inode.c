@@ -11,6 +11,7 @@
  * Based on the minix file system code, (C) 1991, 1992 by Linus Torvalds
  */
 
+#include <linux/fs_api_dio.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/pagemap.h>

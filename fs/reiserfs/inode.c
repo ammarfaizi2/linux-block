@@ -2,6 +2,7 @@
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
+#include <linux/fs_api_dio.h>
 #include <linux/dcache.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/task_flags.h>

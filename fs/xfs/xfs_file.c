@@ -25,6 +25,7 @@
 #include "xfs_iomap.h"
 #include "xfs_reflink.h"
 
+#include <linux/fs_api_dio.h>
 #include <linux/dax.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
