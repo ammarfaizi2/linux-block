@@ -9,6 +9,7 @@
 #ifndef _LINUX_AUDIT_H_
 #define _LINUX_AUDIT_H_
 
+#include <linux/uidgid.h>
 #include <linux/time64.h>
 #include <linux/sched/per_task.h>
 #include <linux/sched.h>
