@@ -3,6 +3,7 @@
  * Copyright (C) 2014  STMicroelectronics SAS. All rights reserved.
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/random.h>
 #include <linux/device_api_lock.h>

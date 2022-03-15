@@ -3,6 +3,7 @@
 /* (C) 1999-2000 Yon Uriarte <yon@astaro.de>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/skbuff_api.h>
 #include <linux/in.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

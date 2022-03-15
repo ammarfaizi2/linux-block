@@ -3,6 +3,7 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

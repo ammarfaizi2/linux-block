@@ -12,6 +12,7 @@
  *
  * Many thanks to Carl Nordbeck
  */
+#include <linux/skbuff_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

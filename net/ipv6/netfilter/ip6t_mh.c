@@ -8,6 +8,7 @@
  * Based on net/netfilter/xt_tcpudp.c
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 #include <linux/module.h>
 #include <net/ip.h>

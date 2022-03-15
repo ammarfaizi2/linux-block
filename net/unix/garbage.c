@@ -63,6 +63,7 @@
  *		wrt receive and holding up unrelated socket operations.
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/sched.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>

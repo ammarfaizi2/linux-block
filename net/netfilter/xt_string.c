@@ -4,6 +4,7 @@
  * (C) 2005 Pablo Neira Ayuso <pablo@eurodev.net>
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/gfp.h>
 #include <linux/init.h>
 #include <linux/module.h>

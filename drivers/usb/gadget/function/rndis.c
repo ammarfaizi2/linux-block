@@ -18,6 +18,7 @@
  *		updates to merge with Linux 2.6, better match RNDIS spec
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
