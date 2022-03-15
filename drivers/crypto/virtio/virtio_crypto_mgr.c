@@ -4,6 +4,7 @@
   * Copyright 2016 HUAWEI TECHNOLOGIES CO., LTD.
   */
 
+#include <linux/thread_info.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mutex.h>
