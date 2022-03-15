@@ -3,6 +3,7 @@
  * Copyright (C) 2020 ARM Ltd.
  */
 
+#include <asm/insn.h>
 #include <linux/bitops.h>
 #include <linux/cpu.h>
 #include <linux/kernel.h>
