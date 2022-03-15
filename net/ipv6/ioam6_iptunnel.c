@@ -6,6 +6,7 @@
  *  Justin Iurman <justin.iurman@uliege.be>
  */
 
+#include <net/ipv6_types.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/slab.h>
