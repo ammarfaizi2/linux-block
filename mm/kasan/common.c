@@ -9,6 +9,7 @@
  *        Andrey Konovalov <andreyknvl@gmail.com>
  */
 
+#include <linux/mm_api_kasan.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/highmem.h>
