@@ -13,6 +13,7 @@
 #ifndef __ASM_STACKPROTECTOR_H
 #define __ASM_STACKPROTECTOR_H
 
+#include <linux/sched/task.h>
 #include <linux/random.h>
 #include <linux/version.h>
 #include <asm/pointer_auth.h>
