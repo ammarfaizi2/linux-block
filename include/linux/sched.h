@@ -1096,42 +1096,6 @@ static inline pid_t task_pgrp_nr(struct task_struct *tsk)
 	return task_pgrp_nr_ns(tsk, &init_pid_ns);
 }
 
-#define TASK_REPORT_IDLE	(TASK_REPORT + 1)
-#define TASK_REPORT_MAX		(TASK_REPORT_IDLE << 1)
-
-static inline unsigned int __task_state_index(unsigned int tsk_state,
-					      unsigned int tsk_exit_state)
-{
-	unsigned int state = (tsk_state | tsk_exit_state) & TASK_REPORT;
-
-	BUILD_BUG_ON_NOT_POWER_OF_2(TASK_REPORT_MAX);
-
-	if (tsk_state == TASK_IDLE)
-		state = TASK_REPORT_IDLE;
-
-	/*
-	 * We're lying here, but rather than expose a completely new task state
-	 * to userspace, we can make this appear as if the task has gone through
-	 * a regular rt_mutex_lock() call.
-	 */
-	if (tsk_state == TASK_RTLOCK_WAIT)
-		state = TASK_UNINTERRUPTIBLE;
-
-	return fls(state);
-}
-
-static inline unsigned int task_state_index(struct task_struct *tsk)
-{
-	return __task_state_index(READ_ONCE(tsk->__state), tsk->exit_state);
-}
-
-extern char task_index_to_char(unsigned int state);
-
-static inline char task_state_to_char(struct task_struct *tsk)
-{
-	return task_index_to_char(task_state_index(tsk));
-}
-
 /**
  * is_global_init - check if a task structure is init. Since init
  * is free to have sub-threads we need to check tgid.
