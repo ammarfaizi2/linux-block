@@ -11,6 +11,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/align.h>
 #include <linux/types.h>
 #include <asm/io.h>
 

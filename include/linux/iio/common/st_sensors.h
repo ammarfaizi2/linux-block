@@ -10,6 +10,7 @@
 #ifndef ST_SENSORS_H
 #define ST_SENSORS_H
 
+#include <linux/align.h>
 #include <linux/i2c.h>
 #include <linux/spi/spi.h>
 #include <linux/irqreturn.h>

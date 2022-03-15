@@ -6,6 +6,7 @@
 #ifndef __GEN8_ENGINE_CS_H__
 #define __GEN8_ENGINE_CS_H__
 
+#include <linux/align.h>
 #include <linux/string.h>
 #include <linux/types.h>
 

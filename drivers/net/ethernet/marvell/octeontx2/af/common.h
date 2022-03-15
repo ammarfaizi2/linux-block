@@ -7,6 +7,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <linux/align.h>
+
 #include "rvu_struct.h"
 
 #define OTX2_ALIGN			128  /* Align to cacheline */

@@ -4,6 +4,7 @@
  */
 #ifndef __ND_H__
 #define __ND_H__
+#include <linux/align.h>
 #include <linux/libnvdimm.h>
 #include <linux/badblocks.h>
 #include <linux/blkdev.h>

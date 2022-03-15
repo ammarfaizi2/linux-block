@@ -12,6 +12,7 @@
 #include "desc.h"
 #include "regs.h"
 
+#include <linux/align.h>
 #include <linux/types.h>
 
 #define IMMEDIATE (1 << 23)
