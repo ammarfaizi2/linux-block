@@ -8,6 +8,7 @@
 #ifndef _E1000_OSDEP_H_
 #define _E1000_OSDEP_H_
 
+#include <linux/io_extra.h>
 #include <asm/io.h>
 
 #define CONFIG_RAM_BASE         0x60000

@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_BIOS_EBDA_H
 #define _ASM_X86_BIOS_EBDA_H
 
+#include <linux/io_extra.h>
 #include <asm/io.h>
 
 /*

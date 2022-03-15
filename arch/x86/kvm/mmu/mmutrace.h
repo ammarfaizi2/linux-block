@@ -2,6 +2,7 @@
 #if !defined(_TRACE_KVMMMU_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_KVMMMU_H
 
+#include <linux/io_extra.h>
 #include <linux/tracepoint.h>
 #include <linux/trace_events.h>
 

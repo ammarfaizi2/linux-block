@@ -10,6 +10,7 @@
 #ifndef _OMAP_IOPGTABLE_H
 #define _OMAP_IOPGTABLE_H
 
+#include <linux/io_extra.h>
 #include <linux/bitops.h>
 
 /*
