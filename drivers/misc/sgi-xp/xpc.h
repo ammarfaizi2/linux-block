@@ -13,6 +13,7 @@
 #ifndef _DRIVERS_MISC_SGIXP_XPC_H
 #define _DRIVERS_MISC_SGIXP_XPC_H
 
+#include <linux/wait_api.h>
 #include <linux/wait.h>
 #include <linux/completion.h>
 #include <linux/timer.h>

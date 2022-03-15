@@ -4,6 +4,7 @@
  * Copyright (c)  2003-2014 QLogic Corporation
  */
 
+#include <linux/wait_api.h>
 #include <linux/jiffies.h>
 
 #include "qla_target.h"

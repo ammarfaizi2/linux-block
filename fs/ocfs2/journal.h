@@ -10,6 +10,7 @@
 #ifndef OCFS2_JOURNAL_H
 #define OCFS2_JOURNAL_H
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs.h>

@@ -6,6 +6,7 @@
 #ifndef	__XFS_LOG_PRIV_H__
 #define __XFS_LOG_PRIV_H__
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/types.h>
 

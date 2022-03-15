@@ -2,6 +2,7 @@
 #ifndef _RDS_RDS_H
 #define _RDS_RDS_H
 
+#include <linux/wait_api.h>
 #include <net/sock.h>
 #include <linux/scatterlist.h>
 #include <linux/highmem.h>

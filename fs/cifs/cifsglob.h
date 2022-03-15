@@ -9,6 +9,7 @@
 #ifndef _CIFS_GLOB_H
 #define _CIFS_GLOB_H
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_types.h>
 #include <linux/jiffies.h>

@@ -9,6 +9,7 @@
 #ifndef _I915_SW_FENCE_H_
 #define _I915_SW_FENCE_H_
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/dma-fence.h>
