@@ -466,9 +466,6 @@ struct task_struct {
 #endif /* #ifdef CONFIG_TASKS_TRACE_RCU */
 
 	struct list_head		tasks;
-#ifdef CONFIG_SMP
-	struct rb_node			pushable_dl_tasks;
-#endif
 
 	struct mm_struct		*mm;
 	struct mm_struct		*active_mm;

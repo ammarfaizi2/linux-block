@@ -128,6 +128,7 @@ DEFINE_PER_TASK(struct plist_node,			pushable_tasks);
  */
 DEFINE_PER_TASK(int,					recent_used_cpu);
 DEFINE_PER_TASK(int,					wake_cpu);
+DEFINE_PER_TASK(struct rb_node,				pushable_dl_tasks);
 #endif
 
 DEFINE_PER_TASK(cpumask_t,				cpus_mask);
@@ -4587,7 +4588,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 	init_task_preempt_count(p);
 #ifdef CONFIG_SMP
 	plist_node_init(&per_task(p, pushable_tasks), MAX_PRIO);
-	RB_CLEAR_NODE(&p->pushable_dl_tasks);
+	RB_CLEAR_NODE(&per_task(p, pushable_dl_tasks));
 #endif
 	return 0;
 }
