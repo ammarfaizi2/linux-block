@@ -5,6 +5,7 @@
 #ifndef __SUNRPC_SYSFS_H
 #define __SUNRPC_SYSFS_H
 
+#include <linux/kobject_types.h>
 #include <linux/types.h>
 
 struct rpc_sysfs_client {
