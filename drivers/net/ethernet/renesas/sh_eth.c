@@ -8,6 +8,7 @@
  *  Copyright (C) 2014 Codethink Limited
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>

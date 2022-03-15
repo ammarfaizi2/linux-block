@@ -28,6 +28,7 @@ static int automatic_resume = 0; /* experimental .. better should be zero */
 static int rfdadd = 0; /* rfdadd=1 may be better for 8K MEM cards */
 static int fifo=0x8;	/* don't change */
 
+#include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/string.h>

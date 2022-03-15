@@ -3,6 +3,7 @@
 
 /* ethtool support for igb */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/vmalloc.h>
 #include <linux/netdevice.h>

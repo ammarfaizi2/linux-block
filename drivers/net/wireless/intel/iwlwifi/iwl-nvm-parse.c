@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
+#include <linux/etherdevice_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/export.h>

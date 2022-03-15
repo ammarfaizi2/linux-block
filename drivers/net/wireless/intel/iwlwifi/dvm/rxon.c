@@ -5,6 +5,7 @@
  * Copyright(c) 2015 Intel Deutschland GmbH
  *****************************************************************************/
 
+#include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 #include <linux/etherdevice.h>
 #include "iwl-trans.h"

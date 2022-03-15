@@ -5,6 +5,7 @@
  * Copyright (C) 2011-2013 Eric Dumazet (eric.dumazet@gmail.com)
  * Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  */
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/netdevice.h>

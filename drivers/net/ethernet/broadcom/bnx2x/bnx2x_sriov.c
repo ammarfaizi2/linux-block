@@ -23,6 +23,7 @@
 #include "bnx2x_init.h"
 #include "bnx2x_cmn.h"
 #include "bnx2x_sp.h"
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/if_vlan.h>

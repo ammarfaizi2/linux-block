@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/mlx5/fs.h>
 #include "en.h"
 #include "en/params.h"

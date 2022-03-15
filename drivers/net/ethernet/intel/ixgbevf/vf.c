@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 
 #include "vf.h"

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2021 Mellanox Technologies. All rights reserved */
 
+#include <linux/etherdevice_api.h>
 #include <linux/debugfs.h>
 #include <linux/err.h>
 #include <linux/etherdevice.h>

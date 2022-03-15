@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
+#include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/of.h>

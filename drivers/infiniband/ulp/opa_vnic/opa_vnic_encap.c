@@ -49,6 +49,7 @@
  * This file contains OPA VNIC encapsulation/decapsulation function.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/if_ether.h>
 #include <linux/if_vlan.h>
 

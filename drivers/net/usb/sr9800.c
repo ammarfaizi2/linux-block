@@ -9,6 +9,7 @@
  * kind, whether express or implied.*
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>

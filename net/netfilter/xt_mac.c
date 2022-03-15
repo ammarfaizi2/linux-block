@@ -5,6 +5,7 @@
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/if_arp.h>

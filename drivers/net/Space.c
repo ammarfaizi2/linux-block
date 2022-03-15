@@ -23,6 +23,7 @@
  *		 - sort probes in a sane way, make sure all (safe) probes
  *		   get run once & failed autoprobes don't autoprobe again.
  */
+#include <linux/etherdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/errno.h>

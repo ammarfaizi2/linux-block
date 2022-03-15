@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/types.h>
 #include <asm/byteorder.h>
 #include <linux/dma-mapping.h>

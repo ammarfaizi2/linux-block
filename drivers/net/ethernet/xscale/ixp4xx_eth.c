@@ -20,6 +20,7 @@
  * bits 5 -> 31	- physical descriptor address
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

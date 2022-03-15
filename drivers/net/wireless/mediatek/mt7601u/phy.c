@@ -11,6 +11,7 @@
 #include "trace.h"
 #include "initvals_phy.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
 

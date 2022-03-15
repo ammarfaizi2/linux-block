@@ -43,6 +43,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/interrupt.h>

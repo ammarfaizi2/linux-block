@@ -3,6 +3,7 @@
 
 #define _RTL8188E_CMD_C_
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 
 #include "../include/osdep_service.h"

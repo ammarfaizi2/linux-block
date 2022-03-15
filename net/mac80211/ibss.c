@@ -12,6 +12,7 @@
  * Copyright(c) 2018-2021 Intel Corporation
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/if_ether.h>

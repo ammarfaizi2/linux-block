@@ -32,6 +32,7 @@
 #define DRV_NAME		"de2104x"
 #define DRV_RELDATE		"Mar 17, 2004"
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

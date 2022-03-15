@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/etherdevice_api.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/module.h>

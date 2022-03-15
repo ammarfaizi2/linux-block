@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 #include <net/dsa.h>
 

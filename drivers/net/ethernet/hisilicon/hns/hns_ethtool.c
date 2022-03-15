@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include <linux/interrupt.h>

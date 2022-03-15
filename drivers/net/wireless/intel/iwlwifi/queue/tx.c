@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2020-2021 Intel Corporation
  */
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <asm/unaligned.h>

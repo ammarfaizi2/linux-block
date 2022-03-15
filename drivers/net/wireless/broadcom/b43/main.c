@@ -19,6 +19,7 @@
 
 */
 
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>

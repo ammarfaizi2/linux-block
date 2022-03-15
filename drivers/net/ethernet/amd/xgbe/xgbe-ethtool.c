@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 #include <linux/spinlock.h>
 #include <linux/phy.h>

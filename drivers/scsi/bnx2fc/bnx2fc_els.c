@@ -14,6 +14,7 @@
  * Written by: Bhanu Prakash Gollapudi (bprakash@broadcom.com)
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 
 #include "bnx2fc.h"

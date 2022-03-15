@@ -7,6 +7,7 @@
  */
 #undef DEBUG
 
+#include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

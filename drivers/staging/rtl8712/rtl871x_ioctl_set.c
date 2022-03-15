@@ -16,6 +16,8 @@
 
 #define _RTL871X_IOCTL_SET_C_
 
+#include <linux/etherdevice_api.h>
+
 #include "osdep_service.h"
 #include "drv_types.h"
 #include "rtl871x_ioctl_set.h"

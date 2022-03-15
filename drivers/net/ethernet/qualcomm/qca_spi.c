@@ -22,6 +22,7 @@
  *   serial converter;
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/etherdevice.h>

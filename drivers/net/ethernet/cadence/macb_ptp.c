@@ -7,6 +7,7 @@
  * Authors: Rafal Ozieblo <rafalo@cadence.com>
  *          Bartosz Folta <bfolta@cadence.com>
  */
+#include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/clk.h>

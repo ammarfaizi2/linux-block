@@ -49,6 +49,7 @@
  *      v0.011: Converted the PMAD to the driver model. macro
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/crc32.h>
 #include <linux/delay.h>

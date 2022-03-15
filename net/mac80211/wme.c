@@ -4,6 +4,7 @@
  * Copyright 2013-2014  Intel Mobile Communications GmbH
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/module.h>

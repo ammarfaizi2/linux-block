@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/moduleparam.h>
 #include <net/netlink.h>

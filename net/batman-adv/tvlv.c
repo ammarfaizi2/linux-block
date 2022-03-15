@@ -6,6 +6,7 @@
 
 #include "main.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/byteorder/generic.h>
 #include <linux/etherdevice.h>
 #include <linux/gfp.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2001-2003 Ilya Volynets
  */
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

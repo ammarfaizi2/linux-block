@@ -8,6 +8,8 @@
  * All rights reserved
  * www.qlogic.com
  */
+#include <linux/etherdevice_api.h>
+
 #include "bna.h"
 #include "bfi.h"
 

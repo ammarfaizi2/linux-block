@@ -19,6 +19,7 @@
 
 ======================================================================*/
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/sched/cond_resched.h>

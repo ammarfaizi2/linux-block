@@ -2,6 +2,8 @@
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
 
+#include <linux/etherdevice_api.h>
+
 #include "coex.h"
 #include "debug.h"
 #include "fw.h"

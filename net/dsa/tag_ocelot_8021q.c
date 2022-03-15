@@ -8,6 +8,7 @@
  * - redirecting towards the correct front port based on TX VLAN and popping
  *   that on egress
  */
+#include <linux/etherdevice_api.h>
 #include <linux/dsa/8021q.h>
 #include <linux/dsa/ocelot.h>
 #include "dsa_priv.h"

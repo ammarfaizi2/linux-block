@@ -7,6 +7,7 @@
 // #define	DEBUG			// error path messages, extra info
 // #define	VERBOSE			// more; success messages
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

@@ -30,6 +30,7 @@
 
 static char version[] = "sb1000.c:v1.1.2 6/01/98 (fventuri@mediaone.net)\n";
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

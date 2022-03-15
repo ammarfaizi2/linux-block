@@ -11,6 +11,7 @@
  *          Chris Telfer <chris.telfer@netronome.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dim.h>
 #include <linux/delay.h>

@@ -4,6 +4,7 @@
  * Copyright(c) 2008 - 2014 Intel Corporation. All rights reserved.
  * Copyright(c) 2018        Intel Corporation
  *****************************************************************************/
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/types.h>

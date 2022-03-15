@@ -3,6 +3,8 @@
 
 #define _RECV_OSDEP_C_
 
+#include <linux/etherdevice_api.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 

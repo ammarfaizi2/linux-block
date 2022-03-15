@@ -20,6 +20,7 @@
  * Vojtech Pavlik, Simunkova 1594, Prague 8, 182 00 Czech Republic
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

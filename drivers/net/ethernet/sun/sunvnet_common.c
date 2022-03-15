@@ -5,6 +5,7 @@
  * Copyright (C) 2016-2017 Oracle. All rights reserved.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

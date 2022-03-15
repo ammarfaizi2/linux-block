@@ -11,6 +11,7 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>

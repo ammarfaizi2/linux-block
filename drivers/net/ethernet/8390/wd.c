@@ -28,6 +28,7 @@
 static const char version[] =
 	"wd.c:v1.10 9/23/94 Donald Becker (becker@cesdis.gsfc.nasa.gov)\n";
 
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

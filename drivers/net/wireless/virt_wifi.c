@@ -9,6 +9,7 @@
  * Author: schuffelen@google.com
  */
 
+#include <linux/etherdevice_api.h>
 #include <net/cfg80211.h>
 #include <net/rtnetlink.h>
 #include <linux/etherdevice.h>

@@ -13,6 +13,7 @@
  */
 
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 
 #include "ieee80211.h"

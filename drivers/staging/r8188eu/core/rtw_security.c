@@ -3,6 +3,7 @@
 
 #define  _RTW_SECURITY_C_
 
+#include <linux/etherdevice_api.h>
 #include <linux/crc32.h>
 
 #include "../include/osdep_service.h"

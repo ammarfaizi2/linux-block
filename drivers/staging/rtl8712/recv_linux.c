@@ -16,6 +16,7 @@
 
 #define _RECV_OSDEP_C_
 
+#include <linux/etherdevice_api.h>
 #include <linux/usb.h>
 
 #include "osdep_service.h"

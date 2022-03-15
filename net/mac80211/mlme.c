@@ -11,6 +11,7 @@
  * Copyright (C) 2018 - 2021 Intel Corporation
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/fips.h>

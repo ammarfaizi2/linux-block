@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 
 #include "cfg80211.h"

@@ -18,6 +18,7 @@
 #include "h/fddi.h"
 #include "h/smc.h"
 #include "h/supern_2.h"
+#include <linux/etherdevice_api.h>
 #include <linux/bitrev.h>
 #include <linux/etherdevice.h>
 

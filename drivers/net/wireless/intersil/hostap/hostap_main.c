@@ -8,6 +8,7 @@
  * Copyright (c) 2002-2005, Jouni Malinen <j@w1.fi>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

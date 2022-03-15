@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016 Broadcom
  */
+#include <linux/etherdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/gcd.h>
 #include <net/cfg80211.h>

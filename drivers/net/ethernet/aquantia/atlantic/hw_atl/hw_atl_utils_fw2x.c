@@ -9,6 +9,8 @@
  * Atlantic hardware abstraction layer.
  */
 
+#include <linux/etherdevice_api.h>
+
 #include "../aq_hw.h"
 #include "../aq_hw_utils.h"
 #include "../aq_pci_func.h"

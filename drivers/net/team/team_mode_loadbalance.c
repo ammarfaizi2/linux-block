@@ -4,6 +4,7 @@
  * Copyright (c) 2012 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

@@ -95,6 +95,7 @@
 #define DRV_VERSION	"0.9.28"
 
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>

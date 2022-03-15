@@ -9,6 +9,7 @@
  *	Copyright (C) 1999 AbsoluteValue Systems, Inc.  All Rights Reserved.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/usb.h>

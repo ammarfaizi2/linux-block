@@ -11,6 +11,7 @@
 	Abstract: rt2x00 generic device routines.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

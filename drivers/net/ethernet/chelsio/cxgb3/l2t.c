@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>

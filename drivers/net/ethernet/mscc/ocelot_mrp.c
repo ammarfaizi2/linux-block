@@ -5,6 +5,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/if_bridge.h>
 #include <linux/mrp_bridge.h>
 #include <soc/mscc/ocelot_vcap.h>

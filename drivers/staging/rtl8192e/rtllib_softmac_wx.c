@@ -11,6 +11,7 @@
  * PS wx handler mostly stolen from hostap, copyright who
  * own it's copyright ;-)
  */
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
 

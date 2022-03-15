@@ -7,6 +7,7 @@
 #include "routing.h"
 #include "main.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/byteorder/generic.h>

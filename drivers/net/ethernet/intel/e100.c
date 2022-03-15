@@ -124,6 +124,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/hardirq.h>
 #include <linux/interrupt.h>

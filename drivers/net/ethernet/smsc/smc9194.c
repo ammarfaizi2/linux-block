@@ -57,6 +57,7 @@
 static const char version[] =
 	"smc9194.c:v0.14 12/15/00 by Erik Stahlman (erik@vt.edu)";
 
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

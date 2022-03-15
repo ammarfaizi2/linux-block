@@ -9,6 +9,7 @@
  * Copyright (C) 2021 Oleksij Rempel <o.rempel@pengutronix.de>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/phy.h>
 #include <net/selftests.h>
 #include <net/tcp.h>

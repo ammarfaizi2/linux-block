@@ -20,6 +20,7 @@
 /*   This file contains debugging routines for use in the QCA7K driver.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/debugfs.h>
 #include <linux/ethtool.h>
 #include <linux/seq_file.h>

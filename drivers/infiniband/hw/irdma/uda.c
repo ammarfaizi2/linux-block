@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0 or Linux-OpenIB
 /* Copyright (c) 2016 - 2021 Intel Corporation */
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 
 #include "osdep.h"

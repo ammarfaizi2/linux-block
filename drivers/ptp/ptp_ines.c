@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "InES_PTP: " fmt
 
+#include <linux/etherdevice_api.h>
 #include <linux/ethtool.h>
 #include <linux/export.h>
 #include <linux/if_vlan.h>

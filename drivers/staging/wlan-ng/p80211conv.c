@@ -53,6 +53,7 @@
  *================================================================
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

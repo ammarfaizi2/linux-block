@@ -443,6 +443,7 @@
     =========================================================================
 */
 
+#include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/compat.h>
 #include <linux/module.h>

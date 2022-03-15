@@ -9,6 +9,7 @@
  * as portionhelp of the ieee80211 subsystem header files.
  *****************************************************************************/
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

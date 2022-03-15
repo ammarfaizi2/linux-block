@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/errno.h>

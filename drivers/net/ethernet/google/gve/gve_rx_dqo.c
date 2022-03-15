@@ -8,6 +8,7 @@
 #include "gve_dqo.h"
 #include "gve_adminq.h"
 #include "gve_utils.h"
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>

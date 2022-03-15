@@ -14,6 +14,7 @@
 #ifndef ATLX_C
 #define ATLX_C
 
+#include <linux/etherdevice_api.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/etherdevice.h>

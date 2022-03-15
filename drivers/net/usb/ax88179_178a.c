@@ -5,6 +5,7 @@
  * Copyright (C) 2011-2013 ASIX
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>

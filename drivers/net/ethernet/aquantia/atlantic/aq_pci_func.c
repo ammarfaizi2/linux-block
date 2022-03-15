@@ -7,6 +7,7 @@
 
 /* File aq_pci_func.c: Definition of PCI functions. */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/cpumask_api.h>
 #include <linux/interrupt.h>

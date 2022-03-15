@@ -9,6 +9,7 @@
  * Copyright (c) 2004-2005, Intel Corporation
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>

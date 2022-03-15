@@ -5,6 +5,7 @@
  * Copyright 2015-2017 Socionext Inc.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>

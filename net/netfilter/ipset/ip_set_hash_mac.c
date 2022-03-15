@@ -3,6 +3,7 @@
 
 /* Kernel module implementing an IP set type: the hash:mac type */
 
+#include <linux/etherdevice_api.h>
 #include <linux/jhash.h>
 #include <linux/module.h>
 #include <linux/etherdevice.h>

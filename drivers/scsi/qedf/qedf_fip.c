@@ -3,6 +3,7 @@
  *  QLogic FCoE Offload Driver
  *  Copyright (c) 2016-2018 Cavium Inc.
  */
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/if_ether.h>

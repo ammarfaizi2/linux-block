@@ -9,6 +9,7 @@
  * $Id: enc28j60.c,v 1.22 2007/12/20 10:47:01 claudio Exp $
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

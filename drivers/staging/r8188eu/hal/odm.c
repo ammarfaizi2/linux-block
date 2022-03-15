@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2007 - 2011 Realtek Corporation. */
 
+#include <linux/etherdevice_api.h>
+
 #include "../include/drv_types.h"
 
 /* avoid to warn in FreeBSD ==> To DO modify */

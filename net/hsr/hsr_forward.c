@@ -8,6 +8,7 @@
  */
 
 #include "hsr_forward.h"
+#include <linux/etherdevice_api.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>

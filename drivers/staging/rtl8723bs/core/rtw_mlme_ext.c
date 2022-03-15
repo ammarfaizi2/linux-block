@@ -4,6 +4,7 @@
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

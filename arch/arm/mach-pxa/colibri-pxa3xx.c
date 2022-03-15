@@ -7,6 +7,7 @@
  *  Daniel Mack <daniel@caiaq.de>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

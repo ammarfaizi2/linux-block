@@ -7,6 +7,7 @@
  *         Jason McMullan <jason.mcmullan@netronome.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <asm/unaligned.h>
 #include <linux/bitfield.h>

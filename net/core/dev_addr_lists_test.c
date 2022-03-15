@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/etherdevice_api.h>
 #include <kunit/test.h>
 #include <linux/etherdevice.h>
 #include <linux/netdevice.h>

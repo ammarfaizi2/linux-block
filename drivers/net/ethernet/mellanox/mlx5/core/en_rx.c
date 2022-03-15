@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>

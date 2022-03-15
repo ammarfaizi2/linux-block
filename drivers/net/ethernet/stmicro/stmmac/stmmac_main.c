@@ -14,6 +14,7 @@
 	https://bugzilla.stlinux.com/
 *******************************************************************************/
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

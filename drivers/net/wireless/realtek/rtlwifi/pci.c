@@ -7,6 +7,7 @@
 #include "base.h"
 #include "ps.h"
 #include "efuse.h"
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

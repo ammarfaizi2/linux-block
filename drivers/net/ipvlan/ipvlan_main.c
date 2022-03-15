@@ -2,6 +2,7 @@
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

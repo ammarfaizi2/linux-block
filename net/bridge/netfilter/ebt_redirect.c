@@ -8,6 +8,7 @@
  *  April, 2002
  *
  */
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <net/sock.h>
 #include "../br_private.h"

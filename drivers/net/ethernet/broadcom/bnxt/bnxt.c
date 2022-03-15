@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dim.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

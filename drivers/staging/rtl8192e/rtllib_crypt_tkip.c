@@ -5,6 +5,7 @@
  * Copyright (c) 2003-2004, Jouni Malinen <jkmaline@cc.hut.fi>
  */
 
+#include <linux/etherdevice_api.h>
 #include <crypto/arc4.h>
 #include <crypto/hash.h>
 #include <linux/fips.h>

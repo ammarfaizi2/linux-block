@@ -19,6 +19,7 @@
  */
 #undef __NO_VERSION__
 
+#include <linux/etherdevice_api.h>
 #include <linux/crc32.h>
 #include <linux/bits.h>
 #include <linux/etherdevice.h>

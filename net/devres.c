@@ -3,6 +3,7 @@
  * This file contains all networking devres helpers.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/etherdevice.h>

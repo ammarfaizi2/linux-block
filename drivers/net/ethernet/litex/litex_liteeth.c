@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/interrupt.h>
 #include <linux/litex.h>

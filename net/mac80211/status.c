@@ -7,6 +7,7 @@
  * Copyright 2013-2014  Intel Mobile Communications GmbH
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/export.h>
 #include <linux/etherdevice.h>
 #include <net/mac80211.h>

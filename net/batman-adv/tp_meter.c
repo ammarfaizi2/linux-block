@@ -7,6 +7,7 @@
 #include "tp_meter.h"
 #include "main.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/atomic.h>

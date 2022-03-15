@@ -8,6 +8,7 @@
 
 #define DRV_NAME	"uli526x"
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 

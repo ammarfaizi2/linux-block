@@ -14,6 +14,7 @@
  * this driver provides active-backup functionality similar to those drivers.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/netdevice.h>
