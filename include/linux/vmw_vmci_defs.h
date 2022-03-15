@@ -8,6 +8,7 @@
 #ifndef _VMW_VMCI_DEF_H_
 #define _VMW_VMCI_DEF_H_
 
+#include <linux/compiler.h>
 #include <linux/atomic.h>
 #include <linux/bits.h>
 
