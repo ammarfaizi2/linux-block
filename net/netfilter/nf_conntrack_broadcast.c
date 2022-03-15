@@ -5,6 +5,7 @@
  *      (c) 2005 Patrick McHardy <kaber@trash.net>
  */
 
+#include <uapi/linux/in_route.h>
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <net/route.h>
