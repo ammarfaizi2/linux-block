@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/mmzone.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched.h>
 #include <linux/sched/topology.h>
