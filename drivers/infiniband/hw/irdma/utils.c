@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0 or Linux-OpenIB
 /* Copyright (c) 2015 - 2021 Intel Corporation */
+#include <linux/netdevice_api_extra.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

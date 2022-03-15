@@ -9,6 +9,7 @@
  * Author: Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/errno.h>

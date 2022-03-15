@@ -7,6 +7,7 @@
  * addresses lists.
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/netdevice.h>
 #include <linux/rtnetlink.h>
 #include <linux/export.h>

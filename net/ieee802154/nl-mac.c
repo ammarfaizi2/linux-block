@@ -10,6 +10,7 @@
  * Maxim Osipov <maxim.osipov@siemens.com>
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/gfp.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * Copyright Alan Cox GW4PTS (alan@lxorguk.ukuu.org.uk)
  * Copyright Tomi Manninen OH2BNS (oh2bns@sral.fi)
  */
+#include <linux/netdevice_api_extra.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/socket.h>

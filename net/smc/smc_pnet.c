@@ -9,6 +9,7 @@
  *  Author(s):  Thomas Richter <tmricht@linux.vnet.ibm.com>
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/list.h>

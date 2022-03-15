@@ -9,6 +9,7 @@
  * Maxim Gorbachyov <maxim.gorbachev@siemens.com>
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/fs_api.h>
 #include <linux/net.h>
 #include <linux/capability.h>

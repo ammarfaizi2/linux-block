@@ -7,6 +7,7 @@
  * Copyright (C) 2018 Aquantia Corp.
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>

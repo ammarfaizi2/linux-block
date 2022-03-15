@@ -22,6 +22,7 @@
  * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/if_vlan_api.h>

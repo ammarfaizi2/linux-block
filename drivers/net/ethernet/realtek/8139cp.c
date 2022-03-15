@@ -53,6 +53,7 @@
 #define DRV_RELDATE		"Mar 22, 2004"
 
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

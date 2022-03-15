@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT "af_iucv"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/fs_api.h>
 #include <linux/filter_api.h>
 #include <linux/atomic_api.h>

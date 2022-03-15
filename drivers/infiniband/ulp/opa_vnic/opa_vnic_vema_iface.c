@@ -49,6 +49,8 @@
  * This file contains OPA VNIC EMA Interface functions.
  */
 
+#include <linux/netdevice_api_extra.h>
+
 #include "opa_vnic_internal.h"
 
 /**

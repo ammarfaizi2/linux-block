@@ -4,6 +4,7 @@
  * Filesystem request handling methods
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/math64.h>

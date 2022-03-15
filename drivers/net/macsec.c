@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Sabrina Dubroca <sd@queasysnail.net>
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_ether_api.h>

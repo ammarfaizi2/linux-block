@@ -3,6 +3,8 @@
 
 /* Link Aggregation code */
 
+#include <linux/netdevice_api_extra.h>
+
 #include "ice.h"
 #include "ice_lag.h"
 

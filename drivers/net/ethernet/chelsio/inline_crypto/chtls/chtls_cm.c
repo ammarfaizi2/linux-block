@@ -5,6 +5,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/kref_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/module.h>

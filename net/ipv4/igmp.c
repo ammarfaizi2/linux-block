@@ -66,6 +66,7 @@
  *					Vinay Kulkarni
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>

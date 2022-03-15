@@ -40,6 +40,7 @@
  *
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/proc_fs.h>

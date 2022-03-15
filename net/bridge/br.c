@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

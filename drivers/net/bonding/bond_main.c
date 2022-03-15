@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/kobject_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>

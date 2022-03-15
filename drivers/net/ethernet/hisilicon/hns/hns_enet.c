@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>

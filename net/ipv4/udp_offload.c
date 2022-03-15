@@ -6,6 +6,7 @@
  *	UDPv4 GSO support
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/skbuff.h>
 #include <net/gro.h>
 #include <net/udp.h>

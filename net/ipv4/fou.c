@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/netdevice_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/ipv6.h>
 #include <linux/module.h>

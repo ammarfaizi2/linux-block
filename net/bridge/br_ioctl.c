@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/compat.h>

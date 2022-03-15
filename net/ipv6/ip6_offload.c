@@ -4,6 +4,7 @@
  *	Linux INET6 implementation
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/ipv6.h>
 #include <linux/kernel.h>
 #include <linux/socket.h>

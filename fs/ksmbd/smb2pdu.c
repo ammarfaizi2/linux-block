@@ -4,6 +4,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_types_sb.h>
 #include <linux/fs_api_sb.h>
