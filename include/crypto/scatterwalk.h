@@ -11,6 +11,7 @@
 #ifndef _CRYPTO_SCATTERWALK_H
 #define _CRYPTO_SCATTERWALK_H
 
+#include <asm/cacheflush.h>
 #include <crypto/algapi.h>
 
 #include <linux/highmem.h>

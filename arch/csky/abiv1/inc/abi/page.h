@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
+#include <asm/cacheflush.h>
 #include <asm/shmparam.h>
 
 extern void flush_dcache_page(struct page *page);

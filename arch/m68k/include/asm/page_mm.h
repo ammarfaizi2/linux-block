@@ -4,6 +4,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <asm/cacheflush.h>
 #include <linux/compiler.h>
 #include <asm/module.h>
 

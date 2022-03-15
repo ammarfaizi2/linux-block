@@ -9,6 +9,7 @@
 #ifndef _LINUX_NTFS_MFT_H
 #define _LINUX_NTFS_MFT_H
 
+#include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/highmem.h>
 #include <linux/pagemap.h>

@@ -12,6 +12,7 @@
 
 #ifdef CONFIG_KPROBES
 
+#include <asm/cacheflush.h>
 #include <asm-generic/kprobes.h>
 #include <linux/types.h>
 #include <linux/ptrace.h>

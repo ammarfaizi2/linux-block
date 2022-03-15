@@ -10,6 +10,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <asm/cacheflush.h>
 #include <asm/types.h>
 #include <asm/ppc-opcode.h>
 
