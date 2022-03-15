@@ -31,6 +31,7 @@
  *	workaround has been removed.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

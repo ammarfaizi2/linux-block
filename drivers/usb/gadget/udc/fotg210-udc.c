@@ -7,6 +7,7 @@
  * Author : Yuan-Hsin Chen <yhchen@faraday-tech.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>

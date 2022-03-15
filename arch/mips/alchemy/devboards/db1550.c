@@ -5,6 +5,7 @@
  * (c) 2011 Manuel Lauss <manuel.lauss@googlemail.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
 #include <linux/gpio.h>

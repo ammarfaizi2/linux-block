@@ -6,6 +6,7 @@
  * Simtec Generic I2C Controller
 */
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

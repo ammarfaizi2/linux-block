@@ -5,6 +5,7 @@
  * Copyright (C) 2013 John Crispin <john@phrozen.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/bitops.h>
 #include <linux/of_platform.h>

@@ -9,6 +9,7 @@
  *   Copyright (c) 2017 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>

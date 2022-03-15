@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 #include <linux/input.h>

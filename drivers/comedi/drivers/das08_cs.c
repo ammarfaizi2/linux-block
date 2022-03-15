@@ -29,6 +29,7 @@
  * Command support does not exist, but could be added for this board.
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pcmcia.h>
 

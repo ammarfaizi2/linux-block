@@ -11,6 +11,7 @@
 
 #define DSS_SUBSYS_NAME "DSS"
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

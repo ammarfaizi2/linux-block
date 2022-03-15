@@ -8,6 +8,7 @@
  *  Authors:	Omair Mohammed Abdullah <omair.m.abdullah@intel.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/interrupt.h>

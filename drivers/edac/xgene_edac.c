@@ -7,6 +7,7 @@
  *         Loc Ho <lho@apm.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

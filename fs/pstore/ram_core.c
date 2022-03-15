@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>

@@ -11,6 +11,7 @@
  *	Copyright (C) 1997, 2001 by Geert Uytterhoeven and others
  */
 
+#include <linux/ioport.h>
 #include <linux/ata.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>

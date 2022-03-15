@@ -17,6 +17,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpufreq.h>
 #include <linux/delay.h>

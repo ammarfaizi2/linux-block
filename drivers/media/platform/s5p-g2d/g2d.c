@@ -6,6 +6,7 @@
  * Kamil Debski, <k.debski@samsung.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

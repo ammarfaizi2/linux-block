@@ -8,6 +8,7 @@
  *		  Anton Vorontsov <avorontsov@mvista.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/compiler.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Robert Jarzmik
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

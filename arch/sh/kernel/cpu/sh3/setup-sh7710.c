@@ -5,6 +5,7 @@
  *  Copyright (C) 2006 - 2009  Paul Mundt
  *  Copyright (C) 2007  Nobuhiro Iwamatsu
  */
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/irq.h>

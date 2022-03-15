@@ -54,6 +54,7 @@
  * other	DBRI low-level stuff
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/irq.h>

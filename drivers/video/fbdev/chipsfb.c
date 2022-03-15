@@ -14,6 +14,7 @@
  *  more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/backlight.h>
 #include <linux/module.h>

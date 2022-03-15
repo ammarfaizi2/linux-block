@@ -14,6 +14,7 @@
  *      3) V4L2_CID_JPEG_ACTIVE_MARKER
  */
 
+#include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>

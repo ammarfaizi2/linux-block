@@ -54,6 +54,7 @@
 
 #define pr_fmt(fmt) "virtio-mmio: " fmt
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/dma-mapping.h>

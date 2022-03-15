@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2009 Marvell International Ltd.
  */
+#include <linux/ioport.h>
 #include <linux/clk/mmp.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

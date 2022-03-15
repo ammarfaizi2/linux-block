@@ -6,6 +6,7 @@
 // Machine support for Thorcom VR1000 board. Designed for Thorcom by
 // Simtec Electronics, http://www.simtec.co.uk/
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

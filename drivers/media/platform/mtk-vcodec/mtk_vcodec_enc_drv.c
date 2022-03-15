@@ -5,6 +5,7 @@
 *	Tiffany Lin <tiffany.lin@mediatek.com>
 */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/export.h>

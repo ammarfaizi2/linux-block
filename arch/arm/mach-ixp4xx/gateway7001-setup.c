@@ -12,6 +12,7 @@
  * Author: Imre Kaloz <Kaloz@openwrt.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/device.h>

@@ -74,6 +74,7 @@
             Adopted for Windows NT driver          01/20/98      CNL
 */
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

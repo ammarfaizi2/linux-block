@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2004 Russell King.
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/serial_8250.h>
 

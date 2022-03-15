@@ -8,6 +8,7 @@
  * Generalisation from i82375 to PCI_CLASS_BRIDGE_EISA.
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/eisa.h>

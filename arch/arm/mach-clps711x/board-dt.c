@@ -3,6 +3,7 @@
  *  Author: Alexander Shiyan <shc_work@mail.ru>, 2016
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/of_fdt.h>
 #include <linux/platform_device.h>

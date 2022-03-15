@@ -5,6 +5,7 @@
  * OMAP1 platform device setup/initialization
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/dma-mapping.h>

@@ -9,6 +9,7 @@
  * Modified for edosk7705 development
  * board by S. Dunn, 2003.
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/irq.h>
 #include <linux/platform_device.h>

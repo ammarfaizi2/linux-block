@@ -6,6 +6,7 @@
  * pcibios_align_resource taken from arch/arm/kernel/bios32.c.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 

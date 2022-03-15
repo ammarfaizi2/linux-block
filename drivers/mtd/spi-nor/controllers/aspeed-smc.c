@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2016, IBM Corporation.
  */
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/bug.h>

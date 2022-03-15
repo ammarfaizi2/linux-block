@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Linaro Ltd.
  */
 
+#include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/device.h>
 #include <linux/firmware.h>

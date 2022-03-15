@@ -3,6 +3,7 @@
  * LED Driver for SGI Octane machines
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <asm/io.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2004 Texas Instruments, Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -7,6 +7,7 @@
  *	  add static buffer allocation
  */
 
+#include <linux/ioport.h>
 #include <linux/i2c.h>
 #include <linux/fs.h>
 #include <linux/export.h>

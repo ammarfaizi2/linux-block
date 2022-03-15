@@ -5,6 +5,7 @@
  * Copyright (C) 2015 John Crispin <john@phrozen.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/slab.h>

@@ -8,6 +8,7 @@
 //
 // For product information, visit https://code.google.com/p/mini2440/
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "ipmi_pci: " fmt
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>

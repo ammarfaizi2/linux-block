@@ -6,6 +6,7 @@
  * Author : Chanwoo Choi <cw00.choi@samsung.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/module.h>

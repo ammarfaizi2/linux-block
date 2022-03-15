@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/ioport.h>
 #include <linux/cpuhotplug.h>
 #include <asm/msr.h>
 #include <linux/init.h>

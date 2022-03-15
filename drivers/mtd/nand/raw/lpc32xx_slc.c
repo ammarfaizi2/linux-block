@@ -10,6 +10,7 @@
  * Copyright © 2012 Roland Stigge
  */
 
+#include <linux/ioport.h>
 #include <linux/highmem.h>
 #include <linux/device_api_lock.h>
 #include <linux/slab.h>

@@ -16,6 +16,7 @@
  * Included Files
  **************************************************************************/
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/leds.h>

@@ -4,6 +4,7 @@
  *  Copyright 2009 Alessandro Rubini
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/device.h>

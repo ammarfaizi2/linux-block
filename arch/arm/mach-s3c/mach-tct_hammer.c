@@ -7,6 +7,7 @@
 // derived from linux/arch/arm/mach-s3c2410/mach-bast.c, written by
 // Ben Dooks <ben@simtec.co.uk>
 
+#include <linux/ioport.h>
 #include <linux/gpio/machine.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

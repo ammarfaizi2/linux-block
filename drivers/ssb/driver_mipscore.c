@@ -10,6 +10,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/ioport.h>
 #include <linux/ssb/ssb.h>
 
 #include <linux/mtd/physmap.h>

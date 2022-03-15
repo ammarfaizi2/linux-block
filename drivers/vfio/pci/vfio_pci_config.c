@@ -20,6 +20,7 @@
  * must be negotiated with the underlying OS.
  */
 
+#include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/pci.h>
 #include <linux/uaccess.h>

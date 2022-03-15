@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
+#include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

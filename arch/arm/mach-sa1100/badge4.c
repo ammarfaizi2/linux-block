@@ -9,6 +9,7 @@
  *
  * Copyright (C) 2002 Hewlett-Packard Company
  */
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

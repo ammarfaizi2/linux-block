@@ -6,6 +6,7 @@
  *  Copyright (C) 2013-2016 John Crispin <john@phrozen.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/pci.h>

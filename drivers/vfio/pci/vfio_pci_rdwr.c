@@ -10,6 +10,7 @@
  * Author: Tom Lyon, pugs@cisco.com
  */
 
+#include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/pci.h>
 #include <linux/uaccess.h>

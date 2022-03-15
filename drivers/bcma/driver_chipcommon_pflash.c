@@ -7,6 +7,7 @@
 
 #include "bcma_private.h"
 
+#include <linux/ioport.h>
 #include <linux/bcma/bcma.h>
 #include <linux/mtd/physmap.h>
 #include <linux/platform_device.h>

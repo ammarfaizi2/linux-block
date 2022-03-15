@@ -10,6 +10,7 @@
  * NOTE: so far only PSC slave mode (bit- and frameclock) is supported.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/module.h>

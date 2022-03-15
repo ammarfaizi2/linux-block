@@ -15,6 +15,7 @@
  * H2 specific changes and cleanup
  * Copyright (C) 2004 Nokia Corporation by Imre Deak <imre.deak@nokia.com>
  */
+#include <linux/ioport.h>
 #include <linux/gpio.h>
 #include <linux/gpio/machine.h>
 #include <linux/kernel.h>

@@ -3,6 +3,7 @@
  * linux/arch/arm/mach-mmp/devices.c
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>

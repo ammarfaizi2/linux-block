@@ -11,6 +11,7 @@
  * Hans Ulli Kroll <ulli.kroll@googlemail.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/rtc.h>

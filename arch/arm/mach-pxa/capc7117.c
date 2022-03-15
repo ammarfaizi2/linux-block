@@ -16,6 +16,7 @@
  *             rework for upstream merge
  */
 
+#include <linux/ioport.h>
 #include <linux/irq.h>
 #include <linux/platform_device.h>
 #include <linux/ata_platform.h>

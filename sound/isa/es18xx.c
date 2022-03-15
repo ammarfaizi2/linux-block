@@ -62,6 +62,7 @@
  *   needed for ZV, so maybe the datasheet is entirely wrong here.
  */
  
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/err.h>

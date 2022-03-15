@@ -13,6 +13,7 @@
  * information so framebuffer drivers can load correctly.
  */
 
+#include <linux/ioport.h>
 #include <linux/dmi.h>
 #include <linux/err.h>
 #include <linux/efi.h>

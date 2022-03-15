@@ -6,6 +6,7 @@
  * Copyright (C) 2020 Cristian Ciocaltea <cristian.ciocaltea@gmail.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/mfd/atc260x/core.h>

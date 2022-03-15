@@ -5,6 +5,7 @@
  * Copyright (c) 2009-2012,2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/ioport.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/clocksource.h>

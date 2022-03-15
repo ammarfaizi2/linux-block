@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/ioport.h>
 #include <linux/clkdev.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

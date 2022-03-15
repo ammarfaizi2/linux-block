@@ -9,6 +9,7 @@
  *   Copyright (C) 2010,2013, NVIDIA Corporation
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/irq.h>

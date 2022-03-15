@@ -7,6 +7,7 @@
  * Keymile 83xx platform specific routines.
  */
 
+#include <linux/ioport.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

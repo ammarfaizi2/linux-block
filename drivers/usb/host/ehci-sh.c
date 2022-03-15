@@ -6,6 +6,7 @@
  *
  * Based on ohci-sh.c and ehci-atmel.c.
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/clk.h>

@@ -2,6 +2,7 @@
 /*
  * DA8xx USB
  */
+#include <linux/ioport.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

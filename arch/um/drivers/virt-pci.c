@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Intel Corporation
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>

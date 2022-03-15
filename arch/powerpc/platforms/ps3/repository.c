@@ -6,6 +6,7 @@
  *  Copyright 2006 Sony Corp.
  */
 
+#include <linux/ioport.h>
 #include <asm/lv1call.h>
 
 #include "platform.h"

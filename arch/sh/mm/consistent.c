@@ -5,6 +5,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/ioport.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

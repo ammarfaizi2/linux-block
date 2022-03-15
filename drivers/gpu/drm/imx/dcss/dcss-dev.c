@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/of_device.h>
 #include <linux/of_graph.h>

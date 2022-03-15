@@ -7,6 +7,7 @@
 // Copyright 2009 Kwangwoo Lee
 //	Kwangwoo Lee <kwangwoo.lee@gmail.com>
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

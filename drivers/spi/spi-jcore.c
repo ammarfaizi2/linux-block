@@ -8,6 +8,7 @@
  * Based loosely on initial version by Oleksandr G Zhadan
  *
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/errno.h>

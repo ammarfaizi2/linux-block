@@ -8,6 +8,7 @@
  * Copyright 2003 by Hans-Joerg Frieden and Thomas Frieden
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

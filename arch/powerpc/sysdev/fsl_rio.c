@@ -18,6 +18,7 @@
  * Matt Porter <mporter@kernel.crashing.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/extable.h>
 #include <linux/types.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2006-2009 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>

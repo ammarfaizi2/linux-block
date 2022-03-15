@@ -7,6 +7,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/ioport.h>
 #include <linux/ssb/ssb.h>
 
 static struct resource ssb_sflash_resource = {

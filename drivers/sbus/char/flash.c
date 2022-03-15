@@ -4,6 +4,7 @@
  * Copyright (C) 1997  Eddie C. Dost  (ecd@skynet.be)
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/errno.h>

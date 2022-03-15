@@ -10,6 +10,7 @@
  * Author : Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/idr_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

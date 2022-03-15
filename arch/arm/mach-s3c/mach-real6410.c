@@ -6,6 +6,7 @@
 //	Ben Dooks <ben@simtec.co.uk>
 //	http://armlinux.simtec.co.uk/
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/fb.h>

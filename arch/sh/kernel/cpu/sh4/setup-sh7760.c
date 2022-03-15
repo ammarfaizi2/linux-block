@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2006  Paul Mundt
  */
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/serial.h>

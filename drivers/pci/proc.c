@@ -5,6 +5,7 @@
  * Copyright (c) 1997--1999 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/ioport.h>
 #include <linux/fs_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/init.h>

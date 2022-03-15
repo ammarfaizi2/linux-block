@@ -42,6 +42,7 @@
  * like lsb/msb first, syncdl, dtdl etc. are exposed via DT and I2S defaults
  * are used. These can be exposed later if needed after testing.
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/export.h>

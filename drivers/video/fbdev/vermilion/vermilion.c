@@ -14,6 +14,7 @@
  *   Alan Hourihane <alanh-at-tungstengraphics-dot-com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

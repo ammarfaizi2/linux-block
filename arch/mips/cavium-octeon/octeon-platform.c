@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Wind River Systems
  */
 
+#include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

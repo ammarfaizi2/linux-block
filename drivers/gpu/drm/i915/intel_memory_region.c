@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/prandom.h>
 

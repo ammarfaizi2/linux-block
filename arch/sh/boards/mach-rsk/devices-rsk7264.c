@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2012 Renesas Electronics Europe
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/platform_device.h>

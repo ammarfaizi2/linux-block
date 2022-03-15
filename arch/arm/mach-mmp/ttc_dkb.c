@@ -5,6 +5,7 @@
  *  Support for the Marvell PXA910-based TTC_DKB Development Platform.
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

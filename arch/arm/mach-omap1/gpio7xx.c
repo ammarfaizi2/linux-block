@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/gpio.h>
 #include <linux/platform_data/gpio-omap.h>
 

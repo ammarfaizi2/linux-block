@@ -7,6 +7,7 @@
  * Code is partially derived from pcic.c
  */
 
+#include <linux/ioport.h>
 #include <linux/of_device.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

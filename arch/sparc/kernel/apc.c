@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Eric Brower (ebrower@usa.net)
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>

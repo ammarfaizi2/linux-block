@@ -7,6 +7,7 @@
  *  Marek Vasut <marek.vasut@gmail.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/moduleparam.h>

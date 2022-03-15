@@ -100,6 +100,7 @@
  *
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/version.h>

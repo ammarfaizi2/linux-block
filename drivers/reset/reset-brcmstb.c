@@ -5,6 +5,7 @@
  * Author: Florian Fainelli <f.fainelli@gmail.com>
  * Copyright (C) 2018 Broadcom
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>

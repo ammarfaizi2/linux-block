@@ -27,6 +27,7 @@
  *  Imre Kaloz <kaloz@openwrt.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

@@ -11,6 +11,7 @@
  *  12-Dec-2002 Sharp Corporation for Poodle
  *  John Lenz <lenz@cs.wisc.edu> updates to 2.6
  */
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/export.h>

@@ -10,6 +10,7 @@
  * QUICC ENGINE Interrupt Controller
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

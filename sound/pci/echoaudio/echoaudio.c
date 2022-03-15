@@ -5,6 +5,7 @@
  *  Copyright (C) 2020 Mark Hills <mark@xwax.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/fs_api.h>

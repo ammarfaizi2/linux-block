@@ -3,6 +3,7 @@
 // Copyright 2009 Wolfson Microelectronics
 //      Mark Brown <broonie@opensource.wolfsonmicro.com>
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/platform_device.h>

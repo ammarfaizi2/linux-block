@@ -19,6 +19,7 @@
  *   Blocks: LCD port (identical to TS-5500 LCD).
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>

@@ -7,6 +7,7 @@
  * Generic XTALK initialization code
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/smp.h>
 #include <linux/platform_device.h>

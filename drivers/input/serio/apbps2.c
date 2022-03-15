@@ -13,6 +13,7 @@
  *
  * Contributors: Daniel Hellstrom <daniel@gaisler.com>
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/of_device.h>

@@ -37,6 +37,7 @@
  *   340988a (daqcard-1200)
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pcmcia.h>
 

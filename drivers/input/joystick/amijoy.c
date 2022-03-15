@@ -10,6 +10,7 @@
 /*
  */
 
+#include <linux/ioport.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

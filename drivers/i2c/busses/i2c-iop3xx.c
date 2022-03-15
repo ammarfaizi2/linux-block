@@ -26,6 +26,7 @@
  *	fix: driver refuses to address self.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

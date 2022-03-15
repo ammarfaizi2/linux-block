@@ -9,6 +9,7 @@
  * the Nomadik 8815 and Ux500 platforms.
  */
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>

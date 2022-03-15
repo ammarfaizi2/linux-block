@@ -6,6 +6,7 @@
  * for more details.
  *
  */
+#include <linux/ioport.h>
 #include <linux/fb.h>
 #include <linux/pci.h>
 #include <linux/module.h>

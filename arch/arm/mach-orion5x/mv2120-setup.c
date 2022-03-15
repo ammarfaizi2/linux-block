@@ -7,6 +7,7 @@
  * published by the Free Software Foundation; either version 2 of the
  * License, or (at your option) any later version.
  */
+#include <linux/ioport.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

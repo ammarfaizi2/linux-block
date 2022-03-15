@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018-2019 The Linux Foundation. All rights reserved. */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/ascii85.h>
 #include "msm_gem.h"

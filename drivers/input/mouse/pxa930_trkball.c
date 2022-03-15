@@ -7,6 +7,7 @@
  *             initial version
  */
 
+#include <linux/ioport.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

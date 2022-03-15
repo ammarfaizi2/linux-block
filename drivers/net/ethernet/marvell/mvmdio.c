@@ -17,6 +17,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/ioport.h>
 #include <linux/acpi.h>
 #include <linux/acpi_mdio.h>
 #include <linux/clk.h>

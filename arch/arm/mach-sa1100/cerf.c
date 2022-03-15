@@ -7,6 +7,7 @@
  * Jan-2004 : Removed io map for flash [FB]
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/gpio/machine.h>
 #include <linux/kernel.h>

@@ -20,6 +20,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <linux/ioport.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/types.h>

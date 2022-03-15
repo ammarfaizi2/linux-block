@@ -10,6 +10,7 @@
  * Copyright (C) 2005 Stephen Street / StreetFire Sound Labs
  */
 
+#include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

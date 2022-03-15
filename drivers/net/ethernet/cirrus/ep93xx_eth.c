@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/dma-mapping.h>

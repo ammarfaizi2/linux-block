@@ -12,6 +12,7 @@
  * Chris Zankel <chris@zankel.net>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

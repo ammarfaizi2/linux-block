@@ -6,6 +6,7 @@
  * Author: Chen, Gong <gong.chen@intel.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/atomic_api.h>
 #include <asm/msr.h>
 #include <linux/module.h>

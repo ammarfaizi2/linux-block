@@ -4,6 +4,7 @@
  *
  * Maintainer: Byron Bradley <byron.bbradley@gmail.com>
  */
+#include <linux/ioport.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

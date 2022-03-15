@@ -6,6 +6,7 @@
  *
  * Copyright 2005 Freescale Semiconductor, Inc.
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

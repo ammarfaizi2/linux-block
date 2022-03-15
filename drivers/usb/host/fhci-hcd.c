@@ -11,6 +11,7 @@
  *               Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/types.h>

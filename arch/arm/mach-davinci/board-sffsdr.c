@@ -10,6 +10,7 @@
  * Copyright (C) 2007 MontaVista Software, Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/i2c.h>

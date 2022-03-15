@@ -4,6 +4,7 @@
  * Copyright 2016 Freescale Semiconductor Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

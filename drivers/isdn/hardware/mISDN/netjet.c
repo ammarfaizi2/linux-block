@@ -7,6 +7,7 @@
  * Copyright 2009  by Karsten Keil <keil@isdn4linux.de>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>

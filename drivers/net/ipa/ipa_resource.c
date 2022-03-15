@@ -4,6 +4,7 @@
  * Copyright (C) 2018-2021 Linaro Ltd.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

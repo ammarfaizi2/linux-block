@@ -7,6 +7,7 @@
  * Copyright (c) 2015, Boaz Harrosh <boaz@plexistor.com>.
  */
 
+#include <linux/ioport.h>
 #include <linux/highmem.h>
 #include <linux/device_api_lock.h>
 #include <linux/blkdev.h>

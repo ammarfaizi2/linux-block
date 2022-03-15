@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Pengutronix, Jan Luebbe <kernel@pengutronix.de>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

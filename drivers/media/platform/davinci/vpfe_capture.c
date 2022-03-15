@@ -52,6 +52,7 @@
  *		- Support for STREAMON before QBUF
  *		- Support for control ioctls
  */
+#include <linux/ioport.h>
 #include <linux/i2c.h>
 #include <linux/fs.h>
 #include <linux/export.h>

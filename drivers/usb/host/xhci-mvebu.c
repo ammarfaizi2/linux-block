@@ -4,6 +4,7 @@
  * Author: Gregory CLEMENT <gregory.clement@free-electrons.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/mbus.h>
 #include <linux/of.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2015, Linaro Limited, Shannon Zhao
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/acpi.h>

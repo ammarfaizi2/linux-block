@@ -14,6 +14,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <asm/mach-types.h>
 #include <asm/hardware/sa1111.h>

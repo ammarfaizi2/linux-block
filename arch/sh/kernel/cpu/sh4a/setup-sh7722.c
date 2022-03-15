@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2006 - 2008  Paul Mundt
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/mm.h>
 #include <linux/platform_device.h>

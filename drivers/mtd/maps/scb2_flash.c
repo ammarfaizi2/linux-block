@@ -45,6 +45,7 @@
  * steps.  Probably a wise thing to do.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/types.h>

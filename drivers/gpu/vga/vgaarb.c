@@ -35,6 +35,7 @@
 #define vgaarb_info(dev, fmt, arg...)	dev_info(dev, "vgaarb: " fmt, ##arg)
 #define vgaarb_err(dev, fmt, arg...)	dev_err(dev, "vgaarb: " fmt, ##arg)
 
+#include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/device_api.h>

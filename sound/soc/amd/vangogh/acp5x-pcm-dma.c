@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2021 Advanced Micro Devices, Inc. All rights reserved.
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>

@@ -5,6 +5,7 @@
  *  Copyright (c) 2004 by Castet Matthieu <castet.matthieu@free.fr>
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/pnp.h>
 #include <linux/err.h>

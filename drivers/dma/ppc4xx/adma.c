@@ -15,6 +15,7 @@
  * ADMA driver written by D.Williams.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/capability.h>

@@ -5,6 +5,7 @@
  * Author: Bjorn Andersson <bjorn.andersson@sonymobile.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>

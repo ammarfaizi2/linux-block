@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt)	"kexec: " fmt
 
+#include <linux/ioport.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/smp.h>

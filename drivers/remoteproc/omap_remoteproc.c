@@ -13,6 +13,7 @@
  * Hari Kanigeri <h-kanigeri2@ti.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

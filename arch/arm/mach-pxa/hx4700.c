@@ -10,6 +10,7 @@
  *    Copyright (c) 2006 Anton Vorontsov <cbou@mail.ru>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/agp_backend.h>

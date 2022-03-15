@@ -80,6 +80,7 @@
  *	places.
  */
 
+#include <linux/ioport.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/io.h>
 #include <linux/delay.h>

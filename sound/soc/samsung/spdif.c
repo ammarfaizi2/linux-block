@@ -5,6 +5,7 @@
 // Copyright (c) 2010 Samsung Electronics Co. Ltd
 //		http://www.samsung.com/
 
+#include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/module.h>

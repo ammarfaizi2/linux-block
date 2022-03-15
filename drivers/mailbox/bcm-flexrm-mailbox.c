@@ -23,6 +23,7 @@
  * rings where each mailbox channel represents a separate FlexRM ring.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

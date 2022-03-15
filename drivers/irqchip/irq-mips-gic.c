@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "irq-mips-gic: " fmt
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitfield.h>

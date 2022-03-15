@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Álvaro Fernández Rojas <noltari@gmail.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/io.h>

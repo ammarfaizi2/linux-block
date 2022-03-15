@@ -7,6 +7,7 @@
  * Author: David Dajun Chen <dchen@diasemi.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/input.h>

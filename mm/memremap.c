@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2015 Intel Corporation. All rights reserved. */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/device.h>

@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/pci-acpi.h>

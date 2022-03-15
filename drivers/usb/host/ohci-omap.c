@@ -15,6 +15,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

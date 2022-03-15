@@ -5,6 +5,7 @@
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
+#include <linux/ioport.h>
 #include <linux/vmw_vmci_defs.h>
 #include <linux/hash.h>
 #include <linux/types.h>

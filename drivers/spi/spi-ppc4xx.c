@@ -20,6 +20,7 @@
  * during SPI transfers by setting max_speed_hz via the device tree.
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

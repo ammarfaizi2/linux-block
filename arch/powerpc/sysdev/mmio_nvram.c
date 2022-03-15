@@ -7,6 +7,7 @@
  * Authors : Utz Bacher <utz.bacher@de.ibm.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/fs.h>

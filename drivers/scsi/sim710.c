@@ -13,6 +13,7 @@
  * Rewritten to use 53c700.c by James.Bottomley@SteelEye.com
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/slab.h>

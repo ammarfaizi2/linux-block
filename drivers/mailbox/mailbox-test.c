@@ -5,6 +5,7 @@
  * Author: Lee Jones <lee.jones@linaro.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

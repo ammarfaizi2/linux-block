@@ -6,6 +6,7 @@
  * non-0 I/O hose
  */
 
+#include <linux/ioport.h>
 #include <linux/pci.h>
 #include <linux/init.h>
 #include <linux/tty.h>

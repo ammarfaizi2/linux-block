@@ -10,6 +10,7 @@
    Mainboard specific bugs should be handled by DMI entries.
    CPU specific bugs in setup.c */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/acpi.h>

@@ -5,6 +5,7 @@
  * Copyright(C) 2009 Wolfson Microelectronics PLC.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

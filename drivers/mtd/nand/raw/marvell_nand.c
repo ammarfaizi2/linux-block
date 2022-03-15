@@ -74,6 +74,7 @@
  *     markers.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

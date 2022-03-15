@@ -6,6 +6,7 @@
  * Inspired by code from the SL3516 board support by Jason Lee
  * Inspired by code from Janos Laube <janos.dev@gmail.com>
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/of.h>
 #include <linux/of_platform.h>

@@ -11,6 +11,7 @@
  * Portions Copyright 2002 by Mylex (An IBM Business Unit)
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

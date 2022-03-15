@@ -10,6 +10,7 @@
 
 #define DSS_SUBSYS_NAME "VENC"
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/clk.h>

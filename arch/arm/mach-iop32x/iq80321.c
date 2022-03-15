@@ -9,6 +9,7 @@
  * Copyright (C) 2004 Intel Corp.
  */
 
+#include <linux/ioport.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2017 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

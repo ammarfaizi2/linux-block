@@ -9,6 +9,7 @@
  *  Modified 2009:  Jonathan Cameron <jic23@cam.ac.uk>
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

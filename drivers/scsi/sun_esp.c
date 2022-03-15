@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

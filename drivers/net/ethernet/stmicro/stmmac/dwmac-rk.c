@@ -7,6 +7,7 @@
  * Chen-Zhi (Roger Chen)  <roger.chen@rock-chips.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/stmmac.h>
 #include <linux/bitops.h>

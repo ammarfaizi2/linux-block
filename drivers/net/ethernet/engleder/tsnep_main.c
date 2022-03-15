@@ -18,6 +18,7 @@
 #include "tsnep.h"
 #include "tsnep_hw.h"
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

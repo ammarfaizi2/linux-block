@@ -8,6 +8,7 @@
 * or the maintainer
 */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>

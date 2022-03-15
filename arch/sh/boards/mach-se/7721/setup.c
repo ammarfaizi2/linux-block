@@ -6,6 +6,7 @@
  *
  * Hitachi UL SolutionEngine 7721 Support.
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <mach-se/mach/se7721.h>

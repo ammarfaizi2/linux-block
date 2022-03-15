@@ -6,6 +6,7 @@
  * Author: MontaVista Software, Inc. <source@mvista.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

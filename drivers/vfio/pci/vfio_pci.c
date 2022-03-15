@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ioport.h>
 #include <linux/device.h>
 #include <linux/eventfd.h>
 #include <linux/file.h>

@@ -8,6 +8,7 @@
  * EC for audio function.
  */
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

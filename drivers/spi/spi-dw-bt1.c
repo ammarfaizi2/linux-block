@@ -9,6 +9,7 @@
 // Baikal-T1 DW APB SPI and System Boot SPI driver
 //
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/clk.h>

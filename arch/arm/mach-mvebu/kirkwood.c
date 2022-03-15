@@ -10,6 +10,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>

@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/types.h>
 #include <linux/module.h>
 #include <linux/init.h>

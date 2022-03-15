@@ -11,6 +11,7 @@
 * Maintainters : Vladimir Ananiev (aka Vovan888), Sergge
 *		oslik.ru
 */
+#include <linux/ioport.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -5,6 +5,7 @@
  *   Copyright 2021 Lauri Kasanen
  */
 
+#include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

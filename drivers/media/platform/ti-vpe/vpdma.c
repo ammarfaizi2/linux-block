@@ -9,6 +9,7 @@
  * Archit Taneja, <archit@ti.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

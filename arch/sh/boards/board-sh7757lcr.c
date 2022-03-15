@@ -5,6 +5,7 @@
  * Copyright (C) 2009 - 2010  Renesas Solutions Corp.
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/gpio.h>

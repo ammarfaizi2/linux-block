@@ -9,6 +9,7 @@
  *  - Dream SAM9233+GMS950400+RAM+ROM: Wavetable MIDI, connected to MPU401
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/isa.h>

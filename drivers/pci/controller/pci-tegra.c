@@ -13,6 +13,7 @@
  * Author: Thierry Reding <treding@nvidia.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

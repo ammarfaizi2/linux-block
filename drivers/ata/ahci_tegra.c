@@ -8,6 +8,7 @@
  *	Mikko Perttunen <mperttunen@nvidia.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/ahci_platform.h>

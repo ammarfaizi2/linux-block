@@ -34,6 +34,7 @@
  * Also check the comments in the interrupt routines for some gory details.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

@@ -28,6 +28,7 @@
  *   1   IRQ (not-used)
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/io.h>
 #include <linux/comedi/comedidev.h>

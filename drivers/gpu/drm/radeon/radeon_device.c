@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

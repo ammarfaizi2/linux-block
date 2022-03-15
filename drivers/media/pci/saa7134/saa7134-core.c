@@ -10,6 +10,7 @@
 #include "saa7134.h"
 #include "saa7134-reg.h"
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/init.h>

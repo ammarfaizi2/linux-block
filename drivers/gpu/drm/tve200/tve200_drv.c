@@ -27,6 +27,7 @@
  * This driver exposes a standard KMS interface for this TV encoder.
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

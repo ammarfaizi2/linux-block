@@ -9,6 +9,7 @@
  * Implementation based on pci-exynos.c and pcie-designware.c
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

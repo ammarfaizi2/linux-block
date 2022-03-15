@@ -10,6 +10,7 @@
  *		  Anton Vorontsov <avorontsov@mvista.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

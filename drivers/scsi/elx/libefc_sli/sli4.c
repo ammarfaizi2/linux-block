@@ -8,6 +8,7 @@
  * All common (i.e. transport-independent) SLI-4 functions are implemented
  * in this file.
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

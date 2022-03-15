@@ -7,6 +7,7 @@
  * Copyright (C) 2013, 2014 Linaro Ltd.
  */
 
+#include <linux/ioport.h>
 #include <linux/dmi.h>
 #include <linux/efi.h>
 #include <linux/io.h>

@@ -12,6 +12,7 @@
  * Jun 21, 2006	Initial version
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

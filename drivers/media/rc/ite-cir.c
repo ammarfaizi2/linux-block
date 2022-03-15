@@ -16,6 +16,7 @@
  * <spmf2004-lirc@yahoo.fr> in 2008.
  */
 
+#include <linux/ioport.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

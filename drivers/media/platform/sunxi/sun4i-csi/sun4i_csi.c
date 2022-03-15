@@ -6,6 +6,7 @@
  * Author: Maxime Ripard <maxime.ripard@bootlin.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>

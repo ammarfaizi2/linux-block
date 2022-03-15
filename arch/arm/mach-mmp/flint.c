@@ -7,6 +7,7 @@
  *  Copyright (C) 2009 Marvell International Ltd.
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

@@ -8,6 +8,7 @@
  *
  * Copyright (C) 2006 Jonathan McDowell <noodles@earth.li>
  */
+#include <linux/ioport.h>
 #include <linux/gpio/driver.h>
 #include <linux/gpio/machine.h>
 #include <linux/gpio/consumer.h>

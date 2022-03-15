@@ -14,6 +14,7 @@
  * Based on the virtual v4l2-mem2mem example device
  */
 
+#include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

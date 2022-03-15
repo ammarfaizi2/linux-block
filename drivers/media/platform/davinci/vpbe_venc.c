@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2010 Texas Instruments Inc
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

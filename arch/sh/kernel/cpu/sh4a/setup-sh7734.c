@@ -8,6 +8,7 @@
  * Copyright (C) 2011,2012 Renesas Solutions Corp.
  */
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/serial.h>

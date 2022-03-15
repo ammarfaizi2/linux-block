@@ -7,6 +7,7 @@
  * Author: Christian Ruppert <christian.ruppert@abilis.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/irqdomain.h>
 #include <linux/irq.h>

@@ -8,6 +8,7 @@
  *	Sricharan <r.sricharan@ti.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/platform_device.h>

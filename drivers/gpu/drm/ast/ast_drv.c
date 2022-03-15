@@ -26,6 +26,7 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 

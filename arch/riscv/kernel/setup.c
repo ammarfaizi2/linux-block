@@ -8,6 +8,7 @@
  *  Nick Kossifidis <mick@ics.forth.gr>
  */
 
+#include <linux/ioport.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/mm.h>

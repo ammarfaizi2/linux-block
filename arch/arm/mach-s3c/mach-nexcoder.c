@@ -8,6 +8,7 @@
 //     15-10-2004 GG  Created initial version
 //     12-03-2005 BJD Updated for release
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

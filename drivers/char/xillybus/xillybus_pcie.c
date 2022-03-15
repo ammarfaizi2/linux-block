@@ -7,6 +7,7 @@
  * Driver for the Xillybus FPGA/host framework using PCI Express.
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

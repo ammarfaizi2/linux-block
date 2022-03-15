@@ -9,6 +9,7 @@
  * found on AT91SAM9263.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/dma/at91.h>

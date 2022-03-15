@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2013-2015 Altera Corporation
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/completion.h>

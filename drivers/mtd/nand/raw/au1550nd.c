@@ -3,6 +3,7 @@
  *  Copyright (C) 2004 Embedded Edge, LLC
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020, Broadcom */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/types.h>

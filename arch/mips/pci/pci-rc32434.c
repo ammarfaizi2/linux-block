@@ -25,6 +25,7 @@
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/types.h>
 #include <linux/pci.h>

@@ -11,6 +11,7 @@
  *	S5PC110: use DMA
  */
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>

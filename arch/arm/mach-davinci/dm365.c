@@ -13,6 +13,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/clk-provider.h>
 #include <linux/clk/davinci.h>
 #include <linux/clkdev.h>

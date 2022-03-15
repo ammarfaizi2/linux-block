@@ -9,6 +9,7 @@
  * All rights reserved.
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/device.h>

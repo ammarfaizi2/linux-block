@@ -11,6 +11,7 @@
  *   James R. McKaskill
  */
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

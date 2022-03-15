@@ -11,6 +11,7 @@
  * Based on gianfar_mii.c and ucc_geth_mii.c (Li Yang, Kim Phillips)
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

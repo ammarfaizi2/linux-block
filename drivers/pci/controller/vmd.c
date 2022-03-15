@@ -4,6 +4,7 @@
  * Copyright (c) 2015, Intel Corporation.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/idr_api.h>
 #include <linux/dma-mapping.h>

@@ -11,6 +11,7 @@
  * Project-Homepage: http://www.trust.rub.de/projects/linux-device-driver-infineon-tpm/ 
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/init.h>

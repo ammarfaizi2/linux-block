@@ -12,6 +12,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/acpi.h>
 #include <linux/acpi_mdio.h>

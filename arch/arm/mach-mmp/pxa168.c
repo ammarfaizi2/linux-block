@@ -4,6 +4,7 @@
  *
  *  Code specific to PXA168
  */
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

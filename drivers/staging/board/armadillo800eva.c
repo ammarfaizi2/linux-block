@@ -9,6 +9,7 @@
  * Copyright (C) 2012 Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/capability.h>
 #include <linux/dma-mapping.h>
 #include <linux/fb.h>

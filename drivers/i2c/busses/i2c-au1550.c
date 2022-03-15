@@ -14,6 +14,7 @@
  * any Au1550 board that has a similar PSC configuration.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

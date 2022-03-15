@@ -47,6 +47,7 @@
  * exchange is properly mapped during a transfer.
  */
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/fs.h>

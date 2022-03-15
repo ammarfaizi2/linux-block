@@ -7,6 +7,7 @@
  * Author: Simon Guinot <simon.guinot@sequanux.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

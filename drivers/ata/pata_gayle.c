@@ -11,6 +11,7 @@
  *     Created 12 Jul 1997 by Geert Uytterhoeven
  */
 
+#include <linux/ioport.h>
 #include <linux/ata.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>

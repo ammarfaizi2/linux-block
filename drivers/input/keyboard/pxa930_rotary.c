@@ -3,6 +3,7 @@
  * Driver for the enhanced rotary controller on pxa930 and pxa935
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

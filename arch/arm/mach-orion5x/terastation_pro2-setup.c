@@ -4,6 +4,7 @@
  *
  * Maintainer: Sylver Bruneau <sylver.bruneau@googlemail.com>
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>

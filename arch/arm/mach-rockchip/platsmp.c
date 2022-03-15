@@ -4,6 +4,7 @@
  * Author: Heiko Stuebner <heiko@sntech.de>
  */
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/smp.h>

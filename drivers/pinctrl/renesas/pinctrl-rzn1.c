@@ -6,6 +6,7 @@
  * Based on a driver originally written by Michel Pollet at Renesas.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/pinctrl/rzn1-pinctrl.h>
 #include <linux/clk.h>

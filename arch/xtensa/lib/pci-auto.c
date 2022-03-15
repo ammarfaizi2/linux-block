@@ -11,6 +11,7 @@
  * Based on work from Matt Porter <mporter@mvista.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/pci.h>

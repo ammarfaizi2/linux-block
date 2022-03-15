@@ -6,6 +6,7 @@
  * MPC832xE MDS board specific routines.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

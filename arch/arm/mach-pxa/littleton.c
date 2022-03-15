@@ -12,6 +12,7 @@
  *              eric miao <eric.miao@marvell.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>

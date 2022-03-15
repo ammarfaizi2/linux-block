@@ -4,6 +4,7 @@
  *
  *  Code specific to PXA910
  */
+#include <linux/ioport.h>
 #include <linux/clk/mmp.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

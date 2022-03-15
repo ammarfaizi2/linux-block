@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/ioport.h>
 #include <linux/dmi.h>
 #include <linux/efi.h>
 #include <linux/io.h>

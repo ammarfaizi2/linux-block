@@ -8,6 +8,7 @@
  *	Based on ne.c, by Donald Becker, et-al.
  */
 
+#include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

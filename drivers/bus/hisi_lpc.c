@@ -6,6 +6,7 @@
  * Author: John Garry <john.garry@huawei.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/console.h>

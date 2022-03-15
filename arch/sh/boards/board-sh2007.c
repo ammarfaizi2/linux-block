@@ -5,6 +5,7 @@
  * Copyright (C) 2003, 2004  SUGIOKA Toshinobu
  * Copyright (C) 2010  Hitoshi Mitake <mitake@dcl.info.waseda.ac.jp>
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/irq.h>
 #include <linux/regulator/fixed.h>

@@ -8,6 +8,7 @@
  *  Created:	Jun 15, 2001
  *  Copyright:	MontaVista Software Inc.
  */
+#include <linux/ioport.h>
 #include <linux/clkdev.h>
 #include <linux/gpio.h>
 #include <linux/gpio/gpio-reg.h>

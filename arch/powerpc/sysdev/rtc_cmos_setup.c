@@ -9,6 +9,7 @@
  * or implied.
  */
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/err.h>
 #include <linux/init.h>

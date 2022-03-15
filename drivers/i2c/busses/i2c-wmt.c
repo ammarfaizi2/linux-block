@@ -8,6 +8,7 @@
  *  - Copyright (C) 2008 WonderMedia Technologies, Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

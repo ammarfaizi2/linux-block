@@ -51,6 +51,7 @@
  * - power management? (card can do voice wakeup according to datasheet!!)
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/pci.h>

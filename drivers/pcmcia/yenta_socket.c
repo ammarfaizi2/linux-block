@@ -11,6 +11,7 @@
  * May 2003: Dominik Brodowski <linux@brodo.de>
  * 	Merge pci_socket.c and yenta.c into one file
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/pci.h>

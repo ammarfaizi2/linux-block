@@ -3,6 +3,7 @@
  * Copyright (C) 2009-2015 Cavium, Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/gfp.h>
 #include <linux/io.h>
 #include <linux/module.h>

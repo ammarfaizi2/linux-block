@@ -8,6 +8,7 @@
  * Author: Zhu, Lejun <lejun.zhu@linux.intel.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/interrupt.h>
 #include <linux/regmap.h>

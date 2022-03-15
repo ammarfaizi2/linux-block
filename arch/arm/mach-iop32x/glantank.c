@@ -8,6 +8,7 @@
  * Copyright (C) 2006 Lennert Buytenhek <buytenh@wantstofly.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/f75375s.h>

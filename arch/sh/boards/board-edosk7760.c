@@ -5,6 +5,7 @@
  * Copyright (C) 2008 SPES Societa' Progettazione Elettronica e Software Ltd.
  * Author: Luca Santini <luca.santini@spesonline.com>
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/platform_device.h>

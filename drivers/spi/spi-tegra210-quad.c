@@ -2,6 +2,7 @@
 //
 // Copyright (C) 2020 NVIDIA CORPORATION.
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/completion.h>

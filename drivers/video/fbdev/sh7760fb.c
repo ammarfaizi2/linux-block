@@ -14,6 +14,7 @@
  * sh7760_setcolreg get from drivers/video/sh_mobile_lcdcfb.c
  */
 
+#include <linux/ioport.h>
 #include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

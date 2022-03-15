@@ -86,6 +86,7 @@
  * page-sizes, we need to break this assumption.
  */
 
+#include <linux/ioport.h>
 #include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/pagemap.h>

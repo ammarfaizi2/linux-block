@@ -10,6 +10,7 @@
  *             rewrite to align with latest kernel
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>

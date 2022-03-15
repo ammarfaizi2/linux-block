@@ -6,6 +6,7 @@
  * The Sparx5 Chip Register Model can be browsed at this location:
  * https://github.com/microchip-ung/sparx-5_reginfo
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/mfd/syscon.h>
 #include <linux/of_device.h>

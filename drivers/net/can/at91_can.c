@@ -6,6 +6,7 @@
  * (C) 2008, 2009, 2010, 2011 by Marc Kleine-Budde <kernel@pengutronix.de>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>
 #include <asm/io.h>

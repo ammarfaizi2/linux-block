@@ -6,6 +6,7 @@
  *
  *  Architecture specific fixups.
  */
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/tty.h>
 #include <linux/delay.h>
