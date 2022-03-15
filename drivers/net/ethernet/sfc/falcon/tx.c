@@ -5,6 +5,7 @@
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
+#include <net/pkt_sched.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
