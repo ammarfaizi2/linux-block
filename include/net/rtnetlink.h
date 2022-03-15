@@ -2,6 +2,7 @@
 #ifndef __NET_RTNETLINK_H
 #define __NET_RTNETLINK_H
 
+#include <net/netlink_api.h>
 #include <linux/rtnetlink.h>
 #include <net/netlink.h>
 

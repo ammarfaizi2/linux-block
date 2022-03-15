@@ -2,6 +2,7 @@
 #ifndef __NET_GENERIC_NETLINK_H
 #define __NET_GENERIC_NETLINK_H
 
+#include <net/netlink_api.h>
 #include <linux/genetlink.h>
 #include <net/netlink.h>
 #include <net/net_namespace.h>
