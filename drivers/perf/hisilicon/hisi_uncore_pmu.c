@@ -8,6 +8,7 @@
  *
  * This code is based on the uncore PMUs like arm-cci and arm-ccn.
  */
+#include <linux/sysfs.h>
 #include <linux/perf_event_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/local64_api.h>

@@ -4,6 +4,7 @@
  *      Copyright (c) 2014 Scott Feldman <sfeldma@cumulusnetworks.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/kobject_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

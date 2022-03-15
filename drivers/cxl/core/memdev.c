@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright(c) 2020 Intel Corporation. */
 
+#include <linux/sysfs.h>
 #include <linux/rwsem_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

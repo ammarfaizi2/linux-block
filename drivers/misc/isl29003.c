@@ -12,6 +12,7 @@
  *  	Eurotech S.p.A. <info@eurotech.it>
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

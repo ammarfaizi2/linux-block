@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/ratelimit.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

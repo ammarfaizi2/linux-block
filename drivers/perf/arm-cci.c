@@ -3,6 +3,7 @@
 // Copyright (C) 2013-2018 Arm Ltd.
 // Author: Punit Agrawal <punit.agrawal@arm.com>, Suzuki Poulose <suzuki.poulose@arm.com>
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>

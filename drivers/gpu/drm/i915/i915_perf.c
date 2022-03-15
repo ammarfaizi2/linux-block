@@ -191,6 +191,7 @@
  *   with the rest of the i915 driver.
  */
 
+#include <linux/sysfs.h>
 #include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

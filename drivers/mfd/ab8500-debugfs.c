@@ -71,6 +71,7 @@
  * Warning: bit shift direction depends on read or right command.
  */
 
+#include <linux/sysfs.h>
 #include <linux/device_api_lock.h>
 #include <linux/seq_file.h>
 #include <linux/uaccess.h>

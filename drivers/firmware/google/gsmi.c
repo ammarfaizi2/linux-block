@@ -8,6 +8,7 @@
  * EFI SMI interface for Google platforms
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/kobject_api.h>

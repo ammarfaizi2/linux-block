@@ -50,6 +50,7 @@
  * Documentation/powerpc/hvcs.rst.
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/task.h>
 #include <linux/mutex_api.h>

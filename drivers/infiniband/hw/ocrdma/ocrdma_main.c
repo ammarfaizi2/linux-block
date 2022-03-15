@@ -40,6 +40,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

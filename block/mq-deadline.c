@@ -5,6 +5,7 @@
  *
  *  Copyright (C) 2016 Jens Axboe <axboe@kernel.dk>
  */
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/rbtree_api.h>

@@ -24,6 +24,7 @@
  * Copyright (C) 2006, Intel Corp.  All rights reserved.
  *
  */
+#include <linux/sysfs.h>
 #include <linux/mm_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/device.h>

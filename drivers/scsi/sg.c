@@ -21,6 +21,7 @@ static int sg_version_num = 30536;	/* 2 digits for each component */
  *        (otherwise the macros compile to empty statements).
  *
  */
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/pgtable_api.h>

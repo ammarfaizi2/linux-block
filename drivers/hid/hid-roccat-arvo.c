@@ -13,6 +13,7 @@
  * 5 profiles.
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/device/class.h>
 #include <linux/device.h>

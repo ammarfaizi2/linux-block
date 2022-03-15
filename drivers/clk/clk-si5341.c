@@ -11,6 +11,7 @@
  * The Si5342 and Si5344 are smaller versions of the Si5345.
  */
 
+#include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

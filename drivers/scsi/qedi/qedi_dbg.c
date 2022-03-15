@@ -5,6 +5,7 @@
  */
 
 #include "qedi_dbg.h"
+#include <linux/sysfs.h>
 #include <linux/vmalloc.h>
 
 void

@@ -27,6 +27,7 @@
 #include "amdgpu.h"
 #include "amdgpu_dm.h"
 #include "dm_helpers.h"
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

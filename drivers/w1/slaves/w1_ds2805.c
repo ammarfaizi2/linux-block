@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Andrew Worsley amworsley@gmail.com
  */
 
+#include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>

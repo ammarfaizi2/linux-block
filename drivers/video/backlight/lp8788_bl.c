@@ -7,6 +7,7 @@
  * Author: Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>

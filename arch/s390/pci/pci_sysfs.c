@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT "zpci"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sysfs.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/stat.h>

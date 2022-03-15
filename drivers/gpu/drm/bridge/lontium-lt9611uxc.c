@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020. Linaro Limited.
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>

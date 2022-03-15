@@ -3,6 +3,7 @@
  * v4l2-spi - SPI helpers for Video4Linux2
  */
 
+#include <linux/sysfs.h>
 #include <linux/kmod.h>
 #include <linux/module.h>
 #include <linux/spi/spi.h>

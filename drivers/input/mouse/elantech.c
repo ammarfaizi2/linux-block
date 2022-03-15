@@ -7,6 +7,7 @@
  * Trademarks are the property of their respective owners.
  */
 
+#include <linux/sysfs.h>
 #include <linux/property.h>
 #include <linux/capability.h>
 #include <linux/delay.h>

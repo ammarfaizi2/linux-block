@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/task.h>

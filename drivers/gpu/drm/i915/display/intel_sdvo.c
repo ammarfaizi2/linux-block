@@ -26,6 +26,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 
+#include <linux/sysfs.h>
 #include <linux/delay.h>
 #include <linux/export.h>
 #include <linux/i2c.h>

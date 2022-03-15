@@ -9,6 +9,7 @@
 /*
  */
 
+#include <linux/sysfs.h>
 #include <linux/device.h>
 #include <linux/hid.h>
 #include <linux/usb.h>

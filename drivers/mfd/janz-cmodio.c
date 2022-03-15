@@ -7,6 +7,7 @@
  * Lots of inspiration and code was copied from drivers/mfd/sm501.c
  */
 
+#include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -5,6 +5,7 @@
  * Author: Ganapatrao Kulkarni <gkulkarni@cavium.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/perf_event_api.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>

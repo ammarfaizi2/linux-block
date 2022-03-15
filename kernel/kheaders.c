@@ -6,6 +6,7 @@
  * (Borrowed code from kernel/configs.c)
  */
 
+#include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/kobject_api.h>
 #include <linux/kernel.h>

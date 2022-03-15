@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/sysfs.h>
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/reboot.h>

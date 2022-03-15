@@ -5,6 +5,7 @@
  * Copyright 2013,2014 IBM Corp.
  */
 
+#include <linux/sysfs.h>
 #include <linux/mm_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kobject.h>

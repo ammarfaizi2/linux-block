@@ -5,6 +5,7 @@
  * Copyright 2005,2006 Hebert Valerio Riedel <hvr@gnu.org>
  */
 
+#include <linux/sysfs.h>
 #include <linux/seq_file.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

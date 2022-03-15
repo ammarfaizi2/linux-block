@@ -14,6 +14,7 @@
 #define pr_fmt(fmt) "%s" fmt, "IPMI message handler: "
 #define dev_fmt pr_fmt
 
+#include <linux/sysfs.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

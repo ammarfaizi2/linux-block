@@ -21,6 +21,7 @@
  *
  */
 #include "pp_debug.h"
+#include <linux/sysfs.h>
 #include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

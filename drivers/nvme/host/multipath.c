@@ -3,6 +3,7 @@
  * Copyright (c) 2017-2018 Christoph Hellwig.
  */
 
+#include <linux/sysfs.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

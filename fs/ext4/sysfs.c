@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/sysfs.h>
 #include <linux/sched.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/kobject_api.h>

@@ -8,6 +8,7 @@
  * This code is based heavily on the ARMv7 perf event code.
  */
 
+#include <linux/sysfs.h>
 #include <linux/sysctl.h>
 #include <linux/perf_event_api.h>
 #include <linux/module.h>

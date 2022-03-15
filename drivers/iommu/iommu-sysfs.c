@@ -6,6 +6,7 @@
  *     Author: Alex Williamson <alex.williamson@redhat.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/kobject_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

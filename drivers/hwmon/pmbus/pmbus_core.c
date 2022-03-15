@@ -6,6 +6,7 @@
  * Copyright (c) 2012 Guenter Roeck
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/fs_api.h>

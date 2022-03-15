@@ -8,6 +8,7 @@
  * Copyright (c) 2003-2004 IBM Corp.
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>

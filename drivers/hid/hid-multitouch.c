@@ -31,6 +31,7 @@
  * [1] https://gitlab.freedesktop.org/libevdev/hid-tools
  */
 
+#include <linux/sysfs.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "mobility: " fmt
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>

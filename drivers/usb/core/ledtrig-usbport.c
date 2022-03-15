@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/device.h>
 #include <linux/leds.h>

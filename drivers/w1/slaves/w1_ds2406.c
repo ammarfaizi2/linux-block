@@ -6,6 +6,7 @@
  * Copyright (c) 2014 Scott Alfter <scott@alfter.us>
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

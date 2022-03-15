@@ -5,6 +5,7 @@
  * Authors:	Roopa Prabhu, <roopa@cumulusnetworks.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/rtnetlink.h>
 #include <linux/kmod.h>
 #include <linux/atomic_api.h>

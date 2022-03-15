@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2018-2020 Intel Corporation. All rights reserved.
  */
+#include <linux/sysfs.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/init.h>

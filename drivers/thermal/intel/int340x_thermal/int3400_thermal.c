@@ -6,6 +6,7 @@
  * Authors: Zhang Rui <rui.zhang@intel.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/kobject_api.h>
 #include <linux/module.h>

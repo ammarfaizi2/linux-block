@@ -8,6 +8,7 @@
  *		 Volker Sameske <sameske@de.ibm.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/notifier_api.h>
 #include <linux/kobject_api.h>
 #include <linux/gfp_api.h>

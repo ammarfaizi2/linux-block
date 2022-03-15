@@ -6,6 +6,7 @@
  * Copyright (C) 2018-2021 GE Healthcare
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

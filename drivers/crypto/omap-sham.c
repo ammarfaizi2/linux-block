@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>

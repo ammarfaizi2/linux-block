@@ -3,6 +3,7 @@
  *
  * This code is licenced under the GPL.
  */
+#include <linux/sysfs.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event.h>

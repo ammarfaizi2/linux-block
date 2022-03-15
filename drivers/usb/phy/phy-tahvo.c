@@ -12,6 +12,7 @@
  * Modified for Retu/Tahvo MFD by Aaro Koskinen.
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

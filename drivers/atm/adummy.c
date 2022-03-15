@@ -3,6 +3,7 @@
  * adummy.c: a dummy ATM driver
  */
 
+#include <linux/sysfs.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
