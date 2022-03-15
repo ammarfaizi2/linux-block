@@ -8,6 +8,7 @@
  *	 Mauro Carvalho Chehab
  */
 
+#include <linux/notifier_api.h>
 #include <asm/cpufeature.h>
 #include <linux/module.h>
 #include <linux/init.h>

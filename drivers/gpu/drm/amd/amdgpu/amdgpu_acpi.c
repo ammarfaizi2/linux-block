@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/notifier_api.h>
 #include <linux/backlight.h>
 #include <linux/pci.h>
 #include <linux/acpi.h>

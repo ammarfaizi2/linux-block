@@ -17,6 +17,7 @@
 #define DPRINTK(fmt, args...)
 #endif
 
+#include <linux/notifier_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

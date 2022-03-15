@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/notifier_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/cpuhotplug.h>

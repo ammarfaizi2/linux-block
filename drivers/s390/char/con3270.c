@@ -8,6 +8,7 @@
  *     Copyright IBM Corp. 2003, 2009
  */
 
+#include <linux/notifier_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>

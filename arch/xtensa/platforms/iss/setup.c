@@ -11,6 +11,7 @@
  * Copyright 2001 - 2005 Tensilica Inc.
  * Copyright 2017 Cadence Design Systems Inc.
  */
+#include <linux/notifier_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/notifier.h>

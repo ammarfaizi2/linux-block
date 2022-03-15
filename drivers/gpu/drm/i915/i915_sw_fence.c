@@ -4,6 +4,7 @@
  * (C) Copyright 2016 Intel Corporation
  */
 
+#include <linux/notifier_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-fence-api.h>

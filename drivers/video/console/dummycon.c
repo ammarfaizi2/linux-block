@@ -6,6 +6,7 @@
  *  available, usually until fbcon takes console over.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/types.h>
 #include <linux/kdev_t.h>
 #include <linux/console.h>

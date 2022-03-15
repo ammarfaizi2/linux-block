@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/notifier_api.h>
 #include <linux/spinlock.h>
 #include <linux/export.h>
 #include <linux/proc_fs.h>

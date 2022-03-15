@@ -7,6 +7,7 @@
  * Copyright (C) 2005 Pete Zaitcev (zaitcev@redhat.com)
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>

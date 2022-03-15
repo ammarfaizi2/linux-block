@@ -5,6 +5,7 @@
  * Copyright (c) 2008 Neil Horman <nhorman@tuxdriver.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/export.h>
 #include <linux/fips.h>
 #include <linux/init.h>

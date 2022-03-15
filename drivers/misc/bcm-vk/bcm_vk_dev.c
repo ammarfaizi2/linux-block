@@ -3,6 +3,7 @@
  * Copyright 2018-2020 Broadcom.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

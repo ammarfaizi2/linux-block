@@ -5,6 +5,7 @@
 //  Copyright (C) 2011 Samsung Electronics
 //  MyungJoo Ham <myungjoo.ham@samsung.com>
 
+#include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/err.h>

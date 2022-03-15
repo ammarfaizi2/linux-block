@@ -7,6 +7,7 @@
  * Copyright (c) 2001 Patrick Mochel <mochel@osdl.org>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/tsc.h>
 #include <asm/segment_api.h>

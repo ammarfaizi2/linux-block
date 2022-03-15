@@ -8,6 +8,7 @@
 #define pr_fmt(fmt)     "AMD-Vi: " fmt
 #define dev_fmt(fmt)    pr_fmt(fmt)
 
+#include <linux/notifier_api.h>
 #include <linux/mm_api.h>
 #include <linux/llist_api.h>
 #include <linux/io.h>

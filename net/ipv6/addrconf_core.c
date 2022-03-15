@@ -4,6 +4,7 @@
  * not configured or static.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/export.h>
 #include <net/ipv6.h>

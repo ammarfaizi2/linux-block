@@ -87,6 +87,7 @@
  *	All object allocations for a node occur from node specific slab lists.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>

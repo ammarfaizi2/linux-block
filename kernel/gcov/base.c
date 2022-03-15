@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	"gcov: " fmt
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/init.h>

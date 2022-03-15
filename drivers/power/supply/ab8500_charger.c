@@ -10,6 +10,7 @@
  *	Arun R Murthy <arun.murthy@stericsson.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device/class.h>

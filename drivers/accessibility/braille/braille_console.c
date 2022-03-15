@@ -8,6 +8,7 @@
  *  Copyright (C) Samuel Thibault <samuel.thibault@ens-lyon.org>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"tegra voltage-coupler: " fmt
 
+#include <linux/notifier_api.h>
 #include <linux/minmax.h>
 #include <linux/capability.h>
 #include <linux/init.h>

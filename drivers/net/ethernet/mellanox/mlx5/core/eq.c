@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2021, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

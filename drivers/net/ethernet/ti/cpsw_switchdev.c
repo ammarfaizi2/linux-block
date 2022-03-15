@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

@@ -1,3 +1,4 @@
+#include <linux/notifier_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/notifier.h>
 #include <linux/rcupdate.h>

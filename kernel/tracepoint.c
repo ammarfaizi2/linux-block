@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2008-2014 Mathieu Desnoyers
  */
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/module.h>

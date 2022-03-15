@@ -5,6 +5,7 @@
  * Copyright 2016 Ezequiel Garcia <ezequiel@vanguardiasur.com.ar>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/notifier.h>

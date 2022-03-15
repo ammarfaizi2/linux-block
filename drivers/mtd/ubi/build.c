@@ -16,6 +16,7 @@
  * later using the "UBI control device".
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

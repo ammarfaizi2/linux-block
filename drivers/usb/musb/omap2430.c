@@ -8,6 +8,7 @@
  *
  * This file is part of the Inventra Controller Driver for Linux.
  */
+#include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

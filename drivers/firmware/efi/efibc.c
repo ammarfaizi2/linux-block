@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "efibc: " fmt
 
+#include <linux/notifier_api.h>
 #include <linux/efi.h>
 #include <linux/module.h>
 #include <linux/reboot.h>

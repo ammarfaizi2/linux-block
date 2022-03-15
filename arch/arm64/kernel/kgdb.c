@@ -8,6 +8,7 @@
  * Author: Vijaya Kumar K <vijaya.kumar@caviumnetworks.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bug.h>
 #include <linux/irq.h>

@@ -8,6 +8,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/notifier_api.h>
 #include <linux/kref_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/notifier_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

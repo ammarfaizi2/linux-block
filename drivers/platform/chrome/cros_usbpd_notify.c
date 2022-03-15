@@ -5,6 +5,7 @@
  * This driver serves as the receiver of cros_ec PD host events.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/module.h>

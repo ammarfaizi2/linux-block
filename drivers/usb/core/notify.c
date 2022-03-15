@@ -11,6 +11,7 @@
  */
 
 
+#include <linux/notifier_api.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/notifier.h>

@@ -71,6 +71,7 @@
  * by Adam Tla/lka <atlka@pg.gda.pl>, Aug 2006
  */
 
+#include <linux/notifier_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

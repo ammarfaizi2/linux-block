@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/notifier_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>

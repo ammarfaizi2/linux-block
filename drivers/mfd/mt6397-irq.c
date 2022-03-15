@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2019 MediaTek Inc.
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

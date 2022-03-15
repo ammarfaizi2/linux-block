@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2019 SiFive, Inc.
  *
  */
+#include <linux/notifier_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

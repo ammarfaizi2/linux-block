@@ -8,6 +8,7 @@
  * CONFIG_HEARTBEAT code.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitops.h>
 #include <linux/module.h>
