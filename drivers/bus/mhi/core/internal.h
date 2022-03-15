@@ -7,6 +7,7 @@
 #ifndef _MHI_INT_H
 #define _MHI_INT_H
 
+#include <linux/pm_wakeup.h>
 #include <linux/dma-mapping.h>
 #include <linux/mhi.h>
 

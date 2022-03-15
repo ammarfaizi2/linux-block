@@ -9,6 +9,7 @@
 #ifndef __LINUX_MFD_88PM80X_H
 #define __LINUX_MFD_88PM80X_H
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/platform_device.h>
