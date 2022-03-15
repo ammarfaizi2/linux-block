@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /* internal file - do not include directly */
 
+#include <net/xdp_types.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_NET
