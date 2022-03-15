@@ -6,6 +6,7 @@
 #ifndef	__XFS_INODE_H__
 #define	__XFS_INODE_H__
 
+#include <linux/wait_bit.h>
 #include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 
