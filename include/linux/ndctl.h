@@ -13,6 +13,7 @@
 #ifndef _LINUX_NDCTL_H
 #define _LINUX_NDCTL_H
 
+#include <asm/page.h>
 #include <uapi/linux/ndctl.h>
 
 enum {
