@@ -34,6 +34,7 @@
  *             fileset vfs     -> vp(1) <-> ... <-> vp(n) <->vproot;
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include <linux/blkdev.h>

@@ -23,6 +23,7 @@
 #include "xfs_error.h"
 #include "xfs_ioctl.h"
 
+#include <linux/mm_api_truncate.h>
 #include <linux/lockdep_api.h>
 #include <linux/io.h>
 #include <linux/fs_api_sb.h>

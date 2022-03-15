@@ -19,6 +19,7 @@
  * journaling (ext2 can use a reserved inode for storing the log).
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

@@ -9,6 +9,7 @@
  * Inode handling routines
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * Copyright (C) 2016-2019 Christoph Hellwig.
  */
+#include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/memcontrol.h>
 #include <linux/io.h>
