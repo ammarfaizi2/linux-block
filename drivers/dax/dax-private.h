@@ -5,6 +5,7 @@
 #ifndef __DAX_PRIVATE_H__
 #define __DAX_PRIVATE_H__
 
+#include <linux/pgtable_api.h>
 #include <linux/device.h>
 #include <linux/cdev.h>
 #include <linux/idr.h>

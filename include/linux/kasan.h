@@ -2,6 +2,7 @@
 #ifndef _LINUX_KASAN_H
 #define _LINUX_KASAN_H
 
+#include <linux/pgtable_api.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/static_key.h>
