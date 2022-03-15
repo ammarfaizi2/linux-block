@@ -2,6 +2,7 @@
 #ifndef _NDISC_H
 #define _NDISC_H
 
+#include <linux/net.h>
 #include <net/ipv6_stubs.h>
 
 /*

@@ -8,6 +8,7 @@
 #ifndef _SIW_CM_H
 #define _SIW_CM_H
 
+#include <linux/net.h>
 #include <net/sock.h>
 #include <linux/tcp.h>
 

@@ -11,6 +11,7 @@
 #ifndef __SMC_H
 #define __SMC_H
 
+#include <linux/net.h>
 #include <linux/socket.h>
 #include <linux/types.h>
 #include <linux/compiler.h> /* __aligned */

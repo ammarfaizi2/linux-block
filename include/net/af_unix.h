@@ -2,6 +2,7 @@
 #ifndef __LINUX_NET_AFUNIX_H
 #define __LINUX_NET_AFUNIX_H
 
+#include <linux/net.h>
 #include <linux/socket.h>
 #include <linux/un.h>
 #include <linux/mutex.h>
