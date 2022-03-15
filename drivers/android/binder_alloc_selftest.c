@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/list_lru_api.h>
 #include <linux/mm_types.h>
 #include <linux/err.h>
 #include "binder_alloc.h"

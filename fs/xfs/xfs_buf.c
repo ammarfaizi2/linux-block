@@ -4,6 +4,7 @@
  * All Rights Reserved.
  */
 #include "xfs.h"
+#include <linux/list_lru_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
