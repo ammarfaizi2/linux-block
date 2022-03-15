@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __NVDIMM_PMEM_H__
 #define __NVDIMM_PMEM_H__
+#include <linux/memremap.h>
 #include <linux/page-flags.h>
 #include <linux/badblocks.h>
 #include <linux/types.h>
