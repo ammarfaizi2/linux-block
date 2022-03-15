@@ -3,6 +3,7 @@
 #ifndef _BLK_IOPRIO_H_
 #define _BLK_IOPRIO_H_
 
+#include <linux/ioprio.h>
 #include <linux/kconfig.h>
 
 struct request_queue;
