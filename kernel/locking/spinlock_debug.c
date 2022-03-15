@@ -6,6 +6,7 @@
  * DEBUG_SPINLOCK.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/spinlock.h>
 #include <linux/nmi.h>
 #include <linux/interrupt.h>

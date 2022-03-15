@@ -12,6 +12,7 @@
 
 /* Core of can-j1939 that links j1939 to CAN. */
 
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/can/can-ml.h>
 #include <linux/can/core.h>

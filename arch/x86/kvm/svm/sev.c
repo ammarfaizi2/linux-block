@@ -7,6 +7,7 @@
  * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/gfp_api.h>
 #include <linux/file.h>
 #include <linux/cpumask_api.h>

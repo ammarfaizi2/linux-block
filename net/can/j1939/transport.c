@@ -8,6 +8,7 @@
 // Copyright (c) 2017-2019 Pengutronix,
 //                         Oleksij Rempel <kernel@pengutronix.de>
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/hrtimer_api.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/cred.h>
 #include <linux/cgroup_api.h>

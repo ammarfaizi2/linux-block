@@ -17,6 +17,7 @@
 //   o Add more codecs and platforms to ensure good API coverage.
 //   o Support TDM on PCM and I2S
 
+#include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2014, 2020 Intel Corporation
  * Copyright (C) 2016 Intel Deutschland GmbH
  */
+#include <linux/lockdep_api.h>
 #include <net/mac80211.h>
 #include "fw-api.h"
 #include "mvm.h"

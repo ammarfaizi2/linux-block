@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Intel Corporation. All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/lockdep_api.h>
 #include <linux/slab.h>
 #include <generated/utsrelease.h>
 #include "nvmet.h"

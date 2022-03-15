@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

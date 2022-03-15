@@ -8,6 +8,7 @@
  * Copyright (C) 2012-2014 Philipp Zabel, Pengutronix
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/debugfs.h>

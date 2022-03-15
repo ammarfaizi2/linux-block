@@ -3,6 +3,7 @@
  * Copyright (C) 2013-2014, 2018-2020 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  */
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/ieee80211.h>

@@ -30,6 +30,7 @@
 
 #include "cgroup-internal.h"
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/hashtable_api.h>

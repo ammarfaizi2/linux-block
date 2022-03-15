@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Daniel Mack
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/filter_api.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/atomic_api.h>

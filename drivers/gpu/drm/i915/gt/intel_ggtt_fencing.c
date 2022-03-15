@@ -3,6 +3,7 @@
  * Copyright © 2008-2015 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/highmem.h>

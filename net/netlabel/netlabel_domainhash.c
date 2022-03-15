@@ -14,6 +14,7 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2006, 2008
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/types.h>
 #include <linux/rculist.h>
 #include <linux/skbuff.h>

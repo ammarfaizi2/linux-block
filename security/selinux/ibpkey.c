@@ -18,6 +18,7 @@
  * (c) Mellanox Technologies, 2016
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/types.h>
 #include <linux/rcupdate.h>
 #include <linux/list.h>

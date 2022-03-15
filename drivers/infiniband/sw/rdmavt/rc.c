@@ -3,6 +3,7 @@
  * Copyright(c) 2016 Intel Corporation.
  */
 
+#include <linux/lockdep_api.h>
 #include <rdma/rdmavt_qp.h>
 #include <rdma/ib_hdrs.h>
 

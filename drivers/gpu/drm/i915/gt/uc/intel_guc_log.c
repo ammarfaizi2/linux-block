@@ -3,6 +3,7 @@
  * Copyright © 2014-2019 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/debugfs.h>
 
 #include "gt/intel_gt.h"

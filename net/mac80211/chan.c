@@ -4,6 +4,7 @@
  * Copyright 2020 - 2021 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/capability.h>
 #include <linux/nl80211.h>
 #include <linux/export.h>

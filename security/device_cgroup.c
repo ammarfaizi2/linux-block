@@ -5,6 +5,7 @@
  * Copyright 2007 IBM Corp
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/cgroup_api.h>
 #include <linux/capability.h>
 #include <linux/bpf-cgroup-api.h>

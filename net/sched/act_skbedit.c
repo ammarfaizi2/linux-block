@@ -5,6 +5,7 @@
  * Author: Alexander Duyck <alexander.h.duyck@intel.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/atomic_api.h>

@@ -9,6 +9,7 @@
  *          Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

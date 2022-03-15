@@ -6,6 +6,7 @@
 
 #include "mac.h"
 
+#include <linux/lockdep_api.h>
 #include <net/mac80211.h>
 #include "hif.h"
 #include "core.h"

@@ -3,6 +3,7 @@
  * (C) 1997 Linus Torvalds
  * (C) 1999 Andrea Arcangeli <andrea@suse.de> (dynamic inode allocation)
  */
+#include <linux/lockdep_api.h>
 #include <linux/list_lru_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

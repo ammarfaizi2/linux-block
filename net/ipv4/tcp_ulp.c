@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kmod.h>
 #include <linux/capability.h>
 #include <linux/module.h>

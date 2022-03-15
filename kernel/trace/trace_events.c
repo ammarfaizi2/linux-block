@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cpumask_api.h>

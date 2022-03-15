@@ -6,6 +6,7 @@
  *
  * This code is GPL.
  */
+#include <linux/lockdep_api.h>
 #include <linux/kernel.h>
 #include <linux/netfilter.h>
 #include <net/protocol.h>

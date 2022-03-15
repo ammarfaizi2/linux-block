@@ -5,6 +5,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

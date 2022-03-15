@@ -8,6 +8,7 @@
  * Copyright (C) 2002 Neil Brown <neilb@cse.unsw.edu.au>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

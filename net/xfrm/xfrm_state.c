@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

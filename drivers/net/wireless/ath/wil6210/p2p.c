@@ -4,6 +4,7 @@
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 
 #include "wil6210.h"

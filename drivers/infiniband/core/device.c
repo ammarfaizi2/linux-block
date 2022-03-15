@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kmod.h>

@@ -8,6 +8,7 @@
  *  Improving global KVA allocator, Uladzislau Rezki, Sony, May 2019
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/llist_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

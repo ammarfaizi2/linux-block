@@ -3,6 +3,7 @@
  * QLogic Fibre Channel HBA Driver
  * Copyright (c)  2003-2014 QLogic Corporation
  */
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 

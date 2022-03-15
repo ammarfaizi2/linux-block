@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

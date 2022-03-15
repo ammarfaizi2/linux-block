@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/lockdep_api.h>
 #include <linux/delay.h>
 
 #include "iwl-trans.h"

@@ -3,6 +3,7 @@
  * Implement CPU time clocks for the POSIX clock interface.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>

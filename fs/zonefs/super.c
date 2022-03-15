@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2019 Western Digital Corporation or its affiliates.
  */
+#include <linux/lockdep_api.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

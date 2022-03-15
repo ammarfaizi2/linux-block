@@ -6,6 +6,7 @@
  * selecting the socket index from the array of available sockets.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/idr_api.h>
 #include <linux/filter_api.h>
 #include <linux/capability.h>

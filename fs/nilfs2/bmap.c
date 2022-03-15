@@ -7,6 +7,7 @@
  * Written by Koji Sato.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/string.h>

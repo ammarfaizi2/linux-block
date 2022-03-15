@@ -2,6 +2,7 @@
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/delay.h>
 
 #include "main.h"

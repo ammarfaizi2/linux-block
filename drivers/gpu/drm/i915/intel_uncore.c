@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/io.h>
 #include <linux/hrtimer_api.h>
 #include <linux/atomic_api.h>

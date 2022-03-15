@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 

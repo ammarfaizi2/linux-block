@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/llist_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>

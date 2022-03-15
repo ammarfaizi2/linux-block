@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/lockdep_api.h>
+
 #include "ctree.h"
 #include "delalloc-space.h"
 #include "block-rsv.h"

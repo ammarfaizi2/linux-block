@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/sched/cond_resched.h>
 
 #include "gem/i915_gem_context.h"

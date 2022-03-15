@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mlx5/driver.h>

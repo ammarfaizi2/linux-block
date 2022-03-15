@@ -4,6 +4,7 @@
  * Copyright (c) 2019 Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

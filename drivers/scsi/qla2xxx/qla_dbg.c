@@ -64,6 +64,7 @@
 
 #include "qla_def.h"
 
+#include <linux/lockdep_api.h>
 #include <linux/delay.h>
 #define CREATE_TRACE_POINTS
 #include <trace/events/qla.h>

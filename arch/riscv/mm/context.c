@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Western Digital Corporation or its affiliates.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

@@ -9,6 +9,7 @@
  * Copyright 2018-2020  Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/if_ether.h>
 #include <linux/etherdevice.h>

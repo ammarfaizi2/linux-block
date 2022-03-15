@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "kfence: " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>

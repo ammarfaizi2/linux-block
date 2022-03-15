@@ -4,6 +4,7 @@
  * Copyright (C) 2019, 2021 Intel Corporation
  * Author:     Luis Carlos Cobo <luisca@cozybit.com>
  */
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>

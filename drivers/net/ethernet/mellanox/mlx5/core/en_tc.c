@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>
 #include <linux/hashtable_api.h>

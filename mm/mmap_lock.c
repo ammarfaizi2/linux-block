@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 #define CREATE_TRACE_POINTS
+#include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/local.h>

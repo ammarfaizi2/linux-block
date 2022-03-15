@@ -4,6 +4,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/slab.h> /* fault-inject.h is not standalone! */

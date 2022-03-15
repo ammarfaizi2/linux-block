@@ -5,6 +5,7 @@
 
 /* XXX TBD some includes may be extraneous */
 
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

@@ -32,6 +32,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>

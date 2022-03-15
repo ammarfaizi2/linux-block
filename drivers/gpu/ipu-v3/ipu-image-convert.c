@@ -5,6 +5,7 @@
  * Queued image conversion support, with tiling and rotation.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>

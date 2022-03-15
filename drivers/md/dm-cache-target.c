@@ -10,6 +10,7 @@
 #include "dm-cache-metadata.h"
 #include "dm-io-tracker.h"
 
+#include <linux/lockdep_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/dm-io.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/idr_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

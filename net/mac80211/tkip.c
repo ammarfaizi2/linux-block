@@ -4,6 +4,7 @@
  * Copyright 2005, Devicescape Software, Inc.
  * Copyright (C) 2016 Intel Deutschland GmbH
  */
+#include <linux/lockdep_api.h>
 #include <linux/kernel.h>
 #include <linux/bitops.h>
 #include <linux/types.h>

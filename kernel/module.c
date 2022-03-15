@@ -6,6 +6,7 @@
 
 #define INCLUDE_VERMAGIC
 
+#include <linux/lockdep_api.h>
 #include <linux/llist_api.h>
 #include <linux/kthread.h>
 #include <linux/kobject_api.h>

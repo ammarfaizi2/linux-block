@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/device_api.h>
 #include <linux/atomic.h>
 #include <linux/bug.h>

@@ -3,6 +3,7 @@
  * Generic hugetlb support.
  * (C) Nadia Yvette Chambers, April 2004
  */
+#include <linux/lockdep_api.h>
 #include <linux/llist_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>

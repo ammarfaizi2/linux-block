@@ -35,6 +35,7 @@
  * call must not fail.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/ieee80211.h>
 #include <linux/slab.h>

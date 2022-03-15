@@ -34,6 +34,7 @@
 #define DEBUG
 #endif
 
+#include <linux/lockdep_api.h>
 #include <linux/sched.h>
 #include <linux/errno.h>
 #include <linux/module.h>

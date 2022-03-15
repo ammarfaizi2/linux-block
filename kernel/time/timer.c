@@ -18,6 +18,7 @@
  *              Designed by David S. Miller, Alexey Kuznetsov and Ingo Molnar
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/debugobjects.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/device.h>
 #include <linux/sysfs.h>
 #include <linux/thermal.h>

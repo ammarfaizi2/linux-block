@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018 Facebook
  */
+#include <linux/lockdep_api.h>
 #include <linux/file.h>
 #include <linux/capability.h>
 #include <linux/bpf.h>

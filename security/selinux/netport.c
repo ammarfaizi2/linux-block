@@ -17,6 +17,7 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2008
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/types.h>
 #include <linux/rcupdate.h>
 #include <linux/list.h>

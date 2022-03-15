@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "qeth"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kmod.h>
 #include <linux/ipv6.h>

@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xive-kvm: " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/irqdesc.h>
 #include <linux/interrupt.h>
 #include <linux/gfp_api.h>

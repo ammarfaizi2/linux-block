@@ -5,6 +5,7 @@
  *
  * Generic LRU infrastructure
  */
+#include <linux/lockdep_api.h>
 #include <linux/list_lru_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

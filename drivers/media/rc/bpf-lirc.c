@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2018 Sean Young <sean@mess.org>
 
+#include <linux/lockdep_api.h>
 #include <linux/filter_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

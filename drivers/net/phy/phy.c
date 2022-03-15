@@ -8,6 +8,7 @@
  * Copyright (c) 2006, 2007  Maciej W. Rozycki
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

@@ -5,6 +5,7 @@
  * Copyright(c) 2015 Intel Deutschland GmbH
  *****************************************************************************/
 
+#include <linux/lockdep_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 

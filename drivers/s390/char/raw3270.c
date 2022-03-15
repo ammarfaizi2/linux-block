@@ -8,6 +8,7 @@
  *     Copyright IBM Corp. 2003, 2009
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

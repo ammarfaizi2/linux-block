@@ -12,6 +12,7 @@
  *   (C) CC Computer Consultants GmbH, 2007
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/sched/cond_resched.h>

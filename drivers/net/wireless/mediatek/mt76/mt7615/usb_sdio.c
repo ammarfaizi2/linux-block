@@ -5,6 +5,7 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/idr_api.h>
 #include <asm/unaligned.h>
 #include <linux/kernel.h>

@@ -15,6 +15,7 @@
  * Copyright (C) 2015 Paolo Valente <paolo.valente@unimore.it>
  *                    Arianna Avanzini <avanzini.arianna@gmail.com>
  */
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>

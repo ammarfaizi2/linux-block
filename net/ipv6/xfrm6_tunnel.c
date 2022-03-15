@@ -7,6 +7,7 @@
  *
  * Based on net/ipv4/xfrm4_tunnel.c
  */
+#include <linux/lockdep_api.h>
 #include <linux/module.h>
 #include <linux/xfrm.h>
 #include <linux/slab.h>

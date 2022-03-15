@@ -16,6 +16,7 @@
  * Based on Xen 3.1 code, Copyright (c) 2004, Intel Corporation.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>

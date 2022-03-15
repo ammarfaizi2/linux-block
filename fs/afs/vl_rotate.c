@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/sched/signal.h>

@@ -13,6 +13,7 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/fs_types_sb.h>
 #include <linux/fs.h>
 #include <linux/dcache.h>

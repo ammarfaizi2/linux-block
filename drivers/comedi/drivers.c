@@ -8,6 +8,7 @@
  *  Copyright (C) 2002 Frank Mori Hess <fmhess@users.sourceforge.net>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

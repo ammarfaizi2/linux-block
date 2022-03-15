@@ -11,6 +11,7 @@
  * Author: Daniel Jordan <daniel.m.jordan@oracle.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

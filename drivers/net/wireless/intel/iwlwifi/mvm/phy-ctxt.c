@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2014 Intel Mobile Communications GmbH
  * Copyright (C) 2017 Intel Deutschland GmbH
  */
+#include <linux/lockdep_api.h>
 #include <net/mac80211.h>
 #include "fw-api.h"
 #include "mvm.h"

@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/highmem.h>

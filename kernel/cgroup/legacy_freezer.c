@@ -14,6 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/cgroup_api.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>

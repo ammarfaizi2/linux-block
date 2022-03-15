@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2017 Intel Corporation. All rights reserved.
  */
+#include <linux/lockdep_api.h>
 #include <linux/libnvdimm.h>
 #include <linux/badblocks.h>
 #include <linux/export.h>
