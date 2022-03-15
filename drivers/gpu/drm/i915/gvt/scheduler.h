@@ -36,6 +36,8 @@
 #ifndef _GVT_SCHEDULER_H_
 #define _GVT_SCHEDULER_H_
 
+#include <linux/wait_types.h>
+
 #include "gt/intel_engine_types.h"
 
 #include "execlist.h"

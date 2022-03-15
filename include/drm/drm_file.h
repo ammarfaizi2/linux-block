@@ -30,6 +30,7 @@
 #ifndef _DRM_FILE_H_
 #define _DRM_FILE_H_
 
+#include <linux/wait_types.h>
 #include <linux/ktime.h>
 #include <linux/types.h>
 #include <linux/completion.h>

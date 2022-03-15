@@ -6,6 +6,7 @@
 #ifndef ATH11K_QMI_H
 #define ATH11K_QMI_H
 
+#include <linux/wait_types.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>
 #include <linux/soc/qcom/qmi.h>
