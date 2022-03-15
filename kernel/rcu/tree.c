@@ -3775,7 +3775,7 @@ static int rcu_blocking_is_gp(void)
 {
 	int ret;
 
-	if (preempt_mode_full() || preempt_mode_rt())
+	if (IS_ENABLED(CONFIG_PREEMPTION))
 		return rcu_scheduler_active == RCU_SCHEDULER_INACTIVE;
 	might_sleep();  /* Check for RCU read-side critical section. */
 	preempt_disable();
