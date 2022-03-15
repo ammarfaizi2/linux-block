@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Google LLC
  */
 
+#include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/kasan.h>

@@ -5,6 +5,7 @@
  * All Rights Reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/slab.h>
 

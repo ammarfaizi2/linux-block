@@ -9,6 +9,7 @@
  *
  * Author: Arjan van de Ven <arjan@linux.intel.com>
  */
+#include <linux/mm_api.h>
 #include <asm/processor.h>
 #include <linux/debugfs.h>
 #include <linux/errno.h>

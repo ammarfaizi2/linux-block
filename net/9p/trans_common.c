@@ -4,6 +4,7 @@
  * Author Venkateswararao Jujjuri <jvrao@linux.vnet.ibm.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/module.h>
 #include "trans_common.h"

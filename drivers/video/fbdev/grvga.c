@@ -10,6 +10,7 @@
  * Contributors: Kristoffer Glembo <kristoffer@gaisler.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/gfp_api.h>
 #include <linux/platform_device.h>

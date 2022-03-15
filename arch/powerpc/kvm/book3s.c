@@ -11,6 +11,7 @@
  * by Hollis Blanchard <hollisb@us.ibm.com>.
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/bitmap.h>

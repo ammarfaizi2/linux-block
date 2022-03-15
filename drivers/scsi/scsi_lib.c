@@ -9,6 +9,7 @@
  *                        of people at Linux Expo.
  */
 
+#include <linux/mm_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

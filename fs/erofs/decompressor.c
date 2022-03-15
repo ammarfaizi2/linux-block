@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  */
 #include "compress.h"
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/module.h>
 #include <linux/lz4.h>

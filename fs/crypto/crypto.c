@@ -20,6 +20,7 @@
  * Special Publication 800-38E and IEEE P1619/D16.
  */
 
+#include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/pagemap.h>
 #include <linux/mempool.h>

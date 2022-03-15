@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

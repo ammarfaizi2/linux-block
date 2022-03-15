@@ -57,6 +57,7 @@
  * in order to prevent random node placement.
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

@@ -48,6 +48,7 @@
  *  Overall revision about smaps.
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_exe_file.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_entry_types.h>

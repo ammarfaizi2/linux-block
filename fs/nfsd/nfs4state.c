@@ -32,6 +32,7 @@
 *
 */
 
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kthread.h>
 #include <linux/kref_api.h>

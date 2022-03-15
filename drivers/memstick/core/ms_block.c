@@ -10,6 +10,7 @@
 #define DRIVER_NAME "ms_block"
 #define pr_fmt(fmt) DRIVER_NAME ": " fmt
 
+#include <linux/mm_api.h>
 #include <linux/idr_api.h>
 #include <linux/module.h>
 #include <linux/blk-mq.h>

@@ -5,6 +5,7 @@
  * Authors: David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

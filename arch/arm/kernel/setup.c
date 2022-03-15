@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2001 Russell King
  */
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/crc32.h>

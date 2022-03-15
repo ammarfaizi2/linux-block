@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/dmi.h>
 #include <linux/efi.h>

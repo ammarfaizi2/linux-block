@@ -30,6 +30,7 @@
  *    Dave Airlie
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

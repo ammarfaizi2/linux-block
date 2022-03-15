@@ -10,6 +10,7 @@
  * archive for more details.
  */
 
+#include <linux/mm_api.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>
 #include <linux/kernel.h>

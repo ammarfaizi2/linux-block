@@ -53,6 +53,7 @@
  * - the space necessary for a bbt in FLASH does not exceed a block boundary
  */
 
+#include <linux/mm_api.h>
 #include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/types.h>

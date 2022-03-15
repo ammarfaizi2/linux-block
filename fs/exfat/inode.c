@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/fs_api.h>

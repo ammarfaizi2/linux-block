@@ -7,6 +7,7 @@
 
 #include "bcm47xxnflash.h"
 
+#include <linux/mm_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

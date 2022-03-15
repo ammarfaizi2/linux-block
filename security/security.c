@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "LSM: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/bpf.h>

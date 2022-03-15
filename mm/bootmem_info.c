@@ -7,6 +7,7 @@
  *     Author: Muchun Song <songmuchun@bytedance.com>
  *
  */
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/compiler.h>
 #include <linux/memblock.h>

@@ -4,6 +4,7 @@
  *
  * See COPYING in top-level directory.
  */
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/bitmap.h>
 #include <asm/cacheflush.h>

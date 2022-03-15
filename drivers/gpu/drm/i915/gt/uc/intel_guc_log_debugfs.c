@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <drm/drm_print.h>

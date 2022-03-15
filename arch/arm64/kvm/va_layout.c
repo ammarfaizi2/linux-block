@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/kvm_host.h>
 #include <linux/random.h>

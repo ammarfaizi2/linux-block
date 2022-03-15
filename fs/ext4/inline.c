@@ -4,6 +4,7 @@
  * Written by Tao Ma <boyu.mt@taobao.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

@@ -7,6 +7,7 @@
  * Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>

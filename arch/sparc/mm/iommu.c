@@ -8,6 +8,7 @@
  * Copyright (C) 1997,1998 Jakub Jelinek    (jj@sunsite.mff.cuni.cz)
  */
  
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/highmem.h>

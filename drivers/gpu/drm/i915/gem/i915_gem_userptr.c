@@ -34,6 +34,7 @@
  *    Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/mmu_context.h>
 #include <linux/mempolicy.h>
 #include <linux/swap.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2003-2006 Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/gfp_api.h>

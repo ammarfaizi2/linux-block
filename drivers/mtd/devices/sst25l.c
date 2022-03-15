@@ -11,6 +11,7 @@
  * Based on m25p80.c
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>

@@ -10,6 +10,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/atomic_api.h>

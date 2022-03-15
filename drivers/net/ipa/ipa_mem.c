@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2021 Linaro Ltd.
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/bitmap.h>
 #include <linux/types.h>

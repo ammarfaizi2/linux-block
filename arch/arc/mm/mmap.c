@@ -7,6 +7,7 @@
  * Copyright (C) 2013 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/mman.h>

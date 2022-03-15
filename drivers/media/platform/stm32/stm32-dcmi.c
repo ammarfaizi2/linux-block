@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/export.h>

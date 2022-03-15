@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright (c) 2021, Microsoft Corporation. */
 
+#include <linux/mm_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/io.h>

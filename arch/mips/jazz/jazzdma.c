@@ -8,6 +8,7 @@
  * on failure of vdma_alloc() one could leave page #0 unused
  * and return the more usual NULL pointer as logical address.
  */
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

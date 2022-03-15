@@ -24,6 +24,7 @@
  */
 #define ECARD_C
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

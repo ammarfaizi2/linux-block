@@ -3,6 +3,7 @@
  * Copyright (C) 2013 Fusion IO.  All rights reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/sched/cond_resched.h>

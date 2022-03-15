@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_entry_types.h>

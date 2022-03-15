@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 
 #include "intel_memory_region.h"

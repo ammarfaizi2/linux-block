@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"efi: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/efi.h>
 #include <linux/fwnode.h>
 #include <linux/init.h>

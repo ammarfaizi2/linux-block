@@ -14,6 +14,7 @@
  *  - Blanking 8bpp displays with VIDC
  */
 
+#include <linux/mm_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

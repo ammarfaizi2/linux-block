@@ -7,6 +7,7 @@
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>

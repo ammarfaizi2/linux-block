@@ -4,6 +4,7 @@
  * Copyright 2000 - 2001 Silicon Graphics, Inc.
  * Copyright 2000 - 2001 Kanoj Sarcar (kanoj@sgi.com)
  */
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/mm.h>
 #include <linux/mmzone.h>

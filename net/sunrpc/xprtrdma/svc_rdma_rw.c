@@ -5,6 +5,7 @@
  * Use the core R/W API to move RPC-over-RDMA Read and Write chunks.
  */
 
+#include <linux/mm_api.h>
 #include <linux/llist_api.h>
 #include <linux/atomic_api.h>
 #include <rdma/rw.h>

@@ -12,6 +12,7 @@
  * Common pmac/prep/chrp pci routines. -- Cort
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

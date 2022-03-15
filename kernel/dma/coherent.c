@@ -3,6 +3,7 @@
  * Coherent per-device memory handling.
  * Borrowed from i386
  */
+#include <linux/mm_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/io.h>

@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/lockdep_api.h>
 #include <linux/highmem_extra.h>

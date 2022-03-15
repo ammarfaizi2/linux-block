@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

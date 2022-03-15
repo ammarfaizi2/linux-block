@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 /* Copyright (c) 2020 Marvell International Ltd. */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/qed/qed_chain.h>

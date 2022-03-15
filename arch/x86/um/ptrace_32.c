@@ -3,6 +3,7 @@
  * Licensed under the GPL
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/sched.h>
 #include <linux/uaccess.h>

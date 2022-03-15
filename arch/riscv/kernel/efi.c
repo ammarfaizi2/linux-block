@@ -4,6 +4,7 @@
  * Adapted from arch/arm64/kernel/efi.c
  */
 
+#include <linux/mm_api.h>
 #include <linux/efi.h>
 #include <linux/init.h>
 

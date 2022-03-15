@@ -7,6 +7,7 @@
  */
 
 #define pr_fmt(fmt) "kasan: " fmt
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/kasan.h>

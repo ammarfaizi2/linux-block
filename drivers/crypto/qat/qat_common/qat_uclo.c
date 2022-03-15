@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2014 - 2020 Intel Corporation */
+#include <linux/mm_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/bitmap.h>

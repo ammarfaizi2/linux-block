@@ -7,6 +7,7 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/uaccess.h>

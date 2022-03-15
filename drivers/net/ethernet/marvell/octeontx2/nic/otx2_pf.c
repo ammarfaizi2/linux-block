@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/if_link.h>

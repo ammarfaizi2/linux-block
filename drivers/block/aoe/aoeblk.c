@@ -4,6 +4,7 @@
  * block device routines
  */
 
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/hdreg.h>
 #include <linux/blk-mq.h>

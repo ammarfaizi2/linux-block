@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/time.h>

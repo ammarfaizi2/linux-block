@@ -5,6 +5,7 @@
  * Copyright (C) 2012, Michel Lespinasse <walken@google.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/fs.h>
 #include <linux/rmap.h>

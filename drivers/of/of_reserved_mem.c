@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt)	"OF: reserved mem: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/err.h>
 #include <linux/of.h>
 #include <linux/of_fdt.h>

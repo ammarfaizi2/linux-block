@@ -11,6 +11,7 @@
 
 #include "ext4_jbd2.h"
 #include "mballoc.h"
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>

@@ -6,6 +6,7 @@
  * Author: Catalin Marinas <catalin.marinas@arm.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

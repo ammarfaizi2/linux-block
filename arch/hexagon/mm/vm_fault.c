@@ -11,6 +11,7 @@
  * execptions.
  */
 
+#include <linux/mm_api.h>
 #include <asm/traps.h>
 #include <linux/uaccess.h>
 #include <linux/mm.h>

@@ -11,6 +11,7 @@
 
 #undef DEBUG
 
+#include <linux/mm_api.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

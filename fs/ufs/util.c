@@ -7,6 +7,7 @@
  * Charles University, Faculty of Mathematics and Physics
  */
  
+#include <linux/mm_api.h>
 #include <linux/kdev_t.h>
 #include <linux/string.h>
 #include <linux/slab.h>

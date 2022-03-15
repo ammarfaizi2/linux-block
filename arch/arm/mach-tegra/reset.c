@@ -5,6 +5,7 @@
  * Copyright (C) 2011,2012 NVIDIA Corporation.
  */
 
+#include <linux/mm_api.h>
 #include <linux/bitops.h>
 #include <linux/cpumask.h>
 #include <linux/init.h>

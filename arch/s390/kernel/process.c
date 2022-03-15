@@ -8,6 +8,7 @@
  *		 Denis Joseph Barrow,
  */
 
+#include <linux/mm_api.h>
 #include <linux/elf-randomize.h>
 #include <linux/compiler.h>
 #include <linux/cpu.h>

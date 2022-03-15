@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api.h>
 #include <asm/local_api.h>
 #include <linux/bitops.h>
 #include <linux/types.h>

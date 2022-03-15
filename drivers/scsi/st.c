@@ -20,6 +20,7 @@
 
 static const char *verstr = "20160209";
 
+#include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Red Hat, Inc., Johannes Weiner
  */
 
+#include <linux/mm_api.h>
 #include <linux/list_lru_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  * This file contains the setup_arch() code, which handles the architecture-dependent
  * parts of early kernel initialization.
  */
+#include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

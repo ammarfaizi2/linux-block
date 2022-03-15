@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/mm_api.h>
 #include <linux/ftrace.h>
 #include <asm/sections.h>
 #include <linux/objtool.h>

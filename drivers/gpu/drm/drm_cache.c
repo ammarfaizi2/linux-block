@@ -28,6 +28,7 @@
  * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/dma-mapping.h>

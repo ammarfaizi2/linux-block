@@ -11,6 +11,7 @@
  *         Marco Elver <elver@google.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/sched/cond_resched.h>
 #include <kunit/test.h>

@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/cgroup_api.h>
 #include <linux/atomic_api.h>

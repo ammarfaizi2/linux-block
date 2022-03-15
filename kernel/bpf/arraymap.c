@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016,2017 Facebook
  */
+#include <linux/mm_api.h>
 #include <linux/file.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

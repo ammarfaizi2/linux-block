@@ -13,6 +13,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/mm_api.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/init.h>

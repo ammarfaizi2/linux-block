@@ -14,6 +14,7 @@
  * Marc Gauthier
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <asm/processor.h>
 #include <asm/mmu_context.h>

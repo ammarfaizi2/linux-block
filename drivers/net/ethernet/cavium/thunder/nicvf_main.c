@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Cavium, Inc.
  */
 
+#include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

@@ -5,6 +5,7 @@
  * (c) 2007 Gerd Hoffmann <kraxel@suse.de>
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/console.h>

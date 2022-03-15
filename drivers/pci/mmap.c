@@ -7,6 +7,7 @@
  * Author: David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

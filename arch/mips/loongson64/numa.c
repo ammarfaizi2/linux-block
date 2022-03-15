@@ -6,6 +6,7 @@
  *          Huacai Chen, chenhc@lemote.com
  *          Xiaofu Meng, Shuangshuang Zhang
  */
+#include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  *
  * (C) Copyright 1995 1996 Linus Torvalds
  */
+#include <linux/mm_api.h>
 #include <linux/vmalloc.h>
 #include <linux/mm.h>
 #include <linux/io.h>

@@ -7,6 +7,7 @@
  * Author: Richard Purdie <rpurdie@openedhand.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/export.h>

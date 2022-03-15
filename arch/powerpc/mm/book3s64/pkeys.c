@@ -5,6 +5,7 @@
  * Copyright 2017, Ram Pai, IBM Corporation.
  */
 
+#include <linux/mm_api.h>
 #include <asm/mman.h>
 #include <asm/mmu_context.h>
 #include <asm/mmu.h>

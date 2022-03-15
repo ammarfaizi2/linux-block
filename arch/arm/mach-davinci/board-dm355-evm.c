@@ -8,6 +8,7 @@
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

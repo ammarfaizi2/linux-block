@@ -5,6 +5,7 @@
  *  Copyright (C) 2015 IBM Corp. <aik@ozlabs.ru>
  */
 
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/signal.h>

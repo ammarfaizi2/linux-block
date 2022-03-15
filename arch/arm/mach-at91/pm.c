@@ -6,6 +6,7 @@
  * Copyright (C) 2005 David Brownell
  */
 
+#include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/genalloc.h>
 #include <linux/io.h>

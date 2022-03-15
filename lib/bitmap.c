@@ -4,6 +4,7 @@
  * Helper functions for bitmap.h.
  */
 
+#include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

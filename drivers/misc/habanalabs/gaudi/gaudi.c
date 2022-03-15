@@ -13,6 +13,7 @@
 #include "../include/gaudi/gaudi_reg_map.h"
 #include "../include/gaudi/gaudi_async_ids_map_extended.h"
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

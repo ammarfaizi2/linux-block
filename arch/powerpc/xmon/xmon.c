@@ -7,6 +7,7 @@
  * Copyrignt (C) 2006 Michael Ellerman, IBM Corp
  */
 
+#include <linux/mm_api.h>
 #include <linux/hardirq.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>

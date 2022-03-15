@@ -12,6 +12,7 @@
  * Public License. See the file "COPYING" in the main directory of this
  * archive for more details.
  */
+#include <linux/mm_api.h>
 #include <linux/vmalloc.h>
 #include <linux/module.h>
 #include <linux/slab.h>

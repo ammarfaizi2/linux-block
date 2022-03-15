@@ -3,6 +3,7 @@
  *  Copyright 2008 Michael Ellerman, IBM Corporation.
  */
 
+#include <linux/mm_api.h>
 #include <linux/kprobes.h>
 #include <linux/vmalloc.h>
 #include <linux/init.h>

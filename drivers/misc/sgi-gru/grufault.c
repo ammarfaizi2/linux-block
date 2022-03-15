@@ -11,6 +11,7 @@
  *  Copyright (c) 2008 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

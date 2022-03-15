@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ipv6.h>
 #include <crypto/aead.h>

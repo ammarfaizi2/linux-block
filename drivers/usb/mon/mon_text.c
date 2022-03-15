@@ -5,6 +5,7 @@
  * This is a text format reader.
  */
 
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>

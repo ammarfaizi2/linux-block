@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/ptrace.h>
 #include <linux/sched.h>

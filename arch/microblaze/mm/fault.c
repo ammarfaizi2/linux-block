@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/extable.h>
 #include <linux/signal.h>
 #include <linux/sched.h>

@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/file.h>
 #include <linux/atomic_api.h>

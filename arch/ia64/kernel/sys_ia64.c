@@ -6,6 +6,7 @@
  * Copyright (C) 1999-2000, 2002-2003, 2005 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

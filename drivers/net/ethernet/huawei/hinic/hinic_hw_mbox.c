@@ -2,6 +2,7 @@
 /* Huawei HiNIC PCI Express Linux driver
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>

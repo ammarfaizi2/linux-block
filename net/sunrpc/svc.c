@@ -11,6 +11,7 @@
  * by Greg Banks <gnb@melbourne.sgi.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

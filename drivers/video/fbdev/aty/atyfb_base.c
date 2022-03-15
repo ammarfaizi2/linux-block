@@ -48,6 +48,7 @@
 
 ******************************************************************************/
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/compat.h>

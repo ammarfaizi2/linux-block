@@ -11,6 +11,7 @@
 
 #undef DEBUG
 
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/init.h>

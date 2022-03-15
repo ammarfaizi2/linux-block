@@ -8,6 +8,7 @@
  *    Copyright (C) 1995  Linus Torvalds
  */
 
+#include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

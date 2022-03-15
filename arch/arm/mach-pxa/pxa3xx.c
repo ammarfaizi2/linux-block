@@ -9,6 +9,7 @@
  * 2007-09-02: eric miao <eric.miao@marvell.com>
  *             initial version
  */
+#include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/dmaengine.h>

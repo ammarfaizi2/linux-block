@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Sven Schnelle <svens@stackframe.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/kprobes.h>
 #include <linux/mm.h>

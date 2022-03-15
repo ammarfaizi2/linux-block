@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "AF_XDP: %s: " fmt, __func__
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

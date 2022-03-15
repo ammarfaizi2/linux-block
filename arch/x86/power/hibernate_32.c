@@ -5,6 +5,7 @@
  * Copyright (c) 2006 Rafael J. Wysocki <rjw@sisk.pl>
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp.h>
 #include <linux/suspend.h>
 #include <linux/memblock.h>

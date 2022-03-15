@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/mm.h>

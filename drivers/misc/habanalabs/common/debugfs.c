@@ -8,6 +8,7 @@
 #include "habanalabs.h"
 #include "../include/hw_ip/mmu/mmu_general.h"
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

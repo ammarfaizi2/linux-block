@@ -17,6 +17,7 @@
  *   Author: Huang Ying <ying.huang@intel.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/llist_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>

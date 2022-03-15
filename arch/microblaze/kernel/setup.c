@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/of_clk.h>
 #include <linux/clocksource.h>

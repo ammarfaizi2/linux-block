@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Magnus Damm
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/sched.h>
 #include <linux/suspend.h>

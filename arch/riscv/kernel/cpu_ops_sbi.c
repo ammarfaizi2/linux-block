@@ -5,6 +5,7 @@
  * Copyright (c) 2020 Western Digital Corporation or its affiliates.
  */
 
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/mm.h>
 #include <linux/sched/task_stack.h>

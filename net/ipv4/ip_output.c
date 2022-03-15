@@ -43,6 +43,7 @@
  *		Hirokazu Takahashi:	sendfile() on UDP works now.
  */
 
+#include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2011 Richard Weinberger <richrd@nod.at>
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <asm/elf.h>
 

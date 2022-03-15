@@ -6,6 +6,7 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/netdevice.h>
 
 #include "atl1e.h"

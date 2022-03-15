@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "alternatives: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/cpu.h>

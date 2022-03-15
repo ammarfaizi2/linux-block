@@ -3,6 +3,7 @@
  * Copyright 2019 Advanced Micro Devices, Inc.
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/gfp_api.h>
 #include <linux/bitmap.h>

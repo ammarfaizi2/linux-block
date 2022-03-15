@@ -3,6 +3,7 @@
 
 */
 
+#include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <asm/msr.h>
 #include <linux/clocksource.h>

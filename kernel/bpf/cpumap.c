@@ -16,6 +16,7 @@
  * netstack, and assigning dedicated CPUs for this stage.  This
  * basically allows for 10G wirespeed pre-filtering via bpf.
  */
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>

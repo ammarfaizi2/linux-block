@@ -18,6 +18,7 @@
 
 #define pr_fmt(fmt) "mvebu-pmsu: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/clk.h>

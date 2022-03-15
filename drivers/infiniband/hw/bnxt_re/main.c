@@ -36,6 +36,7 @@
  * Description: Main component of the bnxt_re driver
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

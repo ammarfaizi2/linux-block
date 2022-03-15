@@ -7,6 +7,7 @@
  *	    Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>

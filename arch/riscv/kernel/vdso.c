@@ -6,6 +6,7 @@
  * Copyright (C) 2015 Regents of the University of California
  */
 
+#include <linux/mm_api.h>
 #include <linux/elf.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

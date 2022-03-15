@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/cpumask_api.h>

@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/prime_numbers.h>
 #include <linux/random.h>
 

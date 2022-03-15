@@ -9,6 +9,7 @@
  * This function is used through-out the kernel (including mm and fs)
  * to indicate a major problem.
  */
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/fs_api.h>

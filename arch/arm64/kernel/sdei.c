@@ -2,6 +2,7 @@
 // Copyright (C) 2017 Arm Ltd.
 #define pr_fmt(fmt) "sdei: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/arm-smccc.h>
 #include <linux/arm_sdei.h>

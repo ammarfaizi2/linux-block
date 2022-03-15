@@ -3,6 +3,7 @@
  *
  *  For licencing details see kernel-base/COPYING
  */
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
 #include <linux/export.h>

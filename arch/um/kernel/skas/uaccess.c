@@ -3,6 +3,7 @@
  * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/highmem.h>

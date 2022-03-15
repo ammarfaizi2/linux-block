@@ -9,6 +9,7 @@
  * This file initializes the trap entry points
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/mm.h>
 #include <linux/sched/signal.h>

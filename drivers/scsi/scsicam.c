@@ -11,6 +11,7 @@
  * For more information, please consult the SCSI-CAM draft.
  */
 
+#include <linux/mm_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/fs.h>

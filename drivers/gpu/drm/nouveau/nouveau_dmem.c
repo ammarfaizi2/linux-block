@@ -27,6 +27,7 @@
 #include "nouveau_bo.h"
 #include "nouveau_svm.h"
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

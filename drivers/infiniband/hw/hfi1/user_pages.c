@@ -3,6 +3,7 @@
  * Copyright(c) 2015-2017 Intel Corporation.
  */
 
+#include <linux/mm_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>

@@ -24,6 +24,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+#include <linux/mm_api.h>
 #include <linux/huge_mm.h>
 #include <linux/bitmap.h>
 

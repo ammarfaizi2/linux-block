@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/mm_api.h>
 #include <linux/export.h>
 #include <linux/file.h>
 #include <linux/fs.h>

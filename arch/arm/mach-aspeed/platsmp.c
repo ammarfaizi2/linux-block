@@ -2,6 +2,7 @@
 // Copyright (C) ASPEED Technology Inc.
 // Copyright IBM Corp.
 
+#include <linux/mm_api.h>
 #include <linux/of_address.h>
 #include <linux/io.h>
 #include <linux/of.h>

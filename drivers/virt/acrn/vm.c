@@ -8,6 +8,7 @@
  *	Jason Chen CJ <jason.cj.chen@intel.com>
  *	Yakui Zhao <yakui.zhao@intel.com>
  */
+#include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/io.h>
 #include <linux/mm.h>

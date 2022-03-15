@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "efi: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

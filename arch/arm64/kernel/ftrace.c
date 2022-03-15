@@ -6,6 +6,7 @@
  * Author: AKASHI Takahiro <takahiro.akashi@linaro.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ftrace_pause.h>
 #include <linux/atomic_api.h>
 #include <linux/ftrace.h>

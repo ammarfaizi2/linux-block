@@ -9,6 +9,7 @@
  * Implementation based on pci-exynos.c and pcie-designware.c
  */
 
+#include <linux/mm_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

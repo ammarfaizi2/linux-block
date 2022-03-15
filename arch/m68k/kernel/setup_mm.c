@@ -9,6 +9,7 @@
  * This file handles the architecture-dependent parts of system setup
  */
 
+#include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

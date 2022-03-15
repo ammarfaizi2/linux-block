@@ -4,6 +4,7 @@
  * Copyright (C) 2006, 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/cpumask_api.h>

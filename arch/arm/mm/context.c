@@ -7,6 +7,7 @@
  *
  *  Author: Will Deacon <will.deacon@arm.com>
  */
+#include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

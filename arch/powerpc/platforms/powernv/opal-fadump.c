@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "opal fadump: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/string.h>
 #include <linux/seq_file.h>
 #include <linux/of.h>

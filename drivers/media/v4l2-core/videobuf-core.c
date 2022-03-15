@@ -10,6 +10,7 @@
  * (c) 2006 Ted Walther and John Sokol
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/module.h>

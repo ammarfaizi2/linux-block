@@ -15,6 +15,7 @@
  * Kevin Chea
  *
  */
+#include <linux/mm_api.h>
 #include <linux/uaccess.h>
 #include <asm/syscall.h>
 #include <linux/linkage.h>

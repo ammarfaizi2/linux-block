@@ -7,6 +7,7 @@
  *
  *  Rewritten to use page cache, (C) 1998 Stephen Tweedie
  */
+#include <linux/mm_api.h>
 #include <linux/memcontrol.h>
 #include <linux/kobject_api.h>
 #include <linux/gfp_api.h>

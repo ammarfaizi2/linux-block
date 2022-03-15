@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Red Hat.  All rights reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 1995  Hamish Macdonald
  */
 
+#include <linux/mm_api.h>
 #include <linux/mman.h>
 #include <linux/mm.h>
 #include <linux/kernel.h>

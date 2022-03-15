@@ -11,6 +11,7 @@
  *		accelerated operations on a GEM object)
  */
 
+#include <linux/mm_api.h>
 #include <linux/device_api.h>
 #include <linux/pagemap.h>
 

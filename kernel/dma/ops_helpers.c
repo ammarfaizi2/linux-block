@@ -3,6 +3,7 @@
  * Helpers for DMA ops implementations.  These generally rely on the fact that
  * the allocated memory contains normal pages in the direct kernel mapping.
  */
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-map-ops.h>
 

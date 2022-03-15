@@ -6,6 +6,7 @@
  * Copyright (C) Huawei Futurewei Technologies.
  */
 
+#include <linux/mm_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

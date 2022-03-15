@@ -2,6 +2,7 @@
 /*
  * Interrupt descriptor table related code
  */
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/bitmap.h>
 #include <asm/x86_irq.h>

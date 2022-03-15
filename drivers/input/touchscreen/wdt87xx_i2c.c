@@ -9,6 +9,7 @@
  * may be copied, distributed, and modified under those terms.
  */
 
+#include <linux/mm_api.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>

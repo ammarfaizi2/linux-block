@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>

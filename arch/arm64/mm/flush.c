@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/mm_api.h>
 #include <linux/export.h>
 #include <linux/mm.h>
 #include <linux/pagemap.h>

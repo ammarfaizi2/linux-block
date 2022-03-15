@@ -4,6 +4,7 @@
  * hardening.
  */
 #include "lkdtm.h"
+#include <linux/mm_api.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/sched/task_stack.h>

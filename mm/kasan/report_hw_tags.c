@@ -6,6 +6,7 @@
  * Author: Andrey Konovalov <andreyknvl@google.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/kasan.h>
 #include <linux/kernel.h>
 #include <linux/memory.h>

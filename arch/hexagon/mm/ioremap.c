@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/vmalloc.h>
 #include <linux/mm.h>

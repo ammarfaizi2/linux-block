@@ -17,6 +17,7 @@
  * - scnprintf and vscnprintf
  */
 
+#include <linux/mm_api.h>
 #include <linux/hash.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

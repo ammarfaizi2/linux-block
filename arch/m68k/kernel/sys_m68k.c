@@ -7,6 +7,7 @@
  * platform.
  */
 
+#include <linux/mm_api.h>
 #include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

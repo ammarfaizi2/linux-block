@@ -13,6 +13,7 @@
  * from Florian Echtler, Henrik Bjerregaard Pedersen, and others.
  */
 
+#include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>

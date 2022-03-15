@@ -5,6 +5,7 @@
  * Copyright (C) 2020 ARM Ltd.
  */
 
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/iommu.h>
 #include <linux/list.h>

@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/io.h>

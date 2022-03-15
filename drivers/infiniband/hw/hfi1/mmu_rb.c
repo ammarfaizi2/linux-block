@@ -4,6 +4,7 @@
  * Copyright(c) 2016 - 2017 Intel Corporation.
  */
 
+#include <linux/mm_api.h>
 #include <linux/list.h>
 #include <linux/rculist.h>
 #include <linux/mmu_notifier.h>

@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2005-2007 Cavium Networks
  */
+#include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

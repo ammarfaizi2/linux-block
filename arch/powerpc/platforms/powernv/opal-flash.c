@@ -7,6 +7,7 @@
 
 #define DEBUG
 
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/reboot.h>
 #include <linux/init.h>

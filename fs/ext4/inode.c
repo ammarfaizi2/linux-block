@@ -19,6 +19,7 @@
  *  Assorted race fixes, rewrite of ext4_get_block() by Al Viro, 2000
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

@@ -10,6 +10,7 @@
  * Copyright (c) 2017 Andreas Färber
  */
 
+#include <linux/mm_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/of.h>

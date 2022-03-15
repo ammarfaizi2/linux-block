@@ -4,6 +4,7 @@
  * Author: Tony Xie <tony.xie@rock-chips.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

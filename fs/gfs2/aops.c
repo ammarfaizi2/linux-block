@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api.h>

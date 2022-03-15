@@ -7,6 +7,7 @@
  * Mimi Zohar <zohar@linux.vnet.ibm.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/seq_file.h>
 #include <linux/vmalloc.h>
 #include <linux/kexec.h>

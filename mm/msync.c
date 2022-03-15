@@ -8,6 +8,7 @@
 /*
  * The msync() system call.
  */
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/fs.h>

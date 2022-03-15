@@ -6,6 +6,8 @@
  * Copyright (c) 2002-2005 Richard Russon
  */
 
+#include <linux/mm_api.h>
+
 #include "debug.h"
 #include "dir.h"
 #include "endian.h"

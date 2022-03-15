@@ -9,6 +9,7 @@
  *  Shared /dev/zero mmapping support, Feb 2000, Kanoj Sarcar <kanoj@sgi.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>

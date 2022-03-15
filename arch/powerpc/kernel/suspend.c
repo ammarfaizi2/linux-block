@@ -6,6 +6,7 @@
  * Copyright (c) 2001 Patrick Mochel <mochel@osdl.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/suspend.h>
 #include <asm/page.h>

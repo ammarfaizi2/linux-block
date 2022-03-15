@@ -12,6 +12,7 @@
  * Joe Taylor	<joe@tensilica.com, joetylr@yahoo.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/extable.h>
 #include <linux/hardirq.h>

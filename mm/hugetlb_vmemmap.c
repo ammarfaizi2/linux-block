@@ -170,6 +170,8 @@
  */
 #define pr_fmt(fmt)	"HugeTLB: " fmt
 
+#include <linux/mm_api.h>
+
 #include "hugetlb_vmemmap.h"
 
 /*

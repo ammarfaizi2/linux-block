@@ -3,6 +3,7 @@
  * c 2001 PPC 64 Team, IBM Corp
  */
 
+#include <linux/mm_api.h>
 #include <linux/smp.h>
 #include <linux/export.h>
 #include <linux/memblock.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2009  Matt Fleming
  */
 
+#include <linux/mm_api.h>
 #include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/module.h>

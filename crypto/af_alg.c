@@ -7,6 +7,7 @@
  * Copyright (c) 2010 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/mm_api.h>
 #include <linux/kmod.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

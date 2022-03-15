@@ -7,6 +7,7 @@
  * Based on drivers/pcmcia/omap_cf.c
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

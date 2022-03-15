@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/mm_api.h>
 #include <linux/kallsyms.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

@@ -5,6 +5,7 @@
  * Copyright 2019--2020 Intel Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/limits.h>

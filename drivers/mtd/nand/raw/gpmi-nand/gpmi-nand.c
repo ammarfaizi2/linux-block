@@ -5,6 +5,7 @@
  * Copyright (C) 2010-2015 Freescale Semiconductor, Inc.
  * Copyright (C) 2008 Embedded Alley Solutions, Inc.
  */
+#include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

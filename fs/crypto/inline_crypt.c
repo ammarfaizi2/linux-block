@@ -12,6 +12,7 @@
  * provides the key and IV to use.
  */
 
+#include <linux/mm_api.h>
 #include <linux/blk-crypto.h>
 #include <linux/blkdev.h>
 #include <linux/buffer_head.h>

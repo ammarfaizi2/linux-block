@@ -32,6 +32,7 @@
 #define DRV_DESCRIPTION	"Universal TUN/TAP device driver"
 #define DRV_COPYRIGHT	"(C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>"
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

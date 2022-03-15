@@ -4,6 +4,7 @@
  * Copyright (C) 2005 Bob Copeland <me@bobcopeland.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/module.h>

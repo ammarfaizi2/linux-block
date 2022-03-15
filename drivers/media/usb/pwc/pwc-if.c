@@ -45,6 +45,7 @@
    - Pham Thanh Nam: webcam snapshot button as an event input device
 */
 
+#include <linux/mm_api.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/errno.h>

@@ -17,6 +17,7 @@
  * hibernate and kexec can overwrite the current page tables during transition.
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/trans_pgd.h>

@@ -21,6 +21,7 @@
  * written individually.
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/buffer_head.h>
 #include <linux/mpage.h>

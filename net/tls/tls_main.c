@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/module.h>
 
 #include <net/tcp.h>

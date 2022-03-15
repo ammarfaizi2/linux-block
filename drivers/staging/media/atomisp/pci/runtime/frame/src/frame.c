@@ -16,6 +16,7 @@
 #include "hmm.h"
 
 #include "ia_css_frame.h"
+#include <linux/mm_api.h>
 #include <math_support.h>
 #include "assert_support.h"
 #include "ia_css_debug.h"

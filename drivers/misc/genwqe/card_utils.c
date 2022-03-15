@@ -14,6 +14,7 @@
  * Miscelanous functionality used in the other GenWQE driver parts.
  */
 
+#include <linux/mm_api.h>
 #include <linux/crc32.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

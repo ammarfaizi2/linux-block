@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

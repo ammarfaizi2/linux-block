@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014 The Linux Foundation
  */
+#include <linux/mm_api.h>
 #include <linux/dma-map-ops.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>

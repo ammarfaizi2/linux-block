@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>
