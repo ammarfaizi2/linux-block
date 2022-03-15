@@ -7,6 +7,7 @@
  * All rights reserved.
  */
 
+#include <linux/sched/types.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
