@@ -13,6 +13,7 @@
  */
 #include "rtllib.h"
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

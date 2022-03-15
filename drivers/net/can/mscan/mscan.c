@@ -8,6 +8,7 @@
  * Copyright (C) 2008-2009 Pengutronix <kernel@pengutronix.de>
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

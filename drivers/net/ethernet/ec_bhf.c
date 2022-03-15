@@ -9,6 +9,7 @@
  * Those can be found on Bechhoff CX50xx industrial PCs.
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

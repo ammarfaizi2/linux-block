@@ -119,6 +119,7 @@ that only one external action is invoked at a time.
 
 */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

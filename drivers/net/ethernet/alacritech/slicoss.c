@@ -7,6 +7,7 @@
  * Copyright (C) 2016 Lino Sanfilippo <LinoSanfilippo@gmx.de>
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

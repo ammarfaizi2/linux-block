@@ -8,6 +8,7 @@
  * based on eth1394 by Ben Collins et al
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>

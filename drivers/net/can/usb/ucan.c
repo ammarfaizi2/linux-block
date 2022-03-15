@@ -25,6 +25,7 @@
  *   IN Endpoint. The driver updates statistics and forward it.
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/can.h>

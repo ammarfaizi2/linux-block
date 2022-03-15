@@ -84,6 +84,7 @@ static int gx_fix;
 
 #define yellowfin_debug debug
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

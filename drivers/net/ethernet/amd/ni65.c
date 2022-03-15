@@ -59,6 +59,7 @@
  * 94.July.16: fixed bugs in recv_skb and skb-alloc stuff  (MH)
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

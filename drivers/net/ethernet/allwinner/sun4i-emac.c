@@ -12,6 +12,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
