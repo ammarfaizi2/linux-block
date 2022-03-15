@@ -10,6 +10,7 @@
 #ifndef __LINUX_RCU_H
 #define __LINUX_RCU_H
 
+#include <linux/debugobjects.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <trace/events/rcu.h>
