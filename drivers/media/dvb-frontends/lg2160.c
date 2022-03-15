@@ -5,6 +5,7 @@
  *    Copyright (C) 2010 Michael Krufky <mkrufky@linuxtv.org>
  */
 
+#include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>

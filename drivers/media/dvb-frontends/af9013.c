@@ -8,6 +8,7 @@
  * Thanks to Afatech who kindly provided information.
  */
 
+#include <linux/module.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>

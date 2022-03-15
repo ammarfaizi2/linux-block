@@ -6,6 +6,7 @@
  *   Copyright (C) 2009-2010 Douglas Landgraf <dougsland@redhat.com>
  */
 
+#include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/device_api.h>

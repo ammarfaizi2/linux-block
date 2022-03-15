@@ -31,6 +31,7 @@
 
 #define MODULE_NAME "mr97310a"
 
+#include <linux/module.h>
 #include <linux/export.h>
 
 #include "gspca.h"

@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/module.h>
 #include <linux/kallsyms.h>
 #include <linux/capability.h>
 #include <linux/mm.h>

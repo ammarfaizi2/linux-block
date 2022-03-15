@@ -10,6 +10,7 @@
  * Copyright (C) 2020 Daniel W. S. Almeida
  */
 
+#include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/dev_printk.h>

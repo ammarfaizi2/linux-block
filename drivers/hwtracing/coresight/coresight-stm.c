@@ -15,6 +15,7 @@
  * generic STM API by Chunyan Zhang
  * (C) 2015-2016 Chunyan Zhang <zhang.chunyan@linaro.org>
  */
+#include <linux/module.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

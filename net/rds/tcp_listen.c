@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/module.h>
 #include <linux/ipv6.h>
 #include <linux/kernel.h>
 #include <linux/gfp.h>

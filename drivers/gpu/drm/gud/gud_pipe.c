@@ -3,6 +3,7 @@
  * Copyright 2020 Noralf Trønnes
  */
 
+#include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/lz4.h>

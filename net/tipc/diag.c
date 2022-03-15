@@ -35,6 +35,7 @@
 
 #include "core.h"
 #include "socket.h"
+#include <linux/module.h>
 #include <linux/sock_diag.h>
 #include <linux/tipc_sockets_diag.h>
 

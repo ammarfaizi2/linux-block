@@ -8,6 +8,7 @@
  */
 
 #include "cx231xx.h"
+#include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

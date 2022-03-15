@@ -9,6 +9,7 @@
 
 #define MODULE_NAME "spca501"
 
+#include <linux/module.h>
 #include <linux/export.h>
 
 #include "gspca.h"

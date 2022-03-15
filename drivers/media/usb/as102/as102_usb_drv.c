@@ -4,6 +4,7 @@
  * Copyright (C) 2008 Pierrick Hascoet <pierrick.hascoet@abilis.com>
  * Copyright (C) 2010 Devin Heitmueller <dheitmueller@kernellabs.com>
  */
+#include <linux/module.h>
 #include <linux/kref_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

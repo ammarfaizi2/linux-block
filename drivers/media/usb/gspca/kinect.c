@@ -15,6 +15,7 @@
 
 #define MODULE_NAME "kinect"
 
+#include <linux/module.h>
 #include <linux/export.h>
 
 #include "gspca.h"

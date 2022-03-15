@@ -22,6 +22,7 @@
    feature. This needs to exactly match what is in libv4l! */
 #define SE401_QUANT_FACT 8
 
+#include <linux/module.h>
 #include <linux/export.h>
 #include <linux/input.h>
 #include <linux/slab.h>

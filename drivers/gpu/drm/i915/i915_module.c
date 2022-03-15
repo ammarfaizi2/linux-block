@@ -4,6 +4,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/module.h>
 #include <drm/drm_drv.h>
 
 #include "gem/i915_gem_context.h"

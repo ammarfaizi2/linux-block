@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Max nibble <nibble.max@gmail.com>
  */
 
+#include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

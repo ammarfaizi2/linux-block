@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/random.h>

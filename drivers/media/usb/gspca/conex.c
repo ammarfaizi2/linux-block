@@ -10,6 +10,7 @@
 
 #define MODULE_NAME "conex"
 
+#include <linux/module.h>
 #include <linux/export.h>
 
 #include "gspca.h"

@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
