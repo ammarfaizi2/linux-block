@@ -3,6 +3,7 @@
  * Copyright (C) 2011 Marvell International Ltd. All rights reserved.
  */
 
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>

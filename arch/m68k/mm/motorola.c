@@ -9,6 +9,7 @@
  * Moved 8/20/1999 Sam Creasey
  */
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/module.h>
 #include <linux/signal.h>

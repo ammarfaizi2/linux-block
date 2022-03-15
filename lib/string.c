@@ -15,6 +15,7 @@
  */
 
 #define __NO_FORTIFY
+#include <linux/io_extra.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/ctype.h>

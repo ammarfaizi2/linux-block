@@ -10,6 +10,7 @@
  * by Maciej W. Rozycki.
  */
 
+#include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/bug.h>
 #include <linux/module.h>

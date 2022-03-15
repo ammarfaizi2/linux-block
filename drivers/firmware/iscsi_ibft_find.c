@@ -10,6 +10,7 @@
  * This code finds the iSCSI Boot Format Table.
  */
 
+#include <linux/io_extra.h>
 #include <linux/memblock.h>
 #include <linux/blkdev.h>
 #include <linux/ctype.h>

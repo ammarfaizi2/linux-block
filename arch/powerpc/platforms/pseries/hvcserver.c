@@ -6,6 +6,7 @@
  * PPC64 virtual I/O console server support.
  */
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/module.h>

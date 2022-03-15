@@ -15,6 +15,7 @@
  * Platform initialization for Discontig Memory
  */
 
+#include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

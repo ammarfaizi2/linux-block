@@ -11,6 +11,7 @@
  *               Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/spinlock.h>

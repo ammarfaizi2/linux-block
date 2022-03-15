@@ -7,6 +7,7 @@
  *  Copyright (C) 1999  Niibe Yutaka
  *  Copyright (C) 2002 - 2010 Paul Mundt
  */
+#include <linux/io_extra.h>
 #include <linux/screen_info.h>
 #include <linux/ioport.h>
 #include <linux/init.h>

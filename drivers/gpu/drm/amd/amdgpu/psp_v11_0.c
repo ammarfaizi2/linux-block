@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/module.h>

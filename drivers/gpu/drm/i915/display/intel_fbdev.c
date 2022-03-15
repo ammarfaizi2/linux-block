@@ -24,6 +24,7 @@
  *     David Airlie
  */
 
+#include <linux/io_extra.h>
 #include <linux/async.h>
 #include <linux/console.h>
 #include <linux/delay.h>

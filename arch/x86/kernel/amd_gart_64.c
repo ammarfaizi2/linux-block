@@ -11,6 +11,7 @@
  * Copyright 2002 Andi Kleen, SuSE Labs.
  */
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>

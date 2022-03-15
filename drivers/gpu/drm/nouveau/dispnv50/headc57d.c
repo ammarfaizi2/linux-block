@@ -23,6 +23,7 @@
 #include "atom.h"
 #include "core.h"
 
+#include <linux/io_extra.h>
 #include <nvif/pushc37b.h>
 
 #include <nvhw/class/clc57d.h>

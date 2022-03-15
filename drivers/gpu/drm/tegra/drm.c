@@ -4,6 +4,7 @@
  * Copyright (C) 2012-2016 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/io_extra.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

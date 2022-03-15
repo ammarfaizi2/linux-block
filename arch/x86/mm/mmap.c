@@ -11,6 +11,7 @@
  * Copyright 2007 Jiri Kosina, SUSE Labs.
  */
 
+#include <linux/io_extra.h>
 #include <linux/capability.h>
 #include <asm/processor_api.h>
 #include <asm/elf_api.h>

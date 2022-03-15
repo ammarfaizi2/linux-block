@@ -9,6 +9,7 @@
  * the GNU General Public License (GPL), incorporated herein by reference.
  */
 
+#include <linux/io_extra.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/console.h>

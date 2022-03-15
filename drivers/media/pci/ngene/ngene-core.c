@@ -10,6 +10,7 @@
  *                         support for new dual DVB-S2 card prototype
  */
 
+#include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

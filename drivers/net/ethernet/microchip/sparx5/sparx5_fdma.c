@@ -7,6 +7,7 @@
  * https://github.com/microchip-ung/sparx-5_reginfo
  */
 
+#include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/types.h>

@@ -32,6 +32,7 @@
  *   All Rights Reserved
  */
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

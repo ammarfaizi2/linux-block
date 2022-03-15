@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/io_extra.h>
 #include <linux/ftrace_pause.h>
 #include <linux/ftrace.h>
 #include <linux/init.h>

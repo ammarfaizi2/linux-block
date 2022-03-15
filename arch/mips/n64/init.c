@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2021	Lauri Kasanen
  */
+#include <linux/io_extra.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
 #include <linux/irq.h>

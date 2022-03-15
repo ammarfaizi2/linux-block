@@ -12,6 +12,7 @@
  * Author : Michael Kelley <mikelley@microsoft.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/acpi.h>

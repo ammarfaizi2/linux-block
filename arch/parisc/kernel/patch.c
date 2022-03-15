@@ -5,6 +5,7 @@
   * Copyright (c) 2019 Sven Schnelle <svens@stackframe.org>
   */
 
+#include <linux/io_extra.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/kernel.h>

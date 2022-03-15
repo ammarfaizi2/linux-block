@@ -14,6 +14,7 @@
 
 #undef DEBUG
 
+#include <linux/io_extra.h>
 #include <linux/capability.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

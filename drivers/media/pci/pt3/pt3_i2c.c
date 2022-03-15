@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2014 Akihiro Tsukada <tskd08@gmail.com>
  */
+#include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/i2c.h>

@@ -17,6 +17,7 @@
  *   Author: Huang Ying <ying.huang@intel.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/arm_sdei.h>
 #include <linux/kernel.h>

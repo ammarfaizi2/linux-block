@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "brcmstb-pm: " fmt
 
+#include <linux/io_extra.h>
 #include <asm/cacheflush.h>
 #include <linux/bitops.h>
 #include <linux/compiler.h>

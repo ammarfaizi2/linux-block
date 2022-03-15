@@ -3,6 +3,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/io_extra.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_link.h>
 #include <linux/hardirq.h>

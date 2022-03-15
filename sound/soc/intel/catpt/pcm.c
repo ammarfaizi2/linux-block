@@ -5,6 +5,7 @@
 // Author: Cezary Rojewski <cezary.rojewski@intel.com>
 //
 
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/pm_runtime.h>
 #include <sound/soc.h>

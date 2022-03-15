@@ -21,6 +21,7 @@
 
 /*****************************************************************************/
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api.h>

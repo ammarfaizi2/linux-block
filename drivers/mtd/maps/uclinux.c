@@ -10,6 +10,7 @@
 
 /****************************************************************************/
 
+#include <linux/io_extra.h>
 #include <linux/moduleparam.h>
 #include <linux/types.h>
 #include <linux/init.h>

@@ -12,6 +12,7 @@
  * (http://davesdomain.org.uk/viafb/)
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

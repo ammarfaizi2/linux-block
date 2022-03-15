@@ -4,6 +4,7 @@
  * Copyright © 2008-2012 Intel Corporation
  */
 
+#include <linux/io_extra.h>
 #include <linux/errno.h>
 #include <linux/mutex.h>
 

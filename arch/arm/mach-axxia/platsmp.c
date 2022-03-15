@@ -5,6 +5,7 @@
  * Copyright (C) 2012 LSI Corporation
  */
 
+#include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/io.h>

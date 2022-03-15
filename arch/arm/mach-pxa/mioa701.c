@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Robert Jarzmik
  */
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

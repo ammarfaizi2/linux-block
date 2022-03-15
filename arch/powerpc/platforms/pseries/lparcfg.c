@@ -14,6 +14,7 @@
  * keyword - value pairs that specify the configuration of the partition.
  */
 
+#include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

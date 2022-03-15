@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/timer.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/io_extra.h>
 #include <linux/mm.h>
 #include <linux/ioport.h>
 

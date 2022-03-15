@@ -3,6 +3,7 @@
  *	Copyright (c) 2001 Maciej W. Rozycki
  */
 
+#include <linux/io_extra.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>

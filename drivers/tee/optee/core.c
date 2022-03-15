@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/crash_dump.h>
 #include <linux/errno.h>

@@ -7,6 +7,7 @@
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

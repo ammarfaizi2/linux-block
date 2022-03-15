@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/io.h>

@@ -5,6 +5,7 @@
  * - Kurt Van Dijck, EIA Electronics
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

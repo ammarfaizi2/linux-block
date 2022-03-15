@@ -57,6 +57,7 @@
 static const char version[] =
 	"smc-ultra.c:v2.02 2/3/98 Donald Becker (becker@cesdis.gsfc.nasa.gov)\n";
 
+#include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

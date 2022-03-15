@@ -10,6 +10,8 @@
  * Sebastian Andrzej Siewior < sebastian at breakpoint dot cc >
  */
 
+#include <linux/io_extra.h>
+
 #include "cesa.h"
 
 bool mv_cesa_req_dma_iter_next_transfer(struct mv_cesa_dma_iter *iter,

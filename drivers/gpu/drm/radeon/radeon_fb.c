@@ -24,6 +24,7 @@
  *     David Airlie
  */
 
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/pm_runtime.h>

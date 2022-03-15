@@ -11,6 +11,7 @@
  *		Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/tty.h>
 #include <linux/ioport.h>

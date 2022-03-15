@@ -1,3 +1,4 @@
+#include <linux/io_extra.h>
 #include <linux/string.h>
 #include <linux/module.h>
 #include <linux/io.h>

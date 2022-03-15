@@ -8,6 +8,7 @@
  *  - Intel IQ80310 ATU.
  *  - Intel EBSA285 (blank rom programming mode). Tested working 27/09/2001
  */
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

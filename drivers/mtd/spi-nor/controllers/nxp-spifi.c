@@ -8,6 +8,7 @@
  * Copyright (C) 2013 Freescale Semiconductor, Inc.
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/err.h>

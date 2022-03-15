@@ -10,6 +10,7 @@
 
 /* Remote mouse and keyboard event handling functions */
 
+#include <linux/io_extra.h>
 #include <linux/pci.h>
 #include "ibmasm.h"
 #include "remote.h"

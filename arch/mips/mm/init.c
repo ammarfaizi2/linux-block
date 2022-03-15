@@ -8,6 +8,7 @@
  * Kevin D. Kissell, kevink@mips.com and Carsten Langgaard, carstenl@mips.com
  * Copyright (C) 2000 MIPS Technologies, Inc.  All rights reserved.
  */
+#include <linux/io_extra.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

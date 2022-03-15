@@ -12,6 +12,7 @@
  * The idea of this driver is based on cpint from Neale Ferguson and #CP in CMS
  */
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

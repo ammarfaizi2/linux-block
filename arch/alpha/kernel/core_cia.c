@@ -13,6 +13,7 @@
  */
 
 #define __EXTERN_INLINE inline
+#include <linux/io_extra.h>
 #include <asm/io.h>
 #include <asm/core_cia.h>
 #undef __EXTERN_INLINE

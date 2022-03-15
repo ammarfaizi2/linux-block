@@ -29,6 +29,7 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_vma_manager_api_vm_lock.h>

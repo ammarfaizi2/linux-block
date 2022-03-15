@@ -5,6 +5,7 @@
  *  Misc memory accessors
  */
 
+#include <linux/io_extra.h>
 #include <linux/export.h>
 #include <linux/io.h>
 #include <linux/uaccess.h>

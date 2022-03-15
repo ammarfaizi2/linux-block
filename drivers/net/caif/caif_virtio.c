@@ -5,6 +5,7 @@
  *	    Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  *	    Sjur Brendeland
  */
+#include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>

@@ -8,6 +8,8 @@
 // Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 
+#include <linux/io_extra.h>
+
 #include "ops.h"
 #include "sof-priv.h"
 #include "sof-audio.h"

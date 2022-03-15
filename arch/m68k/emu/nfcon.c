@@ -6,6 +6,7 @@
  * for more details.
  */
 
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/console.h>

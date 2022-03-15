@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2020 Pensando Systems, Inc */
 
+#include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

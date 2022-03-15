@@ -8,6 +8,7 @@
  * Author : Michael Kelley <mikelley@microsoft.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/types.h>
 #include <linux/export.h>
 #include <linux/mm.h>

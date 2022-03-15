@@ -6,6 +6,7 @@
  *     Anup Patel <anup.patel@wdc.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>

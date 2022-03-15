@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <rdma/uverbs_ioctl.h>

@@ -24,6 +24,7 @@
 #include "nouveau_chan.h"
 #include "nouveau_dmem.h"
 
+#include <linux/io_extra.h>
 #include <nvif/notify.h>
 #include <nvif/object.h>
 #include <nvif/vmm.h>

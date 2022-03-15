@@ -16,6 +16,7 @@
 
 ******************************************************************************/
 
+#include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

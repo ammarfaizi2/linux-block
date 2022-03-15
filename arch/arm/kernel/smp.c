@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2002 ARM Limited, All Rights Reserved.
  */
+#include <linux/io_extra.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

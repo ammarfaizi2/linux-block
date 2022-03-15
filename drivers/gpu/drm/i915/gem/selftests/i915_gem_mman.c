@@ -4,6 +4,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/io_extra.h>
 #include <linux/highmem.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/prime_numbers.h>

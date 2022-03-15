@@ -15,6 +15,7 @@
 #define DEBUG
 #define VERBOSE_DEBUG
 
+#include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

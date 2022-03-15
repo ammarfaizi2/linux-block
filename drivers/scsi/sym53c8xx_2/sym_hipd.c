@@ -25,6 +25,7 @@
  *-----------------------------------------------------------------------------
  */
 
+#include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/slab.h>

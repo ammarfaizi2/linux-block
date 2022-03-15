@@ -11,6 +11,7 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+#include <linux/io_extra.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

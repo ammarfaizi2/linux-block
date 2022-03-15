@@ -21,6 +21,7 @@
  * tx_ring_buffers * HDLC_MAX_MRU     = logical channel #0 TX buffers (if used)
  */
 
+#include <linux/io_extra.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>
 #include <linux/fcntl.h>

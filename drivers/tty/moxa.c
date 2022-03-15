@@ -17,6 +17,7 @@
  *      version         : 5.1
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

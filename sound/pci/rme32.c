@@ -55,6 +55,7 @@
  */
 
 
+#include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/gfp.h>
 #include <linux/init.h>

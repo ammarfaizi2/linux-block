@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c)  2018 Intel Corporation */
 
+#include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/if_vlan_api.h>
 #include <linux/hardirq.h>

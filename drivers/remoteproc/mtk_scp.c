@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2019 MediaTek Inc.
 
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <asm/barrier.h>
 #include <linux/clk.h>

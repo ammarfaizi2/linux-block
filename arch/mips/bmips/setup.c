@@ -7,6 +7,7 @@
  * Copyright (C) 2014 Kevin Cernekee <cernekee@gmail.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/bitops.h>

@@ -59,6 +59,7 @@
  * 94.July.16: fixed bugs in recv_skb and skb-alloc stuff  (MH)
  */
 
+#include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

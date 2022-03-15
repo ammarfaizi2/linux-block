@@ -4,6 +4,7 @@
  * Author: Alex Smith <alex.smith@imgtec.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/binfmts.h>
 #include <linux/elf.h>
 #include <linux/err.h>

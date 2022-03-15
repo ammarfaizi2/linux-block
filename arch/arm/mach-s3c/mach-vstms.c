@@ -4,6 +4,7 @@
 //
 // Derived from mach-smdk2413.c - (C) 2006 Simtec Electronics
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

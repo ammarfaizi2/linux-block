@@ -23,6 +23,7 @@
  *    Copyright © 2005-2009 Analog Devices Inc.
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/types.h>

@@ -7,6 +7,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/io_extra.h>
 #include <linux/io.h>
 #include <linux/mm.h>
 #include <linux/sched/mm.h>

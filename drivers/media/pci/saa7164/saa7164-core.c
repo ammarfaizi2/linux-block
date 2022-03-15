@@ -5,6 +5,7 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/freezer.h>
 #include <linux/dma-mapping.h>
 #include <linux/crc32.h>

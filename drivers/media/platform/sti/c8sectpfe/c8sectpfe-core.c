@@ -8,6 +8,7 @@
  *	    Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/io_extra.h>
 #include <linux/i2c.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>

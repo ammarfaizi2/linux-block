@@ -9,6 +9,7 @@
  * See MAINTAINERS file for support contact information.
  */
 
+#include <linux/io_extra.h>
 #include <linux/if_vlan_api.h>
 #include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>

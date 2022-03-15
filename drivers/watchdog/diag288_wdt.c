@@ -21,6 +21,7 @@
 #define KMSG_COMPONENT "diag288_wdt"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/io_extra.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

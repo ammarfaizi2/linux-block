@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

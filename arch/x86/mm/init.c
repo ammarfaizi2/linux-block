@@ -1,3 +1,4 @@
+#include <linux/io_extra.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <asm/processor_api.h>

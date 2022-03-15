@@ -62,6 +62,7 @@
  *     know one?)
  */
 
+#include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 

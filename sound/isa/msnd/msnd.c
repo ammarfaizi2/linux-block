@@ -22,6 +22,7 @@
  *
  ********************************************************************/
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>
 #include <linux/types.h>

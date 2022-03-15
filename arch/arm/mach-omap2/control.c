@@ -9,6 +9,7 @@
  */
 #undef DEBUG
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/of_address.h>

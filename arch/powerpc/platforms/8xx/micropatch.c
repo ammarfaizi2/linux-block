@@ -6,6 +6,7 @@
  * also relocates SMC2, but this would require additional changes
  * to uart.c, so I am holding off on that for a moment.
  */
+#include <linux/io_extra.h>
 #include <linux/init.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

@@ -7,6 +7,7 @@
  *		(C) 2017 Anju T Sudhakar, IBM Corporation.
  *		(C) 2017 Hemant K Shaw, IBM Corporation.
  */
+#include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

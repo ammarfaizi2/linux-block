@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGES.
  *
  */
+#include <linux/io_extra.h>
 #include <linux/highmem.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

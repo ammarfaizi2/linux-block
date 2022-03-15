@@ -5,6 +5,7 @@
  * Based on platsmp.c, Copyright (C) 2002 ARM Ltd.
  * Copyright (C) 2012 Altera Corporation
  */
+#include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/smp.h>

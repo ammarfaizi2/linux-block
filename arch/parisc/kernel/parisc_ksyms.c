@@ -11,6 +11,7 @@
  *    Copyright (C) 2002-2007 Helge Deller <deller with parisc-linux.org>
  */
 
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/syscalls.h>
