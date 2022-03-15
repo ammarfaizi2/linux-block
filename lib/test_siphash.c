@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/siphash_api.h>
 #include <linux/printk.h>
 #include <linux/siphash.h>
 #include <linux/kernel.h>

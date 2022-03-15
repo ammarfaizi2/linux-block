@@ -60,6 +60,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/siphash_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>

@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/siphash_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/net.h>
