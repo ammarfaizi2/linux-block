@@ -10,6 +10,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <asm/kvm_mmu.h>
 #include <linux/compiler.h>
 #include <linux/sched.h>
 #include <linux/sched/hotplug.h>
