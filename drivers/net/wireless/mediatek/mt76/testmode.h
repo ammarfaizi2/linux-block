@@ -7,6 +7,7 @@
 
 #define MT76_TM_TIMEOUT	10
 
+#include <net/netlink_types.h>
 #include <net/netlink.h>
 
 /**
