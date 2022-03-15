@@ -23,6 +23,7 @@
  * formats.
  */
 
+#include <linux/kthread.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api_rw_access.h>

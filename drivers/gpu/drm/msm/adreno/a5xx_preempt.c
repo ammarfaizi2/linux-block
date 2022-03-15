@@ -2,6 +2,7 @@
 /* Copyright (c) 2017 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/kthread.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 

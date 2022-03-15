@@ -32,6 +32,7 @@
 
 #define pr_fmt(fmt) "pit: " fmt
 
+#include <linux/kthread.h>
 #include <linux/hrtimer_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kvm_host.h>

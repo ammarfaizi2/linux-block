@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/kthread.h>
 #include <linux/delay.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>

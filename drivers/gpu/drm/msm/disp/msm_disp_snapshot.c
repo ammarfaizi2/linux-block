@@ -5,6 +5,8 @@
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
+#include <linux/kthread.h>
+
 #include "msm_disp_snapshot.h"
 
 static ssize_t __maybe_unused disp_devcoredump_read(char *buffer, loff_t offset,

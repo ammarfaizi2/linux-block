@@ -8,6 +8,7 @@
  * - redirecting towards the correct front port based on TX VLAN and popping
  *   that on egress
  */
+#include <linux/kthread.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dsa/8021q.h>

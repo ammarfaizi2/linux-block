@@ -5,6 +5,7 @@
  * Copyright 2015-2016, Aneesh Kumar K.V, IBM Corporation.
  */
 
+#include <linux/kthread.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>

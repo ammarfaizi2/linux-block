@@ -7,6 +7,7 @@
  * Author: Baolin Wang <baolin.wang@linaro.org>
  */
 
+#include <linux/kthread.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/delay.h>

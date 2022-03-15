@@ -5,6 +5,7 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/kthread.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <media/cec.h>
