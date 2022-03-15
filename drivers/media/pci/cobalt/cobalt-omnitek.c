@@ -6,6 +6,7 @@
  *  All rights reserved.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/string.h>
 #include <linux/io.h>
 #include <linux/pci_regs.h>

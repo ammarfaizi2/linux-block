@@ -5,6 +5,7 @@
  * Copyright 2016 Noralf Trønnes
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/debugfs.h>

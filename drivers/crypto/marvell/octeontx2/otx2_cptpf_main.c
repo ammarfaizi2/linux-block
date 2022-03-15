@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Marvell. */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>

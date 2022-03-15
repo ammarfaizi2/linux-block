@@ -3,6 +3,7 @@
  * Copyright 2018 Noralf Trønnes
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/dma-buf.h>
 #include <linux/export.h>
 #include <linux/module.h>

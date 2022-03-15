@@ -8,6 +8,8 @@
  * There is no Shared Descriptor for PKC so that the Job Descriptor must carry
  * all the desired key parameters, input and output pointers.
  */
+#include <linux/dma-mapping.h>
+
 #include "compat.h"
 #include "regs.h"
 #include "intern.h"

@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"NFP net bpf: " fmt
 
+#include <linux/dma-mapping.h>
 #include <linux/bpf.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>

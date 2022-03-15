@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <net/mac80211.h>

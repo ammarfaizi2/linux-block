@@ -21,6 +21,7 @@
  */
 #include "vmm.h"
 
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <core/client.h>
 #include <subdev/fb.h>

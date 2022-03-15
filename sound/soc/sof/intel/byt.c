@@ -12,6 +12,7 @@
  * Hardware interface for audio DSP on Baytrail, Braswell and Cherrytrail.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <sound/sof.h>
 #include <sound/sof/xtensa.h>

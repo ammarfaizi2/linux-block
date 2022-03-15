@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
+#include <linux/dma-mapping.h>
 #include <linux/skbuff.h>
 #include <linux/ctype.h>
 

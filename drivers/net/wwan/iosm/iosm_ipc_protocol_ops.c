@@ -3,6 +3,8 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/dma-mapping.h>
+
 #include "iosm_ipc_protocol.h"
 #include "iosm_ipc_protocol_ops.h"
 

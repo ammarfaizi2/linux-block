@@ -6,6 +6,7 @@
 
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 
 #include "ivtv-driver.h"

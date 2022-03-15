@@ -14,6 +14,7 @@
  *  Copyright (C) 2010-2013 Nicholas A. Bellinger <nab@kernel.org>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

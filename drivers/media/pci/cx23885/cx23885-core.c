@@ -7,6 +7,7 @@
 
 #include "cx23885.h"
 
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/list.h>

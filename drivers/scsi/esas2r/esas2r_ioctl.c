@@ -41,6 +41,8 @@
  * USA.
  */
 
+#include <linux/dma-mapping.h>
+
 #include "esas2r.h"
 
 /*

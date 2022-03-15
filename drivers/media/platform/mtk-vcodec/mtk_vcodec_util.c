@@ -5,6 +5,7 @@
 *	Tiffany Lin <tiffany.lin@mediatek.com>
 */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 
 #include "mtk_vcodec_drv.h"

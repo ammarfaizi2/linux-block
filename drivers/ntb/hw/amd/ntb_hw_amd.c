@@ -48,6 +48,7 @@
  * Xiangliang Yu <Xiangliang.Yu@amd.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>

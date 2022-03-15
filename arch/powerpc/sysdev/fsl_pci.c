@@ -13,6 +13,7 @@
  * 	Tony Li <tony.li@freescale.com>
  * 	Anton Vorontsov <avorontsov@ru.mvista.com>
  */
+#include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

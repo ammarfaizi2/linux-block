@@ -15,6 +15,7 @@
  * in the SOFTWARE may be the trademarks of their respective owners.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/netdevice.h>
 #include <linux/tcp.h>
 #include <linux/interrupt.h>

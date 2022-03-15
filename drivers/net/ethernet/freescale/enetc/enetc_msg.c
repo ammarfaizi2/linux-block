@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2017-2019 NXP */
 
+#include <linux/dma-mapping.h>
+
 #include "enetc_pf.h"
 
 static void enetc_msg_disable_mr_int(struct enetc_hw *hw)

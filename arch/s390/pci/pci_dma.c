@@ -6,6 +6,7 @@
  *   Jan Glauber <jang@linux.vnet.ibm.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

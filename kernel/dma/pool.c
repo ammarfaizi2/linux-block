@@ -3,6 +3,7 @@
  * Copyright (C) 2012 ARM Ltd.
  * Copyright (C) 2020 Google LLC
  */
+#include <linux/dma-mapping.h>
 #include <linux/cma.h>
 #include <linux/debugfs.h>
 #include <linux/dma-map-ops.h>

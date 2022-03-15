@@ -3,6 +3,8 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/dma-mapping.h>
+
 #include "i915_drv.h"
 #include "intel_memory_region.h"
 #include "intel_region_lmem.h"

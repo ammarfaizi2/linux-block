@@ -30,6 +30,7 @@
  *	If the kernel uses 300 Hz, steps of about 26 samples are possible.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

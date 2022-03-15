@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/dim.h>
 #include "bnxt_hsi.h"
 #include "bnxt.h"

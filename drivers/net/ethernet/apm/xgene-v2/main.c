@@ -7,6 +7,8 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/dma-mapping.h>
+
 #include "main.h"
 
 static const struct acpi_device_id xge_acpi_match[];

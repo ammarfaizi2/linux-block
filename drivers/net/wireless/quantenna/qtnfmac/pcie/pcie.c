@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (c) 2018 Quantenna Communications, Inc. All rights reserved. */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/printk.h>

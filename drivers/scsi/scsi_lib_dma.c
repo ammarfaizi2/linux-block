@@ -3,6 +3,7 @@
  * SCSI library functions depending on DMA
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/blkdev.h>
 #include <linux/device.h>
 #include <linux/export.h>

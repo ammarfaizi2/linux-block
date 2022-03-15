@@ -39,6 +39,8 @@
  * $Id: //depot/aic7xxx/linux/drivers/scsi/aic7xxx/aic7xxx_osm_pci.c#47 $
  */
 
+#include <linux/dma-mapping.h>
+
 #include "aic7xxx_osm.h"
 #include "aic7xxx_pci.h"
 

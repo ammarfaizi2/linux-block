@@ -8,6 +8,7 @@
 /*
  * Core code for the Via multifunction framebuffer device.
  */
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/via-core.h>

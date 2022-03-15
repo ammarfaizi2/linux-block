@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
+
+#include <linux/dma-mapping.h>
+
 /*
  * Copyright (c) 2001 by David Brownell
  */

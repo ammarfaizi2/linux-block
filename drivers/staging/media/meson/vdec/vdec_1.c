@@ -7,6 +7,7 @@
  * MPEG 1/2/4, H.263, H.264, MJPEG, VC1
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/clk.h>

@@ -10,6 +10,7 @@
  *	Tomasz Figa <tfiga@chromium.org>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/types.h>
 #include <media/v4l2-h264.h>

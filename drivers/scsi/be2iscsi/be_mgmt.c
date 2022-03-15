@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/bsg-lib.h>
 #include <scsi/scsi_transport_iscsi.h>
 #include <scsi/scsi_bsg_iscsi.h>

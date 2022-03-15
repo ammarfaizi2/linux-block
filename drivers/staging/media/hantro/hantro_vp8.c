@@ -5,6 +5,8 @@
  * Copyright (C) 2018 Rockchip Electronics Co., Ltd.
  */
 
+#include <linux/dma-mapping.h>
+
 #include "hantro.h"
 
 /*

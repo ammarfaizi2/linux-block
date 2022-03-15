@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies. */
 
+#include <linux/dma-mapping.h>
+
 #include "rsc_dump.h"
 #include "lib/mlx5.h"
 

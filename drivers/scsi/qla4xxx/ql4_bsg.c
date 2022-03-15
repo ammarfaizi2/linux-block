@@ -4,6 +4,8 @@
  * Copyright (c) 2011-2013 QLogic Corporation
  */
 
+#include <linux/dma-mapping.h>
+
 #include "ql4_def.h"
 #include "ql4_glbl.h"
 #include "ql4_bsg.h"

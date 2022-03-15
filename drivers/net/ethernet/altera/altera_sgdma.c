@@ -3,6 +3,7 @@
  * Copyright (C) 2014 Altera Corporation. All rights reserved
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/list.h>
 #include "altera_utils.h"
 #include "altera_tse.h"

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/gfp.h>

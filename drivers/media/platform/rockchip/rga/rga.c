@@ -4,6 +4,7 @@
  * Author: Jacob Chen <jacob-chen@iotwrt.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/debugfs.h>

@@ -9,6 +9,7 @@
  * http://www.samsung.com/
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 
 #include "s5p_mfc_debug.h"

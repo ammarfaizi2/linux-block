@@ -16,6 +16,7 @@
  * code from rkvdec_vp9_run() followed by rkvdec_vp9_done().
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/vmalloc.h>
 #include <media/v4l2-mem2mem.h>

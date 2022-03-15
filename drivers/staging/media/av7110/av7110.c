@@ -13,6 +13,7 @@
  */
 
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/delay.h>

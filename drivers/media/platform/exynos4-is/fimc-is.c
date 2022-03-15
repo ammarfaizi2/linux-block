@@ -9,6 +9,7 @@
  */
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/debugfs.h>

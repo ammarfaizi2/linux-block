@@ -4,6 +4,7 @@
  * Copyright (c)  2003-2013 QLogic Corporation
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/ctype.h>
 #include "ql4_def.h"

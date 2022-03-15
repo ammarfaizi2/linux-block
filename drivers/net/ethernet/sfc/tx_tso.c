@@ -5,6 +5,7 @@
  * Copyright 2005-2015 Solarflare Communications Inc.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/pci.h>
 #include <linux/tcp.h>
 #include <linux/ip.h>

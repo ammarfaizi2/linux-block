@@ -3,6 +3,7 @@
  *	linux/arch/alpha/kernel/pci_iommu.c
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/pci.h>

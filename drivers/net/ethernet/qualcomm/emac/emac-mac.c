@@ -5,6 +5,7 @@
 /* Qualcomm Technologies, Inc. EMAC Ethernet Controller MAC layer support
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/tcp.h>
 #include <linux/ip.h>

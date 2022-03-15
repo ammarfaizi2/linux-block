@@ -11,6 +11,7 @@
  * Storlink (C) 2003
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

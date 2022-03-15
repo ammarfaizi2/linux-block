@@ -8,6 +8,7 @@
  * Partially based on the bits found in drivers/tty/serial/mfd.c.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>

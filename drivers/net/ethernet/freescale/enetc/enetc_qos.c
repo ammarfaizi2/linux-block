@@ -3,6 +3,7 @@
 
 #include "enetc.h"
 
+#include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <net/pkt_sched.h>
 #include <linux/math64.h>

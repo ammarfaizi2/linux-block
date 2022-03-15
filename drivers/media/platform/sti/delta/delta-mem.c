@@ -4,6 +4,8 @@
  * Author: Hugues Fruchet <hugues.fruchet@st.com> for STMicroelectronics.
  */
 
+#include <linux/dma-mapping.h>
+
 #include "delta.h"
 #include "delta-mem.h"
 

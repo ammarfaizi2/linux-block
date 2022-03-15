@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/align.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2012-2016 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/dma-fence-api.h>
 #include <linux/bitops.h>
 #include <linux/host1x.h>

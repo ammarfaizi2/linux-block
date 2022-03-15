@@ -6,6 +6,7 @@
  * Derived from code that was:
  *	Copyright (C) 2006 Komal Shah <komal_shah802003@yahoo.com>
  */
+#include <linux/dma-mapping.h>
 #include <linux/ahci_platform.h>
 #include <linux/clk-provider.h>
 #include <linux/clk.h>

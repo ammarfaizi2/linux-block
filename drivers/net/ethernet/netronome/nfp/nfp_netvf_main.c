@@ -8,6 +8,7 @@
  *         Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

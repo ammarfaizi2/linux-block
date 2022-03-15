@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/sched/cond_resched.h>

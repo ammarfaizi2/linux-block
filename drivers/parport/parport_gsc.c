@@ -16,6 +16,7 @@
 
 #undef DEBUG	/* undef for production */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/delay.h>

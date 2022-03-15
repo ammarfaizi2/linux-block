@@ -50,6 +50,7 @@
  *    comedi_do_insn(cf,&insn); //executing configuration
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

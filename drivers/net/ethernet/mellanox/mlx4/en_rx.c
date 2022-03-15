@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/cpumask_api.h>
 #include <linux/bpf.h>
 #include <linux/bpf_trace.h>

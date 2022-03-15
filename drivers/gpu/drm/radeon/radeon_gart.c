@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/pci.h>
 #include <linux/vmalloc.h>
 

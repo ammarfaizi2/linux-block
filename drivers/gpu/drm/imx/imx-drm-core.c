@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Sascha Hauer, Pengutronix
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/dma-fence-api.h>
 #include <linux/component.h>
 #include <linux/device.h>

@@ -7,6 +7,7 @@
  *   Wei WANG <wei_wang@realsil.com.cn>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/highmem.h>

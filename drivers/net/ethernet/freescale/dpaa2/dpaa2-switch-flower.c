@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 
 #include "dpaa2-switch.h"

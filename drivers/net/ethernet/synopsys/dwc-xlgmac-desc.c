@@ -15,6 +15,8 @@
  * in the SOFTWARE may be the trademarks of their respective owners.
  */
 
+#include <linux/dma-mapping.h>
+
 #include "dwc-xlgmac.h"
 #include "dwc-xlgmac-reg.h"
 

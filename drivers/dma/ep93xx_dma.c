@@ -14,6 +14,7 @@
  * This driver is based on dw_dmac and amba-pl08x drivers.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

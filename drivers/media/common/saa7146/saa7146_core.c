@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <media/drv-intf/saa7146.h>
 #include <linux/module.h>

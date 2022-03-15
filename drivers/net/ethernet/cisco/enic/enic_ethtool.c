@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/netdevice.h>
 #include <linux/ethtool.h>
 #include <linux/net_tstamp.h>

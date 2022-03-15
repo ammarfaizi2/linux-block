@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/cpumask_api.h>
 #include <asm/unaligned.h>
 #include <asm/page.h>

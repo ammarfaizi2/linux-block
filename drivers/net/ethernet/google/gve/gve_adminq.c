@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2021 Google, Inc.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>

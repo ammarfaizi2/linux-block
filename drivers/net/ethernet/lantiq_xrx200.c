@@ -7,6 +7,7 @@
  * Copyright (C) 2017 - 2018 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/etherdevice.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

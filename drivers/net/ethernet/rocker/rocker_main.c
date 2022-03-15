@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Scott Feldman <sfeldma@gmail.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

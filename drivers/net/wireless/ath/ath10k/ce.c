@@ -5,6 +5,8 @@
  * Copyright (c) 2018 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/dma-mapping.h>
+
 #include "hif.h"
 #include "ce.h"
 #include "debug.h"

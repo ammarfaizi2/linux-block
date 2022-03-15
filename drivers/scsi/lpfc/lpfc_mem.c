@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/dma-mapping.h>
 #include <linux/mempool.h>
 #include <linux/slab.h>
 #include <linux/pci.h>

@@ -13,6 +13,7 @@
 
 #include "be.h"
 #include "be_cmds.h"
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/ethtool.h>
 

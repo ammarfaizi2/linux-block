@@ -4,6 +4,7 @@
 // Author: Inki Dae <inki.dae@samsung.com>
 // Author: Andrzej Hajda <a.hajda@samsung.com>
 
+#include <linux/dma-mapping.h>
 #include <linux/dma-iommu.h>
 #include <linux/dma-map-ops.h>
 #include <linux/iommu.h>

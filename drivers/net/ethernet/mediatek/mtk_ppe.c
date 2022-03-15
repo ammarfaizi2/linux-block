@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Felix Fietkau <nbd@nbd.name> */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <asm/unaligned.h>
 #include <linux/kernel.h>

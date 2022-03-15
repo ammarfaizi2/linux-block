@@ -4,6 +4,7 @@
  * Copyright 2012 Red Hat Inc
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/dma-buf.h>
 #include <linux/highmem.h>
 #include <linux/dma-resv.h>

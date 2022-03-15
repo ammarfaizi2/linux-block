@@ -13,6 +13,7 @@
 
 #include "cx88.h"
 
+#include <linux/dma-mapping.h>
 #include <linux/init.h>
 #include <linux/list.h>
 #include <linux/module.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018 MediaTek Inc.
  */
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/io.h>

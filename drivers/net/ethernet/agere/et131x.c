@@ -53,6 +53,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/pci.h>
 #include <linux/module.h>

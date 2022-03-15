@@ -7,6 +7,7 @@
  * This work was sponsored by CIS(M) Sdn Bhd.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

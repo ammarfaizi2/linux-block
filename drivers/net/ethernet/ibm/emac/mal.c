@@ -20,6 +20,7 @@
  *      Copyright 2002 MontaVista Softare Inc.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/of_irq.h>

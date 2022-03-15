@@ -3,6 +3,8 @@
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/dma-mapping.h>
+
 #include "iwl-trans.h"
 #include "iwl-fh.h"
 #include "iwl-context-info.h"

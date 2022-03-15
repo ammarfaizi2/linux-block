@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <asm/page.h>
 #include <linux/vmalloc.h>

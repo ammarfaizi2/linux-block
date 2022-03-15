@@ -6,6 +6,7 @@
  * Author: Maxime Ripard <maxime.ripard@bootlin.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/list.h>

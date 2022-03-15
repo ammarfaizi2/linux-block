@@ -41,6 +41,7 @@
 
 #define pr_fmt(fmt) "chcr:" fmt
 
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/kernel.h>

@@ -21,6 +21,7 @@
  */
 #include "vmm.h"
 
+#include <linux/dma-mapping.h>
 #include <subdev/timer.h>
 
 static void

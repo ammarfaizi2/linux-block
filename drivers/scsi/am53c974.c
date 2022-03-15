@@ -4,6 +4,7 @@
  * Copyright (c) 2014 Hannes Reinecke, SUSE Linux GmbH
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

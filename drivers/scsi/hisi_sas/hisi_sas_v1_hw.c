@@ -4,6 +4,7 @@
  * Copyright (c) 2015 Hisilicon Limited.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 
 #include "hisi_sas.h"

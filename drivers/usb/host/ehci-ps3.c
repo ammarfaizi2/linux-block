@@ -6,6 +6,7 @@
  *  Copyright 2006 Sony Corp.
  */
 
+#include <linux/dma-mapping.h>
 #include <asm/firmware.h>
 #include <asm/ps3.h>
 

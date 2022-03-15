@@ -11,6 +11,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

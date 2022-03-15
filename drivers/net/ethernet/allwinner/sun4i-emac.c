@@ -12,6 +12,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/etherdevice.h>

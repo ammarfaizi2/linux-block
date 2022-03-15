@@ -7,6 +7,7 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 
 #include "rtl_core.h"

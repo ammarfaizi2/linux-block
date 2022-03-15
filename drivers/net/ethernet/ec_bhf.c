@@ -9,6 +9,7 @@
  * Those can be found on Bechhoff CX50xx industrial PCs.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

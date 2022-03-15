@@ -4,6 +4,7 @@
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

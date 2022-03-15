@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

@@ -15,6 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
  * NONINFRINGEMENT.  See the GNU General Public License for more details.
  ***********************************************************************/
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

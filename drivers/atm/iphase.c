@@ -40,6 +40,7 @@
 
 *******************************************************************************/
 
+#include <linux/dma-mapping.h>
 #include <linux/crc32.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

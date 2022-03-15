@@ -70,6 +70,7 @@
  * make ao fifo size adjustable like ai fifo
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2020 Intel Corporation
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/iopoll.h>

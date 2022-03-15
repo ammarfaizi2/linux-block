@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
+#include <linux/dma-mapping.h>
 #include <core/pci.h>
 #include "priv.h"
 

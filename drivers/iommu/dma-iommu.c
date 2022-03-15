@@ -8,6 +8,7 @@
  * Copyright (C) 2000-2004 Russell King
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/acpi_iort.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2019, Intel Corporation.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/firmware.h>

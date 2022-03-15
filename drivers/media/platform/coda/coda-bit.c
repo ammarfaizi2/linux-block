@@ -8,6 +8,7 @@
  * Copyright (C) 2012-2014 Philipp Zabel, Pengutronix
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/debugfs.h>
 #include <linux/clk.h>
 #include <linux/irqreturn.h>

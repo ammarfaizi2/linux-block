@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/tcp.h>
 #include <linux/if_vlan.h>
 #include <net/geneve.h>

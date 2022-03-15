@@ -4,6 +4,7 @@
  * Copyright (c) 2014 Hisilicon Limited.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/etherdevice.h>
 #include <linux/platform_device.h>

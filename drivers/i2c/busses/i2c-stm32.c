@@ -6,6 +6,7 @@
  * Author: M'boumba Cedric Madianga <cedric.madianga@gmail.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 
 #include "i2c-stm32.h"

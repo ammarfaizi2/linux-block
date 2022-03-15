@@ -11,6 +11,7 @@
  * Portions Copyright 2002 by Mylex (An IBM Business Unit)
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/delay.h>
