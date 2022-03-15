@@ -9,6 +9,7 @@
 #ifndef __LINUX_NEXTHOP_H
 #define __LINUX_NEXTHOP_H
 
+#include <net/ip_fib_api.h>
 #include <linux/netdevice.h>
 #include <linux/notifier.h>
 #include <linux/route.h>
