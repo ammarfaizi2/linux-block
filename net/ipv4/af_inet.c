@@ -63,6 +63,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>

@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2015 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  */
+#include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/ratelimit.h>

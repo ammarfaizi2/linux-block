@@ -9,6 +9,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>

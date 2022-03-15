@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"reboot: " fmt
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/pid_namespace.h>
 #include <linux/notifier_api.h>

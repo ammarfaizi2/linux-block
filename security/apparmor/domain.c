@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/rculist.h>
 #include <linux/ptrace_api.h>
