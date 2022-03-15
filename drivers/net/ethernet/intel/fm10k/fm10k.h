@@ -4,6 +4,7 @@
 #ifndef _FM10K_H_
 #define _FM10K_H_
 
+#include <linux/dma-mapping.h>
 #include <linux/types.h>
 #include <linux/etherdevice.h>
 #include <linux/cpumask.h>

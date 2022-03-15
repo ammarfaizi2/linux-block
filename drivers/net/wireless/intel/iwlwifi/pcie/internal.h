@@ -7,6 +7,7 @@
 #ifndef __iwl_trans_int_pcie_h__
 #define __iwl_trans_int_pcie_h__
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/spinlock.h>
 #include <linux/interrupt.h>

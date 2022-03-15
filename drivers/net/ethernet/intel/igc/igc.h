@@ -4,6 +4,7 @@
 #ifndef _IGC_H_
 #define _IGC_H_
 
+#include <linux/dma-mapping.h>
 #include <linux/kobject.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>
