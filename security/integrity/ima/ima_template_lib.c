@@ -10,6 +10,7 @@
  */
 
 #include "ima_template_lib.h"
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/xattr.h>
 #include <linux/evm.h>

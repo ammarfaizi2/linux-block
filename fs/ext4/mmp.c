@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/random.h>

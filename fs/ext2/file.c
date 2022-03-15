@@ -19,6 +19,7 @@
  * 	(jj@sunsite.ms.mff.cuni.cz)
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/time.h>
 #include <linux/pagemap.h>

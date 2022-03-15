@@ -7,6 +7,7 @@
  *  regular file handling primitives for fat-based filesystems
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/dcache.h>

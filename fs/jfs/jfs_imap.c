@@ -28,6 +28,7 @@
  *	written out when the filesystem is unmounted by diUnmount().
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>

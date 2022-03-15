@@ -7,6 +7,7 @@
  *  Manage the dynamic fd arrays in the process files_struct.
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/bitmap.h>

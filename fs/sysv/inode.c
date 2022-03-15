@@ -22,6 +22,7 @@
  *  the superblock.
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/blkdev.h>
 #include <linux/highuid.h>
