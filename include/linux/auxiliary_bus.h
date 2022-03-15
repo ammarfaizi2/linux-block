@@ -8,6 +8,7 @@
 #ifndef _AUXILIARY_BUS_H_
 #define _AUXILIARY_BUS_H_
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/mod_devicetable.h>
 

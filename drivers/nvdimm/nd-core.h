@@ -4,6 +4,7 @@
  */
 #ifndef __ND_CORE_H__
 #define __ND_CORE_H__
+#include <linux/device_api_lock.h>
 #include <linux/libnvdimm.h>
 #include <linux/device.h>
 #include <linux/sizes.h>

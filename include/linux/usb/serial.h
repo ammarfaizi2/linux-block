@@ -14,6 +14,7 @@
 #ifndef __LINUX_USB_SERIAL_H
 #define __LINUX_USB_SERIAL_H
 
+#include <linux/device_api_lock.h>
 #include <linux/kref.h>
 #include <linux/mutex.h>
 #include <linux/serial.h>

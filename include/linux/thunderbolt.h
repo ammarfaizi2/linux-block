@@ -11,6 +11,7 @@
 #ifndef THUNDERBOLT_H_
 #define THUNDERBOLT_H_
 
+#include <linux/device_api_lock.h>
 #include <linux/bug.h>
 #include <linux/device.h>
 #include <linux/idr.h>

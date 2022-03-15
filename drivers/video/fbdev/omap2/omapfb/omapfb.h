@@ -16,6 +16,7 @@
 #define DEBUG
 #endif
 
+#include <linux/device_api_lock.h>
 #include <linux/rwsem.h>
 #include <linux/dma-mapping.h>
 

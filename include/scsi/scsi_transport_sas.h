@@ -2,6 +2,7 @@
 #ifndef SCSI_TRANSPORT_SAS_H
 #define SCSI_TRANSPORT_SAS_H
 
+#include <linux/device_api_lock.h>
 #include <linux/transport_class.h>
 #include <linux/types.h>
 #include <linux/mutex.h>

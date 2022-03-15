@@ -12,6 +12,7 @@
 #ifndef __USBIP_HOST_COMMON_H
 #define __USBIP_HOST_COMMON_H
 
+#include <linux/device_api_lock.h>
 #include <stdint.h>
 #include <libudev.h>
 #include <errno.h>

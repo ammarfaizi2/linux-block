@@ -9,6 +9,7 @@
 #ifndef _LINUX_FWNODE_H_
 #define _LINUX_FWNODE_H_
 
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/bits.h>

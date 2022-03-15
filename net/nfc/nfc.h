@@ -10,6 +10,7 @@
 #ifndef __LOCAL_NFC_H
 #define __LOCAL_NFC_H
 
+#include <linux/device_api_lock.h>
 #include <net/nfc/nfc.h>
 #include <net/sock.h>
 

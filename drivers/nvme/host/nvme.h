@@ -6,6 +6,7 @@
 #ifndef _NVME_H
 #define _NVME_H
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/nvme.h>
 #include <linux/cdev.h>
