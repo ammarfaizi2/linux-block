@@ -8,6 +8,7 @@
 #ifndef GAUDIP_H_
 #define GAUDIP_H_
 
+#include <linux/mm.h>
 #include <uapi/misc/habanalabs.h>
 #include "../common/habanalabs.h"
 #include "../include/common/hl_boot_if.h"
