@@ -6,6 +6,7 @@
 #ifndef __CPT_COMMON_H
 #define __CPT_COMMON_H
 
+#include <linux/io.h>
 #include <asm/byteorder.h>
 #include <linux/delay.h>
 #include <linux/pci.h>

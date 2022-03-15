@@ -7,6 +7,7 @@
  * Copyright 1999  by Werner Cornelius (werner@isdn4linux.de)
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /*

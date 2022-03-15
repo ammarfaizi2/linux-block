@@ -11,6 +11,8 @@
 #ifndef __BFA_IOC_H__
 #define __BFA_IOC_H__
 
+#include <linux/io.h>
+
 #include "bfad_drv.h"
 #include "bfa_cs.h"
 #include "bfi.h"

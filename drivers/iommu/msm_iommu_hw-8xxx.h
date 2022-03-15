@@ -5,6 +5,7 @@
 #ifndef __ARCH_ARM_MACH_MSM_IOMMU_HW_8XXX_H
 #define __ARCH_ARM_MACH_MSM_IOMMU_HW_8XXX_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define CTX_SHIFT 12

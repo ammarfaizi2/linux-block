@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <asm/cpm1.h>
 
 /* Change this to the value used by your board */

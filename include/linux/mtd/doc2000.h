@@ -11,6 +11,7 @@
 #ifndef __MTD_DOC2000_H__
 #define __MTD_DOC2000_H__
 
+#include <linux/io.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mutex.h>
 

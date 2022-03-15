@@ -4,6 +4,7 @@
 #ifndef _IXGBE_COMMON_H_
 #define _IXGBE_COMMON_H_
 
+#include <linux/io.h>
 #include <linux/dev_printk.h>
 
 #include "ixgbe_type.h"

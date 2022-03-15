@@ -7,6 +7,7 @@
  * Copyright (C) 2016 Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/bitops.h>
 #include <linux/interrupt.h>
 #include <linux/dmaengine.h>

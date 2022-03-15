@@ -8,6 +8,7 @@
 #ifndef __PANFROST_REGS_H__
 #define __PANFROST_REGS_H__
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define GPU_ID				0x00

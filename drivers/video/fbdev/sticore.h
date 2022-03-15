@@ -32,6 +32,7 @@
  * for them to fix it and steal their solution.   prumpf
  */
  
+#include <linux/io.h>
 #include <asm/io.h>
 
 #define STI_WAIT 1

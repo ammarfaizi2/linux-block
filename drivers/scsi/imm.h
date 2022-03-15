@@ -11,6 +11,7 @@
 #ifndef _IMM_H
 #define _IMM_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define   IMM_VERSION   "2.05 (for Linux 2.4.0)"

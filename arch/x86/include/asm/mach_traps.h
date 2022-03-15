@@ -6,6 +6,7 @@
 #ifndef _ASM_X86_MACH_DEFAULT_MACH_TRAPS_H
 #define _ASM_X86_MACH_DEFAULT_MACH_TRAPS_H
 
+#include <linux/io.h>
 #include <asm/mc146818rtc.h>
 
 #define NMI_REASON_PORT		0x61

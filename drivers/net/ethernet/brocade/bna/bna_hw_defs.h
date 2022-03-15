@@ -14,6 +14,8 @@
 #ifndef __BNA_HW_DEFS_H__
 #define __BNA_HW_DEFS_H__
 
+#include <linux/io.h>
+
 #include "bfi_reg.h"
 
 /* SW imposed limits */

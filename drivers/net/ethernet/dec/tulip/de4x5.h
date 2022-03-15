@@ -989,6 +989,7 @@
 /*
 ** Include the IOCTL stuff
 */
+#include <linux/io.h>
 #include <linux/sockios.h>
 
 struct de4x5_ioctl {

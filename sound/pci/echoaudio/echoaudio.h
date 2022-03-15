@@ -153,6 +153,8 @@
 #define _ECHOAUDIO_H_
 
 
+#include <linux/io.h>
+
 #include "echoaudio_dsp.h"
 
 

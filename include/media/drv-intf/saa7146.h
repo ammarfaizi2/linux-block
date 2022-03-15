@@ -2,6 +2,7 @@
 #ifndef __SAA7146__
 #define __SAA7146__
 
+#include <linux/io.h>
 #include <linux/delay.h>	/* for delay-stuff */
 #include <linux/slab.h>		/* for kmalloc/kfree */
 #include <linux/pci.h>		/* for pci-config-stuff, vendor ids etc. */

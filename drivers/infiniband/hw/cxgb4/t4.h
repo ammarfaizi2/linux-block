@@ -31,6 +31,8 @@
 #ifndef __T4_H__
 #define __T4_H__
 
+#include <linux/io.h>
+
 #include "t4_hw.h"
 #include "t4_regs.h"
 #include "t4_values.h"

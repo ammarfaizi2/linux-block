@@ -2,6 +2,7 @@
 #ifndef _AHA152X_H
 #define _AHA152X_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /*

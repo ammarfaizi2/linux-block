@@ -1,6 +1,7 @@
 #ifndef _INTELFBHW_H
 #define _INTELFBHW_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* $DHD: intelfb/intelfbhw.h,v 1.5 2003/06/27 15:06:25 dawes Exp $ */

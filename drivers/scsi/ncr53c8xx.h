@@ -41,6 +41,7 @@
 #ifndef NCR53C8XX_H
 #define NCR53C8XX_H
 
+#include <linux/io.h>
 #include <scsi/scsi_host.h>
 
 

@@ -26,6 +26,7 @@
 #ifndef __NVREG_H_
 #define __NVREG_H_
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* Little macro to construct bitmask for contiguous ranges of bits */

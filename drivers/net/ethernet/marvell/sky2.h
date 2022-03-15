@@ -5,6 +5,7 @@
 #ifndef _SKY2_H
 #define _SKY2_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define ETH_JUMBO_MTU		9000	/* Maximum MTU supported */

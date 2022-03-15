@@ -5,6 +5,8 @@
  * Copyright 2020 Advanced Micro Devices, Inc.
  */
 
+#include <linux/io.h>
+
 #include "rn_chip_offset_byte.h"
 
 #define ACP_DEVS		3

@@ -10,6 +10,7 @@
 #ifndef __LINUX_V3020_H
 #define __LINUX_V3020_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* The v3020 has only one data pin but which one

@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_XEN_PAGE_COHERENT_H
 #define _ASM_X86_XEN_PAGE_COHERENT_H
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/page.h>
 #include <linux/dma-mapping.h>

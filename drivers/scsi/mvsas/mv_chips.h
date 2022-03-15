@@ -7,6 +7,7 @@
  * Copyright 2009-2011 Marvell. <yuxiangl@marvell.com>
 */
 
+#include <linux/io.h>
 #include <linux/dev_printk.h>
 #include <linux/types.h>
 

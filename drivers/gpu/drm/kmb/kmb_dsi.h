@@ -6,6 +6,7 @@
 #ifndef __KMB_DSI_H__
 #define __KMB_DSI_H__
 
+#include <linux/io.h>
 #include <drm/drm_encoder.h>
 #include <drm/drm_mipi_dsi.h>
 

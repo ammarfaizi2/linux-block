@@ -14,6 +14,7 @@
 #if !defined(__LINUX_CDNS3_TRACE) || defined(TRACE_HEADER_MULTI_READ)
 #define __LINUX_CDNS3_TRACE
 
+#include <linux/io.h>
 #include <asm/io.h>
 #include <linux/types.h>
 #include <linux/tracepoint.h>

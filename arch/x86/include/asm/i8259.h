@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_I8259_H
 #define _ASM_X86_I8259_H
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <asm/io.h>
 

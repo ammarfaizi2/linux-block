@@ -9,6 +9,7 @@
 #ifndef CAMIF_REGS_H_
 #define CAMIF_REGS_H_
 
+#include <linux/io.h>
 #include <linux/bitops.h>
 
 #include "camif-core.h"

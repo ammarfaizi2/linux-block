@@ -4,6 +4,7 @@
 #ifndef _IGC_REGS_H_
 #define _IGC_REGS_H_
 
+#include <linux/io.h>
 #include <asm/io.h>
 #include <linux/types.h>
 

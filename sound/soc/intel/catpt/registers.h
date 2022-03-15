@@ -8,6 +8,7 @@
 #ifndef __SND_SOC_INTEL_CATPT_REGS_H
 #define __SND_SOC_INTEL_CATPT_REGS_H
 
+#include <linux/io.h>
 #include <linux/bitops.h>
 #include <linux/iopoll.h>
 #include <uapi/linux/pci_regs.h>

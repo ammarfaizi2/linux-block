@@ -4,6 +4,7 @@
 #ifndef _FM10K_COMMON_H_
 #define _FM10K_COMMON_H_
 
+#include <linux/io.h>
 #include <asm/io.h>
 
 #include "fm10k_type.h"

@@ -7,6 +7,7 @@
 #ifndef TEGRA_DC_H
 #define TEGRA_DC_H 1
 
+#include <linux/io.h>
 #include <linux/host1x.h>
 
 #include <drm/drm_crtc.h>

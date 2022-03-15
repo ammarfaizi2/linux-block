@@ -15,6 +15,7 @@
 #ifndef __EHEA_PHYP_H__
 #define __EHEA_PHYP_H__
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <asm/hvcall.h>
 #include "ehea.h"

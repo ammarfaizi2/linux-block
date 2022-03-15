@@ -6,6 +6,7 @@
  */
 
 #include "chip_offset_byte.h"
+#include <linux/io.h>
 #include <sound/pcm.h>
 #define I2S_SP_INSTANCE                 0x01
 #define I2S_BT_INSTANCE                 0x02

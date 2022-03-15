@@ -10,6 +10,7 @@
 #ifndef __DMA_HSU_H__
 #define __DMA_HSU_H__
 
+#include <linux/io.h>
 #include <linux/spinlock.h>
 #include <linux/dma/hsu.h>
 

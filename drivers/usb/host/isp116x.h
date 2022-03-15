@@ -9,6 +9,7 @@
  * Copyright (C) 2004 David Brownell
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* us of 1ms frame */

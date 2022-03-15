@@ -10,6 +10,7 @@
 #ifndef CX25821_H_
 #define CX25821_H_
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

@@ -12,6 +12,7 @@
 #ifndef __IBMASM_CONDOR_H__
 #define __IBMASM_CONDOR_H__
 
+#include <linux/io.h>
 #include <asm/io.h>
 
 #define VENDORID_IBM	0x1014

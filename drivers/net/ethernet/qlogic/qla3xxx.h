@@ -6,6 +6,7 @@
 #ifndef _QLA3XXX_H_
 #define _QLA3XXX_H_
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /*

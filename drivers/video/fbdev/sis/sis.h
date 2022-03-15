@@ -11,6 +11,7 @@
 #ifndef _SIS_H_
 #define _SIS_H_
 
+#include <linux/io.h>
 #include <video/sisfb.h>
 
 #include "vgatypes.h"

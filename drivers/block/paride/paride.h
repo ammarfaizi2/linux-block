@@ -1,6 +1,7 @@
 #ifndef __DRIVERS_PARIDE_H__
 #define __DRIVERS_PARIDE_H__
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* 

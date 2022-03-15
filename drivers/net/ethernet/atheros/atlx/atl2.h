@@ -12,6 +12,7 @@
 #ifndef _ATL2_H_
 #define _ATL2_H_
 
+#include <linux/io.h>
 #include <linux/atomic.h>
 #include <linux/netdevice.h>
 

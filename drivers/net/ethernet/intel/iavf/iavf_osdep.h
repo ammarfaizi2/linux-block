@@ -4,6 +4,7 @@
 #ifndef _IAVF_OSDEP_H_
 #define _IAVF_OSDEP_H_
 
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/if_ether.h>
 #include <linux/if_vlan.h>

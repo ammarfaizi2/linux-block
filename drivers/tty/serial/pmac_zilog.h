@@ -2,6 +2,7 @@
 #ifndef __PMAC_ZILOG_H__
 #define __PMAC_ZILOG_H__
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /*

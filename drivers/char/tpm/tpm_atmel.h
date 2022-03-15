@@ -26,6 +26,7 @@ struct tpm_atmel_priv {
 
 #ifdef CONFIG_PPC64
 
+#include <linux/io.h>
 #include <asm/prom.h>
 
 #define atmel_getb(priv, offset) readb(priv->iobase + offset)

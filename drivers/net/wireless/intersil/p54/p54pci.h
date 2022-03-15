@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 #ifndef P54PCI_H
 #define P54PCI_H
+#include <linux/io.h>
 #include <linux/interrupt.h>
 
 /*

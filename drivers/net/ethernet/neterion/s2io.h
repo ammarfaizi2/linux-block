@@ -10,6 +10,7 @@
  * system is licensed under the GPL.
  * See the file COPYING in this distribution for more information.
  ************************************************************************/
+#include <linux/io.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 #ifndef _S2IO_H
 #define _S2IO_H

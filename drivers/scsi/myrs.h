@@ -14,6 +14,7 @@
 #ifndef _MYRS_H
 #define _MYRS_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define MYRS_MAILBOX_TIMEOUT 1000000

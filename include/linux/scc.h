@@ -3,6 +3,7 @@
 #ifndef	_SCC_H
 #define	_SCC_H
 
+#include <linux/io.h>
 #include <uapi/linux/scc.h>
 
 

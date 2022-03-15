@@ -2,6 +2,7 @@
 #ifndef ADM8211_H
 #define ADM8211_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* ADM8211 Registers */

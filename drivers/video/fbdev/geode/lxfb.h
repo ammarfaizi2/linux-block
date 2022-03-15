@@ -7,6 +7,7 @@
 #ifndef _LXFB_H_
 #define _LXFB_H_
 
+#include <linux/io.h>
 #include <linux/fb.h>
 
 #define GP_REG_COUNT	(0x7c / 4)

@@ -8,6 +8,7 @@
 #ifndef _PSB_DRV_H_
 #define _PSB_DRV_H_
 
+#include <linux/io.h>
 #include <linux/kref.h>
 #include <linux/mm_types.h>
 

@@ -11,6 +11,7 @@
 #ifndef _RKISP1_COMMON_H
 #define _RKISP1_COMMON_H
 
+#include <linux/io.h>
 #include <linux/debugfs.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>

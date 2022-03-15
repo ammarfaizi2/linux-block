@@ -13,6 +13,7 @@
 #ifndef TGAFB_H
 #define TGAFB_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /*

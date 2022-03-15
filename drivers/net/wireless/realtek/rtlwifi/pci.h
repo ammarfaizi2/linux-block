@@ -4,6 +4,7 @@
 #ifndef __RTL_PCI_H__
 #define __RTL_PCI_H__
 
+#include <linux/io.h>
 #include <linux/pci.h>
 /* 1: MSDU packet queue,
  * 2: Rx Command Queue

@@ -10,6 +10,7 @@ Copyright (C) 2014 STMicroelectronics
 #ifndef __CLKGEN_INFO_H
 #define __CLKGEN_INFO_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 extern spinlock_t clkgen_a9_lock;

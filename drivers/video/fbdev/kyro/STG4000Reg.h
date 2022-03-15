@@ -19,6 +19,7 @@
  * Add an appropriate section for your OS or processor architecture.
  */
 #if defined(__KERNEL__)
+#include <linux/io.h>
 #include <asm/page.h>
 #include <asm/io.h>
 #define STG_WRITE_REG(reg,data) (writel(data,&pSTGReg->reg))

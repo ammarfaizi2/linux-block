@@ -47,6 +47,7 @@
 #ifndef _3W_9XXX_H
 #define _3W_9XXX_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* AEN string type */

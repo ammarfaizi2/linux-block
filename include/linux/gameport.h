@@ -5,6 +5,7 @@
 #ifndef _GAMEPORT_H
 #define _GAMEPORT_H
 
+#include <linux/io.h>
 #include <linux/device/driver.h>
 #include <asm/io.h>
 #include <linux/types.h>

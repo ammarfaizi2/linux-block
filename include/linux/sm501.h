@@ -6,6 +6,7 @@
  *	Vincent Sanders <vince@simtec.co.uk>
 */
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 extern int sm501_unit_power(struct device *dev,

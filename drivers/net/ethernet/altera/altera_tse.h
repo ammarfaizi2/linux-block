@@ -22,6 +22,7 @@
 
 #define ALTERA_TSE_RESOURCE_NAME	"altera_tse"
 
+#include <linux/io.h>
 #include <linux/bitops.h>
 #include <linux/if_vlan.h>
 #include <linux/list.h>

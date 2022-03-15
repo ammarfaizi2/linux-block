@@ -10,6 +10,7 @@
 #ifndef __SOUND_MIXART_HWDEP_H
 #define __SOUND_MIXART_HWDEP_H
 
+#include <linux/io.h>
 #include <sound/hwdep.h>
 
 #ifndef readl_be

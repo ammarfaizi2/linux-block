@@ -2,6 +2,7 @@
 #ifndef __NITROX_DEV_H
 #define __NITROX_DEV_H
 
+#include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>

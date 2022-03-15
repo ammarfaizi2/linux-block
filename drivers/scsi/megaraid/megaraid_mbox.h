@@ -12,6 +12,8 @@
 #define _MEGARAID_H_
 
 
+#include <linux/io.h>
+
 #include "mega_common.h"
 #include "mbox_defs.h"
 #include "megaraid_ioctl.h"

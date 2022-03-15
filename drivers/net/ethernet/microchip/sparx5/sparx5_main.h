@@ -7,6 +7,7 @@
 #ifndef __SPARX5_MAIN_H__
 #define __SPARX5_MAIN_H__
 
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/phy/phy.h>
 #include <linux/netdevice.h>

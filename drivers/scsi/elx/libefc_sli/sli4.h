@@ -12,6 +12,7 @@
 #ifndef _SLI4_H
 #define _SLI4_H
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
 #include "scsi/fc/fc_els.h"

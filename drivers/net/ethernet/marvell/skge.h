@@ -4,6 +4,7 @@
  */
 #ifndef _SKGE_H
 #define _SKGE_H
+#include <linux/io.h>
 #include <linux/interrupt.h>
 
 /* PCI config registers */

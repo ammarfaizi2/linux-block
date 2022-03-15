@@ -35,6 +35,7 @@
 #ifndef __T3_ADAPTER_H__
 #define __T3_ADAPTER_H__
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/spinlock.h>
 #include <linux/interrupt.h>

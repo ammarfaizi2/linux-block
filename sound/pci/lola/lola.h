@@ -8,6 +8,7 @@
 #ifndef _LOLA_H
 #define _LOLA_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define DRVNAME	"snd-lola"

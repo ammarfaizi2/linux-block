@@ -25,6 +25,7 @@ Revision History:
 #ifndef _AMD811E_H
 #define _AMD811E_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* Command style register access

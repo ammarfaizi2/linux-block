@@ -97,6 +97,7 @@
 
 #ifdef __LITTLE_ENDIAN
 
+#include <linux/io.h>
 #include <linux/bitrev.h>
 
 #define reverse_order(l)        \

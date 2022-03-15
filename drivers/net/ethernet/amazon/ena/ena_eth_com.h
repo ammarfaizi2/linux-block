@@ -8,6 +8,7 @@
 
 #include "ena_com.h"
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* head update threshold in units of (queue size / ENA_COMP_HEAD_THRESH) */

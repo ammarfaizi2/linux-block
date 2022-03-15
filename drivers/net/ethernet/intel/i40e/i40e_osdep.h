@@ -4,6 +4,7 @@
 #ifndef _I40E_OSDEP_H_
 #define _I40E_OSDEP_H_
 
+#include <linux/io.h>
 #include <linux/dev_printk.h>
 #include <linux/types.h>
 #include <linux/if_ether.h>

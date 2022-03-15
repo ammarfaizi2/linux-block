@@ -6,6 +6,7 @@
 #ifndef __QLA_DEF_H
 #define __QLA_DEF_H
 
+#include <linux/io.h>
 #include <linux/cache.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

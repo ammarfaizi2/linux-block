@@ -17,6 +17,7 @@
 #ifndef _SMC911X_H_
 #define _SMC911X_H_
 
+#include <linux/io.h>
 #include <linux/smc911x.h>
 /*
  * Use the DMA feature on PXA chips
