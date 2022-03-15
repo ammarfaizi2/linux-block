@@ -8,6 +8,7 @@
 #ifndef _CEC_PRIV_H
 #define _CEC_PRIV_H
 
+#include <linux/seq_file.h>
 #include <linux/cec-funcs.h>
 #include <media/cec-notifier.h>
 

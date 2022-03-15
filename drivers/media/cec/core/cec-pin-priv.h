@@ -8,6 +8,7 @@
 #ifndef LINUX_CEC_PIN_PRIV_H
 #define LINUX_CEC_PIN_PRIV_H
 
+#include <linux/seq_file.h>
 #include <linux/types.h>
 #include <linux/atomic.h>
 #include <media/cec-pin.h>
