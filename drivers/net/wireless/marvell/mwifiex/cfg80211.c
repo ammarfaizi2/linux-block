@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/netlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

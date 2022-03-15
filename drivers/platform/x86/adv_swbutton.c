@@ -5,6 +5,7 @@
  *  (C) Copyright 2020 Advantech Corporation, Inc
  *
  */
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

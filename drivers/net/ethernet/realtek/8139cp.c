@@ -53,6 +53,7 @@
 #define DRV_RELDATE		"Mar 22, 2004"
 
 
+#include <linux/pm_wakeup.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

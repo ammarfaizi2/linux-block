@@ -5,6 +5,7 @@
  * Copyright (c) 2017 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>

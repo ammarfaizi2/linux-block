@@ -31,6 +31,7 @@
  * Revision History:
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

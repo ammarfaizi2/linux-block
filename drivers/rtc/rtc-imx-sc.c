@@ -3,6 +3,7 @@
  * Copyright 2018 NXP.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/notifier.h>
 #include <linux/mod_devicetable.h>
 #include <dt-bindings/firmware/imx/rsrc.h>

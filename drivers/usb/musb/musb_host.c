@@ -8,6 +8,7 @@
  * Copyright (C) 2008-2009 MontaVista Software, Inc. <source@mvista.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)				"bcmgenet_wol: " fmt
 
+#include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>

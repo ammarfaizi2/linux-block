@@ -15,6 +15,7 @@
  * Trademarks are the property of their respective owners.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

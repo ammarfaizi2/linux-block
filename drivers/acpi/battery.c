@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "ACPI: battery: " fmt
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/async.h>

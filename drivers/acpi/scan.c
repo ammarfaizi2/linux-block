@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/pm_wakeup.h>
 #include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

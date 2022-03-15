@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2012 Google, Inc
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>

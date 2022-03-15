@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Broadcom Corporation
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

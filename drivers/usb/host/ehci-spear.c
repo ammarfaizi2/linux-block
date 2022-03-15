@@ -8,6 +8,7 @@
 * Based on various ehci-*.c drivers
 */
 
+#include <linux/pm_wakeup.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

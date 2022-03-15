@@ -4,6 +4,7 @@
  * (C) Copyright 2007 Novell Inc.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/kobject_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

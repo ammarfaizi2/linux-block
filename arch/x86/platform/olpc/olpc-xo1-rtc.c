@@ -5,6 +5,7 @@
  * Copyright (C) 2011 One Laptop per Child
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/mc146818rtc.h>

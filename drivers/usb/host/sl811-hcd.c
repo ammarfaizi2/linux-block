@@ -32,6 +32,7 @@
 #undef	VERBOSE
 #undef	PACKET_TRACE
 
+#include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/device_api.h>

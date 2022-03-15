@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/io_extra.h>

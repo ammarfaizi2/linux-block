@@ -6,6 +6,7 @@
  * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>

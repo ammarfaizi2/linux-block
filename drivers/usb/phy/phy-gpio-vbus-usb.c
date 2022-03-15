@@ -5,6 +5,7 @@
  * Copyright (c) 2008 Philipp Zabel <philipp.zabel@gmail.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/notifier_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

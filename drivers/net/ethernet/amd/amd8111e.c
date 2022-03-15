@@ -54,6 +54,7 @@ Revision History:
 */
 
 
+#include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

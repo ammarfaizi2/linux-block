@@ -7,6 +7,7 @@
  * Based on gpio_keys.c, Copyright 2005 Phil Blundell
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

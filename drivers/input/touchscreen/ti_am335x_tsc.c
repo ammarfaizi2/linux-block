@@ -14,6 +14,7 @@
  */
 
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/err.h>

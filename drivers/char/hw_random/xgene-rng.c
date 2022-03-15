@@ -8,6 +8,7 @@
  *	   Feng Kan <fkan@apm.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

@@ -18,6 +18,7 @@
  * Copyright (C) 2005, 2006 Nokia Corporation
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

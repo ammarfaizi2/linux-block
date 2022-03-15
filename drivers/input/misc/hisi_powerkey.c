@@ -14,6 +14,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
 #include <linux/reboot.h>

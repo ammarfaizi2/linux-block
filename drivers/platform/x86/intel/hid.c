@@ -6,6 +6,7 @@
  *  Copyright (C) 2015 Andrew Lutomirski <luto@kernel.org>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>

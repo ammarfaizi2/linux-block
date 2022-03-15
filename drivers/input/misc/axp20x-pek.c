@@ -13,6 +13,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/errno.h>

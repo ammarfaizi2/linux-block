@@ -5,6 +5,7 @@
  *	   Neil Zhang <zhangwm@marvell.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

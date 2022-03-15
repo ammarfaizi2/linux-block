@@ -13,6 +13,7 @@
  *    http://www.glyn.com/Products/Displays
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

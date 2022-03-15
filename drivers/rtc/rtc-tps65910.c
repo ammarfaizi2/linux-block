@@ -10,6 +10,7 @@
  *   Author: Alexandre Rusev <source@mvista.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

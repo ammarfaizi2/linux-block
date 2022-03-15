@@ -5,6 +5,7 @@
  * Author: ChiYuan Huang <cy_huang@richtek.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -22,6 +22,7 @@
  * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>

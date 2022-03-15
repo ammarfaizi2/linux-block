@@ -18,6 +18,7 @@
  * this warranty disclaimer.
  **/
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

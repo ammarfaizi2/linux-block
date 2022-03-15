@@ -6,6 +6,7 @@
  * Copyright (c) 2009-2011, NVIDIA Corporation.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

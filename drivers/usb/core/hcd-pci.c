@@ -3,6 +3,7 @@
  * (C) Copyright David Brownell 2000-2002
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

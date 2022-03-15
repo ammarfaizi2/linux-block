@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/pm_wakeup.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

@@ -8,6 +8,7 @@
  *          linux@wolfsonmicro.com
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

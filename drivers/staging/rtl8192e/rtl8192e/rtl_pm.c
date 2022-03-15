@@ -4,6 +4,7 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

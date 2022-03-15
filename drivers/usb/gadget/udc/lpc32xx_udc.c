@@ -15,6 +15,7 @@
  *       the LPC3180.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

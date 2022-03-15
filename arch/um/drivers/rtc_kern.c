@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Intel Corporation
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
+#include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>

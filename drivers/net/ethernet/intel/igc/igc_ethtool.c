@@ -2,6 +2,7 @@
 /* Copyright (c)  2018 Intel Corporation */
 
 /* ethtool support for igc */
+#include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>

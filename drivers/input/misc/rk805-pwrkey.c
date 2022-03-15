@@ -7,6 +7,7 @@
  * Author: Joseph Chen <chenjh@rock-chips.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/input.h>
