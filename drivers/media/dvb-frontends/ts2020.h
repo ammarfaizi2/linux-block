@@ -10,6 +10,7 @@
 #ifndef TS2020_H
 #define TS2020_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct ts2020_config {

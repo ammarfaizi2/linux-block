@@ -10,6 +10,7 @@
 #ifndef __S5H1409_H__
 #define __S5H1409_H__
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct s5h1409_config {

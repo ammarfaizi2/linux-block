@@ -11,6 +11,8 @@
 #ifndef DVB_USB_LOG_PREFIX
  #define DVB_USB_LOG_PREFIX "dibusb"
 #endif
+#include <linux/i2c.h>
+
 #include "dvb-usb.h"
 
 #include "dib3000.h"

@@ -2,6 +2,7 @@
 #ifndef __MT2063_H__
 #define __MT2063_H__
 
+#include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 
 struct mt2063_config {

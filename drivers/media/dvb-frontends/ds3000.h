@@ -10,6 +10,7 @@
 #ifndef DS3000_H
 #define DS3000_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct ds3000_config {

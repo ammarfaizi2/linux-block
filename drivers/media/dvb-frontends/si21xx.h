@@ -2,6 +2,7 @@
 #ifndef SI21XX_H
 #define SI21XX_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <media/dvb_frontend.h>
 

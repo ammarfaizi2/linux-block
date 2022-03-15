@@ -11,6 +11,7 @@
 #ifndef _ISL6421_H
 #define _ISL6421_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 /* system register bits */

@@ -9,6 +9,7 @@
 #ifndef __MANTIS_COMMON_H
 #define __MANTIS_COMMON_H
 
+#include <linux/i2c.h>
 #include <linux/interrupt.h>
 #include <linux/mutex.h>
 #include <linux/workqueue.h>

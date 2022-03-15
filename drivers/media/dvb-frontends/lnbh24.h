@@ -19,6 +19,7 @@
 #define LNBH24_TTX	0x40
 #define LNBH24_PCL	0x80
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 #if IS_REACHABLE(CONFIG_DVB_LNBP21)

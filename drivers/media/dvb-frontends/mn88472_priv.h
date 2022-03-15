@@ -8,6 +8,7 @@
 #ifndef MN88472_PRIV_H
 #define MN88472_PRIV_H
 
+#include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 #include <media/dvb_math.h>
 #include "mn88472.h"

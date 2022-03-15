@@ -20,6 +20,7 @@
 #ifndef DIB3000_H
 #define DIB3000_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct dib3000_config

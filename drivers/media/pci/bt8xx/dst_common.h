@@ -10,6 +10,7 @@
 #ifndef DST_COMMON_H
 #define DST_COMMON_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <linux/device.h>
 #include <linux/mutex.h>

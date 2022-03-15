@@ -11,6 +11,7 @@
 #ifndef CX22700_H
 #define CX22700_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct cx22700_config

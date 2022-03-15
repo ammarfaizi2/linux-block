@@ -15,6 +15,7 @@
 #ifndef STV0288_H
 #define STV0288_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <media/dvb_frontend.h>
 

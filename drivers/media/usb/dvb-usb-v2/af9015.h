@@ -10,6 +10,7 @@
 #ifndef AF9015_H
 #define AF9015_H
 
+#include <linux/i2c.h>
 #include <linux/hash.h>
 #include <linux/regmap.h>
 #include "dvb_usb.h"

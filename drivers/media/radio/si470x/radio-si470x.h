@@ -13,6 +13,7 @@
 
 
 /* kernel includes */
+#include <linux/i2c.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

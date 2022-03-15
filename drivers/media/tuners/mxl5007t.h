@@ -8,6 +8,7 @@
 #ifndef __MXL5007T_H__
 #define __MXL5007T_H__
 
+#include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 
 /* ------------------------------------------------------------------------- */

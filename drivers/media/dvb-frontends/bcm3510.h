@@ -9,6 +9,7 @@
 #ifndef BCM3510_H
 #define BCM3510_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <linux/firmware.h>
 

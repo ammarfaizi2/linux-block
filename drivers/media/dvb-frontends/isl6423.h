@@ -9,6 +9,7 @@
 #ifndef __ISL_6423_H
 #define __ISL_6423_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 enum isl6423_current {

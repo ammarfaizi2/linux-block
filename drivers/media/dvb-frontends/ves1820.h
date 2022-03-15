@@ -9,6 +9,7 @@
 #ifndef VES1820_H
 #define VES1820_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 #define VES1820_SELAGC_PWM 0

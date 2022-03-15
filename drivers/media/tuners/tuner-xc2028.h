@@ -8,6 +8,7 @@
 #ifndef __TUNER_XC2028_H__
 #define __TUNER_XC2028_H__
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <media/dvb_frontend.h>
 

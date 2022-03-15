@@ -9,6 +9,7 @@
 #define TUA9001_PRIV_H
 
 #include "tua9001.h"
+#include <linux/i2c.h>
 #include <linux/math64.h>
 #include <linux/regmap.h>
 

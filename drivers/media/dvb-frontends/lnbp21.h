@@ -36,6 +36,7 @@
 	1=static curr limiting */
 #define LNBP21_PCL	0x80
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 #if IS_REACHABLE(CONFIG_DVB_LNBP21)

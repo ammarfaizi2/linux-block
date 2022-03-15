@@ -8,6 +8,7 @@
 #ifndef OR51211_H
 #define OR51211_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <linux/firmware.h>
 

@@ -8,6 +8,7 @@
 #ifndef EC100_H
 #define EC100_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct ec100_config {

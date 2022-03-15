@@ -12,6 +12,7 @@
 #ifndef CX24110_H
 #define CX24110_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct cx24110_config

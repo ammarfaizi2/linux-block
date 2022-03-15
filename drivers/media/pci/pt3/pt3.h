@@ -8,6 +8,7 @@
 #ifndef PT3_H
 #define PT3_H
 
+#include <linux/i2c.h>
 #include <linux/atomic.h>
 #include <linux/types.h>
 

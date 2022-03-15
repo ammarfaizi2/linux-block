@@ -8,6 +8,7 @@
 #ifndef __XC4000_H__
 #define __XC4000_H__
 
+#include <linux/i2c.h>
 #include <linux/firmware.h>
 
 struct dvb_frontend;

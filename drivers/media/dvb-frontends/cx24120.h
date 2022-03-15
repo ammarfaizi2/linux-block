@@ -11,6 +11,7 @@
 #ifndef CX24120_H
 #define CX24120_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <linux/firmware.h>
 

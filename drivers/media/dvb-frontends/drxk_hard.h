@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/i2c.h>
+
 #include "drxk_map.h"
 
 #define DRXK_VERSION_MAJOR 0

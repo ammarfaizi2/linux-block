@@ -9,6 +9,7 @@
 #ifndef CX24123_H
 #define CX24123_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct cx24123_config {

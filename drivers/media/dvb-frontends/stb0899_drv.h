@@ -10,6 +10,7 @@
 #ifndef __STB0899_DRV_H
 #define __STB0899_DRV_H
 
+#include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 

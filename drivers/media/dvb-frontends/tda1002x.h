@@ -12,6 +12,7 @@
 #ifndef TDA1002x_H
 #define TDA1002x_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct tda1002x_config {

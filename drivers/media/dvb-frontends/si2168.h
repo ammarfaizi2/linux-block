@@ -8,6 +8,7 @@
 #ifndef SI2168_H
 #define SI2168_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 /**
  * struct si2168_config - configuration parameters for si2168

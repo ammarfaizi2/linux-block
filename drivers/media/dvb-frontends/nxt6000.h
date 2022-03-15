@@ -10,6 +10,7 @@
 #ifndef NXT6000_H
 #define NXT6000_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct nxt6000_config

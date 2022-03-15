@@ -9,6 +9,7 @@
 #ifndef __MB86A16_H
 #define __MB86A16_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <media/dvb_frontend.h>
 

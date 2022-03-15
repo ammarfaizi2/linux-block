@@ -10,6 +10,7 @@
 #ifndef __STB_6100_REG_H
 #define __STB_6100_REG_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <media/dvb_frontend.h>
 

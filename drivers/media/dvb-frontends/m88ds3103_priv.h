@@ -8,6 +8,7 @@
 #ifndef M88DS3103_PRIV_H
 #define M88DS3103_PRIV_H
 
+#include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 #include "m88ds3103.h"
 #include <media/dvb_math.h>

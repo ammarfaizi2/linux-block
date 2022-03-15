@@ -8,6 +8,7 @@
 #ifndef MN88472_H
 #define MN88472_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 /* Define old names for backward compatibility */

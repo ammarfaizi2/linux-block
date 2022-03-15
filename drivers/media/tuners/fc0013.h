@@ -8,6 +8,7 @@
 #ifndef _FC0013_H_
 #define _FC0013_H_
 
+#include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 #include "fc001x-common.h"
 

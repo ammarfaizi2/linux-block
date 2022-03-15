@@ -10,6 +10,7 @@
 #ifndef __STB0899_PRIV_H
 #define __STB0899_PRIV_H
 
+#include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 #include "stb0899_drv.h"
 

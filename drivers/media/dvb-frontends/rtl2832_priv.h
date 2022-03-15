@@ -9,6 +9,7 @@
 #ifndef RTL2832_PRIV_H
 #define RTL2832_PRIV_H
 
+#include <linux/i2c.h>
 #include <linux/regmap.h>
 #include <linux/math64.h>
 #include <linux/bitops.h>
