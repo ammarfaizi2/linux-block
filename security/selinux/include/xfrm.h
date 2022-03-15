@@ -8,6 +8,7 @@
 #ifndef _SELINUX_XFRM_H_
 #define _SELINUX_XFRM_H_
 
+#include <linux/rtnetlink.h>
 #include <net/flow.h>
 
 int selinux_xfrm_policy_alloc(struct xfrm_sec_ctx **ctxp,
