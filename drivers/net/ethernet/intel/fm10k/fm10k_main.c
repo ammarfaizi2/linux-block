@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2019 Intel Corporation. */
 
+#include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_prefetch.h>
 #include <linux/netdevice_api.h>

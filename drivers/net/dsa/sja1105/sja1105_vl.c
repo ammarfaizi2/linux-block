@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2020 NXP
  */
+#include <linux/sched.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>

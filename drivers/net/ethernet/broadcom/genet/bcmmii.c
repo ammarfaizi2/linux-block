@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2017 Broadcom
  */
 
+#include <linux/sched.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

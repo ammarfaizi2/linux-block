@@ -6,6 +6,7 @@
  *  Chunfeng.Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/sched.h>
 #include <linux/hashtable_api.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

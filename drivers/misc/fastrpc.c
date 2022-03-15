@@ -2,6 +2,7 @@
 // Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
 // Copyright (c) 2018, Linaro Limited
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

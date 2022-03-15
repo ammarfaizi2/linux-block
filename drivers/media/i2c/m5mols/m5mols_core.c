@@ -9,6 +9,7 @@
  * Author: Dongsoo Nathaniel Kim <dongsoo45.kim@samsung.com>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

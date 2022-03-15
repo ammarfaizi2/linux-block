@@ -8,6 +8,7 @@
  * Copyright (C) 2004 - 2005 Alex Aizman
  * maintained by open-iscsi@googlegroups.com
  */
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

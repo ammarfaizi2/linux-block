@@ -3,6 +3,7 @@
  * Basic Node interface support
  */
 
+#include <linux/sched.h>
 #include <linux/preempt.h>
 #include <linux/notifier_api.h>
 #include <linux/mmzone_api.h>

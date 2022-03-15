@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/minmax.h>
 
 #include "dcn20_hubp.h"

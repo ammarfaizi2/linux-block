@@ -21,6 +21,7 @@
 /*****************************************************************************/
 
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

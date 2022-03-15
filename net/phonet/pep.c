@@ -9,6 +9,7 @@
  * Author: Rémi Denis-Courmont
  */
 
+#include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/mm_api.h>
 #include <linux/capability.h>

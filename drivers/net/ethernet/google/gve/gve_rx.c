@@ -7,6 +7,7 @@
 #include "gve.h"
 #include "gve_adminq.h"
 #include "gve_utils.h"
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

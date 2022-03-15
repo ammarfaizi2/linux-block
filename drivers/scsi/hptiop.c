@@ -7,6 +7,7 @@
  *
  * For more information, visit http://www.highpoint-tech.com
  */
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

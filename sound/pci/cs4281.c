@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>,
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/delay.h>

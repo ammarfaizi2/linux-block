@@ -36,6 +36,7 @@
 
 #define pr_fmt(fmt) "xen-blkback: " fmt
 
+#include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

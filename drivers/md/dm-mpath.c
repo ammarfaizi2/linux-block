@@ -5,6 +5,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

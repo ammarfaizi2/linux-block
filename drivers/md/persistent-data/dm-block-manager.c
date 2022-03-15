@@ -6,6 +6,7 @@
 #include "dm-block-manager.h"
 #include "dm-persistent-data-internal.h"
 
+#include <linux/sched.h>
 #include <linux/dm-bufio.h>
 #include <linux/crc32c.h>
 #include <linux/module.h>

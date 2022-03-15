@@ -176,6 +176,7 @@
  * root@peer# head -c 7 $DBG_DIR/peer0/peer_mw0
  */
 
+#include <linux/sched.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>

@@ -12,6 +12,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

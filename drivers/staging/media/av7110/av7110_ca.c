@@ -11,6 +11,7 @@
  * the project's page is at https://linuxtv.org
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

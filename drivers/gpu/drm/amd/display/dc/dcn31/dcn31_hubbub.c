@@ -24,6 +24,7 @@
  */
 
 
+#include <linux/sched.h>
 #include <linux/capability.h>
 
 #include "dcn30/dcn30_hubbub.h"

@@ -6,6 +6,7 @@
  * Copyright (c) 2012 Paolo Valente.
  */
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

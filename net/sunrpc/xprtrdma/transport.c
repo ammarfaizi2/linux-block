@@ -49,6 +49,7 @@
  * transport switch. All others are RPC RDMA internal.
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/slab.h>

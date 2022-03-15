@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "kfence: " fmt
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>

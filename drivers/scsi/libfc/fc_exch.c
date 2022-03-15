@@ -11,6 +11,7 @@
  * Fibre Channel exchange and sequence handling.
  */
 
+#include <linux/sched.h>
 #include <linux/percpu.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

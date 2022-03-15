@@ -3,6 +3,7 @@
 
 #define _RTL8188E_CMD_C_
 
+#include <linux/sched.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 

@@ -6,6 +6,7 @@
  *  Davide Libenzi <davidel@xmailserver.org>
  */
 
+#include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/poll_time.h>
 #include <linux/pm_wakeup.h>

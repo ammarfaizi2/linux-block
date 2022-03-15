@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

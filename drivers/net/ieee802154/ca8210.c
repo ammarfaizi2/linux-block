@@ -47,6 +47,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

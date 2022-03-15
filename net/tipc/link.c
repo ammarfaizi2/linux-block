@@ -46,6 +46,7 @@
 #include "trace.h"
 #include "crypto.h"
 
+#include <linux/sched.h>
 #include <linux/ratelimit.h>
 #include <linux/jiffies.h>
 #include <linux/pkt_sched.h>

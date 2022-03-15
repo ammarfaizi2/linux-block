@@ -10,6 +10,7 @@
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
+#include <linux/sched.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/gpio.h>

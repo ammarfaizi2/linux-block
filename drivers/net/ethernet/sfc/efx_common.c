@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api_lock.h>

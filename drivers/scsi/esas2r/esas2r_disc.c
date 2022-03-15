@@ -42,6 +42,7 @@
  */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 
 #include "esas2r.h"

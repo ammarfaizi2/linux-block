@@ -14,6 +14,8 @@
  *
  */
 
+#include <linux/sched.h>
+
 #include "motu.h"
 
 static bool has_dsp_event(struct snd_motu *motu)

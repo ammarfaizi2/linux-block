@@ -9,6 +9,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>

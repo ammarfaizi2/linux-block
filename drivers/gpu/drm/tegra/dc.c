@@ -4,6 +4,7 @@
  * Copyright (C) 2012 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

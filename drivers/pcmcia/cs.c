@@ -9,6 +9,7 @@
  * (C) 1999		David A. Hinds
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

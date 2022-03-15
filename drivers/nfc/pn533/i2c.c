@@ -7,6 +7,7 @@
  * Copyright (C) 2016 HALE electronic
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

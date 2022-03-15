@@ -3,6 +3,7 @@
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

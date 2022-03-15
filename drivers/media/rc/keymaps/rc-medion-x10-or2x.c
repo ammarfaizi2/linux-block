@@ -10,6 +10,7 @@
  * buttons, such as OR22V and OR24E.
  */
 
+#include <linux/sched.h>
 #include <linux/module.h>
 #include <media/rc-map.h>
 

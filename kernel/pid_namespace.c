@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/mutex_api.h>

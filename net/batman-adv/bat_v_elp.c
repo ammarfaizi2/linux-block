@@ -7,6 +7,7 @@
 #include "bat_v_elp.h"
 #include "main.h"
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/kref_api.h>
 #include <linux/etherdevice_api.h>

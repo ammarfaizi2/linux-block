@@ -8,6 +8,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/sched.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>

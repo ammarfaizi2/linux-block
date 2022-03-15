@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

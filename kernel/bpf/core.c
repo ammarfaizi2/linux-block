@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/perf_event_api.h>
 #include <linux/percpu.h>

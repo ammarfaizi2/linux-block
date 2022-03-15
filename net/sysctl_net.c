@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/kallsyms.h>
 #include <linux/capability.h>

@@ -10,6 +10,7 @@
  * Bill Richardson.
  */
 
+#include <linux/sched.h>
 #include <linux/notifier_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

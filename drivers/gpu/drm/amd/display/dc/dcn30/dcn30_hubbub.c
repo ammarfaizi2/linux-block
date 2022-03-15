@@ -24,6 +24,7 @@
  */
 
 
+#include <linux/sched.h>
 #include <linux/capability.h>
 
 #include "dm_services.h"

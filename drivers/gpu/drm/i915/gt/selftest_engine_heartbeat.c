@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/llist_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>

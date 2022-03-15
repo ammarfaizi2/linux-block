@@ -7,6 +7,7 @@
  * This source file contains Tegra210 supported video formats,
  * VI and CSI SoC specific data, operations and registers accessors.
  */
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

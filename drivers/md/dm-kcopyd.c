@@ -9,6 +9,7 @@
  * completion notification.
  */
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

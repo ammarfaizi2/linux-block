@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Avago Technologies.  All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>

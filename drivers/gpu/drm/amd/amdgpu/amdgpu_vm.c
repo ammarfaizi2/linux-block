@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

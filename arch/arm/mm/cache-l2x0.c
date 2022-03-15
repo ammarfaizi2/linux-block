@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2007 ARM Limited
  */
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

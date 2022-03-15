@@ -40,6 +40,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

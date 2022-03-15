@@ -8,6 +8,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>

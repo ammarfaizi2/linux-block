@@ -3,6 +3,7 @@
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
+#include <linux/sched.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/net.h>

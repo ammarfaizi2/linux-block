@@ -21,6 +21,8 @@
  *
  * Authors: Martin Peres
  */
+#include <linux/sched.h>
+
 #include "priv.h"
 
 static void

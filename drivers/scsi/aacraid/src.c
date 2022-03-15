@@ -16,6 +16,7 @@
  * Abstract: Hardware Device Interface for PMC SRC based controllers
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/capability.h>

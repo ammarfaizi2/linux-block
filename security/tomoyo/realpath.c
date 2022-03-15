@@ -6,6 +6,7 @@
  */
 
 #include "common.h"
+#include <linux/sched.h>
 #include <linux/kdev_t.h>
 #include <linux/dcache.h>
 #include <linux/magic.h>

@@ -8,6 +8,7 @@
  *  Author: Manjunatha Halli <manjunatha_halli@ti.com>
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 
 #include "fmdrv.h"

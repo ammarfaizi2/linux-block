@@ -24,6 +24,7 @@
  */
 #include "priv.h"
 
+#include <linux/sched.h>
 #include <linux/delay.h>
 #include <subdev/bios/fan.h>
 #include <subdev/gpio.h>

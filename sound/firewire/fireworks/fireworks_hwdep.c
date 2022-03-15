@@ -16,6 +16,8 @@
  *
  */
 
+#include <linux/sched.h>
+
 #include "fireworks.h"
 
 static long

@@ -16,6 +16,7 @@
  * NONINFRINGEMENT.  See the GNU General Public License for more
  * details.
  **********************************************************************/
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>

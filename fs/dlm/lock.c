@@ -53,6 +53,7 @@
                                    R: do_xxxx()
    L: receive_xxxx_reply()     <-  R: send_xxxx_reply()
 */
+#include <linux/sched.h>
 #include <linux/rwsem.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>

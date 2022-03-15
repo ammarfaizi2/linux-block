@@ -4,6 +4,7 @@
  * Copyright (C) 2019 Haren Myneni, IBM Corp
  */
 
+#include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

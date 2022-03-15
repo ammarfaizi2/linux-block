@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/hardirq.h>

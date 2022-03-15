@@ -5,6 +5,7 @@
 
 /* Toplevel file. Relies on dhd_linux.c to send commands to the dongle. */
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

@@ -35,6 +35,7 @@
  *		        within kupdate, it will ignore the immediate flag
  */
 
+#include <linux/sched.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

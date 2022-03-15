@@ -7,6 +7,7 @@
  * Authors: Younghwan Joo <yhwan.joo@samsung.com>
  *          Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
+#include <linux/sched.h>
 #include <linux/delay.h>
 
 #include "fimc-is.h"

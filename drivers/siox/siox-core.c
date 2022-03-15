@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2015-2017 Pengutronix, Uwe Kleine-König <kernel@pengutronix.de>
  */
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>

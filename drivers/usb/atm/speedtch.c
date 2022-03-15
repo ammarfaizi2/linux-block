@@ -9,6 +9,7 @@
  *  Based on "modem_run.c", copyright (C) 2001, Benoit Papillault
  ******************************************************************************/
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/delay.h>

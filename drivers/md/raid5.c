@@ -35,6 +35,7 @@
  * miss any bits.
  */
 
+#include <linux/sched.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -35,6 +35,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sched.h>
 #include <linux/hash.h>
 #include <linux/atomic_api.h>
 #include <linux/ip.h>

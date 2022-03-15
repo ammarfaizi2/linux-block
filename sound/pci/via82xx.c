@@ -32,6 +32,7 @@
  *	- Optimize position calculation for the 823x chips. 
  */
 
+#include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

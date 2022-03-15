@@ -5,6 +5,7 @@
 // Copyright (c) 2019 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

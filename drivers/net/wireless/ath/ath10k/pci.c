@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  */
 
+#include <linux/sched.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <linux/slab.h>
 #include <linux/dns_resolver.h>

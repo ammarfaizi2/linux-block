@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>

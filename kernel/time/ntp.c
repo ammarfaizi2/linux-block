@@ -6,6 +6,7 @@
  * Please see those files for relevant copyright info and historical
  * changelogs.
  */
+#include <linux/sched.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/capability.h>

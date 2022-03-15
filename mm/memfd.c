@@ -7,6 +7,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api_mapping.h>
 #include <linux/fs_api.h>

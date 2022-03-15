@@ -32,6 +32,8 @@
  *
  */
 
+#include <linux/sched.h>
+
 #include "i915_drv.h"
 #include "gvt.h"
 

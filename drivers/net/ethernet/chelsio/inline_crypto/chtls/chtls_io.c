@@ -5,6 +5,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

@@ -36,6 +36,7 @@
  * reverse-engineering activity
  */
 
+#include <linux/sched.h>
 #include <linux/export.h>
 #include <linux/atomic_api.h>
 #include <sound/core.h>

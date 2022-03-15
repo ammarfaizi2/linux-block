@@ -6,6 +6,7 @@
 #include "qla_def.h"
 #include "qla_target.h"
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>

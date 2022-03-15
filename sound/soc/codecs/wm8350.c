@@ -7,6 +7,7 @@
  * Author: Liam Girdwood <lrg@slimlogic.co.uk>
  */
 
+#include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

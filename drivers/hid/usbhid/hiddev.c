@@ -12,6 +12,7 @@
  * e-mail - mail your message to Paul Stewart <stewart@wetlogic.net>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs_api.h>

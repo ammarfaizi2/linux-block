@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2008 Dave Chinner
  * All Rights Reserved.
  */
+#include <linux/sched.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>
 #include <linux/freezer.h>

@@ -9,6 +9,7 @@
  *		 Heiko Carstens <heiko.carstens@de.ibm.com>,
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mutex.h>

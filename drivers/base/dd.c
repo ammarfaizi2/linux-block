@@ -16,6 +16,7 @@
  * Copyright (c) 2007-2009 Novell Inc.
  */
 
+#include <linux/sched.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

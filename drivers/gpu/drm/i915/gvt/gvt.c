@@ -30,6 +30,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/idr_api.h>

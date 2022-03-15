@@ -5,6 +5,7 @@
  *  Author: Eric Biederman <ebiederm@xmision.com>
  */
 
+#include <linux/sched.h>
 #include <linux/radix-tree-api.h>
 #include <linux/module.h>
 #include <linux/ipc.h>

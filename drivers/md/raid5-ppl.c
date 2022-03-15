@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Intel Corporation.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>

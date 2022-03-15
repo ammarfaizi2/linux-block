@@ -26,6 +26,7 @@
  * Copyright (C) 2011 Maciej S. Szmigiero <mail@maciej.szmigiero.name>
  */
 
+#include <linux/sched.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>

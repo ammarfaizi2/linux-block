@@ -15,6 +15,7 @@
 
 #define KMSG_COMPONENT "dasd"
 
+#include <linux/sched.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

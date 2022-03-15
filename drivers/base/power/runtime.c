@@ -5,6 +5,7 @@
  * Copyright (c) 2009 Rafael J. Wysocki <rjw@sisk.pl>, Novell Inc.
  * Copyright (C) 2010 Alan Stern <stern@rowland.harvard.edu>
  */
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

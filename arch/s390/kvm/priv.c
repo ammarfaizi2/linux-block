@@ -8,6 +8,7 @@
  *               Christian Borntraeger <borntraeger@de.ibm.com>
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/preempt.h>
 #include <linux/mmap_lock.h>

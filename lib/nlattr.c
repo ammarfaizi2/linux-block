@@ -6,6 +6,7 @@
  * 				Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/sched.h>
 #include <linux/ratelimit.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

@@ -10,6 +10,7 @@
  * Specifications at www.trustedcomputinggroup.org
  */
 
+#include <linux/sched.h>
 #include <linux/gfp_api.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

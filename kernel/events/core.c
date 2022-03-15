@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>

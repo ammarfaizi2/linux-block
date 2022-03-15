@@ -7,6 +7,7 @@
  *
  *****************************************************************************/
 
+#include <linux/sched.h>
 #include <acpi/acpi.h>
 #include "accommon.h"
 #include "acinterp.h"

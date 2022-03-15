@@ -17,6 +17,7 @@
  *       - processors supported:- Intel XScale PXA25x, PXA26x, PXA27x
  */
 
+#include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>

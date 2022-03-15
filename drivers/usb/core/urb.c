@@ -3,6 +3,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

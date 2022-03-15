@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/sched.h>
 #include <linux/module.h>
 
 #include <linux/mm.h> /* for handle_mm_fault() */

@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

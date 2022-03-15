@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "qeth"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api_lock.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>

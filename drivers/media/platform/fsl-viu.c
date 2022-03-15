@@ -9,6 +9,7 @@
  *	     Anatolij Gustschin <agust@denx.de>
  */
 
+#include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_types.h>

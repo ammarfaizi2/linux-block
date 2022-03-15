@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

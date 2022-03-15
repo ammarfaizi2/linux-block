@@ -4,6 +4,7 @@
  * flexcop-i2c.c - flexcop internal 2Wire bus (I2C) and dvb i2c initialization
  * see flexcop.c for copyright information
  */
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/i2c.h>
 

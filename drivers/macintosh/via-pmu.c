@@ -18,6 +18,7 @@
  *    a sleep or a freq. switch
  *
  */
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

@@ -16,6 +16,7 @@
  * (e.g. "11" for 1.1).
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

@@ -7,6 +7,7 @@
  * the information ethtool needs.
  */
 
+#include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

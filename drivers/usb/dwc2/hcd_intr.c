@@ -38,6 +38,7 @@
 /*
  * This file contains the interrupt handlers for Host mode
  */
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

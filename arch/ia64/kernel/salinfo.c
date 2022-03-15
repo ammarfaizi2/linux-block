@@ -37,6 +37,7 @@
  *   Modify the locking to make the test for "work to do" an atomic operation.
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>

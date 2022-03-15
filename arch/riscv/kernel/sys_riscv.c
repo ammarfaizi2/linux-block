@@ -5,6 +5,7 @@
  * Copyright (C) 2017 SiFive
  */
 
+#include <linux/sched.h>
 #include <linux/syscalls.h>
 #include <asm/unistd.h>
 #include <asm/cacheflush.h>

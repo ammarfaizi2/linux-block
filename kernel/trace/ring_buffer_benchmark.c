@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2009 Steven Rostedt <srostedt@redhat.com>
  */
+#include <linux/sched.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/node.h>
 #include <linux/mm_types.h>

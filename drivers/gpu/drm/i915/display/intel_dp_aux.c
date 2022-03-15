@@ -3,6 +3,7 @@
  * Copyright © 2020-2021 Intel Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/delay.h>
 
 #include "i915_drv.h"

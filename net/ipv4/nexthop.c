@@ -5,6 +5,7 @@
  * Copyright (c) 2017-19 David Ahern <dsa@cumulusnetworks.com>
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>

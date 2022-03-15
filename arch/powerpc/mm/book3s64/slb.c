@@ -9,6 +9,7 @@
  * Copyright (C) 2002 Anton Blanchard <anton@au.ibm.com>, IBM
  */
 
+#include <linux/sched.h>
 #include <linux/hardirq.h>
 #include <asm/asm-prototypes.h>
 #include <asm/interrupt.h>

@@ -7,6 +7,7 @@
  *              Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/sched.h>
 #include <linux/fs.h>
 #include <linux/stat.h>
 #include <linux/slab.h>

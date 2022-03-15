@@ -12,6 +12,7 @@
 #include "debug.h"
 #include "writeback.h"
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/math64.h>
 #include <linux/llist_api.h>

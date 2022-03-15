@@ -5,6 +5,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>

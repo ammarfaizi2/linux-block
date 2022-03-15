@@ -14,6 +14,7 @@
  *  Copyright (C) 2010-2013 Nicholas A. Bellinger <nab@kernel.org>
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

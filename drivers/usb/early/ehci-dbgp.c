@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/io.h>
 #include <linux/console.h>
 #include <linux/errno.h>

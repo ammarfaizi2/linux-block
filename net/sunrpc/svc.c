@@ -11,6 +11,7 @@
  * by Greg Banks <gnb@melbourne.sgi.com>
  */
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/ptrace_api.h>
 #include <linux/mutex_api.h>

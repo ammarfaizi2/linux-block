@@ -3,6 +3,7 @@
  * Copyright (c) 2017-2018 Mellanox Technologies. All rights reserved.
  */
 
+#include <linux/sched.h>
 #include <linux/kref_api.h>
 #include <rdma/rdma_cm.h>
 #include <rdma/ib_verbs.h>

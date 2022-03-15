@@ -15,6 +15,7 @@
  /* treated slightly differently for reconnection purposes since we never     */
  /* want to reuse a stale file handle and only the caller knows the file info */
 
+#include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

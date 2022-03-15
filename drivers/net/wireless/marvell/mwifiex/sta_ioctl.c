@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 
 #include "decl.h"

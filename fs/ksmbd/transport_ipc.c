@@ -3,6 +3,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

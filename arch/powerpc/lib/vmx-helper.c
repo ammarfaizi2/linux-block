@@ -6,6 +6,7 @@
  * Authors: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
  *          Anton Blanchard <anton@au.ibm.com>
  */
+#include <linux/sched.h>
 #include <linux/preempt.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/uaccess.h>

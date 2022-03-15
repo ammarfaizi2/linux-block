@@ -3,6 +3,7 @@
  * Copyright (c) 2003 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/io.h>

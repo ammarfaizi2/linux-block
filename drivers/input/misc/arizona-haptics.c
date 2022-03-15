@@ -7,6 +7,7 @@
  * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
+#include <linux/sched.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

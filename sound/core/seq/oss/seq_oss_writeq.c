@@ -10,6 +10,7 @@
 #include "seq_oss_writeq.h"
 #include "seq_oss_event.h"
 #include "seq_oss_timer.h"
+#include <linux/sched.h>
 #include <sound/seq_oss_legacy.h>
 #include "../seq_lock.h"
 #include "../seq_clientmgr.h"

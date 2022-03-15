@@ -2,6 +2,7 @@
 /*  GPLv2, Copyright(c) 2017 Jesper Dangaard Brouer, Red Hat, Inc. */
 #include "xdp_sample.bpf.h"
 
+#include <linux/sched.h>
 #include <bpf/bpf_tracing.h>
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_helpers.h>

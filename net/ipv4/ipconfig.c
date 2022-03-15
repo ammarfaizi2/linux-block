@@ -33,6 +33,7 @@
  *              --  Chris Novakovic <chris@chrisn.me.uk>, April 2018
  */
 
+#include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

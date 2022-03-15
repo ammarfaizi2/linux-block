@@ -32,6 +32,8 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
+#include <linux/sched.h>
+
 #include "mga_drv.h"
 
 /* ================================================================

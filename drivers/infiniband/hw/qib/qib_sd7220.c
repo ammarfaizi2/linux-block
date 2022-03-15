@@ -36,6 +36,7 @@
  * on the QLogic_IB 7220 chip.
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/pci.h>

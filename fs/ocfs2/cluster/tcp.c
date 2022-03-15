@@ -37,6 +37,7 @@
  * and only accepts the connection if the higher numbered node is heartbeating.
  */
 
+#include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

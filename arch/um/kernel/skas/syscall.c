@@ -3,6 +3,7 @@
  * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/ptrace.h>
 #include <linux/seccomp.h>

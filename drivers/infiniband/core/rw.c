@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016 HGST, a Western Digital Company.
  */
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

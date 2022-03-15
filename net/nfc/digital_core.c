@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "digital: %s: " fmt, __func__
 
+#include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

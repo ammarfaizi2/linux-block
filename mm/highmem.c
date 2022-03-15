@@ -17,6 +17,7 @@
  * Copyright (C) 1999 Ingo Molnar <mingo@redhat.com>
  */
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>

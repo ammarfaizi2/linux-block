@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/mutex_api.h>

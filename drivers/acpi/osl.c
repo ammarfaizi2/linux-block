@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "ACPI: OSL: " fmt
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

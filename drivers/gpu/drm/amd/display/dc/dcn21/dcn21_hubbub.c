@@ -22,6 +22,7 @@
  * Authors: AMD
  *
  */
+#include <linux/sched.h>
 #include <linux/delay.h>
 #include "dm_services.h"
 #include "dcn20/dcn20_hubbub.h"

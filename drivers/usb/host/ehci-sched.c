@@ -4,6 +4,7 @@
  * Copyright (c) 2003 Michal Sojka, for high-speed iso transfers
  */
 
+#include <linux/sched.h>
 #include <linux/types.h>
 
 /* this file is part of ehci-hcd.c */

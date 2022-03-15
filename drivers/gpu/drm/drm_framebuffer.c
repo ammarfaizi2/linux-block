@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/export.h>

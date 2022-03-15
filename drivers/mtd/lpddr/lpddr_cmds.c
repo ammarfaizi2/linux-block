@@ -11,6 +11,7 @@
  * Implement XIP support
  * Implement OTP support
  */
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/sched/cond_resched.h>

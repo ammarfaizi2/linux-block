@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

@@ -2,6 +2,7 @@
 /*
  * bsg.c - block layer implementation of the sg v4 interface
  */
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
+#include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>

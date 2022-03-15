@@ -11,6 +11,7 @@
 
  */      
 
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

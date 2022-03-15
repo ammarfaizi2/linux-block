@@ -9,6 +9,7 @@
  * package and is not a general device driver.
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/unistd.h>
 #include <linux/miscdevice.h>	/* for misc_register, and MISC_DYNAMIC_MINOR */

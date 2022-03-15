@@ -13,6 +13,8 @@
  * more details.
  */
 
+#include <linux/sched.h>
+
 #include "hmm.h"
 
 #include "sh_css_sp.h"

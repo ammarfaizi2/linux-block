@@ -20,6 +20,7 @@
  * more details, a copy of which can be found in the file COPYING  *
  * included with this package.                                     *
  *******************************************************************/
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/percpu.h>
 #include <linux/pci-dma-compat.h>

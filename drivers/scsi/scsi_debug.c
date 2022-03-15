@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

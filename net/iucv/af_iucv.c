@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT "af_iucv"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

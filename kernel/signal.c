@@ -11,6 +11,7 @@
  *		to allow signals to be sent reliably.
  */
 
+#include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/pid.h>
 #include <linux/mm_api.h>

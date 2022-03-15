@@ -10,6 +10,7 @@
  *		Viresh Kumar <viresh.kumar@linaro.org>
  *
  */
+#include <linux/sched.h>
 #include <linux/sched/cpufreq.h>
 #include <linux/of_api.h>
 #include <linux/math64.h>

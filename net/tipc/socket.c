@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/random.h>
 #include <linux/poll.h>

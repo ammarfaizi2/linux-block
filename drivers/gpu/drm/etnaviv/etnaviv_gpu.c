@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

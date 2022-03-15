@@ -5,6 +5,7 @@
  * Copyright 2012 Analog Devices Inc.
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

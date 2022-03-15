@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>

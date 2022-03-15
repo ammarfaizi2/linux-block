@@ -8,6 +8,7 @@
 
 #include "motu.h"
 
+#include <linux/sched.h>
 #include <linux/delay.h>
 
 // Status register for MOTU 828 (0x'ffff'f000'0b00).

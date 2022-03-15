@@ -15,6 +15,7 @@
  *		Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

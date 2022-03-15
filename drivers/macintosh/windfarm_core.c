@@ -21,6 +21,7 @@
  * instead which is a bit of an overkill imho
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

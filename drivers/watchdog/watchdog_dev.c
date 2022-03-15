@@ -29,6 +29,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 
 #include "../display_mode_lib.h"

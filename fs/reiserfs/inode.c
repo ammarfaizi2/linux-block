@@ -2,6 +2,7 @@
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
+#include <linux/sched.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/delay.h>

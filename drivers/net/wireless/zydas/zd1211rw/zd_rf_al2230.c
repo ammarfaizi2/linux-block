@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2007 Daniel Drake <dsd@gentoo.org>
  */
 
+#include <linux/sched.h>
 #include <linux/kernel.h>
 
 #include "zd_rf.h"

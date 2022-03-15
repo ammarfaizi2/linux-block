@@ -5,6 +5,7 @@
 *	Tiffany Lin <tiffany.lin@mediatek.com>
 */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

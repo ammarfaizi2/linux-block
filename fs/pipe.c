@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992, 1999  Linus Torvalds
  */
 
+#include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

@@ -39,6 +39,7 @@
  * This file contains the core HCD code, and implements the Linux hc_driver
  * API
  */
+#include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

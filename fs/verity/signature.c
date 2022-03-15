@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/sched.h>
 #include <asm/byteorder.h>
 #include <linux/cred.h>
 #include <linux/key.h>

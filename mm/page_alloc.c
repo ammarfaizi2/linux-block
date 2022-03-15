@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>

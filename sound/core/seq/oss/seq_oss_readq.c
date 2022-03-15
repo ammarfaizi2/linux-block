@@ -9,6 +9,7 @@
 
 #include "seq_oss_readq.h"
 #include "seq_oss_event.h"
+#include <linux/sched.h>
 #include <linux/io.h>
 #include <sound/seq_oss_legacy.h>
 #include "../seq_lock.h"

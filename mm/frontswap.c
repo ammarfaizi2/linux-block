@@ -10,6 +10,7 @@
  * Author: Dan Magenheimer
  */
 
+#include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

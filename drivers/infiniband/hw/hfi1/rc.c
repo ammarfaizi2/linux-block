@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2018 Intel Corporation.
  */
 
+#include <linux/sched.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

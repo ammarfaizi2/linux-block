@@ -3,6 +3,7 @@
  * PCI detection and setup code
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/resource_ext_api.h>
 #include <linux/mutex_api.h>

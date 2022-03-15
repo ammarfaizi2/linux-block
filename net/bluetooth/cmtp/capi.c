@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/proc_fs.h>

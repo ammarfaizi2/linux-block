@@ -35,6 +35,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>

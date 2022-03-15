@@ -109,6 +109,7 @@
 #define DBG(cmd,xxx...) xxx
 #endif
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

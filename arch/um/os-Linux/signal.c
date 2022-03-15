@@ -6,6 +6,7 @@
  * Copyright (C) 2004 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/sched.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <errno.h>

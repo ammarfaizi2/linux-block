@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/percpu_counter_api.h>

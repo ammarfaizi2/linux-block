@@ -7,6 +7,7 @@
  *   Copyright (C) 2016 Sang Engineering, Wolfram Sang
  */
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>

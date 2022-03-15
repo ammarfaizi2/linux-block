@@ -65,6 +65,7 @@
  * For history of changes, see Documentation/scsi/ChangeLog.megaraid
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

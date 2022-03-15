@@ -7,6 +7,7 @@
  * S3C2410 I2C Controller
 */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>

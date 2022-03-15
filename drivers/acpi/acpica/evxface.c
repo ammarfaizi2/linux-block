@@ -9,6 +9,7 @@
 
 #define EXPORT_ACPI_INTERFACES
 
+#include <linux/sched.h>
 #include <acpi/acpi.h>
 #include "accommon.h"
 #include "acnamesp.h"

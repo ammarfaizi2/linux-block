@@ -14,6 +14,7 @@
 #define KMSG_COMPONENT "vmlogrdr"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sched.h>
 #include <linux/kobject_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

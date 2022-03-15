@@ -18,6 +18,7 @@
  *    the userland interface
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

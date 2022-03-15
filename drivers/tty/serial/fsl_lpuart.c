@@ -5,6 +5,7 @@
  *  Copyright 2012-2014 Freescale Semiconductor, Inc.
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

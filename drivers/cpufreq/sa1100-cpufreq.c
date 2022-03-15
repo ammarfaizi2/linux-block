@@ -67,6 +67,7 @@
  * Developers Manual" (available for free from Intel).
  */
 
+#include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/init.h>

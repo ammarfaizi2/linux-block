@@ -3,6 +3,7 @@
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>

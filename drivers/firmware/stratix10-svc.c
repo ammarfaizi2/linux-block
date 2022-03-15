@@ -3,6 +3,7 @@
  * Copyright (C) 2017-2018, Intel Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

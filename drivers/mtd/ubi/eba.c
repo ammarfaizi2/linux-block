@@ -28,6 +28,7 @@
  * 64 bits is enough to never overflow.
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>

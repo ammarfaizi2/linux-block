@@ -194,6 +194,7 @@
 
 #define pr_fmt(fmt) "apm: " fmt
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>

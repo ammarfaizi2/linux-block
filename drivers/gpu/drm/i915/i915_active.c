@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

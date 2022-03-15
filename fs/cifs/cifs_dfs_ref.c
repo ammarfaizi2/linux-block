@@ -9,6 +9,7 @@
  *		Steve French (sfrench@us.ibm.com)
  */
 
+#include <linux/sched.h>
 #include <linux/dcache.h>
 #include <linux/mount.h>
 #include <linux/namei.h>

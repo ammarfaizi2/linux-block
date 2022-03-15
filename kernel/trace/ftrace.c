@@ -14,6 +14,7 @@
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>

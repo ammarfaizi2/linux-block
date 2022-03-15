@@ -9,6 +9,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/sched.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>

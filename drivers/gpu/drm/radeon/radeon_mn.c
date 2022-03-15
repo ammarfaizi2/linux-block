@@ -28,6 +28,7 @@
  *    Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/firmware.h>
 #include <linux/module.h>

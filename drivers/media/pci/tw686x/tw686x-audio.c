@@ -10,6 +10,7 @@
  * (c) 2011-12 liran <jli11@intersil.com> [Intersil|Techwell China]
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

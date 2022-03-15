@@ -10,6 +10,7 @@
 /*
  */
 
+#include <linux/sched.h>
 #include <linux/irqflags.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

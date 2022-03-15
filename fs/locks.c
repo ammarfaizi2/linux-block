@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/percpu_rwsem_api.h>
 #include <linux/notifier_api.h>

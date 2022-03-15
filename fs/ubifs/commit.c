@@ -31,6 +31,7 @@
  * cache.
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

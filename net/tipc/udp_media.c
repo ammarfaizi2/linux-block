@@ -32,6 +32,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

@@ -7,6 +7,7 @@
  *  Copyright (c) 2005 Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
  *  Copyright (c) 2005 Ian McDonald <ian.mcdonald@jandi.co.nz>
  */
+#include <linux/sched.h>
 #include <linux/dccp.h>
 #include <linux/module.h>
 #include <linux/types.h>

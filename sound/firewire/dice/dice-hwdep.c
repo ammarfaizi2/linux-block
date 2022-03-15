@@ -6,6 +6,8 @@
  * Copyright (c) 2014 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/sched.h>
+
 #include "dice.h"
 
 static long hwdep_read(struct snd_hwdep *hwdep, char __user *buf,

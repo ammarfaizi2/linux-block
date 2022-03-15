@@ -3,6 +3,7 @@
  * HD-audio controller helpers
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

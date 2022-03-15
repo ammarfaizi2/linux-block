@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

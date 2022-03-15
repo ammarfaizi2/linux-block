@@ -19,6 +19,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/parport.h>
 #include <linux/delay.h>

@@ -9,6 +9,7 @@
  * (C) Copyright David Brownell 2000-2002
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

@@ -5,6 +5,7 @@
  *    Copyright (C) 2008 Pengutronix
  */
 
+#include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/ioport.h>
 #include <linux/module.h>

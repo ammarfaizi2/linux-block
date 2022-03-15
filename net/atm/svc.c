@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/sched.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/string.h>

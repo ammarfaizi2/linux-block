@@ -7,6 +7,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

@@ -11,6 +11,7 @@
  *	code written by Sharp/Lineo for 2.4 kernels
  */
 
+#include <linux/sched.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

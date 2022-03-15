@@ -9,6 +9,7 @@
  * Copyright (c) 2009 Wind River Systems, Inc.  All Rights Reserved.
  */
 
+#include <linux/sched.h>
 #include <linux/cpumask_api.h>
 #include <linux/ctype.h>
 #include <linux/string.h>

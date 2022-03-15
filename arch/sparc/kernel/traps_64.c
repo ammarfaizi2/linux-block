@@ -9,6 +9,7 @@
  * I like traps on v9, :))))
  */
 
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>

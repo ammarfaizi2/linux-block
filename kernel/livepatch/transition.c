@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>

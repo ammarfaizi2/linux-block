@@ -70,6 +70,7 @@
  * 2007-04-27 Russ Anderson <rja@sgi.com>
  *	      Support multiple cpus going through OS_MCA in the same event.
  */
+#include <linux/sched.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

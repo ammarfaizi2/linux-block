@@ -12,6 +12,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

@@ -26,6 +26,7 @@
 static const char version[] = "tc35815.c:v" DRV_VERSION "\n";
 #define MODNAME			"tc35815"
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

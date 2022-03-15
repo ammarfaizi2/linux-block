@@ -7,6 +7,7 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/fs_api.h>

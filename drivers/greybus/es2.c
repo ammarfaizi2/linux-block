@@ -5,6 +5,7 @@
  * Copyright 2014-2015 Google Inc.
  * Copyright 2014-2015 Linaro Ltd.
  */
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

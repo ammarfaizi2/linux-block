@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/dma-fence-api.h>

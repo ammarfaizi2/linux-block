@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>

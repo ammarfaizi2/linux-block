@@ -22,6 +22,7 @@
  *    shuts down.
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

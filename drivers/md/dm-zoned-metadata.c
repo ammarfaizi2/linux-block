@@ -7,6 +7,7 @@
 
 #include "dm-zoned.h"
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>

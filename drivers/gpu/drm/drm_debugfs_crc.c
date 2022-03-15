@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/circ_buf.h>
 #include <linux/ctype.h>
 #include <linux/debugfs.h>

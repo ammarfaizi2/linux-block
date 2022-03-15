@@ -7,6 +7,7 @@
  * Copyright:   (C) 2009 Nokia Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>

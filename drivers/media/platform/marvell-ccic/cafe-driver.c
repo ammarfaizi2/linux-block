@@ -16,6 +16,7 @@
  * v4l2_device/v4l2_subdev conversion by:
  * Copyright (C) 2009 Hans Verkuil <hverkuil@xs4all.nl>
  */
+#include <linux/sched.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

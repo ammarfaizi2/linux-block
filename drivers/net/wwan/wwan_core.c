@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2021, Linaro Ltd <loic.poulain@linaro.org> */
 
+#include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

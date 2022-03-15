@@ -5,6 +5,7 @@
  *               Igor Kotrasinski <i.kotrasinsk@samsung.com>
  */
 
+#include <linux/sched.h>
 #include <linux/net.h>
 #include <net/sock.h>
 #include <linux/list.h>

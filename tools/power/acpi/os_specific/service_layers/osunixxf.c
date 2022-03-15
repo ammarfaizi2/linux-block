@@ -11,6 +11,7 @@
  * These interfaces are required in order to compile the ASL compiler and the
  * various ACPICA tools under Linux or other Unix-like system.
  */
+#include <linux/sched.h>
 #include <acpi/acpi.h>
 #include "accommon.h"
 #include "amlcode.h"

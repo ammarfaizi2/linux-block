@@ -7,6 +7,7 @@
 
  */
 
+#include <linux/sched.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/bug.h>

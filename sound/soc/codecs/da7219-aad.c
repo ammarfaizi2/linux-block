@@ -7,6 +7,7 @@
  * Author: Adam Thomson <Adam.Thomson.Opensource@diasemi.com>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
