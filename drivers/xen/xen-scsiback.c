@@ -33,6 +33,7 @@
 
 #define pr_fmt(fmt) "xen-pvscsi: " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

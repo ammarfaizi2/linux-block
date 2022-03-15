@@ -43,6 +43,7 @@
 #endif
 #endif
 
+#include <linux/gfp_api.h>
 #include <asm/page.h>
 
 #include <linux/memblock.h>

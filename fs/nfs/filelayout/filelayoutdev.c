@@ -28,6 +28,7 @@
  *  such damages.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/nfs_fs.h>
 #include <linux/vmalloc.h>
 #include <linux/module.h>

@@ -26,6 +26,7 @@
 #include "cpuid.h"
 #include "spte.h"
 
+#include <linux/gfp_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

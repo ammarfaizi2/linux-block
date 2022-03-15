@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014-2016 Christoph Hellwig.
  */
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/sunrpc/svc.h>
 #include <linux/blkdev.h>

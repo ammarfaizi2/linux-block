@@ -5,6 +5,7 @@
  *  Copyright (C) 1995  Linus Torvalds
  *  Modifications for ARM processor (c) 1995-2002 Russell King
  */
+#include <linux/gfp_api.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

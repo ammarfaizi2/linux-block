@@ -7,6 +7,7 @@
  *	      Jan Glauber <jang@linux.vnet.ibm.com>
  * 2.6 cio integration by Cornelia Huck <cornelia.huck@de.ibm.com>
  */
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

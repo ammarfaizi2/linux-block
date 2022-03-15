@@ -11,6 +11,7 @@
  * http://www.azulsystems.com/events/javaone_2007/2007_LockFreeHash.pdf
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/vmalloc.h>
 #include <linux/jhash.h>

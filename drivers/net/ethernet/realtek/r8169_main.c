@@ -9,6 +9,7 @@
  * See MAINTAINERS file for support contact information.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

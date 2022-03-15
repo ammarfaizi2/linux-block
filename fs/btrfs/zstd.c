@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/gfp_api.h>
 #include <linux/bio.h>
 #include <linux/bitmap.h>
 #include <linux/err.h>

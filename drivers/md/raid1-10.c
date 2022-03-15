@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/gfp_api.h>
 #include <linux/types.h>
 
 /* Maximum size of each resync request */

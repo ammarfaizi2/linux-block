@@ -28,6 +28,7 @@
  *  such damages.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/nfs_fs.h>

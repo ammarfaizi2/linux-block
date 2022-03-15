@@ -6,6 +6,7 @@
  * Copyright (C) 2006-2016 Oracle Corporation
  */
 
+#include <linux/gfp_api.h>
 #include <linux/errno.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

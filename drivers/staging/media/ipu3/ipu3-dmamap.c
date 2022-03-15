@@ -7,6 +7,7 @@
  * Author: Yong Zhi <yong.zhi@intel.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/vmalloc.h>
 
 #include "ipu3.h"

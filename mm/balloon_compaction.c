@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2012, Red Hat, Inc.  Rafael Aquini <aquini@redhat.com>
  */
+#include <linux/gfp_api.h>
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/export.h>

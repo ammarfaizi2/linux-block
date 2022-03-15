@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api_mapping.h>
 #include <linux/fs_api.h>
 #include <linux/delayed_call.h>

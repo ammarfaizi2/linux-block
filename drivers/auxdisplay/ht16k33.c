@@ -8,6 +8,7 @@
  * Copyright (C) 2021 Glider bv
  */
 
+#include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

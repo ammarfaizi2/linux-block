@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cache.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

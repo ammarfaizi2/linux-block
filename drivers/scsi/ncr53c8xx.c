@@ -82,6 +82,7 @@
 
 #define SCSI_NCR_DEBUG_FLAGS	(0)
 
+#include <linux/gfp_api.h>
 #include <linux/capability.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>

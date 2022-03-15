@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2006 Andriy Skulysh <askulsyh@gmail.com>
  */
+#include <linux/gfp_api.h>
 #include <linux/init.h>
 #include <linux/suspend.h>
 #include <linux/errno.h>

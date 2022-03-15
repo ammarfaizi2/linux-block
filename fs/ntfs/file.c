@@ -5,6 +5,7 @@
  * Copyright (c) 2001-2015 Anton Altaparmakov and Tuxera Inc.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/backing-dev-api.h>

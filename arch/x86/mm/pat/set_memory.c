@@ -3,6 +3,7 @@
  * Copyright 2002 Andi Kleen, SuSE Labs.
  * Thanks to Ben LaHaise for precious feedback.
  */
+#include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/cacheflush.h>
 #include <linux/highmem.h>

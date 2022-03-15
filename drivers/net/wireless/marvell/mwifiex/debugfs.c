@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>

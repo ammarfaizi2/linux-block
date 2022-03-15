@@ -4,6 +4,7 @@
  *    Author(s): Heiko Carstens <heiko.carstens@de.ibm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/memblock.h>
 #include <linux/pfn.h>

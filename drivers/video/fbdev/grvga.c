@@ -10,6 +10,7 @@
  * Contributors: Kristoffer Glembo <kristoffer@gaisler.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/of_platform.h>

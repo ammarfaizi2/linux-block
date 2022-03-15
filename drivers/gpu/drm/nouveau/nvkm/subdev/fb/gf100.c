@@ -24,6 +24,7 @@
 #include "gf100.h"
 #include "ram.h"
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <core/memory.h>
 #include <core/option.h>

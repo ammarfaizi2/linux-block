@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>
 #include <drm/drm_vma_manager_api_vm_lock.h>

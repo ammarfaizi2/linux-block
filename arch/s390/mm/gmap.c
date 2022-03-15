@@ -8,6 +8,7 @@
  *		 Janosch Frank <frankja@linux.vnet.ibm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/pagewalk.h>

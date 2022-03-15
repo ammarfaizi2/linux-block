@@ -7,6 +7,7 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cache.h>
 #include <linux/clocksource.h>
 #include <linux/elf.h>

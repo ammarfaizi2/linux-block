@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT "hmcdrv"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>

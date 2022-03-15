@@ -3,6 +3,7 @@
  * Copyright(c) 2007 Yuri Tikhonov <yur@emcraft.com>
  * Copyright(c) 2009 Intel Corporation
  */
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

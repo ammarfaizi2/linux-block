@@ -43,6 +43,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

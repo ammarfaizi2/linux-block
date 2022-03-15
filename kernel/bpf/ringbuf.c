@@ -1,3 +1,4 @@
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bpf.h>
 #include <linux/btf.h>

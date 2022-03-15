@@ -8,6 +8,7 @@
  *	by Tomoaki Ishikawa <tomy@users.sourceforge.jp>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

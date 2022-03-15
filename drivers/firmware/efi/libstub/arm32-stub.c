@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2013 Linaro Ltd;  <roy.franz@linaro.org>
  */
+#include <linux/gfp_api.h>
 #include <linux/efi.h>
 #include <asm/efi.h>
 

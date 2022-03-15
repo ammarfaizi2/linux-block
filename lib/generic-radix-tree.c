@@ -1,4 +1,5 @@
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/generic-radix-tree.h>

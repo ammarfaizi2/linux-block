@@ -13,6 +13,7 @@
 #include "aq_hw_utils.h"
 #include "aq_ptp.h"
 
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/netdevice.h>

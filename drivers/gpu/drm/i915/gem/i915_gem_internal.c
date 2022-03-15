@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/gfp_api.h>
 #include <linux/scatterlist.h>
 #include <linux/slab.h>
 #include <linux/swiotlb.h>

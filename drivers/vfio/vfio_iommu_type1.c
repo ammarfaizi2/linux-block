@@ -21,6 +21,7 @@
  * device/bus interface rather than a group interface.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <asm/io.h>

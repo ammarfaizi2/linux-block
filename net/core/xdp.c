@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2017 Jesper Dangaard Brouer, Red Hat Inc.
  */
+#include <linux/gfp_api.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/bpf.h>

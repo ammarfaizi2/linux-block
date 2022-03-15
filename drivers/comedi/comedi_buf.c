@@ -7,6 +7,7 @@
  * Copyright (C) 2002 Frank Mori Hess <fmhess@users.sourceforge.net>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -31,6 +31,7 @@
 * via an ELAN U132 adapter.
 *
 */
+#include <linux/gfp_api.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

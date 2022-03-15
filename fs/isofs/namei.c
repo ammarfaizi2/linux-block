@@ -7,6 +7,7 @@
  *  (C) 1991  Linus Torvalds - minix filesystem
  */
 
+#include <linux/gfp_api.h>
 #include <linux/dcache.h>
 #include <linux/gfp.h>
 #include "isofs.h"

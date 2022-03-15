@@ -7,6 +7,7 @@
  *
  **************************************************************************/
 
+#include <linux/gfp_api.h>
 #include <linux/fs.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>

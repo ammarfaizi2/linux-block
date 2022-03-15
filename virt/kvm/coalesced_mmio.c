@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/gfp_api.h>
 #include <kvm/iodev.h>
 
 #include <linux/kvm_host.h>

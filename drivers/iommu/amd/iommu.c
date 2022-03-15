@@ -8,6 +8,7 @@
 #define pr_fmt(fmt)     "AMD-Vi: " fmt
 #define dev_fmt(fmt)    pr_fmt(fmt)
 
+#include <linux/gfp_api.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

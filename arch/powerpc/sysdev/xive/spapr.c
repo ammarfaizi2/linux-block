@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xive: " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/types.h>
 #include <linux/irq.h>

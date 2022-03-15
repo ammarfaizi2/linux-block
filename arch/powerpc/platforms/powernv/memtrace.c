@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "memtrace: " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitops.h>
 #include <linux/string.h>

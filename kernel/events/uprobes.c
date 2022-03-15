@@ -9,6 +9,7 @@
  * Copyright (C) 2011-2012 Red Hat, Inc., Peter Zijlstra
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

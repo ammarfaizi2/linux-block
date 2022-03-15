@@ -4,6 +4,7 @@
  * Copyright (C) 2002-2005 Eric Biederman  <ebiederm@xmission.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/mm.h>
 #include <linux/kexec.h>
 #include <linux/delay.h>

@@ -6,6 +6,7 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

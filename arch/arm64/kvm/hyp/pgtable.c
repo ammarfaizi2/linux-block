@@ -7,6 +7,7 @@
  * Author: Will Deacon <will@kernel.org>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/bitfield.h>
 #include <asm/kvm_pgtable.h>
 #include <asm/stage2_pgtable.h>

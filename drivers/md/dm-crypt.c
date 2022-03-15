@@ -7,6 +7,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/crc32.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

@@ -2,6 +2,7 @@
 /* Copyright(c) 1999 - 2006 Intel Corporation. */
 
 #include "e1000.h"
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

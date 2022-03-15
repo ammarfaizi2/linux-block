@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/capability.h>
 #include <linux/console.h>
 #include <linux/kernel.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2021 Intel Corporation. */
 
+#include <linux/gfp_api.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <asm/sgx.h>

@@ -9,6 +9,7 @@
  * by Yu Liu <yu.liu@freescale.com>.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/kvm_host.h>
 #include <linux/slab.h>
 #include <linux/err.h>

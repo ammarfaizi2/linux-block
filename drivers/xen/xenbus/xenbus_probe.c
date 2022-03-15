@@ -37,6 +37,7 @@
 	pr_debug("xenbus_probe (%s:%d) " fmt ".\n",	\
 		 __func__, __LINE__, ##args)
 
+#include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>

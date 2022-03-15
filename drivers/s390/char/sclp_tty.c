@@ -8,6 +8,7 @@
  *		 Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/kmod.h>
 #include <linux/tty.h>
 #include <linux/tty_driver.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2003-2006 Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/compiler.h>

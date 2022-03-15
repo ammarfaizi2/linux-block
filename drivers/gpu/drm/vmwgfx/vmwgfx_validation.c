@@ -25,6 +25,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include "vmwgfx_validation.h"

@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Shaohua Li <shli@fb.com>
  * Copyright (C) 2016 Song Liu <songliubraving@fb.com>
  */
+#include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

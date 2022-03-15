@@ -30,6 +30,7 @@
 #error "contiguous percpu allocation is incompatible with paged first chunk"
 #endif
 
+#include <linux/gfp_api.h>
 #include <linux/log2.h>
 
 static void pcpu_post_unmap_tlb_flush(struct pcpu_chunk *chunk,

@@ -40,6 +40,7 @@
  *
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
+#include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <asm/pgalloc.h>

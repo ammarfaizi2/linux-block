@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

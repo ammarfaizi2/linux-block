@@ -47,6 +47,7 @@
 
 *******************************************************************************/
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/types.h>

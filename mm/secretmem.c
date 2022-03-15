@@ -5,6 +5,7 @@
  * Author: Mike Rapoport <rppt@linux.ibm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/atomic_api.h>

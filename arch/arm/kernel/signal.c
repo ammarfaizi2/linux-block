@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2009 Russell King
  */
+#include <linux/gfp_api.h>
 #include <linux/capability.h>
 #include <linux/restart_block_api.h>
 #include <linux/errno.h>

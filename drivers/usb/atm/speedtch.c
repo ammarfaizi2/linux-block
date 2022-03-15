@@ -9,6 +9,7 @@
  *  Based on "modem_run.c", copyright (C) 2001, Benoit Papillault
  ******************************************************************************/
 
+#include <linux/gfp_api.h>
 #include <linux/delay.h>
 #include <asm/page.h>
 #include <linux/device.h>

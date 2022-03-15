@@ -38,6 +38,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/sched/cond_resched.h>

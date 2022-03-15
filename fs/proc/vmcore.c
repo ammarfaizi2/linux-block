@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <asm/elf_api.h>
 #include <linux/mm.h>

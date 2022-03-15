@@ -206,6 +206,7 @@ static int io;
 static int irq;
 static int dma;
 
+#include <linux/gfp_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

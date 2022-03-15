@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2016 Christoph Hellwig.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/vmalloc.h>
 
 #include "blocklayout.h"

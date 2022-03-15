@@ -13,6 +13,7 @@
  *  affs regular file handling primitives
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/atomic_api.h>

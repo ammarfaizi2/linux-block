@@ -15,6 +15,7 @@
 #define KMSG_COMPONENT "zram"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/cpumask_api.h>

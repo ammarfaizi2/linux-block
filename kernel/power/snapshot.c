@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "PM: hibernation: " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/version.h>
 #include <linux/module.h>

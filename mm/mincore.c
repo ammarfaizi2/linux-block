@@ -8,6 +8,7 @@
 /*
  * The mincore() system call.
  */
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pagemap.h>

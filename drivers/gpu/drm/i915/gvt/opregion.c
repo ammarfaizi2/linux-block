@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/acpi.h>
 #include "i915_drv.h"
 #include "gvt.h"

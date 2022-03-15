@@ -6,6 +6,7 @@
  * busses using the iommu infrastructure
  */
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dma-direct.h>
 #include <linux/pci.h>

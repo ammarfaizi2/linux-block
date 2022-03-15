@@ -15,6 +15,7 @@
  * (c) 2006 Ted Walther and John Sokol
  */
 
+#include <linux/gfp_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

@@ -10,6 +10,7 @@
  *  MSGTYPE restruct:		  Holger Dengler <hd@linux.vnet.ibm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

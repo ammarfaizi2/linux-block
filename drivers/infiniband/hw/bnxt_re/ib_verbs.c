@@ -36,6 +36,7 @@
  * Description: IB Verbs interpreter
  */
 
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>

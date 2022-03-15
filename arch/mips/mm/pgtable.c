@@ -3,6 +3,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/gfp_api.h>
 #include <linux/export.h>
 #include <linux/mm.h>
 #include <linux/string.h>

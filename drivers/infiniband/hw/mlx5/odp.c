@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <rdma/ib_umem.h>
 #include <rdma/ib_umem_odp.h>

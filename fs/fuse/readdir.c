@@ -8,6 +8,7 @@
 
 
 #include "fuse_i.h"
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>

@@ -13,6 +13,7 @@
  *	Hugh Dickins
  */
 
+#include <linux/gfp_api.h>
 #include <linux/dax.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

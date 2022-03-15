@@ -3,6 +3,7 @@
  * Copyright (C) 2011 Richard Weinberger <richrd@nod.at>
  */
 
+#include <linux/gfp_api.h>
 #include <asm/elf_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

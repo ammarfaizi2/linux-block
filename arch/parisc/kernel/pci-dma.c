@@ -18,6 +18,7 @@
 ** - ggg
 */
 
+#include <linux/gfp_api.h>
 #include <linux/init.h>
 #include <linux/gfp.h>
 #include <linux/mm.h>

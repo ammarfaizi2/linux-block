@@ -6,6 +6,7 @@
  * Author: Catalin Marinas <catalin.marinas@arm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/mm.h>
 #include <linux/gfp.h>
 #include <linux/highmem.h>

@@ -6,6 +6,7 @@
  *  Copyright (C) 2009 Marvell Semiconductor
  */
 
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/ctype.h>
 #include <linux/uaccess.h>

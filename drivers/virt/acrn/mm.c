@@ -9,6 +9,7 @@
  *	Shuo Liu <shuo.a.liu@intel.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/io.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

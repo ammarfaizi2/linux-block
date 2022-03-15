@@ -7,6 +7,7 @@
  * Author: Michael Holzheu <holzheu@linux.vnet.ibm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/compat.h>
 #include <linux/uaccess.h>

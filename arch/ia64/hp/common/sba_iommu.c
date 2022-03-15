@@ -16,6 +16,7 @@
 **
 */
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/types.h>

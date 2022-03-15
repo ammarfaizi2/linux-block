@@ -7,6 +7,7 @@
  *  Copyright (C) 2002,2003 Andi Kleen <ak@suse.de>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <linux/signal.h>

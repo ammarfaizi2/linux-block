@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "ACPI: PM: " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/list.h>

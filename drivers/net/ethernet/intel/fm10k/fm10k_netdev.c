@@ -2,6 +2,7 @@
 /* Copyright(c) 2013 - 2019 Intel Corporation. */
 
 #include "fm10k.h"
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

@@ -38,6 +38,7 @@
  *	zspage->lock
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/bit_spinlock.h>

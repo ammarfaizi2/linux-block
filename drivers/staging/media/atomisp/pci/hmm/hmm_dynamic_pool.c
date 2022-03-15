@@ -20,6 +20,7 @@
 /*
  * This file contains functions for dynamic memory pool management
  */
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

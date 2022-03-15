@@ -9,6 +9,7 @@
  * pool of pages per node.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/types.h>

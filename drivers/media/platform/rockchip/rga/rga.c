@@ -4,6 +4,7 @@
  * Author: Jacob Chen <jacob-chen@iotwrt.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

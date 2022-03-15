@@ -7,6 +7,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/gfp_api.h>
 #include <asm/cacheflush.h>
 #include <linux/compiler.h>
 #include <linux/netdevice.h>

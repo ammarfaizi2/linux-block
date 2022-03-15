@@ -5,6 +5,7 @@
  *  Copyright (C) 2012 Simo Sorce <simo@redhat.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/types.h>
 #include <linux/un.h>
 

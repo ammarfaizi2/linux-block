@@ -7,6 +7,7 @@
  * Copyright (C) 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

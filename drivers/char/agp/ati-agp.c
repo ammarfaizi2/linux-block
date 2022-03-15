@@ -2,6 +2,7 @@
  * ATi AGPGART routines.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/device_api.h>
 #include <linux/types.h>
 #include <linux/module.h>

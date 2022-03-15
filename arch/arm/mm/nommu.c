@@ -4,6 +4,7 @@
  *
  * ARM uCLinux supporting functions.
  */
+#include <linux/gfp_api.h>
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/pagemap.h>

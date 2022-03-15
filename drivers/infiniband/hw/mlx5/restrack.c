@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2020, Mellanox Technologies Ltd. All rights reserved.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <uapi/rdma/rdma_netlink.h>
 #include <linux/mlx5/rsc_dump.h>

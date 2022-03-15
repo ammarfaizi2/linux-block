@@ -48,6 +48,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sw842.h>
 #include <linux/spinlock.h>

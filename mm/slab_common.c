@@ -4,6 +4,7 @@
  *
  * (C) 2012 Christoph Lameter <cl@linux.com>
  */
+#include <linux/gfp_api.h>
 #include <linux/error-injection.h>
 #include <linux/slab.h>
 

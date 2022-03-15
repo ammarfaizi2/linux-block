@@ -3,6 +3,7 @@
  * Copyright 2021 Google LLC.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/init.h>
 #include <linux/highmem.h>
 #include <linux/kobject.h>

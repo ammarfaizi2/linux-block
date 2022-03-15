@@ -20,6 +20,7 @@
 /*
  * This file contains functions for buffer object structure management
  */
+#include <linux/gfp_api.h>
 #include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
