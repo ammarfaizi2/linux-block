@@ -7,6 +7,7 @@
 #ifndef _HFI1_KERNEL_H
 #define _HFI1_KERNEL_H
 
+#include <linux/cred.h>
 #include <linux/refcount.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>

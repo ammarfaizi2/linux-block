@@ -7,6 +7,7 @@
  */
 #ifndef _CIFSPROTO_H
 #define _CIFSPROTO_H
+#include <linux/cred.h>
 #include <linux/nls.h>
 #include "trace.h"
 #ifdef CONFIG_CIFS_DFS_UPCALL
