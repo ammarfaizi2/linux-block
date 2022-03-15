@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/mmu_notifier.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
