@@ -33,6 +33,7 @@
 
 #define pr_fmt(fmt)	"ACPI CPPC: " fmt
 
+#include <linux/rwsem_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kobject_api.h>
 #include <linux/io.h>

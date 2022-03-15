@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/rwsem_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>

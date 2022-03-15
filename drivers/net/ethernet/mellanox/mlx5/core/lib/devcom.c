@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2018 Mellanox Technologies */
 
+#include <linux/rwsem_api.h>
 #include <linux/mlx5/vport.h>
 #include "lib/devcom.h"
 

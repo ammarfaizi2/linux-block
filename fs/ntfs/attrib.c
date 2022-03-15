@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/pagemap.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

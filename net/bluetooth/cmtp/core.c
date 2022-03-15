@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/rwsem_api.h>
 #include <linux/net.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

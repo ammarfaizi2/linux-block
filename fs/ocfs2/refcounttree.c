@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Oracle.  All rights reserved.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>

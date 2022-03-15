@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>

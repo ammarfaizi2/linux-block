@@ -7,6 +7,7 @@
  * Copyright (C) 2003, 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>

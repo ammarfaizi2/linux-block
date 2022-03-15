@@ -5,6 +5,7 @@
  *	       Martin Schwidefsky <schwidefsky@de.ibm.com>,
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>

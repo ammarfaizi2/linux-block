@@ -5,6 +5,7 @@
  * Copyright (c) 2001-2015 Anton Altaparmakov and Tuxera Inc.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

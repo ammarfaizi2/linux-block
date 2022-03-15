@@ -14,6 +14,7 @@
  * Link to conversion tool: https://github.com/jlabundy/iqs62x-h2bin.git
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

@@ -9,6 +9,7 @@
  * battery charging and regulator control, firmware update.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

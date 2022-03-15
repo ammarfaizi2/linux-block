@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/rwsem_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

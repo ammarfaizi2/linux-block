@@ -23,6 +23,7 @@
  * formats.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/ptrace_api.h>

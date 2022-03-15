@@ -44,6 +44,7 @@
  *  see sem_lock().
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/pid_namespace.h>
 #include <linux/idr_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2015 Scott Feldman <sfeldma@gmail.com>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/log2.h>

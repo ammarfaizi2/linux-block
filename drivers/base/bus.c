@@ -8,6 +8,7 @@
  * Copyright (c) 2007 Novell Inc.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

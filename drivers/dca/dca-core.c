@@ -7,6 +7,7 @@
  * This driver supports an interface for DCA clients and providers to meet.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/kernel.h>
 #include <linux/notifier.h>

@@ -8,6 +8,7 @@
  * Copyright (c) 2005 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/atomic.h>
 #include <linux/init.h>

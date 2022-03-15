@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mm_api.h>
 #include <linux/capability.h>
 #include <linux/user_namespace.h>

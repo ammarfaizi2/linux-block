@@ -28,6 +28,7 @@
  * 64 bits is enough to never overflow.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/sched/cond_resched.h>

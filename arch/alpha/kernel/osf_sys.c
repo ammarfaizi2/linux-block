@@ -11,6 +11,7 @@
  * special parameter blocks..
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/poll_time.h>
 #include <linux/mm_api.h>

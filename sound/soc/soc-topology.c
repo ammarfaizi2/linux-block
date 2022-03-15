@@ -20,6 +20,7 @@
 //  This file only manages the core ALSA and ASoC components, all other bespoke
 //  firmware topology data is passed to component drivers for bespoke handling.
 
+#include <linux/rwsem_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

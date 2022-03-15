@@ -6,6 +6,7 @@
 
 #define INCLUDE_VERMAGIC
 
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_latch.h>
 #include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

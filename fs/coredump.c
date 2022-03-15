@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/ptrace_api.h>
 #include <linux/mmap_lock.h>

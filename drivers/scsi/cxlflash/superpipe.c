@@ -8,6 +8,7 @@
  * Copyright (C) 2015 IBM Corporation
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

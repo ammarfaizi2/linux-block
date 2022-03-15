@@ -8,6 +8,7 @@
  * Revised by Ryusuke Konishi.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>

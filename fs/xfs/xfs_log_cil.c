@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Red Hat, Inc. All Rights Reserved.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/atomic_api.h>
 

@@ -20,6 +20,7 @@
  *   Copyright (C) 1991, 1992 Linus Torvalds
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>

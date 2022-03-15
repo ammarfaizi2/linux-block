@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

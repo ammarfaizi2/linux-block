@@ -11,6 +11,7 @@
 #include "peer.h"
 #include "messages.h"
 
+#include <linux/rwsem_api.h>
 #include <linux/percpu.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_pcpu_stats.h>

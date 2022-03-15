@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>

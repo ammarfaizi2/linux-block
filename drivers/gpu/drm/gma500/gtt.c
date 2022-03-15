@@ -7,6 +7,7 @@
  *	    Alan Cox <alan@linux.intel.com>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

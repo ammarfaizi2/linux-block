@@ -25,6 +25,7 @@
  *                             devices. All mtu based now.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>

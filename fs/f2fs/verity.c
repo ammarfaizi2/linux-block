@@ -24,6 +24,7 @@
  * since there can be a hole between i_size and the start of the Merkle tree.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_page_address.h>

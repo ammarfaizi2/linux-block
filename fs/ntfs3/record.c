@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs.h>
 
 #include "debug.h"

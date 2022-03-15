@@ -10,6 +10,7 @@
  * License.  See the file COPYING in the main directory of this archive
  * for more details.
  */
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/fb.h>
 #include <linux/notifier.h>

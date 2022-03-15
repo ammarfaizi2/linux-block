@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/rwsem_api.h>
 #include <linux/kmod.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

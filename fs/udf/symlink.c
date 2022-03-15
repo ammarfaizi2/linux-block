@@ -20,6 +20,7 @@
  */
 
 #include "udfdecl.h"
+#include <linux/rwsem_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

@@ -5,6 +5,7 @@
  *  Author: Eric Biederman <ebiederm@xmision.com>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/init.h>
 #include <linux/export.h>
 #include <linux/uts.h>

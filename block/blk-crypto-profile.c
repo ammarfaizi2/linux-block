@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt) "blk-crypto: " fmt
 
+#include <linux/rwsem_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/hash.h>
 #include <linux/device_api_lock.h>

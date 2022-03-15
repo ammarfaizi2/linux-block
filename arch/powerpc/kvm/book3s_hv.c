@@ -15,6 +15,7 @@
  * by Alexander Graf <agraf@suse.de>.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rcuwait_api.h>
 #include <linux/random.h>
 #include <linux/prefetch.h>

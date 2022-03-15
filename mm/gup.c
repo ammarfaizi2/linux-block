@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/rwsem_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/pgtable_api_access.h>
 #include <linux/pagefault_ctrl.h>

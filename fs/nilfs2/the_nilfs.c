@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>

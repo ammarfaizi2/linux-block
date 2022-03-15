@@ -5,6 +5,7 @@
  * Encryption hooks for higher-level filesystem operations.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/delayed_call.h>
 #include <linux/dcache.h>

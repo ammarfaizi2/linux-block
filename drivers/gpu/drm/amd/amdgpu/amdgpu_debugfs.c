@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>

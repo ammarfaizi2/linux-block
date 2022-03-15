@@ -15,6 +15,7 @@
 #include "matroxfb_crtc2.h"
 #include "matroxfb_misc.h"
 #include "matroxfb_DAC1064.h"
+#include <linux/rwsem_api.h>
 #include <linux/matroxfb.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>

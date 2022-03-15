@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rwsem_api.h>
 #include <linux/pagemap.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api_kvmalloc.h>

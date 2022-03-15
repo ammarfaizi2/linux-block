@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)     "DMAR: " fmt
 
+#include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/notifier_api.h>
 #include <linux/mm_page_address.h>

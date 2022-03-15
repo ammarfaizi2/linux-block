@@ -10,6 +10,7 @@
  *
  * Ext4 extents status tree core functions.
  */
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/math64.h>

@@ -9,6 +9,7 @@
  * This file implements various helper functions for UBIFS authentication support
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/crypto.h>
 #include <linux/verification.h>
 #include <crypto/hash.h>

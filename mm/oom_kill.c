@@ -18,6 +18,7 @@
  *  kernel subsystems and hints as to where to find out what things do.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/pid.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

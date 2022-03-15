@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

@@ -11,6 +11,7 @@
  */
 
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

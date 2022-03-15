@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>

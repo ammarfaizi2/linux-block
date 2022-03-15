@@ -4,6 +4,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/list_bl_api.h>

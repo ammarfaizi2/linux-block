@@ -4,6 +4,7 @@
  * Copyright 2016 Google Inc.
  * Copyright 2016 Linaro Ltd.
  */
+#include <linux/rwsem_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

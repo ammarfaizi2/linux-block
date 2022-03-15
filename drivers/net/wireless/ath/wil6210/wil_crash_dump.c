@@ -5,6 +5,7 @@
  */
 
 #include "wil6210.h"
+#include <linux/rwsem_api.h>
 #include <linux/devcoredump.h>
 
 static int wil_fw_get_crash_dump_bounds(struct wil6210_priv *wil,

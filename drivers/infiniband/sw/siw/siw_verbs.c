@@ -3,6 +3,7 @@
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
+#include <linux/rwsem_api.h>
 #include <linux/random.h>
 #include <linux/mm_api.h>
 #include <linux/atomic_api.h>

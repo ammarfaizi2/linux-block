@@ -5,6 +5,7 @@
  * Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/notifier_api.h>
 #include <linux/kmod.h>

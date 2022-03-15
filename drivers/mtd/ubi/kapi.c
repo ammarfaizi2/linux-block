@@ -7,6 +7,7 @@
 
 /* This file mostly implements UBI kernel API functions */
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

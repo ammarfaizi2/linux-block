@@ -10,6 +10,7 @@
  * and Nettle, by Niels Möller.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/notifier_api.h>
 #include <linux/err.h>

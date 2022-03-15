@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/highmem.h>

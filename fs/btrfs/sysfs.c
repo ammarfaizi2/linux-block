@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>

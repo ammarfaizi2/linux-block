@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

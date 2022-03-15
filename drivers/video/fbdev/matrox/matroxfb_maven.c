@@ -16,6 +16,7 @@
 #include "matroxfb_maven.h"
 #include "matroxfb_misc.h"
 #include "matroxfb_DAC1064.h"
+#include <linux/rwsem_api.h>
 #include <linux/device_api.h>
 #include <linux/i2c.h>
 #include <linux/matroxfb.h>

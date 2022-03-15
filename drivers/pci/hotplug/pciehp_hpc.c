@@ -14,6 +14,7 @@
 
 #define dev_fmt(fmt) "pciehp: " fmt
 
+#include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/hardirq.h>
 #include <linux/delay.h>

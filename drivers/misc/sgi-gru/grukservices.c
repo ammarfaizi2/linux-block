@@ -7,6 +7,7 @@
  *  Copyright (c) 2008 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

@@ -20,6 +20,7 @@
  * must be negotiated with the underlying OS.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/pci.h>

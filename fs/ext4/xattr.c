@@ -51,6 +51,7 @@
  * by the buffer lock.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
 #include <linux/list_bl_api.h>

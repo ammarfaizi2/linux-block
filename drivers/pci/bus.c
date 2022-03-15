@@ -6,6 +6,7 @@
  *	David Miller (davem@redhat.com)
  *	Ivan Kokshaysky (ink@jurassic.park.msu.ru)
  */
+#include <linux/rwsem_api.h>
 #include <linux/resource_ext_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

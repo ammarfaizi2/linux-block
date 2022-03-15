@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright(c) 2020 Intel Corporation. All rights reserved. */
+#include <linux/rwsem_api.h>
 #include <linux/range.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

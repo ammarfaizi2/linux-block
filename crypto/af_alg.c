@@ -7,6 +7,7 @@
  * Copyright (c) 2010 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/kmod.h>

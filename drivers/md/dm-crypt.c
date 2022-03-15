@@ -7,6 +7,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/random.h>
 #include <linux/pgtable_api.h>

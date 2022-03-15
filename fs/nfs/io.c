@@ -5,6 +5,7 @@
  * I/O and data path helper functionality.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/types.h>

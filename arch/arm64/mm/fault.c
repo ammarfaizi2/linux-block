@@ -7,6 +7,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>

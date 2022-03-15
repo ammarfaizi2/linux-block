@@ -168,6 +168,7 @@
 /* #define VERBOSE_DEBUG */
 /* #define DUMP_MSGS */
 
+#include <linux/rwsem_api.h>
 #include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

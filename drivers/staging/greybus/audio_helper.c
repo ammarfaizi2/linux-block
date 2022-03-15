@@ -3,6 +3,7 @@
  * Greybus Audio Sound SoC helper APIs
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/debugfs.h>
 #include <sound/core.h>

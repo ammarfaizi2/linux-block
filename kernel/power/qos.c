@@ -20,6 +20,7 @@
 
 /*#define DEBUG*/
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/fs_api.h>
 #include <linux/pm_qos.h>
