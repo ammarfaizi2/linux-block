@@ -9,6 +9,7 @@
 #ifndef __NET_CFG802154_H
 #define __NET_CFG802154_H
 
+#include <net/net_namespace.h>
 #include <linux/ieee802154.h>
 #include <linux/netdevice.h>
 #include <linux/mutex.h>

@@ -9,6 +9,7 @@
 #ifndef _NET_DST_H
 #define _NET_DST_H
 
+#include <net/net_namespace.h>
 #include <linux/skbuff_api.h>
 #include <net/dst_ops.h>
 #include <linux/netdevice.h>
