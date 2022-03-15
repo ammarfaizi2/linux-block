@@ -26,6 +26,7 @@
  *		<arjan@infradead.org> and Jim Keniston <jkenisto@us.ibm.com>
  *		unified x86 kprobes code.
  */
+#include <asm/ptrace.h>
 #include <linux/kprobes.h>
 #include <linux/ptrace.h>
 #include <linux/string.h>

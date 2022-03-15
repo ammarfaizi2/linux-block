@@ -6,6 +6,7 @@
  * Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
  */
 
+#include <asm/ptrace.h>
 #include <linux/uaccess.h>
 #include <asm/umip.h>
 #include <asm/traps.h>

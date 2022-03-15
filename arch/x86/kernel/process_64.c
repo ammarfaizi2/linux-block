@@ -15,6 +15,7 @@
  * This file handles the architecture-dependent parts of process handling..
  */
 
+#include <asm/ptrace.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <asm/elf_api.h>

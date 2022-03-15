@@ -12,6 +12,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <asm/ptrace.h>
 #include <asm/msr.h>
 #include <asm/local64_api.h>
 #include <linux/perf_event.h>

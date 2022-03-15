@@ -16,6 +16,7 @@
  *   Ben-Ami Yassour <benami@il.ibm.com>
  */
 
+#include <asm/ptrace.h>
 #include <linux/kvm_host.h>
 #include "irq.h"
 #include "ioapic.h"

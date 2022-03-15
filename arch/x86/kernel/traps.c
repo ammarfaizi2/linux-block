@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/ptrace.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <asm/math_emu.h>
