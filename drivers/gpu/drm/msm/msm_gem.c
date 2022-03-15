@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-map-ops.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock.h>

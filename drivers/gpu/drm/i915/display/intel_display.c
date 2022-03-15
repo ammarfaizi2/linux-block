@@ -24,6 +24,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <acpi/video.h>

@@ -22,6 +22,8 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/dma-fence-api.h>
+
 #include "amdgpu.h"
 #include "amdgpu_trace.h"
 #include "si.h"

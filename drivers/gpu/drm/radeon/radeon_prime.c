@@ -24,6 +24,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-buf.h>
 
 #include <drm/drm_prime.h>

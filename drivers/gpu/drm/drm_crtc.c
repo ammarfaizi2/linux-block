@@ -29,6 +29,7 @@
  *      Dave Airlie <airlied@linux.ie>
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
+#include <linux/dma-fence-api.h>
 #include <linux/device_api_lock.h>
 #include <linux/ctype.h>
 #include <linux/list.h>

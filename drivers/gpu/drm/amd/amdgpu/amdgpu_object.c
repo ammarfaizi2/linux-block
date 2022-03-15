@@ -29,6 +29,7 @@
  *    Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
  *    Dave Airlie
  */
+#include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <linux/list.h>
 #include <linux/slab.h>

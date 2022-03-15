@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/delay.h>
 #include <linux/dma-fence.h>
 #include <linux/kernel.h>

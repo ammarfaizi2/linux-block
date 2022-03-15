@@ -27,6 +27,7 @@
 #include "amdgpu.h"
 #include "amdgpu_gfx.h"
 #include "amdgpu_dma_buf.h"
+#include <linux/dma-fence-api.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/dma-buf.h>

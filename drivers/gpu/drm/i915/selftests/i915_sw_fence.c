@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/prime_numbers.h>

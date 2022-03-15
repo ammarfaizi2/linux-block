@@ -183,6 +183,7 @@
  * point 0 to mean take/replace the fence in the syncobj.
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/anon_inodes.h>
 #include <linux/file.h>
 #include <linux/fs.h>

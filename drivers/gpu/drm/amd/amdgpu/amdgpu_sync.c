@@ -28,6 +28,7 @@
  *    Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-fence-chain.h>
 
 #include "amdgpu.h"

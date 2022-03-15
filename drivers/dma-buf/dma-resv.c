@@ -33,6 +33,7 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-resv.h>
 #include <linux/export.h>
 #include <linux/mm.h>

@@ -25,6 +25,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <linux/file.h>
 #include <linux/pagemap.h>

@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_gem_ttm_helper.h>
 

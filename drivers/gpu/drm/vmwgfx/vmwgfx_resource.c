@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <linux/dma-fence-api.h>
 #include <drm/ttm/ttm_placement.h>
 
 #include "vmwgfx_resource_priv.h"
