@@ -33,6 +33,7 @@
 #ifndef __LIB_CLOCK_H__
 #define __LIB_CLOCK_H__
 
+#include <linux/seqlock_api.h>
 #include <linux/types.h>
 
 static inline bool mlx5_is_real_time_rq(struct mlx5_core_dev *mdev)
