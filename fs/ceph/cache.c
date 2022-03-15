@@ -6,6 +6,7 @@
  *  Written by Milosz Tanski (milosz@adfin.com)
  */
 
+#include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>
 #include <linux/ceph/ceph_debug.h>
 

@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

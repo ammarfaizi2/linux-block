@@ -15,6 +15,7 @@
 /* [Feb-Apr 2000, AV] Rewrite to the new namespace architecture.
  */
 
+#include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>
 #include <linux/delayed_call.h>
 #include <linux/dcache.h>
