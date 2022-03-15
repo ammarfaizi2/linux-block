@@ -10,6 +10,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
+#include <linux/sizes.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>

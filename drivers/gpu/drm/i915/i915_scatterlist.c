@@ -9,6 +9,7 @@
 #include "i915_buddy.h"
 #include "i915_ttm_buddy_manager.h"
 
+#include <linux/sizes.h>
 #include <linux/scatterlist_api.h>
 #include <drm/drm_mm.h>
 

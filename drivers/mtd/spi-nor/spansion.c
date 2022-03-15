@@ -4,6 +4,7 @@
  * Copyright (C) 2014, Freescale Semiconductor, Inc.
  */
 
+#include <linux/sizes.h>
 #include <linux/mm_api.h>
 #include <linux/mtd/spi-nor.h>
 
