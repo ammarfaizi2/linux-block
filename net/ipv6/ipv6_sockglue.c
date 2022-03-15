@@ -18,6 +18,7 @@
  *		- added multicast source filtering API for MLDv2
  */
 
+#include <net/ipv6_api_sock.h>
 #include <net/ipv6_api.h>
 #include <net/inet_ecn.h>
 #include <net/dst_api.h>

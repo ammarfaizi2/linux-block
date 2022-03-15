@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/ipv6_api_sock.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
