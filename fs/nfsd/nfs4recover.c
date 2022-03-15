@@ -32,6 +32,7 @@
 *
 */
 
+#include <linux/umh.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
