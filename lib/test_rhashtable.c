@@ -10,6 +10,7 @@
  * Self Test
  **************************************************************************/
 
+#include <linux/numa.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/ktime_api.h>
