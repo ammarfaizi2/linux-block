@@ -15,6 +15,7 @@
  * This file handles the architecture-dependent parts of process handling..
  */
 
+#include <asm/segment_api.h>
 #include <asm/ptrace.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>
