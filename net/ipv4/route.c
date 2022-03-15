@@ -60,6 +60,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <net/dst_ops_api.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

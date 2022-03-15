@@ -10,6 +10,7 @@
  *	Lennert dedicates this file to Kerstin Wurdinger.
  */
 
+#include <net/dst_ops_api.h>
 #include <net/dst_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
