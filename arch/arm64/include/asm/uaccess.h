@@ -7,6 +7,7 @@
 #ifndef __ASM_UACCESS_H
 #define __ASM_UACCESS_H
 
+#include <asm/processor.h>
 #include <linux/sched/task_flags.h>
 #include <asm/alternative.h>
 #include <asm/kernel-pgtable.h>
