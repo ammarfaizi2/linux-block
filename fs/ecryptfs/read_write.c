@@ -6,6 +6,7 @@
  *   Author(s): Michael A. Halcrow <mahalcro@us.ibm.com>
  */
 
+#include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>
 #include <linux/sched/signal.h>

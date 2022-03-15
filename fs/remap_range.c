@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <asm/cacheflush.h>
 #include <linux/slab.h>
 #include <linux/stat.h>
 #include <linux/sched/xacct.h>

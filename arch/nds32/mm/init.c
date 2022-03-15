@@ -3,6 +3,7 @@
 // Copyright (C) 2012 ARM Ltd.
 // Copyright (C) 2013-2017 Andes Technology Corporation
 
+#include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/swap.h>

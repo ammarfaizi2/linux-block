@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <asm/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/page-flags.h>
 #include <linux/pagemap.h>

@@ -4,6 +4,7 @@
  * Author: Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
+#include <asm/cacheflush.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

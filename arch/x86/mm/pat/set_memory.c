@@ -3,6 +3,7 @@
  * Copyright 2002 Andi Kleen, SuSE Labs.
  * Thanks to Ben LaHaise for precious feedback.
  */
+#include <asm/cacheflush.h>
 #include <linux/highmem.h>
 #include <linux/memblock.h>
 #include <linux/sched.h>

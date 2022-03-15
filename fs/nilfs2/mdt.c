@@ -7,6 +7,7 @@
  * Written by Ryusuke Konishi.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/buffer_head.h>
 #include <linux/mpage.h>
 #include <linux/mm.h>

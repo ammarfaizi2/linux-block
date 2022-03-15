@@ -27,6 +27,7 @@
  * 16 KiB.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/vfs.h>
 #include <linux/kernel.h>

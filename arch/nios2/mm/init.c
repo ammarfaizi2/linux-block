@@ -12,6 +12,7 @@
  * for more details.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/signal.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

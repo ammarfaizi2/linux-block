@@ -6,6 +6,7 @@
  *
  */
 
+#include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/bug.h>
 #include <linux/mm_types.h>

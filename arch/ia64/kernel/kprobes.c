@@ -10,6 +10,7 @@
  *              <anil.s.keshavamurthy@intel.com> adapted from i386
  */
 
+#include <asm/cacheflush.h>
 #include <linux/kprobes.h>
 #include <linux/ptrace.h>
 #include <linux/string.h>

@@ -2,6 +2,7 @@
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
+#include <asm/cacheflush.h>
 #include <linux/capability.h>
 #include <linux/fs.h>
 #include <linux/mount.h>

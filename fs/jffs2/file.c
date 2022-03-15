@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/time.h>

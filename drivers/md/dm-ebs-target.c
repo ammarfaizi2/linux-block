@@ -10,6 +10,7 @@
  */
 
 #include "dm.h"
+#include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/workqueue.h>
 #include <linux/dm-bufio.h>

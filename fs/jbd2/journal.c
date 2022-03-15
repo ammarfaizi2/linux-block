@@ -19,6 +19,7 @@
  * journaling (ext2 can use a reserved inode for storing the log).
  */
 
+#include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/time.h>
 #include <linux/fs.h>

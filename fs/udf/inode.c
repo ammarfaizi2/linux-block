@@ -30,6 +30,7 @@
  */
 
 #include "udfdecl.h"
+#include <asm/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/module.h>
 #include <linux/pagemap.h>

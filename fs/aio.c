@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/errno.h>

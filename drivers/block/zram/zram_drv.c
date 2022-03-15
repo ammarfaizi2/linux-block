@@ -15,6 +15,7 @@
 #define KMSG_COMPONENT "zram"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/bio.h>

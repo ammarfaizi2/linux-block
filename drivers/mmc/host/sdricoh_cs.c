@@ -10,6 +10,7 @@
 #define DEBUG
 #define VERBOSE_DEBUG
 */
+#include <asm/cacheflush.h>
 #include <linux/delay.h>
 #include <linux/highmem.h>
 #include <linux/module.h>

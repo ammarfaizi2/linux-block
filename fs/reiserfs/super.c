@@ -11,6 +11,7 @@
  * NO WARRANTY
  */
 
+#include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>

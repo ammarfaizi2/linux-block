@@ -2,6 +2,7 @@
 /*
  *  Implementation of operations over global quota file
  */
+#include <asm/cacheflush.h>
 #include <linux/spinlock.h>
 #include <linux/fs.h>
 #include <linux/slab.h>

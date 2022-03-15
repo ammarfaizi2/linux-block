@@ -39,6 +39,7 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
+#include <asm/cacheflush.h>
 #include <linux/io-mapping.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel_stat.h>

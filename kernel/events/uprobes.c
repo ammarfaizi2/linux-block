@@ -9,6 +9,7 @@
  * Copyright (C) 2011-2012 Red Hat, Inc., Peter Zijlstra
  */
 
+#include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/highmem.h>
 #include <linux/pagemap.h>	/* read_mapping_page */

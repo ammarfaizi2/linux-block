@@ -20,6 +20,7 @@
 /*
  * This file contains entry functions for memory management of ISP driver
  */
+#include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

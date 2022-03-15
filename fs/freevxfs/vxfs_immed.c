@@ -30,6 +30,7 @@
 /*
  * Veritas filesystem driver - support for 'immed' inodes.
  */
+#include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>
 

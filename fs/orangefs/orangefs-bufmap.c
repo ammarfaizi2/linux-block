@@ -4,6 +4,8 @@
  *
  * See COPYING in top-level directory.
  */
+#include <asm/cacheflush.h>
+
 #include "protocol.h"
 #include "orangefs-kernel.h"
 #include "orangefs-bufmap.h"

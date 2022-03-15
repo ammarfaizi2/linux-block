@@ -19,6 +19,7 @@
  *   <gilles.quillard@bull.net>
  */
 
+#include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/string.h>

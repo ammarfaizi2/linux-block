@@ -12,6 +12,7 @@
 /*
  * This handles all read/write requests to block devices
  */
+#include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/bio.h>

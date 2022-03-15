@@ -7,6 +7,7 @@
 
 #ifdef NTFS_RW
 
+#include <asm/cacheflush.h>
 #include <linux/pagemap.h>
 
 #include "bitmap.h"
