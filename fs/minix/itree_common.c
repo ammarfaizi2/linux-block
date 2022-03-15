@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Generic part */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 
 typedef struct {

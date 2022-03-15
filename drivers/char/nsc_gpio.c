@@ -8,6 +8,7 @@
    Copyright (c) 2005      Jim Cromie <jim.cromie@gmail.com>
 */
 
+#include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <linux/fs.h>
 #include <linux/module.h>

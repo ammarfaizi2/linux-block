@@ -24,6 +24,7 @@
 /*
  * RFCOMM sockets.
  */
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/compat.h>

@@ -7,6 +7,7 @@
 
 #define RTC_VERSION		"1.00"
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>

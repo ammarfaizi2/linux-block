@@ -9,6 +9,7 @@
  *   		Michael C. Thompson <mcthomps@us.ibm.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <crypto/hash.h>
 #include <crypto/skcipher.h>

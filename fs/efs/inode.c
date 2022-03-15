@@ -8,6 +8,7 @@
  *              and from work (c) 1998 Mike Shaver.
  */
 
+#include <linux/fs_api.h>
 #include <linux/buffer_head.h>
 #include <linux/module.h>
 #include <linux/fs.h>

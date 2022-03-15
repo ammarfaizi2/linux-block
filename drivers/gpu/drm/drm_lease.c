@@ -2,6 +2,7 @@
 /*
  * Copyright © 2017 Keith Packard <keithp@keithp.com>
  */
+#include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/uaccess.h>
 

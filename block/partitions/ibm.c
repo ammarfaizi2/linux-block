@@ -6,6 +6,7 @@
  * Copyright IBM Corp. 1999, 2012
  */
 
+#include <linux/fs_api.h>
 #include <linux/buffer_head.h>
 #include <linux/hdreg.h>
 #include <linux/slab.h>

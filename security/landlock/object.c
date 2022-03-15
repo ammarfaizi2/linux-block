@@ -6,6 +6,7 @@
  * Copyright © 2018-2020 ANSSI
  */
 
+#include <linux/fs_api.h>
 #include <linux/bug.h>
 #include <linux/compiler_types.h>
 #include <linux/err.h>

@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob@ti.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/dma-mapping.h>
 #include <linux/platform_device.h>

@@ -23,6 +23,7 @@
  * formats.
  */
 
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
 #include <asm/cacheflush.h>

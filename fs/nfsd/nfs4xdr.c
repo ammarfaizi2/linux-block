@@ -33,6 +33,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/file.h>
 #include <linux/slab.h>

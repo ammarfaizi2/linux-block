@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pagevec.h>

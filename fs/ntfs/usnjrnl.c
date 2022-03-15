@@ -8,6 +8,7 @@
 
 #ifdef NTFS_RW
 
+#include <linux/fs_api.h>
 #include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/highmem.h>

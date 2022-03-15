@@ -3,6 +3,7 @@
    (C) 1996 Peter Braam
    */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/time.h>

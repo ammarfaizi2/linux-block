@@ -3,6 +3,7 @@
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/netlink.h>

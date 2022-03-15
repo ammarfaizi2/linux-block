@@ -4,6 +4,7 @@
  * Copyright (C) 2001 - 2008 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/fs_api.h>
 #include <linux/console.h>
 #include <linux/ctype.h>
 #include <linux/string.h>

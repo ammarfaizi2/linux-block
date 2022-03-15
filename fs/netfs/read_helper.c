@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/fs_api.h>
 #include <linux/cacheflush.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

@@ -20,6 +20,7 @@
  *   Copyright (C) 1991, 1992 Linux Torvalds
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/types.h>

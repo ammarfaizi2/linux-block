@@ -6,6 +6,7 @@
 //
 // Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
 
+#include <linux/fs_api.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>
 #include <linux/debugfs.h>

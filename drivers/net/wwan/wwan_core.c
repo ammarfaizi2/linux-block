@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2021, Linaro Ltd <loic.poulain@linaro.org> */
 
+#include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

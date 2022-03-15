@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/blkdev.h>
 #include <linux/module.h>

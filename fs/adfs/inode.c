@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1997-1999 Russell King
  */
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/buffer_head.h>
 #include <linux/writeback.h>

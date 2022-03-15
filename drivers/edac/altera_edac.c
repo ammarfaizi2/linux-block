@@ -5,6 +5,7 @@
  *  Copyright 2011-2012 Calxeda, Inc.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>

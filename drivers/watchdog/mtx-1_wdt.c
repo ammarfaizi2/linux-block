@@ -25,6 +25,7 @@
  *      it MUST be triggered every 2..95 seconds.
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/types.h>

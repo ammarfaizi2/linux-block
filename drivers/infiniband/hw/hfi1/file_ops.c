@@ -4,6 +4,7 @@
  * Copyright(c) 2015-2020 Intel Corporation.
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/poll.h>
 #include <linux/cdev.h>

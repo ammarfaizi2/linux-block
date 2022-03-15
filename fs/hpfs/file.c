@@ -8,6 +8,7 @@
  */
 
 #include "hpfs_fn.h"
+#include <linux/fs_api.h>
 #include <linux/mpage.h>
 #include <linux/iomap.h>
 #include <linux/fiemap.h>

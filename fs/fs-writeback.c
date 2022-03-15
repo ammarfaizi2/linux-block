@@ -14,6 +14,7 @@
  *		Additions for address_space-based writeback
  */
 
+#include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>

@@ -176,6 +176,7 @@
  * root@peer# head -c 7 $DBG_DIR/peer0/peer_mw0
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/align.h>
 #include <linux/init.h>

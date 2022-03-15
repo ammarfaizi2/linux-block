@@ -9,6 +9,7 @@
 
 #include "debugfs.h"
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>

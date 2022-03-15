@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <asm/cacheflush.h>
 #include <linux/init.h>
 #include <linux/signal.h>

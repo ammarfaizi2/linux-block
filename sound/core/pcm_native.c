@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/compat.h>
 #include <linux/mm.h>

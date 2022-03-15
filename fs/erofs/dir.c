@@ -3,6 +3,7 @@
  * Copyright (C) 2017-2018 HUAWEI, Inc.
  *             https://www.huawei.com/
  */
+#include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 
 #include "internal.h"

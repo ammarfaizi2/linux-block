@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
+#include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

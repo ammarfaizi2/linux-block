@@ -12,6 +12,7 @@
  * e-mail - mail your message to Paul Stewart <stewart@wetlogic.net>
  */
 
+#include <linux/fs_api.h>
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/sched/signal.h>

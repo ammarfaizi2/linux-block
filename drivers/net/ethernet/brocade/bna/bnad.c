@@ -8,6 +8,7 @@
  * All rights reserved
  * www.qlogic.com
  */
+#include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>

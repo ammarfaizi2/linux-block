@@ -10,6 +10,7 @@
  *  Rajan Vaja <rajanv@xilinx.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/compiler.h>
 #include <linux/module.h>
 #include <linux/slab.h>

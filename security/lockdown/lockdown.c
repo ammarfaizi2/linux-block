@@ -10,6 +10,7 @@
  * 2 of the Licence, or (at your option) any later version.
  */
 
+#include <linux/fs_api.h>
 #include <linux/security.h>
 #include <linux/export.h>
 #include <linux/lsm_hooks.h>

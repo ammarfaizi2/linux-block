@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/fs_api.h>
 #include <linux/export.h>
 
 #include <linux/types.h>

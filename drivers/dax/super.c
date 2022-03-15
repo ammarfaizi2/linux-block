@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2017 Intel Corporation. All rights reserved.
  */
+#include <linux/fs_api.h>
 #include <linux/pagemap.h>
 #include <linux/module.h>
 #include <linux/mount.h>

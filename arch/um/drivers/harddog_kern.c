@@ -34,6 +34,7 @@
  *	Added WDIOC_GETTIMEOUT and WDIOC_SETTIMOUT.
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

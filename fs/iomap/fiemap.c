@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016-2021 Christoph Hellwig.
  */
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/compiler.h>
 #include <linux/fs.h>

@@ -4,6 +4,7 @@
  * Phillip Lougher <phillip@squashfs.org.uk>
  */
 
+#include <linux/fs_api.h>
 #include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/vfs.h>

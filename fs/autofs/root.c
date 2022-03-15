@@ -5,6 +5,7 @@
  * Copyright 2001-2006 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/compat.h>

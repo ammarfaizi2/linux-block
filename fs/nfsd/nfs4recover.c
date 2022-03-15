@@ -32,6 +32,7 @@
 *
 */
 
+#include <linux/fs_api.h>
 #include <linux/delay.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>

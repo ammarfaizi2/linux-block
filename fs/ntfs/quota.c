@@ -8,6 +8,8 @@
 
 #ifdef NTFS_RW
 
+#include <linux/fs_api.h>
+
 #include "index.h"
 #include "quota.h"
 #include "debug.h"

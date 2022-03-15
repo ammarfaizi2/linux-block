@@ -10,6 +10,7 @@
  * 0x80 writes made by the BIOS during the boot process.
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

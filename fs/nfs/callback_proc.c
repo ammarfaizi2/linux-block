@@ -7,6 +7,7 @@
  * NFSv4 callback procedures
  */
 
+#include <linux/fs_api.h>
 #include <linux/errno.h>
 #include <linux/math.h>
 #include <linux/nfs4.h>

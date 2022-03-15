@@ -7,6 +7,7 @@
  * Copyright (C) Purism SPC 2019
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>

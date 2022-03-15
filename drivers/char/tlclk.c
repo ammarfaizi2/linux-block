@@ -27,6 +27,7 @@
  * MPCBL0010 ATCA computer.
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>	/* printk() */

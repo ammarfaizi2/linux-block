@@ -3,6 +3,7 @@
  * Copyright (C) 2004, OGAWA Hirofumi
  */
 
+#include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>

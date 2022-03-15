@@ -5,6 +5,7 @@
  * Copyright (c) 2000 Eric Brower (ebrower@usa.net)
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>

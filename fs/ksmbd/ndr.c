@@ -4,6 +4,7 @@
  *   Author(s): Namjae Jeon <linkinjeon@kernel.org>
  */
 
+#include <linux/fs_api.h>
 #include <linux/align.h>
 #include <linux/fs.h>
 

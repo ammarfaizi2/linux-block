@@ -6,6 +6,7 @@
  * Copyright (C) 2002  Christoph Hellwig
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/capability.h>
 #include <linux/sched/cond_resched.h>

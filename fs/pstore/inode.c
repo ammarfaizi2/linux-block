@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Intel Corporation <tony.luck@intel.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/fs.h>

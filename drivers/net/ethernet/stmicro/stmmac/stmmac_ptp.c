@@ -7,6 +7,8 @@
 
   Author: Rayagond Kokatanur <rayagond@vayavyalabs.com>
 *******************************************************************************/
+#include <linux/fs_api.h>
+
 #include "stmmac.h"
 #include "stmmac_ptp.h"
 #include "dwmac4.h"

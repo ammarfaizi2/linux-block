@@ -8,6 +8,7 @@
  * to the Coda project. Contact Peter Braam <coda@cs.cmu.edu>.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/fsl/mc.h>
 #include "dpsw.h"
 #include "dpsw-cmd.h"

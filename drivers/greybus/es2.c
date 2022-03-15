@@ -5,6 +5,7 @@
  * Copyright 2014-2015 Google Inc.
  * Copyright 2014-2015 Linaro Ltd.
  */
+#include <linux/fs_api.h>
 #include <linux/delay.h>
 #include <linux/kthread.h>
 #include <linux/sizes.h>

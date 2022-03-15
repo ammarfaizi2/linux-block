@@ -17,6 +17,7 @@
  *   (8802.11: 5.5)
  */
 
+#include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/proc_fs.h>

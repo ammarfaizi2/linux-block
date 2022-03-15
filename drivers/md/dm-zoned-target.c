@@ -7,6 +7,7 @@
 
 #include "dm-zoned.h"
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 
 #define	DM_MSG_PREFIX		"zoned"

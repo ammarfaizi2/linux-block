@@ -7,6 +7,7 @@
  * Author: Andrey Konovalov <andreyknvl@gmail.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/compiler.h>
 #include <linux/ctype.h>
 #include <linux/debugfs.h>

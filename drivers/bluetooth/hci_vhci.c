@@ -8,6 +8,7 @@
  *  Copyright (C) 2004-2006  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <asm/unaligned.h>
 

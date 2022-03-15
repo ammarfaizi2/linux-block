@@ -23,6 +23,7 @@
 #include "xfs_error.h"
 #include "xfs_ioctl.h"
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/delayed_call.h>
 #include <linux/dcache.h>

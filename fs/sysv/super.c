@@ -21,6 +21,7 @@
  *  This file contains code for read/parsing the superblock.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/init.h>

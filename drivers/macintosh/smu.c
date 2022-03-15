@@ -18,6 +18,7 @@
  *    the userland interface
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

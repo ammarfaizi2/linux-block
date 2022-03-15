@@ -10,6 +10,7 @@
  * mapping representation such as dm-stripe.
  */
 
+#include <linux/fs_api.h>
 #include <linux/device-mapper.h>
 
 #include <linux/module.h>

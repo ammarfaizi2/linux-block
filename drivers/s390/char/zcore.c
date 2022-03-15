@@ -12,6 +12,7 @@
 #define KMSG_COMPONENT "zdump"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/debugfs.h>

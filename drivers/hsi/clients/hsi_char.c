@@ -8,6 +8,7 @@
  * Contact: Andras Domokos <andras.domokos@nokia.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/align.h>
 #include <linux/errno.h>
 #include <linux/types.h>

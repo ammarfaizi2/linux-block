@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/fs_api.h>
 #include <linux/pagewalk.h>
 #include <linux/hugetlb.h>
 #include <linux/bitops.h>

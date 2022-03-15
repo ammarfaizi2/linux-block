@@ -42,6 +42,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

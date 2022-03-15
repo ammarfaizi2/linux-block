@@ -18,6 +18,7 @@
  * Author:  Andrew Christian
  *          28 May 2002
  */
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/moduleparam.h>

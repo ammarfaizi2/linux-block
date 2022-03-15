@@ -4,6 +4,7 @@
  * Author: Benjamin Gaignard <benjamin.gaignard@st.com> for STMicroelectronics.
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/component.h>
 #include <linux/dma-mapping.h>

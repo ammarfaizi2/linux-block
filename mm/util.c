@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/file.h>
 #include <linux/capability.h>

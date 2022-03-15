@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)    "%s: " fmt, __func__
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/debugfs.h>
 #include <linux/remoteproc.h>

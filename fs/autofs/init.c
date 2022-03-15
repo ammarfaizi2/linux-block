@@ -3,6 +3,7 @@
  * Copyright 1997-1998 Transmeta Corporation -- All Rights Reserved
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include "autofs_i.h"

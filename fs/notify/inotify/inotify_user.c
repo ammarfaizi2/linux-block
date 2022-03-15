@@ -13,6 +13,7 @@
  * inotify was largely rewriten to make use of the fsnotify infrastructure
  */
 
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/file.h>
 #include <linux/fs.h> /* struct inode */

@@ -8,6 +8,7 @@
  * NFS namespace
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/dcache.h>
 #include <linux/gfp.h>

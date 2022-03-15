@@ -5,6 +5,7 @@
  * This is a text format reader.
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/usb.h>

@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/fs_api.h>
 #include <linux/uaccess.h>
 
 /**

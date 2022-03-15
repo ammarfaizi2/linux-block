@@ -48,6 +48,7 @@
  *  Overall revision about smaps.
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>

@@ -32,6 +32,7 @@
  *      none  - Maintained in Linux kernel after v0.13
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

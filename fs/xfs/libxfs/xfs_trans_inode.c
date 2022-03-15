@@ -15,6 +15,7 @@
 #include "xfs_trans_priv.h"
 #include "xfs_inode_item.h"
 
+#include <linux/fs_api.h>
 #include <linux/iversion.h>
 
 /*

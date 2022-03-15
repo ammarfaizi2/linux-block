@@ -12,6 +12,7 @@
  * 20-06-1998 by Frank Denis : Linux 2.1.99+ & dcache support.
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/buffer_head.h>
 #include "qnx4.h"

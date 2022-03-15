@@ -3,6 +3,7 @@
  * Copyright (C) 2013 Fusion IO.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/mount.h>
 #include <linux/pseudo_fs.h>

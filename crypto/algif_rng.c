@@ -38,6 +38,7 @@
  * DAMAGE.
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <crypto/rng.h>

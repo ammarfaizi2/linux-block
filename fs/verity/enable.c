@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/sched/cond_resched.h>
 #include <crypto/hash.h>

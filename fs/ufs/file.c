@@ -24,6 +24,7 @@
  *  ext2 fs regular file handling primitives
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 
 #include "ufs_fs.h"

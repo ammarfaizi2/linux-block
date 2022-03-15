@@ -10,6 +10,7 @@
  */
 
 /* #define DEBUG */
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/sysfs.h>
 #include <linux/kobject.h>

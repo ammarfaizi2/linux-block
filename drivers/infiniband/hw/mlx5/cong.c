@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 
 #include "mlx5_ib.h"

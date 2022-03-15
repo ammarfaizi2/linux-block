@@ -5,6 +5,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>

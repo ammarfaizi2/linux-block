@@ -13,6 +13,7 @@
  */
 
 
+#include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

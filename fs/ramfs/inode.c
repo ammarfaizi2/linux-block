@@ -23,6 +23,7 @@
  * caches is sufficient.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>

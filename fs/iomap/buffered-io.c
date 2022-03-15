@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * Copyright (C) 2016-2019 Christoph Hellwig.
  */
+#include <linux/fs_api.h>
 #include <linux/cacheflush.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

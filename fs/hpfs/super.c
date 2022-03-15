@@ -8,6 +8,7 @@
  */
 
 #include "hpfs_fn.h"
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/capability.h>

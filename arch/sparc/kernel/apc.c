@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Eric Brower (ebrower@usa.net)
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/errno.h>

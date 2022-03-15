@@ -20,6 +20,7 @@
  */
 
 #include "udfdecl.h"
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/uaccess.h>
 #include <linux/errno.h>

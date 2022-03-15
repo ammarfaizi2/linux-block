@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/fs_api.h>
 #include <linux/string.h>
 #include <linux/parser.h>
 #include <linux/timer.h>

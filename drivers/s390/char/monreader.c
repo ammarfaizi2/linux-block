@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "monreader"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/module.h>
 #include <linux/slab.h>

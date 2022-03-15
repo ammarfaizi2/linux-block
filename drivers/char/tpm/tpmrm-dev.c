@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2017 James.Bottomley@HansenPartnership.com
  */
+#include <linux/fs_api.h>
 #include <linux/slab.h>
 #include "tpm-dev.h"
 

@@ -11,6 +11,7 @@
  * Copyright (C) 2006 Craig W. Nadler
  */
 
+#include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

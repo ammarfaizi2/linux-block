@@ -8,6 +8,7 @@
 
 /* proc info support a la one created by Sizif@Botik.RU for PGC */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/time.h>

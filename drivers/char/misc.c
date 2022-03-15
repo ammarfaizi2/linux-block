@@ -34,6 +34,7 @@
  * Added devfs support. Richard Gooch <rgooch@atnf.csiro.au>  10-Jan-1998
  */
 
+#include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

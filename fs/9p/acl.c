@@ -4,6 +4,7 @@
  * Author Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <net/9p/9p.h>

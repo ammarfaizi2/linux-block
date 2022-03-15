@@ -9,6 +9,7 @@
  *  Please send bug reports to: hjw@zvw.de
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/math64.h>
 #include <linux/iversion.h>

@@ -11,6 +11,7 @@
  *  POSIX 1003.1e draft standard 17 ACLs.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Tom Herbert <tom@herbertland.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/filter_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bpf.h>

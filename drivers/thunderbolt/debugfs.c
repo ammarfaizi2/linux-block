@@ -7,6 +7,7 @@
  *	    Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/pm_runtime.h>
 #include <linux/uaccess.h>

@@ -18,6 +18,7 @@
  *               2000 Transmeta Corp.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/fs.h>

@@ -20,6 +20,7 @@
  *   Copyright (C) 1991, 1992 Linus Torvalds
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/fs.h>
 #include <linux/types.h>

@@ -7,6 +7,7 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/ccp.h>
 

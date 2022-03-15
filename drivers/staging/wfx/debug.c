@@ -5,6 +5,7 @@
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <linux/crc32.h>

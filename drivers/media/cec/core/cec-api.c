@@ -5,6 +5,7 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/capability.h>
 #include <linux/errno.h>

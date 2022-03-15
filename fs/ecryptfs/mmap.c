@@ -11,6 +11,7 @@
  *   Author(s): Michael A. Halcrow <mahalcro@us.ibm.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <asm/cacheflush.h>
 #include <linux/pagemap.h>

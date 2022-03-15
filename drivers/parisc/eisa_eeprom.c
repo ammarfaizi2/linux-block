@@ -5,6 +5,7 @@
  *    Copyright (C) 2001 Thomas Bogendoerfer <tsbogend at parisc-linux.org>
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

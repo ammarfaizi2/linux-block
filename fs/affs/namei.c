@@ -10,6 +10,7 @@
  */
 
 #include "affs.h"
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/exportfs.h>
 

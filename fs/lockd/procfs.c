@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Jeff Layton <jlayton@primarydata.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/proc_fs.h>
 #include <linux/module.h>

@@ -175,6 +175,7 @@
  * see the fault until after the damage is done.
 */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/sound.h>

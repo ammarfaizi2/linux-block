@@ -28,6 +28,7 @@
  *		EAGAIN
  */
 
+#include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/types.h>
 #include <linux/major.h>

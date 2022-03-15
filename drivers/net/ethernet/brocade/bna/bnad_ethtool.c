@@ -11,6 +11,7 @@
 
 #include "cna.h"
 
+#include <linux/fs_api.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/ethtool.h>

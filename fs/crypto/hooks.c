@@ -5,6 +5,7 @@
  * Encryption hooks for higher-level filesystem operations.
  */
 
+#include <linux/fs_api.h>
 #include <linux/delayed_call.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>

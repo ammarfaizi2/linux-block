@@ -19,6 +19,7 @@
  *	  			  David Pye <dmp@davidmpye.dyndns.org>
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/stddef.h>	/* for offsetof() */
 #include <linux/init.h>

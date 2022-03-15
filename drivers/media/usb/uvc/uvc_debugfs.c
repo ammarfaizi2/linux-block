@@ -6,6 +6,7 @@
  *          Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/module.h>
 #include <linux/debugfs.h>

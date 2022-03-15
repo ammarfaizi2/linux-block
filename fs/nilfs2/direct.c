@@ -7,6 +7,7 @@
  * Written by Koji Sato.
  */
 
+#include <linux/fs_api.h>
 #include <linux/errno.h>
 #include "nilfs.h"
 #include "page.h"

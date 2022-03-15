@@ -136,6 +136,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/kobject.h>
 #include <linux/string.h>

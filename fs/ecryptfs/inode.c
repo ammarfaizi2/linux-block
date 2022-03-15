@@ -9,6 +9,7 @@
  *              Michael C. Thompsion <mcthomps@us.ibm.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/delayed_call.h>
 #include <linux/file.h>
 #include <linux/vmalloc.h>

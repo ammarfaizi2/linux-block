@@ -9,6 +9,7 @@
 #include "orangefs-kernel.h"
 #include "orangefs-bufmap.h"
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/parser.h>
 #include <linux/hashtable.h>

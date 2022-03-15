@@ -7,6 +7,7 @@
  * Written by Koji Sato.
  */
 
+#include <linux/fs_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/slab.h>
 #include <linux/string.h>

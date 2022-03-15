@@ -9,6 +9,8 @@
  *
  */
 
+#include <linux/fs_api.h>
+
 #include "nodelist.h"
 
 const struct inode_operations jffs2_symlink_inode_operations =

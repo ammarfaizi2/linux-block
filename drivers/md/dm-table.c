@@ -7,6 +7,7 @@
 
 #include "dm-core.h"
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/vmalloc.h>

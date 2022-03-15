@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2019 SiFive, Inc.
  *
  */
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/interrupt.h>
 #include <linux/of_irq.h>

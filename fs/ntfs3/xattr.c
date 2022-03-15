@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/posix_acl.h>
 #include <linux/posix_acl_xattr.h>

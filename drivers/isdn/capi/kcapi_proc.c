@@ -11,6 +11,7 @@
 
 
 #include "kcapi.h"
+#include <linux/fs_api.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <linux/init.h>

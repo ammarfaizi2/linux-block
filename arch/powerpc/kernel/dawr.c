@@ -5,6 +5,7 @@
  * Copyright 2019, Michael Neuling, IBM Corporation.
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/export.h>
 #include <linux/fs.h>

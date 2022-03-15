@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
+#include <linux/fs_api.h>
 #include <linux/slab.h>
 #include <uapi/linux/mount.h>
 #include "common.h"

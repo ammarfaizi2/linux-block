@@ -9,6 +9,7 @@
  *  Linux VFS namei operations.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 
 #include "protocol.h"

@@ -9,6 +9,7 @@
  * This function is used through-out the kernel (including mm and fs)
  * to indicate a major problem.
  */
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/debug_locks.h>
 #include <linux/sched/debug.h>

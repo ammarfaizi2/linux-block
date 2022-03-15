@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"reboot: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/device.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

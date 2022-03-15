@@ -3,6 +3,7 @@
  * linux/drivers/char/ds1620.c: Dallas Semiconductors DS1620
  *   thermometer driver (as used in the Rebel.com NetWinder)
  */
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/miscdevice.h>
 #include <linux/delay.h>

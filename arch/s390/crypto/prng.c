@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT "prng"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/fips.h>
 #include <linux/init.h>

@@ -18,6 +18,7 @@
  *	0.1	20/06/2002
  *		- first public version
  */
+#include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/sched/cond_resched.h>
 #include <uapi/linux/uinput.h>

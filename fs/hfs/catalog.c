@@ -12,6 +12,8 @@
  *     re-shamelessly stolen Copyright (C) 1997 Linus Torvalds
  */
 
+#include <linux/fs_api.h>
+
 #include "hfs_fs.h"
 #include "btree.h"
 

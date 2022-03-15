@@ -6,6 +6,7 @@
  * Copyright (C) 2015	Intel Deutschland GmbH
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/kobject.h>

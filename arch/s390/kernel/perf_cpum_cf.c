@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT	"cpum_cf"
 #define pr_fmt(fmt)	KMSG_COMPONENT ": " fmt
 
+#include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

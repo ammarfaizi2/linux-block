@@ -8,6 +8,7 @@
  * Revised by Ryusuke Konishi.
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/string.h>

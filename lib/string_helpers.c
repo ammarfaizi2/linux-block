@@ -5,6 +5,7 @@
  * Copyright 31 August 2008 James Bottomley
  * Copyright (C) 2013, Intel Corporation
  */
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>

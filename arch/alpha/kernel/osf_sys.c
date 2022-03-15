@@ -11,6 +11,7 @@
  * special parameter blocks..
  */
 
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/errno.h>
 #include <linux/sched/signal.h>

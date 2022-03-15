@@ -20,6 +20,8 @@
  *
  *  adfs regular file handling primitives           
  */
+#include <linux/fs_api.h>
+
 #include "adfs.h"
 
 const struct file_operations adfs_file_operations = {

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/slab.h>
 #include "ext4_jbd2.h"

@@ -9,6 +9,7 @@
  * Option parsing
  */
 
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/string.h>
 #include <linux/kernel.h>

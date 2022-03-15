@@ -6,6 +6,7 @@
  * Copyright 2015 Linaro Ltd.
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>

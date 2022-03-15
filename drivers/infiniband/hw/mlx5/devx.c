@@ -3,6 +3,7 @@
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/eventfd.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

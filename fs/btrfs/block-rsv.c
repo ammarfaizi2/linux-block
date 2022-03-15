@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/fs_api.h>
+
 #include "misc.h"
 #include "ctree.h"
 #include "block-rsv.h"

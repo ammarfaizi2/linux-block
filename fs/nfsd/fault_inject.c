@@ -5,6 +5,7 @@
  * Uses debugfs to create fault injection points for client testing
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/debugfs.h>

@@ -8,6 +8,7 @@
  *	Daniel Borkmann <daniel@iogearbox.net>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/init.h>
 #include <linux/magic.h>

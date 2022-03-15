@@ -13,6 +13,7 @@
  */
 
 #include "ext2.h"
+#include <linux/fs_api.h>
 #include <linux/quotaops.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

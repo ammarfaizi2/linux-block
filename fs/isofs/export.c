@@ -14,6 +14,7 @@
  *     fs/exportfs/expfs.c.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 
 #include "isofs.h"

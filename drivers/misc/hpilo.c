@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Hewlett-Packard Development Company, L.P.
  *	David Altobelli <david.altobelli@hpe.com>
  */
+#include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

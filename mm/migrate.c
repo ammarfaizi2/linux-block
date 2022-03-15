@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/fs_api.h>
 #include <linux/dax.h>
 #include <linux/cpuhotplug.h>
 #include <linux/capability.h>

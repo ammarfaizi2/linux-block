@@ -11,6 +11,7 @@
  *  Andy Adamson   <andros@umich.edu>
  */
 
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

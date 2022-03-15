@@ -8,6 +8,7 @@
  * Copyright (C) 2002 Neil Brown <neilb@cse.unsw.edu.au>
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/types.h>

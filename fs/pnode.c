@@ -5,6 +5,7 @@
  * (C) Copyright IBM Corporation 2005.
  *	Author : Ram Pai (linuxram@us.ibm.com)
  */
+#include <linux/fs_api.h>
 #include <linux/mnt_namespace.h>
 #include <linux/mount.h>
 #include <linux/fs.h>

@@ -5,6 +5,7 @@
  *  Copyright (c) 2012, Jeff Layton <jlayton@redhat.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>

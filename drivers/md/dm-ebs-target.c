@@ -10,6 +10,7 @@
  */
 
 #include "dm.h"
+#include <linux/fs_api.h>
 #include <linux/bvec_api.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>

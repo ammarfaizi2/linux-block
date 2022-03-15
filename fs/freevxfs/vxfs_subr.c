@@ -30,6 +30,7 @@
 /*
  * Veritas filesystem driver - shared subroutines.
  */
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include <linux/kernel.h>

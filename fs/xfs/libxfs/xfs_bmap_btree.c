@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2003,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/fs_api.h>
 #include <asm/unaligned.h>
 
 #include "xfs.h"

@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dccp.h>
 #include <linux/icmp.h>
 #include <linux/slab.h>

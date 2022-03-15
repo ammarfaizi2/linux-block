@@ -9,6 +9,7 @@
  * Copyright (c) 2016, Western Digital
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

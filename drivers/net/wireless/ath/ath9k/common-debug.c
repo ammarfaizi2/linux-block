@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 
 #include "common.h"

@@ -48,6 +48,7 @@
 
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 
 #define KERNEL

@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) "xen_mcelog: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/types.h>

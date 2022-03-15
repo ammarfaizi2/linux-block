@@ -10,6 +10,7 @@
  *	- Get the key and enable EVM
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/audit.h>
 #include <linux/uaccess.h>

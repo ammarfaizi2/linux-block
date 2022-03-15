@@ -7,6 +7,7 @@
  *  table of configured filesystems
  */
 
+#include <linux/fs_api.h>
 #include <linux/syscalls.h>
 #include <linux/fs.h>
 #include <linux/proc_fs.h>

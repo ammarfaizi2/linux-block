@@ -18,6 +18,7 @@
  * The other files are human-readable.
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

@@ -3,6 +3,7 @@
  * High-level sync()-related operations
  */
 
+#include <linux/fs_api.h>
 #include <linux/blkdev.h>
 #include <linux/kernel.h>
 #include <linux/file.h>

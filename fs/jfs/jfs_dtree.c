@@ -87,6 +87,7 @@
  *	log based recovery:
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/fs.h>
 #include <linux/quotaops.h>

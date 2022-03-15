@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * Copyright (c) 2016-2021 Christoph Hellwig.
  */
+#include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

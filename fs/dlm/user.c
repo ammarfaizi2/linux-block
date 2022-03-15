@@ -3,6 +3,7 @@
  * Copyright (C) 2006-2010 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/miscdevice.h>

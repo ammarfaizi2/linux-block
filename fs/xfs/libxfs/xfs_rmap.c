@@ -3,6 +3,8 @@
  * Copyright (c) 2014 Red Hat, Inc.
  * All Rights Reserved.
  */
+#include <linux/fs_api.h>
+
 #include "xfs.h"
 #include "xfs_fs.h"
 #include "xfs_shared.h"

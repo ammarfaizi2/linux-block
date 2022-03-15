@@ -9,6 +9,7 @@
  * for more details.
  *
  */
+#include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/mman.h>
 #include <linux/mm.h>

@@ -70,6 +70,7 @@
  *   wrappers provided below.
  */
 
+#include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/syscalls.h>
 #include <linux/errno.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2010 Felix Fietkau <nbd@openwrt.org>
  */
+#include <linux/fs_api.h>
 #include <linux/netdevice.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>

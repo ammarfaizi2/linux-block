@@ -19,6 +19,7 @@
 
 #include "udfdecl.h"
 
+#include <linux/fs_api.h>
 #include <linux/blkdev.h>
 #include <linux/cdrom.h>
 #include <linux/uaccess.h>

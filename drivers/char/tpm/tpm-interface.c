@@ -19,6 +19,7 @@
  * calls to msleep.
  */
 
+#include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

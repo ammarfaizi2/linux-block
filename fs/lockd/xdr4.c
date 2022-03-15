@@ -8,6 +8,7 @@
  * Copyright (C) 1999, Trond Myklebust <trond.myklebust@fys.uio.no>
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/nfs.h>

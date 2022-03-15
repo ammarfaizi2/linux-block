@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/capability.h>
 #include <linux/backing-dev-api.h>

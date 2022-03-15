@@ -9,6 +9,8 @@
  * Handle individual btree records
  */
 
+#include <linux/fs_api.h>
+
 #include "hfsplus_fs.h"
 #include "hfsplus_raw.h"
 

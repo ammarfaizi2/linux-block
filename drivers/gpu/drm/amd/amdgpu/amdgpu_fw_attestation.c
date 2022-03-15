@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/firmware.h>
 #include <linux/dma-mapping.h>

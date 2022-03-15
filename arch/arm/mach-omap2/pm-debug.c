@@ -16,6 +16,7 @@
  * Based on pm.c for omap2
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/sched/clock.h>

@@ -3,6 +3,7 @@
 
 /* Written 1998-2000 by Werner Almesberger, EPFL ICA */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/module.h>
 #include <linux/slab.h>

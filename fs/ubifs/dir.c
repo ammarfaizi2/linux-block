@@ -28,6 +28,7 @@
  * write it, but just marks it as dirty.
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/sched/cond_resched.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 Atmel Corporation
  */
+#include <linux/fs_api.h>
 #include <linux/moduleparam.h>
 #include <linux/export.h>
 #include <linux/debugfs.h>

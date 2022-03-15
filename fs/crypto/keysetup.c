@@ -8,6 +8,7 @@
  * Heavily modified since then.
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <crypto/skcipher.h>
 #include <linux/key.h>

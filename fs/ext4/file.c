@@ -19,6 +19,7 @@
  *	(jj@sunsite.ms.mff.cuni.cz)
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/dcache.h>
 #include <linux/backing-dev-api.h>
