@@ -7,6 +7,7 @@
 
 #include "dm-zoned.h"
 
+#include <linux/refcount_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

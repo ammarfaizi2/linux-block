@@ -10,6 +10,7 @@
 #include "dm-uevent.h"
 #include "dm-ima.h"
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>

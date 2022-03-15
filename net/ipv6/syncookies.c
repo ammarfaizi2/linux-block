@@ -9,6 +9,7 @@
  *  linux/net/ipv4/syncookies.c
  */
 
+#include <linux/refcount_api.h>
 #include <linux/ipv6.h>
 #include <linux/tcp.h>
 #include <linux/random.h>

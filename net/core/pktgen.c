@@ -112,6 +112,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/nsproxy.h>
 #include <linux/net.h>

@@ -15,6 +15,7 @@
  *	"BCM1250/BCM1125/BCM1125H User Manual", Broadcom Corporation
  */
 
+#include <linux/refcount_api.h>
 #include <linux/compiler.h>
 #include <linux/console.h>
 #include <linux/delay.h>

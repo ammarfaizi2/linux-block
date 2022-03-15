@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //#define DEBUG
+#include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

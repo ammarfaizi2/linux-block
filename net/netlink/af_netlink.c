@@ -18,6 +18,7 @@
  * 				   mandatory if CONFIG_NET=y these days
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>

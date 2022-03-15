@@ -7,6 +7,7 @@
  *	Pedro Roque		<roque@di.fc.ul.pt>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/icmpv6.h>

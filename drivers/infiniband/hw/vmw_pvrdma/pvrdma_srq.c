@@ -43,6 +43,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/atomic_api.h>
 #include <asm/page.h>
 #include <linux/io.h>

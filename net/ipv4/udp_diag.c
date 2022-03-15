@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/refcount_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/inet_diag.h>

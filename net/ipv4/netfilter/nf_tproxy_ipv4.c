@@ -4,6 +4,7 @@
  * Author: Krisztian Kovacs
  */
 
+#include <linux/refcount_api.h>
 #include <net/netfilter/nf_tproxy.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

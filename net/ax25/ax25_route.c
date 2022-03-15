@@ -9,6 +9,7 @@
  * Copyright (C) Frederic Rible F1OAT (frible@teaser.fr)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/errno.h>

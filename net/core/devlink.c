@@ -7,6 +7,7 @@
  * Copyright (c) 2016 Jiri Pirko <jiri@mellanox.com>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>

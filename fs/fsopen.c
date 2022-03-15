@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/nsproxy.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_types_sb.h>

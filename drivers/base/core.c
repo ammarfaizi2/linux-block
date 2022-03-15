@@ -8,6 +8,7 @@
  * Copyright (c) 2006 Novell, Inc.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

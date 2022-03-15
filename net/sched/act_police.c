@@ -6,6 +6,7 @@
  * 		J Hadi Salim (action changes)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>

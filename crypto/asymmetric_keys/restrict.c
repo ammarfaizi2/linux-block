@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) "ASYM: "fmt
+#include <linux/refcount_api.h>
 #include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

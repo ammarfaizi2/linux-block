@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/refcount_api.h>
 #include <linux/jiffies.h>
 #include <linux/errno.h>	/* error codes */
 #include <linux/kernel.h>	/* printk */

@@ -14,6 +14,7 @@
  * subsequently hacked by Paul Mackerras.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/skbuff.h>

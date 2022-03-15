@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

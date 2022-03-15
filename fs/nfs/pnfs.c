@@ -27,6 +27,7 @@
  *  such damages.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/mm_api.h>
 #include <linux/kmod.h>

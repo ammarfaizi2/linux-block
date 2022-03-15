@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/dma-mapping.h>

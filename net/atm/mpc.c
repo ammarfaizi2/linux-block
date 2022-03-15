@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/refcount_api.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

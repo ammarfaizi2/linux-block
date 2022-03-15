@@ -15,6 +15,7 @@
  * Copyright (C) 2015 Paolo Valente <paolo.valente@unimore.it>
  *                    Arianna Avanzini <avanzini.arianna@gmail.com>
  */
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/radix-tree-api.h>
 #include <linux/percpu-refcount-api.h>

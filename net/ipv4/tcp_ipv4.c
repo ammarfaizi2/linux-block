@@ -47,6 +47,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/net.h>

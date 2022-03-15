@@ -73,6 +73,7 @@
 #define dev_fmt(fmt) "SCMI Notifications - " fmt
 #define pr_fmt(fmt) "SCMI Notifications - " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

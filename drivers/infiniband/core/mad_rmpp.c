@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 

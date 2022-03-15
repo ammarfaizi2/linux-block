@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/mmu_notifier.h>

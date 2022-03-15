@@ -14,6 +14,7 @@
  * Copyright (C) 2018-2021 ARM Ltd.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

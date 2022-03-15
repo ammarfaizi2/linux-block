@@ -3,6 +3,7 @@
  * (C) 2012 by Pablo Neira Ayuso <pablo@netfilter.org>
  * (C) 2012 by Vyatta Inc. <http://www.vyatta.com>
  */
+#include <linux/refcount_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

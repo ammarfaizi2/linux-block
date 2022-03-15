@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/refcount_api.h>
 #include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mutex_api.h>

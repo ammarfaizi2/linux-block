@@ -4,6 +4,7 @@
  * Copyright 2020 Google LLC.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/pid.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>

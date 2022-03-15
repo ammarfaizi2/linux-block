@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmu_notifier.h>
 #include <linux/mmap_lock.h>

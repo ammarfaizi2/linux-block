@@ -12,6 +12,7 @@
  *  Copyright (C) 2004-2006 Ingo Molnar
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
+#include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

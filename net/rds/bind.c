@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/refcount_api.h>
 #include <linux/random.h>
 #include <linux/kernel.h>
 #include <net/sock.h>

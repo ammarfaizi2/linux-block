@@ -31,6 +31,7 @@
  *  "The futexes are also cursed."
  *  "But they come in a choice of three flavours!"
  */
+#include <linux/refcount_api.h>
 #include <linux/ratelimit.h>
 #include <linux/ptrace_api.h>
 #include <linux/pagefault_ctrl.h>

@@ -10,6 +10,7 @@
  *  mm/ksm.c (mm hashing).
  */
 
+#include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/pagemap.h>
 #include <linux/mmap_lock.h>

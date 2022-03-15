@@ -28,6 +28,7 @@
  * ==FILEVERSION 20040616==
  */
 
+#include <linux/refcount_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

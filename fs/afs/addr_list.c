@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/slab.h>
 #include <linux/ctype.h>
 #include <linux/dns_resolver.h>

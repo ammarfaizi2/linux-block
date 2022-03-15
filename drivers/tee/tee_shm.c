@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015-2017, 2019-2021 Linaro Limited
  */
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

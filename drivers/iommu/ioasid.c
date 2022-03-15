@@ -4,6 +4,7 @@
  * subsets. Users create a subset with DECLARE_IOASID_SET, then allocate and
  * free IOASIDs with ioasid_alloc and ioasid_put.
  */
+#include <linux/refcount_api.h>
 #include <linux/ioasid.h>
 #include <linux/module.h>
 #include <linux/slab.h>

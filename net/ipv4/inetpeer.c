@@ -6,6 +6,7 @@
  *  Authors:	Andrey V. Savochkin <saw@msu.ru>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>

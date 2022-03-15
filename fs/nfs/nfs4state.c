@@ -38,6 +38,7 @@
  * subsequent patch.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>

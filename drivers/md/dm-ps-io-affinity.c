@@ -6,6 +6,7 @@
  */
 #include "dm-path-selector.h"
 
+#include <linux/refcount_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/device-mapper.h>

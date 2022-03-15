@@ -8,6 +8,7 @@
 #include "dm-bio-prison-v1.h"
 #include "dm.h"
 
+#include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

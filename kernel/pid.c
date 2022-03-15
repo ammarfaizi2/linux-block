@@ -27,6 +27,7 @@
  *
  */
 
+#include <linux/refcount_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/pid.h>
 #include <linux/idr_api.h>

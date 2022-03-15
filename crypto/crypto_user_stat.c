@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/refcount_api.h>
 #include <linux/atomic_api.h>
 #include <linux/crypto.h>
 #include <linux/cryptouser.h>

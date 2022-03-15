@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  * Copyright (C) 2013-2014 Christoph Hellwig
  */
+#include <linux/refcount_api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>

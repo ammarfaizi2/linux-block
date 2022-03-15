@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/ratelimit.h>
 #include <linux/random.h>
 #include <linux/percpu.h>

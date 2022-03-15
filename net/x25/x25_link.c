@@ -18,6 +18,7 @@
 
 #define pr_fmt(fmt) "X25: " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/jiffies.h>

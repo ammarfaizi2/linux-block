@@ -60,6 +60,7 @@
  * any (or all) other directions.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

@@ -23,6 +23,7 @@
  *    Dajiang Zhang <dajiang.zhang@nokia.com>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/in.h>

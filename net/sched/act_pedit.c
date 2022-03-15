@@ -5,6 +5,7 @@
  * Authors:	Jamal Hadi Salim (2002-4)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

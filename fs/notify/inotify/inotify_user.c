@@ -13,6 +13,7 @@
  * inotify was largely rewriten to make use of the fsnotify infrastructure
  */
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/idr_api.h>

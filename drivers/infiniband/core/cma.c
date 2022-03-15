@@ -6,6 +6,7 @@
  * Copyright (c) 2005-2006 Intel Corporation.  All rights reserved.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/nsproxy.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

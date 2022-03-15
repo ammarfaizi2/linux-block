@@ -19,6 +19,7 @@
  */
 
 
+#include <linux/refcount_api.h>
 #include <linux/ratelimit.h>
 #include <linux/net.h>
 #include <linux/lockdep_api.h>

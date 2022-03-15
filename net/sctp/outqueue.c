@@ -26,6 +26,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/list.h>   /* For struct list_head */

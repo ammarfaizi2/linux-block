@@ -9,6 +9,7 @@
  * Copyright (C) 1997 Theodore Ts'o
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

@@ -17,6 +17,7 @@
  *				  handlers as inet6_protocol{}.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/errno.h>

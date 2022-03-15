@@ -15,6 +15,7 @@
  * none of the bugs are Pavel's now.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/cred.h>

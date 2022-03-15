@@ -6,6 +6,7 @@
  * Copyright IBM Corp. 2018
  */
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/if_vlan_types.h>
 #include <linux/device_api_lock.h>
