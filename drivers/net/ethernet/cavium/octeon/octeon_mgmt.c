@@ -6,6 +6,7 @@
  * Copyright (C) 2009-2012 Cavium, Inc
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api_lock.h>

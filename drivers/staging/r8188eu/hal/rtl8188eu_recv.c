@@ -2,6 +2,7 @@
 /* Copyright(c) 2007 - 2011 Realtek Corporation. */
 
 #define _RTL8188EU_RECV_C_
+#include <linux/tasklet_api.h>
 #include <linux/slab.h>
 
 #include "../include/osdep_service.h"

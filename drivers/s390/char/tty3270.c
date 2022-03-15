@@ -8,6 +8,7 @@
  *	-- Copyright IBM Corp. 2003
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

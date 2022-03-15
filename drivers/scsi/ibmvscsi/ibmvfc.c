@@ -7,6 +7,7 @@
  * Copyright (C) IBM Corporation, 2008
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

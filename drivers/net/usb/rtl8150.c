@@ -3,6 +3,7 @@
  *  Copyright (c) 2002 Petko Manolov (petkan@users.sourceforge.net)
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

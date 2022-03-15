@@ -11,6 +11,7 @@
 	Abstract: rt2x00 generic device routines.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

@@ -38,6 +38,7 @@
 
 #define dev_fmt(fmt) "QPLIB: " fmt
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>

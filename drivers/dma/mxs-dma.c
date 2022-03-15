@@ -4,6 +4,7 @@
 //
 // Refer to drivers/dma/imx-sdma.c
 
+#include <linux/tasklet_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

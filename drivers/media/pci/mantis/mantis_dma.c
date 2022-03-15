@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/tasklet_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <asm/page.h>

@@ -9,6 +9,7 @@
  * on the Intel Xscale(R) family of I/O Processors (IOP 32x, 33x, 134x)
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/io.h>

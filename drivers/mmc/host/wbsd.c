@@ -17,6 +17,7 @@
  * - On APIC systems the FIFO empty interrupt is sometimes lost.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>

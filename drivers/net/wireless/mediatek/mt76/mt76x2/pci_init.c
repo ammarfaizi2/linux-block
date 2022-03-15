@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/delay.h>
 #include "mt76x2.h"
 #include "eeprom.h"

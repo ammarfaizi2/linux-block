@@ -8,6 +8,7 @@
  * Copyright (C) 2010-2011 Guennadi Liakhovetski
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>

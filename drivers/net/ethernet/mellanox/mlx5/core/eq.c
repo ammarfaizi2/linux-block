@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2021, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/radix-tree-api.h>

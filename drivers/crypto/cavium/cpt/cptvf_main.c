@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Cavium, Inc.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/dma-mapping.h>

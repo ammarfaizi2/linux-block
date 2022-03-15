@@ -3,6 +3,7 @@
 
 #define _XMIT_OSDEP_C_
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

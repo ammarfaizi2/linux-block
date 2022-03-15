@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock.h>
 #include <linux/spinlock_api.h>
 #include <linux/kernel.h>

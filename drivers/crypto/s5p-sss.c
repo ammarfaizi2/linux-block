@@ -9,6 +9,7 @@
 //
 // Hash part based on omap-sham.c driver.
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

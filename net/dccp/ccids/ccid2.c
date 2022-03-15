@@ -10,6 +10,7 @@
 /*
  * This implementation should follow RFC 4341
  */
+#include <linux/tasklet_api.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 #include "../feat.h"

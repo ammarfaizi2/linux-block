@@ -16,6 +16,7 @@
 
 #undef USB_TRACE
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io_extra.h>

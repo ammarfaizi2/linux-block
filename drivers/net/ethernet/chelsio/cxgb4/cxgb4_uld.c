@@ -35,6 +35,7 @@
  *  Written by: Hariprasad Shenai (hariprasad@chelsio.com)
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

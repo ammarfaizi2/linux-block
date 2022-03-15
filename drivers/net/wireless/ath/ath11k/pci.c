@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/of_api.h>

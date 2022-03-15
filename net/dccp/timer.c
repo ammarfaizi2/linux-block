@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/dccp.h>

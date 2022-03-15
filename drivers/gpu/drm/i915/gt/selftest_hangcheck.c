@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

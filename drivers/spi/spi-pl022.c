@@ -13,6 +13,7 @@
  *      Sachin Verma <sachin.verma@st.com>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

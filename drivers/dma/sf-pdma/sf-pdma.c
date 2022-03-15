@@ -13,6 +13,7 @@
  *   SiFive FU540-C000 v1.0
  *   https://static.dev.sifive.com/FU540-C000-v1.0.pdf
  */
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

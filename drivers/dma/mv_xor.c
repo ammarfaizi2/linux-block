@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008, Marvell International Ltd.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

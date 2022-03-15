@@ -33,6 +33,8 @@
  * THE POSSIBILITY OF SUCH DAMAGES.
  */
 
+#include <linux/tasklet_api.h>
+
 #include "ath5k.h"
 
 

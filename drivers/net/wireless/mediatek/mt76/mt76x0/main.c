@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Stanislaw Gruszka <stf_xl@wp.pl>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice.h>
 #include "mt76x0.h"
