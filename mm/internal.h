@@ -7,6 +7,7 @@
 #ifndef __MM_INTERNAL_H
 #define __MM_INTERNAL_H
 
+#include <linux/fs_api_f_count.h>
 #include <linux/cpumask_api.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
