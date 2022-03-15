@@ -16,6 +16,7 @@
  *		Mike McLagan	:	Routing by source
  */
 
+#include <net/ip_fib_api.h>
 #include <net/inet_sock_api.h>
 #include <net/inet_connection_sock_api.h>
 #include <net/dst_api.h>

@@ -6,6 +6,7 @@
  * Added /proc/sys/net/ipv4 directory entry (empty =) ). [MS]
  */
 
+#include <net/ip_fib_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched.h>
 #include <linux/cred.h>

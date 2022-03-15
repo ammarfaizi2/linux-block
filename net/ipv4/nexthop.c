@@ -5,6 +5,7 @@
  * Copyright (c) 2017-19 David Ahern <dsa@cumulusnetworks.com>
  */
 
+#include <net/ip_fib_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

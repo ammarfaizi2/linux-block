@@ -4,6 +4,7 @@
  * Rusty Russell (C) 2000 -- This code is GPL.
  * Patrick McHardy (C) 2006-2012
  */
+#include <net/ip_fib_api.h>
 #include <net/dst_api.h>
 #include <linux/kernel.h>
 #include <linux/netfilter.h>
