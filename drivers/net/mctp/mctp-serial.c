@@ -13,6 +13,7 @@
  * Copyright (c) 2021 Code Construct
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/idr_api.h>
 #include <linux/capability.h>

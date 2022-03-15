@@ -4,6 +4,7 @@
 /* Written 1997-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/capability.h>

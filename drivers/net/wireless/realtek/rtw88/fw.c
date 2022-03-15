@@ -2,6 +2,7 @@
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

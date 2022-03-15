@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2021 MediaTek Inc. */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/mmc/sdio_func.h>

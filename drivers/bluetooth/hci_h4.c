@@ -8,6 +8,7 @@
  *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/module.h>
 
 #include <linux/kernel.h>

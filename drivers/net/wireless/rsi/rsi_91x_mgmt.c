@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/timer.h>

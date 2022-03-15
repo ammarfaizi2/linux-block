@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2015-2017 Intel Deutschland GmbH
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

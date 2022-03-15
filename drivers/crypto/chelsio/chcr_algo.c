@@ -41,6 +41,7 @@
 
 #define pr_fmt(fmt) "chcr:" fmt
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>
 #include <linux/dma-mapping.h>

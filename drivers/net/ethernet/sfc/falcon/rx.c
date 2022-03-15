@@ -5,6 +5,7 @@
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

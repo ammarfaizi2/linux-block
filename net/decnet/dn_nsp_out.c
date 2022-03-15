@@ -29,6 +29,7 @@
 
 *******************************************************************************/
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/errno.h>
 #include <linux/types.h>

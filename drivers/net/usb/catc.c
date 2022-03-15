@@ -20,6 +20,7 @@
  * Vojtech Pavlik, Simunkova 1594, Prague 8, 182 00 Czech Republic
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

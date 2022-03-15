@@ -9,6 +9,7 @@
  * as portionhelp of the ieee80211 subsystem header files.
  *****************************************************************************/
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>

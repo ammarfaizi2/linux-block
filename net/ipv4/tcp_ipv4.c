@@ -47,6 +47,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/seq_file_net.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>

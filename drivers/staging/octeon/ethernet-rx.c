@@ -5,6 +5,7 @@
  * Copyright (c) 2003-2010 Cavium Networks
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

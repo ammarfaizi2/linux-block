@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/skbuff_api_extra.h>
 #include <asm/unaligned.h>
 
 #include <net/bluetooth/bluetooth.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

@@ -8,6 +8,7 @@
 
 #define DRV_NAME	"uli526x"
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

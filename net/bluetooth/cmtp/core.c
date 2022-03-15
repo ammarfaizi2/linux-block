@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rwsem_api.h>
 #include <linux/net.h>
 #include <linux/fs.h>

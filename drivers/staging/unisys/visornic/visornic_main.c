@@ -9,6 +9,7 @@
  * Partition via the IO channel.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/nsproxy.h>

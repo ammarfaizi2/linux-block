@@ -18,6 +18,7 @@
  * this warranty disclaimer.
  **/
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

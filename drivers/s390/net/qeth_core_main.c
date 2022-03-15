@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "qeth"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2020-2021 NVIDIA CORPORATION & AFFILIATES
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>

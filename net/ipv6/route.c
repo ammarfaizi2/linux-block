@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/siphash_api.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>

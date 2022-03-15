@@ -8,6 +8,7 @@
  *  Copyright (C) 2014  STMicroelectronics SAS. All rights reserved.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/skbuff.h>
 

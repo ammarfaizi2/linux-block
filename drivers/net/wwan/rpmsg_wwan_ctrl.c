@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2021, Stephan Gerhold <stephan@gerhold.net> */
+#include <linux/skbuff_api_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/mod_devicetable.h>

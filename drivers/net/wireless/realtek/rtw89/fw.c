@@ -2,6 +2,7 @@
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>

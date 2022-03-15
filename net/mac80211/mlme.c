@@ -11,6 +11,7 @@
  * Copyright (C) 2018 - 2021 Intel Corporation
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

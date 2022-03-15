@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2018 Xue Liu <liuxuenetmail@gmail.com>
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2008, John W. Linville <linville@tuxdriver.com>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/seq_file.h>
 #include <linux/err.h>
 #include <linux/fips.h>

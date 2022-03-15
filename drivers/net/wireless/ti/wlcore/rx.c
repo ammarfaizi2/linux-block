@@ -7,6 +7,7 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/gfp.h>
 #include <linux/sched.h>
 

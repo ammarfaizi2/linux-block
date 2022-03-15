@@ -9,6 +9,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  * Alexander Aring <aar@pengutronix.de>
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/seq_file.h>
 #include <linux/random.h>
 #include <linux/of_api.h>

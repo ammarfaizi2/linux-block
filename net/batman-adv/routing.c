@@ -7,6 +7,7 @@
 #include "routing.h"
 #include "main.h"
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/kref_api.h>
 #include <linux/if_ether_api.h>

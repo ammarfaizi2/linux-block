@@ -12,6 +12,7 @@
  * Copyright (C) 2018, 2020 Intel Corporation
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/ieee80211.h>
 #include <net/cfg80211.h>
 #include <net/mac80211.h>

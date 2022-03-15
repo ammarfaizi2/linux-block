@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Chelsio Communications, Inc.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/mutex_api.h>

@@ -6,6 +6,7 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 #include "layer2.h"
+#include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/random.h>

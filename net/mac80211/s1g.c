@@ -3,6 +3,7 @@
  * S1G handling
  * Copyright(c) 2020 Adapt-IP
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/ieee80211.h>
 #include <net/mac80211.h>

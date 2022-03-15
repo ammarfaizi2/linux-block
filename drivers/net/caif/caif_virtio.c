@@ -5,6 +5,7 @@
  *	    Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  *	    Sjur Brendeland
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/netdevice_api.h>

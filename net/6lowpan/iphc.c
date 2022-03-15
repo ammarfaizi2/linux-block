@@ -46,6 +46,7 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/ipv6.h>
 #include <linux/bitops.h>
 #include <linux/if_arp.h>

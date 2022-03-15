@@ -5,6 +5,7 @@
  * Copyright (c) 2017 Red Hat, Inc. -- Jiri Benc <jbenc@redhat.com>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/module.h>

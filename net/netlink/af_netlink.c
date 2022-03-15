@@ -18,6 +18,7 @@
  * 				   mandatory if CONFIG_NET=y these days
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/seq_file_net.h>
 #include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>

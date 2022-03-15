@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/skbuff_api_extra.h>
 #include <linux/rwsem_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

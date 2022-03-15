@@ -14,6 +14,7 @@
 	https://bugzilla.stlinux.com/
 *******************************************************************************/
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/property.h>

@@ -6,6 +6,7 @@
  *                    Signal 11 Software
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/spi/spi.h>
 #include <linux/interrupt.h>
 #include <linux/mod_devicetable.h>

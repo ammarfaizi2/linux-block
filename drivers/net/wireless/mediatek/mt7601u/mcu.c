@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <asm/unaligned.h>

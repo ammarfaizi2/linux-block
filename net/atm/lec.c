@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api_lock.h>

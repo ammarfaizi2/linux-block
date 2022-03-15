@@ -7,6 +7,7 @@
  * TODO: Add ingress support (and socket redirect support)
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/refcount_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

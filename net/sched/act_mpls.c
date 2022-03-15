@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2019 Netronome Systems, Inc. */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/refcount_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_vlan_api.h>

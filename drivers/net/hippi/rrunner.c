@@ -24,6 +24,7 @@
 #define RX_DMA_SKBUFF 1
 #define PKT_COPY_THRESHOLD 512
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

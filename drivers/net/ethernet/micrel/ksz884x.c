@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/semaphore.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api_lock.h>

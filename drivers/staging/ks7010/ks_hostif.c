@@ -6,6 +6,7 @@
  *   Copyright (C) 2009 Renesas Technology Corp.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

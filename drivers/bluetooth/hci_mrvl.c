@@ -7,6 +7,7 @@
  *  Copyright (C) 2016  Intel Corporation
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

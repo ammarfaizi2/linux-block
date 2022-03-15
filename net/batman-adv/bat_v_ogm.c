@@ -7,6 +7,7 @@
 #include "bat_v_ogm.h"
 #include "main.h"
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

@@ -16,6 +16,7 @@
  * Revision: 0.3.3 (socket), 2008-11-05
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

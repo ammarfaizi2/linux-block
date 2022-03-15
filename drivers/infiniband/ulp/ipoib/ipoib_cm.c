@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/prandom.h>
 #include <linux/netdevice_api_lock.h>

@@ -2,6 +2,7 @@
 /* Copyright (c) 2016 Thomas Graf <tgraf@tgraf.ch>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/filter_api.h>

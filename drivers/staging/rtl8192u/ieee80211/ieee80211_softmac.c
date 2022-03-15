@@ -13,6 +13,7 @@
  */
 #include "ieee80211.h"
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
