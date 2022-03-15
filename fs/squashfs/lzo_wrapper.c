@@ -8,6 +8,7 @@
  * lzo_wrapper.c
  */
 
+#include <linux/bvec_api.h>
 #include <linux/mutex.h>
 #include <linux/bio.h>
 #include <linux/slab.h>

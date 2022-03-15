@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2001 Jens Axboe <axboe@kernel.dk>
  */
+#include <linux/bvec_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/swap.h>

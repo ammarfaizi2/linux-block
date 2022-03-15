@@ -7,6 +7,7 @@
 
 #define KMSG_COMPONENT "dasd-fba"
 
+#include <linux/bvec_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <asm/debug.h>

@@ -12,6 +12,7 @@
 
 #define KMSG_COMPONENT "dasd-eckd"
 
+#include <linux/bvec_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

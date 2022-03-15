@@ -6,6 +6,7 @@
  * Written by: Martin K. Petersen <martin.petersen@oracle.com>
  */
 
+#include <linux/bvec_api.h>
 #include <linux/blk-integrity.h>
 #include <linux/mempool.h>
 #include <linux/export.h>

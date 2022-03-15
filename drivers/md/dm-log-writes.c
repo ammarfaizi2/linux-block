@@ -4,6 +4,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/bvec_api.h>
 #include <linux/atomic_api.h>
 #include <linux/device-mapper.h>
 

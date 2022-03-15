@@ -5,6 +5,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/bvec_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

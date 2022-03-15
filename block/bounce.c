@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/bvec_api.h>
 #include <asm/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/export.h>
