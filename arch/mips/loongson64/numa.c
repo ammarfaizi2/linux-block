@@ -6,6 +6,7 @@
  *          Huacai Chen, chenhc@lemote.com
  *          Xiaofu Meng, Shuangshuang Zhang
  */
+#include <linux/topology.h>
 #include <linux/string.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

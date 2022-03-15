@@ -7,6 +7,7 @@
  * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  */
 
+#include <linux/topology.h>
 #include <linux/mutex_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/cpumask_api.h>

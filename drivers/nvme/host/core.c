@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
+#include <linux/topology.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/srcu.h>

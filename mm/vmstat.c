@@ -10,6 +10,7 @@
  *		Christoph Lameter <christoph@lameter.com>
  *  Copyright (C) 2008-2014 Christoph Lameter
  */
+#include <linux/topology.h>
 #include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>

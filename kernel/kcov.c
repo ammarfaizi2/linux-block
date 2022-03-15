@@ -2,6 +2,7 @@
 #define pr_fmt(fmt) "kcov: " fmt
 
 #define DISABLE_BRANCH_PROFILING
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/refcount_api.h>

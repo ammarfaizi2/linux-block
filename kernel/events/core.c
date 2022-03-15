@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/topology.h>
 #include <linux/sysctl.h>
 #include <linux/syscalls_api.h>
 #include <linux/srcu.h>

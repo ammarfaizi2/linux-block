@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/topology.h>
 #include <linux/prefetch.h>
 #include <linux/preempt.h>
 #include <linux/perf_event_api.h>

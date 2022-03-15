@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/ratelimit.h>

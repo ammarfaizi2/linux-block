@@ -7,6 +7,7 @@
  * even if we're invoked from userspace (think modprobe, hotplug cpu,
  * etc.).
  */
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/mm_api.h>

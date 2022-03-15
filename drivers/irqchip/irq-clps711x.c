@@ -5,6 +5,7 @@
  *  Copyright (C) 2013 Alexander Shiyan <shc_work@mail.ru>
  */
 
+#include <linux/topology.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

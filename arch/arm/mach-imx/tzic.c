@@ -3,6 +3,7 @@
  * Copyright (C)2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
+#include <linux/topology.h>
 #include <linux/irqdesc.h>
 #include <linux/init.h>
 #include <linux/device.h>

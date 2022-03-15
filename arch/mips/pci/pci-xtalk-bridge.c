@@ -4,6 +4,7 @@
  * Copyright (C) 1999, 2000, 04 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  */
+#include <linux/topology.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/ioport.h>

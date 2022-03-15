@@ -7,6 +7,7 @@
  * Copyright (c) Mike Travis
  */
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/preempt.h>

@@ -9,6 +9,7 @@
  * information.
  */
 
+#include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>

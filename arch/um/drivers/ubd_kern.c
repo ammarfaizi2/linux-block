@@ -21,6 +21,7 @@
 
 #define UBD_SHIFT 4
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -27,6 +27,7 @@
 
 #define DEVICE_NAME "Z2RAM"
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

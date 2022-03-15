@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  * Copyright (C) 2013-2014 Christoph Hellwig
  */
+#include <linux/topology.h>
 #include <linux/timekeeping.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>

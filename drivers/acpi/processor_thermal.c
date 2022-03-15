@@ -9,6 +9,7 @@
  *  			- Added processor hotplug support
  */
 
+#include <linux/topology.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

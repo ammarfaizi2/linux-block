@@ -6,6 +6,7 @@
  *  Copyright (C) 1997       Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
 
+#include <linux/topology.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/cpumask_api.h>

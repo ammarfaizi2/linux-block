@@ -163,6 +163,7 @@
 
 /* do print messages for unexpected interrupts */
 static int print_unex = 1;
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/highmem.h>

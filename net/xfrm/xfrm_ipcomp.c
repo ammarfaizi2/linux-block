@@ -11,6 +11,7 @@
  *   - Adaptive compression.
  */
 
+#include <linux/topology.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>

@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xive: " fmt
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_page_address.h>

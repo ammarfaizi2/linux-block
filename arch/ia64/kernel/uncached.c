@@ -9,6 +9,7 @@
  * pool of pages per node.
  */
 
+#include <linux/topology.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

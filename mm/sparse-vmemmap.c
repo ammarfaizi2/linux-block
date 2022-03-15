@@ -18,6 +18,7 @@
  * The architecture is expected to provide a vmemmap_populate() function
  * to instantiate the mapping.
  */
+#include <linux/topology.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>

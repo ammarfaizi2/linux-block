@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //#define DEBUG
+#include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

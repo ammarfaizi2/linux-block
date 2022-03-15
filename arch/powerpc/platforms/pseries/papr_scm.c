@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt)	"papr-scm: " fmt
 
+#include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>

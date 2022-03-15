@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/topology.h>
 #include <linux/timex.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007 David S. Miller (davem@davemloft.net)
  */
+#include <linux/topology.h>
 #include <linux/of_api.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>

@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/topology.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

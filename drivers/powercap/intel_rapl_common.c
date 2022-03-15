@@ -5,6 +5,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/topology.h>
 #include <linux/smp_api.h>
 #include <linux/notifier_api.h>
 #include <linux/math64.h>

@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) "numa: " fmt
 
+#include <linux/topology.h>
 #include <linux/of_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>

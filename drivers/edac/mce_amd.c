@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/topology.h>
 #include <linux/notifier_api.h>
 #include <asm/processor.h>
 #include <asm/msr.h>

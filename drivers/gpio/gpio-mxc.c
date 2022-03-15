@@ -7,6 +7,7 @@
 // Authors: Daniel Mack, Juergen Beisert.
 // Copyright (C) 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
 
+#include <linux/topology.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

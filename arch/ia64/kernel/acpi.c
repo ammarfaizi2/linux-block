@@ -15,6 +15,7 @@
  *  Copyright (C) 2004 Ashok Raj <ashok.raj@intel.com>
  */
 
+#include <linux/topology.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

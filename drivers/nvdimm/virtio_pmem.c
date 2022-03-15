@@ -6,6 +6,7 @@
  * from host and registers the virtual pmem device
  * with libnvdimm core.
  */
+#include <linux/topology.h>
 #include <linux/device_api_lock.h>
 
 #include "virtio_pmem.h"

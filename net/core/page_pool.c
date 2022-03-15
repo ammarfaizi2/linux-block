@@ -5,6 +5,7 @@
  *	Copyright (C) 2016 Red Hat, Inc.
  */
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mm_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2009, Intel Corporation.
  */
 
+#include <linux/topology.h>
 #include <linux/timex.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>

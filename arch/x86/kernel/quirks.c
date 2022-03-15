@@ -2,6 +2,7 @@
 /*
  * This file contains work-arounds for x86 and x86_64 platform bugs.
  */
+#include <linux/topology.h>
 #include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/dmi.h>

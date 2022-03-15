@@ -5,6 +5,7 @@
  *			 <benh@kernel.crashing.org>
  */
 
+#include <linux/topology.h>
 #include <linux/syscalls_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmap_lock.h>

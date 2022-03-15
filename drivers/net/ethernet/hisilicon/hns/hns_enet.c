@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>

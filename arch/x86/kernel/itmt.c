@@ -16,6 +16,7 @@
  * frequency under ITMT.
  */
 
+#include <linux/topology.h>
 #include <linux/smp_api.h>
 #include <linux/sched/topology.h>
 #include <linux/mutex_api.h>

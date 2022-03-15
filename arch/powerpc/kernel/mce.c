@@ -9,6 +9,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "mce: " fmt
 
+#include <linux/topology.h>
 #include <linux/rwsem_api.h>
 #include <linux/preempt.h>
 #include <linux/of_api.h>

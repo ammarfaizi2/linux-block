@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt) "of_pmem: " fmt
 
+#include <linux/topology.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/of_platform.h>

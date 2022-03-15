@@ -87,6 +87,7 @@
  *	All object allocations for a node occur from node specific slab lists.
  */
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/random.h>

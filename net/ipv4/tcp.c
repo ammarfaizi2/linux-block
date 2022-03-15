@@ -243,6 +243,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/topology.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

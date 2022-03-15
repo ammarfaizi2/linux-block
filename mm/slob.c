@@ -57,6 +57,7 @@
  * in order to prevent random node placement.
  */
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/mm.h>
 #include <linux/pgtable_api.h>

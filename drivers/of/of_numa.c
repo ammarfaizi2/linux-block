@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "OF: NUMA: " fmt
 
+#include <linux/topology.h>
 #include <linux/of_api.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2004-2016 Cavium, Inc.
  */
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
