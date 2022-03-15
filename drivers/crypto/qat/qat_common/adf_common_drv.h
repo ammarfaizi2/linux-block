@@ -3,6 +3,7 @@
 #ifndef ADF_DRV_H
 #define ADF_DRV_H
 
+#include <linux/topology.h>
 #include <linux/smp_api.h>
 #include <linux/list.h>
 #include <linux/pci.h>

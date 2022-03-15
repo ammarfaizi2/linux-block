@@ -5,6 +5,7 @@
 #if !defined(_TRACE_SCHED_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_SCHED_H
 
+#include <linux/topology.h>
 #include <linux/sched/signal.h>
 #include <linux/pid.h>
 #include <linux/sched/task.h>

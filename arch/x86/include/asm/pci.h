@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_PCI_H
 #define _ASM_X86_PCI_H
 
+#include <linux/topology.h>
 #include <linux/mm.h> /* for struct page */
 #include <linux/types.h>
 #include <linux/slab.h>
