@@ -18,6 +18,7 @@
 #ifndef __CPIA2_H__
 #define __CPIA2_H__
 
+#include <linux/fs.h>
 #include <linux/videodev2.h>
 #include <linux/usb.h>
 #include <linux/poll.h>

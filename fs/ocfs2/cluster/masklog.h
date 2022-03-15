@@ -62,6 +62,7 @@
  */
 
 /* for task_struct */
+#include <linux/fs.h>
 #include <linux/sched.h>
 
 /* bits that are frequently given and infrequently matched in the low word */

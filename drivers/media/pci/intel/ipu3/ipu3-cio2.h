@@ -4,6 +4,7 @@
 #ifndef __IPU3_CIO2_H
 #define __IPU3_CIO2_H
 
+#include <linux/fs.h>
 #include <linux/bits.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
 #ifndef _SELINUX_AVC_H_
 #define _SELINUX_AVC_H_
 
+#include <linux/fs.h>
 #include <linux/stddef.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

@@ -8,6 +8,7 @@
 #ifndef _HV_UTILS_TRANSPORT_H
 #define _HV_UTILS_TRANSPORT_H
 
+#include <linux/fs.h>
 #include <linux/connector.h>
 #include <linux/miscdevice.h>
 

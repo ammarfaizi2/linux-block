@@ -7,6 +7,7 @@
 #ifndef __VENUS_CORE_H_
 #define __VENUS_CORE_H_
 
+#include <linux/fs.h>
 #include <linux/debugfs.h>
 #include <linux/bitops.h>
 #include <linux/list.h>
