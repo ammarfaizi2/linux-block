@@ -4,6 +4,7 @@
 #if !defined(_TRACE_QDISC_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_QDISC_H
 
+#include <net/sch_generic_api.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
 #include <linux/tracepoint.h>

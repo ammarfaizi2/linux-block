@@ -1,6 +1,7 @@
 #ifndef __NET_SCHED_CODEL_QDISC_H
 #define __NET_SCHED_CODEL_QDISC_H
 
+#include <net/sch_generic_api.h>
 #include <linux/types.h>
 
 /*
