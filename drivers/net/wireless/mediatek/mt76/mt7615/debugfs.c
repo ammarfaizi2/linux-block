@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/debugfs.h>
 #include <asm/unaligned.h>
 
 #include "mt7615.h"

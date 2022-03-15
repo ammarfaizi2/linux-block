@@ -11,6 +11,7 @@
  * ALT2 function.
  */
 
+#include <linux/debugfs.h>
 #include <asm/io.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_bridge.h>

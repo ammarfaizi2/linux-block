@@ -3,6 +3,7 @@
  * Copyright (c) 2001-2002 by David Brownell
  */
 
+#include <linux/debugfs.h>
 #include <linux/types.h>
 
 /* this file is part of ehci-hcd.c */

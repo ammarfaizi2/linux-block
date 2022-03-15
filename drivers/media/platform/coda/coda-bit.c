@@ -8,6 +8,7 @@
  * Copyright (C) 2012-2014 Philipp Zabel, Pengutronix
  */
 
+#include <linux/debugfs.h>
 #include <linux/clk.h>
 #include <linux/irqreturn.h>
 #include <linux/kernel.h>

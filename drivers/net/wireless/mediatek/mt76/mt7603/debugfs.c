@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/debugfs.h>
+
 #include "mt7603.h"
 
 static int

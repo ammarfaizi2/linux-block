@@ -4,6 +4,8 @@
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/debugfs.h>
+
 #include "core.h"
 #include "wmi-ops.h"
 #include "txrx.h"

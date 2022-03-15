@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (c) 2015-2016 Quantenna Communications. All rights reserved. */
 
+#include <linux/debugfs.h>
+
 #include "debug.h"
 
 void qtnf_debugfs_init(struct qtnf_bus *bus, const char *name)

@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/vmalloc.h>
 

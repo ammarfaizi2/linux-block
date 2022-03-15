@@ -60,6 +60,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/debugfs.h>
 #include <linux/export.h>
 #include <linux/moduleparam.h>
 #include <linux/vmalloc.h>

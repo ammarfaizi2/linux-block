@@ -9,6 +9,7 @@
  *
  *****************************************************************************/
 
+#include <linux/debugfs.h>
 #include <linux/kernel.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>

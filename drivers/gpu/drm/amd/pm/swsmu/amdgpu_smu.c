@@ -22,6 +22,7 @@
 
 #define SWSMU_CODE_LAYER_L1
 
+#include <linux/debugfs.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/firmware.h>

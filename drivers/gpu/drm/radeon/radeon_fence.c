@@ -29,6 +29,7 @@
  *    Dave Airlie
  */
 
+#include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/firmware.h>

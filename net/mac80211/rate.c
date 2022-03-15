@@ -6,6 +6,7 @@
  * Copyright 2017	Intel Deutschland GmbH
  */
 
+#include <linux/debugfs.h>
 #include <linux/kernel.h>
 #include <linux/rtnetlink.h>
 #include <linux/module.h>

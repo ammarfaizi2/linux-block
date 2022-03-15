@@ -7,6 +7,7 @@
  * Author: Lu Baolu <baolu.lu@linux.intel.com>
  */
 
+#include <linux/debugfs.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 

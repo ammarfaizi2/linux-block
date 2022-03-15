@@ -5,6 +5,7 @@
  * Copyright (c) 2018, Oracle and/or its affiliates
  */
 
+#include <linux/debugfs.h>
 #include <linux/moduleparam.h>
 #include "nvme.h"
 

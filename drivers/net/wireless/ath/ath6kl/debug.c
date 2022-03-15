@@ -17,6 +17,7 @@
 
 #include "core.h"
 
+#include <linux/debugfs.h>
 #include <linux/skbuff.h>
 #include <linux/fs.h>
 #include <linux/vmalloc.h>

@@ -8,6 +8,7 @@
 #include "habanalabs.h"
 #include "../include/hw_ip/mmu/mmu_general.h"
 
+#include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/uaccess.h>

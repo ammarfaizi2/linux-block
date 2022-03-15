@@ -10,6 +10,7 @@
  * storage device to each channel for storing ECC data.
  */
 
+#include <linux/debugfs.h>
 #include <asm/x86_init.h>
 #include <linux/module.h>
 #include <linux/init.h>

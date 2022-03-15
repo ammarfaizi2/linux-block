@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#include <linux/debugfs.h>
 #include <linux/string.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_atomic_helper.h>

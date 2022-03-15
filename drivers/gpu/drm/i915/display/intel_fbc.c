@@ -38,6 +38,7 @@
  * forcibly disable it to allow proper screen updates.
  */
 
+#include <linux/debugfs.h>
 #include <drm/drm_fourcc.h>
 
 #include "i915_drv.h"

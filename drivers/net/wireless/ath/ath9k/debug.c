@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/debugfs.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/export.h>

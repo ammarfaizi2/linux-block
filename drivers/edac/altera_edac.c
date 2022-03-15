@@ -5,6 +5,7 @@
  *  Copyright 2011-2012 Calxeda, Inc.
  */
 
+#include <linux/debugfs.h>
 #include <linux/bitmap.h>
 #include <asm/cacheflush.h>
 #include <linux/ctype.h>

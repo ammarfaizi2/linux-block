@@ -6,6 +6,7 @@
  *
  * Core file which registers crypto algorithms supported by the hardware.
  */
+#include <linux/debugfs.h>
 #include <linux/clk.h>
 #include <linux/crypto.h>
 #include <linux/io.h>

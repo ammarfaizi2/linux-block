@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Hisilicon Limited.
  */
 
+#include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/clock.h>
 #include "hisi_sas.h"

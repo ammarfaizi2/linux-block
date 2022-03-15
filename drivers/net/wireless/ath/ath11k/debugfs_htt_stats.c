@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/debugfs.h>
 #include <linux/vmalloc.h>
 #include "core.h"
 #include "dp_tx.h"

@@ -8,6 +8,7 @@
 #include "dpu_hw_sspp.h"
 #include "dpu_kms.h"
 
+#include <linux/debugfs.h>
 #include <drm/drm_file.h>
 
 #define DPU_FETCH_CONFIG_RESET_VALUE   0x00000087
