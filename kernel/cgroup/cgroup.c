@@ -30,6 +30,7 @@
 
 #include "cgroup-internal.h"
 
+#include <linux/percpu_rwsem_api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
