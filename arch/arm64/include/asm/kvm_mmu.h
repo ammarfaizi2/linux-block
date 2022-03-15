@@ -7,6 +7,7 @@
 #ifndef __ARM64_KVM_MMU_H__
 #define __ARM64_KVM_MMU_H__
 
+#include <asm/kvm_arm.h>
 #include <asm/page.h>
 #include <asm/memory.h>
 #include <asm/mmu.h>
