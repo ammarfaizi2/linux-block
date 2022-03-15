@@ -4,6 +4,7 @@
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
+#include <linux/bug.h>
 #include <linux/kernel.h>
 
 #include "k3-psil-priv.h"
