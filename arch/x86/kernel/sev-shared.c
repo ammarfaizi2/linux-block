@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
+
+#include <asm/special_insns.h>
+
 /*
  * AMD Encrypted Register State Support
  *
