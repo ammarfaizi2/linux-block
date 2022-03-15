@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/swait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched.h>
