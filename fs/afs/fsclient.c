@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/uio_api.h>
 #include <linux/ktime_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>

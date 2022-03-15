@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>

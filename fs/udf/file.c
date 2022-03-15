@@ -26,6 +26,7 @@
  */
 
 #include "udfdecl.h"
+#include <linux/uio_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

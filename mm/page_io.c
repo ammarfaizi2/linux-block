@@ -11,6 +11,7 @@
  *  Always use brw_page, life becomes simpler. 12 May 1998 Eric Biederman
  */
 
+#include <linux/uio_api.h>
 #include <linux/sched.h>
 #include <linux/ratelimit.h>
 #include <linux/pgtable_api.h>

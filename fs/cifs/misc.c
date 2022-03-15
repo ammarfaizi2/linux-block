@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

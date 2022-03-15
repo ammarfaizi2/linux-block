@@ -7,6 +7,7 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/uio_api.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

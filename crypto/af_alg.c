@@ -7,6 +7,7 @@
  * Copyright (c) 2010 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/uio_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>

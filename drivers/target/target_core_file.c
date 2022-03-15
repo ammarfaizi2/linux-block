@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/uio_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/math64.h>
 #include <linux/gfp_api.h>

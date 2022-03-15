@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/uio_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>

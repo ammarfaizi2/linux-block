@@ -25,6 +25,7 @@
 #include "xfs_iomap.h"
 #include "xfs_reflink.h"
 
+#include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/mm.h>
 #include <linux/sched.h>

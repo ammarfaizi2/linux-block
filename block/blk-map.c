@@ -2,6 +2,7 @@
 /*
  * Functions related to mapping data to requests
  */
+#include <linux/uio_api.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

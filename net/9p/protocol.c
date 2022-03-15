@@ -8,6 +8,7 @@
  *  Copyright (C) 2008 by IBM, Corp.
  */
 
+#include <linux/uio_api.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

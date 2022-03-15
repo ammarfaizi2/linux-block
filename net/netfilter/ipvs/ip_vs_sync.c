@@ -35,6 +35,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>

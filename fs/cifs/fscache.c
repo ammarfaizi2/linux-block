@@ -6,6 +6,7 @@
  *   Author(s): Suresh Jayaraman <sjayaraman@suse.de>
  *
  */
+#include <linux/uio_api.h>
 #include <linux/slab.h>
 #include <linux/pagemap.h>
 

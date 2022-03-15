@@ -5,6 +5,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/uio_api.h>
 #include <linux/slab.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

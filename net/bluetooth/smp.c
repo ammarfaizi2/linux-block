@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/uio_api.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>

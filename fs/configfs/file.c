@@ -8,6 +8,7 @@
  * configfs Copyright (C) 2005 Oracle.  All rights reserved.
  */
 
+#include <linux/uio_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>

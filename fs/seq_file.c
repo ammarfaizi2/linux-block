@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/uio_api.h>
 #include <linux/rculist.h>
 #include <linux/ratelimit.h>
 #include <linux/mutex_api.h>

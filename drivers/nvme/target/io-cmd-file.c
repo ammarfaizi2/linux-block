@@ -5,6 +5,7 @@
  * affiliates.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/uio_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/fs_api_sb.h>

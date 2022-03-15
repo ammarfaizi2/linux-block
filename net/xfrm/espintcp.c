@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/uio_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/netdevice_api.h>
