@@ -9,6 +9,7 @@
 #ifndef _NET_SEG6_H
 #define _NET_SEG6_H
 
+#include <net/checksum.h>
 #include <linux/net.h>
 #include <linux/ipv6.h>
 #include <linux/seg6.h>
