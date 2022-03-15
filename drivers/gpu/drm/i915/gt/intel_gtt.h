@@ -16,6 +16,7 @@
 #ifndef __INTEL_GTT_H__
 #define __INTEL_GTT_H__
 
+#include <linux/mm_page_address.h>
 #include <linux/kref_api.h>
 #include <linux/ioport.h>
 #include <linux/io-mapping.h>

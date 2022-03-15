@@ -32,6 +32,7 @@
 # include <asm/msr.h>
 #endif
 
+#include <linux/mm_page_address.h>
 #include <asm/page.h>
 
 /* Reservation marker for mksstat pid's */

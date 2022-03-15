@@ -2,6 +2,7 @@
 #ifndef _LINUX_SLAB_DEF_H
 #define	_LINUX_SLAB_DEF_H
 
+#include <linux/mm_page_address.h>
 #include <linux/kfence.h>
 #include <linux/reciprocal_div.h>
 

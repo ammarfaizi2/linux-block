@@ -23,6 +23,8 @@
 #ifndef __SMU_CMN_H__
 #define __SMU_CMN_H__
 
+#include <linux/mm_page_address.h>
+
 #include "amdgpu_smu.h"
 
 #if defined(SWSMU_CODE_LAYER_L2) || defined(SWSMU_CODE_LAYER_L3) || defined(SWSMU_CODE_LAYER_L4)

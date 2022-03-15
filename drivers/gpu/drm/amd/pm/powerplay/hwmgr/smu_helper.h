@@ -1,3 +1,6 @@
+
+#include <linux/mm_page_address.h>
+
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *

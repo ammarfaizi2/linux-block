@@ -11,6 +11,7 @@
 #ifndef _CRYPTO_SCATTERWALK_H
 #define _CRYPTO_SCATTERWALK_H
 
+#include <linux/mm_page_address.h>
 #include <asm/cacheflush.h>
 #include <crypto/algapi.h>
 
