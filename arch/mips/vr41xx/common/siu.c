@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2007-2008  Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <asm/cpu-type.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/ioport.h>

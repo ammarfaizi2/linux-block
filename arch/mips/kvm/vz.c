@@ -9,6 +9,7 @@
  * Authors: Yann Le Du <ledu@kymasys.com>
  */
 
+#include <asm/cpu-type.h>
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <linux/module.h>

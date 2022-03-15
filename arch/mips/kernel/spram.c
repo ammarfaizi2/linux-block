@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2007, 2008 MIPS Technologies, Inc.
  */
+#include <asm/cpu-type.h>
 #include <linux/kernel.h>
 #include <linux/ptrace.h>
 #include <linux/stddef.h>

@@ -15,6 +15,7 @@
  *  Yoichi Yuasa <yuasa@linux-mips.org>
  *  - Coped with INTASSIGN of NEC VR4133.
  */
+#include <asm/cpu-type.h>
 #include <linux/errno.h>
 #include <linux/export.h>
 #include <linux/init.h>

@@ -12,6 +12,7 @@
  * support references the code of MIPS stacktrace.c.
  */
 
+#include <asm/cpu-type.h>
 #include <linux/cpumask.h>
 #include <linux/interrupt.h>
 #include <linux/smp.h>

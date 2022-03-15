@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <asm/cpu-type.h>
 #include <linux/types.h>
 #include <asm/bmips.h>
 #include <asm/io.h>

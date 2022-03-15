@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Wind River Systems
  */
 
+#include <asm/cpu-type.h>
 #include <linux/etherdevice.h>
 #include <linux/of_platform.h>
 #include <linux/of_fdt.h>
