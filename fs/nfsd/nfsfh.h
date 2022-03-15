@@ -8,6 +8,7 @@
 #ifndef _LINUX_NFSD_NFSFH_H
 #define _LINUX_NFSD_NFSFH_H
 
+#include <linux/dcache.h>
 #include <linux/crc32.h>
 #include <linux/sunrpc/svc.h>
 #include <linux/iversion.h>

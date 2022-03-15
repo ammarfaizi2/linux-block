@@ -10,6 +10,7 @@
 
 #ifdef __KERNEL__
 
+#include <linux/dcache.h>
 #include <linux/idr.h> /* inotify uses this */
 #include <linux/fs.h> /* struct inode */
 #include <linux/list.h>

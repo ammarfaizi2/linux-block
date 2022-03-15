@@ -11,6 +11,7 @@
 #ifndef _LINUX_FSVERITY_H
 #define _LINUX_FSVERITY_H
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <uapi/linux/fsverity.h>
 
