@@ -7,6 +7,7 @@
 #ifndef WILC_NETDEV_H
 #define WILC_NETDEV_H
 
+#include <linux/srcu_types.h>
 #include <linux/tcp.h>
 #include <linux/ieee80211.h>
 #include <net/cfg80211.h>
