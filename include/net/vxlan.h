@@ -2,6 +2,7 @@
 #ifndef __NET_VXLAN_H
 #define __NET_VXLAN_H 1
 
+#include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/if_vlan.h>
 #include <net/udp_tunnel.h>

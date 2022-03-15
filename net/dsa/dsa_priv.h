@@ -7,6 +7,7 @@
 #ifndef __DSA_PRIV_H
 #define __DSA_PRIV_H
 
+#include <linux/if_vlan_api.h>
 #include <linux/if_bridge.h>
 #include <linux/if_vlan.h>
 #include <linux/phy.h>
