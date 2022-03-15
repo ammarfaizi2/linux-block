@@ -15,6 +15,7 @@
  */
 #define pr_fmt(fmt) "seccomp: " fmt
 
+#include <linux/random.h>
 #include <linux/ptrace_api.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>

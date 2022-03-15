@@ -5,6 +5,7 @@
  * Based on ipt_random and ipt_nth by Fabrice MARIE <fabrice@netfilter.org>.
  */
 
+#include <linux/random.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/spinlock.h>

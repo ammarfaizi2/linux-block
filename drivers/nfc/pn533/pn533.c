@@ -6,6 +6,7 @@
  * Copyright (C) 2012-2013 Tieto Poland
  */
 
+#include <linux/random.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device.h>

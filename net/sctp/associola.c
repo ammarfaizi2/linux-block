@@ -28,6 +28,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/random.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>

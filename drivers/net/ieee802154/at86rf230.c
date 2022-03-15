@@ -9,6 +9,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  * Alexander Aring <aar@pengutronix.de>
  */
+#include <linux/random.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/hrtimer_api.h>

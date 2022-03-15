@@ -7,6 +7,7 @@
  *          Iyappan Subramanian <isubramanian@apm.com>
  */
 
+#include <linux/random.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/random.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>

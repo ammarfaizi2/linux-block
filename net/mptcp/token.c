@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) "MPTCP: " fmt
 
+#include <linux/random.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/memblock.h>

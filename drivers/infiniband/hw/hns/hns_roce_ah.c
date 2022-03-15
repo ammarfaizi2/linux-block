@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/random.h>
 #include <linux/pci.h>
 #include <rdma/ib_addr.h>
 #include <rdma/ib_cache.h>

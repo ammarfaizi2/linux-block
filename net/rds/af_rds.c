@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/random.h>
 #include <linux/net.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

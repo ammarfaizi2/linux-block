@@ -6,6 +6,7 @@
  *  Based on ideas by D.J.Bernstein and Eric Schenk.
  */
 
+#include <linux/random.h>
 #include <linux/tcp.h>
 #include <linux/siphash.h>
 #include <linux/kernel.h>

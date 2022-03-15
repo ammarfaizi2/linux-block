@@ -5,6 +5,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/random.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

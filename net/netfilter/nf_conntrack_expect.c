@@ -7,6 +7,7 @@
  * (c) 2005-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/random.h>
 #include <linux/net.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>

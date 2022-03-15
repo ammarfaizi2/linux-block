@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/random.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>
