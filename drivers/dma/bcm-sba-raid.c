@@ -37,6 +37,7 @@
  * by Broadcom SoC ring manager.
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>

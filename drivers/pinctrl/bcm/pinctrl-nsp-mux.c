@@ -25,6 +25,7 @@
  *					+----------
  */
 
+#include <linux/seq_file.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

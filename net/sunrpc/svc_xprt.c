@@ -5,6 +5,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched/signal.h>
 #include <linux/rculist.h>
 #include <linux/net.h>

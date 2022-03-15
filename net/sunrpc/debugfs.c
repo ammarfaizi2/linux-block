@@ -5,6 +5,7 @@
  * (c) 2014 Jeff Layton <jlayton@primarydata.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/refcount_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

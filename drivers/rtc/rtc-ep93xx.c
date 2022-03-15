@@ -6,6 +6,7 @@
  * Author: Alessandro Zummo <a.zummo@towertech.it>
  */
 
+#include <linux/seq_file.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/rtc.h>

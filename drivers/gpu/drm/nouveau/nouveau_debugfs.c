@@ -28,6 +28,7 @@
  *  Ben Skeggs <bskeggs@redhat.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/dcache.h>
 #include <linux/debugfs.h>
 #include <nvif/class.h>

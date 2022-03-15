@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
+#include <linux/seq_file.h>
 #include <linux/pagemap.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

@@ -37,6 +37,7 @@
  * Includes useful feedback from Clark Williams <williams@redhat.com>
  *
  */
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

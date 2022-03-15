@@ -6,6 +6,7 @@
  * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/err.h>

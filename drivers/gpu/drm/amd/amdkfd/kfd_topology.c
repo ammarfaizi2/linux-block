@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/seq_file.h>
 #include <linux/rwsem_api.h>
 #include <linux/kobject_api.h>
 #include <linux/cpumask_api.h>

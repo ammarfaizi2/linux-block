@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/seq_file.h>
 #include <linux/rculist.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

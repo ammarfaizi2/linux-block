@@ -5,6 +5,7 @@
  *  Copyright (c) 2012, Jeff Layton <jlayton@redhat.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/random.h>

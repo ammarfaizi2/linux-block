@@ -11,6 +11,7 @@
 //
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include "rsnd.h"
 

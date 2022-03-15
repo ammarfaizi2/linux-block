@@ -4,6 +4,7 @@
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>

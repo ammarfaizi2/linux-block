@@ -6,6 +6,7 @@
  * Used by Master driver
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

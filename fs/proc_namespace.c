@@ -7,6 +7,7 @@
  * fs/namespace.c, thus here instead of fs/proc
  *
  */
+#include <linux/seq_file.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/mnt_namespace.h>

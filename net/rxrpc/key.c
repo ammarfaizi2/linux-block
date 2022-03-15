@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/cred.h>
 #include <crypto/skcipher.h>

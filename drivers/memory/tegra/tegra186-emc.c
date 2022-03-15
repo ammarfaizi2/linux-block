@@ -3,6 +3,7 @@
  * Copyright (C) 2019 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/seq_file.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

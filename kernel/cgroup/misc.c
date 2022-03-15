@@ -6,6 +6,7 @@
  * Author: Vipin Sharma <vipinsh@google.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/cgroup_api.h>
 #include <linux/atomic_api.h>
 #include <linux/limits.h>

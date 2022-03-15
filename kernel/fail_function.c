@@ -2,6 +2,7 @@
 /*
  * fail_function.c: Function-based error injection
  */
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/error-injection.h>

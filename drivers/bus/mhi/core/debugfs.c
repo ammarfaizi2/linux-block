@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/seq_file.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>

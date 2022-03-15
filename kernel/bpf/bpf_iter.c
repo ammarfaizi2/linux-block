@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020 Facebook */
 
+#include <linux/seq_file.h>
 #include <linux/ratelimit.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

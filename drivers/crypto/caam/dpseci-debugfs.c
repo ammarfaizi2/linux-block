@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2019 NXP */
 
+#include <linux/seq_file.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/debugfs.h>

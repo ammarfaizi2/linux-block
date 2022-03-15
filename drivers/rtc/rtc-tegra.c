@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2019, NVIDIA Corporation.
  */
 
+#include <linux/seq_file.h>
 #include <linux/pm_wakeup.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

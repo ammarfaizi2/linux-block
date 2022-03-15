@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2020, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/seq_file.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

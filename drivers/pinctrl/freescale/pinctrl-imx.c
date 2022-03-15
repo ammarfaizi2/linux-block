@@ -7,6 +7,7 @@
 //
 // Author: Dong Aisheng <dong.aisheng@linaro.org>
 
+#include <linux/seq_file.h>
 #include <linux/radix-tree-api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

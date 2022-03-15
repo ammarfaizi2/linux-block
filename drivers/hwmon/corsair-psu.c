@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Wilken Gottwalt <wilken.gottwalt@posteo.net>
  */
 
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>

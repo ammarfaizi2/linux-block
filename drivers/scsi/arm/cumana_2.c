@@ -13,6 +13,7 @@
  *   18-08-1998	RMK	0.0.3	Fixed synchronous transfer depth.
  *   02-04-2000	RMK	0.0.4	Updated for new error handling code.
  */
+#include <linux/seq_file.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>

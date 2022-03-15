@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/seq_file.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_debugfs.h>
 #include <drm/drm_file.h>

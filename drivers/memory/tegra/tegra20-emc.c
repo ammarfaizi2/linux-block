@@ -5,6 +5,7 @@
  * Author: Dmitry Osipenko <digetx@gmail.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

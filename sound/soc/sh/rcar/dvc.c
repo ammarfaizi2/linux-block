@@ -27,6 +27,7 @@
  *	amixer set "DVC Out" 100%  // Volume Up
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 

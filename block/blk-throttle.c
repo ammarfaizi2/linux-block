@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Vivek Goyal <vgoyal@redhat.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/percpu.h>

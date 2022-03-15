@@ -2,6 +2,7 @@
 // Copyright 2020 IBM Corp.
 // Copyright (c) 2019-2020 Intel Corporation
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

@@ -6,6 +6,7 @@
  *  Copyright (C) 2012 John Crispin <john@phrozen.org>
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/device.h>

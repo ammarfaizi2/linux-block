@@ -3,6 +3,7 @@
 // Copyright (C) 2015-2017 Socionext Inc.
 //   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

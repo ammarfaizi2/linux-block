@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/io_extra.h>
 #include <linux/debugfs.h>

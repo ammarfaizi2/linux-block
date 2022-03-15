@@ -23,6 +23,7 @@
  * rings where each mailbox channel represents a separate FlexRM ring.
  */
 
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

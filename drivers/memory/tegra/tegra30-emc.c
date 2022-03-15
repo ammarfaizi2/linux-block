@@ -9,6 +9,7 @@
  * Copyright (C) 2019 GRATE-DRIVER project
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

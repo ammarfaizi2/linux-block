@@ -19,6 +19,7 @@
  *  02-04-2000	RMK	0.1.1	Updated for new error handling code.
  *  22-10-2000  SH		Updated for new registering scheme.
  */
+#include <linux/seq_file.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>

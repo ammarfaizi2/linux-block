@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/seq_file.h>
 #include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <linux/list.h>

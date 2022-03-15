@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/seq_file.h>
 #include <drm/drm_print.h>
 
 #include "i915_drv.h" /* for_each_engine! */

@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Hisilicon Limited.
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>

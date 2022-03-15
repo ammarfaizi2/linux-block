@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Broadcom Corporation
  */
 
+#include <linux/seq_file.h>
 #include <linux/netdevice.h>
 #include <linux/module.h>
 

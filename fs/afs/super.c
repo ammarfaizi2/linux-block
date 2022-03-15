@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/seq_file.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

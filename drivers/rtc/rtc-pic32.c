@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Microchip Technology Inc.  All rights reserved.
  *
  */
+#include <linux/seq_file.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

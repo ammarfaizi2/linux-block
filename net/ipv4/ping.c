@@ -15,6 +15,7 @@
  * none of the bugs are Pavel's now.
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

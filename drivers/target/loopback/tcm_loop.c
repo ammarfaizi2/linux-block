@@ -20,6 +20,7 @@
  * GNU General Public License for more details.
  ****************************************************************************/
 
+#include <linux/seq_file.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>

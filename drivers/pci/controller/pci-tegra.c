@@ -13,6 +13,7 @@
  * Author: Thierry Reding <treding@nvidia.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/resource_ext_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

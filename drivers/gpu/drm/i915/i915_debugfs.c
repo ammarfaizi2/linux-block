@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/seq_file.h>
 #include <linux/rbtree_api.h>
 #include <linux/module.h>
 #include <linux/ktime_api.h>

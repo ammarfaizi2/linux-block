@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Felix Fietkau <nbd@nbd.name> */
 
+#include <linux/seq_file.h>
 #include <linux/kernel.h>
 #include <linux/debugfs.h>
 #include "mtk_eth_soc.h"

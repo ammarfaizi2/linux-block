@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

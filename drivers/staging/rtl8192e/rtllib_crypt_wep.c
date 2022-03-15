@@ -5,6 +5,7 @@
  * Copyright (c) 2002-2004, Jouni Malinen <jkmaline@cc.hut.fi>
  */
 
+#include <linux/seq_file.h>
 #include <crypto/arc4.h>
 #include <linux/fips.h>
 #include <linux/module.h>

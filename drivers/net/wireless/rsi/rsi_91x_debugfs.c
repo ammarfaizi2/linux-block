@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/seq_file.h>
 #include <linux/debugfs.h>
 
 #include "rsi_debugfs.h"

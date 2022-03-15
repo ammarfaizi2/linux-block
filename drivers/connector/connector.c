@@ -6,6 +6,7 @@
  * All rights reserved.
  */
 
+#include <linux/seq_file.h>
 #include <linux/refcount_api.h>
 #include <linux/net.h>
 #include <linux/io.h>

@@ -6,6 +6,7 @@
  * Author: Brendan Higgins <brendanhiggins@google.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/kref_api.h>
 #include <kunit/test.h>
 #include <kunit/test-bug.h>

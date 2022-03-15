@@ -29,6 +29,7 @@
 #define XEN_NETIF_DEFINE_TOEPLITZ
 
 #include "common.h"
+#include <linux/seq_file.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/vmalloc.h>

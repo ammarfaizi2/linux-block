@@ -7,6 +7,7 @@
  * Author: Vidya Sagar <vidyas@nvidia.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>

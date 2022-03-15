@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include <drm/drm_print.h>
 

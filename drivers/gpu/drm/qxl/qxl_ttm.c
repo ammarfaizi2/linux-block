@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/seq_file.h>
 #include <linux/delay.h>
 
 #include <drm/drm.h>

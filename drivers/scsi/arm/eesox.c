@@ -19,6 +19,7 @@
  *   02-04-2000	RMK	0.0.3	Fixed NO_IRQ/NO_DMA problem, updated for new
  *				error handling code.
  */
+#include <linux/seq_file.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2008, John W. Linville <linville@tuxdriver.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/err.h>
 #include <linux/fips.h>
 #include <linux/module.h>

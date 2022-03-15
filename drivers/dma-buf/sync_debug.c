@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Google, Inc.
  */
 
+#include <linux/seq_file.h>
 #include <linux/ktime_api.h>
 #include <linux/init.h>
 #include <linux/dma-fence-api.h>

@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/seq_file.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Marvell
  */
 
+#include <linux/seq_file.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/debugfs.h>

@@ -15,6 +15,7 @@
 // but provides extensions to which platform specific implementation of the gpio
 // and wakeup interrupts can be hooked to.
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

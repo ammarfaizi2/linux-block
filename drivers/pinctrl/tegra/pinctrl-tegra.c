@@ -10,6 +10,7 @@
  * Copyright (C) 2009-2011 ST-Ericsson AB
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
