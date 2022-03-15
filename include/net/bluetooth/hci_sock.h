@@ -25,6 +25,7 @@
 #ifndef __HCI_SOCK_H
 #define __HCI_SOCK_H
 
+#include <linux/ioctl.h>
 #include <linux/types.h>
 
 /* Socket options */
