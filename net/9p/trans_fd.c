@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/eventpoll.h>
 #include <linux/in.h>
 #include <linux/module.h>
 #include <linux/net.h>

@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "AF_XDP: %s: " fmt, __func__
 
+#include <linux/eventpoll.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <asm/io.h>
