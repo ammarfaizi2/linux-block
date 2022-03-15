@@ -44,6 +44,7 @@
  * ifindexes. The setup and packet enqueue/send code is shared between the two
  * types of devmap; only the lookup and insertion is different.
  */
+#include <linux/nsproxy.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/filter_api.h>

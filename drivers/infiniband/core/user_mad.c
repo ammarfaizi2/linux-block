@@ -35,6 +35,7 @@
 
 #define pr_fmt(fmt) "user_mad: " fmt
 
+#include <linux/nsproxy.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
