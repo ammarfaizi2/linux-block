@@ -39,6 +39,7 @@
  * Serge Semin <fancer.lancer@gmail.com>, <Sergey.Semin@t-platforms.ru>
  */
 
+#include <linux/align.h>
 #include <linux/stddef.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

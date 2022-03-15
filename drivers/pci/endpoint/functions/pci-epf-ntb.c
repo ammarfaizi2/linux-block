@@ -34,6 +34,7 @@
  * +---------------------------------------------------------------------+
  */
 
+#include <linux/align.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/module.h>

@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/align.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <scsi/iscsi_proto.h>

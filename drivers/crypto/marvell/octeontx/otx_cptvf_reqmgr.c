@@ -8,6 +8,8 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/align.h>
+
 #include "otx_cptvf.h"
 #include "otx_cptvf_algs.h"
 

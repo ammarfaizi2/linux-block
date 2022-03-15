@@ -14,6 +14,7 @@
  *	     tighter packing. Prefetchable range support.
  */
 
+#include <linux/align.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

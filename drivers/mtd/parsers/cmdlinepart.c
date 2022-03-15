@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt)	"mtd: " fmt
 
+#include <linux/align.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/mtd/mtd.h>

@@ -7,6 +7,7 @@
  * Chul Kim <chul.kim@idt.com>
  */
 
+#include <linux/align.h>
 #include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/init.h>

@@ -4,6 +4,7 @@
  *  GUS's memory allocation routines / bottom layer
  */
 
+#include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <sound/core.h>

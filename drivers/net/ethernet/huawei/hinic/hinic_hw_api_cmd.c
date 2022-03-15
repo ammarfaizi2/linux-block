@@ -4,6 +4,7 @@
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
+#include <linux/align.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/errno.h>

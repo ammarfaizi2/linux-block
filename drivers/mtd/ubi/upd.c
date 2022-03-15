@@ -25,6 +25,7 @@
  * transaction with a roll-back capability.
  */
 
+#include <linux/align.h>
 #include <linux/err.h>
 #include <linux/uaccess.h>
 #include <linux/math64.h>

@@ -7,6 +7,7 @@
  *
  * TODO: Proximity
  */
+#include <linux/align.h>
 #include <linux/bitops.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

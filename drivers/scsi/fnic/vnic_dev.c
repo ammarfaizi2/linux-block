@@ -16,6 +16,7 @@
  * SOFTWARE.
  */
 
+#include <linux/align.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/types.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/align.h>
 #include <drm/drm_print.h>
 #include <linux/clk.h>
 #include "komeda_dev.h"

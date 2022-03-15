@@ -56,6 +56,7 @@
 /* enqueuing/finishing log of urbs */
 //#define URB_TRACE
 
+#include <linux/align.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/debugfs.h>

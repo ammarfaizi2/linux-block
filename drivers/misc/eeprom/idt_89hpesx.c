@@ -36,6 +36,7 @@
  * CSR address and value can be any of hexadecimal, decimal or octal format.
  */
 
+#include <linux/align.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

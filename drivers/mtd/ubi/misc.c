@@ -7,6 +7,7 @@
 
 /* Here we keep miscellaneous functions which are used all over the UBI code */
 
+#include <linux/align.h>
 #include <linux/sched/cond_resched.h>
 
 #include "ubi.h"

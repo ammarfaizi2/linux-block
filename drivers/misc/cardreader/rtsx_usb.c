@@ -6,6 +6,7 @@
  * Author:
  *   Roger Tseng <rogerable@realtek.com>
  */
+#include <linux/align.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>

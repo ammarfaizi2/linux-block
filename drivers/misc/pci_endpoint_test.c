@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/align.h>
 #include <linux/crc32.h>
 #include <linux/delay.h>
 #include <linux/fs.h>

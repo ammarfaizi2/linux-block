@@ -6,6 +6,7 @@
  * Copyright 2010 Analog Devices Inc.
  */
 
+#include <linux/align.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
