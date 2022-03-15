@@ -17,6 +17,7 @@
 #ifndef BNX2X_INIT_H
 #define BNX2X_INIT_H
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 
 /* Init operation types and structures */

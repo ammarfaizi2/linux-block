@@ -4,6 +4,7 @@
 #ifndef _IXGBEVF_H_
 #define _IXGBEVF_H_
 
+#include <linux/netdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/types.h>
 #include <linux/bitops.h>

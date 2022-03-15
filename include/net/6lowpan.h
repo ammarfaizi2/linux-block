@@ -53,6 +53,7 @@
 #ifndef __6LOWPAN_H__
 #define __6LOWPAN_H__
 
+#include <linux/netdevice_api.h>
 #include <linux/debugfs.h>
 
 #include <net/ipv6.h>

@@ -7,6 +7,7 @@
 #ifndef WIL6210_TXRX_H
 #define WIL6210_TXRX_H
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 

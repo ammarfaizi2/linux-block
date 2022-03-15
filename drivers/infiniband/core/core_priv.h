@@ -33,6 +33,7 @@
 #ifndef _CORE_PRIV_H
 #define _CORE_PRIV_H
 
+#include <linux/netdevice_api.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
 #include <linux/cgroup_rdma.h>

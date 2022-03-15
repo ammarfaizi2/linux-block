@@ -42,6 +42,7 @@
 #ifndef CAN_ML_H
 #define CAN_ML_H
 
+#include <linux/netdevice_api.h>
 #include <linux/can.h>
 #include <linux/list.h>
 #include <linux/netdevice.h>

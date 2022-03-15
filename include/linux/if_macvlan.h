@@ -2,6 +2,7 @@
 #ifndef _LINUX_IF_MACVLAN_H
 #define _LINUX_IF_MACVLAN_H
 
+#include <linux/netdevice_api.h>
 #include <linux/if_link.h>
 #include <linux/if_vlan.h>
 #include <linux/list.h>

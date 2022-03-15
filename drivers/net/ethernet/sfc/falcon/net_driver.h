@@ -10,6 +10,7 @@
 #ifndef EF4_NET_DRIVER_H
 #define EF4_NET_DRIVER_H
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/ethtool.h>

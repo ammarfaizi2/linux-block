@@ -9,6 +9,7 @@
 
 #include "main.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bitops.h>

@@ -4,6 +4,7 @@
 #ifndef _IXGBE_COMMON_H_
 #define _IXGBE_COMMON_H_
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/dev_printk.h>
 

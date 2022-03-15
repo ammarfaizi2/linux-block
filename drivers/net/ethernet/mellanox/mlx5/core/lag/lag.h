@@ -4,6 +4,8 @@
 #ifndef __MLX5_LAG_H__
 #define __MLX5_LAG_H__
 
+#include <linux/netdevice_api.h>
+
 #include "mlx5_core.h"
 #include "mp.h"
 #include "port_sel.h"

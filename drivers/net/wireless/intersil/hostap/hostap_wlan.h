@@ -2,6 +2,7 @@
 #ifndef HOSTAP_WLAN_H
 #define HOSTAP_WLAN_H
 
+#include <linux/netdevice_api.h>
 #include <linux/interrupt.h>
 #include <linux/wireless.h>
 #include <linux/netdevice.h>

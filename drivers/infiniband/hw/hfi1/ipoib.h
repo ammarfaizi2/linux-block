@@ -11,6 +11,7 @@
 #ifndef HFI1_IPOIB_H
 #define HFI1_IPOIB_H
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 #include <linux/stddef.h>
 #include <linux/atomic.h>

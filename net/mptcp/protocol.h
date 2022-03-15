@@ -7,6 +7,7 @@
 #ifndef __MPTCP_PROTOCOL_H
 #define __MPTCP_PROTOCOL_H
 
+#include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/random.h>
 #include <net/tcp.h>

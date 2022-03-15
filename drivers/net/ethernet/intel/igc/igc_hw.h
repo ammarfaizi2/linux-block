@@ -4,6 +4,7 @@
 #ifndef _IGC_HW_H_
 #define _IGC_HW_H_
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 #include <linux/if_ether.h>
 #include <linux/netdevice.h>

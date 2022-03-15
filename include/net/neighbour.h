@@ -2,6 +2,7 @@
 #ifndef _NET_NEIGHBOUR_H
 #define _NET_NEIGHBOUR_H
 
+#include <linux/netdevice_api.h>
 #include <linux/neighbour.h>
 
 /*

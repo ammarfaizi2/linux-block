@@ -9,6 +9,7 @@
 #ifndef _AX88796C_MAIN_H
 #define _AX88796C_MAIN_H
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/mii.h>
 

@@ -20,6 +20,7 @@
 #ifndef _PROTOCOL_H
 #define _PROTOCOL_H
 
+#include <linux/netdevice_api.h>
 #include <linux/in6.h>
 #include <linux/skbuff.h>
 #if IS_ENABLED(CONFIG_IPV6)

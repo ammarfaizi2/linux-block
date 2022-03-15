@@ -11,6 +11,7 @@
 #include "decl.h"
 #include "host.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/kfifo.h>
 
 /* sleep_params */

@@ -6,6 +6,7 @@
 #ifndef _IGBVF_H_
 #define _IGBVF_H_
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 #include <linux/timer.h>
 #include <linux/io.h>

@@ -1,3 +1,6 @@
+
+#include <linux/netdevice_api.h>
+
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * CAN driver for PEAK System USB adapters

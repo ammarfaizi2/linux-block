@@ -8,6 +8,7 @@
 #ifndef _CTCM_MAIN_H_
 #define _CTCM_MAIN_H_
 
+#include <linux/netdevice_api.h>
 #include <asm/ccwdev.h>
 #include <asm/ccwgroup.h>
 

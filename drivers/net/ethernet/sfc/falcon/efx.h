@@ -8,6 +8,8 @@
 #ifndef EF4_EFX_H
 #define EF4_EFX_H
 
+#include <linux/netdevice_api.h>
+
 #include "net_driver.h"
 #include "filter.h"
 

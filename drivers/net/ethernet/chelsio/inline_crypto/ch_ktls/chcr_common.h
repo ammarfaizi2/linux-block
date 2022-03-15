@@ -4,6 +4,8 @@
 #ifndef __CHCR_COMMON_H__
 #define __CHCR_COMMON_H__
 
+#include <linux/netdevice_api.h>
+
 #include "cxgb4.h"
 
 #define CHCR_MAX_SALT                      4

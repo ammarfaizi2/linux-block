@@ -4,6 +4,7 @@
 #ifndef _ICE_H_
 #define _ICE_H_
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

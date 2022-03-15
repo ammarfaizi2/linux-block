@@ -1,3 +1,6 @@
+
+#include <linux/netdevice_api.h>
+
 /* bnx2x_init_ops.h: Qlogic Everest network driver.
  *               Static functions needed during the initialization.
  *               This file is "included" in bnx2x_main.c.

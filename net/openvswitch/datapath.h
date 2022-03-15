@@ -6,6 +6,7 @@
 #ifndef DATAPATH_H
 #define DATAPATH_H 1
 
+#include <linux/netdevice_api.h>
 #include <asm/page.h>
 #include <linux/kernel.h>
 #include <linux/mutex.h>

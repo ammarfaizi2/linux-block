@@ -1,3 +1,6 @@
+
+#include <linux/netdevice_api.h>
+
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2013-2014, 2016-2018 The Linux Foundation. All rights reserved.
  */

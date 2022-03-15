@@ -11,6 +11,7 @@
  * Controller (VNIC) specific declarations.
  */
 
+#include <linux/netdevice_api.h>
 #include <rdma/ib_verbs.h>
 
 /* 16 header bytes + 2 reserved bytes */

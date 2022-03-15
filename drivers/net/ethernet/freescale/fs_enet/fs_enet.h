@@ -2,6 +2,7 @@
 #ifndef FS_ENET_H
 #define FS_ENET_H
 
+#include <linux/netdevice_api.h>
 #include <linux/mii.h>
 #include <linux/netdevice.h>
 #include <linux/types.h>

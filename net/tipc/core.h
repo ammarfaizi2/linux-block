@@ -38,6 +38,7 @@
 #ifndef _TIPC_CORE_H
 #define _TIPC_CORE_H
 
+#include <linux/netdevice_api.h>
 #include <linux/tipc.h>
 #include <linux/tipc_config.h>
 #include <linux/tipc_netlink.h>

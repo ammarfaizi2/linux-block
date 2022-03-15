@@ -4,6 +4,7 @@
 #ifndef _IAVF_TXRX_H_
 #define _IAVF_TXRX_H_
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 
 /* Interrupt Throttling and Rate Limiting Goodies */

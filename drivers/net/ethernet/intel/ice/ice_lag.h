@@ -4,6 +4,7 @@
 #ifndef _ICE_LAG_H_
 #define _ICE_LAG_H_
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 
 /* LAG roles for netdev */

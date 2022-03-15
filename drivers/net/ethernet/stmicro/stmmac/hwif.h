@@ -5,6 +5,7 @@
 #ifndef __STMMAC_HWIF_H__
 #define __STMMAC_HWIF_H__
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/stmmac.h>
 
