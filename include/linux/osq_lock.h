@@ -2,6 +2,7 @@
 #ifndef __LINUX_OSQ_LOCK_H
 #define __LINUX_OSQ_LOCK_H
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 
 /*

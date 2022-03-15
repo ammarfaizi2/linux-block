@@ -73,6 +73,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/compiler.h>
 

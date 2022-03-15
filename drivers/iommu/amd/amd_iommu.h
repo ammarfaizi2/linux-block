@@ -7,6 +7,7 @@
 #ifndef AMD_IOMMU_H
 #define AMD_IOMMU_H
 
+#include <linux/atomic_api.h>
 #include <linux/iommu.h>
 
 #include "amd_iommu_types.h"

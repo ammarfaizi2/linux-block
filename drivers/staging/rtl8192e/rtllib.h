@@ -19,6 +19,7 @@
  */
 #ifndef RTLLIB_H
 #define RTLLIB_H
+#include <linux/atomic_api.h>
 #include <linux/if_ether.h> /* ETH_ALEN */
 #include <linux/kernel.h>   /* ARRAY_SIZE */
 #include <linux/module.h>

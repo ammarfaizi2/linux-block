@@ -8,6 +8,7 @@
 #ifndef _LINUX_RWSEM_H
 #define _LINUX_RWSEM_H
 
+#include <linux/atomic_api.h>
 #include <linux/linkage.h>
 
 #include <linux/types.h>

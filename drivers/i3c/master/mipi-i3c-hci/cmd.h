@@ -10,6 +10,7 @@
 #ifndef CMD_H
 #define CMD_H
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 
 /*

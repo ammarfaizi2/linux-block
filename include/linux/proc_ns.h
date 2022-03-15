@@ -5,6 +5,7 @@
 #ifndef _LINUX_PROC_NS_H
 #define _LINUX_PROC_NS_H
 
+#include <linux/atomic_api.h>
 #include <linux/ns_common.h>
 
 struct pid_namespace;

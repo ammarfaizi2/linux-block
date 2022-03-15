@@ -2,6 +2,7 @@
 #ifndef _ASM_GENERIC_LOCAL_H
 #define _ASM_GENERIC_LOCAL_H
 
+#include <linux/atomic_api.h>
 #include <linux/percpu.h>
 #include <linux/atomic.h>
 #include <asm/types.h>

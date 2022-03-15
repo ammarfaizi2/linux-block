@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_QSPINLOCK_H
 #define _ASM_X86_QSPINLOCK_H
 
+#include <linux/atomic_api.h>
 #include <linux/jump_label.h>
 #include <asm/cpufeature.h>
 #include <asm-generic/qspinlock_types.h>

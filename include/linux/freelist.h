@@ -2,6 +2,7 @@
 #ifndef FREELIST_H
 #define FREELIST_H
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 
 /*

@@ -2,6 +2,7 @@
 #ifndef _LINUX_PAGE_COUNTER_H
 #define _LINUX_PAGE_COUNTER_H
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/kernel.h>
 #include <asm/page.h>

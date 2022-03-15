@@ -3,6 +3,7 @@
 #ifndef _LINUX_INTERRUPT_H
 #define _LINUX_INTERRUPT_H
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/bitops.h>
 #include <linux/cpumask.h>

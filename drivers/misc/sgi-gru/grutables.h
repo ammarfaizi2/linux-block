@@ -129,6 +129,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/refcount.h>
 #include <linux/rmap.h>
 #include <linux/interrupt.h>

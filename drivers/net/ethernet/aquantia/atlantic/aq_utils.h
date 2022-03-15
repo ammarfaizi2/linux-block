@@ -9,6 +9,8 @@
 #ifndef AQ_UTILS_H
 #define AQ_UTILS_H
 
+#include <linux/atomic_api.h>
+
 #include "aq_common.h"
 
 static inline void aq_utils_obj_set(atomic_t *flags, u32 mask)
