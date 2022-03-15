@@ -4,6 +4,7 @@
  * Copyright (C) 2008, 2011 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>

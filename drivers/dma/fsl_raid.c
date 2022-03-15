@@ -58,6 +58,7 @@
  *	clears the interrupt and leave the post interrupt processing to the irq
  *	thread.
  */
+#include <linux/capability.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/of_irq.h>

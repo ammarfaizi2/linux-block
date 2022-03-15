@@ -5,6 +5,7 @@
  * Copyright (C) 2017-2019 Microchip Technology Inc.
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/iopoll.h>

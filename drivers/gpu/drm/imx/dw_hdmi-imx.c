@@ -4,6 +4,7 @@
  * derived from imx-hdmi.c(renamed to bridge/dw_hdmi.c now)
  */
 
+#include <linux/capability.h>
 #include <linux/component.h>
 #include <linux/mfd/syscon.h>
 #include <linux/mfd/syscon/imx6q-iomuxc-gpr.h>

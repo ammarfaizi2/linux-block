@@ -24,6 +24,8 @@
  *
  **************************************************************************/
 
+#include <linux/capability.h>
+
 #include "vmwgfx_drv.h"
 #include "vmwgfx_resource_priv.h"
 #include "vmwgfx_so.h"

@@ -11,6 +11,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/prefetch.h>

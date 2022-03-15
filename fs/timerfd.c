@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/alarmtimer.h>
 #include <linux/file.h>
 #include <linux/poll.h>

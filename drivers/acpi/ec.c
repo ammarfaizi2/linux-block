@@ -16,6 +16,7 @@
 /* #define DEBUG */
 #define pr_fmt(fmt) "ACPI: EC: " fmt
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

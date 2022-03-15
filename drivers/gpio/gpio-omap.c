@@ -9,6 +9,7 @@
  * Added OMAP4 support - Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

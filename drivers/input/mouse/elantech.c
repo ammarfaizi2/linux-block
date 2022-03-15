@@ -7,6 +7,7 @@
  * Trademarks are the property of their respective owners.
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/dmi.h>
 #include <linux/slab.h>

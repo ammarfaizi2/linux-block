@@ -8,6 +8,7 @@
  *              Mauro Carvalho Chehab <mchehab@kernel.org> (version 2)
  */
 
+#include <linux/capability.h>
 #include <linux/compat.h>
 #include <linux/mm.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
 
 #define DSS_SUBSYS_NAME "DSI"
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/mfd/syscon.h>

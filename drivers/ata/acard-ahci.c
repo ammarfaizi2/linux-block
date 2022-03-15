@@ -17,6 +17,7 @@
  * http://www.intel.com/technology/serialata/pdf/rev1_1.pdf
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

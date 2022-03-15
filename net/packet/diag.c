@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/sock_diag.h>
 #include <linux/net.h>

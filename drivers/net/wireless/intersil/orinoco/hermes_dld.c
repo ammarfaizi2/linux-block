@@ -39,6 +39,7 @@
  * under either the MPL or the GPL.
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include "hermes.h"

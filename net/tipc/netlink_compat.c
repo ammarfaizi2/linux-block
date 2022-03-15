@@ -38,6 +38,7 @@
 #include "socket.h"
 #include "node.h"
 #include "net.h"
+#include <linux/capability.h>
 #include <net/genetlink.h>
 #include <linux/tipc_config.h>
 

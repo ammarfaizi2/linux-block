@@ -8,6 +8,7 @@
  *            (C)  2009 Alexander Clouter <alex@digriz.org.uk>
  */
 
+#include <linux/capability.h>
 #include <linux/slab.h>
 #include "cpufreq_governor.h"
 

@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "software IO TLB: " fmt
 
+#include <linux/capability.h>
 #include <linux/cache.h>
 #include <linux/dma-direct.h>
 #include <linux/dma-map-ops.h>

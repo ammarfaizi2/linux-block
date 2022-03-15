@@ -7,6 +7,7 @@
  *	- initialize default measure policy rules
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/list.h>

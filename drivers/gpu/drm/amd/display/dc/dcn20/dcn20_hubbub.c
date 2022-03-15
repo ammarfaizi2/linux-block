@@ -24,6 +24,8 @@
  */
 
 
+#include <linux/capability.h>
+
 #include "dcn20_hubbub.h"
 #include "reg_helper.h"
 #include "clk_mgr.h"

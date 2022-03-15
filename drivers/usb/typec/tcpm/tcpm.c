@@ -5,6 +5,7 @@
  * USB Power Delivery protocol stack.
  */
 
+#include <linux/capability.h>
 #include <linux/completion.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>

@@ -36,6 +36,7 @@
  * work correctly otherwise  (note: this is a pretty rare condition).
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

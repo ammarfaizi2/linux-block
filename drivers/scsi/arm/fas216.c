@@ -31,6 +31,7 @@
  *			automatically request sense data upon check
  *			condition status from targets.
  */
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>
 #include <linux/kernel.h>

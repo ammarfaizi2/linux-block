@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/capability.h>
 #include <linux/user_namespace.h>
 #include <linux/cred.h>
 

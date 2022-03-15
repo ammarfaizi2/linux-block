@@ -8,6 +8,7 @@
 #include "ice_fltr.h"
 #include "ice_lib.h"
 #include "ice_dcb_lib.h"
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <net/dcbnl.h>
 

@@ -10,6 +10,7 @@
  * counter which decrements on every clock cycle.
  */
 
+#include <linux/capability.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/module.h>

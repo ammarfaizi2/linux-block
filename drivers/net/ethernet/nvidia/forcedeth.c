@@ -32,6 +32,7 @@
 #define FORCEDETH_VERSION		"0.64"
 #define DRV_NAME			"forcedeth"
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/pci.h>

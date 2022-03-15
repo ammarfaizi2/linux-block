@@ -7,6 +7,7 @@
 #include "qla_target.h"
 #include "qla_gbl.h"
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>

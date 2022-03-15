@@ -6,6 +6,8 @@
  * Copyright (C) 2003 by Andreas Gruenbacher, <a.gruenbacher@computer.org>
  */
 
+#include <linux/capability.h>
+
 #include "ext2.h"
 #include "xattr.h"
 

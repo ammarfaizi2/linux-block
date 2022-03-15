@@ -4,6 +4,7 @@
  * Copyright (C) 2011 Novell Inc.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <uapi/linux/magic.h>
 #include <linux/fs.h>

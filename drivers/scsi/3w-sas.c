@@ -50,6 +50,7 @@
    3.26.02.000 - Initial driver release.
 */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/reboot.h>
 #include <linux/spinlock.h>

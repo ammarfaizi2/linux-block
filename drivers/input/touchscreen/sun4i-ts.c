@@ -27,6 +27,7 @@
  * than the one in the A10 User Manual v.1.5)
  */
 
+#include <linux/capability.h>
 #include <linux/err.h>
 #include <linux/hwmon.h>
 #include <linux/thermal.h>

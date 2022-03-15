@@ -18,6 +18,7 @@
  * information about these ioctls.
  */
 
+#include <linux/capability.h>
 #include <crypto/skcipher.h>
 #include <linux/key-type.h>
 #include <linux/random.h>

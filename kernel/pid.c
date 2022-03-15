@@ -27,6 +27,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/mm.h>
 #include <linux/export.h>
 #include <linux/slab.h>

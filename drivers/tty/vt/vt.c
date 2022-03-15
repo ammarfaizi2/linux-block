@@ -71,6 +71,7 @@
  * by Adam Tla/lka <atlka@pg.gda.pl>, Aug 2006
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

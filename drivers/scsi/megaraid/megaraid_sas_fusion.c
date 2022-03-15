@@ -17,6 +17,7 @@
  *  Send feedback to: megaraidlinux.pdl@broadcom.com
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

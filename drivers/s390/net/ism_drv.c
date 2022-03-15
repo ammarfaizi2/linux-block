@@ -7,6 +7,7 @@
 #define KMSG_COMPONENT "ism"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/types.h>

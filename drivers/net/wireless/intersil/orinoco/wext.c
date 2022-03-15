@@ -2,6 +2,7 @@
  *
  * See copyright notice in main.c
  */
+#include <linux/capability.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/if_arp.h>

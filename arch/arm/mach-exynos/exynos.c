@@ -5,6 +5,7 @@
 // Copyright (c) 2010-2014 Samsung Electronics Co., Ltd.
 //		http://www.samsung.com
 
+#include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/of.h>

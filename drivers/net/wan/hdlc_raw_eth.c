@@ -6,6 +6,7 @@
  * Copyright (C) 2002-2006 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
+#include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/etherdevice.h>
 #include <linux/gfp.h>

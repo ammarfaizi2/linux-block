@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/uaccess.h>
 
 #include "dc.h"

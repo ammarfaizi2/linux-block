@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2021 Google, Inc.
  */
 
+#include <linux/capability.h>
 #include <linux/cpumask.h>
 #include <linux/etherdevice.h>
 #include <linux/interrupt.h>

@@ -5,6 +5,7 @@
  * Copyright 2011-2015 Analog Devices Inc.
  */
 
+#include <linux/capability.h>
 #include <linux/interrupt.h>
 #include <linux/clk.h>
 #include <linux/device.h>

@@ -38,6 +38,7 @@
  *  out_of_space hacks, D. Gilbert (dpg) 990608
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

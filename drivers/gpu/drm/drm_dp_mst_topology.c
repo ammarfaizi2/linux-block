@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/capability.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

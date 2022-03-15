@@ -23,6 +23,7 @@
  * formats.
  */
 
+#include <linux/capability.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/sched/rseq_api.h>

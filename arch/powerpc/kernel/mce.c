@@ -9,6 +9,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "mce: " fmt
 
+#include <linux/capability.h>
 #include <linux/hardirq.h>
 #include <linux/types.h>
 #include <linux/ptrace.h>

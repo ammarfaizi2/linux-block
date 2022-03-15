@@ -30,6 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/pid.h>

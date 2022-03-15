@@ -7,6 +7,7 @@
 
 #include "dm-core.h"
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/vmalloc.h>
 #include <linux/blkdev.h>

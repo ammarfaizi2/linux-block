@@ -18,6 +18,7 @@
  * Mostly rewritten by Thomas Gleixner <tglx@linutronix.de> and
  *		       Andy Lutomirsky <luto@amacapital.net>
  */
+#include <linux/capability.h>
 #include <asm/processor_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

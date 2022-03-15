@@ -22,6 +22,7 @@
  * concurrent access to the same port.
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

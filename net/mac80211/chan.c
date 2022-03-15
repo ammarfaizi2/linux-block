@@ -4,6 +4,7 @@
  * Copyright 2020 - 2021 Intel Corporation
  */
 
+#include <linux/capability.h>
 #include <linux/nl80211.h>
 #include <linux/export.h>
 #include <linux/rtnetlink.h>

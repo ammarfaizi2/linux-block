@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/moduleparam.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * Based on the x86 specific implementation.
  */
 
+#include <linux/capability.h>
 #include <linux/hrtimer.h>
 #include <linux/timekeeper_internal.h>
 #include <vdso/datapage.h>

@@ -9,6 +9,7 @@
  *	     Anatolij Gustschin <agust@denx.de>
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>

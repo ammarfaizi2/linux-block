@@ -45,6 +45,7 @@
  *   - ref 26921 - Ibex Peak BIOS Specification
  */
 
+#include <linux/capability.h>
 #include <asm/cpufeature.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>

@@ -9,6 +9,7 @@
  * 		Wu Fengguang <wfg@linux.intel.com>
  */
 
+#include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <sound/core.h>

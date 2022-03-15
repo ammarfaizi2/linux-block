@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/capability.h>
 #include <linux/slab.h>
 #include <linux/compat.h>
 #include <linux/cred.h>

@@ -7,6 +7,7 @@
  * Created to pull SCSI mid layer sysfs routines into one file.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>

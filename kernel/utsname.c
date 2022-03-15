@@ -5,6 +5,7 @@
  *  Author: Serge Hallyn <serue@us.ibm.com>
  */
 
+#include <linux/capability.h>
 #include <linux/export.h>
 #include <linux/uts.h>
 #include <linux/utsname.h>

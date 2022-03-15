@@ -15,6 +15,7 @@
  * handle both radio and analog TV tuning.
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

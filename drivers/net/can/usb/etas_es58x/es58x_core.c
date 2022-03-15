@@ -10,6 +10,7 @@
  * Copyright (c) 2020, 2021 Vincent Mailhol <mailhol.vincent@wanadoo.fr>
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

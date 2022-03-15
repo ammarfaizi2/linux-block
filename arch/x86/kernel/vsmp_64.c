@@ -9,6 +9,7 @@
  *			     Ravikiran Thirumalai <kiran@scalemp.com>
  */
 
+#include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/pci_ids.h>
 #include <linux/pci_regs.h>

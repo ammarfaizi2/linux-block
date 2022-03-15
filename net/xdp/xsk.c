@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "AF_XDP: %s: " fmt, __func__
 
+#include <linux/capability.h>
 #include <asm/io.h>
 #include <linux/if_xdp.h>
 #include <linux/init.h>

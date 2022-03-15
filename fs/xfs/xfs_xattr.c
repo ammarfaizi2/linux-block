@@ -16,6 +16,7 @@
 #include "xfs_acl.h"
 #include "xfs_da_btree.h"
 
+#include <linux/capability.h>
 #include <linux/posix_acl_xattr.h>
 
 

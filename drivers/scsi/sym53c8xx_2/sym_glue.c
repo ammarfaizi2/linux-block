@@ -24,6 +24,7 @@
  *
  *-----------------------------------------------------------------------------
  */
+#include <linux/capability.h>
 #include <linux/ctype.h>
 #include <linux/init.h>
 #include <linux/module.h>

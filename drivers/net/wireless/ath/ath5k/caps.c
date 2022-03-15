@@ -21,6 +21,8 @@
 * Capabilities *
 \**************/
 
+#include <linux/capability.h>
+
 #include "ath5k.h"
 #include "reg.h"
 #include "debug.h"

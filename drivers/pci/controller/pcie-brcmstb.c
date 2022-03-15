@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (C) 2009 - 2019 Broadcom */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>

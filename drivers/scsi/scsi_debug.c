@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Copyright (C) Shailabh Nagar, IBM Corp. 2006
  */
 
+#include <linux/capability.h>
 #include <linux/sched.h>
 #include <linux/sched/task.h>
 #include <linux/sched/cputime.h>

@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>

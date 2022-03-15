@@ -12,6 +12,7 @@
  * realview smp platform.
  * * Copyright (c) 2002 ARM Limited.
  */
+#include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/smp.h>

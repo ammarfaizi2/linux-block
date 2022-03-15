@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/capability.h>
 #include <linux/audit.h>
 #include <linux/security.h>
 

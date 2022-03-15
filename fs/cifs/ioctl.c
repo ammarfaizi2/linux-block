@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/fs.h>
 #include <linux/file.h>
 #include <linux/mount.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/err.h>

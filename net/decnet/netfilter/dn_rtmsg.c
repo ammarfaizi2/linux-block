@@ -10,6 +10,7 @@
  *
  * Author:      Steven Whitehouse <steve@chygwyn.com>
  */
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>

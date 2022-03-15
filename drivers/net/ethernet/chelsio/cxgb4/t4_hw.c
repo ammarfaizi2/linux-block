@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include "cxgb4.h"
 #include "t4_regs.h"

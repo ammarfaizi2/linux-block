@@ -16,6 +16,7 @@
  * Abstract: Contains all routines for control of the AFA comm layer
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>

@@ -21,6 +21,7 @@
 	Abstract: rt2800 generic device routines.
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/crc-ccitt.h>
 #include <linux/kernel.h>

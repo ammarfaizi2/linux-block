@@ -5,6 +5,7 @@
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/capability.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

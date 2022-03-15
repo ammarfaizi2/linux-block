@@ -17,6 +17,7 @@
  * default behavior.
  */
 
+#include <linux/capability.h>
 #include <linux/pci.h>
 #include "pci-bridge-emul.h"
 

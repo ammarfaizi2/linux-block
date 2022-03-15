@@ -7,6 +7,7 @@
  * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/sched/signal.h>

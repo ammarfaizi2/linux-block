@@ -8,6 +8,7 @@
  * based on arch/arm/common/rtctime.c
  */
 
+#include <linux/capability.h>
 #include <linux/rtc.h>
 #include <linux/sched.h>
 #include <linux/module.h>

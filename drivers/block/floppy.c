@@ -163,6 +163,7 @@
 
 /* do print messages for unexpected interrupts */
 static int print_unex = 1;
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/sched.h>

@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/jffs2.h>

@@ -10,6 +10,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

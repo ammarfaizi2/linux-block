@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

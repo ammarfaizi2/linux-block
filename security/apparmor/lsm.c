@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/capability.h>
 #include <linux/lsm_hooks.h>
 #include <linux/moduleparam.h>
 #include <linux/mm.h>

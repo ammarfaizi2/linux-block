@@ -6,6 +6,7 @@
  * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
+#include <linux/capability.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/dmaengine.h>

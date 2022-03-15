@@ -26,6 +26,7 @@
 /*#define DEBUG 1 */
 /*#define UARTDELAY 1 */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/pgtable.h>
 

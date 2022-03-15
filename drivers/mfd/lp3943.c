@@ -27,6 +27,7 @@
  *   A PWM is input pin of a backlight device.
  */
 
+#include <linux/capability.h>
 #include <linux/err.h>
 #include <linux/gpio.h>
 #include <linux/i2c.h>

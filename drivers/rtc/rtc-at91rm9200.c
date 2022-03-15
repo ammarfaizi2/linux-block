@@ -13,6 +13,7 @@
  *	Based on rtc.c by Paul Gortmaker
  */
 
+#include <linux/capability.h>
 #include <linux/bcd.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

@@ -4,6 +4,7 @@
  * Copyright © 2008,2010 Intel Corporation
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/intel-iommu.h>

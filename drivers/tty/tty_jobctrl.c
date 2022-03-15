@@ -3,6 +3,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/signal.h>

@@ -3,6 +3,8 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * All Rights Reserved.
  */
+#include <linux/capability.h>
+
 #include "xfs.h"
 #include "xfs_shared.h"
 #include "xfs_format.h"

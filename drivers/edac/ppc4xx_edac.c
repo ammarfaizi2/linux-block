@@ -4,6 +4,7 @@
  *   Grant Erickson <gerickson@nuovations.com>
  */
 
+#include <linux/capability.h>
 #include <linux/edac.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

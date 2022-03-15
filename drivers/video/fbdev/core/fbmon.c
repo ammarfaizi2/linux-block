@@ -26,6 +26,7 @@
  * for more details.
  *
  */
+#include <linux/capability.h>
 #include <linux/fb.h>
 #include <linux/module.h>
 #include <linux/pci.h>

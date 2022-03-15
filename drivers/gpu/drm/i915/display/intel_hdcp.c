@@ -8,6 +8,7 @@
  * Ramalingam C <ramalingam.c@intel.com>
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/component.h>
 #include <linux/i2c.h>

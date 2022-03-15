@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Intel Corp, Author: Lan Tianyu <tianyu.lan@intel.com>
  */
 
+#include <linux/capability.h>
 #include <linux/acpi.h>
 #include <linux/device.h>
 #include <linux/err.h>

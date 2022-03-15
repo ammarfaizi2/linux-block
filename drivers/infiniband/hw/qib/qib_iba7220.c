@@ -37,6 +37,7 @@
  * QLogic_IB 7220 chip (except that specific to the SerDes)
  */
 
+#include <linux/capability.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

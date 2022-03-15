@@ -6,6 +6,7 @@
  * See Documentation/security/keys/trusted-encrypted.rst
  */
 
+#include <linux/capability.h>
 #include <crypto/hash_info.h>
 #include <linux/init.h>
 #include <linux/slab.h>

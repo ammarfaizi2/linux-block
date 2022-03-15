@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
+#include <linux/capability.h>
+
 #include "e1000.h"
 
 static s32 e1000_wait_autoneg(struct e1000_hw *hw);

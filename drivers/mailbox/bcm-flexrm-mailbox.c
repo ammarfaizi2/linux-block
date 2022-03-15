@@ -23,6 +23,7 @@
  * rings where each mailbox channel represents a separate FlexRM ring.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <asm/barrier.h>
 #include <asm/byteorder.h>

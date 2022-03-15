@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "arm-smmu: " fmt
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/acpi.h>

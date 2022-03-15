@@ -4,6 +4,7 @@
  * Copyright (c) 2014, Intel Corporation.
  */
 
+#include <linux/capability.h>
 #include <linux/blkdev.h>
 #include <linux/fs.h>
 #include <linux/genhd.h>

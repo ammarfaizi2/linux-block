@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/capability.h>
 #include <linux/if_arp.h>
 #include <linux/net.h>
 #include <linux/mctp.h>

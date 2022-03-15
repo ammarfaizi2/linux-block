@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/capability.h>
 #include <asm/dma.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

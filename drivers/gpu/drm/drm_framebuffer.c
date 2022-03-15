@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/capability.h>
 #include <linux/export.h>
 #include <linux/uaccess.h>
 

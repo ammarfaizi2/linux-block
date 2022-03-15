@@ -3,6 +3,7 @@
   * Copyright (C) 2010 Brian King IBM Corporation
   */
 
+#include <linux/capability.h>
 #include <linux/cpu.h>
 #include <linux/delay.h>
 #include <linux/suspend.h>

@@ -18,6 +18,7 @@
 #include "matroxfb_misc.h"
 #include "matroxfb_accel.h"
 #include "g450_pll.h"
+#include <linux/capability.h>
 #include <linux/matroxfb.h>
 
 #ifdef NEED_DAC1064

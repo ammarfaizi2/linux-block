@@ -9,6 +9,7 @@
  * Copyright 2004 Motorola Inc.
  */
 
+#include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/export.h>
 #include <linux/mm.h>

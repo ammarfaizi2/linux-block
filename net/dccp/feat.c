@@ -17,6 +17,7 @@
  *    extensions of RFCs 4340..42 define features with item lengths larger than
  *    one byte, a feature-specific extension of the code will be required.
  */
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include "ccid.h"

@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

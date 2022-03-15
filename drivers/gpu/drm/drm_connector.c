@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/capability.h>
 #include <drm/drm_auth.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_edid.h>

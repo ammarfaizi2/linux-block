@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>
 #include <linux/netdevice.h>

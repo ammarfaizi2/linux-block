@@ -7,6 +7,7 @@
  * Copyright 2009-12 Wolfson Microelectronics plc
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/acpi_iort.h>

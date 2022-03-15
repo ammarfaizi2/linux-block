@@ -21,6 +21,7 @@ static int sg_version_num = 30536;	/* 2 digits for each component */
  *        (otherwise the macros compile to empty statements).
  *
  */
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 

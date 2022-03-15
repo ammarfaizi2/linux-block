@@ -9,6 +9,7 @@
  *     - JMicron (hardware and technical support)
  */
 
+#include <linux/capability.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/dmaengine.h>

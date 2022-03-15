@@ -39,6 +39,7 @@
 
 ******************************************************************************/
 
+#include <linux/capability.h>
 #include <linux/interrupt.h>
 
 #include <linux/kernel.h>

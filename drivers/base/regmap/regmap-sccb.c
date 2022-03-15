@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Register map access API - SCCB support
 
+#include <linux/capability.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <linux/regmap.h>

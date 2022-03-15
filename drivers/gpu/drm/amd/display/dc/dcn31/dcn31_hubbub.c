@@ -24,6 +24,8 @@
  */
 
 
+#include <linux/capability.h>
+
 #include "dcn30/dcn30_hubbub.h"
 #include "dcn31_hubbub.h"
 #include "dm_services.h"

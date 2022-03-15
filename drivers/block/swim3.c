@@ -14,6 +14,7 @@
 
 #undef DEBUG
 
+#include <linux/capability.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>

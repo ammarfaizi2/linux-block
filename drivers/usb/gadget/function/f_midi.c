@@ -18,6 +18,7 @@
  *   Ben Williamson <ben.williamson@greyinnovation.com>
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

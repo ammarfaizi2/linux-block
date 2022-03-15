@@ -24,6 +24,7 @@
 * Protocol Control Unit Functions *
 \*********************************/
 
+#include <linux/capability.h>
 #include <asm/unaligned.h>
 
 #include "ath5k.h"

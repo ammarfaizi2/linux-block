@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Marek Vasut <marek.vasut@gmail.com>
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>

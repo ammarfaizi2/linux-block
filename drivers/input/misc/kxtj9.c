@@ -4,6 +4,7 @@
  * Written by Chris Hudson <chudson@kionix.com>
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/input.h>

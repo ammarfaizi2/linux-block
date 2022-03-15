@@ -26,6 +26,7 @@
  * 		or a LUN is seen that cannot have a device attached to it.
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

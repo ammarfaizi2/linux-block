@@ -5,6 +5,7 @@
  * Copyright (c) 2013 Scott Feldman <sfeldma@cumulusnetworks.com>
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/netdevice.h>

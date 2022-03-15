@@ -34,6 +34,7 @@
  * the same DMA mappings?
  */
 
+#include <linux/capability.h>
 #include <linux/pagemap.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

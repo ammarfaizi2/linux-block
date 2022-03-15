@@ -12,6 +12,7 @@
 
 #define EXT4FS_DEBUG
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

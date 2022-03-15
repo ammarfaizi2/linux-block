@@ -100,6 +100,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/version.h>
 
 #include "matroxfb_base.h"

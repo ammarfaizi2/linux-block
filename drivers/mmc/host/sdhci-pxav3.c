@@ -7,6 +7,7 @@
  *		Philip Rakity <prakity@marvell.com>
  *		Mark Brown <markb@marvell.com>
  */
+#include <linux/capability.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

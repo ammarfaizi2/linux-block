@@ -26,6 +26,7 @@
  *	Jesse Barnes <jesse.barnes@intel.com>
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/hdmi.h>
 #include <linux/i2c.h>

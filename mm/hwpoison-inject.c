@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Inject a hwpoison memory failure on a arbitrary pfn */
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/debugfs.h>
 #include <linux/kernel.h>

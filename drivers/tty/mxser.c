@@ -15,6 +15,7 @@
  *	- Fixed x86_64 cleanness
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/errno.h>

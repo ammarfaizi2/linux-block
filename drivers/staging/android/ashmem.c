@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "ashmem: " fmt
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/export.h>

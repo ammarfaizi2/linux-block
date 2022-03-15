@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
+#include <linux/capability.h>
 #include <net/tcp_states.h>
 #include <linux/nfc.h>
 #include <linux/export.h>

@@ -33,6 +33,7 @@
  * End of serial driver configuration section.
  */
 
+#include <linux/capability.h>
 #include <linux/bitops.h>
 #include <linux/circ_buf.h>
 #include <linux/console.h>

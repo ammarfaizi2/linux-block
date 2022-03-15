@@ -11,6 +11,7 @@
 	Supported chipsets: rt2571W & rt2671.
  */
 
+#include <linux/capability.h>
 #include <linux/crc-itu-t.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>

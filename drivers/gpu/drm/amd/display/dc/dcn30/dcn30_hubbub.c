@@ -24,6 +24,8 @@
  */
 
 
+#include <linux/capability.h>
+
 #include "dm_services.h"
 #include "reg_helper.h"
 #include "dcn30_hubbub.h"

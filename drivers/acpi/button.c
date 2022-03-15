@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ACPI: button: " fmt
 
+#include <linux/capability.h>
 #include <linux/compiler.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

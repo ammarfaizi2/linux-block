@@ -6,6 +6,7 @@
  *  Copyright (C) 2011   Red Hat, Inc.  All rights reserved.
  *  Copyright (C) 2011   Mike Christie
  */
+#include <linux/capability.h>
 #include <linux/bsg.h>
 #include <linux/slab.h>
 #include <linux/blk-mq.h>

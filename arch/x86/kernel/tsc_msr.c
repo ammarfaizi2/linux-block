@@ -6,6 +6,7 @@
  * Author: Bin Gao <bin.gao@intel.com>
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/thread_info.h>
 

@@ -33,6 +33,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/capability.h>
 #include <linux/export.h>
 #include <linux/pci.h>
 #include <linux/seq_file.h>

@@ -64,6 +64,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/log2.h>
 #include <linux/nospec.h>

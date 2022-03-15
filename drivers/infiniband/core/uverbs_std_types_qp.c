@@ -3,6 +3,7 @@
  * Copyright (c) 2020, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <rdma/uverbs_std_types.h>
 #include "rdma_core.h"

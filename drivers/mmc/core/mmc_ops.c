@@ -5,6 +5,7 @@
  *  Copyright 2006-2007 Pierre Ossman
  */
 
+#include <linux/capability.h>
 #include <linux/slab.h>
 #include <linux/export.h>
 #include <linux/types.h>

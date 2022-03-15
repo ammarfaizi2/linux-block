@@ -7,6 +7,7 @@
  * Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/export.h>

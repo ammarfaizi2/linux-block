@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2002 ARM Limited, All Rights Reserved.
  */
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/init.h>

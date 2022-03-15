@@ -7,6 +7,7 @@
  * Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmaengine.h>

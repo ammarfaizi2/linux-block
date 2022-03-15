@@ -8,6 +8,7 @@
  *  All rights reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/math64.h>
