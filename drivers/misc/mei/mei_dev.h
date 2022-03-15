@@ -7,6 +7,7 @@
 #ifndef _MEI_DEV_H_
 #define _MEI_DEV_H_
 
+#include <linux/rwsem.h>
 #include <linux/jiffies.h>
 #include <linux/bitops_types.h>
 #include <linux/types.h>
