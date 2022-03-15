@@ -4,6 +4,7 @@
  * Author: Mike Leach <mike.leach@linaro.org>
  */
 
+#include <linux/cpu.h>
 #include <linux/atomic_api.h>
 #include <linux/amba/bus.h>
 #include <linux/atomic.h>

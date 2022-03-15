@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "NMI watchdog: " fmt
 
+#include <linux/cpu.h>
 #include <linux/atomic_api.h>
 #include <linux/nmi.h>
 #include <linux/atomic.h>
