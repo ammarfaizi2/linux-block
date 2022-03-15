@@ -16,6 +16,7 @@
  *
  */
 
+#include <asm/byteorder.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/types.h>

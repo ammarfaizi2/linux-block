@@ -9,6 +9,7 @@
  * differences should be hidden in the spux.c,h files.
  */
 
+#include <asm/byteorder.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 

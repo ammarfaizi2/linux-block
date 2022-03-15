@@ -7,6 +7,7 @@
  *          Jason McMullan <jason.mcmullan@netronome.com>
  *          Espen Skoglund <espen.skoglund@netronome.com>
  */
+#include <asm/byteorder.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 

@@ -11,6 +11,7 @@
  *  POSIX 1003.1e draft standard 17 ACLs.
  */
 
+#include <asm/byteorder.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/atomic.h>
