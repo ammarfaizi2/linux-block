@@ -24,6 +24,7 @@
  *-----------------------------------------------------------------------------
  */
 
+#include <linux/gfp_api.h>
 #include <linux/gfp.h>
 
 #ifndef SYM_HIPD_H
