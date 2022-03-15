@@ -5,6 +5,7 @@
 #ifndef _UDPLITE_H
 #define _UDPLITE_H
 
+#include <linux/uio_api.h>
 #include <linux/skbuff_api.h>
 #include <net/ip6_checksum.h>
 
