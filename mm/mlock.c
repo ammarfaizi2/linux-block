@@ -6,6 +6,7 @@
  *  (C) Copyright 2002 Christoph Hellwig
  */
 
+#include <linux/mm_api_gate_area.h>
 #include <linux/dax.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/capability.h>
