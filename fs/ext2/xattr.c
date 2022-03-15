@@ -54,6 +54,7 @@
  * to avoid deadlocks.
  */
 
+#include <linux/list_bl_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>
