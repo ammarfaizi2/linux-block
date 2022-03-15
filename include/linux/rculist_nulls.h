@@ -7,6 +7,7 @@
 /*
  * RCU-protected list version
  */
+#include <linux/rculist.h>
 #include <linux/list_nulls.h>
 #include <linux/rcupdate.h>
 
