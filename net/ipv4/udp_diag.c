@@ -6,6 +6,7 @@
  */
 
 
+#include <net/udp_api_sock.h>
 #include <net/sock_api.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_api.h>
