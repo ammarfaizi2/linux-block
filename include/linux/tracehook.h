@@ -43,6 +43,7 @@
 #ifndef _LINUX_TRACEHOOK_H
 #define _LINUX_TRACEHOOK_H	1
 
+#include <linux/ptrace_api.h>
 #include <linux/sched/rseq_api.h>
 #include <linux/sched.h>
 #include <linux/ptrace.h>
