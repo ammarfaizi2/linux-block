@@ -6,6 +6,7 @@
 #if !defined(_HV_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _HV_TRACE_H
 
+#include <linux/uuid_api.h>
 #include <linux/tracepoint.h>
 
 DECLARE_EVENT_CLASS(vmbus_hdr_msg,
