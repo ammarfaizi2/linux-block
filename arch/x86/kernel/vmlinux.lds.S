@@ -285,15 +285,6 @@ SECTIONS
 	}
 #endif
 
-#ifdef CONFIG_X86_KERNEL_IBT
-	. = ALIGN(8);
-	.ibt_endbr_seal : AT(ADDR(.ibt_endbr_seal) - LOAD_OFFSET) {
-		__ibt_endbr_seal = .;
-		*(.ibt_endbr_seal)
-		__ibt_endbr_seal_end = .;
-	}
-#endif
-
 	/*
 	 * struct alt_inst entries. From the header (alternative.h):
 	 * "Alternative instructions for different CPU types or capabilities"
