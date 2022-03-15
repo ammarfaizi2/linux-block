@@ -7,6 +7,7 @@
  * Simple hashed spinlocking.
  */
 
+#include <linux/log2.h>
 #include <linux/spinlock.h>
 #include <linux/cache.h>
 

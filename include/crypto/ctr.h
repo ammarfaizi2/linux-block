@@ -8,6 +8,7 @@
 #ifndef _CRYPTO_CTR_H
 #define _CRYPTO_CTR_H
 
+#include <linux/log2.h>
 #include <crypto/algapi.h>
 #include <crypto/internal/skcipher.h>
 #include <linux/string.h>

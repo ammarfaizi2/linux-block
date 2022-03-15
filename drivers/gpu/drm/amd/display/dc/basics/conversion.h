@@ -28,6 +28,7 @@
 
 #include "include/fixed31_32.h"
 
+#include <linux/log2.h>
 #include <linux/types.h>
 
 uint16_t fixed_point_to_int_frac(
