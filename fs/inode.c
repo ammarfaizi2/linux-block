@@ -3,6 +3,7 @@
  * (C) 1997 Linus Torvalds
  * (C) 1999 Andrea Arcangeli <andrea@suse.de> (dynamic inode allocation)
  */
+#include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>

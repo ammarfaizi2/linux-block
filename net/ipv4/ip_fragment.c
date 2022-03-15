@@ -23,6 +23,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/net.h>

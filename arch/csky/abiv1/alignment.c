@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
+#include <linux/sysctl.h>
 #include <linux/sched/signal.h>
 #include <linux/kernel.h>
 #include <linux/uaccess.h>

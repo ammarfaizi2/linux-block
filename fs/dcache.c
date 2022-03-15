@@ -15,6 +15,7 @@
  * the dcache entry is deleted or garbage collected.
  */
 
+#include <linux/sysctl.h>
 #include <linux/stringhash.h>
 #include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>

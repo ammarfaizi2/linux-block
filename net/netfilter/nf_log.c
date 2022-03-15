@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/sysctl.h>
 #include <linux/slab.h>
 #include <linux/seq_file_net.h>
 #include <linux/mutex_api.h>

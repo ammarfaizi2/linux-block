@@ -49,6 +49,7 @@
  * transport switch. All others are RPC RDMA internal.
  */
 
+#include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

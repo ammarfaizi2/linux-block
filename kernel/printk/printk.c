@@ -19,6 +19,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sysctl.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

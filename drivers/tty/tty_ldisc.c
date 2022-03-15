@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/lockdep_api.h>
