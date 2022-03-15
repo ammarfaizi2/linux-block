@@ -3,6 +3,8 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/kref_api.h>
+
 #include "intel_memory_region.h"
 #include "i915_gem_region.h"
 #include "i915_drv.h"

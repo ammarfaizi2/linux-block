@@ -4,6 +4,7 @@
  * Copyright (C) 2002-2007 Kristian Høgsberg
  */
 
+#include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>

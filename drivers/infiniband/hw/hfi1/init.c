@@ -4,6 +4,7 @@
  * Copyright(c) 2021 Cornelis Networks.
  */
 
+#include <linux/kref_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>

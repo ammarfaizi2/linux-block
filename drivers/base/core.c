@@ -8,6 +8,7 @@
  * Copyright (c) 2006 Novell, Inc.
  */
 
+#include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device/driver.h>
 #include <linux/device/class.h>

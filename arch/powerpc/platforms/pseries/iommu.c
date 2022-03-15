@@ -10,6 +10,7 @@
  * Dynamic DMA mapping support, pSeries-specific parts, both SMP and LPAR.
  */
 
+#include <linux/kref_api.h>
 #include <linux/ioport.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api.h>

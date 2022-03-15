@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
+#include <linux/kref_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/vmalloc.h>
 #include <linux/module.h>

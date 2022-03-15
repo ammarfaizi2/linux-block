@@ -9,6 +9,7 @@
  *          Stefan Hajnoczi <stefanha@linux.vnet.ibm.com>
  ****************************************************************************/
 
+#include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

@@ -10,6 +10,7 @@
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/atomic.h>

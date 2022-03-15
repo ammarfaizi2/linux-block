@@ -5,6 +5,7 @@
  *	Alex Chiang <achiang@hp.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api.h>
 #include <linux/kobject.h>

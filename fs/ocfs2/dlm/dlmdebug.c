@@ -7,6 +7,7 @@
  * Copyright (C) 2004, 2008 Oracle.  All rights reserved.
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

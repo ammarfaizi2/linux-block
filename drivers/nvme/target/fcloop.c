@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Avago Technologies.  All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/kref_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

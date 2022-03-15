@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

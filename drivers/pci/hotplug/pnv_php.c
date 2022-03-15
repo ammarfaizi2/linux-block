@@ -5,6 +5,7 @@
  * Copyright Gavin Shan, IBM Corporation 2016.
  */
 
+#include <linux/kref_api.h>
 #include <linux/interrupt.h>
 #include <linux/libfdt.h>
 #include <linux/module.h>

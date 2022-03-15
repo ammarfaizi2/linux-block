@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  */
 
+#include <linux/kref_api.h>
 #include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <linux/module.h>

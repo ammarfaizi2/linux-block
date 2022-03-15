@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Microsemi Corporation
  */
 
+#include <linux/kref_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

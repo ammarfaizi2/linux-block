@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright 2019 IBM Corp.
+#include <linux/kref_api.h>
 #include <linux/io.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

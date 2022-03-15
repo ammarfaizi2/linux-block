@@ -16,6 +16,7 @@
  */
 #define pr_fmt(fmt) "clock: " fmt
 
+#include <linux/kref_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

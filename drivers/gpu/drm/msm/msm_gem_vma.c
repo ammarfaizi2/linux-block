@@ -4,6 +4,8 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/kref_api.h>
+
 #include "msm_drv.h"
 #include "msm_gem.h"
 #include "msm_mmu.h"

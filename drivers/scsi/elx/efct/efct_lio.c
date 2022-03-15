@@ -4,6 +4,7 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <linux/kref_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>

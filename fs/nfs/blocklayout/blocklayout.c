@@ -30,6 +30,7 @@
  * possibility of such damages.
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

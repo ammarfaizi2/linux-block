@@ -8,6 +8,8 @@
  * domain_sm Domain State Machine: States
  */
 
+#include <linux/kref_api.h>
+
 #include "efc.h"
 
 int

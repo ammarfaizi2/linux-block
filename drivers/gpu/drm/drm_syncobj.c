@@ -183,6 +183,7 @@
  * point 0 to mean take/replace the fence in the syncobj.
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>

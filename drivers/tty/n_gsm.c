@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>

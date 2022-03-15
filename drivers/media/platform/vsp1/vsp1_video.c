@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/export.h>

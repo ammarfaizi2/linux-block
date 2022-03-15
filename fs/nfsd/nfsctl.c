@@ -5,6 +5,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>

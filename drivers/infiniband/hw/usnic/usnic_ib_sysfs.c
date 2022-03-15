@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

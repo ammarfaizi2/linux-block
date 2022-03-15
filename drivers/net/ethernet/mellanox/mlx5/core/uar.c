@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/kref_api.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

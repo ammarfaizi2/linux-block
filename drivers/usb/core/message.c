@@ -5,6 +5,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

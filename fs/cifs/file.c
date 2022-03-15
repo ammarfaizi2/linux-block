@@ -8,6 +8,7 @@
  *              Jeremy Allison (jra@samba.org)
  *
  */
+#include <linux/kref_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/hash.h>

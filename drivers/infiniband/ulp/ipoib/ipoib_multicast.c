@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/skbuff.h>
 #include <linux/rtnetlink.h>

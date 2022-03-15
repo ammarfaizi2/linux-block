@@ -14,6 +14,7 @@
 #define pr_fmt(fmt) "%s" fmt, "IPMI message handler: "
 #define dev_fmt pr_fmt
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

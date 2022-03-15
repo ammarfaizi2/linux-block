@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/kref_api.h>
 #include <linux/mm.h>
 
 /* DC interface (public) */

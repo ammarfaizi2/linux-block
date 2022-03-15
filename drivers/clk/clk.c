@@ -6,6 +6,7 @@
  * Standard functionality for the common clock API.  See Documentation/driver-api/clk.rst
  */
 
+#include <linux/kref_api.h>
 #include <linux/fwnode.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

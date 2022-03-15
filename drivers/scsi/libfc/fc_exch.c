@@ -11,6 +11,7 @@
  * Fibre Channel exchange and sequence handling.
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/cache.h>

@@ -5,6 +5,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/kref_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/module.h>
 #include <linux/list.h>

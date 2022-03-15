@@ -4,6 +4,7 @@
  * Copyright (C) 2009, 2010, 2011 Red Hat, Inc.
  * Copyright (C) 2009, 2010, 2011 Amit Shah <amit.shah@redhat.com>
  */
+#include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

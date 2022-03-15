@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>
 #include <linux/sort.h>

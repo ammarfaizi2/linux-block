@@ -5,6 +5,7 @@
  * All Rights Reserved.
  */
 
+#include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/dma-mapping.h>

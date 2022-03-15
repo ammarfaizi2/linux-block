@@ -10,6 +10,7 @@
  * 19-Apr-2000 Chris Evans      - Security fix
  */
 
+#include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/module.h>

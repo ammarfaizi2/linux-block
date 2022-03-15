@@ -17,6 +17,7 @@
 
 #ifdef DEBUG
 
+#include <linux/kref_api.h>
 #include <linux/siphash.h>
 
 static __init void print_node(struct allowedips_node *node, u8 bits)

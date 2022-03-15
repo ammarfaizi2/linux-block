@@ -41,6 +41,7 @@
 #include "addr.h"
 #include "msg.h"
 #include "bearer.h"
+#include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

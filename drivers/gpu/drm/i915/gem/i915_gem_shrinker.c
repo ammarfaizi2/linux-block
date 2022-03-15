@@ -4,6 +4,7 @@
  * Copyright © 2008-2015 Intel Corporation
  */
 
+#include <linux/kref_api.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/oom.h>

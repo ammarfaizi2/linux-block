@@ -44,6 +44,7 @@
  * The jobs in a entity are always scheduled in the order that they were pushed.
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>

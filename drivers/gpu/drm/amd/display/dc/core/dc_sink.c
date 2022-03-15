@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/kref_api.h>
 #include <linux/slab.h>
 
 #include "dm_services.h"

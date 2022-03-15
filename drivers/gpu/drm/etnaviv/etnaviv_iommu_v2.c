@@ -3,6 +3,7 @@
  * Copyright (C) 2016-2018 Etnaviv Project
  */
 
+#include <linux/kref_api.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/dma-mapping.h>

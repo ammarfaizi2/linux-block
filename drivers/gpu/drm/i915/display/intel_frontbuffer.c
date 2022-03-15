@@ -55,6 +55,7 @@
  * cancelled as soon as busyness is detected.
  */
 
+#include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 
 #include "i915_drv.h"

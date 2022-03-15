@@ -6,6 +6,7 @@
 
 #include "main.h"
 
+#include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>

@@ -4,6 +4,8 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/kref_api.h>
+
 #include "mock_context.h"
 #include "selftests/mock_drm.h"
 #include "selftests/mock_gtt.h"

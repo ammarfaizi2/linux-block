@@ -6,6 +6,7 @@
  * Copyright (c) 2016 Andrew Lunn <andrew@lunn.ch>
  */
 
+#include <linux/kref_api.h>
 #include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/err.h>

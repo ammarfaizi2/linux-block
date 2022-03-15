@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  * Copyright (c) 2017-2021 Christoph Hellwig.
  */
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/device_api.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2020 Intel Corporation.
  */
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/workqueue.h>
 #include "intel_pxp.h"

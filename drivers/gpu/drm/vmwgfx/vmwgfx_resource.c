@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>
 #include <drm/ttm/ttm_placement.h>

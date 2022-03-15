@@ -2,6 +2,7 @@
 //
 // Copyright 2019 Google LLC.
 
+#include <linux/kref_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of.h>

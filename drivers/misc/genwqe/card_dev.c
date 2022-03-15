@@ -15,6 +15,7 @@
  * user-space applications to communicate with the card.
  */
 
+#include <linux/kref_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>

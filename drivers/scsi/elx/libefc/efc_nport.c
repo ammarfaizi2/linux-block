@@ -25,6 +25,8 @@
  * - the nport is removed
  */
 
+#include <linux/kref_api.h>
+
 #include "efc.h"
 
 void

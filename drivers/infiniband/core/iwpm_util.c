@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 
 #include "iwpm_util.h"

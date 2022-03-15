@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"OF: " fmt
 
+#include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/fwnode.h>
 #include <linux/of.h>

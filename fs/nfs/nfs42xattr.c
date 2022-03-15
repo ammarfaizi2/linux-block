@@ -7,6 +7,7 @@
  *
  * Author: Frank van der Linden <fllinden@amazon.com>
  */
+#include <linux/kref_api.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>
