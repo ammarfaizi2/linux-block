@@ -2,6 +2,7 @@
 #ifndef _LINUX_JIFFIES_H
 #define _LINUX_JIFFIES_H
 
+#include <linux/typecheck.h>
 #include <linux/cache.h>
 #include <linux/limits.h>
 #include <linux/math64.h>
