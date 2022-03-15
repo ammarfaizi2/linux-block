@@ -19,6 +19,7 @@
  */
 
 
+#include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

@@ -28,6 +28,7 @@
  * SUCH DAMAGES.
  */
 
+#include <linux/sunrpc/debug.h>
 #include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <crypto/skcipher.h>

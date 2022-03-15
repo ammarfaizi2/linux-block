@@ -41,6 +41,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <linux/sunrpc/debug.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/slab.h>
 #include <linux/fs.h>
