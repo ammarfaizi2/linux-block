@@ -9,6 +9,7 @@
  * Copyright (C) 2010 Igor M. Liplianin <liplianin@netup.ru>
  */
 
+#include <linux/err.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/slab.h>

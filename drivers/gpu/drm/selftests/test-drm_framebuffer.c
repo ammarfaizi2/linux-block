@@ -3,6 +3,7 @@
  * Test cases for the drm_framebuffer functions
  */
 
+#include <linux/err.h>
 #include <linux/kernel.h>
 
 #include <drm/drm_device.h>

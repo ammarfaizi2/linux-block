@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/err.h>
 #include <linux/interconnect-provider.h>
 #include <linux/device.h>
 #include <linux/export.h>
