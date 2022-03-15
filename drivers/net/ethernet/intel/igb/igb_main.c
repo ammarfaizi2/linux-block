@@ -3,6 +3,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/if_link.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/filter_api.h>

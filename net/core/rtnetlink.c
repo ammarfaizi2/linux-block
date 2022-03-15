@@ -12,6 +12,7 @@
  *	Vitaly E. Lavrov		RTA_OK arithmetic was wrong.
  */
 
+#include <linux/if_link.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
