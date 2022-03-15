@@ -2,6 +2,7 @@
 #if !defined(_MSM_GPU_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
 #define _MSM_GPU_TRACE_H_
 
+#include <linux/pid.h>
 #include <linux/tracepoint.h>
 
 #undef TRACE_SYSTEM
