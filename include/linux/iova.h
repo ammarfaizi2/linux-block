@@ -9,6 +9,7 @@
 #ifndef _IOVA_H_
 #define _IOVA_H_
 
+#include <linux/bitops.h>
 #include <linux/align.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

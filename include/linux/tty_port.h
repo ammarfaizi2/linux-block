@@ -2,6 +2,7 @@
 #ifndef _LINUX_TTY_PORT_H
 #define _LINUX_TTY_PORT_H
 
+#include <linux/bitops.h>
 #include <linux/kref.h>
 #include <linux/mutex.h>
 #include <linux/tty_buffer.h>

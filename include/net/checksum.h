@@ -15,6 +15,7 @@
 #ifndef _CHECKSUM_H
 #define _CHECKSUM_H
 
+#include <linux/bitops.h>
 #include <linux/errno.h>
 #include <asm/types.h>
 #include <asm/byteorder.h>

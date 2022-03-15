@@ -10,6 +10,7 @@
  *		<drew@colorado.edu>
  */
 
+#include <linux/bitops.h>
 #include <linux/types.h>
 #include <linux/kdev_t.h>
 #include <linux/uuid.h>
