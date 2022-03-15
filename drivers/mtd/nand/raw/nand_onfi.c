@@ -12,6 +12,7 @@
  * This file contains all ONFI helpers.
  */
 
+#include <linux/bitmap.h>
 #include <linux/slab.h>
 
 #include "internals.h"

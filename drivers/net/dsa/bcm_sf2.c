@@ -5,6 +5,7 @@
  * Copyright (C) 2014, Broadcom Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/list.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

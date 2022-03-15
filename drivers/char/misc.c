@@ -34,6 +34,7 @@
  * Added devfs support. Richard Gooch <rgooch@atnf.csiro.au>  10-Jan-1998
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 
 #include <linux/fs.h>

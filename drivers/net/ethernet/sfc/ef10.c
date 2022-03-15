@@ -19,6 +19,7 @@
 #include "workarounds.h"
 #include "selftest.h"
 #include "ef10_sriov.h"
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/in.h>
 #include <linux/jhash.h>

@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/bitmap.h>
 #include <asm/segment_api.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

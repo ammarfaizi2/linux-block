@@ -19,6 +19,7 @@
  * values to it, unless there's only one channel requested.
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/io.h>

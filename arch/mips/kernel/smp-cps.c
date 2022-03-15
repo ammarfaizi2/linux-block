@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/cpu.h>
 #include <linux/delay.h>

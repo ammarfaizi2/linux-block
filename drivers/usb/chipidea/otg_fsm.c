@@ -16,6 +16,7 @@
  * - OTG test device
  */
 
+#include <linux/bitmap.h>
 #include <linux/usb/otg.h>
 #include <linux/usb/gadget.h>
 #include <linux/usb/hcd.h>

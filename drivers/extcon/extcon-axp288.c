@@ -7,6 +7,7 @@
  * Author: Ramakrishna Pallala <ramakrishna.pallala@intel.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

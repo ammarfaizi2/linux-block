@@ -6,6 +6,7 @@
 //
 // Author: Dimitris Papastamos <dp@opensource.wolfsonmicro.com>
 
+#include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/lzo.h>
 #include <linux/slab.h>

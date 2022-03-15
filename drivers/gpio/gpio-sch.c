@@ -6,6 +6,7 @@
  *  Author: Denis Turischev <denis@compulab.co.il>
  */
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>

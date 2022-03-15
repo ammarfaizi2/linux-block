@@ -7,6 +7,7 @@
  * Author: Robert Love <rlove@google.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/hrtimer.h>
 #include <linux/delay.h>
 #include <linux/io.h>

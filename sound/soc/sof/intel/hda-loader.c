@@ -15,6 +15,7 @@
  * Hardware interface for HDA DSP code loader
  */
 
+#include <linux/bitmap.h>
 #include <linux/firmware.h>
 #include <sound/hdaudio_ext.h>
 #include <sound/hda_register.h>

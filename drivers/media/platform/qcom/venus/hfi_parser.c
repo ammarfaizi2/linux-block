@@ -4,6 +4,7 @@
  *
  * Author: Stanimir Varbanov <stanimir.varbanov@linaro.org>
  */
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>
 

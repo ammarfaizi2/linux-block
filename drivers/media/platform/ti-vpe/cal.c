@@ -9,6 +9,7 @@
  *	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/mfd/syscon.h>

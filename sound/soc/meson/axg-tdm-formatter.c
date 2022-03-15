@@ -3,6 +3,7 @@
 // Copyright (c) 2018 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>

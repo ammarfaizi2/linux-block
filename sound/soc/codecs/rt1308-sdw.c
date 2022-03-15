@@ -5,6 +5,7 @@
 // Copyright(c) 2019 Realtek Semiconductor Corp.
 //
 //
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/pm_runtime.h>

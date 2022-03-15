@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <asm/local64_api.h>
 #include <linux/acpi.h>
 #include <linux/bitops.h>

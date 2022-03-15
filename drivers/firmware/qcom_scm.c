@@ -2,6 +2,7 @@
 /* Copyright (c) 2010,2015,2019 The Linux Foundation. All rights reserved.
  * Copyright (C) 2015 Linaro Ltd.
  */
+#include <linux/bitmap.h>
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/cpumask.h>

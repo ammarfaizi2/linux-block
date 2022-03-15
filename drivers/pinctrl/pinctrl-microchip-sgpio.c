@@ -7,6 +7,7 @@
  * Copyright (c) 2020 Microchip Technology Inc. and its subsidiaries.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>
 #include <linux/clk.h>

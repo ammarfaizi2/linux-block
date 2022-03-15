@@ -11,6 +11,7 @@
  * Author: Phil Edworthy <phil.edworthy@renesas.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

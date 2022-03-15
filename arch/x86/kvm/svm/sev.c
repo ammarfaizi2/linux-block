@@ -7,6 +7,7 @@
  * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

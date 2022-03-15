@@ -2,6 +2,7 @@
 /*
  * sparse memory mappings.
  */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

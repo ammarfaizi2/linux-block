@@ -4,6 +4,7 @@
  * SmartMedia/xD translation layer
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/random.h>

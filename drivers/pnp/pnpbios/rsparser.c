@@ -3,6 +3,7 @@
  * rsparser.c - parses and encodes pnpbios resource data streams
  */
 
+#include <linux/bitmap.h>
 #include <linux/ctype.h>
 #include <linux/pnp.h>
 #include <linux/string.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2018 Nicolas Saenz Julienne <nsaenzjulienne@suse.de>
  */
 
+#include <linux/bitmap.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/slab.h>

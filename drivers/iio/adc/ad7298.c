@@ -5,6 +5,7 @@
  * Copyright 2011 Analog Devices Inc.
  */
 
+#include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

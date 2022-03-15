@@ -7,6 +7,7 @@
  *  Copyright (c) 2008 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/mm.h>

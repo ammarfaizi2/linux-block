@@ -27,6 +27,7 @@
 /* Thanx to gkh and the rest of the usb dev group for all code I have
    assimilated :-) */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

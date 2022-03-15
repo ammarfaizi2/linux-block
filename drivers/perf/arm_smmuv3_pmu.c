@@ -34,6 +34,7 @@
  * are not supported.
  */
 
+#include <linux/bitmap.h>
 #include <asm/local64_api.h>
 #include <linux/acpi.h>
 #include <linux/acpi_iort.h>

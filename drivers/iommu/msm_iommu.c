@@ -5,6 +5,7 @@
  */
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

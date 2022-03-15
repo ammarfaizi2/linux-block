@@ -31,6 +31,7 @@
  *	workaround has been removed.
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/x86_irq.h>
 #include <asm/msr.h>

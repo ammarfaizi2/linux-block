@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/crc32.h>

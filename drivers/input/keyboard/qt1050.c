@@ -9,6 +9,7 @@
  *  Copyright (C) 2011 Atmel
  */
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/input.h>

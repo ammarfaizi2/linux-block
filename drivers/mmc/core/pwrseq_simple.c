@@ -6,6 +6,7 @@
  *
  *  Simple MMC power sequence management
  */
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -12,6 +12,7 @@
  * BMA250: 7-bit I2C slave address 0x18 or 0x19
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

@@ -25,6 +25,7 @@
  * between all LAN ports by default.
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>

@@ -29,6 +29,8 @@
  *
  */
 
+#include <linux/bitmap.h>
+
 #include "i915_drv.h"
 #include "gvt.h"
 #include "trace.h"

@@ -8,6 +8,7 @@
  *
  * Data sheet: ARM DDI 0190B, September 2000
  */
+#include <linux/bitmap.h>
 #include <linux/spinlock.h>
 #include <linux/errno.h>
 #include <linux/init.h>

@@ -8,6 +8,7 @@
  *		 Janosch Frank <frankja@linux.vnet.ibm.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/pagewalk.h>
 #include <linux/swap.h>

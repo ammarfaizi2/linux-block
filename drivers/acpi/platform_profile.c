@@ -2,6 +2,7 @@
 
 /* Platform profile sysfs interface */
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/bits.h>
 #include <linux/init.h>

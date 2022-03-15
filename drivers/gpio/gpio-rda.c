@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Manivannan Sadhasivam
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>
 #include <linux/kernel.h>

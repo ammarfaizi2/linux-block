@@ -6,6 +6,7 @@
  * Copyright (C) 2015 Cogent Embedded, Inc.
  */
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/iio/events.h>
 #include <linux/iio/iio.h>

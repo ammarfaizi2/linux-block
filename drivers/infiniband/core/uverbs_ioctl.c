@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/bitmap.h>
 #include <rdma/rdma_user_ioctl.h>
 #include <rdma/uverbs_ioctl.h>
 #include "rdma_core.h"

@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Vaisala Oyj. All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/crc8.h>
 #include <linux/delay.h>

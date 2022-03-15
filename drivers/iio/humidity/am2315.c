@@ -7,6 +7,7 @@
  * 7-bit I2C address: 0x5C.
  */
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/kernel.h>

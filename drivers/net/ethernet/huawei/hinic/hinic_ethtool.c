@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/device.h>

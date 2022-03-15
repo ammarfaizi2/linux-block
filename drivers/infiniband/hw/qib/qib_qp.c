@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/vmalloc.h>

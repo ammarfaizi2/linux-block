@@ -2,6 +2,7 @@
 /*
  * ip30-irq.c: Highlevel interrupt handling for IP30 architecture.
  */
+#include <linux/bitmap.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

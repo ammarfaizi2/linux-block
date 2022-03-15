@@ -27,6 +27,7 @@
  *  Based on Xen 3.1 code.
  */
 
+#include <linux/bitmap.h>
 #include <linux/kvm_host.h>
 #include <linux/kvm.h>
 #include <linux/mm.h>

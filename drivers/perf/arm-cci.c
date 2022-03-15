@@ -3,6 +3,7 @@
 // Copyright (C) 2013-2018 Arm Ltd.
 // Author: Punit Agrawal <punit.agrawal@arm.com>, Suzuki Poulose <suzuki.poulose@arm.com>
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/local64_api.h>
 #include <linux/arm-cci.h>

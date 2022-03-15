@@ -7,6 +7,7 @@
  *    Author(s): Cornelia Huck <cornelia.huck@de.ibm.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel_stat.h>
 #include <linux/init.h>
 #include <linux/memblock.h>

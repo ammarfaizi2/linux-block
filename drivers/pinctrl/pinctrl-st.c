@@ -5,6 +5,7 @@
  *	Srinivas Kandagatla <srinivas.kandagatla@st.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/slab.h>

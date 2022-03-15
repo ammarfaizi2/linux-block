@@ -9,6 +9,7 @@
  * See MAINTAINERS file for support contact information.
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Texas Instruments Incorporated - https://www.ti.com/
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/bitmap.h>
 #include <linux/kallsyms.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

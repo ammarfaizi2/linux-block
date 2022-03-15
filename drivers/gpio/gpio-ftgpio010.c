@@ -10,6 +10,7 @@
  * MXC GPIO support. (c) 2008 Daniel Mack <daniel@caiaq.de>
  * Copyright 2008 Juergen Beisert, kernel@pengutronix.de
  */
+#include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

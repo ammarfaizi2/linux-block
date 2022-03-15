@@ -33,6 +33,7 @@
 
 #define DRV_NAME	"via-rhine"
 
+#include <linux/bitmap.h>
 #include <linux/types.h>
 
 /* A few user-configurable values.

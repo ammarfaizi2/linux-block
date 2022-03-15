@@ -9,6 +9,7 @@
  * Copyright 2018-2021	Intel Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/export.h>
 #include <linux/bitfield.h>
 #include <net/cfg80211.h>

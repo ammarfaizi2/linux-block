@@ -4,6 +4,7 @@
  *
  * Drives the local APIC in "clustered mode".
  */
+#include <linux/bitmap.h>
 #include <linux/cpumask.h>
 #include <linux/dmi.h>
 #include <linux/smp.h>

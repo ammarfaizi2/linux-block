@@ -8,6 +8,7 @@
  *	      Halil Pasic <pasic@linux.ibm.com>
  *	      Pierre Morel <pmorel@linux.ibm.com>
  */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/string.h>
 #include <linux/vfio.h>

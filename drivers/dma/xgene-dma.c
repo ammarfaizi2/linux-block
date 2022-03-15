@@ -9,6 +9,7 @@
  * NOTE: PM support is currently not available.
  */
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

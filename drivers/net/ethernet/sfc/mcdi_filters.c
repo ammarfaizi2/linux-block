@@ -9,6 +9,8 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/bitmap.h>
+
 #include "mcdi_filters.h"
 #include "mcdi.h"
 #include "nic.h"

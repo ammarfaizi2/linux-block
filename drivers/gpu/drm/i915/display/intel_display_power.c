@@ -3,6 +3,8 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/bitmap.h>
+
 #include "i915_drv.h"
 #include "i915_irq.h"
 #include "intel_cdclk.h"

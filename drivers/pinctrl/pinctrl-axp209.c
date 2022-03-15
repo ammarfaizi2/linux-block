@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Quentin Schulz <quentin.schulz@free-electrons.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/gpio/driver.h>

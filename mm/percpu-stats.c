@@ -7,6 +7,7 @@
  *
  * Prints statistics about the percpu allocator and backing chunks.
  */
+#include <linux/bitmap.h>
 #include <linux/debugfs.h>
 #include <linux/list.h>
 #include <linux/percpu.h>

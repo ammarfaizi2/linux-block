@@ -3,6 +3,7 @@
  * Copyright (c) 2018 Hisilicon Limited.
  */
 
+#include <linux/bitmap.h>
 #include <linux/pci.h>
 #include <rdma/ib_umem.h>
 #include "hns_roce_device.h"

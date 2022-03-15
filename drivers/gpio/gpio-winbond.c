@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/ioport.h>
 #include <linux/isa.h>

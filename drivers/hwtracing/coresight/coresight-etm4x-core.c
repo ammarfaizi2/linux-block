@@ -3,6 +3,7 @@
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <asm/local_api.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>

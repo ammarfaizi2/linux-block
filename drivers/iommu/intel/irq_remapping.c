@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt)     "DMAR-IR: " fmt
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/x86_irq.h>
 #include <linux/interrupt.h>

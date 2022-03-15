@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2010-2020 NVIDIA Corporation */
 
+#include <linux/bitmap.h>
+
 #include "drm.h"
 #include "submit.h"
 #include "uapi.h"

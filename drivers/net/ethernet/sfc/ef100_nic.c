@@ -9,6 +9,8 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/bitmap.h>
+
 #include "ef100_nic.h"
 #include "efx_common.h"
 #include "efx_channels.h"

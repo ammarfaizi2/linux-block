@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <linux/bitmap.h>
+
 #include "lib/mlx5.h"
 #include "en.h"
 #include "en_accel/tls.h"

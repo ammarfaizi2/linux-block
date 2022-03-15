@@ -15,6 +15,7 @@
  *	Mikael Pettersson	:	PM converted to driver model.
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

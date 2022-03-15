@@ -6,6 +6,7 @@
  * Author: Mathias Nyman <mathias.nyman@linux.intel.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>

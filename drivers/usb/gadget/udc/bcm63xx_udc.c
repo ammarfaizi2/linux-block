@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Broadcom Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/clk.h>

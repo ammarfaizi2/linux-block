@@ -9,6 +9,7 @@
  *	Jinyoung Choi <j-young.choi@samsung.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 

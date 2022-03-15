@@ -8,6 +8,7 @@
  * Copyright (C) 2018 IBM Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/file.h>
 #include <linux/idr.h>
 #include <linux/module.h>

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2021, Intel Corporation. */
 
+#include <linux/bitmap.h>
+
 #include "ice_virtchnl_allowlist.h"
 
 /* Purpose of this file is to share functionality to allowlist or denylist

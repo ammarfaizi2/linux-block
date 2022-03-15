@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Marvell. */
 
+#include <linux/bitmap.h>
 #include <linux/ctype.h>
 #include <linux/firmware.h>
 #include "otx2_cptpf_ucode.h"

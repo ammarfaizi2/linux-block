@@ -9,6 +9,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/socket.h>
 #include <linux/if_vlan.h>

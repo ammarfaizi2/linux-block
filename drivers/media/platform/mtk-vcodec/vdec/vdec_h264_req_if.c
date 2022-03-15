@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <media/v4l2-mem2mem.h>

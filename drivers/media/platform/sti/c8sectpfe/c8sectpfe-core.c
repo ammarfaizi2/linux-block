@@ -8,6 +8,7 @@
  *	    Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/clk.h>

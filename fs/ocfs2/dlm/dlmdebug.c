@@ -7,6 +7,7 @@
  * Copyright (C) 2004, 2008 Oracle.  All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>

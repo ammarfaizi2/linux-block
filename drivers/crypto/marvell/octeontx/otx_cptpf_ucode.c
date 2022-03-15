@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/bitmap.h>
 #include <linux/ctype.h>
 #include <linux/firmware.h>
 #include "otx_cpt_common.h"

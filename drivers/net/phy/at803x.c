@@ -7,6 +7,7 @@
  * Author: Matus Ujhelyi <ujhelyi.m@gmail.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/phy.h>
 #include <linux/module.h>
 #include <linux/string.h>

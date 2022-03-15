@@ -12,6 +12,7 @@
  * Common pmac/prep/chrp pci routines. -- Cort
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/string.h>

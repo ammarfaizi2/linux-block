@@ -6,6 +6,7 @@
  * Copyright 2007 Sony Corp.
  */
 
+#include <linux/bitmap.h>
 #include <linux/ata.h>
 #include <linux/blk-mq.h>
 #include <linux/slab.h>

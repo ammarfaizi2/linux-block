@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2008, 2009 PMC Sierra Inc
  */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/init.h>

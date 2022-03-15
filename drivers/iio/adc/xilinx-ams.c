@@ -8,6 +8,7 @@
  *  Rajnikant Bhojani <rajnikant.bhojani@xilinx.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/bits.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

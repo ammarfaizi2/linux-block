@@ -16,6 +16,7 @@
  * This driver uses "csrows" EDAC attribute to represent DIMM slot#
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/pci.h>

@@ -12,6 +12,7 @@
   * Driver for max1363 and similar chips.
   */
 
+#include <linux/bitmap.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

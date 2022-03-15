@@ -7,6 +7,7 @@
  * Copyright (C) 1999 - 2001 Kanoj Sarcar
  */
 
+#include <linux/bitmap.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/irqdomain.h>

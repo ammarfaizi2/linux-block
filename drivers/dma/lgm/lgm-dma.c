@@ -5,6 +5,7 @@
  * Copyright (c) 2016 - 2020 Intel Corporation.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

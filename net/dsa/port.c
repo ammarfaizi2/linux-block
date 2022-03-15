@@ -6,6 +6,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/if_bridge.h>
 #include <linux/notifier.h>
 #include <linux/of_mdio.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2017 Savoir-faire Linux, Inc.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/interrupt.h>
 #include <linux/irqdomain.h>

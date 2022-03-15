@@ -51,6 +51,8 @@
  * needs to be tracked by this code.
  */
 
+#include <linux/bitmap.h>
+
 #include "vmwgfx_drv.h"
 #include "vmwgfx_binding.h"
 #include "device_include/svga3d_reg.h"

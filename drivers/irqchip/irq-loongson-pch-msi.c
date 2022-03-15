@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "pch-msi: " fmt
 
+#include <linux/bitmap.h>
 #include <linux/irqchip.h>
 #include <linux/msi.h>
 #include <linux/of.h>

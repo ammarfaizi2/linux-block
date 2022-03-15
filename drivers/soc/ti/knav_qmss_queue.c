@@ -8,6 +8,7 @@
  *		Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/dma-mapping.h>

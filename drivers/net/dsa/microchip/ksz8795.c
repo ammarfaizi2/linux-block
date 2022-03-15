@@ -6,6 +6,7 @@
  *	Tristram Ha <Tristram.Ha@microchip.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/export.h>

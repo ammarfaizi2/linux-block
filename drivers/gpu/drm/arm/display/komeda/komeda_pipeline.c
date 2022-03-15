@@ -4,6 +4,7 @@
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
+#include <linux/bitmap.h>
 #include <drm/drm_print.h>
 
 #include "komeda_dev.h"

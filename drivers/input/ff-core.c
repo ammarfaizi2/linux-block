@@ -11,6 +11,7 @@
 
 /* #define DEBUG */
 
+#include <linux/bitmap.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

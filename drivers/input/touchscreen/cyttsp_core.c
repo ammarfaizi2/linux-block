@@ -13,6 +13,7 @@
  * Contact Cypress Semiconductor at www.cypress.com <kev@cypress.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/input.h>
 #include <linux/input/mt.h>

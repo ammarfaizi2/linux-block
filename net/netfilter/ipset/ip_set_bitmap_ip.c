@@ -6,6 +6,7 @@
 
 /* Kernel module implementing an IP set type: the bitmap:ip type */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>

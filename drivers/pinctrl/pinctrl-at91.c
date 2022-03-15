@@ -5,6 +5,7 @@
  * Copyright (C) 2011-2012 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/init.h>

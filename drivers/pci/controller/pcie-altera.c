@@ -6,6 +6,7 @@
  * Description: Altera PCIe host controller driver
  */
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/irqchip/chained_irq.h>

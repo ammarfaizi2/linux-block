@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2016 MediaTek Inc.
  * Author: Yong Wu <yong.wu@mediatek.com>
  */
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/device.h>

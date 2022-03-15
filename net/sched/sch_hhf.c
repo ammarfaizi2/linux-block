@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Nandita Dukkipati <nanditad@google.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

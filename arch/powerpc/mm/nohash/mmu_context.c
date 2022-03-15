@@ -21,6 +21,7 @@
  *     also clear mm->cpu_vm_mask bits when processes are migrated
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/init.h>

@@ -8,6 +8,7 @@
  *  Created:	Jun 15, 2001
  *  Copyright:	MontaVista Software Inc.
  */
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/clk.h>
 #include <linux/err.h>

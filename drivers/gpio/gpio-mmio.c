@@ -40,6 +40,7 @@ o        `                     ~~~~\___/~~~~    ` controller in FPGA is ,.`
  *               `.......````.```
  */
 
+#include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/bug.h>

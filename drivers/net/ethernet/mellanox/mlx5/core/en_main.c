@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/bitmap.h>
 #include <net/tc_act/tc_gact.h>
 #include <net/pkt_cls.h>
 #include <linux/mlx5/fs.h>

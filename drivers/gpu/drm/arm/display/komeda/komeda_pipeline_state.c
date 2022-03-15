@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/bitmap.h>
 #include <linux/align.h>
 #include <drm/drm_print.h>
 #include <linux/clk.h>

@@ -6,6 +6,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <linux/bitmap.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <asm/local64_api.h>

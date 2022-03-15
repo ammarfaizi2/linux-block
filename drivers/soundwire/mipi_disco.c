@@ -17,6 +17,7 @@
  *    here
  */
 
+#include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/property.h>
 #include <linux/mod_devicetable.h>

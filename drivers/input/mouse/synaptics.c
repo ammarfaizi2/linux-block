@@ -20,6 +20,7 @@
  * Trademarks are the property of their respective owners.
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/dmi.h>

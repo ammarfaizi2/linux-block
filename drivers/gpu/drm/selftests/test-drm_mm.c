@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "drm_mm: " fmt
 
+#include <linux/bitmap.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/prime_numbers.h>

@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/bitmap.h>
+
 #include "amdgpu.h"
 #include "amdgpu_gfx.h"
 #include "amdgpu_rlc.h"

@@ -11,6 +11,7 @@
  * Funded by:  Volkswagen Group Research
  */
 
+#include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/types.h>

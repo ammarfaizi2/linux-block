@@ -3,6 +3,7 @@
  * QLogic iSCSI HBA Driver
  * Copyright (c)  2003-2013 QLogic Corporation
  */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>

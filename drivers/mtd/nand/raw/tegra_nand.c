@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Avionic Design GmbH
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/dma-mapping.h>

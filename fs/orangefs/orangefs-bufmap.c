@@ -4,6 +4,7 @@
  *
  * See COPYING in top-level directory.
  */
+#include <linux/bitmap.h>
 #include <asm/cacheflush.h>
 
 #include "protocol.h"

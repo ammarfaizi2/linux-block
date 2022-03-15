@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2020, Maxim Integrated
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/module.h>

@@ -16,6 +16,7 @@
  *	Fenghua Yu <fenghua.yu@intel.com>
  *	Add multiple ptc.g/ptc.ga instruction support in global tlb purge.
  */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

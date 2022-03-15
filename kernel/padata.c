@@ -11,6 +11,7 @@
  * Author: Daniel Jordan <daniel.m.jordan@oracle.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/completion.h>
 #include <linux/export.h>
 #include <linux/cpumask.h>

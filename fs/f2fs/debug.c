@@ -8,6 +8,7 @@
  * Copyright (c) 2012 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/backing-dev.h>

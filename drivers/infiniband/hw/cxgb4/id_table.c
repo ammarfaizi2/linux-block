@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/random.h>
 #include "iw_cxgb4.h"

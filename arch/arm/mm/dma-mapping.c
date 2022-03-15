@@ -6,6 +6,7 @@
  *
  *  DMA uncached mapping support.
  */
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/genalloc.h>

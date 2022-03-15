@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/gfp.h>

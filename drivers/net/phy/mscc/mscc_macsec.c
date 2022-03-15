@@ -7,6 +7,7 @@
  * Copyright (c) 2020 Microsemi Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/phy.h>
 #include <dt-bindings/net/mscc-phy-vsc8531.h>
 

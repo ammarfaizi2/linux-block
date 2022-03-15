@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019, Intel Corporation. */
 
+#include <linux/bitmap.h>
 #include <net/xdp_sock_drv.h>
 #include "ice_base.h"
 #include "ice_lib.h"

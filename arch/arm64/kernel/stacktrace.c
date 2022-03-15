@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2012 ARM Ltd.
  */
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/ftrace.h>

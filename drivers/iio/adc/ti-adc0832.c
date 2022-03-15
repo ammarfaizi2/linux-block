@@ -7,6 +7,7 @@
  * Datasheet: https://www.ti.com/lit/ds/symlink/adc0832-n.pdf
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
 #include <linux/spi/spi.h>

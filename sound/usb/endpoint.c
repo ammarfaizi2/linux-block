@@ -2,6 +2,7 @@
 /*
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/gfp.h>
 #include <linux/init.h>

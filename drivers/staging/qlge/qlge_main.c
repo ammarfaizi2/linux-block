@@ -5,6 +5,7 @@
  * Author:     Linux qlge network device driver by
  *                      Ron Mercer <ron.mercer@qlogic.com>
  */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/bitops.h>

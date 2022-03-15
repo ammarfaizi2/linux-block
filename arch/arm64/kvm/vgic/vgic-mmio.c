@@ -3,6 +3,7 @@
  * VGIC MMIO handling functions
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/bsearch.h>
 #include <linux/interrupt.h>

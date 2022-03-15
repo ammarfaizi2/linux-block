@@ -3,6 +3,7 @@
  * Copyright (C) 2011, 2012 STRATO.  All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>

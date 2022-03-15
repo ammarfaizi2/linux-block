@@ -7,6 +7,7 @@
  * Copyright (c) 2019, 2020 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/compiler.h>
 #include <linux/gpio/driver.h>
 #include <linux/interrupt.h>

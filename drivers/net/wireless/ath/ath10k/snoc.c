@@ -3,6 +3,7 @@
  * Copyright (c) 2018 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bits.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>

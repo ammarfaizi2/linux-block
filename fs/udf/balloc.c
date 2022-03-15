@@ -21,6 +21,7 @@
 
 #include "udfdecl.h"
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 
 #include "udf_i.h"

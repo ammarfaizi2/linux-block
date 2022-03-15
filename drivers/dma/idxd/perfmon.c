@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2020 Intel Corporation. All rights rsvd. */
 
+#include <linux/bitmap.h>
 #include <asm/local64_api.h>
 #include <linux/sched/task.h>
 #include <linux/io-64-nonatomic-lo-hi.h>

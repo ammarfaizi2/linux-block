@@ -5,6 +5,7 @@
  * Copyright (c) 2012-2016, Intel Corporation.
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

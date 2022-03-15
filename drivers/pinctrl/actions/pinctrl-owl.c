@@ -9,6 +9,7 @@
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/gpio/driver.h>

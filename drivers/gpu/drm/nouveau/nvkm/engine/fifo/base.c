@@ -24,6 +24,7 @@
 #include "priv.h"
 #include "chan.h"
 
+#include <linux/bitmap.h>
 #include <core/client.h>
 #include <core/gpuobj.h>
 #include <core/notify.h>

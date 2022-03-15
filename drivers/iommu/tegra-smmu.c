@@ -3,6 +3,7 @@
  * Copyright (C) 2011-2014 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/debugfs.h>
 #include <linux/err.h>

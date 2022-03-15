@@ -12,6 +12,7 @@
  * https://www.nxp.com/docs/en/errata/ES_FXLS8962AF.pdf
  */
 
+#include <linux/bitmap.h>
 #include <linux/bits.h>
 #include <linux/bitfield.h>
 #include <linux/i2c.h>

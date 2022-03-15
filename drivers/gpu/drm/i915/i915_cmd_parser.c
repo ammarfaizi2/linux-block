@@ -25,6 +25,8 @@
  *
  */
 
+#include <linux/bitmap.h>
+
 #include "gt/intel_engine.h"
 #include "gt/intel_gpu_commands.h"
 

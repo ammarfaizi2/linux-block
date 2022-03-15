@@ -9,6 +9,7 @@
  *	Fengwei Yin <fengwei.yin@intel.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/kthread.h>

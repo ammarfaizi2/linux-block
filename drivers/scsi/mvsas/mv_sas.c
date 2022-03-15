@@ -7,6 +7,7 @@
  * Copyright 2009-2011 Marvell. <yuxiangl@marvell.com>
 */
 
+#include <linux/bitmap.h>
 #include <asm/unaligned.h>
 
 #include "mv_sas.h"

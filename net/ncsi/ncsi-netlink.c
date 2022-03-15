@@ -3,6 +3,7 @@
  * Copyright Samuel Mendoza-Jonas, IBM Corporation 2018.
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/if_arp.h>

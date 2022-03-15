@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2020 Intel Corporation */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>

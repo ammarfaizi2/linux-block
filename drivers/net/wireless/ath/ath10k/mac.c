@@ -7,6 +7,7 @@
 
 #include "mac.h"
 
+#include <linux/bitmap.h>
 #include <net/cfg80211.h>
 #include <net/mac80211.h>
 #include <linux/etherdevice.h>

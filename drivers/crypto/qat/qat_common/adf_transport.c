@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2014 - 2020 Intel Corporation */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/nospec.h>

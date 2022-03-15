@@ -5,6 +5,7 @@
 //
 // Nintendo Wii (Hollywood) GPIO driver
 
+#include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

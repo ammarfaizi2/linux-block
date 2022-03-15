@@ -3,6 +3,8 @@
  * Copyright © 2014-2018 Intel Corporation
  */
 
+#include <linux/bitmap.h>
+
 #include "i915_drv.h"
 #include "intel_context.h"
 #include "intel_engine_pm.h"

@@ -5,6 +5,7 @@
  * Author: Karthikeyan Mani <karthikeyanm@amiindia.co.in>
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/gpio/driver.h>

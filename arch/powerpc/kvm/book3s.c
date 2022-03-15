@@ -11,6 +11,7 @@
  * by Hollis Blanchard <hollisb@us.ibm.com>.
  */
 
+#include <linux/bitmap.h>
 #include <linux/kvm_host.h>
 #include <linux/err.h>
 #include <linux/export.h>

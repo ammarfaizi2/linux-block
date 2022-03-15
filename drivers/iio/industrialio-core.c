@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "iio-core: " fmt
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/idr.h>

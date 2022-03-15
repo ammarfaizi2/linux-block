@@ -3,6 +3,7 @@
  *  power_supply_hwmon.c - power supply hwmon support.
  */
 
+#include <linux/bitmap.h>
 #include <linux/err.h>
 #include <linux/hwmon.h>
 #include <linux/power_supply.h>

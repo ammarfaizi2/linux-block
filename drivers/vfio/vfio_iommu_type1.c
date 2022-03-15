@@ -21,6 +21,7 @@
  * device/bus interface rather than a group interface.
  */
 
+#include <linux/bitmap.h>
 #include <asm/io.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/compat.h>

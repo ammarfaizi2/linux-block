@@ -40,6 +40,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/interrupt.h>

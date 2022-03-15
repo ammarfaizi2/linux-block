@@ -5,6 +5,7 @@
  * Copyright (C) 2019 STMicroelectronics
  * Author(s): Amelie Delaunay <amelie.delaunay@st.com>.
  */
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>
