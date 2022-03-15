@@ -3,6 +3,7 @@
 
 /* The driver transmit and receive code */
 
+#include <net/checksum.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>

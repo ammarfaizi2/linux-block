@@ -6,6 +6,7 @@
  * Copyright © CC Computer Consultants GmbH, 2007
  */
 
+#include <net/checksum.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/ip.h>

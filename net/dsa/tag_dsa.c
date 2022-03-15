@@ -45,6 +45,7 @@
  *   6    6       2        2      4    2       N
  */
 
+#include <net/checksum.h>
 #include <linux/dsa/mv88e6xxx.h>
 #include <linux/etherdevice.h>
 #include <linux/list.h>

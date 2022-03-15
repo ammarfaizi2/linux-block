@@ -10,6 +10,7 @@
  *	Created by Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>
  */
 
+#include <net/checksum.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>

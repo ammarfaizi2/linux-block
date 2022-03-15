@@ -6,6 +6,7 @@
  *	UDPv4 GSO support
  */
 
+#include <net/checksum.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

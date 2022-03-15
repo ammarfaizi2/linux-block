@@ -98,6 +98,7 @@ static const int multicast_filter_limit = 32;
 
 #define pr_fmt(fmt)		KBUILD_MODNAME " " fmt
 
+#include <net/checksum.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>

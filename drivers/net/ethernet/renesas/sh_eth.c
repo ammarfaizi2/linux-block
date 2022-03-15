@@ -8,6 +8,7 @@
  *  Copyright (C) 2014 Codethink Limited
  */
 
+#include <net/checksum.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
