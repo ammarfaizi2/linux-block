@@ -2,6 +2,7 @@
 #ifndef _LINUX_INIT_H
 #define _LINUX_INIT_H
 
+#include <linux/build_bug.h>
 #include <linux/compiler.h>
 #include <linux/types.h>
 
