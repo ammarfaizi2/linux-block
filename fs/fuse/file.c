@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/fs_api_mapping.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/backing-dev-api.h>
