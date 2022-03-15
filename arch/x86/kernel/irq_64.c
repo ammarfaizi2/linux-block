@@ -9,6 +9,7 @@
  * io_apic.c.)
  */
 
+#include <linux/pgtable.h>
 #include <linux/percpu.h>
 #include <linux/mmzone.h>
 #include <linux/mmzone_api.h>
