@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2020 Collabora Ltd.
  */
+#include <asm/elf_api.h>
 #include <linux/sched.h>
 #include <linux/prctl.h>
 #include <linux/syscall_user_dispatch.h>

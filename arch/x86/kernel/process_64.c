@@ -15,6 +15,7 @@
  * This file handles the architecture-dependent parts of process handling..
  */
 
+#include <asm/elf_api.h>
 #include <linux/cpu.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

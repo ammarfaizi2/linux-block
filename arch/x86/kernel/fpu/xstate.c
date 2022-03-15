@@ -4,6 +4,7 @@
  *
  * Author: Suresh Siddha <suresh.b.siddha@intel.com>
  */
+#include <asm/elf_api.h>
 #include <linux/bitops.h>
 #include <linux/compat.h>
 #include <linux/cpu.h>

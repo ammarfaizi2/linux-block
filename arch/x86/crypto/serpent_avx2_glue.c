@@ -5,6 +5,7 @@
  * Copyright © 2012-2013 Jussi Kivilinna <jussi.kivilinna@mbnet.fi>
  */
 
+#include <asm/elf_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/crypto.h>

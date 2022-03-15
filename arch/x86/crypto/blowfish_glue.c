@@ -8,6 +8,7 @@
  *   Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <asm/elf_api.h>
 #include <crypto/algapi.h>
 #include <crypto/blowfish.h>
 #include <crypto/internal/skcipher.h>

@@ -8,6 +8,7 @@
  *  Copyright (C) 2006 NTT (Nippon Telegraph and Telephone Corporation)
  */
 
+#include <asm/elf_api.h>
 #include <asm/unaligned.h>
 #include <linux/crypto.h>
 #include <linux/init.h>

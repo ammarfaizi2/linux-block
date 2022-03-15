@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/elf_api.h>
 #include <linux/restart_block_api.h>
 #include <linux/sched/rseq_api.h>
 #include <linux/sched.h>

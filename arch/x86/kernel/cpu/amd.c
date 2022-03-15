@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <asm/elf_api.h>
 #include <linux/export.h>
 #include <linux/bitops.h>
 #include <linux/elf.h>

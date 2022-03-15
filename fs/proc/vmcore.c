@@ -8,6 +8,7 @@
  *
  */
 
+#include <asm/elf_api.h>
 #include <linux/mm.h>
 #include <linux/kcore.h>
 #include <linux/user.h>
