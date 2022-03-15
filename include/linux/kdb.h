@@ -13,6 +13,7 @@
  * Copyright (C) 2009 Jason Wessel <jason.wessel@windriver.com>
  */
 
+#include <linux/cpumask.h>
 #include <linux/cpumask_api.h>
 #include <linux/list.h>
 

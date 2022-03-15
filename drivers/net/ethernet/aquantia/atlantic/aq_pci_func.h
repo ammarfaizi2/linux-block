@@ -10,6 +10,8 @@
 #ifndef AQ_PCI_FUNC_H
 #define AQ_PCI_FUNC_H
 
+#include <linux/cpumask.h>
+
 #include "aq_common.h"
 #include "aq_nic.h"
 
