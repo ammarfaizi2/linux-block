@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)	"GICv3: " fmt
 
+#include <linux/irq_api_eff_affinity.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>

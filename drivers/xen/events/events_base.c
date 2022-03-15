@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/irq_api_eff_affinity.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

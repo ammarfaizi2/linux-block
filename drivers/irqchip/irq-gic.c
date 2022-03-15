@@ -17,6 +17,7 @@
  * As such, the enable set/clear, pending set/clear and active bit
  * registers are banked per-cpu for these sources.
  */
+#include <linux/irq_api_eff_affinity.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

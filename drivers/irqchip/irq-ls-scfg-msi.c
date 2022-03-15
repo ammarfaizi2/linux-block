@@ -7,6 +7,7 @@
  * Author: Minghuan Lian <Minghuan.Lian@nxp.com>
  */
 
+#include <linux/irq_api_eff_affinity.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

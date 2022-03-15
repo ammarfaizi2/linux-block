@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/irq_api_eff_affinity.h>
 #include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/irqdomain.h>

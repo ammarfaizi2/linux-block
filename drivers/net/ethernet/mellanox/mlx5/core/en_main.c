@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/irq_api_eff_affinity.h>
 #include <linux/if_vlan_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/gfp_api.h>
