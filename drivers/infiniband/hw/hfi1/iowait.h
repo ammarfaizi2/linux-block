@@ -6,6 +6,7 @@
 #ifndef _HFI1_IOWAIT_H
 #define _HFI1_IOWAIT_H
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/atomic_api.h>
 #include <linux/seqlock.h>

@@ -8,6 +8,7 @@
 #ifndef SOUND_TASCAM_H_INCLUDED
 #define SOUND_TASCAM_H_INCLUDED
 
+#include <linux/workqueue_api.h>
 #include <linux/device.h>
 #include <linux/firewire.h>
 #include <linux/firewire-constants.h>

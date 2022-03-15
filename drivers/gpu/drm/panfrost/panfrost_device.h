@@ -5,6 +5,7 @@
 #ifndef __PANFROST_DEVICE_H__
 #define __PANFROST_DEVICE_H__
 
+#include <linux/workqueue_api.h>
 #include <linux/shrinker.h>
 #include <linux/atomic.h>
 #include <linux/io-pgtable.h>

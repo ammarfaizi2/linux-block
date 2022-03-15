@@ -32,6 +32,7 @@
 	
 #define PS_VERSION	"1.02"
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/sched.h>

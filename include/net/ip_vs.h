@@ -6,6 +6,7 @@
 #ifndef _NET_IP_VS_H
 #define _NET_IP_VS_H
 
+#include <linux/workqueue_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/netfilter/nf_conntrack_common_api.h>
 #include <linux/indirect_call_wrapper.h>

@@ -10,6 +10,7 @@
 
 #ifndef MISDNHW_H
 #define MISDNHW_H
+#include <linux/workqueue_api.h>
 #include <linux/mISDNif.h>
 #include <linux/timer.h>
 

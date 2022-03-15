@@ -6,6 +6,8 @@
 #ifndef __iwl_fw_runtime_h__
 #define __iwl_fw_runtime_h__
 
+#include <linux/workqueue_api.h>
+
 #include "iwl-config.h"
 #include "iwl-trans.h"
 #include "img.h"

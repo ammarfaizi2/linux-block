@@ -25,6 +25,7 @@
 #define _nblank(x) #x
 #define nblank(x) _nblank(x)[0]
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/io.h>

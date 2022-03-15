@@ -10,6 +10,7 @@
  * Author: Ingo Molnar <mingo@elte.hu>
  *	   Paul E. McKenney <paulmck@linux.ibm.com>
  */
+#include <linux/workqueue_api.h>
 #include <linux/swait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/softirq.h>

@@ -12,6 +12,7 @@
 #ifndef SI476X_CORE_H
 #define SI476X_CORE_H
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kfifo.h>
 #include <linux/atomic.h>
