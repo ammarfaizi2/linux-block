@@ -13,6 +13,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <asm/io.h>
 #include <asm/vdso/vdso.h>
 #include <asm/clocksource.h>
 #include <asm/unistd.h>

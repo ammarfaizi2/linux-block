@@ -12,6 +12,7 @@
 #ifndef _HYPERV_H
 #define _HYPERV_H
 
+#include <asm/io.h>
 #include <uapi/linux/hyperv.h>
 
 #include <linux/mm.h>

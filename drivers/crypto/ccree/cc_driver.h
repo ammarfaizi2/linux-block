@@ -8,6 +8,7 @@
 #ifndef __CC_DRIVER_H__
 #define __CC_DRIVER_H__
 
+#include <asm/io.h>
 #include <linux/dma-mapping.h>
 #include <crypto/algapi.h>
 #include <crypto/internal/skcipher.h>

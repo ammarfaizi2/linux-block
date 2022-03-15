@@ -4,6 +4,8 @@
 #ifndef _FM10K_COMMON_H_
 #define _FM10K_COMMON_H_
 
+#include <asm/io.h>
+
 #include "fm10k_type.h"
 
 #define FM10K_REMOVED(hw_addr) unlikely(!(hw_addr))

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (C) 2015-2018 Broadcom */
 
+#include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/mutex.h>
 #include <linux/spinlock_types.h>

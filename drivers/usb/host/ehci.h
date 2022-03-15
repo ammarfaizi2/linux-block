@@ -6,6 +6,7 @@
 #ifndef __LINUX_EHCI_HCD_H
 #define __LINUX_EHCI_HCD_H
 
+#include <asm/io.h>
 #include <linux/types.h>
 
 /* definitions used for the EHCI driver */

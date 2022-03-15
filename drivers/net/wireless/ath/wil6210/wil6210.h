@@ -7,6 +7,7 @@
 #ifndef __WIL6210_H__
 #define __WIL6210_H__
 
+#include <asm/io.h>
 #include <linux/etherdevice.h>
 #include <linux/netdevice.h>
 #include <linux/wireless.h>

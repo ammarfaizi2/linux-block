@@ -4,6 +4,7 @@
 #ifndef	_QTN_HW_IDS_H_
 #define	_QTN_HW_IDS_H_
 
+#include <asm/io.h>
 #include <linux/pci_ids.h>
 
 #define PCIE_VENDOR_ID_QUANTENNA	(0x1bb5)
