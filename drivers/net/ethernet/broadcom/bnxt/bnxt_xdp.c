@@ -6,6 +6,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
+#include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/filter_api.h>
 #include <linux/dma-mapping.h>

@@ -47,6 +47,7 @@
  * Intel PCIe NTB Linux driver
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -7,6 +7,7 @@
 
 /* File aq_pci_func.c: Definition of PCI functions. */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

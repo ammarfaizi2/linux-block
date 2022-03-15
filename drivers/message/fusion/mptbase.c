@@ -46,6 +46,7 @@
 */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
+#include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

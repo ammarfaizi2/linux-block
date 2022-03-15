@@ -6,6 +6,7 @@
  *          Elie Morisse <syniurge@gmail.com>
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

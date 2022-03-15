@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api_prefetch.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

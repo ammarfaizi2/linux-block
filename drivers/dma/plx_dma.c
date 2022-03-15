@@ -7,6 +7,7 @@
 
 #include "dmaengine.h"
 
+#include <linux/pci-dma-compat.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

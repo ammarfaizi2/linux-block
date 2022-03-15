@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

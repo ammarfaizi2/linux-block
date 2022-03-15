@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

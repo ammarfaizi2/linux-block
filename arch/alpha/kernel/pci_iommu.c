@@ -3,6 +3,7 @@
  *	linux/arch/alpha/kernel/pci_iommu.c
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/mm_page_address.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

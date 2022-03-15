@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

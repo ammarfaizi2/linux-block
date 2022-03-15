@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api_prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

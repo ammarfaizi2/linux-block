@@ -18,6 +18,7 @@
  */
 
 
+#include <linux/pci-dma-compat.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>

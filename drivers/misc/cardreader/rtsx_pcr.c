@@ -7,6 +7,7 @@
  *   Wei WANG <wei_wang@realsil.com.cn>
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

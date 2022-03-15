@@ -5,6 +5,7 @@
  * Driver for the PA Semi PWRficient onchip 1G/10G Ethernet MACs
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

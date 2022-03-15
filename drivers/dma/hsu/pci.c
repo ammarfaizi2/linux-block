@@ -8,6 +8,7 @@
  * Partially based on the bits found in drivers/tty/serial/mfd.c.
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

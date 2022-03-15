@@ -39,6 +39,7 @@
  * Serge Semin <fancer.lancer@gmail.com>, <Sergey.Semin@t-platforms.ru>
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

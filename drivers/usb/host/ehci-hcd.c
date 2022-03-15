@@ -7,6 +7,7 @@
  * Copyright (c) 2000-2004 by David Brownell
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hardirq.h>

@@ -6,6 +6,7 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

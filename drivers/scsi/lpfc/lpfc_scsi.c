@@ -20,6 +20,7 @@
  * more details, a copy of which can be found in the file COPYING  *
  * included with this package.                                     *
  *******************************************************************/
+#include <linux/pci-dma-compat.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/hashtable_api.h>

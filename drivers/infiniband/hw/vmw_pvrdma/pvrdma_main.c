@@ -43,6 +43,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

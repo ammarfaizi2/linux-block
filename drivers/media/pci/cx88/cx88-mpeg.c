@@ -11,6 +11,7 @@
 
 #include "cx88.h"
 
+#include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/module.h>

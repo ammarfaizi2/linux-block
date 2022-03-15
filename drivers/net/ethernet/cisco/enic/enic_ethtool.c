@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/netdevice.h>

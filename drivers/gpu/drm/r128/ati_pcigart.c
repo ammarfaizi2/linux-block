@@ -31,6 +31,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
