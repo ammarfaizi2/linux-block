@@ -6,6 +6,7 @@
 
 #ifndef _QEDE_H_
 #define _QEDE_H_
+#include <linux/netdevice_api_extra.h>
 #include <linux/compiler.h>
 #include <linux/version.h>
 #include <linux/workqueue.h>
