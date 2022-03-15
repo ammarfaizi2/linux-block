@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/pagemap_api_readahead.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>

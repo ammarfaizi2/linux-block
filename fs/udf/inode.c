@@ -30,6 +30,7 @@
  */
 
 #include "udfdecl.h"
+#include <linux/pagemap_api_readahead.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

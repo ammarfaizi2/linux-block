@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/pagemap_api_readahead.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

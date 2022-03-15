@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/pagemap_api_readahead.h>
 #include <linux/mm_page_address.h>
 #include <linux/highmem.h>
 #include <linux/fs_api_sb.h>

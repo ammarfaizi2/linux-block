@@ -10,6 +10,7 @@
  * most "normal" filesystems (but you don't /have/ to use this:
  * the NFS filesystem used to do this differently, for example)
  */
+#include <linux/pagemap_api_readahead.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>
