@@ -2,6 +2,7 @@
 #ifndef _LINUX_DAX_H
 #define _LINUX_DAX_H
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/mm.h>

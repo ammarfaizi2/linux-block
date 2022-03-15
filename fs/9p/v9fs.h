@@ -8,6 +8,7 @@
 #ifndef FS_9P_V9FS_H
 #define FS_9P_V9FS_H
 
+#include <linux/fs_types_sb.h>
 #include <linux/backing-dev.h>
 
 /**

@@ -11,6 +11,7 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
+#include <linux/fs_types_sb.h>
 #include <linux/bitmap.h>
 #include <linux/fs.h>
 #include <linux/ext2_fs.h>

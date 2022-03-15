@@ -12,6 +12,7 @@
  * (C) Copyright 2005 Robert Love
  */
 
+#include <linux/fs_types_sb.h>
 #include <linux/dcache.h>
 #include <linux/fsnotify_backend.h>
 #include <linux/audit.h>

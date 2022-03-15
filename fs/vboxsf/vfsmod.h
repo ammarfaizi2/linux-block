@@ -8,6 +8,7 @@
 #ifndef VFSMOD_H
 #define VFSMOD_H
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs.h>
 #include <linux/backing-dev.h>
 #include <linux/idr.h>
