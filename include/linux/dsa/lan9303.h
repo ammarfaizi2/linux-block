@@ -1,4 +1,5 @@
 /* Included by drivers/net/dsa/lan9303.h and net/dsa/tag_lan9303.c */
+#include <linux/mutex.h>
 #include <linux/if_ether.h>
 
 struct lan9303;

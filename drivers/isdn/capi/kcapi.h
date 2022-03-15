@@ -10,6 +10,7 @@
  */
 
 
+#include <linux/mutex.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
 #include <linux/list.h>

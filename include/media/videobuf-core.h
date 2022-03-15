@@ -13,6 +13,7 @@
 #ifndef _VIDEOBUF_CORE_H
 #define _VIDEOBUF_CORE_H
 
+#include <linux/mutex.h>
 #include <linux/mutex_api.h>
 #include <linux/poll.h>
 #include <linux/videodev2.h>

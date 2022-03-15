@@ -10,6 +10,7 @@
 #ifndef WFX_HIF_TX_H
 #define WFX_HIF_TX_H
 
+#include <linux/mutex.h>
 #include <linux/completion.h>
 #include <linux/types.h>
 

@@ -8,6 +8,7 @@
 #ifndef _LINUX_PM_H
 #define _LINUX_PM_H
 
+#include <linux/mutex.h>
 #include <linux/export.h>
 #include <linux/list.h>
 #include <linux/workqueue.h>

@@ -2,6 +2,7 @@
 #ifndef _HWBM_H
 #define _HWBM_H
 
+#include <linux/mutex.h>
 #include <linux/types.h>
 
 struct hwbm_pool {
