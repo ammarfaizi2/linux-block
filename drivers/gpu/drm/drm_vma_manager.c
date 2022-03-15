@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <drm/drm_vma_manager_api_vm_lock.h>
 #include <linux/mm.h>
 #include <linux/module.h>
 #include <linux/rbtree.h>

@@ -25,6 +25,8 @@
  *
  **************************************************************************/
 
+#include <drm/drm_vma_manager_api_vm_lock.h>
+
 #include "vmwgfx_drv.h"
 
 static int vmw_bo_vm_lookup(struct ttm_device *bdev,

@@ -25,6 +25,7 @@
  *
  */
 
+#include <drm/drm_vma_manager_api_vm_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/slab.h>

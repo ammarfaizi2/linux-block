@@ -9,6 +9,7 @@
  * Copyright (c) 2011 Samsung Electronics Co., Ltd.
  */
 
+#include <drm/drm_vma_manager_api_vm_lock.h>
 #include <linux/dma-buf.h>
 #include <linux/dma-mapping.h>
 #include <linux/export.h>

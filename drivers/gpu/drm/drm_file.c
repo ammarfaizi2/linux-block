@@ -31,6 +31,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <drm/drm_vma_manager_api_vm_lock.h>
 #include <linux/anon_inodes.h>
 #include <linux/dma-fence.h>
 #include <linux/file.h>
