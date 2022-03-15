@@ -209,6 +209,7 @@
 
 #define L1OIP_VERSION	0	/* 0...3 */
 
+#include <linux/net.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/delay.h>

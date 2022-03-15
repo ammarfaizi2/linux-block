@@ -8,6 +8,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 
 #include "net_driver.h"

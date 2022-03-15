@@ -10,6 +10,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/net.h>
 #include <linux/in.h>
 #include <linux/inetdevice.h>
 #include <linux/if_ether.h>

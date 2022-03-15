@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/mlx5/driver.h>
 #include "wq.h"

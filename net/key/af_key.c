@@ -10,6 +10,7 @@
  *		Derek Atkins <derek@ihtfp.com>
  */
 
+#include <linux/net.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

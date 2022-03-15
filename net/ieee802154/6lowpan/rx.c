@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_arp.h>
 

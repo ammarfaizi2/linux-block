@@ -9,6 +9,7 @@
  * Copyright (c) 2020, 2021 Vincent Mailhol <mailhol.vincent@wanadoo.fr>
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/units.h>

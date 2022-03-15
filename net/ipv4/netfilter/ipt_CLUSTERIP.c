@@ -6,6 +6,7 @@
  * Development of this code funded by SuSE Linux AG, https://www.suse.com/
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

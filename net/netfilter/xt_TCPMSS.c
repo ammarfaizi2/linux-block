@@ -6,6 +6,7 @@
  * Copyright (C) 2007 Patrick McHardy <kaber@trash.net>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/net.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/ip.h>

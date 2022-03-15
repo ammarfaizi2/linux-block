@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Scott Feldman <sfeldma@gmail.com>
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

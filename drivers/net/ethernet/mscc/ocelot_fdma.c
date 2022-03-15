@@ -7,6 +7,7 @@
  * Page recycling code is mostly taken from gianfar driver.
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

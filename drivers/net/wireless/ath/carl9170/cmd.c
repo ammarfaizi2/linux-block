@@ -36,6 +36,7 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <asm/div64.h>
 #include "carl9170.h"

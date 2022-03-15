@@ -8,6 +8,8 @@
  * Copyright 2009-2017 Canonical Ltd.
  */
 
+#include <linux/net.h>
+
 #include "include/apparmor.h"
 #include "include/audit.h"
 #include "include/cred.h"

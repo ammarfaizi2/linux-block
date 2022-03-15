@@ -4,6 +4,7 @@
  * Copyright (C) 2011 - 2014 Cisco Systems Inc
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/netdevice.h>

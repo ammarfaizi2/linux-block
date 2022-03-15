@@ -3,6 +3,7 @@
  * Copyright(c) 1999 - 2004 Intel Corporation. All rights reserved.
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>

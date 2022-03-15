@@ -5,6 +5,7 @@
  *               Krzysztof Opasiak <k.opasiak@samsung.com>
  */
 
+#include <linux/net.h>
 #include <asm/byteorder.h>
 #include <linux/file.h>
 #include <linux/fs.h>

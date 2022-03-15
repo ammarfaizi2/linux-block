@@ -30,6 +30,7 @@
  *	Receive: the packet's reception time is converted to an appropriate
  *	timestamp.
  */
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

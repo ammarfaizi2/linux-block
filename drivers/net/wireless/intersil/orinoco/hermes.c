@@ -38,6 +38,7 @@
  * under either the MPL or the GPL.
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/minmax.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

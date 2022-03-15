@@ -4,6 +4,7 @@
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 
 #include "wil6210.h"
