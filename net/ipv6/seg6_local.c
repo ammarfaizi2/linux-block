@@ -7,6 +7,7 @@
  *  eBPF support: Mathieu Xhonneux <m.xhonneux@gmail.com>
  */
 
+#include <net/dst_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_nf.h>

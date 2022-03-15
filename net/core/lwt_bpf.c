@@ -2,6 +2,7 @@
 /* Copyright (c) 2016 Thomas Graf <tgraf@tgraf.ch>
  */
 
+#include <net/dst_api.h>
 #include <net/checksum.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>

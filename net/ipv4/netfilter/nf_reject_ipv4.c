@@ -3,6 +3,7 @@
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
 
+#include <net/dst_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_ether_api.h>

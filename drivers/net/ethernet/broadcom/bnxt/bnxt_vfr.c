@@ -6,6 +6,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
+#include <net/dst_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

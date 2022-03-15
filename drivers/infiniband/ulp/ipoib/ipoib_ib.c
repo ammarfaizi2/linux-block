@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <net/dst_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>

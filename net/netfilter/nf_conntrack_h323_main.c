@@ -11,6 +11,7 @@
  * For more information, please see http://nath323.sourceforge.net/
  */
 
+#include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

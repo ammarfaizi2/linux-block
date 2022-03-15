@@ -10,6 +10,7 @@
  *	Ville Nuorvala		<vnuorval@tcs.hut.fi>
  */
 
+#include <net/dst_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice.h>
 #include <linux/notifier.h>

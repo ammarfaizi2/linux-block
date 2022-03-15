@@ -3,6 +3,7 @@
  * (C) 2002-2006 Netfilter Core Team <coreteam@netfilter.org>
  */
 
+#include <net/dst_api.h>
 #include <linux/types.h>
 #include <linux/export.h>
 #include <linux/init.h>

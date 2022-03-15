@@ -20,6 +20,7 @@
  *		Mike McLagan	:	Routing by source
  */
 
+#include <net/dst_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/types.h>
 #include <linux/mm.h>

@@ -19,6 +19,7 @@
  *		Jorge Cwik, <jorge@laser.satlink.net>
  */
 
+#include <net/dst_api.h>
 #include <linux/timekeeping.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

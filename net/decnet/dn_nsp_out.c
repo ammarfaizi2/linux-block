@@ -29,6 +29,7 @@
 
 *******************************************************************************/
 
+#include <net/dst_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/errno.h>

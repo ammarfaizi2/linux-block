@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <net/dst_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>

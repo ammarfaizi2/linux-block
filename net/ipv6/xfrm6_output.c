@@ -5,6 +5,7 @@
  * Copyright (c) 2004 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <net/dst_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_ether.h>
 #include <linux/kernel.h>

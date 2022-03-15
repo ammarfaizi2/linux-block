@@ -4,6 +4,7 @@
  * (C) 2020 Alexander Aring <alex.aring@gmail.com>
  */
 
+#include <net/dst_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/ipv6.h>

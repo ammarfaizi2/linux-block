@@ -9,6 +9,7 @@
  *  linux/net/ipv4/syncookies.c
  */
 
+#include <net/dst_api.h>
 #include <linux/siphash_api.h>
 #include <linux/refcount_api.h>
 #include <linux/ipv6.h>

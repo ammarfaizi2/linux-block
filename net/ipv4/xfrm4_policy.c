@@ -9,6 +9,7 @@
  *
  */
 
+#include <net/dst_api.h>
 #include <linux/sysctl.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

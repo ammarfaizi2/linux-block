@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <net/dst_api.h>
 #include <linux/slab.h>
 #include <linux/ipv6.h>
 #include <linux/errno.h>

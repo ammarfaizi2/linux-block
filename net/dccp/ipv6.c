@@ -8,6 +8,7 @@
  *	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
  */
 
+#include <net/dst_api.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>

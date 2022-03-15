@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Paolo Abeni <pabeni@redhat.com>
  */
 
+#include <net/dst_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

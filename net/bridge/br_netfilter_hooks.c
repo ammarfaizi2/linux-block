@@ -10,6 +10,7 @@
  *	Lennert dedicates this file to Kerstin Wurdinger.
  */
 
+#include <net/dst_api.h>
 #include <net/checksum.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
