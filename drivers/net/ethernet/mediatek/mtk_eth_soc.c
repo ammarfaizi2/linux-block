@@ -6,6 +6,7 @@
  *   Copyright (C) 2013-2016 Michael Lee <igvtee@gmail.com>
  */
 
+#include <linux/dim.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

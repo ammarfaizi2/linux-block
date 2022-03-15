@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)				"bcmgenet: " fmt
 
+#include <linux/dim.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

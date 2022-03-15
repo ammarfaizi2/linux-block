@@ -3,6 +3,7 @@
 
 /* The driver transmit and receive code */
 
+#include <linux/dim.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/mm.h>
