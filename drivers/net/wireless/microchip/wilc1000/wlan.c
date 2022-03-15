@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <uapi/linux/in.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

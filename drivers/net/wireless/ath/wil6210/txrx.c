@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <uapi/linux/in.h>
 #include <linux/workqueue_api.h>
 #include <linux/timex.h>
 #include <linux/timekeeping.h>
