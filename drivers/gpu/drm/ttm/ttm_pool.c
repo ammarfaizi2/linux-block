@@ -31,6 +31,7 @@
  * cause they are rather slow compared to alloc_pages+map.
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/debugfs.h>
 #include <linux/atomic_api.h>

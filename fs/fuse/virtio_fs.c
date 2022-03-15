@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Red Hat, Inc.
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/dcache.h>

@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/fs_api.h>
 #include <asm/cacheflush.h>
 #include <linux/init.h>

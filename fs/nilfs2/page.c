@@ -7,6 +7,7 @@
  * Written by Ryusuke Konishi and Seiji Kihara.
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pagemap.h>

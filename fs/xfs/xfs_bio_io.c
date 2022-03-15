@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2019 Christoph Hellwig.
  */
+#include <linux/highmem_extra.h>
+
 #include "xfs.h"
 
 static inline unsigned int bio_max_vecs(unsigned int count)

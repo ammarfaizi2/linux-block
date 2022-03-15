@@ -4,6 +4,7 @@
  * All Rights Reserved.
  */
 #include "xfs.h"
+#include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/bio.h>
 #include <linux/bitmap.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/fs_api.h>
 #include <asm/cacheflush.h>
 #include <linux/fs.h>
