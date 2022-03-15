@@ -7,6 +7,7 @@
  * Copyright (c) 2013-2014, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/init.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

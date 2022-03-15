@@ -7,6 +7,7 @@
  * Author: Hyun Woo Kwon <hyun.kwon@xilinx.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

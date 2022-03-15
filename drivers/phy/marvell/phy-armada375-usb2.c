@@ -11,6 +11,7 @@
  * common features of both USB controllers.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/phy/phy.h>
 #include <linux/init.h>

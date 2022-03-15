@@ -9,6 +9,7 @@
  * Based on leds-gpio.c by Raphael Assenat <raph@8d.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

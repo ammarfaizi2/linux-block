@@ -4,6 +4,7 @@
  * Based on code and know-how from the Samsung GT-S7710
  * Gareth Phillips <gareth.phillips@samsung.com>
  */
+#include <linux/mod_devicetable.h>
 #include <linux/ktime_api.h>
 #include <linux/irqflags.h>
 #include <linux/device_api_lock.h>

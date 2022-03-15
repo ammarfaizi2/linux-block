@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2021 Renesas Electronics Corporation
  */
+#include <linux/mod_devicetable.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

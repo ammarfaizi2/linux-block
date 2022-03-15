@@ -7,6 +7,7 @@
  * Author: Saravanan Sekar <sravanhome@gmail.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/iio/driver.h>
 #include <linux/iio/iio.h>
 #include <linux/iio/machine.h>

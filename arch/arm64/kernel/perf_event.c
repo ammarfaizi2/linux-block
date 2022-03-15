@@ -8,6 +8,7 @@
  * This code is based heavily on the ARMv7 perf event code.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/math64.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

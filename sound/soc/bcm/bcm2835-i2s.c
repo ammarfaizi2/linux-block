@@ -23,6 +23,7 @@
  *	Copyright 2007-2010 Freescale Semiconductor, Inc.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

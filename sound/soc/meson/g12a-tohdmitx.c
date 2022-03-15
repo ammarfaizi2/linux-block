@@ -3,6 +3,7 @@
 // Copyright (c) 2019 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
+#include <linux/mod_devicetable.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/module.h>

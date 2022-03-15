@@ -9,6 +9,7 @@
  * Samsung SoC Framebuffer driver
 */
 
+#include <linux/mod_devicetable.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

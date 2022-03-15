@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Intel Corporation. All rights reserved.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

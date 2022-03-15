@@ -10,6 +10,7 @@
  * iio sysfs.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/iio/buffer.h>

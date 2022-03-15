@@ -4,6 +4,7 @@
  * Author: Wendell Lin <wendell.lin@mediatek.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/clk-provider.h>

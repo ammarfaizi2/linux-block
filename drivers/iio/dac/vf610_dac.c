@@ -5,6 +5,7 @@
  * Copyright 2016 Toradex AG
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>

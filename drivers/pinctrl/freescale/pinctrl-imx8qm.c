@@ -5,6 +5,7 @@
  *	Dong Aisheng <aisheng.dong@nxp.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <dt-bindings/pinctrl/pads-imx8qm.h>
 #include <linux/err.h>
 #include <linux/firmware/imx/sci.h>

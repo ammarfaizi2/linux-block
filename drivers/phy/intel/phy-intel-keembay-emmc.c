@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Intel Corporation
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

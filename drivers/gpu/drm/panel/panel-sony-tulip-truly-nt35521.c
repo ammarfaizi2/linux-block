@@ -6,6 +6,7 @@
  *   Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>

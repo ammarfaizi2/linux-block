@@ -3,6 +3,7 @@
  * Copyright 2018-2019 NXP.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/arm-smccc.h>
 #include <linux/firmware/imx/sci.h>

@@ -5,6 +5,7 @@
 // Copyright (C) 2021, Christophe Branchereau <cbranchereau@gmail.com>
 // Copyright (C) 2021, Paul Cercueil <paul@crapouillou.net>
 
+#include <linux/mod_devicetable.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

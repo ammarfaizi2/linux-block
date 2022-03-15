@@ -19,6 +19,7 @@
  * not supported by the hardware.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

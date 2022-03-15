@@ -7,6 +7,7 @@
  *	Aapo Vienamo	<avienamo@nvidia.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/module.h>

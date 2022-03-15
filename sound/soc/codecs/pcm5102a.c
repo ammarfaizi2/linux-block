@@ -6,6 +6,7 @@
  *		Copyright 2013
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

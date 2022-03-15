@@ -3,6 +3,7 @@
  * Copyright 2016 Broadcom
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

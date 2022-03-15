@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/init.h>

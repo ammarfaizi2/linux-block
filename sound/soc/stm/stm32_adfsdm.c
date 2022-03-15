@@ -7,6 +7,7 @@
  *          Olivier Moysan <olivier.moysan@st.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/module.h>

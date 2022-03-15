@@ -3,6 +3,7 @@
  * Copyright Altera Corporation (C) 2013-2014. All rights reserved
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

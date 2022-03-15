@@ -7,6 +7,7 @@
  * Author: Kavyasree Kotagiri <kavyasree.kotagiri@microchip.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2019, Linaro Ltd.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/bitops.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>

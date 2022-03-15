@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Google, Inc
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device.h>
 #include <linux/iio/buffer.h>
 #include <linux/iio/common/cros_ec_sensors_core.h>

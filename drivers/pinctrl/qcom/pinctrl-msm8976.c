@@ -5,6 +5,7 @@
  * Copyright (c) 2016, AngeloGioacchino Del Regno <kholk11@gmail.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

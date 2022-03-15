@@ -5,6 +5,7 @@
  * Copyright (c) 2020 Nobuhiro Iwamatsu <nobuhiro1.iwamatsu@toshiba.co.jp>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

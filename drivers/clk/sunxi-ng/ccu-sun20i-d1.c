@@ -4,6 +4,7 @@
  * Copyright (C) 2021 Samuel Holland <samuel@sholland.org>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>
 #include <linux/module.h>

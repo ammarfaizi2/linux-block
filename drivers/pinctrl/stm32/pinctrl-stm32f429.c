@@ -4,6 +4,7 @@
  * Copyright (C) STMicroelectronics 2017
  * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
  */
+#include <linux/mod_devicetable.h>
 #include <linux/init.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
