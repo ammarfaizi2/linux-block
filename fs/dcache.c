@@ -15,6 +15,7 @@
  * the dcache entry is deleted or garbage collected.
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

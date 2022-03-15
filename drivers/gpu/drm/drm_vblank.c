@@ -24,6 +24,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/sched.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

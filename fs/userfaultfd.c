@@ -10,6 +10,7 @@
  *  mm/ksm.c (mm hashing).
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>

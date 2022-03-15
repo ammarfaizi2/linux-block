@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>

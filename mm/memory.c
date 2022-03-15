@@ -39,6 +39,7 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>

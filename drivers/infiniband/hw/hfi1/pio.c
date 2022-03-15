@@ -3,6 +3,7 @@
  * Copyright(c) 2015-2018 Intel Corporation.
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/percpu.h>
 #include <linux/lockdep_api.h>

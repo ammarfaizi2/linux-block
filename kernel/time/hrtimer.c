@@ -22,6 +22,7 @@
  *	et. al.
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/lockdep_api.h>

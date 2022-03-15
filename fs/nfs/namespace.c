@@ -8,6 +8,7 @@
  * NFS namespace
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

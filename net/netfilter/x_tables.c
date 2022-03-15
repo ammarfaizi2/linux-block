@@ -10,6 +10,7 @@
  *   Copyright (C) 2000-2005 Netfilter Core Team <coreteam@netfilter.org>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/seqlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>

@@ -10,6 +10,7 @@
  *              names to make it usable in general net subsystem.
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/bitops.h>

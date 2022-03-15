@@ -9,6 +9,7 @@
  * Author: Rémi Denis-Courmont
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/seqlock.h>
 #include <linux/sysctl.h>
 #include <linux/errno.h>

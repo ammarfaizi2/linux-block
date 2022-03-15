@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/seqlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/task_stack.h>
 #include <linux/sched/signal.h>
