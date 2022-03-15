@@ -19,7 +19,7 @@
 #include <linux/rcupdate.h>
 #include <linux/page-flags-layout.h>
 #include <linux/workqueue.h>
-#include <linux/seqlock.h>
+#include <linux/seqcount_types.h>
 #include <linux/kref.h>
 
 #include <asm/mmu.h>
