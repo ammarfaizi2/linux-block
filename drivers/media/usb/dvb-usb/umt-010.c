@@ -6,6 +6,8 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/delay.h>
+
 #include "dibusb.h"
 
 #include "mt352.h"

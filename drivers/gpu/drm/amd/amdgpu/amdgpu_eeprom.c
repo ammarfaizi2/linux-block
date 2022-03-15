@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/delay.h>
+
 #include "amdgpu_eeprom.h"
 #include "amdgpu.h"
 

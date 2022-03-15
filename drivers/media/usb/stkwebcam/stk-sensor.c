@@ -35,6 +35,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
+
 #include "stk-webcam.h"
 
 #define STK_IIC_BASE		(0x0200)

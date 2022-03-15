@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/vmalloc.h>

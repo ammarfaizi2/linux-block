@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/delay.h>
 #include <drv_types.h>
 #include <rtw_debug.h>
 #include <rtl8723b_hal.h>

@@ -12,6 +12,7 @@
  * are also included.
  */
 
+#include <linux/delay.h>
 #include <linux/usb/otg.h>
 #include <linux/usb/gadget.h>
 #include <linux/usb/chipidea.h>

@@ -28,6 +28,7 @@
 
 #include "bcm47xx_private.h"
 
+#include <linux/delay.h>
 #include <linux/bcm47xx_sprom.h>
 #include <linux/export.h>
 #include <linux/types.h>

@@ -6,6 +6,7 @@
  * Author: Michael Auchter <michael.auchter@ni.com>
  */
 
+#include <linux/delay.h>
 #include <linux/extcon-provider.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

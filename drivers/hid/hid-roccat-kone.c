@@ -22,6 +22,7 @@
  * TODO is it possible to overwrite group for sysfs attributes via udev?
  */
 
+#include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/input.h>
 #include <linux/hid.h>

@@ -30,6 +30,7 @@
 
 /* Include files */
 
+#include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/errno.h>
 #include <linux/module.h>

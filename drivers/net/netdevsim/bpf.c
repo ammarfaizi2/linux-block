@@ -13,6 +13,7 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
+#include <linux/delay.h>
 #include <linux/bpf.h>
 #include <linux/bpf_verifier.h>
 #include <linux/debugfs.h>

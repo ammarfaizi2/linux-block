@@ -6,6 +6,8 @@
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
 
+#include <linux/delay.h>
+
 #include "dibusb.h"
 
 /* Max transfer size done by I2C transfer functions */

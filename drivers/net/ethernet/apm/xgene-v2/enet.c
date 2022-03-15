@@ -7,6 +7,8 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/delay.h>
+
 #include "main.h"
 
 void xge_wr_csr(struct xge_pdata *pdata, u32 offset, u32 val)

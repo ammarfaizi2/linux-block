@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/delay.h>
+
 #include "amdgpu.h"
 #include "tonga_baco.h"
 

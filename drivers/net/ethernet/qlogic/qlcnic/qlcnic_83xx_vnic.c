@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/delay.h>
+
 #include "qlcnic.h"
 #include "qlcnic_hw.h"
 

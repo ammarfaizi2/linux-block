@@ -4,6 +4,7 @@
 /* ethtool support for iavf */
 #include "iavf.h"
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 

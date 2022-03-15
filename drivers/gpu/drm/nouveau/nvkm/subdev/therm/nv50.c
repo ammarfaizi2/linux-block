@@ -22,6 +22,8 @@
  * Authors: Ben Skeggs
  * 	    Martin Peres
  */
+#include <linux/delay.h>
+
 #include "priv.h"
 
 static int

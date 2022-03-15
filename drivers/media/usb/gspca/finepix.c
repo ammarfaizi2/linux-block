@@ -9,6 +9,8 @@
 
 #define MODULE_NAME "finepix"
 
+#include <linux/delay.h>
+
 #include "gspca.h"
 
 MODULE_AUTHOR("Frank Zago <frank@zago.net>");

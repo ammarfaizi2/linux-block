@@ -6,6 +6,7 @@
  *  Copyright (C) 2015  Intel Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/firmware.h>
 #include <linux/dmi.h>

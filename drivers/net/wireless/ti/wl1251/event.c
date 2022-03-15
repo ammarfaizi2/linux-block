@@ -6,6 +6,8 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
+#include <linux/delay.h>
+
 #include "wl1251.h"
 #include "reg.h"
 #include "io.h"

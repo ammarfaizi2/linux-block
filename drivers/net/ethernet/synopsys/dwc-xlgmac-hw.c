@@ -15,6 +15,7 @@
  * in the SOFTWARE may be the trademarks of their respective owners.
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/phy.h>
 #include <linux/mdio.h>

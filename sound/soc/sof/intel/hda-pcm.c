@@ -15,6 +15,7 @@
  * Hardware interface for generic Intel audio DSP HDA IP
  */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/moduleparam.h>
 #include <sound/hda_register.h>

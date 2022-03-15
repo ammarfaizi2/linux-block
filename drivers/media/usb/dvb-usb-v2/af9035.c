@@ -6,6 +6,8 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/delay.h>
+
 #include "af9035.h"
 
 /* Max transfer size done by I2C transfer functions */

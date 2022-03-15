@@ -41,6 +41,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
 #include <media/dvb_demux.h>
 #include <media/dvb_frontend.h>
 #include "altera-ci.h"

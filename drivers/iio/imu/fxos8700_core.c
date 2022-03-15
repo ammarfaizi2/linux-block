@@ -6,6 +6,7 @@
  *
  * TODO: Buffer, trigger, and IRQ support
  */
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/regmap.h>
 #include <linux/acpi.h>

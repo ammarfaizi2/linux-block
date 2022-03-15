@@ -8,6 +8,7 @@
 
 #include "e1000.h"
 
+#include <linux/delay.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_E1000E_HWTS

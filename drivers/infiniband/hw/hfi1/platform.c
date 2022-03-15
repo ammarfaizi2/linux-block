@@ -3,6 +3,7 @@
  * Copyright(c) 2015, 2016 Intel Corporation.
  */
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 
 #include "hfi.h"

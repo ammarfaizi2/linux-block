@@ -15,6 +15,7 @@
  * It is based on the original tpm_tis device driver from Leendert van
  * Dorn and Kyleen Hall.
  */
+#include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <linux/wait.h>

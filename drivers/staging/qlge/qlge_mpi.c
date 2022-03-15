@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/delay.h>
+
 #include "qlge.h"
 
 int qlge_unpause_mpi_risc(struct qlge_adapter *qdev)

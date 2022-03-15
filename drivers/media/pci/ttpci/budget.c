@@ -17,6 +17,8 @@
  * the project's page is at https://linuxtv.org
  */
 
+#include <linux/delay.h>
+
 #include "budget.h"
 #include "stv0299.h"
 #include "ves1x93.h"

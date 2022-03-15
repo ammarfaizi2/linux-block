@@ -6,6 +6,7 @@
  *  Copyright (C) 2012  Intel Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/acpi.h>
 #include <linux/errno.h>
 #include <linux/gpio/consumer.h>

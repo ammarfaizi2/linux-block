@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/delay.h>
 #include <linux/version.h>
 #include <linux/types.h>
 #include <linux/netdevice.h>

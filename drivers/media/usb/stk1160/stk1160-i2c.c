@@ -10,6 +10,7 @@
  *	<rmthomas--a.t--sciolus.org>
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/usb.h>
 #include <linux/i2c.h>

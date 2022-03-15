@@ -7,6 +7,7 @@
 
 */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include "stb0899_drv.h"
 #include "stb0899_priv.h"

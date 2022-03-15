@@ -11,6 +11,7 @@
  */
 
 #include "cx231xx.h"
+#include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/list.h>
 #include <linux/module.h>

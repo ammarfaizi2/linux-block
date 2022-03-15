@@ -27,6 +27,7 @@
 
 #define MODULE_NAME "ov519"
 
+#include <linux/delay.h>
 #include <linux/input.h>
 #include "gspca.h"
 

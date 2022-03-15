@@ -4,6 +4,7 @@
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <drv_types.h>
 #include <rtw_debug.h>

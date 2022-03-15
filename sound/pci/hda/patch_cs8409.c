@@ -6,6 +6,7 @@
  *                    Cirrus Logic International Semiconductor Ltd.
  */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/slab.h>

@@ -5,6 +5,7 @@
  * - Kurt Van Dijck, EIA Electronics
  */
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/sched/signal.h>
 #include <asm/div64.h>

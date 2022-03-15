@@ -2,6 +2,7 @@
 /* Copyright(c) 1999 - 2006 Intel Corporation. */
 
 #include "e1000.h"
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <net/ip6_checksum.h>

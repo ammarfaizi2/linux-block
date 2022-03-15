@@ -31,6 +31,7 @@
  * encoder block has CEC support.
  */
 
+#include <linux/delay.h>
 #include <linux/debugfs.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_edid.h>

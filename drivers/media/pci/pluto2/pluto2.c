@@ -9,6 +9,7 @@
  *	Copyright (c) 2004 TDF
  */
 
+#include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
 #include <linux/init.h>

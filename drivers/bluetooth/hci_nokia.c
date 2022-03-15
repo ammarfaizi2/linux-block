@@ -6,6 +6,7 @@
  *  Copyright (C) 2015-2017 Sebastian Reichel <sre@kernel.org>
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/errno.h>
 #include <linux/firmware.h>

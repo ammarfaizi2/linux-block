@@ -5,6 +5,8 @@
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
 
+#include <linux/delay.h>
+
 #include "./fireworks.h"
 
 /*

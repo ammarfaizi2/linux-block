@@ -7,6 +7,8 @@
  * Copyright (C) 2010 Fitipower Integrated Technology Inc
  */
 
+#include <linux/delay.h>
+
 #include "fc0013.h"
 #include "fc0013-priv.h"
 

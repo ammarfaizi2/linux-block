@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/slab.h>
 #include <linux/module.h>

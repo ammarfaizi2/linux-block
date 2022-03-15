@@ -15,6 +15,7 @@
 
 #define dev_fmt(fmt) "pciehp: " fmt
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

@@ -14,6 +14,7 @@
 
 #include "cx88.h"
 
+#include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/module.h>

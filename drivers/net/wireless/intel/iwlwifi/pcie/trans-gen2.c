@@ -3,6 +3,8 @@
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/delay.h>
+
 #include "iwl-trans.h"
 #include "iwl-prph.h"
 #include "iwl-context-info.h"

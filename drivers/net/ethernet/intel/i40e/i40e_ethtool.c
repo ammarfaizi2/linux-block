@@ -3,6 +3,7 @@
 
 /* ethtool support for i40e */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 
 #include "i40e.h"

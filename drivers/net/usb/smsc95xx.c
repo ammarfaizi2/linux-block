@@ -5,6 +5,7 @@
  *
  *****************************************************************************/
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>

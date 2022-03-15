@@ -17,6 +17,8 @@
 
 #define MODULE_NAME "stv0680"
 
+#include <linux/delay.h>
+
 #include "gspca.h"
 
 MODULE_AUTHOR("Hans de Goede <hdegoede@redhat.com>");

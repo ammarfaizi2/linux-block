@@ -18,6 +18,8 @@
  */
 
 
+#include <linux/delay.h>
+
 #include "budget.h"
 #include "ttpci-eeprom.h"
 

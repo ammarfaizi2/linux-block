@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 
 #include "amdgpu.h"

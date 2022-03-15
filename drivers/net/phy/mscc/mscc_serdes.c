@@ -7,6 +7,7 @@
  * Copyright (c) 2021 Microsemi Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/phy.h>
 #include "mscc_serdes.h"
 #include "mscc.h"

@@ -26,6 +26,7 @@
 #include "priv.h"
 #include "fuc/gf119.fuc4.h"
 
+#include <linux/delay.h>
 #include <subdev/timer.h>
 
 void

@@ -6,6 +6,7 @@
 #include "../base.h"
 #include "../efuse.h"
 #include "fw_common.h"
+#include <linux/delay.h>
 #include <linux/module.h>
 
 void rtl8723_enable_fw_download(struct ieee80211_hw *hw, bool enable)

@@ -3,6 +3,7 @@
  * Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <asm/io.h>
 

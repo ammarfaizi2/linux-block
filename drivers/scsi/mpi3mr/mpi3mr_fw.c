@@ -8,6 +8,7 @@
  */
 
 #include "mpi3mr.h"
+#include <linux/delay.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/io-64-nonatomic-lo-hi.h>

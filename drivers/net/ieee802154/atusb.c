@@ -23,6 +23,7 @@
  * Copyright (c) 2017 Josef Filzmaier <j.filzmaier@gmx.at>
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/module.h>

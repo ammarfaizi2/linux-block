@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
+#include <linux/delay.h>
 #include <linux/kthread.h>
 #include <linux/firmware.h>
 #include <linux/export.h>

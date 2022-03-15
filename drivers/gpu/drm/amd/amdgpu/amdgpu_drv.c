@@ -22,6 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/delay.h>
 #include <drm/amdgpu_drm.h>
 #include <drm/drm_aperture.h>
 #include <drm/drm_drv.h>

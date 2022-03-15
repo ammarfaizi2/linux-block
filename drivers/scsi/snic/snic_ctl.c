@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

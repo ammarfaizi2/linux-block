@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/delay.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

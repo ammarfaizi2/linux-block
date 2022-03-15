@@ -18,6 +18,7 @@
  * For protocol info, see http://alauda.sourceforge.net
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 

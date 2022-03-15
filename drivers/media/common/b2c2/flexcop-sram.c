@@ -4,6 +4,8 @@
  * flexcop-sram.c - functions for controlling the SRAM
  * see flexcop.c for copyright information
  */
+#include <linux/delay.h>
+
 #include "flexcop.h"
 
 static void flexcop_sram_set_chip(struct flexcop_device *fc,

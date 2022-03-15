@@ -3,6 +3,7 @@
  * Host Side support for RNDIS Networking Links
  * Copyright (C) 2005 by David Brownell
  */
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>

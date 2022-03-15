@@ -5,6 +5,8 @@
  * Copyright (C) 2014 Max nibble <nibble.max@gmail.com>
  */
 
+#include <linux/delay.h>
+
 #include "smipcie.h"
 #include "m88ds3103.h"
 #include "ts2020.h"

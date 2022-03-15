@@ -7,6 +7,8 @@
  * This file keeps functions for initializing and handling the
  * USB and URB stuff.
  */
+#include <linux/delay.h>
+
 #include "dvb-usb-common.h"
 
 int dvb_usb_generic_rw(struct dvb_usb_device *d, u8 *wbuf, u16 wlen, u8 *rbuf,

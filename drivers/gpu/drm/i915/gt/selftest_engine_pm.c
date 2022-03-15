@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/sort.h>
 
 #include "i915_selftest.h"

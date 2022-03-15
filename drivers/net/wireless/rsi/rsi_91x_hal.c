@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 #include <net/bluetooth/bluetooth.h>
 #include "rsi_mgmt.h"

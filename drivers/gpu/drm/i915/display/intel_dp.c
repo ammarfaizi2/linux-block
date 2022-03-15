@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/export.h>
 #include <linux/i2c.h>

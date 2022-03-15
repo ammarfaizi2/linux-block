@@ -3,6 +3,8 @@
  *
  *  Copyright (C) 2005-9 DiBcom, SA et al
  */
+#include <linux/delay.h>
+
 #include "dib0700.h"
 
 #include "dib3000mc.h"

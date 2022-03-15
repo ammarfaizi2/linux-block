@@ -5,6 +5,7 @@
  * Copyright (c) 2020 NXP.
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

@@ -29,6 +29,7 @@
 ****************************************************************************/
 
 
+#include <linux/delay.h>
 #include <linux/types.h>
 
 /* These functions are common for all "3G" cards */

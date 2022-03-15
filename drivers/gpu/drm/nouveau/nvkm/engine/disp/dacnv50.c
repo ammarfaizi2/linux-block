@@ -23,6 +23,7 @@
  */
 #include "ior.h"
 
+#include <linux/delay.h>
 #include <subdev/timer.h>
 
 static void

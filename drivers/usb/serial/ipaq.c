@@ -6,6 +6,7 @@
  *	    Ganesh Varadarajan <ganesh@veritas.com>
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

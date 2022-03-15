@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/irq.h>
 

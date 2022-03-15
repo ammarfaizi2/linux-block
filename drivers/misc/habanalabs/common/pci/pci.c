@@ -8,6 +8,7 @@
 #include "../habanalabs.h"
 #include "../../include/hw_ip/pci/pci_general.h"
 
+#include <linux/delay.h>
 #include <linux/pci.h>
 
 #define HL_PLDM_PCI_ELBI_TIMEOUT_MSEC	(HL_PCI_ELBI_TIMEOUT_MSEC * 100)

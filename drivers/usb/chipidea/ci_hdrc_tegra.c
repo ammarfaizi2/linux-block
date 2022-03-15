@@ -3,6 +3,7 @@
  * Copyright (c) 2016, NVIDIA Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/module.h>

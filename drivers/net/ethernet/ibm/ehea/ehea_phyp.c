@@ -14,6 +14,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
+
 #include "ehea_phyp.h"
 
 

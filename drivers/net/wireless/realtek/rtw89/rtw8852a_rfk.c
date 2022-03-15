@@ -2,6 +2,8 @@
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
 
+#include <linux/delay.h>
+
 #include "coex.h"
 #include "debug.h"
 #include "mac.h"

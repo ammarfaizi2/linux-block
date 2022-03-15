@@ -5,6 +5,7 @@
  * driver patches from Reyk Floeter <reyk@vantronix.net> and
  * Andy Warner <andyw@pobox.com> */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/if.h>
 #include <linux/skbuff.h>

@@ -22,6 +22,7 @@
 #include "ovly.h"
 #include "atom.h"
 
+#include <linux/delay.h>
 #include <nouveau_bo.h>
 
 #include <nvif/push507c.h>

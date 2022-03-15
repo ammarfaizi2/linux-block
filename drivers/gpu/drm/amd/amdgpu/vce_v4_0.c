@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 #include <drm/drm_drv.h>
 

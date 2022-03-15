@@ -15,6 +15,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>
 #include "rsi_sdio.h"

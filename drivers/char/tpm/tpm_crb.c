@@ -11,6 +11,7 @@
  * the TCG CRB 2.0 TPM specification.
  */
 
+#include <linux/delay.h>
 #include <linux/acpi.h>
 #include <linux/highmem.h>
 #include <linux/rculist.h>

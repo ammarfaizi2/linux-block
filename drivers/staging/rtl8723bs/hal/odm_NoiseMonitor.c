@@ -5,6 +5,8 @@
  *
  ******************************************************************************/
 
+#include <linux/delay.h>
+
 #include "odm_precomp.h"
 
 /*  This function is for inband noise test utility only */

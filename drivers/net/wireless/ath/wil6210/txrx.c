@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include <net/ieee80211_radiotap.h>
 #include <linux/if_arp.h>

@@ -38,6 +38,7 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

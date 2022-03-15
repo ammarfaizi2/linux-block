@@ -8,6 +8,8 @@
  * Inspired by gl861.c and au6610.c drivers
  */
 
+#include <linux/delay.h>
+
 #include "dtv5100.h"
 #include "zl10353.h"
 #include "qt1010.h"

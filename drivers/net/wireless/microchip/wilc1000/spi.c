@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/spi/spi.h>
 #include <linux/crc7.h>

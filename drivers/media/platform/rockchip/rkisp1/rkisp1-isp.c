@@ -8,6 +8,7 @@
  * Copyright (C) 2017 Rockchip Electronics Co., Ltd.
  */
 
+#include <linux/delay.h>
 #include <linux/debugfs.h>
 #include <linux/iopoll.h>
 #include <linux/phy/phy.h>

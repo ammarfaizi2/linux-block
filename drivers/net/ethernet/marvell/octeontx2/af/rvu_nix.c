@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/pci.h>

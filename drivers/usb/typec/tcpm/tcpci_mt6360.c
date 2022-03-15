@@ -5,6 +5,7 @@
  * Author: ChiYuan Huang <cy_huang@richtek.com>
  */
 
+#include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

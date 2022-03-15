@@ -10,6 +10,7 @@
  *	Rui Miguel Silva <rui.silva@linaro.org>
  */
 
+#include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

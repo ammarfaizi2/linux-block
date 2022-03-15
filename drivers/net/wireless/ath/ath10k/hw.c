@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2017 Qualcomm Atheros, Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/bitops.h>
 #include <linux/bitfield.h>

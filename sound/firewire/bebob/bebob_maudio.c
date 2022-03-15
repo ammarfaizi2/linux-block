@@ -6,6 +6,7 @@
  */
 
 #include "./bebob.h"
+#include <linux/delay.h>
 #include <sound/control.h>
 
 /*

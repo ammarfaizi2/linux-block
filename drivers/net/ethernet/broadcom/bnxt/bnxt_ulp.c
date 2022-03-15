@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 

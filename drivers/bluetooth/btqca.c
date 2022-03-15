@@ -4,6 +4,7 @@
  *
  *  Copyright (c) 2015 The Linux Foundation. All rights reserved.
  */
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/firmware.h>
 #include <linux/vmalloc.h>

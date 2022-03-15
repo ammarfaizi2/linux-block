@@ -6,6 +6,8 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/delay.h>
+
 #include "dvb_usb_common.h"
 
 static int dvb_usb_v2_generic_io(struct dvb_usb_device *d,

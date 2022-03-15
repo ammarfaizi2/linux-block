@@ -13,6 +13,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
 #include <linux/gpio/consumer.h>

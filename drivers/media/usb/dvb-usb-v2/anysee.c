@@ -18,6 +18,8 @@
  * is highly welcome!
  */
 
+#include <linux/delay.h>
+
 #include "anysee.h"
 #include "dvb-pll.h"
 #include "tda1002x.h"

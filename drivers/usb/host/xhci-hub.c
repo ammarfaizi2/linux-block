@@ -9,6 +9,7 @@
  */
 
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <asm/unaligned.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/delay.h>
 #include <linux/acpi.h>
 #include <linux/device.h>
 #include <linux/init.h>

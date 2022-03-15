@@ -26,6 +26,7 @@
  * - anything else?
  */
 
+#include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/etherdevice.h>
 #include <linux/ethtool.h>

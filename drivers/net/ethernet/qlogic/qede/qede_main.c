@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/delay.h>
 #include <linux/crash_dump.h>
 #include <linux/module.h>
 #include <linux/pci.h>

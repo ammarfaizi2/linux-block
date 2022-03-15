@@ -3,6 +3,8 @@
  * Copyright © 2020-2021 Intel Corporation
  */
 
+#include <linux/delay.h>
+
 #include "i915_drv.h"
 #include "i915_trace.h"
 #include "intel_display_types.h"

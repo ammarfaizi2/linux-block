@@ -7,6 +7,8 @@
  * Thanks to Afatech who kindly provided information.
  */
 
+#include <linux/delay.h>
+
 #include "af9015.h"
 
 static int dvb_usb_af9015_remote;

@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Microchip Technology Inc. and its subsidiaries.
  */
 
+#include <linux/delay.h>
 #include <asm/unaligned.h>
 
 #include "sparx5_main_regs.h"

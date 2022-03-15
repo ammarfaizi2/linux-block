@@ -16,6 +16,7 @@
 
 #define _OS_INTFS_C_
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/kthread.h>
 #include <linux/firmware.h>

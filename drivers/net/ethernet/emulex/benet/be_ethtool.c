@@ -13,6 +13,7 @@
 
 #include "be.h"
 #include "be_cmds.h"
+#include <linux/delay.h>
 #include <linux/ethtool.h>
 
 struct be_ethtool_stat {

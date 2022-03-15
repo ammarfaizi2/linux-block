@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/ctype.h>
 #include <linux/firmware.h>

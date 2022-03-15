@@ -16,6 +16,7 @@
 
 #include "bnx2fc.h"
 
+#include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

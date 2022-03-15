@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Cavium, Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/firmware.h>
 #include <linux/interrupt.h>

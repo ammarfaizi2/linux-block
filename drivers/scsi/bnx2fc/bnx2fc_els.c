@@ -14,6 +14,8 @@
  * Written by: Bhanu Prakash Gollapudi (bprakash@broadcom.com)
  */
 
+#include <linux/delay.h>
+
 #include "bnx2fc.h"
 
 static void bnx2fc_logo_resp(struct fc_seq *seq, struct fc_frame *fp,

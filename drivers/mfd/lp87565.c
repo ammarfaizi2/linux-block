@@ -5,6 +5,7 @@
  * Author: Keerthy <j-keerthy@ti.com>
  */
 
+#include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/interrupt.h>
 #include <linux/mfd/core.h>

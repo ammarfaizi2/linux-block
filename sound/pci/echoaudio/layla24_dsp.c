@@ -27,6 +27,7 @@
 
 ****************************************************************************/
 
+#include <linux/delay.h>
 #include <linux/types.h>
 
 static int write_control_reg(struct echoaudio *chip, u32 value, char force);

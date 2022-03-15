@@ -11,6 +11,7 @@
 #include "trace.h"
 #include "initvals_phy.h"
 
+#include <linux/delay.h>
 #include <linux/etherdevice.h>
 
 static void mt7601u_agc_reset(struct mt7601u_dev *dev);

@@ -11,6 +11,7 @@
  *  - Create channel for sensor time
  */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/iio/iio.h>

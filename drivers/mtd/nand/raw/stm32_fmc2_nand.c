@@ -4,6 +4,7 @@
  * Author: Christophe Kerello <christophe.kerello@st.com>
  */
 
+#include <linux/delay.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/dmaengine.h>

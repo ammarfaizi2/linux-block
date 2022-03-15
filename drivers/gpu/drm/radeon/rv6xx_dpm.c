@@ -28,6 +28,7 @@
 #include "r600_dpm.h"
 #include "rv6xx_dpm.h"
 #include "atom.h"
+#include <linux/delay.h>
 #include <linux/seq_file.h>
 
 static u32 rv6xx_scale_count_given_unit(struct radeon_device *rdev,

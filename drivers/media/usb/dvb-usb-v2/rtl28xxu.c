@@ -7,6 +7,8 @@
  * Copyright (C) 2012 Thomas Mair <thomas.mair86@googlemail.com>
  */
 
+#include <linux/delay.h>
+
 #include "rtl28xxu.h"
 
 static int rtl28xxu_disable_rc;

@@ -6,6 +6,8 @@
  */
 
 
+#include <linux/delay.h>
+
 #include "cxd2820r_priv.h"
 
 /* Write register table */

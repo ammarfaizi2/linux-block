@@ -3,6 +3,7 @@
  * Copyright 2015-2020 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 
 #include "ena_com.h"

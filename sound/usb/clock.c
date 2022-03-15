@@ -3,6 +3,7 @@
  *   Clock domain and sample rate management functions
  */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/init.h>
 #include <linux/string.h>

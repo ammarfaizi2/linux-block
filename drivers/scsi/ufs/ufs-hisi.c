@@ -6,6 +6,7 @@
  * Copyright (c) 2016-2017 HiSilicon Technologies Co., Ltd.
  */
 
+#include <linux/delay.h>
 #include <linux/time.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

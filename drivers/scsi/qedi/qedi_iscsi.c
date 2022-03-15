@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Cavium Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/etherdevice.h>

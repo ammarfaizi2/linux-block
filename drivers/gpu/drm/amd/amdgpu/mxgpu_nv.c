@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 
 #include "amdgpu.h"

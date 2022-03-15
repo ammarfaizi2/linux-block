@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Akihiro Tsukada <tskd08@gmail.com>
  */
 
+#include <linux/delay.h>
 #include <linux/freezer.h>
 #include <linux/kernel.h>
 #include <linux/kthread.h>

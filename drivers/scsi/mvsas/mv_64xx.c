@@ -7,6 +7,8 @@
  * Copyright 2009-2011 Marvell. <yuxiangl@marvell.com>
 */
 
+#include <linux/delay.h>
+
 #include "mv_sas.h"
 #include "mv_64xx.h"
 #include "mv_chips.h"

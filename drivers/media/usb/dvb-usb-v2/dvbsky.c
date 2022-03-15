@@ -5,6 +5,8 @@
  * Copyright (C) 2013 Max nibble <nibble.max@gmail.com>
  */
 
+#include <linux/delay.h>
+
 #include "dvb_usb.h"
 #include "m88ds3103.h"
 #include "ts2020.h"

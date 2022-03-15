@@ -21,6 +21,7 @@
  * 128x1,2,3,4 bytes.
  *
  */
+#include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>

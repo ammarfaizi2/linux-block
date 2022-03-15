@@ -5,6 +5,8 @@
  * Copyright (c) 2014-2015 Takashi Sakamoto
  */
 
+#include <linux/delay.h>
+
 #include "digi00x.h"
 
 #define READY_TIMEOUT_MS	200

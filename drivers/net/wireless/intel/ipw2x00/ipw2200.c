@@ -16,6 +16,7 @@
 
 ******************************************************************************/
 
+#include <linux/delay.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <net/cfg80211-wext.h>

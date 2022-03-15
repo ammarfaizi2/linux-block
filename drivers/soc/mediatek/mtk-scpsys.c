@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015 Pengutronix, Sascha Hauer <kernel@pengutronix.de>
  */
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/io.h>

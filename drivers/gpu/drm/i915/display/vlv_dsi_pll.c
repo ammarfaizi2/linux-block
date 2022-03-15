@@ -25,6 +25,7 @@
  *	Yogesh Mohan Marimuthu <yogesh.mohan.marimuthu@intel.com>
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 
 #include "i915_drv.h"

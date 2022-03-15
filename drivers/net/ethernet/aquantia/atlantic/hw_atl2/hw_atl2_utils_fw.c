@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Marvell International Ltd.
  */
 
+#include <linux/delay.h>
 #include <linux/iopoll.h>
 
 #include "aq_hw.h"

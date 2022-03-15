@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2021 MediaTek Inc.
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/of_device.h>
 #include <linux/regmap.h>

@@ -8,6 +8,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 

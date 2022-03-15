@@ -5,6 +5,7 @@
  * Copyright 2006-2013 Solarflare Communications Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/mtd/mtd.h>
 #include <linux/slab.h>

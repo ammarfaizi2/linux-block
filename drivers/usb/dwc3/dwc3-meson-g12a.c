@@ -14,6 +14,7 @@
  * - Dynamic OTG switching with ID change interrupt
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

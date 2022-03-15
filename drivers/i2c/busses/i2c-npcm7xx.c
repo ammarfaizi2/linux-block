@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2020 Nuvoton Technologies tali.perry@nuvoton.com
  */
+#include <linux/delay.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/debugfs.h>

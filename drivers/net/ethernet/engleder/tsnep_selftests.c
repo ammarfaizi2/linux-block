@@ -3,6 +3,7 @@
 
 #include "tsnep.h"
 
+#include <linux/delay.h>
 #include <net/pkt_sched.h>
 
 enum tsnep_test {

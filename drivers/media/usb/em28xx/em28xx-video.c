@@ -24,6 +24,7 @@
 
 #include "em28xx.h"
 
+#include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/list.h>
 #include <linux/module.h>

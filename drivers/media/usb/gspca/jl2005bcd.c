@@ -7,6 +7,7 @@
 
 #define MODULE_NAME "jl2005bcd"
 
+#include <linux/delay.h>
 #include <linux/workqueue.h>
 #include <linux/slab.h>
 #include "gspca.h"

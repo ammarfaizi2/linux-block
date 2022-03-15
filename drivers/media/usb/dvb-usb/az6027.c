@@ -14,6 +14,7 @@
 
 #include "stb6100.h"
 #include "stb6100_cfg.h"
+#include <linux/delay.h>
 #include <media/dvb_ca_en50221.h>
 
 int dvb_usb_az6027_debug;

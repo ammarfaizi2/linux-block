@@ -13,6 +13,7 @@
  *  - http://www.t13.org/
  */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/compat.h>
 #include <linux/slab.h>

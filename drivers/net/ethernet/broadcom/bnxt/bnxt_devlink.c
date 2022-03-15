@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>

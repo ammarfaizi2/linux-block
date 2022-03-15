@@ -5,6 +5,8 @@
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/delay.h>
+
 #include "ce6230.h"
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);

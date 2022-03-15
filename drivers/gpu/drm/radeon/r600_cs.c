@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/delay.h>
 #include <linux/kernel.h>
 
 #include "radeon.h"

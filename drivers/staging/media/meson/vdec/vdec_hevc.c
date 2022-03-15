@@ -6,6 +6,7 @@
  * HEVC, VP9
  */
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/clk.h>
 

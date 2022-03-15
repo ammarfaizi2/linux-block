@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/firmware.h>

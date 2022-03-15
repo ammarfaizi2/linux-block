@@ -7,6 +7,7 @@
  *	Hyungwon Hwang <human.hwang@samsung.com>
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/iopoll.h>

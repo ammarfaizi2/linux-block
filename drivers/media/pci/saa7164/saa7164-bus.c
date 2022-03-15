@@ -5,6 +5,8 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/delay.h>
+
 #include "saa7164.h"
 
 /* The message bus to/from the firmware is a ring buffer in PCI address

@@ -10,6 +10,8 @@
  * package and is not a general device driver.
  */
 
+#include <linux/delay.h>
+
 #include "spk_priv.h"
 #include "speakup.h"
 #include "speakup_acnt.h" /* local header file for Accent values */

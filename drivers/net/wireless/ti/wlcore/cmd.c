@@ -7,6 +7,7 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

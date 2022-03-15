@@ -11,6 +11,7 @@
  * Author: Ajitpal Singh <ajitpal.singh@stericsson.com>
  */
 
+#include <linux/delay.h>
 #include <linux/vmalloc.h>
 #include <linux/sched.h>
 #include <linux/firmware.h>

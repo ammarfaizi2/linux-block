@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/delay.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/io.h>

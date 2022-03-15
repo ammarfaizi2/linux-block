@@ -22,6 +22,7 @@
  * Windows-Media-Center-RC-IR-Collection-Green-Button-Specification-03-08-2011-V2.pdf
  */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/module.h>

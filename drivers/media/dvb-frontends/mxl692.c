@@ -9,6 +9,7 @@
  * which was released under GPL V2
  */
 
+#include <linux/delay.h>
 #include <linux/mutex.h>
 #include <linux/i2c-mux.h>
 #include <linux/string.h>

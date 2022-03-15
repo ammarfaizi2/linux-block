@@ -8,6 +8,7 @@
  * Author: Simon Xue <xxm@rock-chips.com>
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/gpio/consumer.h>
 #include <linux/mfd/syscon.h>

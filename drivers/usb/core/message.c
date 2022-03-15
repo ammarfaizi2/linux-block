@@ -5,6 +5,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/delay.h>
 #include <linux/acpi.h>
 #include <linux/pci.h>	/* for scatterlist macros */
 #include <linux/usb.h>

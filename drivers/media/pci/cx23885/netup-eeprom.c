@@ -10,6 +10,8 @@
  */
 
 #
+#include <linux/delay.h>
+
 #include "cx23885.h"
 #include "netup-eeprom.h"
 

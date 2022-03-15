@@ -12,6 +12,7 @@
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
 #include "vp702x.h"
+#include <linux/delay.h>
 #include <linux/mutex.h>
 
 /* debug */

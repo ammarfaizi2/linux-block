@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/delay.h>
+
 #include "amdgpu.h"
 #include "soc15.h"
 #include "soc15_hw_ip.h"

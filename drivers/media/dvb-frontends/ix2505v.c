@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Malcolm Priestley
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/dvb/frontend.h>
 #include <linux/slab.h>

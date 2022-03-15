@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/slab.h>
 #include <drv_types.h>

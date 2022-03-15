@@ -12,6 +12,8 @@
  *  Copyright (C) 2009 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/delay.h>
+
 #include "sp2_priv.h"
 
 static int sp2_read_i2c(struct sp2 *s, u8 reg, u8 *buf, int len)

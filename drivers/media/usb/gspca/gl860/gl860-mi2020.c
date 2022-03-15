@@ -7,6 +7,8 @@
 
 /* Sensor : MI2020 */
 
+#include <linux/delay.h>
+
 #include "gl860.h"
 
 static u8 dat_wbal1[] = {0x8c, 0xa2, 0x0c};

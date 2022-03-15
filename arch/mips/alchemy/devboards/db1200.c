@@ -5,6 +5,7 @@
  * Copyright (C) 2008-2011 Manuel Lauss
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
 #include <linux/gpio.h>

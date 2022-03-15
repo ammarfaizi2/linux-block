@@ -6,6 +6,7 @@
  */
 
 #include "m88rs6000t.h"
+#include <linux/delay.h>
 #include <linux/regmap.h>
 
 struct m88rs6000t_dev {

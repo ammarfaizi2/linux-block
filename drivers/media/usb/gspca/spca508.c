@@ -9,6 +9,8 @@
 
 #define MODULE_NAME "spca508"
 
+#include <linux/delay.h>
+
 #include "gspca.h"
 
 MODULE_AUTHOR("Michel Xhaard <mxhaard@users.sourceforge.net>");

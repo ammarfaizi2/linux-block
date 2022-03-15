@@ -14,6 +14,7 @@
  *  by Maxim Krasnyansky and Marcel Holtmann.
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 

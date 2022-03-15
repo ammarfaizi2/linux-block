@@ -4,6 +4,7 @@
  * Copyright (c) 2015 Hisilicon Limited.
  */
 
+#include <linux/delay.h>
 #include <linux/debugfs.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

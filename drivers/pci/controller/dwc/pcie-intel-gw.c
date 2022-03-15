@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Intel Corporation.
  */
 
+#include <linux/delay.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/gpio/consumer.h>

@@ -12,6 +12,7 @@
  * Nuvoton contact information: APC.Support@nuvoton.com
  *****************************************************************************/
 
+#include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

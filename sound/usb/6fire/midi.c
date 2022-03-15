@@ -9,6 +9,7 @@
  * Copyright:	(C) Torsten Schenk
  */
 
+#include <linux/delay.h>
 #include <sound/rawmidi.h>
 
 #include "midi.h"

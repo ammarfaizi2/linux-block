@@ -19,6 +19,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
+
 #include "bnx2x_stats.h"
 #include "bnx2x_cmn.h"
 #include "bnx2x_sriov.h"

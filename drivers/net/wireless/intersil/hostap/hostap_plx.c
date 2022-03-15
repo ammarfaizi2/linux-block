@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/if.h>
 #include <linux/skbuff.h>

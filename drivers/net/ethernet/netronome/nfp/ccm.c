@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2016-2019 Netronome Systems, Inc. */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 
 #include "ccm.h"

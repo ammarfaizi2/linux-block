@@ -2,6 +2,7 @@
 /* Copyright(c) 2020  Realtek Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/pci.h>
 
 #include "mac.h"

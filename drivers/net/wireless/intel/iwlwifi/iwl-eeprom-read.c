@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2005-2014, 2018-2019, 2021 Intel Corporation
  */
+#include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/export.h>

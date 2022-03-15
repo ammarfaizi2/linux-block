@@ -2,6 +2,7 @@
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
 #include "ixgbe.h"
+#include <linux/delay.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/if_ether.h>

@@ -5,6 +5,7 @@
  * Antoine Tenart <antoine.tenart@free-electrons.com>
  */
 
+#include <linux/delay.h>
 #include <linux/arm-smccc.h>
 #include <linux/clk.h>
 #include <linux/io.h>

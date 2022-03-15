@@ -21,6 +21,7 @@
 
 /*****************************************************************************/
 
+#include <linux/delay.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>

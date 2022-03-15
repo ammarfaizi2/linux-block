@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/delay.h>
+
 #include "common_baco.h"
 
 

@@ -13,6 +13,7 @@
  * Copyright 2016-2017 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/io.h>

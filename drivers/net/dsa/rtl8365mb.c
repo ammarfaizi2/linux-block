@@ -90,6 +90,7 @@
  * one of the simpler chips.
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>

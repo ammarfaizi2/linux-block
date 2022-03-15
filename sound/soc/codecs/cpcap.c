@@ -8,6 +8,7 @@
  * Copyright (C) 2007 - 2009 Motorola, Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/regmap.h>
 #include <linux/platform_device.h>

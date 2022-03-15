@@ -16,6 +16,7 @@
  */
 #include "hif.h"
 
+#include <linux/delay.h>
 #include <linux/export.h>
 
 #include "core.h"

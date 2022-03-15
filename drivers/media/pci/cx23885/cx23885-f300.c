@@ -14,6 +14,8 @@
  * Copyright (C) 2009 Igor M. Liplianin <liplianin@me.by>
  */
 
+#include <linux/delay.h>
+
 #include "cx23885.h"
 #include "cx23885-f300.h"
 

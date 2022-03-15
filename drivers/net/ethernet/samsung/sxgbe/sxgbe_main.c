@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/crc32.h>
 #include <linux/dma-mapping.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Wind River Systems
  */
 
+#include <linux/delay.h>
 #include <asm/cpu-type.h>
 #include <linux/etherdevice.h>
 #include <linux/of_platform.h>

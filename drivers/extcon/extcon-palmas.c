@@ -9,6 +9,7 @@
  * Author: Hema HK <hemahk@ti.com>
  */
 
+#include <linux/delay.h>
 #include <linux/devm-helpers.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

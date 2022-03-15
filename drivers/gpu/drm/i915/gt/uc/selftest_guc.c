@@ -3,6 +3,8 @@
  * Copyright �� 2021 Intel Corporation
  */
 
+#include <linux/delay.h>
+
 #include "selftests/igt_spinner.h"
 #include "selftests/intel_scheduler_helpers.h"
 

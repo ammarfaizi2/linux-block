@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: MIT
+
+#include <linux/delay.h>
+
 /*
  * Copyright © 2021 Intel Corporation
  */

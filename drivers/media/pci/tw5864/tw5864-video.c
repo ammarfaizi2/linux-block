@@ -5,6 +5,7 @@
  *  Copyright (C) 2016 Bluecherry, LLC <maintainers@bluecherrydvr.com>
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <media/v4l2-common.h>
 #include <media/v4l2-event.h>

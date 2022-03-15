@@ -22,6 +22,7 @@
  *   serial converter;
  */
 
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/etherdevice.h>
 #include <linux/if_arp.h>

@@ -5,6 +5,7 @@
  *    Copyright (C) 2010 Michael Krufky <mkrufky@linuxtv.org>
  */
 
+#include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/dvb/frontend.h>
 #include "lg2160.h"

@@ -22,6 +22,7 @@
 #include "core.h"
 #include "head.h"
 
+#include <linux/delay.h>
 #include <nvif/push507c.h>
 #include <nvif/timer.h>
 

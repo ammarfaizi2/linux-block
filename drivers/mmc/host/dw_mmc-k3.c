@@ -4,6 +4,7 @@
  * Copyright (c) 2013 HiSilicon Limited.
  */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

@@ -9,6 +9,8 @@
 
 #define MODULE_NAME "spca1528"
 
+#include <linux/delay.h>
+
 #include "gspca.h"
 #include "jpeg.h"
 

@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/signal.h>
 #include <linux/sched.h>

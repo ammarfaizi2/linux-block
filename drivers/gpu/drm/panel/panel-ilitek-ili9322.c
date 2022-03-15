@@ -19,6 +19,7 @@
  * Derived from drivers/drm/gpu/panel/panel-samsung-ld9040.c
  */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>

@@ -14,6 +14,7 @@
  */
 
 /*! \file */
+#include <linux/delay.h>
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>

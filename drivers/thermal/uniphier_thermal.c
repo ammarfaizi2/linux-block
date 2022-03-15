@@ -7,6 +7,7 @@
  *	Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
  */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/interrupt.h>
 #include <linux/mfd/syscon.h>

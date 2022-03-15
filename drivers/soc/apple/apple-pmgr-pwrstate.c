@@ -5,6 +5,7 @@
  * Copyright The Asahi Linux Contributors
  */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/bitfield.h>
 #include <linux/err.h>

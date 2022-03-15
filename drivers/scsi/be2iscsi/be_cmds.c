@@ -7,6 +7,7 @@
  * linux-drivers@broadcom.com
  */
 
+#include <linux/delay.h>
 #include <scsi/iscsi_proto.h>
 
 #include "be_main.h"

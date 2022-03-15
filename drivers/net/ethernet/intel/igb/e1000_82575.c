@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/if_ether.h>
 #include <linux/i2c.h>

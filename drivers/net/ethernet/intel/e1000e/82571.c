@@ -17,6 +17,8 @@
  * 82583V Gigabit Network Connection
  */
 
+#include <linux/delay.h>
+
 #include "e1000.h"
 
 static s32 e1000_get_phy_id_82571(struct e1000_hw *hw);

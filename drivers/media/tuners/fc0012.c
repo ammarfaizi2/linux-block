@@ -5,6 +5,8 @@
  * Copyright (C) 2012 Hans-Frieder Vogt <hfvogt@gmx.net>
  */
 
+#include <linux/delay.h>
+
 #include "fc0012.h"
 #include "fc0012-priv.h"
 

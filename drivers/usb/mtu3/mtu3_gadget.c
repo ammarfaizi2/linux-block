@@ -7,6 +7,8 @@
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/delay.h>
+
 #include "mtu3.h"
 #include "mtu3_trace.h"
 

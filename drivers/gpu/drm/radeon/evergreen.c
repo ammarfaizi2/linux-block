@@ -22,6 +22,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/firmware.h>
 #include <linux/pci.h>

@@ -7,6 +7,7 @@
 #include "base.h"
 #include "ps.h"
 #include "efuse.h"
+#include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/export.h>
 #include <linux/module.h>

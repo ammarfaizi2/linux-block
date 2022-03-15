@@ -5,6 +5,8 @@
  * 80003ES2LAN Gigabit Ethernet Controller (Serdes)
  */
 
+#include <linux/delay.h>
+
 #include "e1000.h"
 
 /* A table for the GG82563 cable length where the range is defined

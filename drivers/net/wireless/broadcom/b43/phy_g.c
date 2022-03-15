@@ -20,6 +20,7 @@
 #include "main.h"
 #include "wa.h"
 
+#include <linux/delay.h>
 #include <linux/bitrev.h>
 #include <linux/slab.h>
 

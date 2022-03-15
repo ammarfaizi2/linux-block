@@ -9,6 +9,8 @@
  * Copyright (C) 2009 Igor M. Liplianin <liplianin@netup.ru>
  */
 
+#include <linux/delay.h>
+
 #include "stv0900.h"
 #include "stv0900_reg.h"
 #include "stv0900_priv.h"

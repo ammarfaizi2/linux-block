@@ -3,6 +3,8 @@
 
 #define _HCI_HAL_INIT_C_
 
+#include <linux/delay.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/rtw_efuse.h"

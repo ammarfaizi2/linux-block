@@ -10,6 +10,8 @@
 
 #define MODULE_NAME "mars"
 
+#include <linux/delay.h>
+
 #include "gspca.h"
 #include "jpeg.h"
 

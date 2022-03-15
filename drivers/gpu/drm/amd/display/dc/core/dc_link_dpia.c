@@ -24,6 +24,8 @@
  *
  */
 
+#include <linux/delay.h>
+
 #include "dc.h"
 #include "dc_link_dpia.h"
 #include "inc/core_status.h"

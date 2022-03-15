@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2014  Realtek Corporation.*/
 
+#include <linux/delay.h>
+
 #include "../wifi.h"
 #include "../pci.h"
 #include "../ps.h"

@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/clk-provider.h>
 #include <linux/bcd.h>
 #include <linux/bitfield.h>

@@ -6,6 +6,7 @@
  * Copyright 2016 Chen-Yu Tsai <wens@csie.org>
  */
 
+#include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
