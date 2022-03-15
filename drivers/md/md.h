@@ -8,6 +8,7 @@
 #ifndef _MD_MD_H
 #define _MD_MD_H
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/blkdev.h>
