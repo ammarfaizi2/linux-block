@@ -11,6 +11,7 @@
  *          Chris Telfer <chris.telfer@netronome.com>
  */
 
+#include <net/xdp_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/tasklet_api.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <net/xdp_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>

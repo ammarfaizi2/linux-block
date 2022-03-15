@@ -16,6 +16,7 @@
  * netstack, and assigning dedicated CPUs for this stage.  This
  * basically allows for 10G wirespeed pre-filtering via bpf.
  */
+#include <net/xdp_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

@@ -31,6 +31,7 @@
  *
  */
 
+#include <net/xdp_api.h>
 #include <net/sch_generic_api.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>

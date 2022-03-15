@@ -13,6 +13,7 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
+#include <net/xdp_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/netdevice_api.h>
