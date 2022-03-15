@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/route_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

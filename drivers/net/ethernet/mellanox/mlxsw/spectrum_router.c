@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2016-2018 Mellanox Technologies. All rights reserved */
 
+#include <net/route_api.h>
 #include <net/neighbour_api.h>
 #include <net/ipv6_api.h>
 #include <net/ip_fib_api.h>

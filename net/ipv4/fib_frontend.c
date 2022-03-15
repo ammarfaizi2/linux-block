@@ -9,6 +9,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/ip_fib_api.h>

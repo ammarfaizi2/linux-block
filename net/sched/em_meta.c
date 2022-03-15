@@ -54,6 +54,7 @@
  * 	      only available if that subsystem is enabled in the kernel.
  */
 
+#include <net/route_api.h>
 #include <net/netlink_api.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

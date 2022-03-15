@@ -12,6 +12,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <net/route_api.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>

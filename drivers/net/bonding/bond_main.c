@@ -31,6 +31,7 @@
  *
  */
 
+#include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <net/neighbour_api.h>
 #include <net/ipv6_api.h>

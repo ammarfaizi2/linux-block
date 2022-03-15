@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/route_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_nf.h>

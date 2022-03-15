@@ -14,6 +14,7 @@
  *
  */
 
+#include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <net/neighbour_api.h>
 #include <net/dst_api.h>

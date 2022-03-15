@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <net/route_api.h>
 #include <net/pkt_cls_api_tcf_filter.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>

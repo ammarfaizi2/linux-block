@@ -3,6 +3,7 @@
  * Copyright 2021 Marvell. All rights reserved.
  */
 
+#include <net/route_api.h>
 #include <net/neighbour_api_seqlock.h>
 #include <net/neighbour_api.h>
 #include <net/ipv6_api.h>

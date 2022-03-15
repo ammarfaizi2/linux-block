@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <net/route_api.h>
 #include <net/neighbour_api_seqlock.h>
 #include <net/neighbour_api.h>
 #include <net/dst_api.h>

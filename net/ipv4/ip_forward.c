@@ -20,6 +20,7 @@
  *		Mike McLagan	:	Routing by source
  */
 
+#include <net/route_api.h>
 #include <net/ip_extra.h>
 #include <net/dst_api.h>
 #include <linux/netdevice_api.h>
