@@ -5,6 +5,7 @@
  * Copyright(C) 2006, Red Hat, Inc., Ingo Molnar
  */
 
+#include <linux/timerqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
