@@ -6,6 +6,7 @@
 
 /* Kernel module implementing an IP set type: the bitmap:ip,mac type */
 
+#include <net/netlink_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>

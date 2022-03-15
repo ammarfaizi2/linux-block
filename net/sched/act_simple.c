@@ -5,6 +5,7 @@
  * Authors:	Jamal Hadi Salim (2005-8)
  */
 
+#include <net/netlink_api.h>
 #include <net/act_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>

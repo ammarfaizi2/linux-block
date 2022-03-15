@@ -14,6 +14,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <net/netlink.h>
 #include <linux/firmware.h>

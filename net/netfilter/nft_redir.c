@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Arturo Borrero Gonzalez <arturo@debian.org>
  */
 
+#include <net/netlink_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

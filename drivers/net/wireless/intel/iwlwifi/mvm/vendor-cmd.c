@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Intel Corporation
  */
 #include "mvm.h"
+#include <net/netlink_api.h>
 #include <linux/mutex_api.h>
 #include <linux/nl80211-vnd-intel.h>
 #include <net/netlink.h>

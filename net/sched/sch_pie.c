@@ -11,6 +11,7 @@
  * RFC 8033: https://tools.ietf.org/html/rfc8033
  */
 
+#include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/prandom.h>
 #include <linux/math64.h>

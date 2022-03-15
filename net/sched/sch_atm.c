@@ -3,6 +3,7 @@
 
 /* Written 1998-2000 by Werner Almesberger, EPFL ICA */
 
+#include <net/netlink_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/refcount_api.h>
 #include <linux/net.h>

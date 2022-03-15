@@ -14,6 +14,7 @@
  * (c) Copyright Huw Davies <huw@codeweavers.com>, 2015
  */
 
+#include <net/netlink_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/socket.h>

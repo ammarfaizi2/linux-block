@@ -8,6 +8,7 @@
  *
  * Author(s):  Guvenc Gulce
  */
+#include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>

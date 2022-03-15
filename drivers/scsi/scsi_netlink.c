@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2006   James Smart, Emulex Corporation
  */
+#include <net/netlink_api.h>
 #include <linux/capability.h>
 #include <linux/time.h>
 #include <linux/jiffies.h>

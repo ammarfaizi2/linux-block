@@ -2,6 +2,7 @@
 /*
  * Copyright 2021 NXP
  */
+#include <net/netlink_api.h>
 #include <linux/slab.h>
 
 #include "netlink.h"

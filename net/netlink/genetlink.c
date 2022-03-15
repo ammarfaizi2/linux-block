@@ -7,6 +7,7 @@
  *				Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <net/netlink_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

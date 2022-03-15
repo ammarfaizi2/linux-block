@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Texas Instruments. All rights reserved.
  */
 
+#include <net/netlink_api.h>
 #include <net/genetlink.h>
 #include "event.h"
 #include "scan.h"

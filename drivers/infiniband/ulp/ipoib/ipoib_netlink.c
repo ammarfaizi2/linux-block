@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <net/netlink_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/if_arp.h>      /* For ARPHRD_xxx */

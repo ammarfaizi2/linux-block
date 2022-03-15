@@ -5,6 +5,7 @@
  * (C) 2006-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/types.h>

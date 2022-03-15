@@ -29,6 +29,7 @@
 			Alan Cox, 30th May 1994
 */
 
+#include <net/netlink_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>

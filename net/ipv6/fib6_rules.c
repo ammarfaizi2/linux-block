@@ -10,6 +10,7 @@
  *	Ville Nuorvala		<vnuorval@tcs.hut.fi>
  */
 
+#include <net/netlink_api.h>
 #include <net/l3mdev.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>

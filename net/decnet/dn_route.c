@@ -47,6 +47,7 @@
 
 *******************************************************************************/
 
+#include <net/netlink_api.h>
 #include <net/neighbour_api.h>
 #include <net/dst_ops_api.h>
 #include <net/dst_api.h>

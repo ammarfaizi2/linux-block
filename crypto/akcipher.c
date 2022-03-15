@@ -5,6 +5,7 @@
  * Copyright (c) 2015, Intel Corporation
  * Authors: Tadeusz Struk <tadeusz.struk@intel.com>
  */
+#include <net/netlink_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

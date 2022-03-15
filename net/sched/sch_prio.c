@@ -7,6 +7,7 @@
  *              Init --  EINVAL when opt undefined
  */
 
+#include <net/netlink_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/types.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2005, 2006, 2008 Patrick McHardy <kaber@trash.net>
  */
+#include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/kernel.h>

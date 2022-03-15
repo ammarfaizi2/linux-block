@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Anders K. Pedersen <akp@cohaesio.com>
  */
 
+#include <net/netlink_api.h>
 #include <net/dst_api.h>
 #include <linux/ipv6.h>
 #include <linux/kernel.h>

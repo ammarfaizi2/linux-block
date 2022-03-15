@@ -4,6 +4,7 @@
  * (C) 2006-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <net/netlink_api.h>
 #include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/timer.h>

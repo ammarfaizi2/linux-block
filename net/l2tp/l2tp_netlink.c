@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/kmod.h>
 #include <linux/ipv6.h>

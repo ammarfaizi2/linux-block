@@ -44,6 +44,7 @@
  * SUCH DAMAGE.
  */
 
+#include <net/netlink_api.h>
 #include <net/neighbour.h>
 #include <net/neighbour_api.h>
 #include <net/inet_sock_api.h>

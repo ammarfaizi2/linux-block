@@ -15,6 +15,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>

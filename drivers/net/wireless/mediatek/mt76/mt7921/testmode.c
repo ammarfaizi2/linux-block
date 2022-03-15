@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 

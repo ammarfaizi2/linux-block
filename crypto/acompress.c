@@ -6,6 +6,7 @@
  * Authors: Weigang Li <weigang.li@intel.com>
  *          Giovanni Cabiddu <giovanni.cabiddu@intel.com>
  */
+#include <net/netlink_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <net/netlink_api.h>
 #include <net/ip_fib_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

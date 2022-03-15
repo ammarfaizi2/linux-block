@@ -12,6 +12,7 @@
  * the Free Software Foundation.
  */
 
+#include <net/netlink_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

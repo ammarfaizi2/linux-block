@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Nicira, Inc.
  */
 
+#include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>

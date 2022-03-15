@@ -8,6 +8,7 @@
  * Copyright (c) 2008 Loc Ho <lho@amcc.com>
  */
 
+#include <net/netlink_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/highmem.h>

@@ -5,6 +5,7 @@
  * Written 1998,1999 by Werner Almesberger, EPFL ICA
  */
 
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>

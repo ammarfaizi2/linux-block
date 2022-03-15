@@ -5,6 +5,7 @@
  *
  * Authors:	Roopa Prabhu, <roopa@cumulusnetworks.com>
  */
+#include <net/netlink_api.h>
 #include <net/neighbour_api.h>
 #include <net/ipv6_api.h>
 #include <linux/slab.h>

@@ -4,6 +4,7 @@
  */
 #ifndef __PMSR_H
 #define __PMSR_H
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

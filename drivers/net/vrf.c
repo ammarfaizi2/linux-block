@@ -9,6 +9,7 @@
  * Based on dummy, team and ipvlan drivers
  */
 
+#include <net/netlink_api.h>
 #include <net/neighbour_api_output.h>
 #include <net/neighbour_api.h>
 #include <net/ndisc_api.h>

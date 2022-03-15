@@ -24,6 +24,7 @@
 */
 
 
+#include <net/netlink_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/slab.h>

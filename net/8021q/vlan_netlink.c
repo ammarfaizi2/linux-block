@@ -5,6 +5,7 @@
  * 	Copyright (c) 2007 Patrick McHardy <kaber@trash.net>
  */
 
+#include <net/netlink_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

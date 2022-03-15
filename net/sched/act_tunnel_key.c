@@ -4,6 +4,7 @@
  * Copyright (c) 2016, Mellanox Technologies. All rights reserved.
  */
 
+#include <net/netlink_api.h>
 #include <net/dst_api.h>
 #include <net/act_api.h>
 #include <linux/spinlock_api.h>

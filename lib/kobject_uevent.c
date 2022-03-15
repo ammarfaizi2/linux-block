@@ -13,6 +13,7 @@
  *	Greg Kroah-Hartman	<greg@kroah.com>
  */
 
+#include <net/netlink_api.h>
 #include <linux/uuid_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>

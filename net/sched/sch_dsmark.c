@@ -4,6 +4,7 @@
 /* Written 1998-2000 by Werner Almesberger, EPFL ICA */
 
 
+#include <net/netlink_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/module.h>

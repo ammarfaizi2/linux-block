@@ -11,6 +11,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <net/netlink_api.h>
 #include <net/ndisc_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>

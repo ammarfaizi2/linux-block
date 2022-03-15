@@ -9,6 +9,7 @@
  * Eduardo J. Blanco <ejbs@netlabs.com.uy> :990222: kmod support
  */
 
+#include <net/netlink_api.h>
 #include <net/act_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

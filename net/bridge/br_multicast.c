@@ -5,6 +5,7 @@
  * Copyright (c) 2010 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <net/ip_extra.h>
 #include <linux/workqueue_api.h>
