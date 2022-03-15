@@ -18,6 +18,7 @@
 #ifndef mISDNIF_H
 #define mISDNIF_H
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/device_types.h>
 #include <linux/types.h>
 #include <linux/errno.h>

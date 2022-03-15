@@ -2,6 +2,7 @@
 #ifndef __LINUX_GRE_H
 #define __LINUX_GRE_H
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/skbuff.h>
 #include <net/ip_tunnels.h>
 

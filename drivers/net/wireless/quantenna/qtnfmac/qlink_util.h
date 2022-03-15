@@ -4,6 +4,7 @@
 #ifndef _QTN_FMAC_QLINK_UTIL_H_
 #define _QTN_FMAC_QLINK_UTIL_H_
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
 #include <net/cfg80211.h>
