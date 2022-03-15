@@ -5,6 +5,7 @@
  * Copyright (C) 2002 David S. Miller.
  */
 
+#include <asm/pgtable.h>
 #include <linux/moduleloader.h>
 #include <linux/kernel.h>
 #include <linux/elf.h>
