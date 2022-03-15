@@ -32,6 +32,7 @@
 #ifndef _XENBUS_XENBUS_H
 #define _XENBUS_XENBUS_H
 
+#include <linux/idr_types.h>
 #include <linux/device/bus.h>
 #include <linux/mutex.h>
 #include <linux/uio.h>

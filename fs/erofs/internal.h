@@ -7,6 +7,7 @@
 #ifndef __EROFS_INTERNAL_H
 #define __EROFS_INTERNAL_H
 
+#include <linux/idr_types.h>
 #include <linux/fs.h>
 #include <linux/dcache.h>
 #include <linux/mm.h>

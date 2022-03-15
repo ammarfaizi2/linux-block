@@ -5,6 +5,7 @@
 
 #ifndef _DRIVERS_SLIMBUS_H
 #define _DRIVERS_SLIMBUS_H
+#include <linux/idr_types.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/mutex.h>

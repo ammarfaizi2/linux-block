@@ -25,6 +25,7 @@
 
 #include "amdgpu_ring.h"
 
+#include <linux/idr_types.h>
 #include <linux/types.h>
 
 struct drm_device;

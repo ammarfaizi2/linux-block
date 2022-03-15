@@ -4,6 +4,7 @@
  */
 #ifndef __ND_H__
 #define __ND_H__
+#include <linux/idr_types.h>
 #include <linux/dev_printk.h>
 #include <linux/align.h>
 #include <linux/libnvdimm.h>
