@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

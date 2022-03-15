@@ -18,6 +18,7 @@
  * The architecture is expected to provide a vmemmap_populate() function
  * to instantiate the mapping.
  */
+#include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

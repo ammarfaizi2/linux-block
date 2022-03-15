@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2005 Russell King
  */
+#include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

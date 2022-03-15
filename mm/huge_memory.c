@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api_tlb_flush.h>

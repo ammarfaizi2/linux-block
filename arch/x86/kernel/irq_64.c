@@ -9,6 +9,7 @@
  * io_apic.c.)
  */
 
+#include <linux/mmzone_api.h>
 #include <linux/mm.h>
 #include <linux/mm_api.h>
 #include <asm/processor_api.h>

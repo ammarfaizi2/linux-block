@@ -6,6 +6,7 @@
  *  Nick Kossifidis <mick@ics.forth.gr>
  */
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

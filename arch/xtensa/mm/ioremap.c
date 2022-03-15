@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Cadence Design Systems Inc.
  */
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/vmalloc.h>

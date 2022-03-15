@@ -8,6 +8,7 @@
  *  Based on linux/arch/i386/mm/init.c:
  *   Copyright (C) 1995  Linus Torvalds
  */
+#include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/memory_hotplug.h>

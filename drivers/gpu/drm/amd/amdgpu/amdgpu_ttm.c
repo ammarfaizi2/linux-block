@@ -30,6 +30,7 @@
  *    Dave Airlie
  */
 
+#include <linux/mmzone_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

@@ -10,6 +10,7 @@
  * Copyright (c) 2018 Oleksandr Andrushchenko, EPAM Systems Inc.
  */
 
+#include <linux/mmzone_api.h>
 #include <asm/xen/hypercall.h>
 
 #include <xen/interface/memory.h>

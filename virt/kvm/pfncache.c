@@ -11,6 +11,7 @@
  *   David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/bitmap.h>
 #include <linux/kvm_host.h>

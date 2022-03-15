@@ -16,6 +16,7 @@
 
 #undef DEBUG
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/signal.h>
