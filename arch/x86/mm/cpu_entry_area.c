@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/cc_platform.h>
 #include <linux/spinlock.h>
 #include <linux/percpu.h>
 #include <linux/kallsyms.h>
