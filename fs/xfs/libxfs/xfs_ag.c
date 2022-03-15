@@ -5,6 +5,7 @@
  * All rights reserved.
  */
 
+#include <linux/radix-tree-api.h>
 #include <linux/atomic_api.h>
 
 #include "xfs.h"

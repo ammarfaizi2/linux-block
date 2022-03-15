@@ -4,6 +4,7 @@
  * Copyright © 2008,2010 Intel Corporation
  */
 
+#include <linux/radix-tree-api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

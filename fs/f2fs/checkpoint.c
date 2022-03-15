@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/radix-tree-api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/pagemap.h>
 #include <linux/mm_page_address.h>

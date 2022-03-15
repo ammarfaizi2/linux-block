@@ -12,6 +12,7 @@
  */
 #define pr_fmt(fmt) "pinctrl core: " fmt
 
+#include <linux/radix-tree-api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/device_api_lock.h>

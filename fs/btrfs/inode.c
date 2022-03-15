@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/radix-tree-api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mutex_api.h>

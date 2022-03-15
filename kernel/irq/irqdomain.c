@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt)  "irq: " fmt
 
+#include <linux/radix-tree-api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2003 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/radix-tree-api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/list_lru_api.h>

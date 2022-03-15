@@ -33,6 +33,7 @@
  *
  */
 
+#include <linux/radix-tree-api.h>
 #include <linux/pgtable_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>

@@ -10,6 +10,7 @@
  * Origin: Copyright (C) 2008 Intel Corp.
  */
 
+#include <linux/radix-tree-api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
