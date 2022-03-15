@@ -7,6 +7,7 @@
 #ifndef __MIPS_ASM_MACHINE_H__
 #define __MIPS_ASM_MACHINE_H__
 
+#include <linux/of_api.h>
 #include <linux/libfdt.h>
 #include <linux/of.h>
 

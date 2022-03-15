@@ -6,6 +6,7 @@
 #ifndef FIMC_MDEVICE_H_
 #define FIMC_MDEVICE_H_
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

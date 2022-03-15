@@ -8,6 +8,7 @@
 #ifndef __LINUX_OF_MDIO_H
 #define __LINUX_OF_MDIO_H
 
+#include <linux/of_api.h>
 #include <linux/dev_printk.h>
 #include <linux/device.h>
 #include <linux/phy.h>
