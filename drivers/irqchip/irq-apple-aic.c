@@ -45,6 +45,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <clocksource/arm_arch_timer.h>
 #include <linux/bits.h>
 #include <linux/bitfield.h>
 #include <linux/cpuhotplug.h>

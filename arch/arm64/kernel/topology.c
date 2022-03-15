@@ -11,6 +11,7 @@
  * for more details.
  */
 
+#include <clocksource/arm_arch_timer.h>
 #include <linux/acpi.h>
 #include <linux/arch_topology.h>
 #include <linux/cacheinfo.h>
