@@ -8,6 +8,7 @@
  */
 
 #ifdef __KERNEL__
+#include <linux/bits.h>
 #include <linux/kernel.h>
 #else
 #include <stdio.h>

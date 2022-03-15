@@ -13,6 +13,8 @@
  * more details.
  */
 
+#include <linux/bits.h>
+
 #include "ia_css_dpc2.host.h"
 #include "assert_support.h"
 
