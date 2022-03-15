@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012 Bryan Schumaker <bjschuma@netapp.com>
  */
+#include <linux/writeback.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mm_api_truncate.h>

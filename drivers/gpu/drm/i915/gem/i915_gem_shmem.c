@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/writeback.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
