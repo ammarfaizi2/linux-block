@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/seq_file_net.h>
 #include <linux/semaphore.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

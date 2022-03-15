@@ -16,6 +16,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/seq_file_net.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

@@ -55,6 +55,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/seq_file_net.h>
 #include <linux/seq_file.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

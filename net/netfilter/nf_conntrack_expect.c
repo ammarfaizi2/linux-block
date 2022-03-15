@@ -7,6 +7,7 @@
  * (c) 2005-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/seq_file_net.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/random.h>
