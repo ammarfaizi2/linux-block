@@ -8,6 +8,7 @@
  * Author: Jingoo Han <jg1.han@samsung.com>
  */
 
+#include <linux/resource_ext_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

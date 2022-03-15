@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/resource_ext_api.h>
 #include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/pci.h>

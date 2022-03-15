@@ -8,6 +8,7 @@
  * Copyright (C) 2000-2004 Russell King
  */
 
+#include <linux/resource_ext_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
