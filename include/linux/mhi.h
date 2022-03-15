@@ -6,6 +6,7 @@
 #ifndef _MHI_H_
 #define _MHI_H_
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 #include <linux/dma-direction.h>
 #include <linux/mutex.h>

@@ -9,6 +9,7 @@
 #ifndef __DRM_MIPI_DSI_H__
 #define __DRM_MIPI_DSI_H__
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 
 struct mipi_dsi_host;

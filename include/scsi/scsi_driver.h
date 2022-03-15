@@ -2,6 +2,7 @@
 #ifndef _SCSI_SCSI_DRIVER_H
 #define _SCSI_SCSI_DRIVER_H
 
+#include <linux/device/driver.h>
 #include <linux/blk_types.h>
 #include <linux/device.h>
 

@@ -5,6 +5,7 @@
 #ifndef _LINUX_MEI_CL_BUS_H
 #define _LINUX_MEI_CL_BUS_H
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 #include <linux/uuid.h>
 #include <linux/mod_devicetable.h>

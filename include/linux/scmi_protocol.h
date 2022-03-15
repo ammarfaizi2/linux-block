@@ -8,6 +8,7 @@
 #ifndef _LINUX_SCMI_PROTOCOL_H
 #define _LINUX_SCMI_PROTOCOL_H
 
+#include <linux/device/driver.h>
 #include <linux/bitfield.h>
 #include <linux/device.h>
 #include <linux/notifier.h>

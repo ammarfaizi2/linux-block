@@ -7,6 +7,7 @@
 #define _PARPORT_H_
 
 
+#include <linux/device/driver.h>
 #include <linux/jiffies.h>
 #include <linux/proc_fs.h>
 #include <linux/spinlock.h>

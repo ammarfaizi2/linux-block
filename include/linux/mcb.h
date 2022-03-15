@@ -8,6 +8,7 @@
 #ifndef _LINUX_MCB_H
 #define _LINUX_MCB_H
 
+#include <linux/device/driver.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device.h>
 #include <linux/irqreturn.h>

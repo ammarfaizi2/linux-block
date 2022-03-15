@@ -11,6 +11,7 @@
 #ifndef ASMARM_AMBA_H
 #define ASMARM_AMBA_H
 
+#include <linux/device/driver.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/mod_devicetable.h>

@@ -14,6 +14,7 @@
 #define _LINUX_DS_H
 
 #ifdef __KERNEL__
+#include <linux/device/driver.h>
 #include <linux/mod_devicetable.h>
 #endif
 

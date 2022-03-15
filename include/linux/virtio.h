@@ -3,6 +3,7 @@
 #define _LINUX_VIRTIO_H
 /* Everything a virtio driver needs to work with any particular virtio
  * implementation. */
+#include <linux/device/driver.h>
 #include <linux/types.h>
 #include <linux/scatterlist.h>
 #include <linux/spinlock.h>

@@ -8,6 +8,7 @@
 #ifndef __LINUX_LEDS_H_INCLUDED
 #define __LINUX_LEDS_H_INCLUDED
 
+#include <linux/device/driver.h>
 #include <linux/bits.h>
 #include <dt-bindings/leds/common.h>
 #include <linux/device.h>

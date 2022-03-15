@@ -8,6 +8,7 @@
 #ifndef __LINUX_MOXTET_H
 #define __LINUX_MOXTET_H
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 #include <linux/irq.h>
 #include <linux/irqdomain.h>

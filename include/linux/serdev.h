@@ -5,6 +5,7 @@
 #ifndef _LINUX_SERDEV_H
 #define _LINUX_SERDEV_H
 
+#include <linux/device/driver.h>
 #include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/device.h>
