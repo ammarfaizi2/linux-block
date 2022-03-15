@@ -6,6 +6,7 @@
  *
  * Author(s): Neil Armstrong <narmstrong@baylibre.com>
  */
+#include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/i2c.h>
 #include <linux/mfd/core.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2017 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/property.h>
 #include <linux/pci.h>

@@ -9,6 +9,7 @@
  * Implementation based on pci-exynos.c and pcie-designware.c
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

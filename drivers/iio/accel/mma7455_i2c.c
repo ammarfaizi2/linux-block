@@ -4,6 +4,7 @@
  * Copyright 2015 Joachim Eastwood <manabian@gmail.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <linux/regmap.h>

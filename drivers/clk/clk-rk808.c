@@ -7,6 +7,7 @@
  * Author:Chris Zhong <zyw@rock-chips.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>
 #include <linux/slab.h>

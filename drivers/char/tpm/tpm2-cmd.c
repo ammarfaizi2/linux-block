@@ -12,6 +12,7 @@
  */
 
 #include "tpm.h"
+#include <linux/device_api.h>
 #include <crypto/hash_info.h>
 
 static struct tpm2_hash tpm2_hash_map[] = {

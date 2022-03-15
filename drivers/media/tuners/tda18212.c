@@ -6,6 +6,7 @@
  */
 
 #include "tda18212.h"
+#include <linux/device_api.h>
 #include <linux/regmap.h>
 
 struct tda18212_dev {

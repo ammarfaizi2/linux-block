@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Socionext Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/console.h>
 #include <linux/module.h>

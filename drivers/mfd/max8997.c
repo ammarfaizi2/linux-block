@@ -7,6 +7,7 @@
 //
 // This driver is based on max8998.c
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/i2c.h>

@@ -8,6 +8,7 @@
  *	Copyright (C) 2008 Sebastian Haas <haas@ems-wuensche.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

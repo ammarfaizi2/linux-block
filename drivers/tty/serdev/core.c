@@ -6,6 +6,7 @@
  * Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/errno.h>
 #include <linux/idr.h>

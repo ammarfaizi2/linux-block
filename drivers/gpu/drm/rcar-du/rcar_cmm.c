@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Jacopo Mondi <jacopo+renesas@jmondi.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of.h>

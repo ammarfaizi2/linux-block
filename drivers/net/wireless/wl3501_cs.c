@@ -28,6 +28,7 @@
  * with a SMP machine (dual pentium 100), using pktgen, 432 pps (pkt_size = 60)
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

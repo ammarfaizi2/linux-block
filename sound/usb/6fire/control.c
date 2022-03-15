@@ -13,6 +13,7 @@
  *   volumes and introduced mute switch
  */
 
+#include <linux/device_api.h>
 #include <linux/interrupt.h>
 #include <sound/control.h>
 #include <sound/tlv.h>

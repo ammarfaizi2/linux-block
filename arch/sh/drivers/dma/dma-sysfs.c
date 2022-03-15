@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2004 - 2006  Paul Mundt
  */
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/stat.h>

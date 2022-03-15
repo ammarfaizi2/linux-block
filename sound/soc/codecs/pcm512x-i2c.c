@@ -6,6 +6,7 @@
  *		Copyright 2014 Linaro Ltd
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

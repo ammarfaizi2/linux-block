@@ -7,6 +7,7 @@
  * Author: Gregor Boirie <gregor.boirie@parrot.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/regmap.h>
 #include <linux/i2c.h>

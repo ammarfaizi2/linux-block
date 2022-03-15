@@ -5,6 +5,7 @@
  * Copyright(c) 2021 Intel Corporation. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/firmware.h>
 #include <sound/core.h>
 #include <sound/soc.h>

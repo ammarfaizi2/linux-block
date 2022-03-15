@@ -12,6 +12,7 @@
  * to perform transactions on that bus.
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -27,6 +27,7 @@
  *     allocated and free'd.
  */
 
+#include <linux/device_api.h>
 #include <linux/pm_qos.h>
 #include <linux/spinlock.h>
 #include <linux/slab.h>

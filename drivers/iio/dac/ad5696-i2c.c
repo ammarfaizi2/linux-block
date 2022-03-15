@@ -9,6 +9,7 @@
 
 #include "ad5686.h"
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 

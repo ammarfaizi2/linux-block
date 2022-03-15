@@ -12,6 +12,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/jiffies.h>

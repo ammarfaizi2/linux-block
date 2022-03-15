@@ -13,6 +13,7 @@
  * Author: Chen-Yu Tsai <wens@csie.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/err.h>
 #include <linux/mfd/axp20x.h>

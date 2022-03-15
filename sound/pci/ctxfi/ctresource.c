@@ -13,6 +13,7 @@
 
 #include "ctresource.h"
 #include "cthardware.h"
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 

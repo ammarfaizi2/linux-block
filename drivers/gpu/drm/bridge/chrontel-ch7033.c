@@ -5,6 +5,7 @@
  * Copyright (C) 2019,2020 Lubomir Rintel
  */
 
+#include <linux/device_api.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>
 #include <linux/regmap.h>

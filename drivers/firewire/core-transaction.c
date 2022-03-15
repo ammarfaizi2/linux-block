@@ -5,6 +5,7 @@
  * Copyright (C) 2004-2006 Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/device_api.h>
 #include <linux/bug.h>
 #include <linux/completion.h>
 #include <linux/device.h>

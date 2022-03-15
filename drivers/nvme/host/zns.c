@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  */
 
+#include <linux/device_api.h>
 #include <linux/blkdev.h>
 #include <linux/vmalloc.h>
 #include "nvme.h"

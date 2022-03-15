@@ -5,6 +5,7 @@
  * Intel SOF Machine Driver with es8336 Codec
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/dmi.h>
 #include <linux/gpio/consumer.h>

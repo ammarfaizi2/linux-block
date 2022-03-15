@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2013-2015 Altera Corporation
  */
+#include <linux/device_api.h>
 #include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/fpga/fpga-mgr.h>

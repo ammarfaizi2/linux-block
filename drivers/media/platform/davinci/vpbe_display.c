@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2010 Texas Instruments Incorporated - https://www.ti.com/
  */
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2000-2005 by David Brownell
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/netdevice.h>

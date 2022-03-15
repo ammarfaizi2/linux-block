@@ -2,6 +2,7 @@
 /*
  * Copyright 2010-2011 Calxeda, Inc.
  */
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <asm/io.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  * Andreas Larsson <andreas@gaisler.com>
  */
 
+#include <linux/device_api.h>
 #include <asm/byteorder.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

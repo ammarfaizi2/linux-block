@@ -3,6 +3,8 @@
 
 /* advanced RSS configuration ethtool support for iavf */
 
+#include <linux/device_api.h>
+
 #include "iavf.h"
 
 /**

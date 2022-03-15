@@ -5,6 +5,7 @@
  *
  **************************************************************************/
 
+#include <linux/device_api.h>
 #include <linux/console.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

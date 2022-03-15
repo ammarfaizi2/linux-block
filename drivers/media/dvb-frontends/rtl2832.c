@@ -6,6 +6,8 @@
  * Copyright (C) 2012-2014 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/device_api.h>
+
 #include "rtl2832_priv.h"
 
 #define REG_MASK(b) (BIT(b + 1) - 1)

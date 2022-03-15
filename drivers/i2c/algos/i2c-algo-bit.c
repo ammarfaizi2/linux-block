@@ -8,6 +8,7 @@
  * <kmalkki@cc.hut.fi> and Jean Delvare <jdelvare@suse.de>
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/delay.h>

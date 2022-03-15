@@ -8,6 +8,7 @@
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

@@ -8,6 +8,7 @@
  * Author: Leonard Crestez <leonard.crestez@nxp.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <dt-bindings/interconnect/imx8mm.h>

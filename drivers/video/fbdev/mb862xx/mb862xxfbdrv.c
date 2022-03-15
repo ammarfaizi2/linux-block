@@ -10,6 +10,7 @@
 
 #undef DEBUG
 
+#include <linux/device_api.h>
 #include <linux/fb.h>
 #include <linux/delay.h>
 #include <linux/uaccess.h>

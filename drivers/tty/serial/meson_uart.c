@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Carlo Caione <carlo@caione.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/console.h>
 #include <linux/delay.h>

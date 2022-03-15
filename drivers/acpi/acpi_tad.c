@@ -20,6 +20,7 @@
  * be taken care of by the ACPI PM domain attached to its platform device.
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

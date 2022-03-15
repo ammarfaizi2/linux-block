@@ -11,6 +11,7 @@
  * Note: SDO pin cannot be left floating otherwise I2C address
  *	 will be undefined.
  */
+#include <linux/device_api.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <linux/regmap.h>

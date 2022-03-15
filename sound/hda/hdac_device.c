@@ -3,6 +3,7 @@
  * HD-audio codec core device
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/delay.h>

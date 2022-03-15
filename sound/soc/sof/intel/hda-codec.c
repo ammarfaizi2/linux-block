@@ -8,6 +8,7 @@
 // Authors: Keyon Jie <yang.jie@linux.intel.com>
 //
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <sound/hdaudio_ext.h>
 #include <sound/hda_register.h>

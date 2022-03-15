@@ -19,6 +19,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/i2c.h>
 #include <linux/i2c-mux.h>

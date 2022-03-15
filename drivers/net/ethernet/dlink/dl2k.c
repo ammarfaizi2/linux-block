@@ -8,6 +8,7 @@
 */
 
 #include "dl2k.h"
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/capability.h>

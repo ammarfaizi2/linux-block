@@ -34,6 +34,7 @@
  * information.
  */
 
+#include <linux/device_api.h>
 #include <asm/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

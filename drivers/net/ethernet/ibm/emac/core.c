@@ -19,6 +19,7 @@
  * 	Johnnie Peters <jpeters@mvista.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/string.h>

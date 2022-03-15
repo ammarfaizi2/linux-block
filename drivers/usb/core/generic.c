@@ -19,6 +19,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/device_api.h>
 #include <linux/usb.h>
 #include <linux/usb/hcd.h>
 #include <uapi/linux/usb/audio.h>

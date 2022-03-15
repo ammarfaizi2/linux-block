@@ -30,6 +30,7 @@
  * software renderer and the X server for efficient buffer sharing.
  */
 
+#include <linux/device_api.h>
 #include <linux/dma-buf.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

@@ -7,6 +7,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/ulpi/interface.h>
 #include <linux/ulpi/driver.h>
 #include <linux/ulpi/regs.h>

@@ -3,6 +3,7 @@
  * ISA bus.
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

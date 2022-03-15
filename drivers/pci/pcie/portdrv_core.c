@@ -6,6 +6,7 @@
  * Copyright (C) Tom Long Nguyen (tom.l.nguyen@intel.com)
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
  *  Copyright (C) 2021 Oracle.
  */
 
+#include <linux/device_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/kexec.h>

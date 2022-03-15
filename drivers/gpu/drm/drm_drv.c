@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/device_api.h>
 #include <linux/debugfs.h>
 #include <linux/fs.h>
 #include <linux/module.h>

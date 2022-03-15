@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "ACPI: PCI: " fmt
 
+#include <linux/device_api.h>
 #include <linux/dmi.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>

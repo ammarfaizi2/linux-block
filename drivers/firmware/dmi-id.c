@@ -5,6 +5,7 @@
  * Copyright 2007, Lennart Poettering
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

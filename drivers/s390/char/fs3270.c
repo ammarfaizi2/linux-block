@@ -8,6 +8,7 @@
  *     Copyright IBM Corp. 2003, 2009
  */
 
+#include <linux/device_api.h>
 #include <linux/memblock.h>
 #include <linux/console.h>
 #include <linux/init.h>

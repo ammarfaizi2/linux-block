@@ -8,6 +8,7 @@
  *	    Rajmohan Mani <rajmohan.mani@intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/errno.h>
 #include <linux/ioport.h>

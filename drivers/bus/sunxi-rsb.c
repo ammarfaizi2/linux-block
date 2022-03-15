@@ -34,6 +34,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/clk/clk-conf.h>
 #include <linux/device.h>

@@ -18,6 +18,7 @@
  * is provided as am200epd.c
  *
  */
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

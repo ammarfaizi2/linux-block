@@ -5,6 +5,7 @@
  * USB Type-C Port Controller Interface.
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

@@ -107,6 +107,7 @@ static int full_duplex[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
 #define TX_TIMEOUT  (2*HZ)
 
 /* Include files, designed to support most kernel versions 2.0.0 and later. */
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

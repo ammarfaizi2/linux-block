@@ -7,6 +7,7 @@
  * Author: Damien Horsley <Damien.Horsley@imgtec.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

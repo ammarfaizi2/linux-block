@@ -7,6 +7,7 @@
  * Copyright (C) Dmitry Yusupov, 2004 - 2005
  * Copyright (C) Alex Aizman, 2004 - 2005
  */
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

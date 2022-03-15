@@ -7,6 +7,7 @@
  * See Documentation/ABI/testing/debugfs-wilco-ec for usage.
  */
 
+#include <linux/device_api.h>
 #include <linux/ctype.h>
 #include <linux/debugfs.h>
 #include <linux/fs.h>

@@ -16,6 +16,7 @@
  * - The period and duty cycle can't be changed together in one atomic action.
  */
 
+#include <linux/device_api.h>
 #include <linux/mfd/ntxec.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

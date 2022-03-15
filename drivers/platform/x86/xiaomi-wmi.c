@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* WMI driver for Xiaomi Laptops */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/input.h>
 #include <linux/module.h>

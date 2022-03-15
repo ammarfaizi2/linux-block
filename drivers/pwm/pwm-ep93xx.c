@@ -16,6 +16,7 @@
  *   platform device ep93xx-pwm.1 - PWMOUT1 (EGPIO14)
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>

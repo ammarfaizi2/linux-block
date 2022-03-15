@@ -7,6 +7,7 @@
  *
  * the project's page is at https://linuxtv.org
  */
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/init.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define PRISM2_PCCARD
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/if.h>

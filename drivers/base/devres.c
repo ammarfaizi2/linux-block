@@ -6,6 +6,7 @@
  * Copyright (c) 2006  Tejun Heo <teheo@suse.de>
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/slab.h>

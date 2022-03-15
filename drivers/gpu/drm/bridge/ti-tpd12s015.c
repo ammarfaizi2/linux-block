@@ -10,6 +10,7 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

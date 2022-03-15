@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Linaro Ltd.
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/cdev.h>
 #include <linux/err.h>

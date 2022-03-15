@@ -6,6 +6,7 @@
  *	Cyril Chemparathy <cyril@ti.com>
  *	Santosh Shilimkar <santosh.shillimkar@ti.com>
  */
+#include <linux/device_api.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/dma-map-ops.h>

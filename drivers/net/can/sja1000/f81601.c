@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Linux Foundation
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

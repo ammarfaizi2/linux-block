@@ -4,6 +4,7 @@
  *
  * Copyright 2019 Analog Devices Inc.
  */
+#include <linux/device_api.h>
 #include <linux/bits.h>
 #include <linux/clk.h>
 #include <linux/fpga/adi-axi-common.h>

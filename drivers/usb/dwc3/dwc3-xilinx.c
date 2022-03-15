@@ -6,6 +6,7 @@
  *          Anurag Kumar Vulisha <anurag.kumar.vulisha@xilinx.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

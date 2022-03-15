@@ -14,6 +14,7 @@
 
 #include "ctsrc.h"
 #include "cthardware.h"
+#include <linux/device_api.h>
 #include <linux/slab.h>
 
 #define SRC_RESOURCE_NUM	256

@@ -4,6 +4,7 @@
 //
 //Copyright 2020 Advanced Micro Devices, Inc.
 
+#include <linux/device_api.h>
 #include <linux/pci.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>

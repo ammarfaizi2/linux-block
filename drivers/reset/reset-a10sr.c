@@ -7,6 +7,7 @@
  * Adapted from reset-socfpga.c
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/mfd/altera-a10sr.h>
 #include <linux/module.h>

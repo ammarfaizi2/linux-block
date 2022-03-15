@@ -15,6 +15,7 @@
  * TPM chip management routines.
  */
 
+#include <linux/device_api.h>
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>

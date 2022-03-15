@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 
 #include "m88ds3103_priv.h"

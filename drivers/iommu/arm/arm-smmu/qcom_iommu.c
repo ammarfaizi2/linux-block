@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Red Hat
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/atomic.h>
 #include <linux/bitfield.h>

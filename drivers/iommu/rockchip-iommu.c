@@ -6,6 +6,7 @@
  *			Daniel Kurtz <djkurtz@chromium.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/compiler.h>
 #include <linux/delay.h>

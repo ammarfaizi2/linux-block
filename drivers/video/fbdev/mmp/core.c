@@ -7,6 +7,7 @@
  * Authors: Zhou Zhu <zzhu3@marvell.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/slab.h>
 #include <linux/dma-mapping.h>
 #include <linux/export.h>

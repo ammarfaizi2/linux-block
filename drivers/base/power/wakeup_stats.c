@@ -7,6 +7,7 @@
  * Copyright (c) 2019 Google Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/idr.h>
 #include <linux/init.h>

@@ -5,6 +5,7 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/debugfs.h>
 #include <linux/bitmap.h>
 #include <linux/errno.h>

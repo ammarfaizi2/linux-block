@@ -4,6 +4,7 @@
  *
  * Based on the i2c-axxia.c driver.
  */
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>
 #include <linux/err.h>

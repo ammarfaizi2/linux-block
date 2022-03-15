@@ -8,6 +8,7 @@
  * This file is licenced under GPL
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/types.h>

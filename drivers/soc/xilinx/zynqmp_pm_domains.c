@@ -9,6 +9,7 @@
  *  Rajan Vaja <rajan.vaja@xilinx.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/list.h>
 #include <linux/module.h>

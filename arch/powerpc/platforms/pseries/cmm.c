@@ -6,6 +6,7 @@
  * Author(s): Brian King (brking@linux.vnet.ibm.com),
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/ctype.h>

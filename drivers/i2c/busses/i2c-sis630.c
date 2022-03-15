@@ -28,6 +28,7 @@
    Note: we assume there can only be one device, with one SMBus interface.
 */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/delay.h>

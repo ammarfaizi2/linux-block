@@ -7,6 +7,7 @@
  * Copyright (C) 2006 by Ole Andre Vadla Ravnas (ActiveSync)
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/sched/signal.h>

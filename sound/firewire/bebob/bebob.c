@@ -11,6 +11,8 @@
  * system to handle BeBoB based devices.
  */
 
+#include <linux/device_api.h>
+
 #include "bebob.h"
 
 MODULE_DESCRIPTION("BridgeCo BeBoB driver");

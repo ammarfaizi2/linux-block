@@ -8,6 +8,7 @@
  * See Documentation/i2c/instantiating-devices.rst for more information.
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

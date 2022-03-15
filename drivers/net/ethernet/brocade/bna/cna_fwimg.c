@@ -8,6 +8,7 @@
  * All rights reserved
  * www.qlogic.com
  */
+#include <linux/device_api.h>
 #include <linux/firmware.h>
 #include "bnad.h"
 #include "bfi.h"

@@ -11,6 +11,8 @@
 */
 
 
+#include <linux/device_api.h>
+
 #include "tulip.h"
 
 

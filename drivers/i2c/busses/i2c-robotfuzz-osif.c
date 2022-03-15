@@ -10,6 +10,7 @@
  * Copyright (C) 2006 Til Harbaum (Till@Harbaum.org)
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/errno.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Sascha Hauer, Pengutronix
  */
 
+#include <linux/device_api.h>
 #include <linux/component.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

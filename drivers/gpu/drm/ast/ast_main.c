@@ -26,6 +26,7 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/pci.h>
 
 #include <drm/drm_atomic_helper.h>

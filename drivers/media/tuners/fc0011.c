@@ -8,6 +8,7 @@
  * Copyright (C) 2012 Hans-Frieder Vogt <hfvogt@gmx.net>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 
 #include "fc0011.h"

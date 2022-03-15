@@ -12,6 +12,7 @@
  *  	Eurotech S.p.A. <info@eurotech.it>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/i2c.h>

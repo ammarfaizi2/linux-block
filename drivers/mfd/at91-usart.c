@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <dt-bindings/mfd/at91-usart.h>
 
 #include <linux/module.h>

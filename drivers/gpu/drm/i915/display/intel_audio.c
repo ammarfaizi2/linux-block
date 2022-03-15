@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/component.h>
 #include <linux/kernel.h>

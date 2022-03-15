@@ -9,6 +9,7 @@
  * in the code.
  */
 
+#include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/serial.h>
 #include <linux/console.h>

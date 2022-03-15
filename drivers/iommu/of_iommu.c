@@ -5,6 +5,7 @@
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/export.h>
 #include <linux/iommu.h>
 #include <linux/limits.h>

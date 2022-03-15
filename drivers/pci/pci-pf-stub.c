@@ -6,6 +6,7 @@
  * driver of their own.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 

@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2003 Deep Blue Solutions Ltd, All Rights Reserved.
  */
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/device.h>

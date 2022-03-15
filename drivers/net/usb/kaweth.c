@@ -30,6 +30,7 @@
  * Code formatting improvements
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/string.h>

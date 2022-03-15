@@ -7,6 +7,7 @@
  * Author: Krystian Garbaciak, Dialog Semiconductor
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

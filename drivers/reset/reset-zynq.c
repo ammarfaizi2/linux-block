@@ -7,6 +7,7 @@
  * Author: Moritz Fischer <moritz.fischer@ettus.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/init.h>

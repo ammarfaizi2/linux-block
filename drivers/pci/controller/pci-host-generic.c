@@ -8,6 +8,7 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

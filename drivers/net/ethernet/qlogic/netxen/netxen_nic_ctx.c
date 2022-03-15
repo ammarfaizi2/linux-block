@@ -5,6 +5,7 @@
  * All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 
 #include "netxen_nic_hw.h"

@@ -12,6 +12,7 @@
  */
 #define pr_fmt(fmt) "pinctrl core: " fmt
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/kref.h>
 #include <linux/export.h>

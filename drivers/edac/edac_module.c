@@ -10,6 +10,7 @@
  * Author: Doug Thompson <dougthompson@xmission.com>
  *
  */
+#include <linux/device_api.h>
 #include <linux/edac.h>
 
 #include "edac_mc.h"

@@ -8,6 +8,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/device_api.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/irq.h>

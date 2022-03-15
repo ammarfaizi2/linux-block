@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2017 Microsemi Corporation
  */
+#include <linux/device_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

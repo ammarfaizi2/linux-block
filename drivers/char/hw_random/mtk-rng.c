@@ -6,6 +6,7 @@
  */
 #define MTK_RNG_DEV KBUILD_MODNAME
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

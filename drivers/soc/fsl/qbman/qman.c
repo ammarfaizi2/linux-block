@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>
 

@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/device_api.h>
 #include <dt-bindings/clock/imx8mp-clock.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>

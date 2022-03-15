@@ -9,6 +9,7 @@
  * Copyright (C) 2008 Wolfram Sang, Pengutronix
  */
 
+#include <linux/device_api.h>
 #include <linux/i2c.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -9,6 +9,7 @@
  *          Suman Anna <s-anna@ti.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
 #include <linux/mutex.h>

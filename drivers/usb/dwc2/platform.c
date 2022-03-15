@@ -35,6 +35,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

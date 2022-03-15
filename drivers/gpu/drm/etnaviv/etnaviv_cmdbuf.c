@@ -3,6 +3,7 @@
  * Copyright (C) 2017-2018 Etnaviv Project
  */
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/dma-mapping.h>
 

@@ -5,6 +5,7 @@
  * Copyright (C) 2009 - 2014 Xilinx, Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

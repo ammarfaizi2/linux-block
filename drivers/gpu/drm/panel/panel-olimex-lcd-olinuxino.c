@@ -6,6 +6,7 @@
  *   Author: Stefan Mavrodiev <stefan@olimex.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/crc32.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>

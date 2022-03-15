@@ -8,6 +8,7 @@
  * Author: Haojian Zhuang <haojian.zhuang@linaro.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/module.h>

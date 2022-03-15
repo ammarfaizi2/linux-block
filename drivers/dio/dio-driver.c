@@ -10,6 +10,7 @@
  *  for more details.
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/dio.h>

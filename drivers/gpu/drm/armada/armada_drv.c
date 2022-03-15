@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Russell King
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/module.h>

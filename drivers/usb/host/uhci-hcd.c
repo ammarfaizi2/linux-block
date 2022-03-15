@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

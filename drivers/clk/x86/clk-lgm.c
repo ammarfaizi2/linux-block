@@ -4,6 +4,7 @@
  * Zhu YiXin <yixin.zhu@intel.com>
  * Rahul Tanwar <rahul.tanwar@intel.com>
  */
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

@@ -2,6 +2,7 @@
 /*
  * PCI Message Signaled Interrupt (MSI) - irqdomain support
  */
+#include <linux/device_api.h>
 #include <linux/acpi_iort.h>
 #include <linux/irqdomain.h>
 #include <linux/of_irq.h>

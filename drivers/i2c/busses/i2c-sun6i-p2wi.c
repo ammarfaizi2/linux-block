@@ -21,6 +21,7 @@
  * PMIC).
  *
  */
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/i2c.h>
 #include <linux/io.h>

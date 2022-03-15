@@ -24,6 +24,7 @@
 
 #define DRV_NAME	"3c589_cs"
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/ptrace.h>

@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/platform_device.h>

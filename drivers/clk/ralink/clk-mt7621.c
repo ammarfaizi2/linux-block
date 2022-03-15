@@ -4,6 +4,7 @@
  * Author: Sergio Paracuellos <sergio.paracuellos@gmail.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
 #include <linux/clk-provider.h>

@@ -7,6 +7,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/module.h>

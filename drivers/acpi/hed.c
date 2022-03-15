@@ -9,6 +9,7 @@
  * notified via SCI, mainly the corrected errors.
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -34,6 +34,7 @@
  * Also check the comments in the interrupt routines for some gory details.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/err.h>

@@ -9,6 +9,7 @@
  * (C) Copyright 2010, Tobias Klauser <tklauser@distanz.ch>
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/timer.h>

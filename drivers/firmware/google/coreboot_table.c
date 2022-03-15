@@ -8,6 +8,7 @@
  * Copyright 2017 Samuel Holland <samuel@sholland.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/device.h>
 #include <linux/err.h>

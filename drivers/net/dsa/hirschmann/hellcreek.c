@@ -7,6 +7,7 @@
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

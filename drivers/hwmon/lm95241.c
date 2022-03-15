@@ -8,6 +8,7 @@
  *   http://www.national.com/ds.cgi/LM/LM95241.pdf
  */
 
+#include <linux/device_api.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

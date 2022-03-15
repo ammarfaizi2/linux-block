@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Philipp Zabel, Pengutronix
  */
 
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/clk.h>
 #include <linux/component.h>

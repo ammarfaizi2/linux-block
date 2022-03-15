@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/mfd/syscon.h>
 #include <linux/platform_device.h>

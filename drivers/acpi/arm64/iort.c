@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt)	"ACPI: IORT: " fmt
 
+#include <linux/device_api.h>
 #include <linux/acpi_iort.h>
 #include <linux/bitfield.h>
 #include <linux/iommu.h>

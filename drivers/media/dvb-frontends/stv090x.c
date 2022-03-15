@@ -7,6 +7,7 @@
 
 */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

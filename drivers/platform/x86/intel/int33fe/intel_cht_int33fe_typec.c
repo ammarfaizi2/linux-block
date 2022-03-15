@@ -17,6 +17,7 @@
  * for these chips can bind to the them.
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

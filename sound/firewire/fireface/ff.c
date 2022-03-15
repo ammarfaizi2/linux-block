@@ -5,6 +5,8 @@
  * Copyright (c) 2015-2017 Takashi Sakamoto
  */
 
+#include <linux/device_api.h>
+
 #include "ff.h"
 
 #define OUI_RME	0x000a35

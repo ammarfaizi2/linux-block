@@ -10,6 +10,7 @@
  * Krzysztof Kozłowski <krzk@kernel.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/crypto.h>
 #include <linux/delay.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/interrupt.h>

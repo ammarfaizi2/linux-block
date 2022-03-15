@@ -7,6 +7,7 @@
  * maximum 255 bytes at a time. If a larger transfer is attempted, error code
  * (-EINVAL) is returned.
  */
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>
 #include <linux/delay.h>

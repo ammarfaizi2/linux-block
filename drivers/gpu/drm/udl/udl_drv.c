@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Red Hat
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 
 #include <drm/drm_crtc_helper.h>

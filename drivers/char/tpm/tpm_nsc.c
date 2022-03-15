@@ -14,6 +14,7 @@
  * Specifications at www.trustedcomputinggroup.org	 
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>

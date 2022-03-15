@@ -168,6 +168,7 @@
 /* #define VERBOSE_DEBUG */
 /* #define DUMP_MSGS */
 
+#include <linux/device_api.h>
 #include <linux/blkdev.h>
 #include <linux/completion.h>
 #include <linux/dcache.h>

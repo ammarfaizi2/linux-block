@@ -5,6 +5,7 @@
  * Portions Copyright (C) 2020 Christoph Hellwig
  */
 
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>

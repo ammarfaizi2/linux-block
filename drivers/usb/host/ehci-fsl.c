@@ -10,6 +10,7 @@
  * Anton Vorontsov <avorontsov@ru.mvista.com>.
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>

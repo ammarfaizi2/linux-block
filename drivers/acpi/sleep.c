@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "ACPI: PM: " fmt
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/irq.h>
 #include <linux/dmi.h>

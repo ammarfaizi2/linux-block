@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/device_api.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

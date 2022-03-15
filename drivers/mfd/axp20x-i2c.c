@@ -13,6 +13,7 @@
  * Author: Carlo Caione <carlo@caione.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

@@ -55,6 +55,7 @@
  * as a external trigger, which can be used to wake up tasks.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/comedi/comedidev.h>

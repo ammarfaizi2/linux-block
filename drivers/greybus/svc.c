@@ -6,6 +6,7 @@
  * Copyright 2015 Linaro Ltd.
  */
 
+#include <linux/device_api.h>
 #include <linux/debugfs.h>
 #include <linux/workqueue.h>
 #include <linux/greybus.h>

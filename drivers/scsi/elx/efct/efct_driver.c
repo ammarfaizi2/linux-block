@@ -4,6 +4,8 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <linux/device_api.h>
+
 #include "efct_driver.h"
 
 #include "efct_hw.h"

@@ -6,6 +6,7 @@
  * Author: David Cohen <david.a.cohen@linux.intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>

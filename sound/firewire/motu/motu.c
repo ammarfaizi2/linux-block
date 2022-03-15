@@ -5,6 +5,8 @@
  * Copyright (c) 2015-2017 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/device_api.h>
+
 #include "motu.h"
 
 #define OUI_MOTU	0x0001f2

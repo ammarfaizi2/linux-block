@@ -6,6 +6,7 @@
  * Copyright (C) 2016-2017 Glider bvba
  */
 
+#include <linux/device_api.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

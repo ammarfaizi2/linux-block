@@ -20,6 +20,7 @@
  *  2004.12.01	Major rewrite by tiwai, merged the work of pshou
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

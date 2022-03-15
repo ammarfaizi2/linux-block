@@ -14,6 +14,7 @@
  * NOTE: Code in this file is not used when booting with Device Tree support.
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

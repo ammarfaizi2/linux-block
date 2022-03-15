@@ -8,6 +8,7 @@
  * Copyright (c) 2016-2017 Andreas Färber
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/console.h>
 #include <linux/delay.h>

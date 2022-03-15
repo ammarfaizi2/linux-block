@@ -8,6 +8,7 @@
 
 #define VERSION "0.25"
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/fs.h>

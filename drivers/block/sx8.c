@@ -10,6 +10,7 @@
  *  for more details.
  */
 
+#include <linux/device_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

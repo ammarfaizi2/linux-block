@@ -23,6 +23,7 @@
  *    before parents in some cases.
  */
 
+#include <linux/device_api.h>
 #include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

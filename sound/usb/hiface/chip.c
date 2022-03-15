@@ -10,6 +10,7 @@
  * The driver is based on the work done in TerraTec DMX 6Fire USB
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <sound/initval.h>

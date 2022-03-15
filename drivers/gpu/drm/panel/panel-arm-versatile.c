@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/bitops.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

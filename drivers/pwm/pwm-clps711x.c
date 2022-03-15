@@ -4,6 +4,7 @@
  * Author: Alexander Shiyan <shc_work@mail.ru>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Glider bvba
  */
 
+#include <linux/device_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/notifier.h>

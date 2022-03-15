@@ -11,6 +11,7 @@
  * - Check ioremap failures
  */
 
+#include <linux/device_api.h>
 #include <drm/drm.h>
 
 #include "mid_bios.h"

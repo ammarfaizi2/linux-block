@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/module.h>

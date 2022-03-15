@@ -6,6 +6,7 @@
  * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/pm_runtime.h>
 

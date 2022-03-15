@@ -7,6 +7,7 @@
  * Author: Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/mfd/core.h>

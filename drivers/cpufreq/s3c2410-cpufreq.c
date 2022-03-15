@@ -7,6 +7,7 @@
  * S3C2410 CPU Frequency scaling
 */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

@@ -18,6 +18,7 @@
  * semaphores to interlock between them.
  */
 
+#include <linux/device_api.h>
 #include <linux/kthread.h>
 
 #include "v3d_drv.h"

@@ -9,6 +9,7 @@
  * Send feedback to <kristen.c.accardi@intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  * Based on usbled.c by Greg Kroah-Hartman (greg@kroah.com)
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

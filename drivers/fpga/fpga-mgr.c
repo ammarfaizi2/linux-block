@@ -8,6 +8,7 @@
  * With code from the mailing list:
  * Copyright (C) 2013 Xilinx, Inc.
  */
+#include <linux/device_api.h>
 #include <linux/firmware.h>
 #include <linux/fpga/fpga-mgr.h>
 #include <linux/idr.h>

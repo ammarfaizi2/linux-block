@@ -11,6 +11,7 @@
  * (part of code stolen from loop.c)
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/major.h>

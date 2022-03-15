@@ -9,6 +9,8 @@
  * Copyright:	(C) Torsten Schenk
  */
 
+#include <linux/device_api.h>
+
 #include "comm.h"
 #include "chip.h"
 #include "midi.h"

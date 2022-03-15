@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/types.h>

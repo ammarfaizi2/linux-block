@@ -3,6 +3,7 @@
  * Copyright (C) 2016 HiSilicon Co., Ltd.
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <linux/hw_random.h>

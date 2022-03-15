@@ -8,6 +8,7 @@
  *	    Lu Baolu <baolu.lu@linux.intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/debugfs.h>
 #include <linux/dmar.h>
 #include <linux/intel-iommu.h>

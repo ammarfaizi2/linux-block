@@ -2,6 +2,7 @@
 /*
  * HD-audio bus
  */
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/module.h>

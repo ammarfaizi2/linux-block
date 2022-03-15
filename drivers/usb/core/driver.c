@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/slab.h>

@@ -8,6 +8,7 @@
  *  Copyright (C) Shérab <Sebastien.Hinderer@ens-lyon.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/moduleparam.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

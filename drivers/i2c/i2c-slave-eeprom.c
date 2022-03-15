@@ -16,6 +16,7 @@
  * EEPROMs, though. We currently use the 8 bit as a valid address.
  */
 
+#include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/firmware.h>
 #include <linux/i2c.h>

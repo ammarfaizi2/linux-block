@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

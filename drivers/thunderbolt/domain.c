@@ -6,6 +6,7 @@
  * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/dmar.h>
 #include <linux/idr.h>

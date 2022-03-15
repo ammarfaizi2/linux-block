@@ -10,6 +10,7 @@
 
 #define DEBUG /* So dev_dbg() is always available. */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h> /* For printk. */
 #include <linux/string.h>
 #include <linux/module.h>

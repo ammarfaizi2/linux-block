@@ -15,6 +15,7 @@
  * in the FE module: VA1J5JF8007S and/or in the product: Earthsoft PT1/PT2.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

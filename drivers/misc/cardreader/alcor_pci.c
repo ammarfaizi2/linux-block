@@ -5,6 +5,7 @@
  * Driver for Alcor Micro AU6601 and AU6621 controllers
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

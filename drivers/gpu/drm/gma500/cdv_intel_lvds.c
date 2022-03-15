@@ -8,6 +8,7 @@
  *	Jesse Barnes <jesse.barnes@intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/dmi.h>
 #include <linux/i2c.h>
 #include <linux/pm_runtime.h>

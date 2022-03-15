@@ -18,6 +18,7 @@
  * ==FILEVERSION 20041108==
  */
 
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/compat.h>
 #include <linux/capability.h>

@@ -5,6 +5,7 @@
  * (C) 2011 DENX Software Engineering, Anatolij Gustschin <agust@denx.de>
  */
 
+#include <linux/device_api.h>
 #include <linux/fb.h>
 #include <linux/i2c.h>
 #include <linux/io.h>

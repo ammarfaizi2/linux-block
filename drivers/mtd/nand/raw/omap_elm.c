@@ -7,6 +7,7 @@
 
 #define DRIVER_NAME	"omap-elm"
 
+#include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

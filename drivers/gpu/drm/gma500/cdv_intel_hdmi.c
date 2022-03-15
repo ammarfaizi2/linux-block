@@ -24,6 +24,7 @@
  *	jim liu <jim.liu@intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/pm_runtime.h>
 
 #include <drm/drm.h>

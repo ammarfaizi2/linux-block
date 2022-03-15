@@ -5,6 +5,7 @@
  * Author: Lee Jones <lee.jones@linaro.org> for ST-Ericsson.
  */
 
+#include <linux/device_api.h>
 #include <linux/sysfs.h>
 #include <linux/init.h>
 #include <linux/stat.h>

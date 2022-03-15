@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Google, Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/virtio_dma_buf.h>
 

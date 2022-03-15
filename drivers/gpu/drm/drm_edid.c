@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>

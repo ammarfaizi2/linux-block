@@ -69,6 +69,7 @@ static const char * const boot_msg =
 
 /* Include files */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/compat.h>
 #include <linux/module.h>

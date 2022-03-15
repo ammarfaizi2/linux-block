@@ -14,6 +14,7 @@
 
 #include "ctamixer.h"
 #include "cthardware.h"
+#include <linux/device_api.h>
 #include <linux/slab.h>
 
 #define AMIXER_RESOURCE_NUM	256

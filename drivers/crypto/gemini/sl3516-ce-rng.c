@@ -7,6 +7,7 @@
  * This file handle the RNG found in the SL3516 crypto engine
  */
 #include "sl3516-ce.h"
+#include <linux/device_api.h>
 #include <linux/pm_runtime.h>
 #include <linux/hw_random.h>
 

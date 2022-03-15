@@ -57,6 +57,7 @@
 
 #define DRV_NAME	"dmfe"
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

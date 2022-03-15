@@ -53,6 +53,7 @@
 #define DRV_RELDATE		"Mar 22, 2004"
 
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>

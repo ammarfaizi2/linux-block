@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/iopoll.h>
 #include <linux/pm_runtime.h>

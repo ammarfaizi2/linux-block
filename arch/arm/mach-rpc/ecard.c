@@ -24,6 +24,7 @@
  */
 #define ECARD_C
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

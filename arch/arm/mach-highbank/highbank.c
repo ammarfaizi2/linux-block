@@ -2,6 +2,7 @@
 /*
  * Copyright 2010-2011 Calxeda, Inc.
  */
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>
 #include <linux/clocksource.h>

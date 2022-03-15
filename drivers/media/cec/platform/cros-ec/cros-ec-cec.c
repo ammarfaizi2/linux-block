@@ -6,6 +6,7 @@
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

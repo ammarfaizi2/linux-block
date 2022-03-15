@@ -10,6 +10,7 @@
  *      1    |  0    |  0x1C
  *      1    |  1    |  0x1F
  */
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

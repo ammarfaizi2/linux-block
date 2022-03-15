@@ -72,6 +72,7 @@
  * (20/10/1999)
  */
 
+#include <linux/device_api.h>
 #include <linux/sched/signal.h>
 #include <linux/signal.h>
 #include <linux/spinlock.h>

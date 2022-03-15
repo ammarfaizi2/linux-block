@@ -9,6 +9,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/mutex.h>
 #include <linux/moduleparam.h>

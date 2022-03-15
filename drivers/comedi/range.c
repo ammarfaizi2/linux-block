@@ -7,6 +7,7 @@
  * Copyright (C) 1997-8 David A. Schleef <ds@schleef.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/uaccess.h>
 #include <linux/comedi/comedidev.h>
 #include "comedi_internal.h"

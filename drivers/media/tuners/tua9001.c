@@ -5,6 +5,8 @@
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/device_api.h>
+
 #include "tua9001_priv.h"
 
 static int tua9001_init(struct dvb_frontend *fe)

@@ -7,6 +7,7 @@
 
 /* In that file, frequencies are expressed in kiloHertz to avoid 32 bits overflows */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/dvb/frontend.h>

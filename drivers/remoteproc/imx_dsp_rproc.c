@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright 2021 NXP */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <dt-bindings/firmware/imx/rsrc.h>
 #include <linux/arm-smccc.h>

@@ -38,6 +38,7 @@
  * programming model.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/console.h>
 #include <linux/delay.h>

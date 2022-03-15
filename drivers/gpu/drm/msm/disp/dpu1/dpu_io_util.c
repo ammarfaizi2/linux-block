@@ -3,6 +3,7 @@
  * All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/clk/clk-conf.h>
 #include <linux/err.h>

@@ -53,6 +53,7 @@
  * Allen Hubbe <Allen.Hubbe@emc.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

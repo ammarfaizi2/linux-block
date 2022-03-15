@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

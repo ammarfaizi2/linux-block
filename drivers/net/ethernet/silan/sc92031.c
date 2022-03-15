@@ -23,6 +23,7 @@
  * matching, so you need to enable IFF_PROMISC when using it.
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2014 ARM Limited
  */
 
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>

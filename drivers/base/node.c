@@ -3,6 +3,7 @@
  * Basic Node interface support
  */
 
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

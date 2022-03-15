@@ -8,6 +8,7 @@
  *         Lee Jones <lee.jones@linaro.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/math64.h>

@@ -14,6 +14,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/device_api.h>
 #include <linux/idr.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

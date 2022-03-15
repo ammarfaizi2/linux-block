@@ -9,6 +9,7 @@
  *  more details.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>

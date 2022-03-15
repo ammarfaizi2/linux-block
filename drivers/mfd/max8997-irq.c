@@ -7,6 +7,7 @@
 //
 // This driver is based on max8998-irq.c
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>

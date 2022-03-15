@@ -9,6 +9,7 @@
  * Archit Taneja, <archit@ti.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/module.h>

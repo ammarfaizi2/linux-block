@@ -11,6 +11,7 @@
  *      511-000136-01-Rev-E-RMI4-Interfacing-Guide.pdf
  */
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/fs.h>

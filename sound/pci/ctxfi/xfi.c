@@ -5,6 +5,7 @@
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/moduleparam.h>

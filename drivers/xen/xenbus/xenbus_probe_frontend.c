@@ -5,6 +5,7 @@
 	pr_debug("(%s:%d) " fmt "\n",			\
 		 __func__, __LINE__, ##__VA_ARGS__)
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/string.h>

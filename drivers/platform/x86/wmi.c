@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/bits.h>
 #include <linux/build_bug.h>

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2019 Intel Corporation. */
 
+#include <linux/device_api.h>
+
 #include "fm10k.h"
 #include "fm10k_vf.h"
 #include "fm10k_pf.h"

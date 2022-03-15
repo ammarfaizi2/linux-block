@@ -3,6 +3,7 @@
  * SCSI functions used by both the initiator and the target code.
  */
 
+#include <linux/device_api.h>
 #include <scsi/scsi_device.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>

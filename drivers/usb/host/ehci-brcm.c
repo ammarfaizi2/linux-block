@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020, Broadcom */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

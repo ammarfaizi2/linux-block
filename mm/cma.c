@@ -21,6 +21,7 @@
 #endif
 #define CREATE_TRACE_POINTS
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/memblock.h>
 #include <linux/err.h>

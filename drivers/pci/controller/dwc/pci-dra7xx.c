@@ -7,6 +7,7 @@
  * Authors: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

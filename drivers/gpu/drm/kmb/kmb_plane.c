@@ -3,6 +3,7 @@
  * Copyright © 2018-2020 Intel Corporation
  */
 
+#include <linux/device_api.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>

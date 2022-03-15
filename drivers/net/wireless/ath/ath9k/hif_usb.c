@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>
 #include "htc.h"

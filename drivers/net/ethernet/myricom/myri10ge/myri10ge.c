@@ -40,6 +40,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api.h>
 #include <linux/tcp.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>

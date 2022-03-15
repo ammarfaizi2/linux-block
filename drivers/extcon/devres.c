@@ -6,6 +6,8 @@
  * Author: Chanwoo Choi <cw00.choi@samsung.com>
  */
 
+#include <linux/device_api.h>
+
 #include "extcon.h"
 
 static int devm_extcon_dev_match(struct device *dev, void *res, void *data)

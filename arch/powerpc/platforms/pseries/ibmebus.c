@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/export.h>
 #include <linux/console.h>

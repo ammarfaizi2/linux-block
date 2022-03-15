@@ -7,6 +7,7 @@
  * Copyright:	(C) MontaVista Software Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/device.h>

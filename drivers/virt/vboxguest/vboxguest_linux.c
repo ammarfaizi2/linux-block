@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2016 Oracle Corporation
  */
 
+#include <linux/device_api.h>
 #include <linux/cred.h>
 #include <linux/input.h>
 #include <linux/kernel.h>

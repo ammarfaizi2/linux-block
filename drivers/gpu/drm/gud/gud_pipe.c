@@ -3,6 +3,7 @@
  * Copyright 2020 Noralf Trønnes
  */
 
+#include <linux/device_api.h>
 #include <linux/lz4.h>
 #include <linux/usb.h>
 #include <linux/workqueue.h>

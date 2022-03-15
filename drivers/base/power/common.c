@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2011 Rafael J. Wysocki <rjw@sisk.pl>, Renesas Electronics Corp.
  */
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/export.h>

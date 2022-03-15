@@ -7,6 +7,7 @@
  *	Andrew F. Davis <afd@ti.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

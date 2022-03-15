@@ -3,6 +3,7 @@
  * Copyright © 2009 Intel Corporation
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/pm_runtime.h>

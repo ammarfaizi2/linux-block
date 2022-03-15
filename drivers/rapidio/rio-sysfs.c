@@ -6,6 +6,7 @@
  * Matt Porter <mporter@kernel.crashing.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/rio.h>
 #include <linux/rio_drv.h>

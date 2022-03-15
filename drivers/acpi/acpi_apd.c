@@ -7,6 +7,7 @@
  *	Wu, Jeff <Jeff.Wu@amd.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/clkdev.h>
 #include <linux/clk-provider.h>

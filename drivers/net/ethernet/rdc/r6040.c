@@ -8,6 +8,7 @@
  * Copyright (C) 2007-2012 Florian Fainelli <f.fainelli@gmail.com>
 */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

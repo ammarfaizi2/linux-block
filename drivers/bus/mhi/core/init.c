@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/io.h>

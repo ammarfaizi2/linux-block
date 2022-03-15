@@ -7,6 +7,7 @@
 //
 // S3C2440/S3C2442 CPU PLL tables (12MHz Crystal)
 
+#include <linux/device_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

@@ -8,6 +8,7 @@
  *
  **************************************************************************/
 
+#include <linux/device_api.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_vblank.h>
 

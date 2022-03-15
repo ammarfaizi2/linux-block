@@ -33,6 +33,7 @@
 #define DRV_NAME	"fmvj18x_cs"
 #define DRV_VERSION	"2.9"
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/ptrace.h>

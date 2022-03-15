@@ -14,6 +14,8 @@
  *  - Flash Memory to store firmwares
  */
 
+#include <linux/device_api.h>
+
 #include "fireworks.h"
 
 MODULE_DESCRIPTION("Echo Fireworks driver");

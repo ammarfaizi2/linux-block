@@ -6,6 +6,7 @@
  * (C) 2015 by Il Han <corone.il.han@gmail.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/hwmon.h>
 #include <linux/i2c.h>

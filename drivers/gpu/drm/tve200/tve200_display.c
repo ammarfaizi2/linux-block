@@ -10,6 +10,7 @@
  * Copyright (C) 2017 Eric Anholt
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/dma-buf.h>
 #include <linux/of_graph.h>

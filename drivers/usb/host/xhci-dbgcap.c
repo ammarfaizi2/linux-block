@@ -6,6 +6,7 @@
  *
  * Author: Lu Baolu <baolu.lu@linux.intel.com>
  */
+#include <linux/device_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/nls.h>

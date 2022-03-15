@@ -12,6 +12,7 @@
 // Method TBMC reads EC_ACPI_MEM_DEVICE_ORIENTATION byte from the shared
 // memory region.
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/input.h>
 #include <linux/io.h>

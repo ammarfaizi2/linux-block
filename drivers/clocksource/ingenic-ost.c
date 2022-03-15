@@ -6,6 +6,7 @@
  * Copyright (C) 2020 Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/clocksource.h>
 #include <linux/mfd/ingenic-tcu.h>

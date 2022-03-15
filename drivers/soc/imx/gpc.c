@@ -4,6 +4,7 @@
  * Copyright 2011-2013 Freescale Semiconductor, Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/io.h>

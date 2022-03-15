@@ -6,6 +6,7 @@
  * based on exynos_drm_drv.c
  */
 
+#include <linux/device_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dma-iommu.h>
 #include <linux/pm_runtime.h>

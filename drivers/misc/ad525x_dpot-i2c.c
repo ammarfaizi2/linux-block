@@ -5,6 +5,7 @@
  * Copyright (C) 2010-2011 Michael Hennerich, Analog Devices Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 

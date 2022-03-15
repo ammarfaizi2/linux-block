@@ -6,6 +6,7 @@
  * Copyright (C) 2015 Alban Bedel <albeu@free.fr>
  */
 
+#include <linux/device_api.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/mod_devicetable.h>

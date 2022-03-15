@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Robert Jarzmik <robert.jarzmik@free.fr>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

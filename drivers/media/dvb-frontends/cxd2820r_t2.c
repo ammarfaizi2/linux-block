@@ -6,6 +6,8 @@
  */
 
 
+#include <linux/device_api.h>
+
 #include "cxd2820r_priv.h"
 
 int cxd2820r_set_frontend_t2(struct dvb_frontend *fe)

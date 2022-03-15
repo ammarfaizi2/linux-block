@@ -3,6 +3,7 @@
  * Copyright 2015-2020 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/ethtool.h>
 #include <linux/pci.h>
 

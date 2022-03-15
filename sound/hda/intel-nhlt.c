@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2015-2019 Intel Corporation
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <sound/intel-nhlt.h>
 

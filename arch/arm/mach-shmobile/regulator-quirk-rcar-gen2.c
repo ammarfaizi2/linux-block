@@ -19,6 +19,7 @@
  * Copyright (C) 2015 Glider bvba
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

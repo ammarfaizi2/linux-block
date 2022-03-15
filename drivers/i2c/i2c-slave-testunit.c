@@ -6,6 +6,7 @@
  * Copyright (C) 2020 by Renesas Electronics Corporation
  */
 
+#include <linux/device_api.h>
 #include <linux/bitops.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

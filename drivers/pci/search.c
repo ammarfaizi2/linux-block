@@ -8,6 +8,7 @@
  * Copyright (C) 2003 -- 2004 Greg Kroah-Hartman <greg@kroah.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/pci.h>
 #include <linux/slab.h>
