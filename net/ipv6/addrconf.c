@@ -36,6 +36,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/nsproxy.h>
 #include <linux/notifier_api.h>

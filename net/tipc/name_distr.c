@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/rculist.h>
 #include <linux/ratelimit.h>
 
 #include "core.h"

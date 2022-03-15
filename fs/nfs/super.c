@@ -21,6 +21,7 @@
  *   of another (see nfs_lookup())
  */
 
+#include <linux/rculist.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

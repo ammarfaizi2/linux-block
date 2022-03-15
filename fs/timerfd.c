@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/rculist.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/fs_api.h>

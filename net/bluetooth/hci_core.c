@@ -25,6 +25,7 @@
 
 /* Bluetooth HCI core. */
 
+#include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

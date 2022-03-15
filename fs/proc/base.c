@@ -48,6 +48,7 @@
  *  Overall revision about smaps.
  */
 
+#include <linux/rculist.h>
 #include <linux/ptrace_api.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>

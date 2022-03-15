@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/rculist.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>

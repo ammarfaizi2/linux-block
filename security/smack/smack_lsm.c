@@ -15,6 +15,7 @@
  *  Copyright (C) 2011 Intel Corporation.
  */
 
+#include <linux/rculist.h>
 #include <linux/ptrace_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

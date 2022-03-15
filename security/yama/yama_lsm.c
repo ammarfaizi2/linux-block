@@ -8,6 +8,7 @@
  * Copyright (C) 2011 The Chromium OS Authors.
  */
 
+#include <linux/rculist.h>
 #include <linux/ptrace_api.h>
 #include <linux/cred.h>
 #include <linux/capability.h>

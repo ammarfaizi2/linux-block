@@ -13,6 +13,7 @@
  * Changes:
  *
  */
+#include <linux/rculist.h>
 #include <linux/string.h>
 #include <linux/net.h>
 #include <linux/socket.h>

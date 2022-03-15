@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Pablo Neira Ayuso <pablo@netfilter.org>
  */
 
+#include <linux/rculist.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

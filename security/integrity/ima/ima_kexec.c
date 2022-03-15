@@ -7,6 +7,7 @@
  * Mimi Zohar <zohar@linux.vnet.ibm.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/seq_file.h>

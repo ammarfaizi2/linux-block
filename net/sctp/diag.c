@@ -14,6 +14,7 @@
  *    Xin Long <lucien.xin@gmail.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

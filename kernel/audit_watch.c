@@ -6,6 +6,7 @@
  * Copyright 2005 IBM Corporation
  */
 
+#include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_exe_file.h>
 #include <linux/fs_types_sb.h>

@@ -49,6 +49,7 @@
  *	BPQ   004	Joerg(DL1BKE)		Fixed to not lock up on ifconfig.
  */
 
+#include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_ether_api.h>

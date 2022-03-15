@@ -11,6 +11,7 @@
 /*
  * Handle hardware traps and faults.
  */
+#include <linux/rculist.h>
 #include <linux/preempt.h>
 #include <linux/io.h>
 #include <asm/ptrace.h>

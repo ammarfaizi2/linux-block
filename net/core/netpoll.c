@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rculist.h>
 #include <linux/nsproxy.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

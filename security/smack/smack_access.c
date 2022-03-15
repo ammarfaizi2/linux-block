@@ -6,6 +6,7 @@
  *      Casey Schaufler <casey@schaufler-ca.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/cred.h>
 #include <linux/capability.h>

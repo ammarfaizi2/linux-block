@@ -18,6 +18,7 @@
  *  6 Jun 1999	Cache readdir lookups in the page cache. -DaveM
  */
 
+#include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

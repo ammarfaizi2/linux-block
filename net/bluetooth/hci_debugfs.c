@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/rculist.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 

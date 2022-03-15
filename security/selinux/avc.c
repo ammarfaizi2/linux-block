@@ -10,6 +10,7 @@
  *
  * Copyright (C) 2003 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
+#include <linux/rculist.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/stddef.h>

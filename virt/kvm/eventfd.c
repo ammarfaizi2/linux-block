@@ -9,6 +9,7 @@
  *	Gregory Haskins <ghaskins@novell.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/eventpoll.h>
 #include <linux/kvm_host.h>

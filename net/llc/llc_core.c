@@ -12,6 +12,7 @@
  * See the GNU General Public License for more details.
  */
 
+#include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

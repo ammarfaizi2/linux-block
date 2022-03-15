@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/kmod.h>

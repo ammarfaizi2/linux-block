@@ -10,6 +10,7 @@
  * 2 of the License, or (at your option) any later version.
  */
 
+#include <linux/rculist.h>
 #include <linux/of_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

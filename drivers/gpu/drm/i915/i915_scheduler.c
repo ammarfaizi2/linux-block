@@ -4,6 +4,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>

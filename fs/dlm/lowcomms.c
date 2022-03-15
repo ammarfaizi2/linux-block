@@ -42,6 +42,7 @@
  *
  */
 
+#include <linux/rculist.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "LSM: " fmt
 
+#include <linux/rculist.h>
 #include <linux/notifier_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

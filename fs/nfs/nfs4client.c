@@ -3,6 +3,7 @@
  * Copyright (C) 2006 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
+#include <linux/rculist.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/dcache.h>

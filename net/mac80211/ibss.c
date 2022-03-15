@@ -12,6 +12,7 @@
  * Copyright(c) 2018-2021 Intel Corporation
  */
 
+#include <linux/rculist.h>
 #include <linux/random.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

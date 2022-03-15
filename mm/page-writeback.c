@@ -12,6 +12,7 @@
  *		Initial version
  */
 
+#include <linux/rculist.h>
 #include <linux/radix-tree-api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/pagemap_api_readahead.h>

@@ -20,6 +20,7 @@
  *    Daisy Chang           <daisyc@us.ibm.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/in.h>

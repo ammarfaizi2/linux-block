@@ -8,6 +8,7 @@
  *  Improving global KVA allocator, Uladzislau Rezki, Sony, May 2019
  */
 
+#include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>

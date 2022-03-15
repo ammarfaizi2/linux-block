@@ -9,6 +9,7 @@
  * Authors:	Lotsa people, from code originally in tcp
  */
 
+#include <linux/rculist.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/ipv6.h>

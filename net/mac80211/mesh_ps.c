@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Intel Corporation
  */
 
+#include <linux/rculist.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
+#include <linux/rculist.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/vmw_vmci_defs.h>

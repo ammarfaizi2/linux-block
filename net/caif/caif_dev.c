@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
+#include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

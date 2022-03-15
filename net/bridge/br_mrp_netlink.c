@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/rculist.h>
 #include <net/genetlink.h>
 
 #include <uapi/linux/mrp_bridge.h>

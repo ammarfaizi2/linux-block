@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/rculist.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

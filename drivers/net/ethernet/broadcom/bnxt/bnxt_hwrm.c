@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>

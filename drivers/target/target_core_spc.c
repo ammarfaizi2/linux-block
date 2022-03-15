@@ -7,6 +7,7 @@
  * Nicholas A. Bellinger <nab@kernel.org>
  */
 
+#include <linux/rculist.h>
 #include <linux/hashtable_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

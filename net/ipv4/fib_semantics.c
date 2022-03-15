@@ -9,6 +9,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api.h>
