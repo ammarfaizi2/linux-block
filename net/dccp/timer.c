@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <net/sock_api_extra.h>
 #include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>
 #include <linux/ktime_api.h>

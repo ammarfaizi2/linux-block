@@ -91,6 +91,7 @@ Version 0.0.6    2.1.110   07-aug-98   Eduardo Marcelo Serrat
 				       dn_bind fixes
 *******************************************************************************/
 
+#include <net/sock_api_extra.h>
 #include <net/rtnetlink_api.h>
 #include <net/dst_api.h>
 #include <linux/wait_api.h>

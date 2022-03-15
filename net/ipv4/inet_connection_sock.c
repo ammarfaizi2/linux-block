@@ -9,6 +9,7 @@
  * Authors:	See the TCP sources
  */
 
+#include <net/sock_api_extra.h>
 #include <net/route_api.h>
 #include <net/ipv6_api.h>
 #include <linux/wait_api.h>

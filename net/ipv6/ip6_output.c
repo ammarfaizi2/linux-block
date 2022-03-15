@@ -22,6 +22,7 @@
  *				for datagram xmit
  */
 
+#include <net/sock_api_extra.h>
 #include <net/route_api.h>
 #include <net/neighbour_api_output.h>
 #include <net/neighbour_api.h>

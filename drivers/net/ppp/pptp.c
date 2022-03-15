@@ -5,6 +5,7 @@
  *	Authors: Dmitry Kozlov <xeb@mail.ru>
  */
 
+#include <net/sock_api_extra.h>
 #include <net/route_api.h>
 #include <net/ip_extra.h>
 #include <net/dst_api.h>

@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "X25: " fmt
 
+#include <net/sock_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
