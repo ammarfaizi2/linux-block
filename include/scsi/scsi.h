@@ -6,6 +6,7 @@
 #ifndef _SCSI_SCSI_H
 #define _SCSI_SCSI_H
 
+#include <asm/param.h>
 #include <linux/types.h>
 #include <linux/scatterlist.h>
 #include <linux/kernel.h>
