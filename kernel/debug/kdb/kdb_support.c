@@ -10,6 +10,7 @@
  * 03/02/13    added new 2.5 kallsyms <xavier.bru@bull.net>
  */
 
+#include <linux/mmzone.h>
 #include <linux/mmzone_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/types.h>
