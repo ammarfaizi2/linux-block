@@ -8,6 +8,7 @@
  * Copyright (C) 2004 Pengutronix
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/ioport.h>

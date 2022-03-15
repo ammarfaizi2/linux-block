@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <linux/dma-fence-array.h>

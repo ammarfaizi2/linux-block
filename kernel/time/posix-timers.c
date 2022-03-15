@@ -9,6 +9,7 @@
  *
  * These are all the functions necessary to implement POSIX clocks & timers
  */
+#include <linux/hrtimer_api.h>
 #include <linux/mm.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>

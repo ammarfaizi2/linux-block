@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/ktime.h>
 #include <linux/hrtimer.h>

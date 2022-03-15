@@ -3,6 +3,7 @@
  *
  * This code is licenced under the GPL.
  */
+#include <linux/hrtimer_api.h>
 #include <linux/device/bus.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

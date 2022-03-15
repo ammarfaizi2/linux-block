@@ -16,6 +16,7 @@
 	Supported chipsets: RT2800U.
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/capability.h>
 #include <linux/cpu.h>

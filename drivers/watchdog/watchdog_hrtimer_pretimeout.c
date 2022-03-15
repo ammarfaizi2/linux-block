@@ -3,6 +3,7 @@
  * (c) Copyright 2021 Hewlett Packard Enterprise Development LP.
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/device_api.h>
 #include <linux/hrtimer.h>
 #include <linux/watchdog.h>

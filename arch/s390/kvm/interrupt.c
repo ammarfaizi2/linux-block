@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "kvm-s390"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/interrupt.h>

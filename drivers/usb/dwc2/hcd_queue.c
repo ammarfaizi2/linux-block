@@ -39,6 +39,7 @@
  * This file contains the functions to manage Queue Heads and Queue
  * Transfer Descriptors for Host mode
  */
+#include <linux/hrtimer_api.h>
 #include <linux/bitmap.h>
 #include <linux/gcd.h>
 #include <linux/kernel.h>

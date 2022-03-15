@@ -8,6 +8,7 @@
  *	Author: Lars-Peter Clausen <lars@metafoo.de>
  * Copyright (C) 2015, Intel Corporation
  */
+#include <linux/hrtimer_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/hrtimer.h>

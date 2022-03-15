@@ -5,6 +5,7 @@
  * Copyright(C) 2006, Red Hat, Inc., Ingo Molnar
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/proc_fs.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  *
  *  Based on lirc_serial.c
  */
+#include <linux/hrtimer_api.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

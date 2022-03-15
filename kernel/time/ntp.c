@@ -6,6 +6,7 @@
  * Please see those files for relevant copyright info and historical
  * changelogs.
  */
+#include <linux/hrtimer_api.h>
 #include <linux/capability.h>
 #include <linux/clocksource.h>
 #include <linux/workqueue.h>

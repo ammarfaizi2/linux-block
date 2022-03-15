@@ -5,6 +5,7 @@
 
 #define DSS_SUBSYS_NAME "PLL"
 
+#include <linux/hrtimer_api.h>
 #include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/io.h>

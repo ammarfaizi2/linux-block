@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /* Copyright 2020 NXP */
 
+#include <linux/hrtimer_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/types.h>

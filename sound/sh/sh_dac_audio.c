@@ -7,6 +7,7 @@
  * Based on sh_dac_audio.c (Copyright (C) 2004, 2005 by Andriy Skulysh)
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/hrtimer.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

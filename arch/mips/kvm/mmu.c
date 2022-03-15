@@ -9,6 +9,7 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>
 #include <linux/highmem.h>
 #include <linux/kvm_host.h>

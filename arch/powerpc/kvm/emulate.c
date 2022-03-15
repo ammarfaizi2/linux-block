@@ -7,6 +7,7 @@
  * Authors: Hollis Blanchard <hollisb@us.ibm.com>
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer.h>
 #include <linux/types.h>

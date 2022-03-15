@@ -53,6 +53,7 @@
  * DAMAGE.
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

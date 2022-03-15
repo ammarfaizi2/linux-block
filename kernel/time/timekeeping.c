@@ -3,6 +3,7 @@
  *  Kernel timekeeping code and accessor functions. Based on code from
  *  timer.c, moved in commit 8524070b7982.
  */
+#include <linux/hrtimer_api.h>
 #include <linux/capability.h>
 #include <linux/timekeeper_internal.h>
 #include <linux/module.h>

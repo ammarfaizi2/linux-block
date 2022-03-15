@@ -7,6 +7,8 @@
  * Based on: net/mac80211/util.c
  */
 
+#include <linux/hrtimer_api.h>
+
 #include "ieee802154_i.h"
 #include "driver-ops.h"
 

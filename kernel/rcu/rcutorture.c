@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/hrtimer_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>

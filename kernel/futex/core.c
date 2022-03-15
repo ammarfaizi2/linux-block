@@ -31,6 +31,7 @@
  *  "The futexes are also cursed."
  *  "But they come in a choice of three flavours!"
  */
+#include <linux/hrtimer_api.h>
 #include <linux/debugfs.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

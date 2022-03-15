@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/hrtimer_api.h>
 #include <linux/device/bus.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>

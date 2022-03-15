@@ -11,6 +11,7 @@
 
 #include "cx88.h"
 
+#include <linux/hrtimer_api.h>
 #include <linux/init.h>
 #include <linux/hrtimer.h>
 #include <linux/pci.h>

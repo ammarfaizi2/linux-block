@@ -3,6 +3,7 @@
  * Generic sched_clock() support, to extend low level hardware time
  * counters to full 64-bit ns values.
  */
+#include <linux/hrtimer_api.h>
 #include <linux/clocksource.h>
 #include <linux/init.h>
 #include <linux/jiffies.h>

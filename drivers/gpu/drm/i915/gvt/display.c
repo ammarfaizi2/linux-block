@@ -32,6 +32,7 @@
  *
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/bitmap.h>
 
 #include "i915_drv.h"

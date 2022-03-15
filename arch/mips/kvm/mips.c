@@ -9,6 +9,7 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cpu-type.h>

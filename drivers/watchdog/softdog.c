@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/hrtimer_api.h>
 #include <linux/hrtimer.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
