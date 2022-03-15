@@ -1631,14 +1631,7 @@ static inline unsigned int task_state_index(struct task_struct *tsk)
 	return __task_state_index(READ_ONCE(tsk->__state), tsk->exit_state);
 }
 
-static inline char task_index_to_char(unsigned int state)
-{
-	static const char state_char[] = "RSDTtXZPI";
-
-	BUILD_BUG_ON(1 + ilog2(TASK_REPORT_MAX) != sizeof(state_char) - 1);
-
-	return state_char[state];
-}
+extern char task_index_to_char(unsigned int state);
 
 static inline char task_state_to_char(struct task_struct *tsk)
 {

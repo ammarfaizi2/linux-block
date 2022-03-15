@@ -8694,6 +8694,15 @@ SYSCALL_DEFINE2(sched_rr_get_interval_time32, pid_t, pid,
 }
 #endif
 
+char task_index_to_char(unsigned int state)
+{
+	static const char state_char[] = "RSDTtXZPI";
+
+	BUILD_BUG_ON(1 + ilog2(TASK_REPORT_MAX) != sizeof(state_char) - 1);
+
+	return state_char[state];
+}
+
 void sched_show_task(struct task_struct *p)
 {
 	unsigned long free = 0;
