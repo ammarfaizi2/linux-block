@@ -23,6 +23,7 @@
  *    Dajiang Zhang <dajiang.zhang@nokia.com>
  */
 
+#include <net/inet_sock_api.h>
 #include <linux/timekeeping.h>
 #include <linux/refcount_api.h>
 #include <linux/types.h>

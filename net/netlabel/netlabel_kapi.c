@@ -13,6 +13,7 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2006, 2008
  */
 
+#include <net/inet_sock_api.h>
 #include <linux/ipv6.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

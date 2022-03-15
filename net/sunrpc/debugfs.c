@@ -5,6 +5,7 @@
  * (c) 2014 Jeff Layton <jlayton@primarydata.com>
  */
 
+#include <net/inet_sock_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
