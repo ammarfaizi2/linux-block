@@ -5,6 +5,7 @@
 #if !defined(_TRACE_SUNRPC_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_SUNRPC_H
 
+#include <net/socket_alloc.h>
 #include <linux/sunrpc/sched.h>
 #include <linux/sunrpc/clnt.h>
 #include <linux/sunrpc/svc.h>
