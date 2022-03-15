@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/sched/user.h>
 #include <linux/sched/topology.h>
 #include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>

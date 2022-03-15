@@ -53,6 +53,7 @@
  *			 :  base.c too.
  */
 
+#include <linux/sched/user.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
