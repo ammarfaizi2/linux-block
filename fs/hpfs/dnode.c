@@ -7,6 +7,7 @@
  *  handling directory dnode tree - adding, deleteing & searching for dirents
  */
 
+#include <linux/stat.h>
 #include <linux/slab.h>
 
 #include "hpfs_fn.h"

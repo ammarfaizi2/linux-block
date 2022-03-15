@@ -17,6 +17,7 @@
  * error handling mechanism.
  */
 
+#include <linux/stat.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

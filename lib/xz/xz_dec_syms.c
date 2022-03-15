@@ -7,6 +7,7 @@
  * You can do whatever you want with this file.
  */
 
+#include <linux/stat.h>
 #include <linux/export.h>
 #include <linux/module.h>
 #include <linux/xz.h>

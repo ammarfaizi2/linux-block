@@ -8,6 +8,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/stat.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs.h>

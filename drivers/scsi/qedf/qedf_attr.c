@@ -3,6 +3,8 @@
  *  QLogic FCoE Offload Driver
  *  Copyright (c) 2016-2018 Cavium Inc.
  */
+#include <linux/stat.h>
+
 #include "qedf.h"
 
 inline bool qedf_is_vport(struct qedf_ctx *qedf)

@@ -3,6 +3,7 @@
  * Basic Node interface support
  */
 
+#include <linux/stat.h>
 #include <linux/sched.h>
 #include <linux/preempt.h>
 #include <linux/notifier_api.h>

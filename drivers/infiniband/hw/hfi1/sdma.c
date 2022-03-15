@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2018 Intel Corporation.
  */
 
+#include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seqlock_api.h>

@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) "PKCS7key: "fmt
+#include <linux/stat.h>
 #include <linux/key.h>
 #include <linux/err.h>
 #include <linux/module.h>

@@ -8,6 +8,7 @@
  * Initial development of this code was funded by
  * Phytec Messtechnik GmbH, http://www.phytec.de/
  */
+#include <linux/stat.h>
 #include <linux/minmax.h>
 #include <linux/atomic_api.h>
 #include <linux/platform_device.h>

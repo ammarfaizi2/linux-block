@@ -11,6 +11,7 @@
  * TODO: data ready irq
  */
 
+#include <linux/stat.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

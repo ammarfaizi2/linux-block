@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Wolfson Microelectronics plc
  */
 
+#include <linux/stat.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

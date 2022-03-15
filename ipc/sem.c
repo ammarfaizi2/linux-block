@@ -70,6 +70,7 @@
  *   The worst-case behavior is nevertheless O(N^2) for N wakeups.
  */
 
+#include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/sem.h>
 #include <linux/sched/task.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
 
+#include <linux/stat.h>
 #include <linux/init.h>
 #include <asm/cpu-features.h>
 #include <linux/kernel.h>

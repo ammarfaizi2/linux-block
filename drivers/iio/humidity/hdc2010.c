@@ -10,6 +10,7 @@
  * Datasheet: https://www.ti.com/product/HDC2080/datasheet
  */
 
+#include <linux/stat.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

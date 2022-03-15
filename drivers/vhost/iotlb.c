@@ -4,6 +4,7 @@
  *
  * IOTLB implementation for vhost.
  */
+#include <linux/stat.h>
 #include <linux/slab.h>
 #include <linux/vhost_iotlb.h>
 #include <linux/module.h>
