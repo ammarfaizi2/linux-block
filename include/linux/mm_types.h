@@ -4,22 +4,18 @@
 
 #ifndef __ASSEMBLY__
 
-#include <linux/irqflags.h>
 #include <linux/mm_types_task.h>
 
+#include <linux/align.h>
 #include <linux/auxvec.h>
-#include <linux/kref.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/rbtree.h>
+#include <linux/spinlock_types.h>
+#include <linux/rbtree_types.h>
 #include <linux/rwsem.h>
 #include <linux/completion.h>
-#include <linux/cpumask.h>
 #include <linux/uprobes.h>
-#include <linux/rcupdate.h>
-#include <linux/page-flags-layout.h>
-#include <linux/workqueue.h>
+#include <linux/workqueue_types.h>
 #include <linux/seqcount_types.h>
+#include <linux/page-flags-layout.h>
 #include <linux/kref.h>
 
 #include <asm/mmu.h>
