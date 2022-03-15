@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/rculist.h>

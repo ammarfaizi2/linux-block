@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1997-1999 Russell King
  */
+#include <linux/time64_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>

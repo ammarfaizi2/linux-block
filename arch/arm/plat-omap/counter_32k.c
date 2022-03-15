@@ -9,6 +9,7 @@
  *
  * NOTE: This timer is not the same timer as the old OMAP1 MPU timer.
  */
+#include <linux/time64_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/clk.h>

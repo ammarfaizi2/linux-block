@@ -8,6 +8,7 @@
 
 
 #include "fuse_i.h"
+#include <linux/time64_api.h>
 #include <linux/stringhash.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

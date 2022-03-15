@@ -22,6 +22,7 @@
  *	et. al.
  */
 
+#include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/softirq.h>
 #include <linux/seqlock_api.h>

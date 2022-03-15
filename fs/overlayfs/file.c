@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Red Hat, Inc.
  */
 
+#include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

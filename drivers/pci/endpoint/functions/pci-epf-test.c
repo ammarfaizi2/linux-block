@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/time64_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>

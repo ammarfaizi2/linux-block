@@ -6,6 +6,7 @@
  * Copyright:   (C) 2016 Linaro Limited
  */
 
+#include <linux/time64_api.h>
 #include <linux/sched/signal.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

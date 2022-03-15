@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "damon: " fmt
 
+#include <linux/time64_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

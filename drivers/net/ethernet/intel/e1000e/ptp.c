@@ -8,6 +8,7 @@
 
 #include "e1000.h"
 
+#include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

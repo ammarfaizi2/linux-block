@@ -6,6 +6,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/time64_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

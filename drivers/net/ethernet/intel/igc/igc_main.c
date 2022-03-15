@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c)  2018 Intel Corporation */
 
+#include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>

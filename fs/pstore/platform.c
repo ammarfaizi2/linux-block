@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "pstore: " fmt
 
+#include <linux/time64_api.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

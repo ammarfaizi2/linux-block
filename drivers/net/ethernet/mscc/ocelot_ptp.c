@@ -4,6 +4,7 @@
  * Copyright (c) 2017 Microsemi Corporation
  * Copyright 2020 NXP
  */
+#include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

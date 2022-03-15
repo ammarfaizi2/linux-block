@@ -7,6 +7,7 @@
  * Copyright (C) 2019 Intel Corporation
  */
 
+#include <linux/time64_api.h>
 #include <linux/preempt.h>
 #include <linux/hardirq.h>
 #include <linux/clockchips.h>

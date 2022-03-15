@@ -11,6 +11,7 @@
  *		to allow signals to be sent reliably.
  */
 
+#include <linux/time64_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>

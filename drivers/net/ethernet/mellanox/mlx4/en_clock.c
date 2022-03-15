@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/time64_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

@@ -6,6 +6,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
+#include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

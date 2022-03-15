@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2021 Hisilicon Limited.
 
+#include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/math64.h>

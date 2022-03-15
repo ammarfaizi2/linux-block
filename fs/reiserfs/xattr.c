@@ -35,6 +35,7 @@
  */
 
 #include "reiserfs.h"
+#include <linux/time64_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
