@@ -10,6 +10,7 @@
 #ifndef __LINUX_USB_GADGET_PXA27X_H
 #define __LINUX_USB_GADGET_PXA27X_H
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 #include <linux/spinlock.h>
 #include <linux/io.h>

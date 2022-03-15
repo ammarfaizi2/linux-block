@@ -11,6 +11,7 @@
 #ifndef _IFCVF_H_
 #define _IFCVF_H_
 
+#include <linux/dev_printk.h>
 #include <linux/pci.h>
 #include <linux/pci_regs.h>
 #include <linux/vdpa.h>

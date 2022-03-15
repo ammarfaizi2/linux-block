@@ -9,6 +9,7 @@
 #ifndef _SND_SOC_INTEL_QUIRKS_H
 #define _SND_SOC_INTEL_QUIRKS_H
 
+#include <linux/dev_printk.h>
 #include <linux/platform_data/x86/soc.h>
 
 #if IS_ENABLED(CONFIG_X86)

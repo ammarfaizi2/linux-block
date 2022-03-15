@@ -6,6 +6,7 @@
 #ifndef _CORESIGHT_CORESIGHT_ETM_H
 #define _CORESIGHT_CORESIGHT_ETM_H
 
+#include <linux/dev_printk.h>
 #include <asm/local.h>
 #include <linux/spinlock.h>
 #include "coresight-priv.h"

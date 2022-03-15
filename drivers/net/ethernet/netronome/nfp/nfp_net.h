@@ -12,6 +12,7 @@
 #ifndef _NFP_NET_H_
 #define _NFP_NET_H_
 
+#include <linux/dev_printk.h>
 #include <linux/atomic.h>
 #include <linux/interrupt.h>
 #include <linux/list.h>

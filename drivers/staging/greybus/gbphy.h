@@ -8,6 +8,7 @@
 #ifndef __GBPHY_H
 #define __GBPHY_H
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 struct gbphy_device {

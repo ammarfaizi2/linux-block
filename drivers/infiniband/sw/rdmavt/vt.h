@@ -6,6 +6,7 @@
 #ifndef DEF_RDMAVT_H
 #define DEF_RDMAVT_H
 
+#include <linux/dev_printk.h>
 #include <rdma/rdma_vt.h>
 #include <linux/pci.h>
 #include "pd.h"

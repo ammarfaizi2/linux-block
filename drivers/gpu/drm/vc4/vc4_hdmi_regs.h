@@ -1,6 +1,7 @@
 #ifndef _VC4_HDMI_REGS_H_
 #define _VC4_HDMI_REGS_H_
 
+#include <linux/dev_printk.h>
 #include <linux/pm_runtime.h>
 
 #include "vc4_hdmi.h"

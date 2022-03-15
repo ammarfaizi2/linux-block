@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /* Copyright (C) 2004 Texas Instruments */
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 /*

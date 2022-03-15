@@ -11,6 +11,7 @@
 #ifndef _MMP_CTRL_H_
 #define _MMP_CTRL_H_
 
+#include <linux/dev_printk.h>
 #include <linux/device_api.h>
 #include <video/mmp_disp.h>
 

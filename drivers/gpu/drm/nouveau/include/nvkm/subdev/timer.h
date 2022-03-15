@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_TIMER_H__
 #define __NVKM_TIMER_H__
+#include <linux/dev_printk.h>
 #include <core/subdev.h>
 
 struct nvkm_alarm {

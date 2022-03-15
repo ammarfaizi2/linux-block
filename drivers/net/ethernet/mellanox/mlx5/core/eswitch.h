@@ -33,6 +33,7 @@
 #ifndef __MLX5_ESWITCH_H__
 #define __MLX5_ESWITCH_H__
 
+#include <linux/dev_printk.h>
 #include <linux/if_ether.h>
 #include <linux/if_link.h>
 #include <linux/atomic.h>

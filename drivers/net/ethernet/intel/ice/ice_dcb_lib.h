@@ -4,6 +4,8 @@
 #ifndef _ICE_DCB_LIB_H_
 #define _ICE_DCB_LIB_H_
 
+#include <linux/dev_printk.h>
+
 #include "ice.h"
 #include "ice_base.h"
 #include "ice_lib.h"

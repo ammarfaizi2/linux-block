@@ -27,6 +27,7 @@
 #ifndef __DRM_I2C_CH7006_PRIV_H__
 #define __DRM_I2C_CH7006_PRIV_H__
 
+#include <linux/dev_printk.h>
 #include <linux/device_api.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_encoder_slave.h>

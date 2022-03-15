@@ -20,6 +20,7 @@
    NSC sold the GEODE line to AMD, and the PC-8736x line to Winbond.
 */
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 struct nsc_gpio_ops {

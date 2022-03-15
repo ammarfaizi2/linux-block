@@ -35,6 +35,7 @@
  * the composite model the host can use both functions at the same time.
  */
 
+#include <linux/dev_printk.h>
 #include <linux/device/driver.h>
 #include <linux/bcd.h>
 #include <linux/version.h>

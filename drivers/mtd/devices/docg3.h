@@ -8,6 +8,7 @@
 #ifndef _MTD_DOCG3_H
 #define _MTD_DOCG3_H
 
+#include <linux/dev_printk.h>
 #include <linux/mtd/mtd.h>
 
 /*

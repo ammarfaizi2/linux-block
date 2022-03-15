@@ -8,6 +8,7 @@
 #ifndef __LINUX_MFD_STMPE_H
 #define __LINUX_MFD_STMPE_H
 
+#include <linux/dev_printk.h>
 #include <linux/mutex.h>
 
 #define STMPE_SAMPLE_TIME(x)	((x & 0xf) << 4)

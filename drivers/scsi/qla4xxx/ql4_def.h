@@ -7,6 +7,7 @@
 #ifndef __QL4_DEF_H
 #define __QL4_DEF_H
 
+#include <linux/dev_printk.h>
 #include <linux/cache.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

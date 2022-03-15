@@ -29,6 +29,7 @@
 #include "vnic_stats.h"
 #include "vnic_nic.h"
 #include "vnic_rss.h"
+#include <linux/dev_printk.h>
 #include <linux/device_api.h>
 #include <linux/irq.h>
 

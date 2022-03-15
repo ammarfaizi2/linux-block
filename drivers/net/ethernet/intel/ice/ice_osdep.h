@@ -4,6 +4,7 @@
 #ifndef _ICE_OSDEP_H_
 #define _ICE_OSDEP_H_
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 #include <linux/io.h>
 #ifndef CONFIG_64BIT

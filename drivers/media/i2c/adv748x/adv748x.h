@@ -18,6 +18,7 @@
  *       ADV7482      X        X          X       X
  */
 
+#include <linux/dev_printk.h>
 #include <linux/i2c.h>
 
 #ifndef _ADV748X_H_

@@ -6,6 +6,7 @@
 #define pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
 #endif
 
+#include <linux/dev_printk.h>
 #include <linux/bcma/bcma.h>
 #include <linux/delay.h>
 

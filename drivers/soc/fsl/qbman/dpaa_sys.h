@@ -31,6 +31,7 @@
 #ifndef __DPAA_SYS_H
 #define __DPAA_SYS_H
 
+#include <linux/dev_printk.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/slab.h>

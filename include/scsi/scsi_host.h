@@ -2,6 +2,7 @@
 #ifndef _SCSI_SCSI_HOST_H
 #define _SCSI_SCSI_HOST_H
 
+#include <linux/dev_printk.h>
 #include <linux/device.h>
 #include <linux/list.h>
 #include <linux/types.h>

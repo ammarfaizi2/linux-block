@@ -12,6 +12,7 @@
 /* debug control */
 /* #define UDC_VERBOSE */
 
+#include <linux/dev_printk.h>
 #include <linux/extcon.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>

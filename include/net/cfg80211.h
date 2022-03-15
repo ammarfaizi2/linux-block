@@ -10,6 +10,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/dev_printk.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/ethtool.h>

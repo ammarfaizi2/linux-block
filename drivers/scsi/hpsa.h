@@ -20,6 +20,7 @@
 #ifndef HPSA_H
 #define HPSA_H
 
+#include <linux/dev_printk.h>
 #include <scsi/scsicam.h>
 
 #define IO_OK		0

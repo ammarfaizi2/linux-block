@@ -11,6 +11,7 @@
  * Copyright (C) 2016 Tony Lindgren <tony@atomide.com>
  */
 
+#include <linux/dev_printk.h>
 #include <linux/device.h>
 #include <linux/regmap.h>
 

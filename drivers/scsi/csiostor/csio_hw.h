@@ -35,6 +35,7 @@
 #ifndef __CSIO_HW_H__
 #define __CSIO_HW_H__
 
+#include <linux/dev_printk.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/device.h>

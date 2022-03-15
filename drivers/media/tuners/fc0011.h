@@ -2,6 +2,7 @@
 #ifndef LINUX_FC0011_H_
 #define LINUX_FC0011_H_
 
+#include <linux/dev_printk.h>
 #include <media/dvb_frontend.h>
 
 

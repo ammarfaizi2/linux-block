@@ -7,6 +7,7 @@
 #ifndef _MEI_CLIENT_H_
 #define _MEI_CLIENT_H_
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 #include <linux/poll.h>
 #include <linux/mei.h>

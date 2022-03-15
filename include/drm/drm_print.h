@@ -26,6 +26,7 @@
 #ifndef DRM_PRINT_H_
 #define DRM_PRINT_H_
 
+#include <linux/dev_printk.h>
 #include <linux/compiler.h>
 #include <linux/printk.h>
 #include <linux/seq_file.h>

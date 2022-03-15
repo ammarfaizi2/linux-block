@@ -9,6 +9,7 @@
 #ifndef __BUNDLE_H
 #define __BUNDLE_H
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/pm_runtime.h>

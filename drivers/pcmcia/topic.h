@@ -31,6 +31,7 @@
 #ifndef _LINUX_TOPIC_H
 #define _LINUX_TOPIC_H
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 /* Register definitions for Toshiba ToPIC95/97/100 controllers */

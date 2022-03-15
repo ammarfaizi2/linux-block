@@ -8,6 +8,7 @@
 #ifndef __SIMPLE_CARD_UTILS_H
 #define __SIMPLE_CARD_UTILS_H
 
+#include <linux/dev_printk.h>
 #include <linux/clk.h>
 #include <sound/soc.h>
 

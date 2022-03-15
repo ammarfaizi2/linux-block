@@ -10,6 +10,7 @@
 #ifndef __SOUND_HDA_LOCAL_H
 #define __SOUND_HDA_LOCAL_H
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 /* We abuse kcontrol_new.subdev field to pass the NID corresponding to

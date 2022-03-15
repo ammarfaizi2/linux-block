@@ -9,6 +9,7 @@
 #ifndef _UVC_GADGET_H_
 #define _UVC_GADGET_H_
 
+#include <linux/dev_printk.h>
 #include <linux/list.h>
 #include <linux/mutex.h>
 #include <linux/spinlock.h>

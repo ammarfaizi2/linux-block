@@ -3,6 +3,7 @@
  * i2c-core.h - interfaces internal to the I2C framework
  */
 
+#include <linux/dev_printk.h>
 #include <linux/rwsem.h>
 
 struct i2c_devinfo {

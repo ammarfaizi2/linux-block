@@ -5,6 +5,7 @@
 #ifndef __RTW_DEBUG_H
 #define __RTW_DEBUG_H
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 enum rtw_debug_mask {

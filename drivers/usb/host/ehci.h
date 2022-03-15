@@ -6,6 +6,7 @@
 #ifndef __LINUX_EHCI_HCD_H
 #define __LINUX_EHCI_HCD_H
 
+#include <linux/dev_printk.h>
 #include <asm/io.h>
 #include <linux/types.h>
 

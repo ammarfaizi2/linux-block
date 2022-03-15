@@ -34,6 +34,7 @@
 #ifndef MLX4_IB_H
 #define MLX4_IB_H
 
+#include <linux/dev_printk.h>
 #include <linux/compiler.h>
 #include <linux/list.h>
 #include <linux/mutex.h>

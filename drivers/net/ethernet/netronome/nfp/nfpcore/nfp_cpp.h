@@ -10,6 +10,7 @@
 #ifndef __NFP_CPP_H__
 #define __NFP_CPP_H__
 
+#include <linux/dev_printk.h>
 #include <linux/ctype.h>
 #include <linux/types.h>
 #include <linux/sizes.h>

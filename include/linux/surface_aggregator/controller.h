@@ -12,6 +12,7 @@
 #ifndef _LINUX_SURFACE_AGGREGATOR_CONTROLLER_H
 #define _LINUX_SURFACE_AGGREGATOR_CONTROLLER_H
 
+#include <linux/dev_printk.h>
 #include <linux/completion.h>
 #include <linux/device.h>
 #include <linux/types.h>

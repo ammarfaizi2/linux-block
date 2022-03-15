@@ -14,6 +14,7 @@
 #ifndef V4L2_COMMON_H_
 #define V4L2_COMMON_H_
 
+#include <linux/dev_printk.h>
 #include <linux/time.h>
 #include <media/v4l2-dev.h>
 

@@ -24,6 +24,7 @@
 #define LINUX_PCI_H
 
 
+#include <linux/dev_printk.h>
 #include <linux/device/driver.h>
 #include <linux/mod_devicetable.h>
 

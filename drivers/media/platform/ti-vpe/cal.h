@@ -11,6 +11,7 @@
 #ifndef __TI_CAL_H__
 #define __TI_CAL_H__
 
+#include <linux/dev_printk.h>
 #include <linux/bitfield.h>
 #include <linux/io.h>
 #include <linux/list.h>

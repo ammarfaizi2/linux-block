@@ -13,6 +13,7 @@
 #ifndef __RCAR_VIN__
 #define __RCAR_VIN__
 
+#include <linux/dev_printk.h>
 #include <linux/kref.h>
 
 #include <media/v4l2-async.h>

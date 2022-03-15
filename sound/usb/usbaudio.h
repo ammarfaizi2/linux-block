@@ -2,6 +2,7 @@
 #ifndef __USBAUDIO_H
 #define __USBAUDIO_H
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 /*

@@ -13,6 +13,7 @@
 #ifndef _IPR_H
 #define _IPR_H
 
+#include <linux/dev_printk.h>
 #include <asm/unaligned.h>
 #include <linux/types.h>
 #include <linux/completion.h>

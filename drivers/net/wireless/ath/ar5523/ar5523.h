@@ -18,6 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 #define AR5523_FLAG_PRE_FIRMWARE	(1 << 0)

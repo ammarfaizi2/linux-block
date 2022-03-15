@@ -30,6 +30,7 @@
 #ifndef _LINUX_O2MICRO_H
 #define _LINUX_O2MICRO_H
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 /* Additional PCI configuration registers */

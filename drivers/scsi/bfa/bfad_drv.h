@@ -19,6 +19,7 @@
 #ifndef __BFAD_DRV_H__
 #define __BFAD_DRV_H__
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/dma-mapping.h>
