@@ -10,6 +10,7 @@
 #ifndef __LINUX_HSI_H__
 #define __LINUX_HSI_H__
 
+#include <linux/notifier_api.h>
 #include <linux/device/driver.h>
 #include <linux/device.h>
 #include <linux/mutex.h>

@@ -10,6 +10,7 @@
 #ifndef __LINUX_USB_PHY_H
 #define __LINUX_USB_PHY_H
 
+#include <linux/notifier_api.h>
 #include <linux/extcon.h>
 #include <linux/notifier.h>
 #include <linux/usb.h>

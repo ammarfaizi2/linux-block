@@ -10,6 +10,7 @@
 #ifndef __MFD_TI_LMU_H__
 #define __MFD_TI_LMU_H__
 
+#include <linux/notifier_api.h>
 #include <linux/gpio.h>
 #include <linux/notifier.h>
 #include <linux/regmap.h>

@@ -11,6 +11,7 @@
 #ifndef __DRIVER_OPP_H__
 #define __DRIVER_OPP_H__
 
+#include <linux/notifier_api.h>
 #include <linux/device.h>
 #include <linux/interconnect.h>
 #include <linux/kernel.h>
