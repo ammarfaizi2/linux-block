@@ -49,6 +49,7 @@
 #define ACPI_MUTEX_DEBUG
 #endif
 
+#include <linux/spinlock.h>
 #include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/ctype.h>
