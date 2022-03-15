@@ -6,6 +6,7 @@
  * Copyright 2014 Linaro Ltd.
  */
 
+#include <linux/string.h>
 #include <linux/bitops.h>
 #include <linux/hid.h>
 #include <linux/kernel.h>

@@ -15,6 +15,7 @@
  * Copyright (C) 2013 Red Hat Inc. All Rights Reserved
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

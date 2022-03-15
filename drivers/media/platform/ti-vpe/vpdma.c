@@ -9,6 +9,7 @@
  * Archit Taneja, <archit@ti.com>
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/export.h>

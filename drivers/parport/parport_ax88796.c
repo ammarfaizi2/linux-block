@@ -5,6 +5,7 @@
  *	Ben Dooks <ben@simtec.co.uk>
 */
 
+#include <linux/string.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

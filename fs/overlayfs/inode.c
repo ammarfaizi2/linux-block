@@ -4,6 +4,7 @@
  * Copyright (C) 2011 Novell Inc.
  */
 
+#include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs_api_rw_access.h>

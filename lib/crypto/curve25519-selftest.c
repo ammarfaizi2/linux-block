@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
+#include <linux/string.h>
 #include <linux/random.h>
 #include <crypto/curve25519.h>
 

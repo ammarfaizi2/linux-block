@@ -12,6 +12,7 @@
  *  Richard Purdie <rpurdie@openedhand.com>
  */
 
+#include <linux/string.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

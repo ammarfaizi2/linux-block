@@ -11,6 +11,8 @@
 
 /* MSGQ module source file. */
 
+#include <linux/string.h>
+
 #include "bfi.h"
 #include "bfa_msgq.h"
 #include "bfa_ioc.h"

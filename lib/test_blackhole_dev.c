@@ -9,6 +9,7 @@
  * Copyright (c) 2018, Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <linux/string.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/init.h>

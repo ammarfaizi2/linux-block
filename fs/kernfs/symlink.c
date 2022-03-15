@@ -7,6 +7,7 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>

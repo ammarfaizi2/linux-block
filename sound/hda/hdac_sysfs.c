@@ -3,6 +3,7 @@
  * sysfs support for HD-audio core device
  */
 
+#include <linux/string.h>
 #include <linux/kobject_api.h>
 #include <linux/slab.h>
 #include <linux/sysfs.h>

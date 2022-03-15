@@ -10,6 +10,7 @@
  * Copyright (C) 2005 Dmitry Torokhov <dtor@mail.ru>
  */
 
+#include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/input.h>

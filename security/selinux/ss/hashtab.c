@@ -4,6 +4,7 @@
  *
  * Author : Stephen Smalley, <sds@tycho.nsa.gov>
  */
+#include <linux/string.h>
 #include <linux/log2.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

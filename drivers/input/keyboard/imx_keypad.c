@@ -3,6 +3,7 @@
 // Driver for the IMX keypad port.
 // Copyright (C) 2009 Alberto Panizzo <maramaopercheseimorto@gmail.com>
 
+#include <linux/string.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/hardirq.h>

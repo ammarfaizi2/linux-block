@@ -7,6 +7,7 @@
  *         Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device/class.h>

@@ -7,6 +7,7 @@
  * This file is released under the GPLv2.
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/device/driver.h>
 #include <linux/ctype.h>

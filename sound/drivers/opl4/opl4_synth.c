@@ -32,6 +32,7 @@
  */
 
 #include "opl4_local.h"
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>

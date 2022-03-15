@@ -12,6 +12,7 @@
  * for more details.
  *
  */
+#include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/fb.h>
 #include <linux/slab.h>

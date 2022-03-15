@@ -7,6 +7,7 @@
 #include "dm.h"
 #include "dm-bio-prison-v2.h"
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/spinlock.h>

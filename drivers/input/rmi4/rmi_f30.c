@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016 Synaptics Incorporated
  */
 
+#include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/device_api_lock.h>

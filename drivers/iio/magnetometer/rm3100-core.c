@@ -10,6 +10,7 @@
  * TODO: event generation, pm.
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>

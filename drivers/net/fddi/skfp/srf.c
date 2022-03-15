@@ -15,6 +15,8 @@
 	SRF state machine and frame generation
 */
 
+#include <linux/string.h>
+
 #include "h/types.h"
 #include "h/fddi.h"
 #include "h/smc.h"

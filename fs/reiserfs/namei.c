@@ -11,6 +11,7 @@
  * NO WARRANTY
  */
 
+#include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

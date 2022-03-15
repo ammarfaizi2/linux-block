@@ -8,6 +8,7 @@
  * Copyright (C) 2020-2021 OpenSynergy GmbH
  */
 
+#include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/types.h>
 

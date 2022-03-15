@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright IBM Corp 2019
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

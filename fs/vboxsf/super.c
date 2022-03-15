@@ -10,6 +10,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 1999-2000 by Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

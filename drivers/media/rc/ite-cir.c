@@ -16,6 +16,7 @@
  * <spmf2004-lirc@yahoo.fr> in 2008.
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/bitmap.h>

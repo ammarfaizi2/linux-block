@@ -9,6 +9,7 @@
  * more details.
  *
  */
+#include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>

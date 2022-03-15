@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/fs_entry_types.h>

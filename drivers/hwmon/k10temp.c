@@ -13,6 +13,7 @@
  *   suggest that it provides reasonable temperature values.
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

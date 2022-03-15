@@ -17,6 +17,7 @@
  *  GNU General Public License for more details.
  */
 
+#include <linux/string.h>
 #include <linux/module.h>
 
 #include "../ni_stc.h"

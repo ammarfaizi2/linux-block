@@ -2,6 +2,7 @@
 /*
  * Copyright 2019 NXP
  */
+#include <linux/string.h>
 #include <kunit/test.h>
 #include <linux/pm_qos.h>
 

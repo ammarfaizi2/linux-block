@@ -24,6 +24,7 @@
  * tools/testing/selftests/kmod/kmod.sh --help
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>

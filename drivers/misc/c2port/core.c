@@ -6,6 +6,7 @@
  *  Copyright (c) 2007 Eurotech S.p.A. <info@eurotech.it>
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>

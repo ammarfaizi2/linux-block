@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Zodiac Inflight Innovations
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/jiffies.h>

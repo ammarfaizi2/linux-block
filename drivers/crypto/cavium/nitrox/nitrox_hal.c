@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/string.h>
 #include <linux/delay.h>
 
 #include "nitrox_dev.h"

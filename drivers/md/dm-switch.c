@@ -10,6 +10,7 @@
  * mapping representation such as dm-stripe.
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

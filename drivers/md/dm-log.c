@@ -5,6 +5,7 @@
  * This file is released under the LGPL.
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/kmod.h>
 #include <linux/fs_api.h>

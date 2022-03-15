@@ -6,6 +6,7 @@
  * Copyright 2014-2015 Linaro Ltd.
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/align.h>
 #include <linux/greybus.h>

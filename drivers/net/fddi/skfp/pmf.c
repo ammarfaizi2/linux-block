@@ -14,6 +14,8 @@
 	Parameter Management Frame processing for SMT 7.2
 */
 
+#include <linux/string.h>
+
 #include "h/types.h"
 #include "h/fddi.h"
 #include "h/smc.h"

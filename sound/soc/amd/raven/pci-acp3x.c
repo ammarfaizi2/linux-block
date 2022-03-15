@@ -4,6 +4,7 @@
 //
 //Copyright 2016 Advanced Micro Devices, Inc.
 
+#include <linux/string.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/pci.h>

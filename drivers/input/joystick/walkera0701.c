@@ -23,6 +23,7 @@
 
 #define NO_SYNC 25
 
+#include <linux/string.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/kernel.h>

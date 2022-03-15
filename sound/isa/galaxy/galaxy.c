@@ -4,6 +4,7 @@
  * Copyright (C) 2007,2010  Rene Herman
  */
 
+#include <linux/string.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

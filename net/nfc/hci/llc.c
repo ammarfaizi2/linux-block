@@ -5,6 +5,7 @@
  * Copyright (C) 2012  Intel Corporation. All rights reserved.
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <net/nfc/llc.h>
 

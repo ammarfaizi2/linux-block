@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Intel Corporation
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

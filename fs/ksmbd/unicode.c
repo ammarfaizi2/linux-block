@@ -6,6 +6,7 @@
  *   Modified by Steve French (sfrench@us.ibm.com)
  *   Modified by Namjae Jeon (linkinjeon@kernel.org)
  */
+#include <linux/string.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
 #include <asm/unaligned.h>

@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/export.h>
 #include <linux/moduleparam.h>

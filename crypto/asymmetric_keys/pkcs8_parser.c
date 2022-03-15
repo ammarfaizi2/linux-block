@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) "PKCS8: "fmt
+#include <linux/string.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

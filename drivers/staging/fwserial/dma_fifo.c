@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Peter Hurley <peter@hurleysoftware.com>
  */
 
+#include <linux/string.h>
 #include <linux/log2.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

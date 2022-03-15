@@ -9,6 +9,7 @@
  *  Most if code is ported from OSS/Lite.
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <sound/opl3.h>
 #include <linux/io.h>

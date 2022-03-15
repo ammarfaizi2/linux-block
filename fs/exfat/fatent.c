@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <asm/unaligned.h>

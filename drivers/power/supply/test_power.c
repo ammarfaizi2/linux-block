@@ -11,6 +11,7 @@
  * http://downloads.pylone.jp/src/virtual_battery/virtual_battery-0.0.1.tar.bz2
  */
 
+#include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/power_supply.h>

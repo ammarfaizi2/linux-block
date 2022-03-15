@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) "blacklist: "fmt
+#include <linux/string.h>
 #include <linux/cred.h>
 #include <linux/module.h>
 #include <linux/slab.h>

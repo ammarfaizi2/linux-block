@@ -10,6 +10,7 @@
 /*
  */
 
+#include <linux/string.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/module.h>

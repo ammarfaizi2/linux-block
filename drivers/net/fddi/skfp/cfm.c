@@ -29,6 +29,8 @@
  *		NONE 
  */
 
+#include <linux/string.h>
+
 #include "h/types.h"
 #include "h/fddi.h"
 #include "h/smc.h"

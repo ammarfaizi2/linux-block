@@ -26,6 +26,7 @@
  * for more details.
  *
  */
+#include <linux/string.h>
 #include <linux/math.h>
 #include <linux/ioport.h>
 #include <linux/capability.h>

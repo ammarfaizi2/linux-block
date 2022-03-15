@@ -9,6 +9,7 @@
  * [1] https://www.w3.org/Graphics/JPEG/itu-t81.pdf
  */
 
+#include <linux/string.h>
 #include <asm/unaligned.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

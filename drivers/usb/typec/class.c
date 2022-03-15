@@ -6,6 +6,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2011 Novell Inc.
  */
 
+#include <linux/string.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/fs_entry_types.h>

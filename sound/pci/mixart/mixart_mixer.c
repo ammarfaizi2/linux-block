@@ -7,6 +7,7 @@
  * Copyright (c) 2003 by Digigram <alsa@digigram.com>
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/time.h>
 #include <linux/interrupt.h>

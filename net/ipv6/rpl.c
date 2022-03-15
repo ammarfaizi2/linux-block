@@ -4,6 +4,7 @@
  * (C) 2020 Alexander Aring <alex.aring@gmail.com>
  */
 
+#include <linux/string.h>
 #include <net/ipv6.h>
 #include <net/rpl.h>
 

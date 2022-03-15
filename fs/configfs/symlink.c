@@ -8,6 +8,7 @@
  * configfs Copyright (C) 2005 Oracle.  All rights reserved.
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

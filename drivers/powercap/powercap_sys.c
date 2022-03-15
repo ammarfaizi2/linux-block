@@ -4,6 +4,7 @@
  * Copyright (c) 2013, Intel Corporation.
  */
 
+#include <linux/string.h>
 #include <linux/stat.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>

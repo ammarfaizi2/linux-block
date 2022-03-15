@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2016-2018 Intel Corporation. All rights reserved.
  */
+#include <linux/string.h>
 #include <linux/log2.h>
 #include <linux/dma-mapping.h>
 #include <linux/mei.h>

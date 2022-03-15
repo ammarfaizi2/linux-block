@@ -15,6 +15,7 @@
  * Copyright (c) 2018 William Whistler <wtbw@wtbw.co.uk>
  */
 
+#include <linux/string.h>
 #include <linux/device.h>
 #include <linux/hid.h>
 #include <linux/module.h>

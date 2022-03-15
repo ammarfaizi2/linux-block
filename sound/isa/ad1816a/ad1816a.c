@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/time.h>
 #include <linux/wait.h>

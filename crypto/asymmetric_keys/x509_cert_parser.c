@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) "X.509: "fmt
+#include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/slab.h>

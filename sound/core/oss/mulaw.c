@@ -21,6 +21,7 @@
  *
  */
   
+#include <linux/string.h>
 #include <linux/time.h>
 #include <sound/core.h>
 #include <sound/pcm.h>

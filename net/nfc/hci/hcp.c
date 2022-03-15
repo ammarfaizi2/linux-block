@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "hci: %s: " fmt, __func__
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/mutex_api.h>

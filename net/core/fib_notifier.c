@@ -1,3 +1,4 @@
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/notifier_api.h>

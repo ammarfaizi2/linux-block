@@ -7,6 +7,7 @@
  *	Copyright (c) 2012 Ondrej Zary <linux@rainbow-software.org>
  */
 
+#include <linux/string.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <sound/core.h>

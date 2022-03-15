@@ -4,6 +4,7 @@
  *  Routines for the GF1 MIDI interface - like UART 6850
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>

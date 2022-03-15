@@ -19,6 +19,7 @@
  * Copyright (C) 2020 Daniel W. S. Almeida
  */
 
+#include <linux/string.h>
 #include <linux/dev_printk.h>
 #include <linux/ratelimit.h>
 #include <linux/slab.h>

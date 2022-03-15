@@ -3,6 +3,7 @@
  * Copyright (C) 2016-2020 NVIDIA Corporation
  */
 
+#include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/device.h>

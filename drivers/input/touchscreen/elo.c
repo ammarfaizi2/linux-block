@@ -12,6 +12,7 @@
  * legacy 'E271-140' 4-byte protocol and Elo legacy 'E261-280' 3-byte protocol.
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

@@ -10,6 +10,7 @@
 /*
  */
 
+#include <linux/string.h>
 #include <linux/bitops.h>
 #include <linux/slab.h>
 #include <linux/module.h>

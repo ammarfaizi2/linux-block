@@ -17,6 +17,7 @@
  *      More documentation can be found in serial-u16550.txt.
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>

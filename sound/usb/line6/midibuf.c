@@ -5,6 +5,7 @@
  * Copyright (C) 2004-2010 Markus Grabner (grabner@icg.tugraz.at)
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 
 #include "midibuf.h"

@@ -11,6 +11,7 @@
  *
  *  Copyright (C) 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>

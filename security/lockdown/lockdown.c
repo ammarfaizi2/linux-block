@@ -10,6 +10,7 @@
  * 2 of the Licence, or (at your option) any later version.
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/fs.h>

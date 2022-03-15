@@ -6,6 +6,7 @@
 
 #define DSS_SUBSYS_NAME "APPLY"
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

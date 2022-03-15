@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Devin Heitmueller <dheitmueller@kernellabs.com>
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <media/dvb_frontend.h>

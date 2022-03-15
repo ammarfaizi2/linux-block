@@ -13,6 +13,7 @@
 
 #include "ctpcm.h"
 #include "cttimer.h"
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <sound/pcm.h>
 

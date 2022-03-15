@@ -5,6 +5,7 @@
 
 */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>

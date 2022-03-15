@@ -8,6 +8,7 @@
 #include "dm-space-map.h"
 #include "dm-transaction-manager.h"
 
+#include <linux/string.h>
 #include <linux/export.h>
 #include <linux/device-mapper.h>
 

@@ -8,6 +8,7 @@
 #include "dm-space-map-common.h"
 #include "dm-space-map-metadata.h"
 
+#include <linux/string.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/device-mapper.h>

@@ -7,6 +7,7 @@
 #include "dm-cache-policy-internal.h"
 #include "dm.h"
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/kmod.h>
 #include <linux/module.h>

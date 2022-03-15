@@ -5,6 +5,7 @@
  * Copyright 2020 Google LLC
  */
 
+#include <linux/string.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

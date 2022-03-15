@@ -6,6 +6,7 @@
  * Mimi Zohar <zohar@us.ibm.com>
  */
 
+#include <linux/string.h>
 #include <linux/xattr.h>
 #include <linux/evm.h>
 

@@ -6,6 +6,7 @@
  * (Borrowed code from kernel/configs.c)
  */
 
+#include <linux/string.h>
 #include <linux/kobject_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

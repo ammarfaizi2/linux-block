@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rbtree_api.h>

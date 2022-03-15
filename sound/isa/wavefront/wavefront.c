@@ -6,6 +6,7 @@
  *  Copyright (c) 1997-1999 by Paul Barton-Davis <pbd@op.net>
  */
 
+#include <linux/string.h>
 #include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

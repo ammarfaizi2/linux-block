@@ -8,6 +8,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

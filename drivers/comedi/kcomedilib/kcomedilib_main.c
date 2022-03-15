@@ -7,6 +7,7 @@
  * Copyright (C) 1997-2000 David A. Schleef <ds@schleef.org>
  */
 
+#include <linux/string.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>

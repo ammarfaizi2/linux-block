@@ -3,6 +3,7 @@
  *	vfsv0 quota IO operations on file
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

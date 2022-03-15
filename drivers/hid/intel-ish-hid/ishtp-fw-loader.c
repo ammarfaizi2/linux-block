@@ -5,6 +5,7 @@
  * Copyright (c) 2019, Intel Corporation.
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/dma-mapping.h>

@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/string.h>
 #include <linux/interrupt.h>
 #include <linux/idr_api.h>
 #include <linux/kernel.h>

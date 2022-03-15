@@ -5,6 +5,7 @@
  *	Copyright (c) 2006  Jochen Voss <voss@seehuhn.de>
  */      
 
+#include <linux/string.h>
 #include <sound/core.h>
 #include <sound/control.h>
 #include <sound/tlv.h>

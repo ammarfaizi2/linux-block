@@ -17,6 +17,7 @@
  * default behavior.
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/capability.h>
 #include <linux/pci.h>

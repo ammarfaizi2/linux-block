@@ -9,6 +9,7 @@
 #include "dm-btree-internal.h"
 #include "dm-persistent-data-internal.h"
 
+#include <linux/string.h>
 #include <linux/bitops.h>
 #include <linux/device-mapper.h>
 

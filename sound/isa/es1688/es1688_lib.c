@@ -4,6 +4,7 @@
  *  Routines for control of ESS ES1688/688/488 chip
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

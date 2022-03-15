@@ -53,6 +53,7 @@
  * Allen Hubbe <Allen.Hubbe@emc.com>
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

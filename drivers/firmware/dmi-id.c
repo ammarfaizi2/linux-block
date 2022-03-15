@@ -5,6 +5,7 @@
  * Copyright 2007, Lennart Poettering
  */
 
+#include <linux/string.h>
 #include <linux/kobject_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

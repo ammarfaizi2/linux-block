@@ -12,6 +12,7 @@
  *  for OSS/Free included in the kernel source as reference.
  */
 
+#include <linux/string.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/delay.h>

@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/dcache.h>
 #include <linux/xattr.h>

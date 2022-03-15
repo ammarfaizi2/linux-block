@@ -4,6 +4,7 @@
  * Copyright (C) 2018-2021 Linaro Ltd.
  */
 
+#include <linux/string.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>

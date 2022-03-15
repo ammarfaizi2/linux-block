@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Microsemi Corporation
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/io.h>
