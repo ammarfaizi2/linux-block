@@ -4,6 +4,7 @@
  * Copyright (C) 2008 David S. Miller <davem@davemloft.net>
  */
 
+#include <uapi/linux/signal.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/kgdb.h>
 #include <linux/kdebug.h>

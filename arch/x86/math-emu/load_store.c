@@ -19,6 +19,7 @@
  |    other processes using the emulator while swapping is in progress.      |
  +---------------------------------------------------------------------------*/
 
+#include <uapi/linux/signal.h>
 #include <linux/uaccess.h>
 
 #include "fpu_system.h"

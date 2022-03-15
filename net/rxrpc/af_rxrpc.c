@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <uapi/linux/signal.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/workqueue_api.h>
