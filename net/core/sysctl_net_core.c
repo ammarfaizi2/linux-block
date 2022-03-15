@@ -6,6 +6,7 @@
  * Added /proc/sys/net/core directory entry (empty =) ). [MS]
  */
 
+#include <linux/filter_api.h>
 #include <linux/cred.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

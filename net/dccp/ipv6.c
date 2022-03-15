@@ -8,6 +8,7 @@
  *	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
  */
 
+#include <linux/filter_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/random.h>

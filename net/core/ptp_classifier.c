@@ -95,6 +95,7 @@
  *   drop_ieee1588: ret #0x0       ; PTP_CLASS_NONE
  */
 
+#include <linux/filter_api.h>
 #include <linux/skbuff.h>
 #include <linux/filter.h>
 #include <linux/ptp_classify.h>

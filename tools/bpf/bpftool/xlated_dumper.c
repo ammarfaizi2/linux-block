@@ -2,6 +2,7 @@
 /* Copyright (C) 2018 Netronome Systems, Inc. */
 
 #define _GNU_SOURCE
+#include <linux/filter_api.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

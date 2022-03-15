@@ -6,6 +6,7 @@
  * Copyright (c) 2011 Mircea Gherzan <mgherzan@gmail.com>
  */
 
+#include <linux/filter_api.h>
 #include <linux/bpf.h>
 #include <linux/bitops.h>
 #include <linux/compiler.h>

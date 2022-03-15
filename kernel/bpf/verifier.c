@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Facebook
  * Copyright (c) 2018 Covalent IO, Inc. http://covalent.io
  */
+#include <linux/filter_api.h>
 #include <linux/capability.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/bitmap.h>

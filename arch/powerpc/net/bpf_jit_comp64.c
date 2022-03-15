@@ -7,6 +7,7 @@
  *
  * Based on the powerpc classic BPF JIT compiler by Matt Evans
  */
+#include <linux/filter_api.h>
 #include <linux/moduleloader.h>
 #include <asm/cacheflush.h>
 #include <asm/asm-compat.h>

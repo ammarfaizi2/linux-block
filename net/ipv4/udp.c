@@ -74,6 +74,7 @@
 
 #define pr_fmt(fmt) "UDP: " fmt
 
+#include <linux/filter_api.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/filter_api.h>
 #include <linux/bpf.h>
 #include <linux/filter.h>
 #include "bpf_jit.h"
