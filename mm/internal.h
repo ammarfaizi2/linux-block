@@ -7,6 +7,7 @@
 #ifndef __MM_INTERNAL_H
 #define __MM_INTERNAL_H
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
