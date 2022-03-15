@@ -10,6 +10,7 @@
 #ifndef _RADIO_ISA_H_
 #define _RADIO_ISA_H_
 
+#include <linux/module.h>
 #include <linux/isa.h>
 #include <linux/pnp.h>
 #include <linux/videodev2.h>
