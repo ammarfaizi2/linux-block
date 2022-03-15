@@ -2,6 +2,7 @@
 #ifndef _UAPI_IF_TUNNEL_H_
 #define _UAPI_IF_TUNNEL_H_
 
+#include <uapi/linux/sockios.h>
 #include <linux/types.h>
 #include <linux/if.h>
 #include <linux/ip.h>

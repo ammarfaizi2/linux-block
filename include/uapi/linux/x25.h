@@ -12,6 +12,7 @@
 #ifndef	X25_KERNEL_H
 #define	X25_KERNEL_H
 
+#include <uapi/linux/sockios.h>
 #include <linux/types.h>
 #include <linux/socket.h>
 
