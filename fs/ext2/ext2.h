@@ -11,6 +11,7 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
+#include <linux/stat.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_types_sb.h>
