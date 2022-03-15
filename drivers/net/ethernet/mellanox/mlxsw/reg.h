@@ -4,6 +4,7 @@
 #ifndef _MLXSW_REG_H
 #define _MLXSW_REG_H
 
+#include <linux/math.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

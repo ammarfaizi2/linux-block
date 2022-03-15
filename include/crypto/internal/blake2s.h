@@ -7,6 +7,7 @@
 #ifndef _CRYPTO_INTERNAL_BLAKE2S_H
 #define _CRYPTO_INTERNAL_BLAKE2S_H
 
+#include <linux/math.h>
 #include <asm/byteorder.h>
 #include <crypto/blake2s.h>
 #include <crypto/internal/hash.h>

@@ -4,6 +4,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/math.h>
 #include <linux/align.h>
 #include <linux/bitops.h>
 #include <linux/find.h>

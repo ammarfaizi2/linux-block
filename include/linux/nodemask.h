@@ -90,6 +90,7 @@
  * for such situations. See below and CPUMASK_ALLOC also.
  */
 
+#include <linux/math.h>
 #include <linux/threads.h>
 #include <linux/bitmap.h>
 #include <linux/minmax.h>

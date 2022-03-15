@@ -62,6 +62,7 @@ extern const char *acpi_gbl_ptyp_decode[];
  */
 #ifdef ACPI_ASL_COMPILER
 
+#include <linux/math.h>
 #include <stdio.h>
 
 #define ACPI_MSG_REDIRECT_BEGIN \
