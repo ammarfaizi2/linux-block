@@ -10,6 +10,7 @@
 #ifndef HCI_H
 #define HCI_H
 
+#include <linux/slab.h>
 #include <linux/types.h>
 
 /* Handy logging macro to save on line length */
