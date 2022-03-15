@@ -32,6 +32,7 @@
  * bottom half waiting state.
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 1997 Paul Mackerras (paulus@samba.org)
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

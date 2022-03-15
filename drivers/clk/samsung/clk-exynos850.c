@@ -6,6 +6,7 @@
  * Common Clock Framework support for Exynos850 SoC.
  */
 
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/of.h>

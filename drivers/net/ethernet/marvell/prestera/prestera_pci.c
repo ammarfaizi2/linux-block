@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2019-2020 Marvell International Ltd. All rights reserved */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

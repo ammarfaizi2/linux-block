@@ -5,6 +5,7 @@
  * Scaling algorithms were contributed by Dzung Hoang <dzung.hoang@nxp.com>
  */
 
+#include <linux/io.h>
 #include <linux/device.h>
 #include <linux/slab.h>
 

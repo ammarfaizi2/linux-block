@@ -7,6 +7,7 @@
 
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 
 #include "ivtv-driver.h"

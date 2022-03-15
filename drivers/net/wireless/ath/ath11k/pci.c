@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>

@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/export.h>
 #include <linux/io-mapping.h>

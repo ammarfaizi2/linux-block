@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Intel Corporation
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
+#include <linux/io.h>
 #include <asm/iomap.h>
 #include <asm-generic/pci_iomap.h>
 

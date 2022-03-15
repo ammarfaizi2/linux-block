@@ -5,6 +5,7 @@
  * Copyright (c) 2016 HiSilicon Technologies Co., Ltd.
  */
 
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/iopoll.h>
 #include <linux/kernel.h>

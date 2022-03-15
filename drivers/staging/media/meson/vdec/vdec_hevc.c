@@ -6,6 +6,7 @@
  * HEVC, VP9
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>

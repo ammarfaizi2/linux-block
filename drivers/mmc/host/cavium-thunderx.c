@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2016 Cavium Inc.
  */
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>

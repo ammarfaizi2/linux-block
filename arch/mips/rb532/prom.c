@@ -9,6 +9,7 @@
  *			Florian Fainelli <florian@openwrt.org>
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/mm.h>
 #include <linux/export.h>

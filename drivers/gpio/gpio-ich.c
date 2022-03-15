@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Extreme Engineering Solutions.
  */
 
+#include <linux/io.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>
 #include <linux/ioport.h>

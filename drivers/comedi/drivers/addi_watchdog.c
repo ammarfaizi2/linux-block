@@ -9,6 +9,7 @@
  * Copyright (C) 1998 David A. Schleef <ds@schleef.org>
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 #include "addi_tcw.h"

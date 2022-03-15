@@ -7,6 +7,7 @@
  *  Copyright (C) 1995  Hamish Macdonald
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/module.h>
 #include <asm/cacheflush.h>

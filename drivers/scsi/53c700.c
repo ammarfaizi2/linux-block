@@ -101,6 +101,7 @@
  * */
 #define NCR_700_VERSION "2.8"
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

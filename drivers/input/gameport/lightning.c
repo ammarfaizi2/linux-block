@@ -10,6 +10,7 @@
 /*
  */
 
+#include <linux/io.h>
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

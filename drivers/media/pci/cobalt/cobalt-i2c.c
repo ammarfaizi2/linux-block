@@ -8,6 +8,7 @@
  *  All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/sched/cond_resched.h>

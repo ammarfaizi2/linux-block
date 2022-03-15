@@ -9,6 +9,7 @@
  * Copyright (C) 2011 Texas Instruments
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

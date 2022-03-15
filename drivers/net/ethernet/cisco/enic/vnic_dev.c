@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

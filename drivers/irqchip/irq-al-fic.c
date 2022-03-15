@@ -3,6 +3,7 @@
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  */
 
+#include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/irq.h>

@@ -37,6 +37,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/comedi/comedidev.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

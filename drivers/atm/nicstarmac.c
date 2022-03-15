@@ -8,6 +8,7 @@
  * Read this ForeRunner's MAC address from eprom/eeprom
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 
 typedef void __iomem *virt_addr_t;

@@ -22,6 +22,7 @@
  *	See if we need to kill the FIFO for ATAPI
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

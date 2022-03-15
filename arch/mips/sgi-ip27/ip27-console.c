@@ -6,6 +6,7 @@
  * Copyright (C) 2001, 2002 Ralf Baechle
  */
 
+#include <linux/io.h>
 #include <asm/page.h>
 #include <asm/setup.h>
 #include <asm/sn/addrs.h>

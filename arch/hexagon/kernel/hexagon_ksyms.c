@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <asm/hexagon_vm.h>
 #include <asm/io.h>

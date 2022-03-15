@@ -4,6 +4,7 @@
  * Copyright (C) 2006-2007, Advanced Micro Devices,Inc.
  */
 
+#include <linux/io.h>
 #include <asm/msr.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

@@ -4,6 +4,7 @@
  * Author: Weiyi Lu <weiyi.lu@mediatek.com>
  */
 
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/mfd/syscon.h>

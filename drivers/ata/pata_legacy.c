@@ -44,6 +44,7 @@
  *  change.
  */
 
+#include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/async.h>
 #include <linux/kernel.h>

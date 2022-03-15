@@ -6,6 +6,7 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/acpi.h>

@@ -8,6 +8,7 @@
  * This driver was based on: drivers/watchdog/softdog.c
  */
 
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/reset.h>
 #include <linux/module.h>

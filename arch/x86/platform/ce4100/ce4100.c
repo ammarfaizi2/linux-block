@@ -4,6 +4,7 @@
  *
  * (C) Copyright 2010 Intel Corporation
  */
+#include <linux/io.h>
 #include <asm/fixmap.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

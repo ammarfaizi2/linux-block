@@ -10,6 +10,7 @@
  * Copyright (c) Broadcom Corp, 2012
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bcma/bcma.h>
 #include <linux/delay.h>

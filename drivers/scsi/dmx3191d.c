@@ -8,6 +8,7 @@
 
 */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>

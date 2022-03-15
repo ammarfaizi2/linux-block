@@ -4,6 +4,7 @@
  * Authors: Fabien Dessenne <fabien.dessenne@st.com> for STMicroelectronics.
  */
 
+#include <linux/io.h>
 #include <linux/debugfs.h>
 #include <linux/pm_runtime.h>
 

@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2016, Intel Corporation.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>

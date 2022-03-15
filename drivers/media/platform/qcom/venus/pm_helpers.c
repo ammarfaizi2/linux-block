@@ -4,6 +4,7 @@
  *
  * Author: Stanimir Varbanov <stanimir.varbanov@linaro.org>
  */
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/clk.h>

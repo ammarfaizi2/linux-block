@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Felix Fietkau <nbd@openwrt.org>
  * Copyright (C) 2007 Eugene Konev <ejka@openwrt.org>
  */
+#include <linux/io.h>
 #include <linux/memblock.h>
 #include <linux/init.h>
 #include <linux/mm.h>

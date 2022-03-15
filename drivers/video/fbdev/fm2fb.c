@@ -14,6 +14,7 @@
  *  more details.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/fb.h>

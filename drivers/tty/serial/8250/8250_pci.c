@@ -7,6 +7,7 @@
  *  Copyright (C) 2001 Russell King, All Rights Reserved.
  */
 #undef DEBUG
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/pci.h>

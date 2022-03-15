@@ -5,6 +5,7 @@
  * Copyright Benjamin Herrenschmidt & Gavin Shan, IBM Corporation 2013.
  */
 
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/atomic.h>
 #include <linux/debugfs.h>

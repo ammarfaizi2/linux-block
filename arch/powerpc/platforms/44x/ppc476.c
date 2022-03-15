@@ -17,6 +17,7 @@
  *    Copyright © 2011 David Kliekamp IBM Corporation
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/of.h>
 #include <linux/of_platform.h>

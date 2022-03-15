@@ -8,6 +8,7 @@
  *  Maintained by Marc Zyngier <maz@misterjones.org>
  */
 
+#include <linux/io.h>
 #include <linux/cpufreq.h>
 #include <linux/interrupt.h>
 #include <linux/leds.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Texas Instruments, Inc. https://www.ti.com/
  */
 
+#include <linux/io.h>
 #include <linux/pm.h>
 #include <linux/suspend.h>
 #include <linux/module.h>

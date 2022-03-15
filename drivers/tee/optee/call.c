@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015-2021, Linaro Limited
  */
+#include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/device.h>

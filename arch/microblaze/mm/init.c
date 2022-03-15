@@ -7,6 +7,7 @@
  * for more details.
  */
 
+#include <linux/io.h>
 #include <linux/dma-map-ops.h>
 #include <linux/memblock.h>
 #include <linux/init.h>

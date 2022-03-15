@@ -48,6 +48,7 @@
  * Xiangliang Yu <Xiangliang.Yu@amd.com>
  */
 
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>

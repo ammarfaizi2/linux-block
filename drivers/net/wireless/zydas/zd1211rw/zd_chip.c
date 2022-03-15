@@ -10,6 +10,7 @@
  * Legge sent me a ZD1211B device. Thank you Tim. -- Uli
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

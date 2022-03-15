@@ -8,6 +8,7 @@
  * that made this driver possible.
  */
 
+#include <linux/io.h>
 #include <linux/tifm.h>
 #include <linux/memstick.h>
 #include <linux/highmem.h>

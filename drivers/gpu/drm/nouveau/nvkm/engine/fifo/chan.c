@@ -23,6 +23,7 @@
  */
 #include "chan.h"
 
+#include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <core/client.h>

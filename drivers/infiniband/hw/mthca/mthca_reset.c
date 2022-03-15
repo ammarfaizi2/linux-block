@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

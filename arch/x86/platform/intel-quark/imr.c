@@ -25,6 +25,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/cpu_device_id.h>
 #include <asm/imr.h>

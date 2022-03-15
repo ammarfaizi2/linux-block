@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/io.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/libfdt.h>

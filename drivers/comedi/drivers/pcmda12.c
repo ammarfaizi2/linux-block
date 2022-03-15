@@ -39,6 +39,7 @@
  *   [1] - Do Simultaneous Xfer (see description)
  */
 
+#include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>

@@ -46,6 +46,7 @@
  *
  ************************************************************************
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

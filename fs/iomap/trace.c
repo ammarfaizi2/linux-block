@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2019 Christoph Hellwig
  */
+#include <linux/io.h>
 #include <linux/iomap.h>
 
 /*

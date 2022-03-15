@@ -6,6 +6,7 @@
  * Author: Miquel RAYNAL <miquel.raynal@bootlin.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

@@ -18,6 +18,8 @@
 *******************************************************************************/
 #define SOURCEFILE_NAME "hpi6205.c"
 
+#include <linux/io.h>
+
 #include "hpi_internal.h"
 #include "hpimsginit.h"
 #include "hpidebug.h"

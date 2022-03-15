@@ -23,6 +23,7 @@
  * See Documentation/scsi/g_NCR5380.rst for more info.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <asm/io.h>

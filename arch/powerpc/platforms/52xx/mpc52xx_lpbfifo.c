@@ -8,6 +8,7 @@
  * - Add support for multiple requests to be queued.
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/of.h>

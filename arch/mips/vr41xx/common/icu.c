@@ -15,6 +15,7 @@
  *  Yoichi Yuasa <yuasa@linux-mips.org>
  *  - Coped with INTASSIGN of NEC VR4133.
  */
+#include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <asm/cpu-type.h>
 #include <linux/errno.h>

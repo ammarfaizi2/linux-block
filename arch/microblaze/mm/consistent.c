@@ -6,6 +6,7 @@
  * Copyright (C) 2005 John Williams <jwilliams@itee.uq.edu.au>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

@@ -8,6 +8,7 @@
  *            Xiao Feng Ren <renxiaof@linux.vnet.ibm.com>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/ratelimit.h>
 #include <linux/mm.h>

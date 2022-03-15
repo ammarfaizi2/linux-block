@@ -5,6 +5,7 @@
  *  Copyright © 2016 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/mtd/rawnand.h>
 #include <linux/of_gpio.h>

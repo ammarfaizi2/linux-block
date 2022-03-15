@@ -2,6 +2,7 @@
 // Copyright (C) 2012 ARM Limited
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/cache.h>
 #include <linux/clocksource.h>

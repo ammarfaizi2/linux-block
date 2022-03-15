@@ -12,6 +12,7 @@
  * Separated FPGA interrupts from innovator1510.c and cleaned up for 2.6
  * Copyright (C) 2004 Nokia Corporation by Tony Lindrgen <tony@atomide.com>
  */
+#include <linux/io.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

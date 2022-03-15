@@ -9,6 +9,7 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/io.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 

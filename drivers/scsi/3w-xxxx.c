@@ -196,6 +196,7 @@
    1.26.02.003 - Force 60 second timeout default.
 */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>

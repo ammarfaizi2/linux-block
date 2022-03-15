@@ -43,6 +43,7 @@
  *	   1	-10.1V .. +10.1V
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 #include <linux/delay.h>

@@ -161,6 +161,7 @@
  * ioctlsize            - Initial size of the IOCTL buffer
  */
 
+#include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <asm/io.h>

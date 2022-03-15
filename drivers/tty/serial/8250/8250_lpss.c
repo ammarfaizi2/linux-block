@@ -6,6 +6,7 @@
  * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/module.h>

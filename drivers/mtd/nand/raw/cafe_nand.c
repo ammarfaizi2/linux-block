@@ -11,6 +11,7 @@
 
 #define DEBUG
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/device.h>
 #undef DEBUG

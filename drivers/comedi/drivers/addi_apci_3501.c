@@ -40,6 +40,7 @@
  * The watchdog/timer subdevice is not currently supported.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pci.h>
 

@@ -22,6 +22,7 @@
  * Goutham Rao: <goutham.rao@intel.com>
  *	Skip non-WB memory and ignore empty memory ranges.
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/memblock.h>

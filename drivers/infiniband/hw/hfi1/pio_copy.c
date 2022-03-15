@@ -3,6 +3,8 @@
  * Copyright(c) 2015, 2016 Intel Corporation.
  */
 
+#include <linux/io.h>
+
 #include "hfi.h"
 
 /* additive distance between non-SOP and SOP space */

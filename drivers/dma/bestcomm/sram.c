@@ -11,6 +11,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/io.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2020 Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>

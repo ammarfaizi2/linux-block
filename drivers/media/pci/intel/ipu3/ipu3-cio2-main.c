@@ -11,6 +11,7 @@
  * et al.
  */
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/fs.h>
 #include <linux/export.h>

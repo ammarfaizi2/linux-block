@@ -24,6 +24,7 @@
 #define nv40_instmem(p) container_of((p), struct nv40_instmem, base)
 #include "priv.h"
 
+#include <linux/io.h>
 #include <core/ramht.h>
 #include <engine/gr/nv40.h>
 

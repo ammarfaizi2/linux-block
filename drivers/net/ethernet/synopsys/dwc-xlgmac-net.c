@@ -15,6 +15,7 @@
  * in the SOFTWARE may be the trademarks of their respective owners.
  */
 
+#include <linux/io.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

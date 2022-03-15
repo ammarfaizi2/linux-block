@@ -39,6 +39,7 @@
 
 /* =============== End of user configurable parameters ============== */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/errno.h>

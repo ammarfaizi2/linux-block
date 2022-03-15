@@ -12,6 +12,7 @@
  * power domain.  We use the Timer 4 for our always-on clock
  * source on DB8500.
  */
+#include <linux/io.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/clockchips.h>

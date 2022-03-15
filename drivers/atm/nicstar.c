@@ -33,6 +33,7 @@
 
 /* Header files */
 
+#include <linux/io.h>
 #include <linux/idr_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>

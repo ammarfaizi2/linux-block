@@ -3,6 +3,7 @@
 
 #include "tsnep.h"
 
+#include <linux/io.h>
 #include <net/pkt_sched.h>
 
 /* save one operation at the end for additional operation at list change */

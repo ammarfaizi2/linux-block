@@ -93,6 +93,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

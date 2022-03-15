@@ -3,6 +3,7 @@
  * SMC 37C93X initialization code
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 
 #include <linux/mm.h>

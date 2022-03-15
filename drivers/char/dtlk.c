@@ -48,6 +48,7 @@
 
  */
 
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 

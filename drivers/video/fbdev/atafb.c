@@ -47,6 +47,7 @@
 #define ATAFB_EXT
 #define ATAFB_FALCON
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/string.h>

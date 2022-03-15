@@ -4,6 +4,7 @@
 
 #define pr_fmt(fmt) "clk-ast2600: " fmt
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/mfd/syscon.h>

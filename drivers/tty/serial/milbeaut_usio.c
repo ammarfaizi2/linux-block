@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Socionext Inc.
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

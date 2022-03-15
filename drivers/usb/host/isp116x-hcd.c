@@ -56,6 +56,7 @@
 /* enqueuing/finishing log of urbs */
 //#define URB_TRACE
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/align.h>

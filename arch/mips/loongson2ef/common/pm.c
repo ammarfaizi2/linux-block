@@ -5,6 +5,7 @@
  *  Copyright (C) 2009 Lemote Inc.
  *  Author: Wu Zhangjin <wuzhangjin@gmail.com>
  */
+#include <linux/io.h>
 #include <linux/suspend.h>
 #include <linux/interrupt.h>
 #include <linux/pm.h>

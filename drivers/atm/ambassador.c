@@ -7,6 +7,7 @@
 
 /* * dedicated to the memory of Graham Gordon 1971-1998 * */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

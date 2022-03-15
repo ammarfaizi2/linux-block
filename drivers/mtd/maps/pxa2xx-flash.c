@@ -6,6 +6,7 @@
  * Copyright:	(C) 2001 MontaVista Software Inc.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/slab.h>

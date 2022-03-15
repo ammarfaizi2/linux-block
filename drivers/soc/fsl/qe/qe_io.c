@@ -10,6 +10,7 @@
  * Based on code from Shlomi Gridish <gridish@freescale.com>
  */
 
+#include <linux/io.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

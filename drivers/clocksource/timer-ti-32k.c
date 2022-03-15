@@ -24,6 +24,7 @@
  * Copyright (C) 2015 Texas Instruments Incorporated - https://www.ti.com
  */
 
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/time.h>

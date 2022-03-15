@@ -8,6 +8,7 @@
  *    Copyright (C) 2009 Integrated Device Technology, Inc.
  */
 
+#include <linux/io.h>
 #include <linux/idr_api.h>
 #include <linux/hardirq.h>
 #include <linux/fs_api.h>

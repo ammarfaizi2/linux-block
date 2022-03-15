@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

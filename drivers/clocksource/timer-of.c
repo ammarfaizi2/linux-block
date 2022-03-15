@@ -4,6 +4,7 @@
  *
  * Author: Daniel Lezcano <daniel.lezcano@linaro.org>
  */
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/of.h>

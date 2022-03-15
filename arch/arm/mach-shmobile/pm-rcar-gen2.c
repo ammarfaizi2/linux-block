@@ -7,6 +7,7 @@
  * Copyright (C) 2011  Magnus Damm
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/ioport.h>

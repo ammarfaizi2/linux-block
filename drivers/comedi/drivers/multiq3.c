@@ -25,6 +25,7 @@
  *	  4 = 8 inputs (Model -8E)
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 

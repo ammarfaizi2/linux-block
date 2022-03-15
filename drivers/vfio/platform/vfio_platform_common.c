@@ -6,6 +6,7 @@
 
 #define dev_fmt(fmt)	"VFIO: " fmt
 
+#include <linux/io.h>
 #include <linux/device.h>
 #include <linux/acpi.h>
 #include <linux/iommu.h>

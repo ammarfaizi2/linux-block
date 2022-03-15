@@ -106,6 +106,7 @@
  * preemption, but just sampling the new tail pointer).
  *
  */
+#include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/interrupt.h>

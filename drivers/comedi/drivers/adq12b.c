@@ -46,6 +46,7 @@
  * - The PACER is not supported in this version
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/comedi/comedidev.h>

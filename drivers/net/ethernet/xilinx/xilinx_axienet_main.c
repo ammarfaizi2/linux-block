@@ -22,6 +22,7 @@
  *  - Add support for extended VLAN support.
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

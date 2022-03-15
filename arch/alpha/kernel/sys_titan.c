@@ -13,6 +13,7 @@
  *	Granite
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

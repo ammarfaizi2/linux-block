@@ -14,6 +14,7 @@
  *  Michael S. Tsirkin <mst@redhat.com>
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 
 #include "linux/virtio_pci_legacy.h"

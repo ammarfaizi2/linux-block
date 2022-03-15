@@ -4,6 +4,7 @@
  *  Rewritten from the dovefb driver, and Armada510 manuals.
  */
 
+#include <linux/io.h>
 #include <linux/debugfs.h>
 #include <linux/ctype.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * DaVinci DA850 AHCI SATA platform driver
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pm.h>

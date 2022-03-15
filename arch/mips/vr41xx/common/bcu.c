@@ -15,6 +15,7 @@
  *  Yoichi Yuasa <yuasa@linux-mips.org>
  *  - Added support for NEC VR4133.
  */
+#include <linux/io.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/smp.h>

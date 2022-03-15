@@ -4,6 +4,7 @@
  *
  *  Todo: - add support for the OF persistent properties
  */
+#include <linux/io.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/stddef.h>

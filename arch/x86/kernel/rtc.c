@@ -2,6 +2,7 @@
 /*
  * RTC related functions
  */
+#include <linux/io.h>
 #include <linux/platform_device.h>
 #include <linux/mc146818rtc.h>
 #include <linux/acpi.h>

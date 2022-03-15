@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2010 OKI SEMICONDUCTOR Co., LTD.
  */
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

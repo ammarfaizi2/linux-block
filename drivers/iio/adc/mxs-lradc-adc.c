@@ -10,6 +10,7 @@
  *  Ksenija Stanojevic <ksenija.stanojevic@gmail.com>
  */
 
+#include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/completion.h>
 #include <linux/device.h>

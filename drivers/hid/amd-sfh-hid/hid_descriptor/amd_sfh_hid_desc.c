@@ -7,6 +7,7 @@
  *	     Basavaraj Natikar <Basavaraj.Natikar@amd.com>
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/slab.h>

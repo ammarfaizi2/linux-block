@@ -19,6 +19,7 @@
  * time only these three are supported.
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>
 #include <linux/pm_runtime.h>

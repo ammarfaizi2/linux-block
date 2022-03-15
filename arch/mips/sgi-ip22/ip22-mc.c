@@ -8,6 +8,7 @@
  * Copyright (C) 2004 Peter Fuerst    (pf@net.alphadv.de) - IP28
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

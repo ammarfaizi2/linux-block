@@ -35,6 +35,7 @@
 
 #define MAX_DEVICE_COUNT 4
 
+#include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

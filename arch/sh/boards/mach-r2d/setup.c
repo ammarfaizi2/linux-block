@@ -5,6 +5,7 @@
  * Copyright (C) 2002 - 2006 Atom Create Engineering Co., Ltd.
  * Copyright (C) 2004 - 2007 Paul Mundt
  */
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/mtd/mtd.h>

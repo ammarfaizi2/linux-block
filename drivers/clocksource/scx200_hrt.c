@@ -12,6 +12,7 @@
  * Based on work by John Stultz, and Ted Phelps (in a 2.6.12-rc6 patch)
  */
 
+#include <linux/io.h>
 #include <linux/clocksource.h>
 #include <linux/init.h>
 #include <linux/module.h>

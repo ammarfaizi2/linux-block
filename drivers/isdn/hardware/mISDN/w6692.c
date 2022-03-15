@@ -8,6 +8,7 @@
  * Copyright 2009  by Karsten Keil <keil@isdn4linux.de>
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/pci.h>

@@ -8,6 +8,8 @@
  *
  */
 
+#include <linux/io.h>
+
 #include "ifcvf_base.h"
 
 static inline u8 ifc_ioread8(u8 __iomem *addr)

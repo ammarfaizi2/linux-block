@@ -5,6 +5,7 @@
  * Authors: David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/intel-iommu.h>

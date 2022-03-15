@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/crc32.h>
 #include <linux/atomic_api.h>

@@ -39,6 +39,7 @@
  *   [8] - DAC 1 encoding (same as DAC 0)
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

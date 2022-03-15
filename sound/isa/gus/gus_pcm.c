@@ -10,6 +10,7 @@
  *  chip doesn't support autoinit DMA.
  */
 
+#include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <asm/dma.h>
 #include <linux/slab.h>

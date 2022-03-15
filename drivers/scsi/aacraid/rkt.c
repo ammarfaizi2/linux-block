@@ -16,6 +16,7 @@
  * Abstract: Hardware miniport for Drawbridge specific hardware functions.
  */
 
+#include <linux/io.h>
 #include <linux/blkdev.h>
 
 #include <scsi/scsi_host.h>

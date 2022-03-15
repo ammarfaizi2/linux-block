@@ -8,6 +8,7 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

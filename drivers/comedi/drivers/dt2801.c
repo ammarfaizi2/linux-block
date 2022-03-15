@@ -30,6 +30,7 @@
  * [5] - D/A 1 range (same choices)
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 #include <linux/delay.h>

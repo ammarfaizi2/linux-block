@@ -16,6 +16,7 @@
  * Author: Alessandro Zummo <a.zummo@towertech.it>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

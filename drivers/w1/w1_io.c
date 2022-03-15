@@ -3,6 +3,7 @@
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/io.h>
 #include <linux/export.h>
 #include <asm/io.h>
 

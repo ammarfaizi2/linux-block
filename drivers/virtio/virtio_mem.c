@@ -7,6 +7,7 @@
  * Author(s): David Hildenbrand <david@redhat.com>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>

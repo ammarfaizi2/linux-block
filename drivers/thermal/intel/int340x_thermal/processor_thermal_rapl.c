@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Intel Corporation.
  */
 
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/kernel.h>

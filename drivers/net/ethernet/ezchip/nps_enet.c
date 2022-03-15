@@ -3,6 +3,7 @@
  * Copyright(c) 2015 EZchip Technologies.
  */
 
+#include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>

@@ -36,6 +36,7 @@
  * of the RS600 GART block).
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/io-64-nonatomic-lo-hi.h>

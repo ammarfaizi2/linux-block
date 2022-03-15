@@ -58,6 +58,7 @@
  *	 - Grand cleanup and Linuxisation
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/delay.h>

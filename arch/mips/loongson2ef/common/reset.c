@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Lemote, Inc.
  * Author: Zhangjin Wu, wuzhangjin@gmail.com
  */
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/pm.h>
 

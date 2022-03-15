@@ -27,6 +27,7 @@
  * Based on gamecube_time.c from Torben Nielsen.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>

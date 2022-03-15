@@ -16,6 +16,7 @@
  *	timing value tweaking so it looks good on every monitor in every mode
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/fb.h>

@@ -7,6 +7,7 @@
  *     Tushar Dave <tushar.n.dave@intel.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/acpi.h>

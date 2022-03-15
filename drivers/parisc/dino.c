@@ -40,6 +40,7 @@
 **       for PCI drivers devices which implement/use MMIO registers.
 */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

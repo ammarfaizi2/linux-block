@@ -7,6 +7,7 @@
 
   Author: Rayagond Kokatanur <rayagond@vayavyalabs.com>
 *******************************************************************************/
+#include <linux/io.h>
 #include <linux/fs_api.h>
 
 #include "stmmac.h"

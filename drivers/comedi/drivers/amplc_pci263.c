@@ -23,6 +23,7 @@
  * The state of the outputs can be read.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pci.h>
 

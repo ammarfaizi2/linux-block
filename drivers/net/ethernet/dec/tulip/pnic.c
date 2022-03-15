@@ -10,6 +10,7 @@
 	Please submit bugs to http://bugzilla.kernel.org/ .
 */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

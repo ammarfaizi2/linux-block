@@ -27,6 +27,7 @@
 
 #define DEVICE_NAME "Z2RAM"
 
+#include <linux/io.h>
 #include <linux/major.h>
 #include <linux/vmalloc.h>
 #include <linux/init.h>

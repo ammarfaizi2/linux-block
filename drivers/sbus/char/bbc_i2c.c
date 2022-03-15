@@ -5,6 +5,7 @@
  * Copyright (C) 2001, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

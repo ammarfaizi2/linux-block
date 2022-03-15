@@ -17,6 +17,7 @@
  * IRQ event to the next one.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/serial_reg.h>

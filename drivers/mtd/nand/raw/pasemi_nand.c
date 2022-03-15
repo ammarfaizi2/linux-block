@@ -10,6 +10,7 @@
 
 #undef DEBUG
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/slab.h>
 #include <linux/module.h>

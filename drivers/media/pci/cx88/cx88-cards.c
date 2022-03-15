@@ -10,6 +10,7 @@
 #include "tea5767.h"
 #include "xc4000.h"
 
+#include <linux/io.h>
 #include <linux/i2c.h>
 #include <linux/init.h>
 #include <linux/module.h>

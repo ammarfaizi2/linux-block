@@ -40,6 +40,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/hardirq.h>
 #include <linux/bitmap.h>

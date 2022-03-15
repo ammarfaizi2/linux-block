@@ -40,6 +40,7 @@
  * Status: works
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pcmcia.h>
 

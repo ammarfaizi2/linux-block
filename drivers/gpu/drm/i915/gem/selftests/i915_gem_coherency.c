@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/prime_numbers.h>
 

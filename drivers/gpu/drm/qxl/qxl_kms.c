@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/io-mapping.h>
 #include <linux/pci.h>

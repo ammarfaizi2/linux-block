@@ -48,6 +48,7 @@
 
 ******************************************************************************/
 
+#include <linux/io.h>
 #include <linux/compat.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

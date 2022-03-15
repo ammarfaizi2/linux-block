@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2021 Gerhard Engleder <gerhard@engleder-embedded.com> */
 
+#include <linux/io.h>
+
 #include "tsnep.h"
 
 static const char tsnep_stats_strings[][ETH_GSTRING_LEN] = {

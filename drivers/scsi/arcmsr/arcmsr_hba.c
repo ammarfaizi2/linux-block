@@ -44,6 +44,7 @@
 **     Firmware Specification, see Documentation/scsi/arcmsr_spec.rst
 *******************************************************************************
 */
+#include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

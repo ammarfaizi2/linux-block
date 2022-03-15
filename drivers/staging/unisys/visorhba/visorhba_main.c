@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/idr_api.h>
 #include <linux/highmem.h>

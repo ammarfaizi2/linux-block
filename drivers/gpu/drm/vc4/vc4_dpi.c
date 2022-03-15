@@ -11,6 +11,7 @@
  * ALT2 function.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <asm/io.h>

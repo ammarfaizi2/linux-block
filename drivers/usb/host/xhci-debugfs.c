@@ -7,6 +7,7 @@
  * Author: Lu Baolu <baolu.lu@linux.intel.com>
  */
 
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/slab.h>

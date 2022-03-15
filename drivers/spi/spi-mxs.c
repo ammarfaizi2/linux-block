@@ -18,6 +18,7 @@
 // Based on spi-stmp.c, which is:
 // Author: Dmitry Pervushin <dimka@embeddedalley.com>
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/ioport.h>
 #include <linux/of.h>

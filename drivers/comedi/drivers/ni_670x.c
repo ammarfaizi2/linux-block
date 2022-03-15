@@ -21,6 +21,7 @@
  *   322110b.pdf	PCI/PXI-6703/6704 User Manual
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>

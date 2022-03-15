@@ -76,6 +76,7 @@
  *	* Comb the init routine.  It's still a bit cludgy on a few things.
  */
 
+#include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

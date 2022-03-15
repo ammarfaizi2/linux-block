@@ -4,6 +4,7 @@
  * Author: Tien Hock Loh <thloh@altera.com>
  */
 
+#include <linux/io.h>
 #include <linux/mfd/syscon.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

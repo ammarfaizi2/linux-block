@@ -6,6 +6,7 @@
  * Copyright (C) 2013 by John Crispin <john@phrozen.org>
  */
 
+#include <linux/io.h>
 #include <linux/clockchips.h>
 #include <linux/clocksource.h>
 #include <linux/interrupt.h>

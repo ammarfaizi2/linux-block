@@ -9,6 +9,7 @@
  * Code supporting the TAKARA.
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

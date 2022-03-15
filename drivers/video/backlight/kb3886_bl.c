@@ -7,6 +7,7 @@
  *  Based on corgi_bl.c by Richard Purdie and kb3886 driver by Robert Woerle
  */
 
+#include <linux/io.h>
 #include <asm/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

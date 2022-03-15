@@ -7,6 +7,7 @@
  * Also based on previous sta2x11 work, Copyright 2011 Wind River Systems, Inc.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

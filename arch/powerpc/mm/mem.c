@@ -12,6 +12,7 @@
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/memblock.h>
 #include <linux/highmem.h>

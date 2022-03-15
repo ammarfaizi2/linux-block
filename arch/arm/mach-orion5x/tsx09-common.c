@@ -6,6 +6,7 @@
  *		Byron Bradley <byron.bbradley@gmail.com>
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/mv643xx_eth.h>

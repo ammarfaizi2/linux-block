@@ -13,6 +13,7 @@
 //      amixer sset 'Left Output Mixer PCM' on
 //      amixer sset 'Right Output Mixer PCM' on
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/fsl/guts.h>

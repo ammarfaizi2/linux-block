@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/io.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hashtable_api.h>

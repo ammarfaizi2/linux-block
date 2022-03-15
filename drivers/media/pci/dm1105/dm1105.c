@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Igor M. Liplianin <liplianin@me.by>
  */
 
+#include <linux/io.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

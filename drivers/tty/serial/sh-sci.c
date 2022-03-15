@@ -17,6 +17,7 @@
  */
 #undef DEBUG
 
+#include <linux/io.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

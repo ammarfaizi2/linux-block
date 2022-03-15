@@ -8,6 +8,7 @@
  * Timberdale FPGA UART
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>

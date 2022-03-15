@@ -51,6 +51,7 @@
  * analog triggering on 1602 series
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

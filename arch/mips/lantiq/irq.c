@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Thomas Langer <thomas.langer@lantiq.com>
  */
 
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/ioport.h>

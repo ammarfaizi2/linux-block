@@ -10,6 +10,7 @@
  * Author: Cristian Ciocaltea <cristian.ciocaltea@gmail.com>
  */
 
+#include <linux/io.h>
 #include <linux/bitfield.h>
 #include <linux/interrupt.h>
 #include <linux/irqchip.h>

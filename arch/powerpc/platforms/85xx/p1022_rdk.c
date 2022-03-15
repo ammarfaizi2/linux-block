@@ -12,6 +12,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/io.h>
 #include <linux/fsl/guts.h>
 #include <linux/pci.h>
 #include <linux/of_platform.h>

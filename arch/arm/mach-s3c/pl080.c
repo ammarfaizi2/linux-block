@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2013 Tomasz Figa <tomasz.figa@gmail.com>
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/amba/bus.h>
 #include <linux/amba/pl080.h>

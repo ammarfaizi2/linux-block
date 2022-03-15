@@ -8,6 +8,7 @@
  * This file contains all of the code that is specific to the HFI chip
  */
 
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

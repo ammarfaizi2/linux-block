@@ -8,6 +8,7 @@
  * Date:	2016-8-24
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

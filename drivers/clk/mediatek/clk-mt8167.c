@@ -6,6 +6,7 @@
  *         Fabien Parent <fparent@baylibre.com>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

@@ -38,6 +38,7 @@
  *		User Manual:	https://www.ni.com/pdf/manuals/320676d.pdf
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

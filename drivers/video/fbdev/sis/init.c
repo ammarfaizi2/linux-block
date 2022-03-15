@@ -56,6 +56,7 @@
  * Used by permission.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 
 #include "init.h"

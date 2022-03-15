@@ -15,6 +15,7 @@
  * Send feedback to <scottm@somanetworks.com>
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/errno.h>

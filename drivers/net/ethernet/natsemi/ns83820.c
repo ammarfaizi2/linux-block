@@ -81,6 +81,7 @@
 //#define dprintk		printk
 #define dprintk(x...)		do { } while (0)
 
+#include <linux/io.h>
 #include <linux/if_vlan_api.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>

@@ -7,6 +7,7 @@
  * NTT COMWARE L-BOX RE2 Support
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

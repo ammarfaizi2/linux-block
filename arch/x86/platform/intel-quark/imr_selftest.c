@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/bug.h>
 #include <asm/cpu_device_id.h>

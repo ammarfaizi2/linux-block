@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/dmaengine.h>
 #include <linux/acpi.h>

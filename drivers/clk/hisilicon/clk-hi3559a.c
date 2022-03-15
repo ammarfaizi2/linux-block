@@ -7,6 +7,7 @@
  * Author: Dongjiu Geng <gengdongjiu@huawei.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>

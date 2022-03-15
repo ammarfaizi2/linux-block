@@ -7,6 +7,7 @@
  * DOC: Nitro Enclaves (NE) PCI device driver.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/atomic_api.h>

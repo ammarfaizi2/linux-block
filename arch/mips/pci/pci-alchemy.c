@@ -8,6 +8,7 @@
  * Support for all devices (greater than 16) added by David Gathright.
  */
 
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/export.h>
 #include <linux/types.h>

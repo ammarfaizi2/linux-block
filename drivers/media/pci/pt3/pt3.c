@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Akihiro Tsukada <tskd08@gmail.com>
  */
 
+#include <linux/io.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

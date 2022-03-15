@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Jonathan Liu <net147@gmail.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/i2c.h>

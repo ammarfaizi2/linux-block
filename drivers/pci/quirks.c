@@ -12,6 +12,7 @@
  * file, where their drivers can use them.
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/types.h>

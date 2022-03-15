@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/if_vlan_api.h>
 #include <linux/filter_api.h>

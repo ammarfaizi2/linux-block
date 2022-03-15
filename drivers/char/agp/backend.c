@@ -27,6 +27,7 @@
  * TODO:
  * - Allocate more than order 0 pages to avoid too much linear map splitting.
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

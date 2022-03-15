@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 
 #include "i915_drv.h"

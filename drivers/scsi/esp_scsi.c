@@ -4,6 +4,7 @@
  * Copyright (C) 2007 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

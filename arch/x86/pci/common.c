@@ -5,6 +5,7 @@
  *	(c) 1999--2000 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched.h>

@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>

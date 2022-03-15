@@ -5,6 +5,7 @@
  * Author: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

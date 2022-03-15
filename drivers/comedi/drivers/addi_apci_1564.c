@@ -66,6 +66,7 @@
  * datasheet I have. The (*insn_config) needs more work.
  */
 
+#include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

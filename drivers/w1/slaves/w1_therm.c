@@ -5,6 +5,7 @@
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <asm/types.h>

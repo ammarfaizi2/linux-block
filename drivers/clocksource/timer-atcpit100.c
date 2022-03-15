@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/irq.h>
 #include <linux/clocksource.h>
 #include <linux/clockchips.h>

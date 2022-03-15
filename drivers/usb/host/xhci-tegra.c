@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Google, Inc.
  */
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

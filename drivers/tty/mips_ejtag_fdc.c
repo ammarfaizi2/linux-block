@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2015 Imagination Technologies Ltd
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>

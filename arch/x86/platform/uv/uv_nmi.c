@@ -7,6 +7,7 @@
  * Copyright (c) Mike Travis
  */
 
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/local64_api.h>

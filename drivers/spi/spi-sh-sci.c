@@ -9,6 +9,7 @@
  *   Copyright (c) 2006 Simtec Electronics
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/spinlock.h>

@@ -5,6 +5,7 @@
 /* Qualcomm Technologies, Inc. FSM9900 EMAC SGMII Controller driver.
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/iopoll.h>
 #include "emac.h"

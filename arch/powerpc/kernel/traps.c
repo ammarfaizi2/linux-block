@@ -11,6 +11,7 @@
  * This file handles the architecture-dependent parts of hardware exceptions
  */
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

@@ -15,6 +15,7 @@
  *    - EMU10K1X-DBQ
  *    - STAC 9708T
  */
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>

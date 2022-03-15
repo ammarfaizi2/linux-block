@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <linux/io.h>
+
 #include "mlx4.h"
 
 #define BAD_ACCESS			0xBADACCE5

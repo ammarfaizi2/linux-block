@@ -5,6 +5,7 @@
  *	   PC Chen <pc.chen@mediatek.com>
  */
 
+#include <linux/io.h>
 #include <linux/slab.h>
 #include "../vdec_drv_if.h"
 #include "../mtk_vcodec_util.h"

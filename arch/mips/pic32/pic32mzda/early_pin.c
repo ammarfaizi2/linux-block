@@ -3,6 +3,7 @@
  * Joshua Henderson <joshua.henderson@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
+#include <linux/io.h>
 #include <asm/io.h>
 
 #include "early_pin.h"

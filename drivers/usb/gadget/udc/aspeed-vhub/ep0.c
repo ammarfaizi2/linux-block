@@ -7,6 +7,7 @@
  * Copyright 2017 IBM Corporation
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

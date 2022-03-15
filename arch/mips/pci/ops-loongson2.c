@@ -8,6 +8,7 @@
  * Copyright (C) 2009 Lemote Inc.
  * Author: Wu Zhangjin <wuzhangjin@gmail.com>
  */
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
 //
 // Author: Ran Wang <ran.wang_1@nxp.com>
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>

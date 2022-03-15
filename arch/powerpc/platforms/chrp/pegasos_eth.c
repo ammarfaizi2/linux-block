@@ -9,6 +9,7 @@
  *  And anyone else who helped me on this.
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/init.h>
 #include <linux/ioport.h>

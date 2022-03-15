@@ -4,6 +4,7 @@
  * Parts of this file were based on the MCDE driver by Marcus Lorentzon
  * (C) ST-Ericsson SA 2013
  */
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/dma-buf.h>

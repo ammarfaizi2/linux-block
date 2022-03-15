@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

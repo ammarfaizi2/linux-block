@@ -7,6 +7,7 @@
 
 /* 2.3.x zone allocator, 1999 Andrea Arcangeli <andrea@suse.de> */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/pagemap.h>

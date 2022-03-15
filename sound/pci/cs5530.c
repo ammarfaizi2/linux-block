@@ -27,6 +27,7 @@
  *	same manner.
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/pci.h>

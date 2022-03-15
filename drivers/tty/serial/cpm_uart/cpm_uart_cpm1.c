@@ -11,6 +11,7 @@
  *		Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/tty.h>
 #include <linux/gfp.h>

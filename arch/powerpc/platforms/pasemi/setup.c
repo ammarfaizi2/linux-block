@@ -10,6 +10,7 @@
  * Based on arch/powerpc/platforms/maple/setup.c
  */
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

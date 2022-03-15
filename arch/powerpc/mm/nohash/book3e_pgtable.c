@@ -5,6 +5,7 @@
  * Copyright 2015-2016, Aneesh Kumar K.V, IBM Corporation.
  */
 
+#include <linux/io.h>
 #include <linux/sched.h>
 #include <linux/memblock.h>
 #include <asm/pgalloc.h>

@@ -17,6 +17,7 @@
  *
 =============================================================================*/
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>

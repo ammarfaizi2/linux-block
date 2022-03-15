@@ -26,6 +26,7 @@
  * Only simple analog output writing is supported.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pci.h>
 #include <linux/comedi/comedi_8255.h>

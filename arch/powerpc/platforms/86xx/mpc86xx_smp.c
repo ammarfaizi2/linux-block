@@ -6,6 +6,7 @@
  * Copyright 2006 Freescale Semiconductor Inc.
  */
 
+#include <linux/io.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

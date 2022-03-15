@@ -5,6 +5,7 @@
  * Copyright (c) 2005 David Brownell
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

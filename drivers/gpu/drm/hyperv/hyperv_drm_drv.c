@@ -3,6 +3,7 @@
  * Copyright 2021 Microsoft
  */
 
+#include <linux/io.h>
 #include <linux/efi.h>
 #include <linux/hyperv.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
+#include <linux/io.h>
 #include <linux/bitfield.h>
 
 #include "dw-edma-core.h"

@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <asm/delay.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>

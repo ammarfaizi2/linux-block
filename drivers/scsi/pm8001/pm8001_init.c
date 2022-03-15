@@ -38,6 +38,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>

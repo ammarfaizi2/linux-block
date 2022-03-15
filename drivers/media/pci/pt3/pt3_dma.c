@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2014 Akihiro Tsukada <tskd08@gmail.com>
  */
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

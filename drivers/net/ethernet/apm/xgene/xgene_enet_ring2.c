@@ -5,6 +5,8 @@
  * Author: Iyappan Subramanian <isubramanian@apm.com>
  */
 
+#include <linux/io.h>
+
 #include "xgene_enet_main.h"
 #include "xgene_enet_hw.h"
 #include "xgene_enet_ring2.h"

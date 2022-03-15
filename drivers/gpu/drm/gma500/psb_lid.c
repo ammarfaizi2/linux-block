@@ -5,6 +5,7 @@
  * Authors: Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
  **************************************************************************/
 
+#include <linux/io.h>
 #include <linux/spinlock.h>
 
 #include "psb_drv.h"

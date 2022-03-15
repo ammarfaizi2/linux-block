@@ -34,6 +34,7 @@
  *    Thomas Hellstrom.
  */
 
+#include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/uaccess.h>

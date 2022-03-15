@@ -7,6 +7,7 @@
  *	Copyright (c) 2003 Takashi Iwai <tiwai@suse.de>
  */      
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

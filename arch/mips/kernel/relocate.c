@@ -8,6 +8,7 @@
  * Copyright (C) 2015, Imagination Technologies Ltd.
  * Authors: Matt Redfearn (matt.redfearn@mips.com)
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/bootinfo.h>
 #include <asm/cacheflush.h>

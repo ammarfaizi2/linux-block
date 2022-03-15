@@ -10,6 +10,7 @@
  */
 
 #include "bcma_private.h"
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/pci.h>

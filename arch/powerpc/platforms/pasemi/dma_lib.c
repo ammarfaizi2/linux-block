@@ -5,6 +5,7 @@
  * Common functions for DMA access on PA Semi PWRficient
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/acpi.h>
 #include <linux/pci.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "linux/virtio_pci.h"
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/virtio_pci_legacy.h>
 #include <linux/module.h>

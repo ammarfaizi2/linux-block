@@ -5,6 +5,7 @@
  * Maintainer: Kumar Gala <galak@kernel.crashing.org>
  */
 
+#include <linux/io.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/of_platform.h>

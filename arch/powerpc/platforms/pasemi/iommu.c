@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/memblock.h>
 #include <linux/types.h>

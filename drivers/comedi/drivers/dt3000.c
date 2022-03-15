@@ -40,6 +40,7 @@
  * you the docs without one, also.
  */
 
+#include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/delay.h>

@@ -21,6 +21,7 @@
  *	usb-ohci-tc6393.c(C) Copyright 2004 Lineo Solutions, Inc.
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 #include <linux/mfd/core.h>

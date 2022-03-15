@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <asm/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/io-mapping.h>

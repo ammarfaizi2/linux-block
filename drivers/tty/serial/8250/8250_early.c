@@ -23,6 +23,7 @@
  *	console=uart8250,mmio32,0xff5e0000,115200n8
  */
 
+#include <linux/io.h>
 #include <linux/tty.h>
 #include <linux/init.h>
 #include <linux/console.h>

@@ -7,6 +7,7 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 
 #include "main.h"

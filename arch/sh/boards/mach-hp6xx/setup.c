@@ -7,6 +7,7 @@
  *
  * Setup code for HP620/HP660/HP680/HP690 (internal peripherials only)
  */
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

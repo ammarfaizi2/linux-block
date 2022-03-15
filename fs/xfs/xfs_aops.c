@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2018 Christoph Hellwig.
  * All Rights Reserved.
  */
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/dax.h>
 

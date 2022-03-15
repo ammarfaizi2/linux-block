@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2018 Intel Corporation.
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>

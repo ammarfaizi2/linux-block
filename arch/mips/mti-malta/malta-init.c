@@ -11,6 +11,7 @@
  *         Maciej W. Rozycki <macro@mips.com>
  *          Steven J. Hill <sjhill@mips.com>
  */
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/string.h>
 #include <linux/kernel.h>

@@ -42,6 +42,7 @@
  * [12] - Analog output 7 range configuration (same options)
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 #include <linux/delay.h>

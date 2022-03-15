@@ -24,6 +24,7 @@
  *	   1,  96:  96 DIO configuration
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 #include <linux/comedi/comedi_8255.h>

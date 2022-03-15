@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2007, 2008, 2009, 2010, 2011 Cavium Networks
  */
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/pci.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bits.h>

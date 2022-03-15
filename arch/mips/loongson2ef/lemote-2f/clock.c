@@ -6,6 +6,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/io.h>
 #include <linux/cpufreq.h>
 #include <linux/errno.h>
 #include <linux/export.h>

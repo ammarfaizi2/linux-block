@@ -19,6 +19,7 @@
  * 	Johnnie Peters <jpeters@mvista.com>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>

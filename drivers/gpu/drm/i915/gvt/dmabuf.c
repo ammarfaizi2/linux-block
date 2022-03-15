@@ -28,6 +28,7 @@
  *    Tina Zhang <tina.zhang@intel.com>
  */
 
+#include <linux/io.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>

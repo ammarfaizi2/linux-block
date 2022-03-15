@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include "otx_cptvf.h"
 

@@ -9,6 +9,7 @@
  *  (and others)
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/types.h>

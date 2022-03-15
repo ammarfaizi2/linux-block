@@ -8,6 +8,7 @@
  *		Ed Lin <promise_linux@promise.com>
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/init.h>
 #include <linux/errno.h>

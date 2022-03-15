@@ -7,6 +7,7 @@
  * Based on a work from: Conor Culhane <conor.culhane@silvaco.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

@@ -50,6 +50,7 @@
  *   v.0.01 -- 30-NOV-1999 -- Initial release
  */
 
+#include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

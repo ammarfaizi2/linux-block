@@ -16,6 +16,7 @@
  *      Armin Kuster <akuster@mvista.com>
  * 	Copyright 2001 MontaVista Softare Inc.
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

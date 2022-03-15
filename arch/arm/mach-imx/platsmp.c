@@ -4,6 +4,7 @@
  * Copyright 2011 Linaro Ltd.
  */
 
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/of_address.h>

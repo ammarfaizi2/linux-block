@@ -59,6 +59,7 @@
  *	read: read value
  */
 
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>

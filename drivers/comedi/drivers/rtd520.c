@@ -82,6 +82,7 @@
  * Digital-IO and Analog-Out only support instruction mode.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

@@ -46,6 +46,7 @@
 */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

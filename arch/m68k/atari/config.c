@@ -24,6 +24,7 @@
  * Miscellaneous atari stuff
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/types.h>
 #include <linux/mm.h>

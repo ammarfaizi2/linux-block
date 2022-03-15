@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Unisoc Inc.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/component.h>
 #include <linux/module.h>

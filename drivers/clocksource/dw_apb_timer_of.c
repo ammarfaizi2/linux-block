@@ -5,6 +5,7 @@
  *
  * Modified from mach-picoxcell/time.c
  */
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/dw_apb_timer.h>
 #include <linux/of.h>

@@ -5,6 +5,7 @@
  * Init the built-in ES1888 sound chip (SB16 compatible)
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <asm/io.h>
 #include "proto.h"

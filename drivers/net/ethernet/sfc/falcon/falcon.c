@@ -5,6 +5,7 @@
  * Copyright 2006-2013 Solarflare Communications Inc.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

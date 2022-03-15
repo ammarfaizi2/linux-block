@@ -3,6 +3,7 @@
  * Copyright © 2008 Ingo Molnar
  */
 
+#include <linux/io.h>
 #include <asm/iomap.h>
 #include <asm/memtype.h>
 #include <linux/export.h>
