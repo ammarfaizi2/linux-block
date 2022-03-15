@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"reboot: " fmt
 
+#include <linux/pid_namespace.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

@@ -44,6 +44,7 @@
  *  see sem_lock().
  */
 
+#include <linux/pid_namespace.h>
 #include <linux/idr_api.h>
 #include <linux/cred.h>
 #include <linux/mm.h>
