@@ -7,6 +7,7 @@
  * 	Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
  */
 
+#include <net/l3mdev.h>
 #include <linux/types.h>
 #include <linux/module.h>
 #include <linux/in.h>

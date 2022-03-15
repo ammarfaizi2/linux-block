@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <net/l3mdev.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>

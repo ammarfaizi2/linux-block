@@ -21,6 +21,7 @@
  *					Relax this requirement to work with older peers.
  */
 
+#include <net/l3mdev.h>
 #include <net/ip_fib_api.h>
 #include <net/ip_extra.h>
 #include <net/dst_api_tunnel.h>
