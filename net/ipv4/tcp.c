@@ -243,6 +243,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <net/tcp_bpf.h>
 #include <net/sock_batch.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>
