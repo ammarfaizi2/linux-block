@@ -12,6 +12,7 @@
 #ifndef _LINUX_PM_QOS_H
 #define _LINUX_PM_QOS_H
 
+#include <linux/limits.h>
 #include <linux/err.h>
 #include <linux/bug.h>
 #include <linux/plist.h>

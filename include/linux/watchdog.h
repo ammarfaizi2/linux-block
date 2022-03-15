@@ -10,6 +10,7 @@
 #define _LINUX_WATCHDOG_H
 
 
+#include <linux/limits.h>
 #include <linux/bitops.h>
 #include <linux/cdev.h>
 #include <linux/device.h>

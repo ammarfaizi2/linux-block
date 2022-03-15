@@ -26,6 +26,7 @@
 #ifndef VM_BASIC_TYPES_H
 #define VM_BASIC_TYPES_H
 
+#include <linux/limits.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <asm/page.h>
