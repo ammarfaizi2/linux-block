@@ -10,6 +10,7 @@
 #ifndef _V4L2_IOCTL_H
 #define _V4L2_IOCTL_H
 
+#include <linux/time32.h>
 #include <linux/poll.h>
 #include <linux/fs.h>
 #include <linux/mutex.h>
