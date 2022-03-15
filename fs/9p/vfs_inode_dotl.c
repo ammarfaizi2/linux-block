@@ -6,6 +6,7 @@
  *  Copyright (C) 2002 by Ron Minnich <rminnich@lanl.gov>
  */
 
+#include <linux/delayed_call.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/module.h>

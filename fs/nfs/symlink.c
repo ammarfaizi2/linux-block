@@ -11,6 +11,7 @@
  *  nfs symlink handling code
  */
 
+#include <linux/delayed_call.h>
 #include <linux/time.h>
 #include <linux/errno.h>
 #include <linux/sunrpc/clnt.h>
