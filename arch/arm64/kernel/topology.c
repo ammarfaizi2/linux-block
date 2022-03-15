@@ -11,6 +11,7 @@
  * for more details.
  */
 
+#include <linux/sched/topology.h>
 #include <linux/math64.h>
 #include <linux/cpumask_api.h>
 #include <clocksource/arm_arch_timer.h>
