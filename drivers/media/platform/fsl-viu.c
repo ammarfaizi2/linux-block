@@ -9,6 +9,7 @@
  *	     Anatolij Gustschin <agust@denx.de>
  */
 
+#include <linux/mm_types.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>

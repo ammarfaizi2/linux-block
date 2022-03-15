@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Zodiac Inflight Innovations
  */
 
+#include <linux/mm_types.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

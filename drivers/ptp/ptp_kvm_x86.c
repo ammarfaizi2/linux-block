@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Red Hat Inc.
  */
 
+#include <linux/mm_types.h>
 #include <linux/irqflags.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

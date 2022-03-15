@@ -8,6 +8,7 @@
  * See Documentation/ABI/testing/sysfs-platform-wilco-ec for more information.
  */
 
+#include <linux/mm_types.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/platform_data/wilco-ec.h>
