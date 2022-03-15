@@ -5,6 +5,7 @@
  * Copyright (c) 2020 Samuel Cabrero <scabrero@suse.de>
  */
 
+#include <linux/wait_types.h>
 #include <net/genetlink.h>
 #include <uapi/linux/cifs/cifs_netlink.h>
 
