@@ -25,6 +25,7 @@
 #include "xfs_iomap.h"
 #include "xfs_reflink.h"
 
+#include <linux/sched/mm.h>
 #include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>

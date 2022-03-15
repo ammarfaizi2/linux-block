@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/sched/mm.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/prefetch.h>
