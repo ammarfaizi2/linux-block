@@ -556,7 +556,7 @@ static void dec_dl_migration(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
 }
 
 #define __node_2_pdl(node) \
-	rb_entry((node), struct task_struct, pushable_dl_tasks)
+	per_task_container_of((node), pushable_dl_tasks)
 
 static inline bool __pushable_less(struct rb_node *a, const struct rb_node *b)
 {
@@ -571,9 +571,9 @@ static void enqueue_pushable_dl_task(struct rq *rq, struct task_struct *p)
 {
 	struct rb_node *leftmost;
 
-	BUG_ON(!RB_EMPTY_NODE(&p->pushable_dl_tasks));
+	BUG_ON(!RB_EMPTY_NODE(&per_task(p, pushable_dl_tasks)));
 
-	leftmost = rb_add_cached(&p->pushable_dl_tasks,
+	leftmost = rb_add_cached(&per_task(p, pushable_dl_tasks),
 				 &rq->dl.pushable_dl_tasks_root,
 				 __pushable_less);
 	if (leftmost)
@@ -586,14 +586,14 @@ static void dequeue_pushable_dl_task(struct rq *rq, struct task_struct *p)
 	struct rb_root_cached *root = &dl_rq->pushable_dl_tasks_root;
 	struct rb_node *leftmost;
 
-	if (RB_EMPTY_NODE(&p->pushable_dl_tasks))
+	if (RB_EMPTY_NODE(&per_task(p, pushable_dl_tasks)))
 		return;
 
-	leftmost = rb_erase_cached(&p->pushable_dl_tasks, root);
+	leftmost = rb_erase_cached(&per_task(p, pushable_dl_tasks), root);
 	if (leftmost)
 		dl_rq->earliest_dl.next = per_task(__node_2_pdl(leftmost), dl).deadline;
 
-	RB_CLEAR_NODE(&p->pushable_dl_tasks);
+	RB_CLEAR_NODE(&per_task(p, pushable_dl_tasks));
 }
 
 static inline int has_pushable_dl_tasks(struct rq *rq)
