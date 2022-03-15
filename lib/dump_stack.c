@@ -4,6 +4,7 @@
  * which don't implement their own.
  */
 
+#include <linux/smp_api.h>
 #include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

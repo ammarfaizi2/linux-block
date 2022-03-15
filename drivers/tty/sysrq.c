@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/smp_api.h>
 #include <linux/sched.h>
 #include <linux/perf_event_api.h>
 #include <linux/of_api.h>

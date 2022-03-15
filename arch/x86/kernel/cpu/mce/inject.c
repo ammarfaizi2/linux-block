@@ -16,6 +16,7 @@
  *			   Advanced Micro Devices Inc.
  */
 
+#include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

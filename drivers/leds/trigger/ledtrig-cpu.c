@@ -19,6 +19,7 @@
  * Copyright 2011 - 2012 Bryan Wu <bryan.wu@canonical.com>
  */
 
+#include <linux/smp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>

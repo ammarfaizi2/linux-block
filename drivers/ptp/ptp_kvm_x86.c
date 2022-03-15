@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Red Hat Inc.
  */
 
+#include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/mm_types.h>
 #include <linux/irqflags.h>

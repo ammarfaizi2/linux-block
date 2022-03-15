@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/smp_api.h>
 #include <linux/device_api.h>
 #include <linux/slab.h>
 #include <linux/time.h>

@@ -2,6 +2,7 @@
 /*
  * Xen stolen ticks accounting.
  */
+#include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/cpumask_api.h>
 #include <asm/paravirt_api_clock.h>

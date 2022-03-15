@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/minmax.h>
 #include <linux/cpumask_api.h>

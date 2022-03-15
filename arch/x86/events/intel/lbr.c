@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/smp_api.h>
 #include <linux/slab.h>
 #include <linux/ptrace_api.h>
 #include <linux/perf_event_api.h>

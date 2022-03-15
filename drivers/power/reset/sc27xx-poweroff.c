@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Linaro Ltd.
  */
 
+#include <linux/smp_api.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>

@@ -1,3 +1,4 @@
+#include <linux/smp_api.h>
 #include <linux/sched.h>
 #include <linux/mm_api_tlb_flush.h>
 #include <linux/mm_api.h>

@@ -6,6 +6,7 @@
  *  All Rights Reserved
  */
 
+#include <linux/smp_api.h>
 #include <linux/of_api.h>
 #include <linux/acpi.h>
 #include <linux/cacheinfo.h>

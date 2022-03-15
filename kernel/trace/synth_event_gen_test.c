@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Tom Zanussi <zanussi@kernel.org>
  */
 
+#include <linux/smp_api.h>
 #include <linux/slab.h>
 #include <linux/preempt.h>
 #include <linux/module.h>

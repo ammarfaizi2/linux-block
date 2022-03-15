@@ -5,6 +5,7 @@
  * Copyright (C) 2020 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
+#include <linux/smp_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/cpumask_api.h>

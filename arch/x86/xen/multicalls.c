@@ -20,6 +20,7 @@
  *
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
+#include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/percpu.h>
 #include <linux/hardirq.h>

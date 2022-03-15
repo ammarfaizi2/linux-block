@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <linux/smp_api.h>
 #include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/preempt.h>

@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/smp_api.h>
 #include <linux/jiffies.h>
 #include <linux/device.h>
 #include <linux/hardirq.h>

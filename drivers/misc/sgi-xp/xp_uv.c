@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/smp_api.h>
 #include <linux/device.h>
 #include <asm/uv/uv_hub.h>
 #if defined CONFIG_X86_64

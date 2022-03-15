@@ -3,6 +3,7 @@
  * Copyright 2012  Google, Inc.
  */
 
+#include <linux/smp_api.h>
 #include <linux/mutex_api.h>
 #include <linux/moduleparam.h>
 #include <linux/fs_api.h>

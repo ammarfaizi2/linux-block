@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/smp_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

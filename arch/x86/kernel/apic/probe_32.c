@@ -6,6 +6,7 @@
  *
  * Generic x86 APIC driver probe layer.
  */
+#include <linux/smp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/export.h>

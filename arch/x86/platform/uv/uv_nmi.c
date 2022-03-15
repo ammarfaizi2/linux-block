@@ -7,6 +7,7 @@
  * Copyright (c) Mike Travis
  */
 
+#include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

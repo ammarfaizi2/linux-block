@@ -21,6 +21,7 @@
  */
 #define pr_fmt(fmt) "microcode: " fmt
 
+#include <linux/smp_api.h>
 #include <linux/slab.h>
 #include <asm/processor_api.h>
 #include <linux/earlycpio.h>

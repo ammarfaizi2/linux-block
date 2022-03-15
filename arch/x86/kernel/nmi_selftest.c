@@ -10,6 +10,7 @@
  *   Copyright (C) 2011 Red Hat, Inc., Don Zickus <dzickus@redhat.com>
  */
 
+#include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/irqflags.h>
 #include <linux/cpumask_api.h>

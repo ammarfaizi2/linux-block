@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/smp_api.h>
 #include <linux/kstrtox.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

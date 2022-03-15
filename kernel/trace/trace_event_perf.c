@@ -6,6 +6,7 @@
  * Copyright (C) 2009-2010 Frederic Weisbecker <fweisbec@gmail.com>
  */
 
+#include <linux/smp_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/perf_event_api.h>

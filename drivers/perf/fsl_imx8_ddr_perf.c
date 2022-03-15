@@ -4,6 +4,7 @@
  * Copyright 2016 Freescale Semiconductor, Inc.
  */
 
+#include <linux/smp_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
