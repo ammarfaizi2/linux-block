@@ -27,6 +27,7 @@
  * TODO:
  * - Allocate more than order 0 pages to avoid too much linear map splitting.
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/io.h>

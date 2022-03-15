@@ -3,6 +3,7 @@
  * Copyright (C) 2011 STRATO.  All rights reserved.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mm.h>
 #include <linux/rbtree.h>

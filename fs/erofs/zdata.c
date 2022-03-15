@@ -5,6 +5,7 @@
  */
 #include "zdata.h"
 #include "compress.h"
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

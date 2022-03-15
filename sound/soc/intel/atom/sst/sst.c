@@ -11,6 +11,7 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/io_extra.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>

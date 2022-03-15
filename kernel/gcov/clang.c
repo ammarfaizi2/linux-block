@@ -44,6 +44,7 @@
 
 #define pr_fmt(fmt)	"gcov: " fmt
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/printk.h>

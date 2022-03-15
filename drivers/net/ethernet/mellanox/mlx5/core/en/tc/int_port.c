@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES. All rights reserved. */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mlx5/fs.h>
 #include "en/mapping.h"
 #include "en/tc/int_port.h"

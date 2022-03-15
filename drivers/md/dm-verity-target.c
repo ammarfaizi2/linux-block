@@ -16,6 +16,7 @@
 #include "dm-verity.h"
 #include "dm-verity-fec.h"
 #include "dm-verity-verify-sig.h"
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/kobject_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

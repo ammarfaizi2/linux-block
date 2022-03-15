@@ -35,6 +35,7 @@
  * miss any bits.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/llist_api.h>
 #include <linux/jiffies.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/hash.h>
 #include <linux/mlx5/fs.h>
 #include <linux/ip.h>

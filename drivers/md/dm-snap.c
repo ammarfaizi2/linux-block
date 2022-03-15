@@ -4,6 +4,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/list_bl_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

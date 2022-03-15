@@ -3,6 +3,7 @@
  * Copyright (c) 2018 Hisilicon Limited.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/idr_api.h>
 #include <linux/bitmap.h>

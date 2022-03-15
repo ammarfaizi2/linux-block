@@ -2,6 +2,7 @@
 /*
  * Supplementary group IDs
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

@@ -8,6 +8,7 @@
  *	    Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/fs.h>
 #include <linux/capability.h>
 #include <linux/ioctl.h>

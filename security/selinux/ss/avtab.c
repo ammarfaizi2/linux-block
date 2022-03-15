@@ -17,6 +17,7 @@
  *	Tuned number of hash slots for avtab to reduce memory usage
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/errno.h>

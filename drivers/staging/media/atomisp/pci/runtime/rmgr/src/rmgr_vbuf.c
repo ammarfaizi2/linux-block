@@ -16,6 +16,7 @@
 #include "hmm.h"
 #include "ia_css_rmgr.h"
 
+#include <linux/mm_api_kvmalloc.h>
 #include <type_support.h>
 #include <assert_support.h>
 #include <platform_support.h> /* memset */

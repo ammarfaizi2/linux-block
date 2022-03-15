@@ -3,6 +3,7 @@
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

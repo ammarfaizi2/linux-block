@@ -9,6 +9,7 @@
  *		Catalin(ux aka Dino) BOIE <catab at umbrella dot ro>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/math64.h>
 #include <linux/mm.h>
 #include <linux/module.h>

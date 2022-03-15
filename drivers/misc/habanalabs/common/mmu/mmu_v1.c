@@ -8,6 +8,7 @@
 #include "../habanalabs.h"
 #include "../../include/hw_ip/mmu/mmu_general.h"
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/slab.h>

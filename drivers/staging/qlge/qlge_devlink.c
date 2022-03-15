@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/etherdevice_api.h>
 
 #include "qlge.h"

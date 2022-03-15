@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_entry_types.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

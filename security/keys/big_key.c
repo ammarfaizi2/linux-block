@@ -7,6 +7,7 @@
  */
 
 #define pr_fmt(fmt) "big_key: "fmt
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/init.h>

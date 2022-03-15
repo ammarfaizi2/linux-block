@@ -3,6 +3,7 @@
  * Copyright(c) 2016 - 2020 Intel Corporation.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>

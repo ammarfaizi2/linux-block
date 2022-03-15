@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"NFP net bpf: " fmt
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/dma-mapping.h>
 #include <linux/bpf.h>
 #include <linux/kernel.h>

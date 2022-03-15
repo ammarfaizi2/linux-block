@@ -18,6 +18,7 @@
 #define __UNDEF_NO_VERSION__
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

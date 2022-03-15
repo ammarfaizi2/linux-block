@@ -11,6 +11,7 @@
  * pointer as suggested by Josh Triplett
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/minmax.h>
 #include <linux/lockdep_api.h>
 #include <linux/bit_spinlock.h>

@@ -2,6 +2,7 @@
 /* Copyright (c) 2021, Mellanox Technologies inc. All rights reserved. */
 
 #include "rqt.h"
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/ethtool.h>
 #include <linux/mlx5/transobj.h>
 

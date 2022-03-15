@@ -6,6 +6,7 @@
  * Derived from binfmt_elf.c
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>

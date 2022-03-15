@@ -70,6 +70,7 @@
  *   wrappers provided below.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/syscalls.h>

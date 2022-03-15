@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <media/videobuf-vmalloc.h>

@@ -9,6 +9,7 @@
  * destination and encodes or decodes the data.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/export.h>
 #include <linux/module.h>
 #include <linux/delay.h>

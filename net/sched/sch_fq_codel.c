@@ -5,6 +5,7 @@
  *  Copyright (C) 2012,2015 Eric Dumazet <edumazet@google.com>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

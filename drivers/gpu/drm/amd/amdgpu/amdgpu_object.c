@@ -29,6 +29,7 @@
  *    Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
  *    Dave Airlie
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/highmem.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>

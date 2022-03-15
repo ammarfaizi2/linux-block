@@ -1,3 +1,4 @@
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/minmax.h>
 #include <linux/lockdep.h>
 #include <linux/lockdep_api.h>

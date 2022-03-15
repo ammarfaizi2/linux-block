@@ -25,6 +25,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/dma-resv.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>

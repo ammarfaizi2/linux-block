@@ -22,6 +22,7 @@
  * Authors: Christian König
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/huge_mm.h>
 #include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>

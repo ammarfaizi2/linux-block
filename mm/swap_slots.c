@@ -27,6 +27,7 @@
  * we can possibly sleep.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/huge_mm.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

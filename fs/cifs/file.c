@@ -8,6 +8,7 @@
  *              Jeremy Allison (jra@samba.org)
  *
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/highmem.h>

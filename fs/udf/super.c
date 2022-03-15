@@ -40,6 +40,7 @@
 
 #include "udfdecl.h"
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>

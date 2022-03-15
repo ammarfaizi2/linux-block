@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies Inc. All rights reserved. */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/netdevice.h>
 #include <linux/list.h>
 #include <net/lag.h>

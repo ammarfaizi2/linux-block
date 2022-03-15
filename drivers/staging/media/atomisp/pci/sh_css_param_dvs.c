@@ -14,6 +14,7 @@
  */
 
 #include "sh_css_param_dvs.h"
+#include <linux/mm_api_kvmalloc.h>
 #include <assert_support.h>
 #include <type_support.h>
 #include <ia_css_err.h>

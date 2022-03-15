@@ -23,6 +23,7 @@
  * stack overflow.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/module.h>
 #include <linux/kd.h>
 #include <linux/errno.h>

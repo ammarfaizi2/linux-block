@@ -32,6 +32,8 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api_kvmalloc.h>
+
 #include "cxgb4.h"
 #include "t4_msg.h"
 #include "srq.h"

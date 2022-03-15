@@ -6,6 +6,7 @@
 #include "flow.h"
 #include "datapath.h"
 #include "flow_netlink.h"
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/cpumask_api.h>
 #include <linux/uaccess.h>
 #include <linux/netdevice.h>

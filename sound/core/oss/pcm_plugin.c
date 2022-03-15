@@ -24,6 +24,7 @@
 #define PLUGIN_DEBUG
 #endif
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/slab.h>
 #include <linux/time.h>
 #include <linux/vmalloc.h>

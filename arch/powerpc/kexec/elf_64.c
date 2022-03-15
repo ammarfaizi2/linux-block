@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt)	"kexec_elf: " fmt
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/elf.h>
 #include <linux/kexec.h>
 #include <linux/libfdt.h>

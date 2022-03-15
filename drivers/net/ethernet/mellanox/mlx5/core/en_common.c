@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api_kvmalloc.h>
+
 #include "en.h"
 
 /* mlx5e global resources should be placed in this file.

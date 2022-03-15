@@ -17,6 +17,7 @@
  *
  *
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

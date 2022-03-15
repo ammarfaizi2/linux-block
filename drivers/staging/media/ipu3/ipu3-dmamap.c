@@ -7,6 +7,7 @@
  * Author: Yong Zhi <yong.zhi@intel.com>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

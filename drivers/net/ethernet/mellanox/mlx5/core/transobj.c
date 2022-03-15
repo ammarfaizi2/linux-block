@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mlx5/driver.h>
 #include "mlx5_core.h"
 #include <linux/mlx5/transobj.h>

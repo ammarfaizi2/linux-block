@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Arrikto, Inc. All Rights Reserved.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm.h>
 #include <linux/err.h>
 #include <linux/slab.h>
