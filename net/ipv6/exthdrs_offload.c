@@ -5,6 +5,7 @@
  *
  *      IPV6 Extension Header GSO/GRO support
  */
+#include <linux/init.h>
 #include <net/protocol.h>
 #include "ip6_offload.h"
 

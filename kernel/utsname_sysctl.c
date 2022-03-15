@@ -5,6 +5,7 @@
  *  Author: Eric Biederman <ebiederm@xmision.com>
  */
 
+#include <linux/init.h>
 #include <linux/export.h>
 #include <linux/uts.h>
 #include <linux/utsname.h>

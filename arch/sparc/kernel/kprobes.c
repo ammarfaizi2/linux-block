@@ -4,6 +4,7 @@
  * Copyright (C) 2004 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/kprobes.h>
 #include <linux/extable.h>

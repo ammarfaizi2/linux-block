@@ -7,6 +7,7 @@
  * Copyright (C) 2007 Novell Inc.
  */
 
+#include <linux/init.h>
 #include <linux/kobject.h>
 #include <linux/device.h>
 #include <linux/export.h>

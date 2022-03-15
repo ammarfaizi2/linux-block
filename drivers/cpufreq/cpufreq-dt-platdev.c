@@ -4,6 +4,7 @@
  * Viresh Kumar <viresh.kumar@linaro.org>
  */
 
+#include <linux/init.h>
 #include <linux/err.h>
 #include <linux/of.h>
 #include <linux/of_device.h>

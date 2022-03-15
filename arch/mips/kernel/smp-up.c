@@ -7,6 +7,7 @@
  *
  * Symmetric Uniprocessor (TM) Support
  */
+#include <linux/init.h>
 #include <asm/smp-ops.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
