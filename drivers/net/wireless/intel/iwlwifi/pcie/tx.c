@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
+#include <linux/skbuff_api_frag.h>
 #include <linux/mm_page_address.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

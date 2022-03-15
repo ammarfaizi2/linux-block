@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/prandom.h>

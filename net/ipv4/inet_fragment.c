@@ -7,6 +7,7 @@
  *				ipv6/reassembly. and ipv6 nf conntrack reassembly
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/llist_api.h>

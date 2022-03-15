@@ -4,6 +4,8 @@
  *
  */
 
+#include <linux/skbuff_api_frag.h>
+
 #include "netdev.h"
 #include "ipoib.h"
 

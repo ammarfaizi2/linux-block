@@ -7,6 +7,7 @@
  * This file contains HFI1 support for VNIC SDMA functionality
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/seqlock_api.h>
 #include <linux/netdevice_api.h>
 

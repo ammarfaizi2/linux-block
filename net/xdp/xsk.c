@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "AF_XDP: %s: " fmt, __func__
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

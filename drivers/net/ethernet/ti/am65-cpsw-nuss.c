@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/percpu.h>
 #include <linux/of_api.h>

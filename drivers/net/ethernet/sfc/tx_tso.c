@@ -5,6 +5,7 @@
  * Copyright 2005-2015 Solarflare Communications Inc.
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/prefetch.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

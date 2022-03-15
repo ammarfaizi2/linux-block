@@ -18,6 +18,7 @@
 #include "aq_ptp.h"
 #include "aq_filters.h"
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

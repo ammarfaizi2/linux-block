@@ -35,6 +35,7 @@
 #include "en_accel/tls_rxtx.h"
 #include "accel/accel.h"
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <net/inet6_hashtables.h>

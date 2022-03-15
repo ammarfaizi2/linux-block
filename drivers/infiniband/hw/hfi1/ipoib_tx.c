@@ -8,6 +8,7 @@
  * This file contains HFI1 support for IPOIB SDMA functionality
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/seqlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>

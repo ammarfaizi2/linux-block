@@ -6,6 +6,7 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

@@ -11,6 +11,7 @@
  *          Chris Telfer <chris.telfer@netronome.com>
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/pgtable_api.h>
 #include <linux/netdevice_api_lock.h>

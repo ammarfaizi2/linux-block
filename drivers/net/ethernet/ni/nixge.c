@@ -4,6 +4,7 @@
  * Author: Moritz Fischer <mdf@kernel.org>
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/pgtable_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

@@ -32,6 +32,7 @@
 #define FORCEDETH_VERSION		"0.64"
 #define DRV_NAME			"forcedeth"
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>
 #include <linux/percpu.h>

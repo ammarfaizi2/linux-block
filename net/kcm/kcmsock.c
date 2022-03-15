@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Tom Herbert <tom@herbertland.com>
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

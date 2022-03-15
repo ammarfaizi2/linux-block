@@ -4,6 +4,7 @@
  * Filesystem request handling methods
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>
 #include <linux/ratelimit.h>
 #include <linux/pgtable_api.h>
