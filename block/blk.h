@@ -2,6 +2,7 @@
 #ifndef BLK_INTERNAL_H
 #define BLK_INTERNAL_H
 
+#include <linux/kobject_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/blk-crypto.h>
