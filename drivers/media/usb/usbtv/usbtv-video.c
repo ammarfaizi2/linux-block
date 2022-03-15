@@ -42,6 +42,7 @@
  * reverse-engineering activity
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <media/v4l2-ioctl.h>
 #include <media/videobuf2-v4l2.h>

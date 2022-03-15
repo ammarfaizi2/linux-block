@@ -6,6 +6,7 @@
  * Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

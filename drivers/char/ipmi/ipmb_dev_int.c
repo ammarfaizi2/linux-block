@@ -8,6 +8,7 @@
  * This was inspired by Brendan Higgins' ipmi-bmc-bt-i2c driver.
  */
 
+#include <linux/fs.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/acpi.h>

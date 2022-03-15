@@ -28,6 +28,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/fs.h>
 #include <linux/capability.h>
 #include <linux/export.h>
 #include <linux/nospec.h>

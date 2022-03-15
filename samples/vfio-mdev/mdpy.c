@@ -15,6 +15,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+#include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

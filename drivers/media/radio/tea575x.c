@@ -5,6 +5,7 @@
  *	Copyright (c) 2004 Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/fs.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -5,6 +5,7 @@
  *         Tiffany Lin <tiffany.lin@mediatek.com>
  */
 
+#include <linux/fs.h>
 #include <linux/capability.h>
 #include <media/v4l2-event.h>
 #include <media/v4l2-mem2mem.h>

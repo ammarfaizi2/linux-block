@@ -14,6 +14,7 @@
 
 */
 
+#include <linux/fs.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/mm.h>

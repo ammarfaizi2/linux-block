@@ -8,6 +8,7 @@
  *	    Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/fs.h>
 #include <linux/capability.h>
 #include <linux/ioctl.h>
 #include <linux/mm.h>

@@ -8,6 +8,7 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
+#include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/poll.h>
 #include <linux/vmalloc.h>

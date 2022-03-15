@@ -5,6 +5,7 @@
  *         Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/device.h>
 #include <linux/errno.h>

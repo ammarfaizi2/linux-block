@@ -3,6 +3,7 @@
  *  Copyright (c) 1998-2002 by Paul Davis <pbd@op.net>
  */
 
+#include <linux/fs.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/time.h>

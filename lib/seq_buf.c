@@ -13,6 +13,7 @@
  * seq_buf_init() more than once to reset the seq_buf to start
  * from scratch.
  */
+#include <linux/fs.h>
 #include <linux/err.h>
 #include <linux/dcache.h>
 #include <linux/uaccess.h>

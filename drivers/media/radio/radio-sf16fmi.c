@@ -17,6 +17,7 @@
  * Converted to V4L2 API by Mauro Carvalho Chehab <mchehab@kernel.org>
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/kernel.h>	/* __setup			*/
 #include <linux/module.h>	/* Modules			*/

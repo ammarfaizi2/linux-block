@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

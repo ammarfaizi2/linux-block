@@ -18,6 +18,7 @@
  * ==FILEVERSION 20041108==
  */
 
+#include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/filter_api.h>
 #include <linux/device/class.h>

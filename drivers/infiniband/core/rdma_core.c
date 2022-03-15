@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/fs.h>
 #include <linux/atomic_api.h>
 #include <linux/file.h>
 #include <linux/anon_inodes.h>

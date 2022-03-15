@@ -16,6 +16,7 @@
 #include "au0828.h"
 #include "au8522.h"
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/module.h>

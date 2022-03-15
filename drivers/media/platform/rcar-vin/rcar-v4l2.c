@@ -10,6 +10,7 @@
  * Based on the soc-camera rcar_vin driver
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/pm_runtime.h>
 

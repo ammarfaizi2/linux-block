@@ -4,6 +4,7 @@
  * Copyright (c) 2009 Intel Corporation
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>

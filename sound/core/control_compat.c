@@ -7,6 +7,7 @@
 
 /* this file included from control.c */
 
+#include <linux/fs.h>
 #include <linux/compat.h>
 #include <linux/slab.h>
 

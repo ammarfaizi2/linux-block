@@ -6,6 +6,7 @@
 
 /* This file included from rawmidi.c */
 
+#include <linux/fs.h>
 #include <linux/compat.h>
 
 struct snd_rawmidi_params32 {

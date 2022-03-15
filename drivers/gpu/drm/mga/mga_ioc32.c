@@ -31,6 +31,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/fs.h>
 #include <linux/compat.h>
 
 #include "mga_drv.h"

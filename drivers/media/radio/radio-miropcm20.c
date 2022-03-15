@@ -26,6 +26,7 @@
  * Hans Verkuil <hans.verkuil@cisco.com>
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/module.h>
 #include <linux/init.h>

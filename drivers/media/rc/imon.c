@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/errno.h>

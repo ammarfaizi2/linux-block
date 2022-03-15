@@ -7,6 +7,8 @@
  *  Copyright (c) 2009 Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/fs.h>
+
 #include "cx23885.h"
 #include "cx23885-ioctl.h"
 

@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "v4l2-ctrls: " fmt
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

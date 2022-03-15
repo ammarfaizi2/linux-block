@@ -6,6 +6,7 @@
  *          Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/fs.h>
 #include <linux/atomic.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

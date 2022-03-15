@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/fs.h>
 #include <linux/component.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

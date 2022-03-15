@@ -7,6 +7,7 @@
  *
  **************************************************************************/
 
+#include <linux/fs.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/cpu.h>

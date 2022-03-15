@@ -13,6 +13,7 @@
  * Some parts borrowed from various video4linux drivers, especially
  * bttv-driver.c and zoran.c, see original files for credits.
  */
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/module.h>
 #include <linux/pci.h>

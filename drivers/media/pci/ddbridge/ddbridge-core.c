@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

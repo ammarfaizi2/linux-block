@@ -11,6 +11,7 @@
  */
 
 #include "cx231xx.h"
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/init.h>
 #include <linux/list.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/fs.h>
 #include <linux/dma-mapping.h>
 #include <media/drv-intf/saa7146_vv.h>
 

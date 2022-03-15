@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Google LLC.
  */
 
+#include <linux/fs.h>
 #include <linux/filter.h>
 #include <linux/bpf.h>
 #include <linux/btf.h>

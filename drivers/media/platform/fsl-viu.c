@@ -9,6 +9,7 @@
  *	     Anatolij Gustschin <agust@denx.de>
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

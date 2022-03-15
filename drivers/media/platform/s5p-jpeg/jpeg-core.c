@@ -8,6 +8,7 @@
  * Author: Jacek Anaszewski <j.anaszewski@samsung.com>
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

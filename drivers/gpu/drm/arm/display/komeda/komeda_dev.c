@@ -4,6 +4,7 @@
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
+#include <linux/fs.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/iommu.h>
