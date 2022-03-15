@@ -7,6 +7,7 @@
 #ifndef __I915_PMU_H__
 #define __I915_PMU_H__
 
+#include <linux/sysfs_types.h>
 #include <linux/hrtimer.h>
 #include <linux/perf_event.h>
 #include <linux/spinlock_types.h>
