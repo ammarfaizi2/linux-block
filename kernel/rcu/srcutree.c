@@ -1563,7 +1563,9 @@ static void process_srcu(struct work_struct *work)
 
 	srcu_advance_state(ssp);
 	curdelay = srcu_get_delay(ssp);
-	if (!curdelay) {
+	if (curdelay) {
+		WRITE_ONCE(ssp->reschedule_count, 0);
+	} else {
 		j = jiffies;
 		if (READ_ONCE(ssp->reschedule_jiffies) == j) {
 			WRITE_ONCE(ssp->reschedule_count, READ_ONCE(ssp->reschedule_count) + 1);
