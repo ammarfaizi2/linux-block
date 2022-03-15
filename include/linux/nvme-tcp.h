@@ -7,6 +7,7 @@
 #ifndef _LINUX_NVME_TCP_H
 #define _LINUX_NVME_TCP_H
 
+#include <linux/sizes.h>
 #include <linux/nvme.h>
 
 #define NVME_TCP_DISC_PORT	8009
