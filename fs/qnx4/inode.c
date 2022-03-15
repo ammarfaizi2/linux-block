@@ -13,6 +13,7 @@
  * 30-06-1998 by Frank Denis : first step to write inodes.
  */
 
+#include <linux/blkdev.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>
