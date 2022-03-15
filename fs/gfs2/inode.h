@@ -7,6 +7,7 @@
 #ifndef __INODE_DOT_H__
 #define __INODE_DOT_H__
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include <linux/mm.h>

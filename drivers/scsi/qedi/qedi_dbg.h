@@ -7,6 +7,7 @@
 #ifndef _QEDI_DBG_H_
 #define _QEDI_DBG_H_
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/compiler.h>

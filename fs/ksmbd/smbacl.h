@@ -8,6 +8,7 @@
 #ifndef _SMBACL_H
 #define _SMBACL_H
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/namei.h>
 #include <linux/posix_acl.h>

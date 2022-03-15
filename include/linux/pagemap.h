@@ -5,6 +5,7 @@
 /*
  * Copyright 1995 Linus Torvalds
  */
+#include <linux/fs_api.h>
 #include <linux/mm.h>
 #include <linux/fs.h>
 #include <linux/list.h>

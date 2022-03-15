@@ -10,6 +10,7 @@
 #ifndef _NILFS_H
 #define _NILFS_H
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/buffer_head.h>
 #include <linux/spinlock.h>

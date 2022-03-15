@@ -34,6 +34,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/fs_api.h>
 #include <linux/kref.h>
 #include <linux/dma-resv.h>
 

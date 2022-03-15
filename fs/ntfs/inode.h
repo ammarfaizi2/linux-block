@@ -10,6 +10,7 @@
 #ifndef _LINUX_NTFS_INODE_H
 #define _LINUX_NTFS_INODE_H
 
+#include <linux/fs_api.h>
 #include <linux/atomic.h>
 
 #include <linux/fs.h>

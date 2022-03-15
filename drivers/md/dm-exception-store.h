@@ -10,6 +10,7 @@
 #ifndef _LINUX_DM_EXCEPTION_STORE
 #define _LINUX_DM_EXCEPTION_STORE
 
+#include <linux/fs_api.h>
 #include <linux/blkdev.h>
 #include <linux/list_bl.h>
 #include <linux/device-mapper.h>

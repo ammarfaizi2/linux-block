@@ -6,6 +6,8 @@
 #ifndef LINUX_NFSD_VFS_H
 #define LINUX_NFSD_VFS_H
 
+#include <linux/fs_api.h>
+
 #include "nfsfh.h"
 #include "nfsd.h"
 

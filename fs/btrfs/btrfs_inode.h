@@ -6,6 +6,7 @@
 #ifndef BTRFS_INODE_H
 #define BTRFS_INODE_H
 
+#include <linux/fs_api.h>
 #include <linux/hash.h>
 #include <linux/refcount.h>
 #include "extent_map.h"

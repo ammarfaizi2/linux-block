@@ -9,6 +9,7 @@
 #ifndef _CIFS_GLOB_H
 #define _CIFS_GLOB_H
 
+#include <linux/fs_api.h>
 #include <linux/in.h>
 #include <linux/in6.h>
 #include <linux/inet.h>
