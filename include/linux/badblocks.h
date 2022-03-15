@@ -2,6 +2,7 @@
 #ifndef _LINUX_BADBLOCKS_H
 #define _LINUX_BADBLOCKS_H
 
+#include <linux/bug.h>
 #include <linux/seqlock.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

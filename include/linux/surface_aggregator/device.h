@@ -13,6 +13,7 @@
 #ifndef _LINUX_SURFACE_AGGREGATOR_DEVICE_H
 #define _LINUX_SURFACE_AGGREGATOR_DEVICE_H
 
+#include <linux/bug.h>
 #include <linux/bits.h>
 #include <linux/device.h>
 #include <linux/mod_devicetable.h>
