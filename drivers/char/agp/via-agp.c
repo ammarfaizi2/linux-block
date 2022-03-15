@@ -3,6 +3,7 @@
  * VIA AGPGART routines.
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/types.h>
 #include <linux/module.h>
 #include <linux/pci.h>

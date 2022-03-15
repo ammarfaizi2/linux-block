@@ -9,6 +9,7 @@
  * work is done in the northbridge(s).
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

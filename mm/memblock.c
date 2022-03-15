@@ -6,6 +6,7 @@
  * Copyright (C) 2001 Peter Bergner.
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

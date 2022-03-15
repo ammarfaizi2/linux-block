@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/kobject_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

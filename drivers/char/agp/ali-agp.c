@@ -2,6 +2,7 @@
  * ALi AGPGART routines.
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/device_api.h>

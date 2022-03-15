@@ -8,6 +8,7 @@
  *  Based on linux/arch/i386/mm/init.c:
  *   Copyright (C) 1995  Linus Torvalds
  */
+#include <linux/memory_hotplug.h>
 #include <linux/mm.h>
 #include <linux/swap.h>
 #include <linux/init.h>
