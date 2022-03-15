@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) "MSCODE: "fmt
+#include <linux/gfp.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/err.h>
