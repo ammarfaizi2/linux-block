@@ -13,6 +13,7 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>

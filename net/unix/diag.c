@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/fs_types_sb.h>
 #include <linux/fs.h>
 #include <linux/dcache.h>
 #include <linux/types.h>

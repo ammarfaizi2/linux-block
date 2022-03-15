@@ -14,6 +14,7 @@
  * See namei.c for a description of directory organisation on disk.
  */
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>

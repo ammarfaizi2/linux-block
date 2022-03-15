@@ -13,6 +13,7 @@
  * into the on disk location of the xattr data.
  */
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs.h>
 #include <linux/vfs.h>
 #include <linux/slab.h>

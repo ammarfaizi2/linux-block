@@ -3,6 +3,7 @@
  * Routines that mimic syscalls, but don't use the user address space or file
  * descriptors.  Only for init/ and related early init code.
  */
+#include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/cred.h>

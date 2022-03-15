@@ -4,6 +4,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/device_api.h>

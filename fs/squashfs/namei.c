@@ -39,6 +39,7 @@
  * and doesn't require much extra storage on disk.
  */
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/vfs.h>

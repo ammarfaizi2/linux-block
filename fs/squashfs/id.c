@@ -18,6 +18,7 @@
  * is small) is read at mount time and cached in memory.
  */
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs.h>
 #include <linux/vfs.h>
 #include <linux/slab.h>

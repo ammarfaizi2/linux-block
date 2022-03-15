@@ -11,6 +11,7 @@
  *	- cache integrity information associated with an inode
  *	  using a rbtree tree.
  */
+#include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/slab.h>
 #include <linux/init.h>

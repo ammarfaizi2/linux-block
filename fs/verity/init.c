@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/fs_types_sb.h>
 #include <linux/ratelimit.h>
 
 void fsverity_msg(const struct inode *inode, const char *level,

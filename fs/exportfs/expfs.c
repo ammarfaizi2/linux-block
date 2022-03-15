@@ -9,6 +9,7 @@
  * For details on why we do all the strange and hairy things in here
  * take a look at Documentation/filesystems/nfs/exporting.rst.
  */
+#include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/exportfs.h>

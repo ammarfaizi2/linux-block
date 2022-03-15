@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/fs_types_sb.h>
 #include <linux/cpumask_api.h>
 #include <crypto/hash.h>
 #include <linux/bio.h>
