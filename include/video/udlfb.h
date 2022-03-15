@@ -2,6 +2,7 @@
 #ifndef UDLFB_H
 #define UDLFB_H
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 /*

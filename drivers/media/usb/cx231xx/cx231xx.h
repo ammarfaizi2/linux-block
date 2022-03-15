@@ -10,6 +10,7 @@
 #ifndef _CX231XX_H
 #define _CX231XX_H
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/videodev2.h>
 #include <linux/types.h>

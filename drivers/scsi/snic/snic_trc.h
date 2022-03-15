@@ -18,6 +18,7 @@
 #ifndef __SNIC_TRC_H
 #define __SNIC_TRC_H
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_SCSI_SNIC_DEBUG_FS

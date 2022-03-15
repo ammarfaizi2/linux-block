@@ -5,6 +5,7 @@
 #ifndef __RTW_TX_H_
 #define __RTW_TX_H_
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 #define RTK_TX_MAX_AGG_NUM_MASK		0x1f

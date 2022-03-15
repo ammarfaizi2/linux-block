@@ -4,6 +4,7 @@
 #ifndef NFP_FLOWER_CMSG_H
 #define NFP_FLOWER_CMSG_H
 
+#include <linux/jiffies.h>
 #include <linux/bitfield.h>
 #include <linux/skbuff.h>
 #include <linux/types.h>

@@ -19,6 +19,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/kthread.h>
 #include <linux/bitops.h>
 #include <linux/slab.h>

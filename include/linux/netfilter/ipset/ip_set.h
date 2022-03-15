@@ -7,6 +7,7 @@
 #ifndef _IP_SET_H
 #define _IP_SET_H
 
+#include <linux/jiffies.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/netlink.h>

@@ -5,6 +5,7 @@
 #ifndef __RTW_COEX_H__
 #define __RTW_COEX_H__
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 #define COEX_CCK_2	0x1

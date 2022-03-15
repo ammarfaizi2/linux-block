@@ -6,6 +6,7 @@
  */
 #ifndef __iwl_fw_dbg_h__
 #define __iwl_fw_dbg_h__
+#include <linux/jiffies.h>
 #include <linux/workqueue.h>
 #include <net/cfg80211.h>
 #include "runtime.h"

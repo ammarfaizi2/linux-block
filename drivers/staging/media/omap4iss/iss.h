@@ -10,6 +10,7 @@
 #ifndef _OMAP4_ISS_H_
 #define _OMAP4_ISS_H_
 
+#include <linux/jiffies.h>
 #include <media/v4l2-device.h>
 #include <media/v4l2-mc.h>
 

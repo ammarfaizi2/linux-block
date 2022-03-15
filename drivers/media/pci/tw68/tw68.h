@@ -16,6 +16,7 @@
  *  Copyright (C) 2014 Hans Verkuil <hverkuil@xs4all.nl>
  */
 
+#include <linux/jiffies.h>
 #include <linux/pci.h>
 #include <linux/videodev2.h>
 #include <linux/notifier.h>

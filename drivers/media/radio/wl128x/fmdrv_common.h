@@ -9,6 +9,7 @@
 #ifndef _FMDRV_COMMON_H
 #define _FMDRV_COMMON_H
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 #define FM_ST_REG_TIMEOUT   msecs_to_jiffies(6000)	/* 6 sec */

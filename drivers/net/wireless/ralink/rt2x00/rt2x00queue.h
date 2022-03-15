@@ -13,6 +13,7 @@
 #ifndef RT2X00QUEUE_H
 #define RT2X00QUEUE_H
 
+#include <linux/jiffies.h>
 #include <linux/prefetch.h>
 
 /**

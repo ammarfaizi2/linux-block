@@ -7,6 +7,7 @@
 #ifndef WILC_WLAN_H
 #define WILC_WLAN_H
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/bitfield.h>
 

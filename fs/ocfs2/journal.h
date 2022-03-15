@@ -10,6 +10,7 @@
 #ifndef OCFS2_JOURNAL_H
 #define OCFS2_JOURNAL_H
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/jbd2.h>
 

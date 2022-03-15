@@ -12,6 +12,7 @@
 #define pr_fmt(fmt) "CacheFiles: " fmt
 
 
+#include <linux/jiffies.h>
 #include <linux/fscache-cache.h>
 #include <linux/cred.h>
 #include <linux/security.h>

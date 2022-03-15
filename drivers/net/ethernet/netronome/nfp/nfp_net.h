@@ -12,6 +12,7 @@
 #ifndef _NFP_NET_H_
 #define _NFP_NET_H_
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dev_printk.h>
 #include <linux/atomic.h>

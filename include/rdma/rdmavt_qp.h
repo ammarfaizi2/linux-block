@@ -6,6 +6,7 @@
 #ifndef DEF_RDMAVT_INCQP_H
 #define DEF_RDMAVT_INCQP_H
 
+#include <linux/jiffies.h>
 #include <rdma/rdma_vt.h>
 #include <rdma/ib_pack.h>
 #include <rdma/ib_verbs.h>

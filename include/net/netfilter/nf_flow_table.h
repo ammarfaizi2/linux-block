@@ -1,6 +1,7 @@
 #ifndef _NF_FLOW_TABLE_H
 #define _NF_FLOW_TABLE_H
 
+#include <linux/jiffies.h>
 #include <linux/in.h>
 #include <linux/in6.h>
 #include <linux/netdevice.h>

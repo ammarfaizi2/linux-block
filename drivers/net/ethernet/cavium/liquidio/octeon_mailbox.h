@@ -18,6 +18,7 @@
 #ifndef __MAILBOX_H__
 #define __MAILBOX_H__
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 /* Macros for Mail Box Communication */

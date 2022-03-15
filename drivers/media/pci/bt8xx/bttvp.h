@@ -13,6 +13,7 @@
 #ifndef _BTTVP_H_
 #define _BTTVP_H_
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/types.h>

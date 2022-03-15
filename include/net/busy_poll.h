@@ -12,6 +12,7 @@
 #ifndef _LINUX_NET_BUSY_POLL_H
 #define _LINUX_NET_BUSY_POLL_H
 
+#include <linux/jiffies.h>
 #include <linux/netdevice.h>
 #include <linux/sched/clock.h>
 #include <linux/sched/signal.h>

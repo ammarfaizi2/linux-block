@@ -13,6 +13,7 @@
  *  Copyright (C) 2000 Philip Edelbrock <phil@stimpy.netroedge.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/dma-mapping.h>

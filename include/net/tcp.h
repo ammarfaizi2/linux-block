@@ -16,6 +16,7 @@
 
 #define FASTRETRANS_DEBUG 1
 
+#include <linux/jiffies.h>
 #include <linux/list.h>
 #include <linux/tcp.h>
 #include <linux/bug.h>

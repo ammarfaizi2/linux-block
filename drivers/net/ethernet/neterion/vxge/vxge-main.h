@@ -17,6 +17,7 @@
 #include "vxge-traffic.h"
 #include "vxge-config.h"
 #include "vxge-version.h"
+#include <linux/jiffies.h>
 #include <linux/list.h>
 #include <linux/bitops.h>
 #include <linux/if_vlan.h>

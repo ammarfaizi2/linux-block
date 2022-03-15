@@ -2,6 +2,7 @@
 #ifndef __NET_SCHED_PIE_H
 #define __NET_SCHED_PIE_H
 
+#include <linux/jiffies.h>
 #include <linux/ktime.h>
 #include <linux/skbuff.h>
 #include <linux/types.h>

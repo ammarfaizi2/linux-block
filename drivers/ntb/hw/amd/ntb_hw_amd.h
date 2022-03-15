@@ -49,6 +49,7 @@
 #ifndef NTB_HW_AMD_H
 #define NTB_HW_AMD_H
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/ntb.h>
 #include <linux/pci.h>
