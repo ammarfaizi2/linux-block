@@ -2,6 +2,7 @@
 #ifndef _LINUX_MM_TYPES_H
 #define _LINUX_MM_TYPES_H
 
+#include <linux/irqflags.h>
 #include <linux/mm_types_task.h>
 
 #include <linux/auxvec.h>

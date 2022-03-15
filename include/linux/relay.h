@@ -11,6 +11,7 @@
 #ifndef _LINUX_RELAY_H
 #define _LINUX_RELAY_H
 
+#include <linux/irqflags.h>
 #include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/timer.h>
