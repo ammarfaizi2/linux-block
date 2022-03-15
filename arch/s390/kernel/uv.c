@@ -7,6 +7,7 @@
 #define KMSG_COMPONENT "prot_virt"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/mm_ptlock.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/kobject_api.h>

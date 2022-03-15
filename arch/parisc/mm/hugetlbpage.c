@@ -7,6 +7,7 @@
  * Copyright (C) 2015 Helge Deller <deller@gmx.de>
  */
 
+#include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/fs.h>

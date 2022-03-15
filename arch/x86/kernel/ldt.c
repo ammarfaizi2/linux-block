@@ -12,6 +12,7 @@
  *	    context.lock
  */
 
+#include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_tlb_flush.h>
 #include <linux/mm_api.h>

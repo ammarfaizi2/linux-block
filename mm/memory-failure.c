@@ -33,6 +33,7 @@
  * are rare we hope to get away with this. This avoids impacting the core 
  * VM.
  */
+#include <linux/mm_ptlock.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>

@@ -21,6 +21,7 @@
  * device/bus interface rather than a group interface.
  */
 
+#include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api_kvmalloc.h>

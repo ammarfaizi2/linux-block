@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

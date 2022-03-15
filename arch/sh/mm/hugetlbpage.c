@@ -9,6 +9,7 @@
  * Copyright (C) 2002, 2003 David S. Miller (davem@redhat.com)
  */
 
+#include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/init.h>

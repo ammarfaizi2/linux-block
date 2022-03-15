@@ -7,6 +7,7 @@
  *  Copyright (C) 2010  Linus Torvalds
  */
 
+#include <linux/mm_ptlock.h>
 #include <linux/mm_api_tlb_flush.h>
 #include <linux/pagemap.h>
 #include <linux/hugetlb.h>

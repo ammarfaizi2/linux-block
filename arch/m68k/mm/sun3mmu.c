@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/signal.h>
 #include <linux/sched.h>
