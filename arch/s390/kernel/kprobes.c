@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/kallsyms.h>
 #include <linux/atomic_api.h>
 #include <linux/moduleloader.h>
 #include <linux/kprobes.h>

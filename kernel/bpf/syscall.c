@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  */
+#include <linux/kallsyms.h>
 #include <linux/idr_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

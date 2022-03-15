@@ -34,6 +34,7 @@
  * SOFTWARE.
  */
 
+#include <linux/kallsyms.h>
 #include <linux/gfp.h>
 #include <linux/hardirq.h>
 #include <linux/sched.h>
