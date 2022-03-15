@@ -2,6 +2,7 @@
 #ifndef _LINUX_KTHREAD_H
 #define _LINUX_KTHREAD_H
 /* Simple interface for creating and stopping kernel threads without mess. */
+#include <linux/numa_types.h>
 #include <linux/timer.h>
 #include <linux/err.h>
 #include <linux/sched.h>
