@@ -4,6 +4,7 @@
  *
  * Author: Suresh Siddha <suresh.b.siddha@intel.com>
  */
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>

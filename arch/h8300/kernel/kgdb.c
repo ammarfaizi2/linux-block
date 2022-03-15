@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/ptrace.h>
 #include <linux/kgdb.h>
 #include <linux/kdebug.h>

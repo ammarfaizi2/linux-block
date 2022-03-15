@@ -8,6 +8,7 @@
  * Based on the code posted by Kazuyasu on the Altera Forum at:
  * http://www.alteraforum.com/forum/showpost.php?p=77003&postcount=20
  */
+#include <linux/sched/thread.h>
 #include <linux/ptrace.h>
 #include <linux/kgdb.h>
 #include <linux/kdebug.h>

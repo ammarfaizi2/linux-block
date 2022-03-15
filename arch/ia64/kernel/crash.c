@@ -9,6 +9,7 @@
  * Copyright (C) 2005 Intel Corp	Zou Nan hai <nanhai.zou@intel.com>
  *
  */
+#include <linux/sched/thread.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/smp.h>

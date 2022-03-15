@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/perf_event_api.h>
 #include <linux/pagemap.h>

@@ -12,6 +12,7 @@
 
 #define DEBUG		/* Enable initcall_debug */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/rt.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

@@ -5,6 +5,7 @@
  * Licensed under the GPL
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/sched/mm.h>
 #include <linux/syscalls.h>

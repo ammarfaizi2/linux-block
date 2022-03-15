@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/bitmap.h>

@@ -3,6 +3,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

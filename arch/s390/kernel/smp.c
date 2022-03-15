@@ -19,6 +19,7 @@
 #define KMSG_COMPONENT "cpu"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sched/thread.h>
 #include <linux/sched/affinity.h>
 #include <linux/profile.h>
 #include <linux/pgtable_api.h>

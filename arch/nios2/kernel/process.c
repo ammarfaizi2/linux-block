@@ -12,6 +12,7 @@
  * for more details.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <linux/export.h>
 #include <linux/sched.h>

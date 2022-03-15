@@ -13,6 +13,7 @@
  *   Merge ppc32 and ppc64 implementations
  */
 
+#include <linux/sched/thread.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <asm/processor.h>

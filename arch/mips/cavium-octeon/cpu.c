@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Wind River Systems,
  *   written by Ralf Baechle <ralf@linux-mips.org>
  */
+#include <linux/sched/thread.h>
 #include <linux/init.h>
 #include <linux/irqflags.h>
 #include <linux/notifier.h>

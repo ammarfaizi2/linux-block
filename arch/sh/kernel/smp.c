@@ -7,6 +7,7 @@
  * Copyright (C) 2002 - 2010 Paul Mundt
  * Copyright (C) 2006 - 2007 Akio Idehara
  */
+#include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/sched/affinity.h>
 #include <linux/profile.h>

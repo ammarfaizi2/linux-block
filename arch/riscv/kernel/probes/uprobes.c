@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/sched/thread.h>
 #include <asm/cacheflush.h>
 #include <linux/highmem.h>
 #include <linux/ptrace.h>

@@ -5,6 +5,7 @@
  *  Copyright IBM Corp. 2017
  */
 
+#include <linux/sched/thread.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/mm.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/sched/thread.h>
 #include <asm/segment_api.h>
 #include <asm/ptrace.h>
 #include <linux/kernel.h>

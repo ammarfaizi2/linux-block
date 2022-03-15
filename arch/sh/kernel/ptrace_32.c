@@ -7,6 +7,7 @@
  *
  * Audit support by Yuichi Nakamura <ynakam@hitachisoft.jp>
  */
+#include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

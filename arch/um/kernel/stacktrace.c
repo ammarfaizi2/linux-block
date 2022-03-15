@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Google Inc., Author: Daniel Walter <dwalter@google.com>
  */
 
+#include <linux/sched/thread.h>
 #include <asm/unwind.h>
 #include <linux/kallsyms.h>
 #include <linux/kernel.h>

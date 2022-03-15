@@ -9,6 +9,7 @@
  * Copyright (C) 2002 Anton Blanchard <anton@au.ibm.com>, IBM
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/hardirq.h>

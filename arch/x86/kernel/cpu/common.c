@@ -2,6 +2,7 @@
 /* cpu_feature_enabled() cannot be used this early */
 #define USE_EARLY_PGTABLE_L5
 
+#include <linux/sched/thread.h>
 #include <linux/pgtable_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>

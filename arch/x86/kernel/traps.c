@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/preempt.h>
 #include <linux/notifier_api.h>

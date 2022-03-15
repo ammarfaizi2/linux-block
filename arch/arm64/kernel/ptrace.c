@@ -8,6 +8,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <linux/sched/rseq_api.h>
 #include <linux/audit.h>

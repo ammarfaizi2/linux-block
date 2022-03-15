@@ -10,6 +10,7 @@
  *
  * Derived from the x86 and Alpha versions.
  */
+#include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/mm_api.h>

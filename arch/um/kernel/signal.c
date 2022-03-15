@@ -3,6 +3,7 @@
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/module.h>
 #include <linux/ptrace.h>

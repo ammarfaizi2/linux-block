@@ -6,6 +6,7 @@
  *  General FPU state handling cleanups
  *	Gareth Hughes <gareth@valinux.com>, May 2000
  */
+#include <linux/sched/thread.h>
 #include <linux/sched/task.h>
 #include <linux/preempt.h>
 #include <linux/jiffies.h>

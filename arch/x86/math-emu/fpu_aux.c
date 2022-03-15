@@ -11,6 +11,8 @@
  |                                                                           |
  +---------------------------------------------------------------------------*/
 
+#include <linux/sched/thread.h>
+
 #include "fpu_system.h"
 #include "exception.h"
 #include "fpu_emu.h"

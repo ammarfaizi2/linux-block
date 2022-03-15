@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Rabin Vincent <rabin at rab.in>
  */
 
+#include <linux/sched/thread.h>
 #include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/stddef.h>

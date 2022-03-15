@@ -8,6 +8,7 @@
  * Copyright 2018 Nick Piggin, Michael Ellerman, IBM Corp.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/task.h>
 #include <linux/preempt.h>
 #include <linux/cpumask_api.h>

@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "kvm-s390"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sched/thread.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>

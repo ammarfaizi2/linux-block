@@ -11,6 +11,7 @@
  * state in 'asm.s'.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>

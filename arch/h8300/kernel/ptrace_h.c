@@ -8,6 +8,7 @@
  * this archive for more details.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <linux/linkage.h>
 #include <linux/sched/signal.h>

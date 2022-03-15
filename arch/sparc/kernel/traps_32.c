@@ -10,6 +10,7 @@
  * I hate traps on the sparc, grrr...
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/preempt.h>

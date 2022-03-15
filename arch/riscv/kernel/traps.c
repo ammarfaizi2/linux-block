@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Regents of the University of California
  */
 
+#include <linux/sched/thread.h>
 #include <linux/preempt.h>
 #include <linux/mm_api.h>
 #include <linux/cpu.h>

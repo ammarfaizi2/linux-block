@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright 2017 IBM Corp.
+#include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>

@@ -14,6 +14,7 @@
  * for more details.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>

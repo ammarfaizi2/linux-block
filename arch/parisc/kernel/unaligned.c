@@ -6,6 +6,7 @@
  *    Significantly tweaked by LaMont Jones <lamont@debian.org>
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

@@ -8,6 +8,7 @@
  *                  Copyright (C) 2000 David Howells
  *                  Copyright (C) 2002 - 2010 Paul Mundt
  */
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/perf_event_api.h>
