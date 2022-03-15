@@ -13,6 +13,7 @@
 #ifndef CNIC_IF_H
 #define CNIC_IF_H
 
+#include <uapi/linux/in.h>
 #include <uapi/linux/in6.h>
 #include <linux/io.h>
 
