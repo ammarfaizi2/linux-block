@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <asm/processor_types.h>
 #include <asm/cpufeature.h>
 #include <linux/miscdevice.h>
 #include <linux/slab.h>
