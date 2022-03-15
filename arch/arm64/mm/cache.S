@@ -218,7 +218,7 @@ SYM_FUNC_ALIAS(__dma_flush_area, __pi___dma_flush_area)
  */
 SYM_FUNC_START(__pi___dma_map_area)
 	add	x1, x0, x1
-	cmp	w2, #DMA_FROM_DEVICE
+	cmp	w2, #ASM_DMA_FROM_DEVICE
 	b.eq	__pi_dcache_inval_poc
 	b	__pi_dcache_clean_poc
 SYM_FUNC_END(__pi___dma_map_area)
@@ -232,7 +232,7 @@ SYM_FUNC_ALIAS(__dma_map_area, __pi___dma_map_area)
  */
 SYM_FUNC_START(__pi___dma_unmap_area)
 	add	x1, x0, x1
-	cmp	w2, #DMA_TO_DEVICE
+	cmp	w2, #ASM_DMA_TO_DEVICE
 	b.ne	__pi_dcache_inval_poc
 	ret
 SYM_FUNC_END(__pi___dma_unmap_area)
