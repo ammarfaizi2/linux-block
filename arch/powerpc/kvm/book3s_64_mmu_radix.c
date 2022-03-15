@@ -4,6 +4,7 @@
  * Copyright 2016 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>

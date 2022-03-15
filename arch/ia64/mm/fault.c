@@ -5,6 +5,7 @@
  * Copyright (C) 1998-2002 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
+#include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/sched/signal.h>

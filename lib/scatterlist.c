@@ -4,6 +4,7 @@
  *
  * Scatterlist handling helpers.
  */
+#include <linux/pagefault_ctrl.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <asm/cacheflush.h>

@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>

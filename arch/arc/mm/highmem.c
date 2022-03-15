@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/memblock.h>
 #include <linux/export.h>
 #include <linux/highmem.h>

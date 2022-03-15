@@ -7,6 +7,7 @@
  * Author: Marcelo Henrique Cerri <mhcerri@br.ibm.com>
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <asm/simd.h>
 #include <asm/switch_to.h>
 #include <crypto/aes.h>

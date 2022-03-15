@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/mm.h>

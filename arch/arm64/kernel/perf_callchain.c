@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2015 ARM Limited
  */
+#include <linux/pagefault_ctrl.h>
 #include <linux/perf_event.h>
 #include <linux/stacktrace.h>
 #include <linux/uaccess.h>

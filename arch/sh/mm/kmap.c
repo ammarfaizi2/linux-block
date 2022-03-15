@@ -5,6 +5,7 @@
  * Copyright (C) 1999, 2000, 2002  Niibe Yutaka
  * Copyright (C) 2002 - 2009  Paul Mundt
  */
+#include <linux/pagefault_ctrl.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/mutex.h>

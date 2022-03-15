@@ -6,6 +6,7 @@
  *  Copyright (C) 2009 Marvell Semiconductor
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>

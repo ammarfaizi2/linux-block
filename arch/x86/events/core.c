@@ -12,6 +12,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

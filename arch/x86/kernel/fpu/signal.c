@@ -3,6 +3,7 @@
  * FPU signal frame handling routines.
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <asm/processor_api.h>
 #include <linux/compat.h>
 #include <linux/cpu.h>
