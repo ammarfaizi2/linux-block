@@ -44,6 +44,7 @@
  * zero volts).
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>

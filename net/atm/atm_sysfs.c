@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* ATM driver model support. */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

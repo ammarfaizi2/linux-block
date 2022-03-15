@@ -10,6 +10,7 @@
 
 #include "habanalabs.h"
 
+#include <linux/device/class.h>
 #include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/aer.h>

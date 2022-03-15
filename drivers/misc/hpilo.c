@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Hewlett-Packard Development Company, L.P.
  *	David Altobelli <david.altobelli@hpe.com>
  */
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

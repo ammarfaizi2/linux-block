@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Arcx Inc
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

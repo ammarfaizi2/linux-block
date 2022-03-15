@@ -52,6 +52,7 @@
  * Added GETFLAGS/SETFLAGS ioctls, Fred Barnes, 04/2001
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>

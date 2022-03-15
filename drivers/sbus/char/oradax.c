@@ -21,6 +21,7 @@
  * See Documentation/sparc/oradax/oracle-dax.rst for more details.
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/uaccess.h>
 #include <linux/module.h>

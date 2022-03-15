@@ -8,6 +8,7 @@
  * based on arch/arm/common/rtctime.c
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/rtc.h>

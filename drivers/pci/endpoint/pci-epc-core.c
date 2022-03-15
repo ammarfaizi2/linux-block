@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/device.h>

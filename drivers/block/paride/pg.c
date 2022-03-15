@@ -130,6 +130,7 @@
 #define PI_PG	4
 #endif
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/types.h>
 /* Here are things one can override from the insmod command.

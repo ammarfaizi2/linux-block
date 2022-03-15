@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Microsemi Corporation
  */
 
+#include <linux/device/class.h>
 #include <linux/atomic_api.h>
 #include <linux/align.h>
 #include <linux/interrupt.h>

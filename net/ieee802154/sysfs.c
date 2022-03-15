@@ -7,6 +7,7 @@
  * Based on: net/wireless/sysfs.c
  */
 
+#include <linux/device/class.h>
 #include <linux/device.h>
 #include <linux/rtnetlink.h>
 

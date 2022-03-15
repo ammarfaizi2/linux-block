@@ -33,6 +33,7 @@
  *	than the level indicated above to trigger output.	
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bvec_api.h>

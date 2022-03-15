@@ -23,6 +23,7 @@
   * All rights reserved. Licensed under dual BSD/GPL license.
   */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

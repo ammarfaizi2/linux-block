@@ -16,6 +16,7 @@
  * later using the "UBI control device".
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/err.h>

@@ -7,6 +7,7 @@
  * Nadi Sarrar <nadi@beronet.com>
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

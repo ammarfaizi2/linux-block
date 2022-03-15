@@ -12,6 +12,7 @@
  * Roccat Kova[+] is a bigger version of the Pyra with two more side buttons.
  */
 
+#include <linux/device/class.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/input.h>

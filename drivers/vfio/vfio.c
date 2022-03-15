@@ -10,6 +10,7 @@
  * Author: Tom Lyon, pugs@cisco.com
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

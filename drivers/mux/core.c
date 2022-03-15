@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "mux-core: " fmt
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>
