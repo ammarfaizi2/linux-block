@@ -4,6 +4,7 @@
  * Written by Tao Ma <boyu.mt@taobao.com>
  */
 
+#include <linux/pagemap.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/highmem.h>

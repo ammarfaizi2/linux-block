@@ -34,6 +34,7 @@
  *    Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/pagemap.h>
 #include <linux/mmu_notifier.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>

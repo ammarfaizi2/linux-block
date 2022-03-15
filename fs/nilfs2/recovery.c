@@ -7,6 +7,7 @@
  * Written by Ryusuke Konishi.
  */
 
+#include <linux/pagemap.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/pagemap.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/dcache.h>

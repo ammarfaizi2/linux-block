@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Chao Yu <chao@kernel.org>
  */
 
+#include <linux/pagemap.h>
 #include <linux/module.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_truncate.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2021, Alibaba Cloud
  */
 #include "internal.h"
+#include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

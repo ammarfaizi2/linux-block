@@ -11,6 +11,7 @@
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  */
 
+#include <linux/pagemap.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/mm.h>

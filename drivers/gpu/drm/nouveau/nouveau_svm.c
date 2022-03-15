@@ -24,6 +24,7 @@
 #include "nouveau_chan.h"
 #include "nouveau_dmem.h"
 
+#include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mmu_notifier.h>
 #include <linux/mmap_lock.h>
