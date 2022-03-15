@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_IOBITMAP_H
 #define _ASM_X86_IOBITMAP_H
 
+#include <asm/processor_api.h>
 #include <linux/refcount.h>
 #include <asm/processor.h>
 

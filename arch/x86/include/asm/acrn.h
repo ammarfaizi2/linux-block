@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_ACRN_H
 #define _ASM_X86_ACRN_H
 
+#include <asm/processor_api.h>
 #include <asm/cpufeature.h>
 #include <linux/types.h>
 
