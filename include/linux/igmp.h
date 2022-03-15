@@ -10,6 +10,7 @@
 #ifndef _LINUX_IGMP_H
 #define _LINUX_IGMP_H
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff.h>
 #include <linux/timer.h>
 #include <linux/in.h>

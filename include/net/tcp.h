@@ -16,6 +16,7 @@
 
 #define FASTRETRANS_DEBUG 1
 
+#include <linux/skbuff_api.h>
 #include <linux/jiffies.h>
 #include <linux/list.h>
 #include <linux/tcp.h>

@@ -9,6 +9,7 @@
  *  Copyright (c) 2005-6 Ian McDonald <ian.mcdonald@jandi.co.nz>
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/dccp.h>
 #include <linux/ktime.h>
 #include <net/snmp.h>

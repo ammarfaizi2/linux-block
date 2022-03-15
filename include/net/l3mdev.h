@@ -7,6 +7,7 @@
 #ifndef _NET_L3MDEV_H_
 #define _NET_L3MDEV_H_
 
+#include <linux/skbuff_api.h>
 #include <net/dst.h>
 #include <net/fib_rules.h>
 

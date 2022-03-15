@@ -8,6 +8,7 @@
 #ifndef __AF_VSOCK_H__
 #define __AF_VSOCK_H__
 
+#include <linux/skbuff_api.h>
 #include <linux/kernel.h>
 #include <linux/workqueue.h>
 #include <uapi/linux/vm_sockets.h>

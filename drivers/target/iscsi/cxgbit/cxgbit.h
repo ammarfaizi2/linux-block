@@ -6,6 +6,7 @@
 #ifndef __CXGBIT_H__
 #define __CXGBIT_H__
 
+#include <linux/skbuff_api.h>
 #include <linux/kref_api.h>
 #include <linux/mutex.h>
 #include <linux/list.h>

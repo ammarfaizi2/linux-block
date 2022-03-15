@@ -6,6 +6,7 @@
 #ifndef __DPAA2_ETH_H
 #define __DPAA2_ETH_H
 
+#include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/dcbnl.h>
 #include <linux/netdevice.h>

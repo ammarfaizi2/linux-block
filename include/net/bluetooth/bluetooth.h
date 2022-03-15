@@ -25,6 +25,7 @@
 #ifndef __BLUETOOTH_H
 #define __BLUETOOTH_H
 
+#include <linux/skbuff_api.h>
 #include <linux/poll.h>
 #include <net/sock.h>
 #include <linux/seq_file.h>

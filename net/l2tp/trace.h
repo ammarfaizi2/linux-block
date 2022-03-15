@@ -5,6 +5,7 @@
 #if !defined(_TRACE_L2TP_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_L2TP_H
 
+#include <linux/skbuff_api.h>
 #include <linux/tracepoint.h>
 #include <linux/l2tp.h>
 #include "l2tp_core.h"

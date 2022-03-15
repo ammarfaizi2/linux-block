@@ -9,6 +9,7 @@
 #ifndef _SUNHME_H
 #define _SUNHME_H
 
+#include <linux/skbuff_api.h>
 #include <linux/pci.h>
 
 /* Happy Meal global registers. */

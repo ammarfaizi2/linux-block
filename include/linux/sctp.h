@@ -35,6 +35,7 @@
 #ifndef __LINUX_SCTP_H__
 #define __LINUX_SCTP_H__
 
+#include <linux/skbuff_api.h>
 #include <linux/in.h>		/* We need in_addr.  */
 #include <linux/in6.h>		/* We need in6_addr.  */
 #include <linux/skbuff.h>

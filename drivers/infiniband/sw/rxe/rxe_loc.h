@@ -7,6 +7,7 @@
 #ifndef RXE_LOC_H
 #define RXE_LOC_H
 
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 
 /* rxe_av.c */

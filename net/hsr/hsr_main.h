@@ -10,6 +10,7 @@
 #ifndef __HSR_PRIVATE_H
 #define __HSR_PRIVATE_H
 
+#include <linux/skbuff_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice.h>
 #include <linux/list.h>

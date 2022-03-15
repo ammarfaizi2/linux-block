@@ -35,6 +35,7 @@
 #ifndef __CXGB4_PTP_H__
 #define __CXGB4_PTP_H__
 
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 
 /* Maximum parts-per-billion adjustment that is acceptable */

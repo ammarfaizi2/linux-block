@@ -10,6 +10,7 @@
 #ifndef __QETH_CORE_H__
 #define __QETH_CORE_H__
 
+#include <linux/skbuff_api.h>
 #include <linux/refcount_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>

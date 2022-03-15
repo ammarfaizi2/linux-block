@@ -13,6 +13,7 @@
 #ifndef _LINUX_UDP_H
 #define _LINUX_UDP_H
 
+#include <linux/skbuff_api.h>
 #include <net/inet_sock.h>
 #include <linux/skbuff.h>
 #include <net/netns/hash.h>

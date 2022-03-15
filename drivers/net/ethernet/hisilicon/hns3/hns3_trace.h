@@ -8,6 +8,7 @@
 #if !defined(_HNS3_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
 #define _HNS3_TRACE_H_
 
+#include <linux/skbuff_api.h>
 #include <linux/tracepoint.h>
 
 #define DESC_NR		(sizeof(struct hns3_desc) / sizeof(u32))

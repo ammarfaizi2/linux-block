@@ -6,6 +6,7 @@
  *  Copyright (C) 2015-2018  Intel Corporation
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <asm/unaligned.h>
 

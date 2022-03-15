@@ -2,6 +2,7 @@
 #ifndef _INET_ECN_H_
 #define _INET_ECN_H_
 
+#include <linux/skbuff_api.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
 #include <linux/if_vlan.h>

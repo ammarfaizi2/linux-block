@@ -10,6 +10,7 @@
 #ifndef __AFIUCV_H
 #define __AFIUCV_H
 
+#include <linux/skbuff_api.h>
 #include <asm/types.h>
 #include <asm/byteorder.h>
 #include <linux/list.h>

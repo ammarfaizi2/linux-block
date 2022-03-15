@@ -23,6 +23,7 @@
 
 #define ADDRCONF_NOTIFY_PRIORITY	0
 
+#include <linux/skbuff_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/in.h>
 #include <linux/in6.h>

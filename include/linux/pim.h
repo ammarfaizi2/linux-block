@@ -2,6 +2,7 @@
 #ifndef __LINUX_PIM_H
 #define __LINUX_PIM_H
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff.h>
 #include <asm/byteorder.h>
 

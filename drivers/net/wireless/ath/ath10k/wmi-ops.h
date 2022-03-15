@@ -8,6 +8,7 @@
 #ifndef _WMI_OPS_H_
 #define _WMI_OPS_H_
 
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 
 struct ath10k;

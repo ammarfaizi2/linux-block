@@ -9,6 +9,7 @@
 #ifndef _NET_IPV6_H
 #define _NET_IPV6_H
 
+#include <linux/skbuff_api.h>
 #include <linux/ipv6.h>
 #include <linux/hardirq.h>
 #include <linux/jhash.h>

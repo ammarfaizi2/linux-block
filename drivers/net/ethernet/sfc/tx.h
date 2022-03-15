@@ -8,6 +8,7 @@
 #ifndef EFX_TX_H
 #define EFX_TX_H
 
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 
 /* Driver internal tx-path related declarations. */

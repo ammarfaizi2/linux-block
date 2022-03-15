@@ -8,6 +8,7 @@
 #ifndef _FC_FRAME_H_
 #define _FC_FRAME_H_
 
+#include <linux/skbuff_api.h>
 #include <linux/scatterlist.h>
 #include <linux/skbuff.h>
 #include <scsi/scsi_cmnd.h>

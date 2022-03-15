@@ -8,6 +8,7 @@
 #define __HDLC_H
 
 
+#include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>

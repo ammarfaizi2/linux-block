@@ -31,6 +31,7 @@
  *        CHANNEL_ATTACHED -> CHANNEL_OPENED (performed only by GuestPart)
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/uuid.h>
 #include <linux/skbuff.h>
 #include <linux/visorbus.h>

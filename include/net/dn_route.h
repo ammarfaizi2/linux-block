@@ -7,6 +7,7 @@
     
 *******************************************************************************/
 
+#include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <net/dst.h>
 #include <net/flow.h>

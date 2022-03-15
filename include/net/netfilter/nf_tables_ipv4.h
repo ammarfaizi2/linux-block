@@ -2,6 +2,7 @@
 #ifndef _NF_TABLES_IPV4_H_
 #define _NF_TABLES_IPV4_H_
 
+#include <linux/skbuff_api.h>
 #include <net/netfilter/nf_tables.h>
 #include <net/ip.h>
 

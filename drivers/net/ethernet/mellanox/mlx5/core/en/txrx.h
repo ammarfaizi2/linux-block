@@ -5,6 +5,7 @@
 #define __MLX5_EN_TXRX_H___
 
 #include "en.h"
+#include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/indirect_call_wrapper.h>
 

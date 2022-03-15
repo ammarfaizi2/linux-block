@@ -13,6 +13,7 @@
 #ifndef _NF_CONNTRACK_CORE_H
 #define _NF_CONNTRACK_CORE_H
 
+#include <linux/skbuff_api.h>
 #include <linux/netfilter.h>
 #include <net/netfilter/nf_conntrack.h>
 #include <net/netfilter/nf_conntrack_ecache.h>

@@ -11,6 +11,7 @@
 #ifndef __LINUX_IF_PPPOX_H
 #define __LINUX_IF_PPPOX_H
 
+#include <linux/skbuff_api.h>
 #include <linux/if.h>
 #include <linux/netdevice.h>
 #include <linux/ppp_channel.h>

@@ -40,6 +40,7 @@
  *   and will continue to evolve.
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/in.h>

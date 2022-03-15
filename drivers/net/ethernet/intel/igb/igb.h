@@ -9,6 +9,7 @@
 #include "e1000_mac.h"
 #include "e1000_82575.h"
 
+#include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/timecounter.h>
