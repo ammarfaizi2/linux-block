@@ -19,6 +19,7 @@
 #include "xfs_log.h"
 #include "xfs_error.h"
 
+#include <linux/wait_bit.h>
 #include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

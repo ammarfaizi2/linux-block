@@ -6,6 +6,7 @@
  *  Copyright (C) 2005-2008  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/wait_bit.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/wait_bit.h>
 #include <linux/tasklet_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>

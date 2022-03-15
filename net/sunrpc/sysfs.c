@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2020 Anna Schumaker <Anna.Schumaker@Netapp.com>
  */
+#include <linux/wait_bit.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

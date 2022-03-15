@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  */
 #include "internal.h"
+#include <linux/wait_bit.h>
 #include <linux/sched.h>
 #include <linux/pagemap.h>
 #include <linux/mm_api.h>

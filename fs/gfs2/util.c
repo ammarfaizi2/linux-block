@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/wait_bit.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_entry_types.h>

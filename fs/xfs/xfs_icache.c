@@ -24,6 +24,7 @@
 #include "xfs_ialloc.h"
 #include "xfs_ag.h"
 
+#include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

@@ -4,6 +4,7 @@
  * (c) 2015 - Jeff Layton <jeff.layton@primarydata.com>
  */
 
+#include <linux/wait_bit.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>

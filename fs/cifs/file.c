@@ -8,6 +8,7 @@
  *              Jeremy Allison (jra@samba.org)
  *
  */
+#include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/time64_api.h>

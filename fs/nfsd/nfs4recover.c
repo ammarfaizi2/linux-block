@@ -32,6 +32,7 @@
 *
 */
 
+#include <linux/wait_bit.h>
 #include <linux/umh.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
