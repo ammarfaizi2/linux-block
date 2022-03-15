@@ -8,6 +8,7 @@
  *	Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
  */
 
+#include <asm/processor_api.h>
 #include <linux/limits.h>
 #include <linux/bug.h>
 #include <asm/cpufeature.h>

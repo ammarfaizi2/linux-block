@@ -10,6 +10,7 @@
  *           Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
  *           Stefano Stabellini <stefano.stabellini@eu.citrix.com>
  */
+#include <asm/processor_api.h>
 #include <linux/export.h>
 #include <linux/init.h>
 #include <linux/pci.h>

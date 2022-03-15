@@ -8,6 +8,7 @@
  * Copyright (C) 2006 Advanced Micro Devices, Inc.
  */
 
+#include <asm/processor_api.h>
 #include <linux/cs5535.h>
 #include <linux/platform_device.h>
 #include <linux/export.h>

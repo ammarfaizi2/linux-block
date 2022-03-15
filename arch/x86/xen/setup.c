@@ -5,6 +5,7 @@
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
 
+#include <asm/processor_api.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/mm.h>

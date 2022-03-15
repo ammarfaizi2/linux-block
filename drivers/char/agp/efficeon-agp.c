@@ -20,6 +20,7 @@
  *   - tested with c3/c4 enabled (with the mobility m9 card)
  */
 
+#include <asm/processor_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/init.h>

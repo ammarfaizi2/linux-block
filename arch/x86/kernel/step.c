@@ -2,6 +2,7 @@
 /*
  * x86 single-step support code, common to 32-bit and 64-bit.
  */
+#include <asm/processor_api.h>
 #include <asm/nospec-branch.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>

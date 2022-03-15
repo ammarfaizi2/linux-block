@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "microcode: " fmt
 
+#include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <linux/platform_device.h>
 #include <linux/stop_machine.h>

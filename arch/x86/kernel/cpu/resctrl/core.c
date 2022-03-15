@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	"resctrl: " fmt
 
+#include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <linux/slab.h>
 #include <linux/err.h>

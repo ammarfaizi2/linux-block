@@ -9,6 +9,7 @@
  */
 
 
+#include <asm/processor_api.h>
 #include <linux/kvm_host.h>
 #include "mmu.h"
 #include "mmu_internal.h"

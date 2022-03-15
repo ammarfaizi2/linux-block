@@ -8,6 +8,7 @@
  * Copyright (c) 2021 Tianjia Zhang <tianjia.zhang@linux.alibaba.com>
  */
 
+#include <asm/processor_api.h>
 #include <linux/module.h>
 #include <linux/crypto.h>
 #include <linux/kernel.h>

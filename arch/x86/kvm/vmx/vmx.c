@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <linux/highmem.h>
 #include <linux/hrtimer.h>

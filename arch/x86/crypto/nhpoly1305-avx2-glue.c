@@ -6,6 +6,7 @@
  * Copyright 2018 Google LLC
  */
 
+#include <asm/processor_api.h>
 #include <crypto/internal/hash.h>
 #include <crypto/internal/simd.h>
 #include <crypto/nhpoly1305.h>

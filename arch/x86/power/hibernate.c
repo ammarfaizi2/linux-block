@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Pavel Machek <pavel@ucw.cz>
  * Copyright (c) 2001 Patrick Mochel <mochel@osdl.org>
  */
+#include <asm/processor_api.h>
 #include <linux/gfp.h>
 #include <linux/smp.h>
 #include <linux/suspend.h>

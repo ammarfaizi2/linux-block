@@ -7,6 +7,7 @@
  * Copyright (c) 2006  Michal Ludvig <michal@logix.cz>
  */
 
+#include <asm/processor_api.h>
 #include <crypto/internal/hash.h>
 #include <crypto/padlock.h>
 #include <crypto/sha1.h>

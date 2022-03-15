@@ -40,6 +40,7 @@
  *
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
+#include <asm/processor_api.h>
 #include <asm/pgalloc.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/sched/mm.h>

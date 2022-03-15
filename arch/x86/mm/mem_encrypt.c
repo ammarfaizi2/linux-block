@@ -7,6 +7,7 @@
  * Author: Tom Lendacky <thomas.lendacky@amd.com>
  */
 
+#include <asm/processor_api.h>
 #include <linux/dma-direct.h>
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>

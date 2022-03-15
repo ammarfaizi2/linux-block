@@ -41,6 +41,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/processor_api.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>
 #include <linux/cpuidle.h>

@@ -15,6 +15,7 @@
  * using the CPU's debug registers.
  */
 
+#include <asm/processor_api.h>
 #include <linux/perf_event.h>
 #include <linux/hw_breakpoint.h>
 #include <linux/irqflags.h>

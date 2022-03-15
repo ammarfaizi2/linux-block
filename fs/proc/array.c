@@ -53,6 +53,7 @@
  *			 :  base.c too.
  */
 
+#include <asm/processor_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/types.h>
 #include <linux/errno.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2001 Patrick Mochel <mochel@osdl.org>
  */
 
+#include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <linux/suspend.h>
 #include <linux/export.h>

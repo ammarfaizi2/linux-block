@@ -10,6 +10,7 @@
  * Authors: Marcelo Tosatti <mtosatti@redhat.com>
  */
 
+#include <asm/processor_api.h>
 #include <linux/init.h>
 #include <linux/cpu.h>
 #include <linux/cpuidle.h>

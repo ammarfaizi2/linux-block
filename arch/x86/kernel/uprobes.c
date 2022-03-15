@@ -7,6 +7,7 @@
  *	Srikar Dronamraju
  *	Jim Keniston
  */
+#include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
