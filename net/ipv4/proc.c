@@ -27,6 +27,7 @@
  *	Andi Kleen		:	Add support for /proc/net/netstat
  *	Arnaldo C. Melo		:	Convert to seq_file
  */
+#include <net/sock_batch.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <net/ip_extra.h>
