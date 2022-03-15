@@ -3,6 +3,7 @@
  * Copyright (C) 2020 ARM Ltd.
  */
 
+#include <linux/sched/coredump.h>
 #include <linux/ptrace_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
