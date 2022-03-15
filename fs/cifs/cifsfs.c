@@ -10,6 +10,7 @@
 
 /* Note that BB means BUGBUG (ie something to fix eventually) */
 
+#include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>

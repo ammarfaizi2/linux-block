@@ -35,6 +35,7 @@
  *		        within kupdate, it will ignore the immediate flag
  */
 
+#include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/time.h>

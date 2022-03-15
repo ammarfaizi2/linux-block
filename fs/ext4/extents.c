@@ -17,6 +17,7 @@
  *   - smart tree reduction
  */
 
+#include <linux/backing-dev-api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/time.h>

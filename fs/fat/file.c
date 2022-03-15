@@ -7,6 +7,7 @@
  *  regular file handling primitives for fat-based filesystems
  */
 
+#include <linux/backing-dev-api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/compat.h>

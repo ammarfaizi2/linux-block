@@ -5,6 +5,7 @@
  *  Copyright (C) 2016 - 2020 Christoph Hellwig
  */
 
+#include <linux/backing-dev-api.h>
 #include <linux/init.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

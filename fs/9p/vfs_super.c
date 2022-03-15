@@ -5,6 +5,7 @@
  *  Copyright (C) 2002 by Ron Minnich <rminnich@lanl.gov>
  */
 
+#include <linux/backing-dev-api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/errno.h>

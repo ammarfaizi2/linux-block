@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>

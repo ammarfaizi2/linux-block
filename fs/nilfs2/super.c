@@ -24,6 +24,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/string.h>

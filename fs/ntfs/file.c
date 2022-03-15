@@ -5,6 +5,7 @@
  * Copyright (c) 2001-2015 Anton Altaparmakov and Tuxera Inc.
  */
 
+#include <linux/backing-dev-api.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>
