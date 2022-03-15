@@ -15,6 +15,7 @@
  * Joe Taylor <joe@tensilica.com>
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/restart_block_api.h>
 #include <linux/signal.h>
 #include <linux/errno.h>

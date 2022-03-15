@@ -8,6 +8,7 @@
  * this archive for more details.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/ptrace.h>

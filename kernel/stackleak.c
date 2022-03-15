@@ -10,6 +10,7 @@
  * reveal and blocks some uninitialized stack variable attacks.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/stackleak.h>
 #include <linux/kprobes.h>
 

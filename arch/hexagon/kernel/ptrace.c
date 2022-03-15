@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>

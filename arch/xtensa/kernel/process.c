@@ -15,6 +15,7 @@
  * Kevin Chea
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

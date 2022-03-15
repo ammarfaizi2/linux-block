@@ -2,6 +2,7 @@
 /*
  * x86 single-step support code, common to 32-bit and 64-bit.
  */
+#include <linux/ptrace_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <asm/ptrace.h>

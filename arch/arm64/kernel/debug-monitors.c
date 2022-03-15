@@ -7,6 +7,7 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpu.h>

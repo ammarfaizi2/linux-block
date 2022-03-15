@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)			"habanalabs: " fmt
 
+#include <linux/ptrace_api.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

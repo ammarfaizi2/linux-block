@@ -5,6 +5,7 @@
  * Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/atomic_api.h>
 #include <linux/irq.h>
 #include <linux/sched.h>

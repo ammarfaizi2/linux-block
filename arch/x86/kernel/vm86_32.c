@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <asm/segment_api.h>
 #include <linux/capability.h>

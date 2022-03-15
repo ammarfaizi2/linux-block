@@ -9,6 +9,7 @@
  *             Pavel Emelianov <xemul@openvz.org>
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/pid.h>
 #include <linux/perf_event_api.h>
 #include <linux/fs_api.h>

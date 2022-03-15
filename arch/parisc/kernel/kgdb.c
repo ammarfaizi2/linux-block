@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/kgdb.h>
 #include <linux/string.h>
 #include <linux/sched.h>

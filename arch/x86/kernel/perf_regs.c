@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <asm/processor_api.h>
 #include <linux/errno.h>

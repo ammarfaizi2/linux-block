@@ -24,6 +24,7 @@
  * archive for more details.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

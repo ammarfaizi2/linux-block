@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2014-2016 Pratyush Anand <panand@redhat.com>
  */
+#include <linux/ptrace_api.h>
 #include <linux/notifier_api.h>
 #include <linux/highmem.h>
 #include <linux/ptrace.h>

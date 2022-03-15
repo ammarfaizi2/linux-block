@@ -13,6 +13,7 @@
  *    1997-11-28  Modified for POSIX.1b signals by Richard Henderson
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/restart_block_api.h>
 #include <linux/sched.h>

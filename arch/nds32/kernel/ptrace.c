@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
+#include <linux/ptrace_api.h>
 #include <linux/ptrace.h>
 #include <linux/regset.h>
 #include <linux/tracehook.h>

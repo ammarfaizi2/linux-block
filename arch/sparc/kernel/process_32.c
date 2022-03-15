@@ -8,6 +8,7 @@
 /*
  * This file handles the architecture-dependent parts of process handling..
  */
+#include <linux/ptrace_api.h>
 #include <linux/of_api.h>
 #include <linux/elfcore.h>
 #include <linux/errno.h>

@@ -6,6 +6,7 @@
  * edited by Linus Torvalds
  * ARM modifications Copyright (C) 2000 Russell King
  */
+#include <linux/ptrace_api.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/task_stack.h>

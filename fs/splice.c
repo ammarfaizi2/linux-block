@@ -18,6 +18,7 @@
  * Copyright (C) 2006 Ingo Molnar <mingo@elte.hu>
  *
  */
+#include <linux/ptrace_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

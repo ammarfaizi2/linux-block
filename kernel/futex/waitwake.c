@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/ptrace_api.h>
 #include <linux/plist.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mutex_api.h>

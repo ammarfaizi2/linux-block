@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/notifier_api.h>
 #include <linux/mm_page_address.h>

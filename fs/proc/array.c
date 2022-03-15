@@ -53,6 +53,7 @@
  *			 :  base.c too.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/pid.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

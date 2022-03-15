@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kgdb.h>
 #include <linux/sched.h>

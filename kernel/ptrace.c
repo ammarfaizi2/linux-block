@@ -8,6 +8,7 @@
  * to continually duplicate across every architecture.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/cred.h>
