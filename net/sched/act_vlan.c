@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <net/act_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>

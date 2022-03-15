@@ -5,6 +5,7 @@
  * copyright 	Jamal Hadi Salim (2002-4)
  */
 
+#include <net/act_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/prandom.h>
