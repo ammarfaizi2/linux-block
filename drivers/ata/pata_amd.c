@@ -15,6 +15,7 @@
  *  Documentation publicly available.
  */
 
+#include <linux/prefetch.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

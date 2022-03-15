@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/prefetch.h>
 #include <linux/raid/pq.h>
 #include "x86.h"
 

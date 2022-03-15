@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
+#include <linux/prefetch.h>
 #include <linux/pgtable_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_prefetch.h>

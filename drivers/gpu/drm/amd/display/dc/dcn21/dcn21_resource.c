@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/prefetch.h>
 #include <linux/slab.h>
 
 #include "dm_services.h"

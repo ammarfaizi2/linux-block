@@ -14,6 +14,7 @@
  * Copyright 2004-2006 Freescale Semiconductor, Inc.
  */
 
+#include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

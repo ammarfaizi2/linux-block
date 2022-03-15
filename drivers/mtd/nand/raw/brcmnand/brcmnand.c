@@ -3,6 +3,7 @@
  * Copyright © 2010-2015 Broadcom Corporation
  */
 
+#include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

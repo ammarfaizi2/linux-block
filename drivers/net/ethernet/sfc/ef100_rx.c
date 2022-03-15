@@ -8,6 +8,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/prefetch.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 

@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/prefetch.h>
+
 #include "dcn10/dcn10_hubp.h"
 #include "dcn21_hubp.h"
 

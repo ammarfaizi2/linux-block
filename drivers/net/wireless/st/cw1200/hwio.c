@@ -11,6 +11,7 @@
  * Author: Ajitpal Singh <ajitpal.singh@lockless.no>
  */
 
+#include <linux/prefetch.h>
 #include <linux/delay.h>
 #include <linux/types.h>
 

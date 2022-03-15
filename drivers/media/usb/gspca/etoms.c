@@ -9,6 +9,7 @@
 
 #define MODULE_NAME "etoms"
 
+#include <linux/prefetch.h>
 #include <linux/module.h>
 #include <linux/export.h>
 

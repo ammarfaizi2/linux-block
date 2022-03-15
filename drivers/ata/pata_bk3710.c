@@ -12,6 +12,7 @@
  * Copyright (C) 2007 MontaVista Software, Inc., <source@mvista.com>
  */
 
+#include <linux/prefetch.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/ata.h>

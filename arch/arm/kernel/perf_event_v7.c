@@ -19,6 +19,7 @@
 
 #ifdef CONFIG_CPU_V7
 
+#include <linux/prefetch.h>
 #include <linux/preempt.h>
 #include <linux/perf_event_api.h>
 #include <linux/of_api.h>

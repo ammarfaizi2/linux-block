@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2006 Chris Dearman (chris@mips.com),
  */
+#include <linux/prefetch.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

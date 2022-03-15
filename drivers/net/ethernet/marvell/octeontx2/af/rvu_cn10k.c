@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Marvell.
  */
 
+#include <linux/prefetch.h>
 #include <linux/io.h>
 #include <linux/bitfield.h>
 #include <linux/pci.h>

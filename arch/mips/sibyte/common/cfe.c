@@ -3,6 +3,7 @@
  * Copyright (C) 2000, 2001, 2002, 2003 Broadcom Corporation
  */
 
+#include <linux/prefetch.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/linkage.h>

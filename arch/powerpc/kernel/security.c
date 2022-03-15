@@ -4,6 +4,7 @@
 //
 // Copyright 2018, Michael Ellerman, IBM Corporation.
 
+#include <linux/prefetch.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>

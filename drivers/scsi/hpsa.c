@@ -18,6 +18,7 @@
  *
  */
 
+#include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/cpumask_api.h>

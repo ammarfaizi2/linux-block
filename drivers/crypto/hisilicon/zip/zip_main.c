@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 HiSilicon Limited. */
+#include <linux/prefetch.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

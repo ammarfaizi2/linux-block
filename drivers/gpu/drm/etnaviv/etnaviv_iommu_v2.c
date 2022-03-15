@@ -3,6 +3,7 @@
  * Copyright (C) 2016-2018 Etnaviv Project
  */
 
+#include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/bitmap.h>

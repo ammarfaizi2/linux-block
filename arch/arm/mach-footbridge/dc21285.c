@@ -5,6 +5,7 @@
  *  Copyright (C) 1998-2001 Russell King
  *  Copyright (C) 1998-2000 Phil Blundell
  */
+#include <linux/prefetch.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>

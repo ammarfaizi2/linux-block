@@ -24,6 +24,8 @@
  */
 
 #ifdef CONFIG_DRM_AMD_DC_DCN
+#include <linux/prefetch.h>
+
 #include "dc.h"
 #include "dc_link.h"
 #include "../display_mode_lib.h"

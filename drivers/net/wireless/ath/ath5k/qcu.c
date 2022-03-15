@@ -25,6 +25,7 @@ Queue Control Unit, DCF Control Unit Functions
 #include "ath5k.h"
 #include "reg.h"
 #include "debug.h"
+#include <linux/prefetch.h>
 #include <linux/log2.h>
 
 /**

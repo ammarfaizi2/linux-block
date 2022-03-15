@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/prefetch.h>
 #include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

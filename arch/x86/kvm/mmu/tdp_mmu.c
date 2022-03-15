@@ -7,6 +7,7 @@
 #include "tdp_mmu.h"
 #include "spte.h"
 
+#include <linux/prefetch.h>
 #include <linux/pgtable_api.h>
 #include <linux/module.h>
 #include <linux/mm_api.h>

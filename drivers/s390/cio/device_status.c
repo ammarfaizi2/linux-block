@@ -7,6 +7,7 @@
  * Status accumulation and basic sense functions.
  */
 
+#include <linux/prefetch.h>
 #include <linux/module.h>
 #include <linux/init.h>
 

@@ -14,6 +14,7 @@
  *    Because of these behaviour differences PIIX gets its own driver module.
  */
 
+#include <linux/prefetch.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

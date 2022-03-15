@@ -7,6 +7,7 @@
  *	Srikar Dronamraju
  *	Jim Keniston
  */
+#include <linux/prefetch.h>
 #include <linux/notifier_api.h>
 #include <linux/atomic_api.h>
 #include <asm/ptrace.h>

@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/prefetch.h>
+
 #include "dm_services.h"
 #include "dcn_calc_auto.h"
 #include "dcn_calc_math.h"

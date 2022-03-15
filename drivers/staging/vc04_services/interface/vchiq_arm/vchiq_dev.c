@@ -4,6 +4,7 @@
  * Copyright (c) 2010-2012 Broadcom. All rights reserved.
  */
 
+#include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

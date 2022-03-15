@@ -5,6 +5,7 @@
  * Copyright 2008-2009 Paul Mackerras, IBM Corporation.
  * Copyright 2010 Freescale Semiconductor, Inc.
  */
+#include <linux/prefetch.h>
 #include <linux/string.h>
 #include <linux/perf_event.h>
 #include <asm/reg.h>

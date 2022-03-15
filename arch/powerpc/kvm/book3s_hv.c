@@ -15,6 +15,7 @@
  * by Alexander Graf <agraf@suse.de>.
  */
 
+#include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>

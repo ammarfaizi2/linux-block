@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/prefetch.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

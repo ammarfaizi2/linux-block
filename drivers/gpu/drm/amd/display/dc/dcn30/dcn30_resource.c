@@ -24,6 +24,8 @@
  */
 
 
+#include <linux/prefetch.h>
+
 #include "dm_services.h"
 #include "dc.h"
 

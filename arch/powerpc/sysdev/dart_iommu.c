@@ -13,6 +13,7 @@
  * Dynamic DMA mapping support, Apple U3, U4 & IBM CPC925 "DART" iommu.
  */
 
+#include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

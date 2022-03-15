@@ -6,6 +6,7 @@
  * Author: Jose Abreu <joabreu@synopsys.com>
  */
 
+#include <linux/prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/ktime_api.h>
