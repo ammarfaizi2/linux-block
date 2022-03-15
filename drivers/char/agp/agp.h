@@ -29,6 +29,7 @@
 #ifndef _AGP_BACKEND_PRIV_H
 #define _AGP_BACKEND_PRIV_H 1
 
+#include <asm/msr.h>
 #include <asm/agp.h>	/* for flush_agp_cache() */
 
 #define PFX "agpgart: "

@@ -12,6 +12,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <asm/msr.h>
 #include <linux/perf_event.h>
 
 #include <asm/fpu/xstate.h>
