@@ -13,6 +13,7 @@
 #ifndef _LINUX_SIPHASH_H
 #define _LINUX_SIPHASH_H
 
+#include <asm/byteorder.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 

@@ -4,6 +4,7 @@
  */
 #ifndef _LINUX_RPMSG_BYTEORDER_H
 #define _LINUX_RPMSG_BYTEORDER_H
+#include <asm/byteorder.h>
 #include <linux/types.h>
 #include <uapi/linux/rpmsg_types.h>
 

@@ -11,6 +11,7 @@
 #ifndef __TWL_H_
 #define __TWL_H_
 
+#include <asm/byteorder.h>
 #include <linux/types.h>
 #include <linux/input/matrix_keypad.h>
 

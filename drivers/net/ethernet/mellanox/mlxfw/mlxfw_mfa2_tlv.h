@@ -4,6 +4,7 @@
 #ifndef _MLXFW_MFA2_TLV_H
 #define _MLXFW_MFA2_TLV_H
 
+#include <asm/byteorder.h>
 #include <linux/kernel.h>
 #include "mlxfw_mfa2_file.h"
 
