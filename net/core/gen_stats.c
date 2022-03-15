@@ -9,6 +9,7 @@
  * See Documentation/networking/gen_stats.rst
  */
 
+#include <linux/u64_stats_sync.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
