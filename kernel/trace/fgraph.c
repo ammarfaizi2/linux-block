@@ -7,6 +7,7 @@
  *
  * Highly modified by Steven Rostedt (VMware).
  */
+#include <linux/notifier.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kallsyms.h>
