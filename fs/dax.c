@@ -6,6 +6,7 @@
  * Author: Ross Zwisler <ross.zwisler@linux.intel.com>
  */
 
+#include <linux/hash.h>
 #include <linux/fs_api.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>

@@ -6,6 +6,7 @@
  *   Author(s): Michael A. Halcrow <mhalcrow@us.ibm.com>
  *		Tyler Hicks <code@tyhicks.com>
  */
+#include <linux/hash.h>
 #include <linux/cred.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

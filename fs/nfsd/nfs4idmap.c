@@ -32,6 +32,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/hash.h>
 #include <linux/module.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

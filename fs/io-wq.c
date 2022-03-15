@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Jens Axboe
  *
  */
+#include <linux/hash.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>

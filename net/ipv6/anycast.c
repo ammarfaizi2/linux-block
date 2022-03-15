@@ -9,6 +9,7 @@
  *	based heavily on net/ipv6/mcast.c
  */
 
+#include <linux/hash.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/errno.h>
