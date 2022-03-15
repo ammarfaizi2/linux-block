@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/eventfd.h>
 #include <linux/cred.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
