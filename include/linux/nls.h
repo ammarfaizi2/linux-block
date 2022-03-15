@@ -2,6 +2,7 @@
 #ifndef _LINUX_NLS_H
 #define _LINUX_NLS_H
 
+#include <linux/export.h>
 #include <linux/init.h>
 
 /* Unicode has changed over the years.  Unicode code points no longer
