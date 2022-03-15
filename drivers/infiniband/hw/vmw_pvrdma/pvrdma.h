@@ -46,6 +46,7 @@
 #ifndef __PVRDMA_H__
 #define __PVRDMA_H__
 
+#include <linux/notifier_types.h>
 #include <linux/io.h>
 #include <linux/compiler.h>
 #include <linux/interrupt.h>

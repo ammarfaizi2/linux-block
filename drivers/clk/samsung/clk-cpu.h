@@ -10,6 +10,7 @@
 
 #include "clk.h"
 
+#include <linux/notifier_types.h>
 #include <linux/types.h>
 
 /**

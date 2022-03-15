@@ -4,6 +4,7 @@
 #ifndef QTNFMAC_BUS_H
 #define QTNFMAC_BUS_H
 
+#include <linux/notifier_types.h>
 #include <linux/mutex_api.h>
 #include <linux/netdevice.h>
 #include <linux/workqueue.h>

@@ -10,6 +10,7 @@
 #ifndef BRCMFMAC_CORE_H
 #define BRCMFMAC_CORE_H
 
+#include <linux/notifier_types.h>
 #include <net/cfg80211.h>
 #include "fweh.h"
 
