@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/memcontrol.h>
 #include <linux/kthread.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

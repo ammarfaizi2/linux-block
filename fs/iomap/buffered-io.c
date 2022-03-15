@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * Copyright (C) 2016-2019 Christoph Hellwig.
  */
+#include <linux/memcontrol.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
