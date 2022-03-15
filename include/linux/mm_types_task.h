@@ -8,6 +8,8 @@
  * (These are defined separately to decouple sched.h from mm_types.h as much as possible.)
  */
 
+#include <generated/bounds.h>
+
 #include <linux/types.h>
 #include <linux/threads.h>
 #include <linux/atomic.h>
