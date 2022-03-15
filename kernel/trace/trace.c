@@ -12,6 +12,7 @@
  *  Copyright (C) 2004-2006 Ingo Molnar
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
+#include <linux/ftrace_pause.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cpumask_api.h>

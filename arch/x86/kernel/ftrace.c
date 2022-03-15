@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ftrace_pause.h>
 #include <linux/atomic_api.h>
 #include <asm/ptrace.h>
 #include <linux/compat.h>

@@ -12,6 +12,7 @@
  * All code mutation routines here are called under stop_machine().
  */
 
+#include <linux/ftrace_pause.h>
 #include <linux/atomic_api.h>
 #include <linux/ftrace.h>
 #include <linux/uaccess.h>

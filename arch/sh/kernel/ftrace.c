@@ -12,6 +12,7 @@
  * Arjan van de Ven, for keeping me straight, and explaining to me
  * the dangers of modifying code on the run.
  */
+#include <linux/ftrace_pause.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/ftrace.h>
