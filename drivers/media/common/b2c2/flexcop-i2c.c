@@ -4,6 +4,8 @@
  * flexcop-i2c.c - flexcop internal 2Wire bus (I2C) and dvb i2c initialization
  * see flexcop.c for copyright information
  */
+#include <linux/i2c.h>
+
 #include "flexcop.h"
 
 #define FC_MAX_I2C_RETRIES 100000

@@ -53,6 +53,7 @@
  * M88RS2000 suffers from loss of lock.
  */
 #define DVB_USB_LOG_PREFIX "LME2510(C)"
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/usb.h>

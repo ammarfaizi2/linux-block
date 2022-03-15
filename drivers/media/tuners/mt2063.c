@@ -10,6 +10,7 @@
  *	http://linux.terratec.de/files/TERRATEC_H7/20110323_TERRATEC_H7_Linux.tar.gz
  */
 
+#include <linux/i2c.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>

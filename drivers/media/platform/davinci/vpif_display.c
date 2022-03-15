@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/i2c.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>

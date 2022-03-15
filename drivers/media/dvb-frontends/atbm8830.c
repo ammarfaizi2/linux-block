@@ -6,6 +6,7 @@
  *    Copyright (C) 2009 David T.L. Wong <davidtlwong@gmail.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <asm/div64.h>
 #include <media/dvb_frontend.h>

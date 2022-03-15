@@ -9,6 +9,8 @@
  * Copyright (C) 2009 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/i2c.h>
+
 #include "cx23885.h"
 #include "netup-init.h"
 

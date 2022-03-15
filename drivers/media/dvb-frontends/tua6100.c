@@ -16,6 +16,7 @@
  *                       & Marcus Metzler for convergence integrated media GmbH
  */
 
+#include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/dvb/frontend.h>

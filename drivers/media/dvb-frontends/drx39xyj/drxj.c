@@ -55,6 +55,7 @@ INCLUDE FILES
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 2009 Bill Liu <Bill.Liu@Conexant.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

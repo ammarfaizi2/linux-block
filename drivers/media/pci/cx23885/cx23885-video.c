@@ -8,6 +8,7 @@
 #include "cx23885.h"
 #include "cx23885-video.h"
 
+#include <linux/i2c.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/init.h>

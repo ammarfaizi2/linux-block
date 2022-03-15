@@ -15,6 +15,7 @@
 
 #include "drxk.h"
 #include "mt2063.h"
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <media/dvb_ca_en50221.h>

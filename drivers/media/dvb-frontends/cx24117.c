@@ -12,6 +12,7 @@
 
 */
 
+#include <linux/i2c.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

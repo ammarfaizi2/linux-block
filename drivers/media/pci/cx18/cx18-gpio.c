@@ -8,6 +8,8 @@
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/i2c.h>
+
 #include "cx18-driver.h"
 #include "cx18-io.h"
 #include "cx18-cards.h"

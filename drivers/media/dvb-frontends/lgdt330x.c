@@ -19,6 +19,7 @@
  *
  */
 
+#include <linux/i2c.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

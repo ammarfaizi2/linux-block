@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/i2c.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 

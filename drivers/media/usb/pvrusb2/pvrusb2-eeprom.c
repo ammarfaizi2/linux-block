@@ -5,6 +5,7 @@
  *  Copyright (C) 2004 Aurelien Alleaume <slts@free.fr>
  */
 
+#include <linux/i2c.h>
 #include <linux/slab.h>
 #include "pvrusb2-eeprom.h"
 #include "pvrusb2-hdw-internal.h"

@@ -10,6 +10,7 @@
  */
 
 #
+#include <linux/i2c.h>
 #include <linux/delay.h>
 
 #include "cx23885.h"

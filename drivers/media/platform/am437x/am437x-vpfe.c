@@ -8,6 +8,7 @@
  * Lad, Prabhakar <prabhakar.csengg@gmail.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>

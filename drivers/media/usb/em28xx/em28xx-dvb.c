@@ -23,6 +23,7 @@
 
 #include "em28xx.h"
 
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

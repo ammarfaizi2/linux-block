@@ -7,6 +7,7 @@
  *   Author: Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

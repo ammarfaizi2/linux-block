@@ -8,6 +8,7 @@
  *  https://www.silabs.com/Support%20Documents/TechnicalDocs/Si2165-short.pdf
  */
 
+#include <linux/i2c.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

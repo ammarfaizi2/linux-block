@@ -21,6 +21,7 @@
 //  * VBI support,
 //  * controls support
 
+#include <linux/i2c.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/bitops.h>
