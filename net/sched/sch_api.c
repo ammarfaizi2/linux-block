@@ -11,6 +11,7 @@
  * Jamal Hadi Salim <hadi@nortelnetworks.com>: 990601: ingress support
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>

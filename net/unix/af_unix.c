@@ -77,6 +77,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/net_namespace_api.h>
 #include <linux/wait_api.h>
 #include <linux/splice.h>
 #include <linux/spinlock_api.h>

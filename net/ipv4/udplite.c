@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "UDPLite: " fmt
 
+#include <net/net_namespace_api.h>
 #include <linux/export.h>
 #include <linux/proc_fs.h>
 #include "udp_impl.h"

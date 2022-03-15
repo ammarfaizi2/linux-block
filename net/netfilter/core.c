@@ -6,6 +6,7 @@
  *
  * This code is GPL.
  */
+#include <net/net_namespace_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netfilter/nf_conntrack_common_api.h>
 #include <linux/netdevice_api.h>

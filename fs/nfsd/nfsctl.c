@@ -5,6 +5,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

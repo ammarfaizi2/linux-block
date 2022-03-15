@@ -59,6 +59,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/net_namespace_api.h>
 #include <net/ip_fib_api.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>

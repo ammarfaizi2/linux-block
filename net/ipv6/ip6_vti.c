@@ -11,6 +11,7 @@
  *	net/ipv6/ip6_tunnel.c
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/ndisc_api.h>
 #include <net/ipv6_api.h>

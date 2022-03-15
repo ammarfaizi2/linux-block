@@ -10,6 +10,7 @@
  *   Copyright (C) 2000-2005 Netfilter Core Team <coreteam@netfilter.org>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <net/net_namespace_api.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/seqlock_api.h>

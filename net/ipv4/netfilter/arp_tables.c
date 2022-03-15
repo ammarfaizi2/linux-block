@@ -11,6 +11,7 @@
  *
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <net/net_namespace_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/net.h>
 #include <linux/mm_api_kvmalloc.h>

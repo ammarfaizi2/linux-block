@@ -6,6 +6,7 @@
 
 /* Kernel module for IP set management */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>

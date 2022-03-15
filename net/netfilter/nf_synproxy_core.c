@@ -3,6 +3,7 @@
  * Copyright (c) 2013 Patrick McHardy <kaber@trash.net>
  */
 
+#include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <net/checksum.h>

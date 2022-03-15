@@ -5,6 +5,7 @@
  *	Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

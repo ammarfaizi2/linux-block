@@ -12,6 +12,7 @@
  *  other ebtables table. See net/bridge/br_input.c.
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/netfilter_bridge/ebtables.h>

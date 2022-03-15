@@ -48,6 +48,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/net_namespace_api.h>
 #include <net/ipv6_api_sock.h>
 #include <net/dst_api.h>
 #include <linux/uio_api.h>

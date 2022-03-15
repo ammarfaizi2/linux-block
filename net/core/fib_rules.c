@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/l3mdev.h>
 #include <linux/spinlock_api.h>

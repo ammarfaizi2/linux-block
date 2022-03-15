@@ -47,6 +47,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <net/net_namespace_api.h>
 #include <net/l3mdev.h>
 #include <net/ipv6_api.h>
 #include <net/ip_extra.h>

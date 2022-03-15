@@ -7,6 +7,7 @@
  * Dynamic registration, added aarp entries. (5/30/97 Chris Horn)
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/init.h>
 #include <linux/sysctl.h>
 #include <net/sock.h>

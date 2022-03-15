@@ -6,6 +6,7 @@
  * funded by Astaro.
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/netfilter.h>

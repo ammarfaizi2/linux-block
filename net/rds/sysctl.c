@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <net/net_namespace_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/sysctl.h>

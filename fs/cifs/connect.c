@@ -5,6 +5,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>

@@ -5,6 +5,7 @@
  * Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/sysctl.h>

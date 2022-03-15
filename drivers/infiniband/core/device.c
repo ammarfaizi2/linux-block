@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

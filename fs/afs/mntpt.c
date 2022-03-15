@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

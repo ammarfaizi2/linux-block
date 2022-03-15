@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/net_namespace_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/dcache.h>
