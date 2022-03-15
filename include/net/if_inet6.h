@@ -10,6 +10,7 @@
 #ifndef _NET_IF_INET6_H
 #define _NET_IF_INET6_H
 
+#include <linux/mutex_types.h>
 #include <net/snmp.h>
 #include <linux/ipv6.h>
 #include <linux/refcount.h>
