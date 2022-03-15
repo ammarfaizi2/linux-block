@@ -10,6 +10,7 @@
  * Transmit and frame generation functions.
  */
 
+#include <linux/netdevice_api_dev_stats.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

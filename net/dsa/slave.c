@@ -4,6 +4,7 @@
  * Copyright (c) 2008-2009 Marvell Semiconductor
  */
 
+#include <linux/netdevice_api_dev_stats.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
