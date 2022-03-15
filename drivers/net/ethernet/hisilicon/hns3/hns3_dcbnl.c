@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
+#include <net/dcbnl.h>
+
 #include "hnae3.h"
 #include "hns3_enet.h"
 
