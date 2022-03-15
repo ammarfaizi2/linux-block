@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <asm/cpumask_arch.h>
 #include <linux/thread_info.h>
 #include <linux/capability.h>
 #include <linux/miscdevice.h>
