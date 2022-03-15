@@ -6,6 +6,7 @@
  *	Tristram Ha <Tristram.Ha@microchip.com>
  */
 
+#include <linux/if_vlan_types.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
