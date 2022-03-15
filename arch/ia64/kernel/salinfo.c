@@ -37,6 +37,7 @@
  *   Modify the locking to make the test for "work to do" an atomic operation.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

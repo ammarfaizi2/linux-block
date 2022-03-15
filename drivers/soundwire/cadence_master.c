@@ -6,6 +6,7 @@
  * Used by Master driver
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

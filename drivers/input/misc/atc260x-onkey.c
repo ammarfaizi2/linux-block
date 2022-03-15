@@ -5,6 +5,7 @@
  * Copyright (c) 2020 Cristian Ciocaltea <cristian.ciocaltea@gmail.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>

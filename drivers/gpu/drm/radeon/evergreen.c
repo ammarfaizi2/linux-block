@@ -22,6 +22,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/math64.h>

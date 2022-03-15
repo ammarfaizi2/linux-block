@@ -8,6 +8,7 @@
  * Copyright (C) 2020 Linaro Ltd <loic.poulain@linaro.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

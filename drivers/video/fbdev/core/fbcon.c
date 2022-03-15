@@ -56,6 +56,7 @@
  *  more details.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/notifier_api.h>
 #include <linux/kmod.h>
 #include <linux/kdev_t.h>

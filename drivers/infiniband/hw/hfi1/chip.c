@@ -8,6 +8,7 @@
  * This file contains all of the code that is specific to the HFI chip
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

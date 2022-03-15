@@ -10,6 +10,7 @@
  * Copyright 2009	Johannes Berg <johannes@sipsolutions.net>
  * Copyright (C) 2019 Intel Corporation
  */
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>

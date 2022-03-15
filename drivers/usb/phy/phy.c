@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2004-2013 Texas Instruments
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

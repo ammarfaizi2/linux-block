@@ -25,6 +25,7 @@
  * Authors: Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

@@ -3,6 +3,7 @@
  * Copyright(c) 2018 Intel Corporation.
  *
  */
+#include <linux/workqueue_api.h>
 #include <linux/atomic_api.h>
 
 #include "iowait.h"

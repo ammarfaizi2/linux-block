@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

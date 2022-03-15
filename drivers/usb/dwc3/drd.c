@@ -7,6 +7,7 @@
  * Authors: Roger Quadros <rogerq@ti.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

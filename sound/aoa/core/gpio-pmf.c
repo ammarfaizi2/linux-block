@@ -5,6 +5,7 @@
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <asm/pmac_feature.h>

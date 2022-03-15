@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>

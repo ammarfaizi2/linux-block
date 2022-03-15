@@ -4,6 +4,7 @@
  * Copyright (c) 2015, Intel Corporation.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

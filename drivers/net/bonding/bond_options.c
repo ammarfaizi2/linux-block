@@ -5,6 +5,7 @@
  * Copyright (c) 2013 Scott Feldman <sfeldma@cumulusnetworks.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

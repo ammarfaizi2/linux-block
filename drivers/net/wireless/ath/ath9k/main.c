@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>

@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>

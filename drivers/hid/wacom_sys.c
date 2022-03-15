@@ -10,6 +10,7 @@
 
 #include "wacom_wac.h"
 #include "wacom.h"
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

@@ -18,6 +18,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <media/v4l2-event.h>
 #include <media/v4l2-mediabus.h>

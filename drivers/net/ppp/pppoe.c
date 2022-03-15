@@ -52,6 +52,7 @@
  * License:
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/netdevice_api.h>

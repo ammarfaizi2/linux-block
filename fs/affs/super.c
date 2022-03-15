@@ -11,6 +11,7 @@
  *  (C) 1991  Linus Torvalds - minix filesystem
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

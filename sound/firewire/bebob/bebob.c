@@ -11,6 +11,7 @@
  * system to handle BeBoB based devices.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 

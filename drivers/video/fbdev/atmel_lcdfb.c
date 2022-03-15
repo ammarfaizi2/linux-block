@@ -8,6 +8,7 @@
  * more details.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

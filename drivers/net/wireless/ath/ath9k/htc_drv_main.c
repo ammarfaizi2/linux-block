@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>

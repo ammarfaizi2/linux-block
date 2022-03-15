@@ -7,6 +7,7 @@
  * Copyright (C) 2008      John Poet
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

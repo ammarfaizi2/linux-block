@@ -4,6 +4,7 @@
  * Copyright (C) 2015 Numascale AS. All rights reserved.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timex.h>
 #include <linux/cpumask_api.h>
 #include <linux/clockchips.h>

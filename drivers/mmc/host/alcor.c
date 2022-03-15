@@ -12,6 +12,7 @@
  * thing what I did. 2018 Oleksij Rempel <linux@rempel-privat.de>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

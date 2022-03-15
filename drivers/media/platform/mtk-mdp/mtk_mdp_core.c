@@ -5,6 +5,7 @@
  *         Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>

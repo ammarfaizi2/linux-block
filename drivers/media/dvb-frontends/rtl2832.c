@@ -6,6 +6,7 @@
  * Copyright (C) 2012-2014 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/math64.h>

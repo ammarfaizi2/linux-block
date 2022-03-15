@@ -11,6 +11,7 @@
 #define KMSG_COMPONENT "tape_3590"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/module.h>

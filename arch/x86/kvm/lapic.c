@@ -16,6 +16,7 @@
  * Based on Xen 3.1 code, Copyright (c) 2004, Intel Corporation.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/rcuwait_api.h>
 #include <linux/preempt.h>

@@ -3,6 +3,7 @@
 
 #include "otx2_cpt_common.h"
 #include "otx2_cptvf.h"
+#include <linux/workqueue_api.h>
 #include <linux/device_api_lock.h>
 #include <rvu_reg.h>
 

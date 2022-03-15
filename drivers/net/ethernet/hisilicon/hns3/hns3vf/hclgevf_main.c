@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/semaphore.h>

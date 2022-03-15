@@ -13,6 +13,7 @@
  * additional 8xxx chips like the 8192cu, 8188cus, etc.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>

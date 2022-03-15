@@ -7,6 +7,7 @@
  * Copyright 2012 by Servergy, Inc.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/platform_device.h>
 #include <linux/device.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Broadcom Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

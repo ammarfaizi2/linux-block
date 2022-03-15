@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>

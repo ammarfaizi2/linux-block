@@ -10,6 +10,7 @@
  *	Arun R Murthy <arun.murthy@stericsson.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>

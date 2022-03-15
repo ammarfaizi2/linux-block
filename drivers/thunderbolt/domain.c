@@ -6,6 +6,7 @@
  * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uuid_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

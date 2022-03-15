@@ -15,6 +15,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/prefetch.h>
 #include <linux/pm_wakeup.h>
 #include <linux/device_api.h>

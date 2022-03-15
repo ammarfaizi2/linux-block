@@ -16,6 +16,7 @@
 
 #define _RTL871X_PWRCTRL_C_
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 
 #include "osdep_service.h"

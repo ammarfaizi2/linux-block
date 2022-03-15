@@ -7,6 +7,7 @@
  *  Copyright (C) 2007  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

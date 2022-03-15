@@ -11,6 +11,7 @@
  * driver
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

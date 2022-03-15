@@ -14,6 +14,7 @@
 
 #define dev_fmt(fmt) "pciehp: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

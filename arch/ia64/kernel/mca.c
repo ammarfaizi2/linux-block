@@ -70,6 +70,7 @@
  * 2007-04-27 Russ Anderson <rja@sgi.com>
  *	      Support multiple cpus going through OS_MCA in the same event.
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>

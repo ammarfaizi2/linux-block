@@ -16,6 +16,7 @@
  * http://rainshadowtech.com/doc/HDMICECtoUSBandRS232v2.0.pdf
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/completion.h>

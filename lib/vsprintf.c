@@ -17,6 +17,7 @@
  * - scnprintf and vscnprintf
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uuid_api.h>
 #include <linux/siphash_api.h>
 #include <linux/sched.h>

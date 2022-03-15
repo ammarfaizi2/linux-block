@@ -7,6 +7,7 @@
  * Created to pull SCSI mid layer sysfs routines into one file.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

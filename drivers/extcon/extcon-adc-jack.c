@@ -13,6 +13,7 @@
  * Modified for calling to IIO to get adc by <anish.singh@samsung.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>

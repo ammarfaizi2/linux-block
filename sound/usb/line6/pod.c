@@ -5,6 +5,7 @@
  * Copyright (C) 2004-2010 Markus Grabner (grabner@icg.tugraz.at)
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/wait.h>

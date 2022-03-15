@@ -15,6 +15,7 @@
  * Hardware interface for generic Intel audio DSP HDA IP
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

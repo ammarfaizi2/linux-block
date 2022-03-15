@@ -6,6 +6,7 @@
  * Author(s): Sebastian Ott <sebott@linux.vnet.ibm.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

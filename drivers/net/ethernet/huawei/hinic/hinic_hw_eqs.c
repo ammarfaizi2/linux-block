@@ -4,6 +4,7 @@
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/sched.h>
 #include <linux/mm_api.h>

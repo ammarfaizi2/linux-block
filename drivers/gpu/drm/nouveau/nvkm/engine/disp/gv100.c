@@ -25,6 +25,7 @@
 #include "channv50.h"
 #include "rootnv50.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/bitmap.h>
 #include <core/gpuobj.h>
 #include <subdev/timer.h>

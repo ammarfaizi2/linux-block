@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/kobject_api.h>
 #include <linux/atomic_api.h>

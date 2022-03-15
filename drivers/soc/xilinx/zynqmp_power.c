@@ -9,6 +9,7 @@
  *  Rajan Vaja <rajan.vaja@xilinx.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

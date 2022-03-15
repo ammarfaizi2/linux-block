@@ -5,6 +5,7 @@
  * Copyright (c) 2009 Rafael J. Wysocki <rjw@sisk.pl>, Novell Inc.
  * Copyright (C) 2010 Alan Stern <stern@rowland.harvard.edu>
  */
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

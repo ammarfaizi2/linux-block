@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2014 Intel Mobile Communications GmbH
  * Copyright (C) 2015-2016 Intel Deutschland GmbH
  */
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

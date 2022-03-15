@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>

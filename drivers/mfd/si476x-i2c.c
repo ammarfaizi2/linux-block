@@ -8,6 +8,7 @@
  *
  * Author: Andrey Smirnov <andrew.smirnov@gmail.com>
  */
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

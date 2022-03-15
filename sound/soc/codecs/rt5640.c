@@ -7,6 +7,7 @@
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

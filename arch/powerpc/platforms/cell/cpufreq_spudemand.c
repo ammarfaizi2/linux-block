@@ -7,6 +7,7 @@
  * Author: Christian Krafft <krafft@de.ibm.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

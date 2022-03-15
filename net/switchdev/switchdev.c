@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2015 Scott Feldman <sfeldma@gmail.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

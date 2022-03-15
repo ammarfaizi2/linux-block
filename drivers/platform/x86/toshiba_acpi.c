@@ -22,6 +22,7 @@
 #define TOSHIBA_ACPI_VERSION	"0.24"
 #define PROC_INTERFACE_VERSION	1
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/sched.h>
 #include <linux/fs_api.h>

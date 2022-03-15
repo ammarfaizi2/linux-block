@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2020 Intel Corporation.
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

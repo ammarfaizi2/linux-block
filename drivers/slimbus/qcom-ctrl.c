@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2017, The Linux Foundation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

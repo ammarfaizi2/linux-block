@@ -8,6 +8,7 @@
  * Copyright (c) 2006, 2007  Maciej W. Rozycki
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

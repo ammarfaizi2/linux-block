@@ -7,6 +7,7 @@
  *
  * Author: Linus Walleij <triad@df.lth.se>
  */
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

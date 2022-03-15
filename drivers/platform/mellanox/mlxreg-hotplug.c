@@ -5,6 +5,7 @@
  * Copyright (C) 2016-2020 Mellanox Technologies
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>

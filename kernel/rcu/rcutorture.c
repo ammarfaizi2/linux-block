@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>

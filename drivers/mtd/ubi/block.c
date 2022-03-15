@@ -27,6 +27,7 @@
  * UBI_IOCVOLCRBLK and UBI_IOCVOLRMBLK.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/scatterlist_api.h>
 #include <linux/notifier_api.h>

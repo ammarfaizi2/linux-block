@@ -6,6 +6,7 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/gfp.h>
 #include <linux/module.h>
 #include <linux/mISDNhw.h>

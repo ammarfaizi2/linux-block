@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

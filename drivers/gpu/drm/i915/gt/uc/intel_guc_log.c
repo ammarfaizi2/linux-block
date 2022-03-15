@@ -3,6 +3,7 @@
  * Copyright © 2014-2019 Intel Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

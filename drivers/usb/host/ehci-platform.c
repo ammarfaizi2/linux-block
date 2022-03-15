@@ -18,6 +18,7 @@
  * Copyright 1999 Linus Torvalds
  * Copyright 1999 Gregory P. Smith
  */
+#include <linux/workqueue_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

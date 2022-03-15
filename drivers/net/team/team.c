@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

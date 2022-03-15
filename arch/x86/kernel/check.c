@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/sched.h>

@@ -6,6 +6,7 @@
 //               Marc Kleine-Budde <kernel@pengutronix.de>
 //
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>

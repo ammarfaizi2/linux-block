@@ -7,6 +7,7 @@
  * Author: Richard Purdie <rpurdie@openedhand.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/math64.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

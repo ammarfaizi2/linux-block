@@ -4,6 +4,7 @@
  * Copyright(c) 2005 - 2014 Intel Corporation. All rights reserved.
  * Copyright (C) 2019 - 2020 Intel Corporation
  *****************************************************************************/
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

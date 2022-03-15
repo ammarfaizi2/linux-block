@@ -17,6 +17,8 @@
  * this warranty disclaimer.
  */
 
+#include <linux/workqueue_api.h>
+
 #include "main.h"
 #include "fw.h"
 

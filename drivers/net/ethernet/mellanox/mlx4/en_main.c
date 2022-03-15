@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

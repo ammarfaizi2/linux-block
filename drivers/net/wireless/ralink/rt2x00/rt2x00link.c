@@ -10,6 +10,7 @@
 	Abstract: rt2x00 generic link tuning routines.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

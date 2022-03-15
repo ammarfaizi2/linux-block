@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
+#include <linux/workqueue_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

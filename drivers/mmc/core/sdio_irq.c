@@ -9,6 +9,7 @@
  * Copyright 2008 Pierre Ossman
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  *                         Emil Myhrman (emil.myhrman@gmail.com)
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/jiffies.h>
 #include <linux/wait.h>

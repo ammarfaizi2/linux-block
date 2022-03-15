@@ -8,6 +8,7 @@
  * Some code borrowed from the Linux EHCI driver.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

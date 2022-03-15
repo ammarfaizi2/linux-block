@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2019 Zodiac Inflight Innovations
  */
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

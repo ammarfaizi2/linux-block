@@ -6,6 +6,7 @@
  *	    Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>

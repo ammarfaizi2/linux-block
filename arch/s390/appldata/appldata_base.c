@@ -12,6 +12,7 @@
 #define KMSG_COMPONENT	"appldata"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

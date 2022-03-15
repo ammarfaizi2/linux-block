@@ -7,6 +7,7 @@
 
 #include "dm-exception-store.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/atomic_api.h>
 #include <linux/ctype.h>

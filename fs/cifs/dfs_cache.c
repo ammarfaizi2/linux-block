@@ -5,6 +5,7 @@
  * Copyright (c) 2018-2019 Paulo Alcantara <palcantara@suse.de>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uuid_api.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>

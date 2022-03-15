@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

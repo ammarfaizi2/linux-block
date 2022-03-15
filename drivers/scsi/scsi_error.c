@@ -15,6 +15,7 @@
  *	September 30, 2002 Mike Anderson (andmike@us.ibm.com)
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

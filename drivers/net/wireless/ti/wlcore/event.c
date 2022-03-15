@@ -7,6 +7,7 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>

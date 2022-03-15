@@ -12,6 +12,7 @@
  * life in portables, and add a 'performance/watt' metric somewhere in /proc
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

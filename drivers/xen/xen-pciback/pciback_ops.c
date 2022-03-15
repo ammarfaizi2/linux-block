@@ -8,6 +8,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/interrupt.h>

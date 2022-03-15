@@ -32,6 +32,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

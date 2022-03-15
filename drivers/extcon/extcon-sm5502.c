@@ -6,6 +6,7 @@
  * Author: Chanwoo Choi <cw00.choi@samsung.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

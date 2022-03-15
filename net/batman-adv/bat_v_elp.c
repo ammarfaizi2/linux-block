@@ -7,6 +7,7 @@
 #include "bat_v_elp.h"
 #include "main.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>

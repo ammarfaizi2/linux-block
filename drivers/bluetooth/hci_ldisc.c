@@ -8,6 +8,7 @@
  *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/percpu_rwsem_api.h>
 #include <linux/jiffies.h>

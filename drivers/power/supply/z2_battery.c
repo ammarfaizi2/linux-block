@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Peter Edwards <sweetlilmre@gmail.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

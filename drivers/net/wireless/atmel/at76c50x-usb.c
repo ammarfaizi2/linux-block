@@ -20,6 +20,7 @@
  * https://wireless.wiki.kernel.org/en/users/Drivers/at76c50x-usb#TODO
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

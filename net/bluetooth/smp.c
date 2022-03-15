@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/workqueue_api.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>

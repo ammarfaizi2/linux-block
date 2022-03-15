@@ -9,6 +9,7 @@
  *  Based on max3107.c, by Aavamobile
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

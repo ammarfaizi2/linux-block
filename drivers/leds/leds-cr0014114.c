@@ -2,6 +2,7 @@
 // Copyright (c) 2018 Crane Merchandising Systems. All rights reserved.
 // Copyright (C) 2018 Oleh Kravchenko <oleg@kaa.org.ua>
 
+#include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

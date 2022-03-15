@@ -12,6 +12,7 @@
 #define KMSG_COMPONENT		"hvc_iucv"
 #define pr_fmt(fmt)		KMSG_COMPONENT ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

@@ -8,6 +8,7 @@
 // Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/bits.h>

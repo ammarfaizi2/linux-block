@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "digital: %s: " fmt, __func__
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/sched.h>

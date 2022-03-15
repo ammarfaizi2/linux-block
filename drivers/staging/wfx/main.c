@@ -10,6 +10,7 @@
  * Copyright (c) 2006, Michael Wu <flamingice@sourmilk.net>
  * Copyright (c) 2004-2006 Jean-Baptiste Note <jbnote@gmail.com>, et al.
  */
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

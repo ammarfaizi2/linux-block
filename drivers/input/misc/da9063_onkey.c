@@ -4,6 +4,7 @@
  * Copyright (C) 2015  Dialog Semiconductor Ltd.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

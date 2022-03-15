@@ -27,6 +27,7 @@
  * limited to 4k bytes per second.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/atomic_api.h>

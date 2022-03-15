@@ -5,6 +5,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/device.h>

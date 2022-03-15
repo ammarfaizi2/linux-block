@@ -6,6 +6,7 @@
  *	Andrew F. Davis <afd@ti.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>

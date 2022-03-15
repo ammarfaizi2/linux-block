@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)			"habanalabs: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

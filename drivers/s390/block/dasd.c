@@ -11,6 +11,7 @@
 #define KMSG_COMPONENT "dasd"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>

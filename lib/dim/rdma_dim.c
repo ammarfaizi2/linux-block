@@ -3,6 +3,7 @@
  * Copyright (c) 2019, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/stat.h>
 #include <linux/math.h>
 #include <linux/dim.h>

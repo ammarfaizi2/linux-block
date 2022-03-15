@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>

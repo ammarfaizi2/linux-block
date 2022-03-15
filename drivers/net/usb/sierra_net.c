@@ -20,6 +20,7 @@ static const char driver_name[] = "sierra_net";
 /* if defined debug messages enabled */
 /*#define	DEBUG*/
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

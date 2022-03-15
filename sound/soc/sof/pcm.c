@@ -10,6 +10,7 @@
 // PCM Layer, interface between ALSA and IPC.
 //
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/device_api_lock.h>
 #include <linux/pm_runtime.h>

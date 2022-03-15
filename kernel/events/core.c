@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>

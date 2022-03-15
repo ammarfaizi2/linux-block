@@ -4,6 +4,7 @@
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

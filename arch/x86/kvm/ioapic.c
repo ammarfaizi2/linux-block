@@ -27,6 +27,7 @@
  *  Based on Xen 3.1 code.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bitmap.h>

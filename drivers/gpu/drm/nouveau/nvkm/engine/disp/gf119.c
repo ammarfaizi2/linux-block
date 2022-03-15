@@ -27,6 +27,7 @@
 #include "channv50.h"
 #include "rootnv50.h"
 
+#include <linux/workqueue_api.h>
 #include <core/ramht.h>
 #include <subdev/timer.h>
 

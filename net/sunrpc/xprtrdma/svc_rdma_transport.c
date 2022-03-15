@@ -42,6 +42,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>

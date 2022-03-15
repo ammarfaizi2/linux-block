@@ -10,6 +10,7 @@
  * "rfkill-input: remove unused code".
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

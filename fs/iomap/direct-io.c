@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * Copyright (c) 2016-2021 Christoph Hellwig.
  */
+#include <linux/workqueue_api.h>
 #include <linux/uio_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/tasklet_api.h>

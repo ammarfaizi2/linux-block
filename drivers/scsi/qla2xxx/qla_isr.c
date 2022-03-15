@@ -7,6 +7,7 @@
 #include "qla_target.h"
 #include "qla_gbl.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>

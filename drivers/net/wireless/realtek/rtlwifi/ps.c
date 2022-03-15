@@ -4,6 +4,7 @@
 #include "wifi.h"
 #include "base.h"
 #include "ps.h"
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2006 Advanced Micro Devices, Inc.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/stat.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

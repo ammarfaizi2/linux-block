@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_frag.h>

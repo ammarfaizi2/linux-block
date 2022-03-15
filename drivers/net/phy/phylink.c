@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2015 Russell King
  */
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

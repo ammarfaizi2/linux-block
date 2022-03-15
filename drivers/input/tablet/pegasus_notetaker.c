@@ -36,6 +36,7 @@
  * T	Tip
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
  */
 
 #define pr_fmt(fmt)	"(stc): " fmt
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api.h>

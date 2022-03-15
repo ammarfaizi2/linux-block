@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>

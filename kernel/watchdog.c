@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "watchdog: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

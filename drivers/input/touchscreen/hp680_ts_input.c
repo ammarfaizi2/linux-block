@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/workqueue_api.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/init.h>

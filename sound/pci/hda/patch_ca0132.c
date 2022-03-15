@@ -8,6 +8,7 @@
  * Copyright (c) 2008 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/init.h>

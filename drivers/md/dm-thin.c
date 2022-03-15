@@ -8,6 +8,7 @@
 #include "dm-bio-prison-v1.h"
 #include "dm.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

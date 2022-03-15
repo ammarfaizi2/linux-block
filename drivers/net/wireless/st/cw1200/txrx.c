@@ -6,6 +6,7 @@
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>

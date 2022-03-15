@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uio_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

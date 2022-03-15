@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

@@ -9,6 +9,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uuid_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

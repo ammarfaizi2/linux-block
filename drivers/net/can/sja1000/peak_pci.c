@@ -8,6 +8,7 @@
  * Copyright (C) 2001-2006  PEAK System-Technik GmbH
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/device/driver.h>

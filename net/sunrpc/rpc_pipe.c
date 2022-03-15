@@ -9,6 +9,7 @@
  * Copyright (c) 2002, Trond Myklebust <trond.myklebust@fys.uio.no>
  *
  */
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sunrpc/debug.h>

@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	"resctrl: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/smp_api.h>
 #include <linux/mutex_api.h>

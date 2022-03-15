@@ -8,6 +8,7 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uuid_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>

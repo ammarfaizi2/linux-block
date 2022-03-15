@@ -4,6 +4,7 @@
 #include "persistent-data/dm-bitset.h"
 #include "persistent-data/dm-space-map.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/fs_api.h>

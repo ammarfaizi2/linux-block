@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

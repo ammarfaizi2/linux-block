@@ -8,6 +8,7 @@
 //          Werner Almesberger <werner@openmoko.org>
 // All rights reserved.
 
+#include <linux/workqueue_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

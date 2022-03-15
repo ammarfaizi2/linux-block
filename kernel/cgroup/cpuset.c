@@ -22,6 +22,7 @@
  *  distribution for more details.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/syscalls_api.h>

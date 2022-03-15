@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 David Brownell
  */
+#include <linux/workqueue_api.h>
 #include <linux/seq_file.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

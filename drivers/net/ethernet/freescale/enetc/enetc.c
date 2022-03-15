@@ -2,6 +2,7 @@
 /* Copyright 2017-2019 NXP */
 
 #include "enetc.h"
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>

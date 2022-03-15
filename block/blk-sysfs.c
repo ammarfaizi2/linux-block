@@ -2,6 +2,7 @@
 /*
  * Functions related to sysfs handling
  */
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/percpu-refcount-api.h>

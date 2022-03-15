@@ -10,6 +10,7 @@
  * Copyright (C) 2019-2021 Intel Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/export.h>
 #include <linux/wireless.h>

@@ -11,6 +11,7 @@
 	Abstract: rt2x00 generic usb device routines.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>

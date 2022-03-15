@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/notifier.h>
 #include <linux/device_api_lock.h>

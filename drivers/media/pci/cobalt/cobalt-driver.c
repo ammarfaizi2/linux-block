@@ -8,6 +8,7 @@
  *  All rights reserved.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>

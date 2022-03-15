@@ -33,6 +33,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
+#include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/delay.h>

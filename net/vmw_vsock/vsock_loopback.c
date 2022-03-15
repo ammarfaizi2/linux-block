@@ -7,6 +7,7 @@
  *          Stefano Garzarella <sgarzare@redhat.com>
  *
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/net.h>
 #include <linux/spinlock.h>

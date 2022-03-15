@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/idr_api.h>

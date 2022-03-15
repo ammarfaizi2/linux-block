@@ -8,6 +8,7 @@
  * Datasheet: http://www.nxp.com/documents/data_sheet/PCA9532.pdf
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

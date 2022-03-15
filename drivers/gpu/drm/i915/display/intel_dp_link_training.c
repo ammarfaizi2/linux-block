@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/delay.h>
 
 #include "i915_drv.h"

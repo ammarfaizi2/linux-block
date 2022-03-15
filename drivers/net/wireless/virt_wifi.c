@@ -9,6 +9,7 @@
  * Author: schuffelen@google.com
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>

@@ -6,6 +6,7 @@
 //  Copyright (C) 2009 Samsung Electronics
 //  Minkyu Kang <mk7.kang@samsung.com>
 
+#include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>

@@ -17,6 +17,7 @@
 //   o Add more codecs and platforms to ensure good API coverage.
 //   o Support TDM on PCM and I2S
 
+#include <linux/workqueue_api.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

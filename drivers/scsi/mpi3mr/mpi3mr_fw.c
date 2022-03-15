@@ -8,6 +8,7 @@
  */
 
 #include "mpi3mr.h"
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

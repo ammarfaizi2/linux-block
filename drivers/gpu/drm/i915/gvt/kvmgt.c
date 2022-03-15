@@ -28,6 +28,7 @@
  *    Xiaoguang Chen <xiaoguang.chen@intel.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/srcu.h>

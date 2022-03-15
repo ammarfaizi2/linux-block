@@ -14,6 +14,7 @@
  *  Copyright (C) 2010, Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>

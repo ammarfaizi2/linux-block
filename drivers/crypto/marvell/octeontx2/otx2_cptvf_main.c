@@ -6,6 +6,7 @@
 #include "otx2_cptlf.h"
 #include "otx2_cptvf_algs.h"
 #include "cn10k_cpt.h"
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/slab.h>
 #include <linux/interrupt.h>

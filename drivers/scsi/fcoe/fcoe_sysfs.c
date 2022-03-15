@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

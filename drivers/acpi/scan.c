@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>

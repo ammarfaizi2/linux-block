@@ -7,6 +7,7 @@
  * Copyright (C) 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/stringhash.h>
 #include <linux/spinlock_api.h>

@@ -9,6 +9,7 @@
  * of such GNU licence.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/dma-fence-api.h>

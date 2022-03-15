@@ -85,6 +85,7 @@
  *   TCP_LISTEN - listening
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/syscalls_api.h>

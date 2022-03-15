@@ -5,6 +5,7 @@
 /* Qualcomm Technologies, Inc. EMAC SGMII Controller driver.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/net.h>

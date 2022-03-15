@@ -31,6 +31,7 @@
 * via an ELAN U132 adapter.
 *
 */
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>

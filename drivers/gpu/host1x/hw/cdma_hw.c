@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

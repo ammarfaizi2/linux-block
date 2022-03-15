@@ -8,6 +8,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <asm/msr.h>
 #include <linux/cpufeature.h>
 #include <linux/cpuhotplug.h>

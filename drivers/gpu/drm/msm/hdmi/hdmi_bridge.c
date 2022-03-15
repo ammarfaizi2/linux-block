@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <drm/drm_bridge_connector.h>

@@ -7,6 +7,7 @@
  * Based on: net/mac80211/util.c
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/hrtimer_api.h>

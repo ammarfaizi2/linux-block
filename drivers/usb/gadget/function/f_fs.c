@@ -14,6 +14,7 @@
 /* #define DEBUG */
 /* #define VERBOSE_DEBUG */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>

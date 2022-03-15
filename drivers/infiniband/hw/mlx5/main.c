@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Intel Corporation. All rights reserved.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>

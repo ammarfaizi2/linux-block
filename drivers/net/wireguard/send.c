@@ -11,6 +11,7 @@
 #include "messages.h"
 #include "cookie.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>

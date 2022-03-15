@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/idr_api.h>
 #include <linux/dma-mapping.h>

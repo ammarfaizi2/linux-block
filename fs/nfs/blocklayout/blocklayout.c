@@ -30,6 +30,7 @@
  * possibility of such damages.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/pagemap.h>
 #include <linux/kref_api.h>

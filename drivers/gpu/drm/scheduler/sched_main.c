@@ -44,6 +44,7 @@
  * The jobs in a entity are always scheduled in the order that they were pushed.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_api.h>

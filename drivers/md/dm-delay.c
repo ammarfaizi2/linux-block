@@ -7,6 +7,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

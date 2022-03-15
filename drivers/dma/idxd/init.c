@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2019 Intel Corporation. All rights rsvd. */
+#include <linux/workqueue_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/llist_api.h>

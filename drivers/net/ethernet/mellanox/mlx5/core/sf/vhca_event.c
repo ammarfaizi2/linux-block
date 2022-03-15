@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies Ltd */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>

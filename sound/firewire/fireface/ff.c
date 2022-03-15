@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2017 Takashi Sakamoto
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 

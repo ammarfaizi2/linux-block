@@ -44,6 +44,7 @@
 **     Firmware Specification, see Documentation/scsi/arcmsr_spec.rst
 *******************************************************************************
 */
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>

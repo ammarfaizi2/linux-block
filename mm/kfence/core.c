@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "kfence: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/timex.h>
 #include <linux/stacktrace.h>

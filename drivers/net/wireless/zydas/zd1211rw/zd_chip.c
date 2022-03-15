@@ -10,6 +10,7 @@
  * Legge sent me a ZD1211B device. Thank you Tim. -- Uli
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

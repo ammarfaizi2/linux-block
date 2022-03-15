@@ -7,6 +7,7 @@
  * Thanks to Caskey L. Dickson for his work with acdctl.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

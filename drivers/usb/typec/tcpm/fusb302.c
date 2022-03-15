@@ -5,6 +5,7 @@
  * Fairchild FUSB302 Type-C Chip Driver
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

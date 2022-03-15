@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Microchip Technology Inc. and its subsidiaries.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/notifier_api.h>

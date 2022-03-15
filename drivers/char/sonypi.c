@@ -21,6 +21,7 @@
  * Earlier work by Werner Almesberger, Paul `Rusty' Russell and Paul Mackerras.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/signal.h>
 #include <linux/mutex_api.h>

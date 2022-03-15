@@ -6,6 +6,7 @@
  * Written by: Juri Lelli, ARM Ltd.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/of_api.h>

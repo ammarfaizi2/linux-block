@@ -10,6 +10,7 @@
  * https://www.ti.com/product/bq24257
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/stat.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

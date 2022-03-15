@@ -6,6 +6,7 @@
 // Chanwoo Choi <cw00.choi@samsung.com>
 // Krzysztof Kozlowski <krzk@kernel.org>
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

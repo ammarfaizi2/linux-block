@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/slab.h>

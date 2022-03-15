@@ -44,6 +44,7 @@ double __extendsfdf2(float a)
 
 #define CONFIG_RTL8192_IO_MAP
 
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api_lock.h>

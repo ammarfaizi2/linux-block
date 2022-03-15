@@ -6,6 +6,7 @@
  * Author:	Haojian Zhuang <haojian.zhuang@marvell.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

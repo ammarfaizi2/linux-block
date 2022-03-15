@@ -17,6 +17,7 @@
 //    o Delayed power down of audio subsystem to reduce pops between a quick
 //      device reopen.
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

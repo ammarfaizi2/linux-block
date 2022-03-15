@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

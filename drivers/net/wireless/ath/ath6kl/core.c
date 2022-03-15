@@ -17,6 +17,7 @@
 
 #include "core.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/module.h>

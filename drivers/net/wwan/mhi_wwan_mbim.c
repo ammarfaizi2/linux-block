@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>

@@ -49,6 +49,7 @@
 /*
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

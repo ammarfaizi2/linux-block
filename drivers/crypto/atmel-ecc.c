@@ -6,6 +6,7 @@
  * Author: Tudor Ambarus <tudor.ambarus@microchip.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>

@@ -7,6 +7,7 @@
 #include "qla_gbl.h"
 #include "qla_target.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

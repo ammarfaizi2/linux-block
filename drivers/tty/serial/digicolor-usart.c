@@ -7,6 +7,7 @@
  * Copyright (C) 2014 Paradox Innovation Ltd.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

@@ -33,6 +33,7 @@
 
 #define pr_fmt(fmt) "xen_cpu: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

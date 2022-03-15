@@ -6,6 +6,7 @@
  * Copyright © 2018-2020 ANSSI
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>

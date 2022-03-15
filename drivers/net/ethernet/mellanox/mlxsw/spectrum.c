@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2015-2018 Mellanox Technologies. All rights reserved */
 
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/rtnetlink.h>

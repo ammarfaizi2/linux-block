@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) "efi: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sched.h>
 #include <linux/preempt.h>

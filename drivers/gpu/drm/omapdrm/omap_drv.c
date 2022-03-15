@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob@ti.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

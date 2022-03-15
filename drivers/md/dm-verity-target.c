@@ -16,6 +16,7 @@
 #include "dm-verity.h"
 #include "dm-verity-fec.h"
 #include "dm-verity-verify-sig.h"
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/prefetch.h>

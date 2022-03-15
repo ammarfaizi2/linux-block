@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

@@ -7,6 +7,7 @@
  * Copyright 2017 IBM Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

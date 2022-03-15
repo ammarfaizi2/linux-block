@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 

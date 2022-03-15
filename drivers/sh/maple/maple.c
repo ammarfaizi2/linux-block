@@ -10,6 +10,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

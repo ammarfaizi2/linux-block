@@ -9,6 +9,7 @@
  *		Steve French (sfrench@us.ibm.com)
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/dcache.h>
 #include <linux/mount.h>

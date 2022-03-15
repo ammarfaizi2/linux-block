@@ -12,6 +12,7 @@
  *	Author: Imre Sunyi <imre.sunyi@sonymobile.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/notifier_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kobject_api.h>

@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT		"smsgiucv_app"
 #define pr_fmt(fmt)		KMSG_COMPONENT ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/kobject_api.h>

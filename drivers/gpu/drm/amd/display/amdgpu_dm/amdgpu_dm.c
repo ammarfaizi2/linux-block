@@ -26,6 +26,7 @@
 /* The caprices of the preprocessor require that this be declared right here */
 #define CREATE_TRACE_POINTS
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

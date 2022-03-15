@@ -5,6 +5,7 @@
  * Copyright 2016 Realtek Semiconductor Corp.
  * Author: Jack Yu <jack.yu@realtek.com>
  */
+#include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

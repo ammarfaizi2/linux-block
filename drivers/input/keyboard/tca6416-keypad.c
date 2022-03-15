@@ -7,6 +7,7 @@
  * Author : Sriramakrishnan.A.G. <srk@ti.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/types.h>

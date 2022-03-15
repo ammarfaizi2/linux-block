@@ -6,6 +6,7 @@
 
 /* LCDC DRM driver, based on da8xx-fb */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>

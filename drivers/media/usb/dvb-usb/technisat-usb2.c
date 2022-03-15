@@ -27,6 +27,7 @@
  */
 
 #define DVB_USB_LOG_PREFIX "technisat-usb2"
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

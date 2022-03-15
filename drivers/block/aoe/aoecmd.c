@@ -4,6 +4,7 @@
  * Filesystem request handling methods
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

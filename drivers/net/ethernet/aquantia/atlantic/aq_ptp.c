@@ -9,6 +9,7 @@
  * Definition of functions for Linux PTP support.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>

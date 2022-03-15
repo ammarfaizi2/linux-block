@@ -4,6 +4,7 @@
  * Copyright (c)  2003-2013 QLogic Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/kref_api.h>

@@ -12,6 +12,7 @@
 /*
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

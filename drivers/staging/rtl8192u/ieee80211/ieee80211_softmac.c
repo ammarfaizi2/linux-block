@@ -13,6 +13,7 @@
  */
 #include "ieee80211.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

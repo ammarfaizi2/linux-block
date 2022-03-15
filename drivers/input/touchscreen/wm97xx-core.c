@@ -29,6 +29,7 @@
  *       - Support for async sampling control for noisy LCDs.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

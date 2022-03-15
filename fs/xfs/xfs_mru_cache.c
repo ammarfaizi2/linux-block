@@ -3,6 +3,7 @@
  * Copyright (c) 2006-2007 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/radix-tree-api.h>

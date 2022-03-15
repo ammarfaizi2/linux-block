@@ -6,6 +6,7 @@
  *
  * Author: Lu Baolu <baolu.lu@linux.intel.com>
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

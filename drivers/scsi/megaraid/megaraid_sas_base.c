@@ -17,6 +17,7 @@
  *  Send feedback to: megaraidlinux.pdl@broadcom.com
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/tasklet_api.h>

@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
