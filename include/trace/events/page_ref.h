@@ -5,6 +5,7 @@
 #if !defined(_TRACE_PAGE_REF_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_PAGE_REF_H
 
+#include <linux/mmzone_api.h>
 #include <linux/types.h>
 #include <linux/page_ref.h>
 #include <linux/tracepoint.h>
