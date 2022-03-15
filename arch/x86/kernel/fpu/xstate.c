@@ -4,6 +4,7 @@
  *
  * Author: Suresh Siddha <suresh.b.siddha@intel.com>
  */
+#include <asm/pkru.h>
 #include <asm/msr.h>
 #include <asm/elf_api.h>
 #include <linux/bitops.h>
