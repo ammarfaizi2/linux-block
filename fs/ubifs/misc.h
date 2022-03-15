@@ -15,6 +15,7 @@
 #ifndef __UBIFS_MISC_H__
 #define __UBIFS_MISC_H__
 
+#include <linux/kdev_t.h>
 #include <linux/types.h>
 
 /**
