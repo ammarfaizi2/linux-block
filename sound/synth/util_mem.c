@@ -5,6 +5,7 @@
  *  Generic memory management routines for soundcard memory allocation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mutex.h>
 #include <linux/init.h>
 #include <linux/slab.h>

@@ -6,6 +6,7 @@
  *  Copyright (C) 2002 by Ron Minnich <rminnich@lanl.gov>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>

@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/pci.h>

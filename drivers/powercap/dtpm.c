@@ -17,6 +17,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/math64.h>
 #include <linux/bitops.h>

@@ -4,6 +4,7 @@
  * block device routines
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <rdma/rdma_cm.h>
 
 #include "iw_cxgb4.h"

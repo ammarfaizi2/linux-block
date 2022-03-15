@@ -6,6 +6,8 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/mutex_api.h>
+
 #include "dtt200u.h"
 
 struct dtt200u_fe_state {

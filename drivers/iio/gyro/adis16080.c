@@ -4,6 +4,7 @@
  *
  * Copyright 2010 Analog Devices Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/mutex.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2005 Dirk Opfer
  * Copyright (c) 2008 Dmitry Baryshkov
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/power_supply.h>

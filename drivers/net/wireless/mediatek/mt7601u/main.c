@@ -6,6 +6,7 @@
 
 #include "mt7601u.h"
 #include "mac.h"
+#include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 

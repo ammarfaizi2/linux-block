@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

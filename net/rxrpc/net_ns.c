@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/atomic_api.h>
 #include <linux/proc_fs.h>

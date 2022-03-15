@@ -9,6 +9,7 @@
  * Copyright (C) 1996 Thomas K. Dyas (tdyas@eden.rutgers.edu)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

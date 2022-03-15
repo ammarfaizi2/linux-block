@@ -3,6 +3,7 @@
  * Copyright (C) 2015, 2016 ARM Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>

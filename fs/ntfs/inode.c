@@ -5,6 +5,7 @@
  * Copyright (c) 2001-2014 Anton Altaparmakov and Tuxera Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs_api.h>

@@ -4,6 +4,7 @@
  * Phillip Lougher <phillip@squashfs.org.uk>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>

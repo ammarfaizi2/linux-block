@@ -15,6 +15,7 @@
  * Amit Kucheria <amit.kucheria@canonical.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

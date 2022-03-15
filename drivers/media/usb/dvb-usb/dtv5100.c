@@ -8,6 +8,7 @@
  * Inspired by gl861.c and au6610.c drivers
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>

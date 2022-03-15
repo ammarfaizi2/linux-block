@@ -11,6 +11,7 @@
  *		Wingman Kwok <w-kwok2@ti.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/ioport.h>
 #include <linux/gfp_api.h>

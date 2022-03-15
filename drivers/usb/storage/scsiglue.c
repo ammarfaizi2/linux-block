@@ -28,6 +28,7 @@
  * status of a command.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/blkdev.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

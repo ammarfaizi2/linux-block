@@ -5,6 +5,7 @@
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

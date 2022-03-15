@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Broadcom Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/io.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2004-2010 Markus Grabner (grabner@icg.tugraz.at)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/export.h>
 #include <sound/core.h>

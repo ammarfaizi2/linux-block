@@ -6,6 +6,7 @@
  * Copyright (c) Roman Volkov <v1ron@mail.ru>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
 #include <sound/control.h>

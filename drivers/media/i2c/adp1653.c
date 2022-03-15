@@ -17,6 +17,7 @@
  * - power doesn't need to be ON if all lights are off
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/module.h>

@@ -14,6 +14,7 @@
  * Based on af_d88.c by Texas Instruments.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/i2c.h>

@@ -21,6 +21,7 @@ static int sg_version_num = 30536;	/* 2 digits for each component */
  *        (otherwise the macros compile to empty statements).
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>

@@ -49,6 +49,7 @@
  * This file contains OPA VNIC encapsulation/decapsulation function.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ipv6.h>
 #include <linux/ip.h>
 #include <linux/if_vlan_api.h>

@@ -22,6 +22,7 @@
 #include "udf_sb.h"
 #include "udf_i.h"
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/string.h>
 #include <linux/mutex.h>

@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>

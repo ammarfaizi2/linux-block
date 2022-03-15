@@ -15,6 +15,7 @@
  * TODO: irq, threshold events, continuous mode, hardware buffer
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
 #include <linux/i2c.h>

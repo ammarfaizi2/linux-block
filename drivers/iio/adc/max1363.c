@@ -12,6 +12,7 @@
   * Driver for max1363 and similar chips.
   */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/interrupt.h>

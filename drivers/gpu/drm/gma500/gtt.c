@@ -7,6 +7,7 @@
  *	    Alan Cox <alan@linux.intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api.h>

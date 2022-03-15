@@ -6,6 +6,7 @@
  * Copyright (C) 2011 Peter Zijlstra
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/memory.h>
 #include <linux/uaccess.h>

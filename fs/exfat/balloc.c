@@ -3,6 +3,7 @@
  *  Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/blkdev.h>
 #include <linux/slab.h>
 #include <linux/buffer_head.h>

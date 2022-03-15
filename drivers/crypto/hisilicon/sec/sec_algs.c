@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2016-2017 HiSilicon Limited. */
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/crypto.h>
 #include <linux/dma-mapping.h>

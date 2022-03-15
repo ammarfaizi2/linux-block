@@ -8,6 +8,7 @@
  * Author: Pascal Sachs <pascal.sachs@sensirion.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/page.h>
 #include <linux/crc8.h>

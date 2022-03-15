@@ -18,6 +18,7 @@
 
 #define MODULE_NAME "sq905c"
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/export.h>
 #include <linux/workqueue.h>

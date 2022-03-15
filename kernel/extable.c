@@ -3,6 +3,7 @@
    Copyright (C) 2001 Rusty Russell, 2002 Rusty Russell IBM.
 
 */
+#include <linux/mutex_api.h>
 #include <linux/kallsyms.h>
 #include <linux/hardirq.h>
 #include <linux/filter_api.h>

@@ -36,6 +36,7 @@
  *   per device, not per bus
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>

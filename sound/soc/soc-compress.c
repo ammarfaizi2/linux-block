@@ -8,6 +8,7 @@
 //          Ramesh Babu K V <ramesh.babu@linux.intel.com>
 //          Vinod Koul <vinod.koul@linux.intel.com>
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -5,6 +5,7 @@
  * Copyright 2010 Analog Devices Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/i2c.h>

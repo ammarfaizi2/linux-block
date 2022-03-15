@@ -13,6 +13,7 @@
  * voltage unit is nV.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

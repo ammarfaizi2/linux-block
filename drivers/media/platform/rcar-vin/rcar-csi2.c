@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Renesas Electronics Corp.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>

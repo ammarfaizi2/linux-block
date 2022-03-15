@@ -5,6 +5,7 @@
  * Copyright 2016 Qtechnology A/S
  * 2016 Ricardo Ribalda <ribalda@kernel.org>
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/spi/spi.h>

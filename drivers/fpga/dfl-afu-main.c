@@ -14,6 +14,7 @@
  *   Henry Mitchel <henry.mitchel@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

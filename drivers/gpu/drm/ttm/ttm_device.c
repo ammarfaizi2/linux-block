@@ -27,6 +27,7 @@
 
 #define pr_fmt(fmt) "[TTM DEVICE] " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/debugfs.h>

@@ -12,6 +12,7 @@
  *   so can't handle asymmetric verbs for read and write
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/device.h>
 #include <linux/regmap.h>

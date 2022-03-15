@@ -4,6 +4,7 @@
  * Author(s): Giulio Benetti <giulio.benetti@benettiengineering.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

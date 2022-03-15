@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <acpi/button.h>
 
 #include <linux/pm_runtime.h>

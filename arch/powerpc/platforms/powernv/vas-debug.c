@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "vas: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/debugfs.h>

@@ -7,6 +7,7 @@
  * split from hda_hwdep.c
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/init.h>

@@ -3,6 +3,7 @@
 
 #define _RTW_PWRCTRL_C_
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 

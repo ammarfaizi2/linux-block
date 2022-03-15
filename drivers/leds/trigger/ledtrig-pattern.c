@@ -7,6 +7,7 @@
  * the first version, Baolin Wang simplified and improved the approach.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/leds.h>

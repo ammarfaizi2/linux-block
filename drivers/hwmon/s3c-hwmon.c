@@ -8,6 +8,7 @@
  * S3C24XX/S3C64XX ADC hwmon support
 */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/slab.h>

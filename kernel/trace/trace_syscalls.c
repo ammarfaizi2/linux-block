@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/mutex_api.h>
 #include <linux/kallsyms.h>
 #include <trace/syscall.h>
 #include <trace/events/syscalls.h>

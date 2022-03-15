@@ -7,6 +7,7 @@
  * Copyright (C) 2007-2008 Luis R. Rodriguez <mcgrof@winlab.rutgers.edu>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>

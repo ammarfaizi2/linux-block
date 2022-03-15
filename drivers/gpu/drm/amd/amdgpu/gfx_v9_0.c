@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/dma-fence-api.h>
 #include <linux/bitmap.h>

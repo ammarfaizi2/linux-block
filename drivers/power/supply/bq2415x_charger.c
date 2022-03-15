@@ -15,6 +15,7 @@
  * https://www.ti.com/product/bq24158
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Tomoki Sekiyama (tomoki.sekiyama@gmail.com)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>

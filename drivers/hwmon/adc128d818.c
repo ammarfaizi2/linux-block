@@ -9,6 +9,7 @@
  *			     and Philip Edelbrock <phil@netroedge.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/slab.h>

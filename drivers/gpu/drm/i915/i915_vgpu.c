@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 
 #include "i915_drv.h"

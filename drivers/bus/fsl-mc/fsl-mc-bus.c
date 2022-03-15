@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "fsl-mc: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

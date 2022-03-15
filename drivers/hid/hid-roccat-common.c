@@ -8,6 +8,7 @@
 /*
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/hid.h>
 #include <linux/slab.h>

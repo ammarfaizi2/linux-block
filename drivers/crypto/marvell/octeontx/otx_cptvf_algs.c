@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <crypto/aes.h>
 #include <crypto/authenc.h>

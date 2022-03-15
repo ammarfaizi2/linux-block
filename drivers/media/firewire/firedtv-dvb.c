@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Henrik Kurelid <henrik@kurelid.se>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/export.h>
 #include <linux/bitops.h>
 #include <linux/device.h>

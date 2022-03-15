@@ -13,6 +13,7 @@
  * the device.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/usb.h>
 #include <linux/usb/audio-v2.h>

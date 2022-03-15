@@ -8,6 +8,7 @@
  * 7-bit I2C slave address: 0x57
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

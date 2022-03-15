@@ -9,6 +9,7 @@
  * (C) 1999		David A. Hinds
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device/class.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

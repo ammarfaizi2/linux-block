@@ -10,6 +10,7 @@
  * Copyright (C) 2014 Google, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>

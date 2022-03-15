@@ -2,6 +2,7 @@
 /*
  * Helpers for IOMMU drivers implementing SVA
  */
+#include <linux/mutex_api.h>
 #include <linux/mutex.h>
 #include <linux/sched/mm.h>
 

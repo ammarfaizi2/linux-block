@@ -7,6 +7,7 @@
 #include "qla_gbl.h"
 #include "qla_target.h"
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

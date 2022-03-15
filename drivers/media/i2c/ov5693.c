@@ -12,6 +12,7 @@
  * Jake Day
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/acpi.h>

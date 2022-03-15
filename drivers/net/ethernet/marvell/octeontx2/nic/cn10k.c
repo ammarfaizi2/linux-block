@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 
 #include "cn10k.h"

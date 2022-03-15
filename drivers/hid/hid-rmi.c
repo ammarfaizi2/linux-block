@@ -6,6 +6,7 @@
  *  Copyright (c) 2014 Red Hat, Inc
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>

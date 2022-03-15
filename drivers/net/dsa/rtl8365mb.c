@@ -90,6 +90,7 @@
  * one of the simpler chips.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>

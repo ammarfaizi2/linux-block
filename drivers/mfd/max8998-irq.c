@@ -5,6 +5,7 @@
 // Copyright (C) 2010 Samsung Electronics Co.Ltd
 // Author: Joonyoung Shim <jy0922.shim@samsung.com>
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

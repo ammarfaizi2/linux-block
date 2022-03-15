@@ -24,6 +24,7 @@
 #define nvkm_vram(p) container_of((p), struct nvkm_vram, memory)
 #include "ram.h"
 
+#include <linux/mutex_api.h>
 #include <core/memory.h>
 #include <subdev/mmu.h>
 

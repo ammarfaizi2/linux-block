@@ -8,6 +8,7 @@
  * Based on wm8350.c
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bug.h>
 #include <linux/err.h>

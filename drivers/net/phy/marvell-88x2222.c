@@ -7,6 +7,7 @@
  *	1000Base-X or 10GBase-R on the line side.
  *	SGMII over 1000Base-X.
  */
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/phy.h>

@@ -7,6 +7,7 @@
  * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

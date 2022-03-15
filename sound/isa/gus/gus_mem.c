@@ -4,6 +4,7 @@
  *  GUS's memory allocation routines / bottom layer
  */
 
+#include <linux/mutex_api.h>
 #include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/string.h>

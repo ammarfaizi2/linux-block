@@ -11,6 +11,7 @@
  * the host to read and write to various regions of the BMC's memory.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

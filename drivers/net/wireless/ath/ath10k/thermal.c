@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Qualcomm Atheros, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/device.h>
 #include <linux/sysfs.h>

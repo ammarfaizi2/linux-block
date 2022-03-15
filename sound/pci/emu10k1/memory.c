@@ -6,6 +6,7 @@
  *  EMU10K1 memory page allocation (PTB area)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/pci.h>
 #include <linux/gfp.h>
 #include <linux/time.h>

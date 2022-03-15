@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt)  "irq: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/fwnode.h>
 #include <linux/atomic_api.h>
 #include <linux/acpi.h>

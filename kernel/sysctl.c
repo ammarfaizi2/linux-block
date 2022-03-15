@@ -19,6 +19,7 @@
  *  Removed it and replaced it with older style, 03/23/00, Bill Wendling
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

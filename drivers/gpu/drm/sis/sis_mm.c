@@ -31,6 +31,7 @@
  *    Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <video/sisfb.h>

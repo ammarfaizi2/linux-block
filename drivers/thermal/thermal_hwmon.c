@@ -10,6 +10,7 @@
  *  Copyright (C) 2013 Texas Instruments
  *  Copyright (C) 2013 Eduardo Valentin <eduardo.valentin@ti.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/export.h>

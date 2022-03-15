@@ -16,6 +16,7 @@
 #include "pwc-kiara.h"
 #include "pwc-dec23.h"
 
+#include <linux/mutex_api.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 

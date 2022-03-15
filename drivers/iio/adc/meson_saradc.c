@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

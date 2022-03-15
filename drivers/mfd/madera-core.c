@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2018 Cirrus Logic
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

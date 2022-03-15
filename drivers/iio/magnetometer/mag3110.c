@@ -9,6 +9,7 @@
  * TODO: irq, user offset, oversampling, continuous mode
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

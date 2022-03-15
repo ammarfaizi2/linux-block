@@ -11,6 +11,7 @@
  * UEvent sending added by Evgeny Romanov <romanov@neurosoft.ru>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

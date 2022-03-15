@@ -7,6 +7,7 @@
  * Author : Linus Walleij <linus.walleij@linaro.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/byteorder.h>
 #include <linux/module.h>

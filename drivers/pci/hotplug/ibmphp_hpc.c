@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/wait.h>
 #include <linux/time.h>

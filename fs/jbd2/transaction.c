@@ -14,6 +14,7 @@
  * filesystem).
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>

@@ -12,6 +12,7 @@
  * Chris Verges <kg4ysn@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

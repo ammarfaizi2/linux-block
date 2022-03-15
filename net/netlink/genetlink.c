@@ -7,6 +7,7 @@
  *				Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kmod.h>
 #include <linux/idr_api.h>

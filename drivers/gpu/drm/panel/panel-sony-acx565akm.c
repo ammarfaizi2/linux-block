@@ -17,6 +17,7 @@
  * - Use prepare/unprepare for the basic power on/off of the backligt
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>

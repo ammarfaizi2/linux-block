@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Mellanox Technologies. All rights reserved
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

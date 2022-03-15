@@ -5,6 +5,7 @@
  *         Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/device.h>

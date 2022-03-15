@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/highmem.h>

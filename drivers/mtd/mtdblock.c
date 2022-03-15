@@ -6,6 +6,7 @@
  * Copyright © 2000-2003 Nicolas Pitre <nico@fluxnic.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

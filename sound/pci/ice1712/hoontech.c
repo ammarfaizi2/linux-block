@@ -7,6 +7,7 @@
  *	Copyright (c) 2000 Jaroslav Kysela <perex@perex.cz>
  */      
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

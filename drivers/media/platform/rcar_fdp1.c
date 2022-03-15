@@ -11,6 +11,7 @@
  * m2m-deinterlace, and vsp1 drivers.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/export.h>

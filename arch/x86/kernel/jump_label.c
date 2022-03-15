@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Jason Baron <jbaron@redhat.com>
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/jump_label.h>
 #include <linux/memory.h>
 #include <linux/uaccess.h>

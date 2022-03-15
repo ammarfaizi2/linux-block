@@ -10,6 +10,7 @@
  *	Kieran Bingham <kieran.bingham@ideasonboard.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

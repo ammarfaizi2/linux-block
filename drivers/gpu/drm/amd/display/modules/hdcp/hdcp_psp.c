@@ -26,6 +26,8 @@
 #define MAX_NUM_DISPLAYS 24
 
 
+#include <linux/mutex_api.h>
+
 #include "hdcp.h"
 
 #include "amdgpu.h"

@@ -4,6 +4,7 @@
  * Copyright (c) 2012 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/filter_api.h>

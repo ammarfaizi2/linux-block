@@ -23,6 +23,8 @@
 
 #define SWSMU_CODE_LAYER_L2
 
+#include <linux/mutex_api.h>
+
 #include "amdgpu.h"
 #include "amdgpu_smu.h"
 #include "smu_v11_0.h"

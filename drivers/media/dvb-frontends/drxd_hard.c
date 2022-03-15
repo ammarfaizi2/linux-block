@@ -5,6 +5,7 @@
  * Copyright (C) 2003-2007 Micronas
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

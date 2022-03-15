@@ -8,6 +8,7 @@
  * Copyright (C) 2015 IBM Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <asm/unaligned.h>
 
 #include <linux/interrupt.h>

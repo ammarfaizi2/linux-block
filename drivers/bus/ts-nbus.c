@@ -13,6 +13,7 @@
  * TS-4600 SoM.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/gpio/consumer.h>

@@ -10,6 +10,7 @@
  *  http://www.meas-spec.com/downloads/Digital_Sensor_TSYS02D.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

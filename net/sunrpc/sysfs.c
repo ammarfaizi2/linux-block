@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2020 Anna Schumaker <Anna.Schumaker@Netapp.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sunrpc/clnt.h>

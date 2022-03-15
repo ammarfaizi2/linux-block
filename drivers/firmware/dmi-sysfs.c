@@ -16,6 +16,7 @@
  * Copyright 2011 Google, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/slab.h>
 #include <linux/fs.h>

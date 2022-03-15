@@ -6,6 +6,7 @@
 /*
  * Useful functions for working with MDIO clause 45 PHYs
  */
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/ethtool.h>
 #include <linux/delay.h>

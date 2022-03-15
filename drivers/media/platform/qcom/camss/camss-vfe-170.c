@@ -7,6 +7,7 @@
  * Copyright (C) 2020-2021 Linaro Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

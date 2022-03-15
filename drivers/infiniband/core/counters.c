@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2019 Mellanox Technologies. All rights reserved.
  */
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/capability.h>
 #include <rdma/ib_verbs.h>

@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

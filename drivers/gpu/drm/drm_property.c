@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/export.h>

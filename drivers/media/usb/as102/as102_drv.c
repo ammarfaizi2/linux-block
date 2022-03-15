@@ -4,6 +4,7 @@
  * Copyright (C) 2008 Pierrick Hascoet <pierrick.hascoet@abilis.com>
  * Copyright (C) 2010 Devin Heitmueller <dheitmueller@kernellabs.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

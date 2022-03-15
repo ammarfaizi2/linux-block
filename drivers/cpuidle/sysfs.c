@@ -6,6 +6,7 @@
  * This code is licenced under the GPL.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kobject_api.h>
 #include <linux/cpumask_api.h>

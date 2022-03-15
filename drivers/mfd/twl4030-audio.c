@@ -8,6 +8,7 @@
  * Copyright:   (C) 2009 Nokia Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/types.h>

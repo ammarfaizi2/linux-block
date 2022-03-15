@@ -7,6 +7,7 @@
  * are located to set and get variables to and from the firmware.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
 #include <brcmu_utils.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2010 Jean-Francois Dagenais <dagenaisj@sonatest.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

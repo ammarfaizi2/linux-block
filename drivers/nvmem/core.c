@@ -6,6 +6,7 @@
  * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>

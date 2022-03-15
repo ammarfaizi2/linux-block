@@ -52,6 +52,7 @@
  * Added GETFLAGS/SETFLAGS ioctls, Fred Barnes, 04/2001
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/idr_api.h>

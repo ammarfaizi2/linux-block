@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2017 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/mutex_api.h>
 #include <sound/pcm_params.h>
 #include "motu.h"
 

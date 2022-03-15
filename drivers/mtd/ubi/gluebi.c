@@ -16,6 +16,7 @@
  * eraseblock size is equivalent to the logical eraseblock size of the volume.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/list.h>

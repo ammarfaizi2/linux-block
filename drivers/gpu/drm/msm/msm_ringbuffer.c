@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dma-fence-api.h>
 
 #include "msm_ringbuffer.h"

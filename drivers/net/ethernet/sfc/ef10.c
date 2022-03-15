@@ -19,6 +19,7 @@
 #include "workarounds.h"
 #include "selftest.h"
 #include "ef10_sriov.h"
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -8,6 +8,7 @@
  * Author: Navin Sankar Velliangiri <navin@linumiz.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/crc8.h>
 #include <linux/delay.h>

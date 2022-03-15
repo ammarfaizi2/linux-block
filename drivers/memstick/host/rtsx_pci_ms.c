@@ -7,6 +7,7 @@
  *   Wei WANG <wei_wang@realsil.com.cn>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/highmem.h>
 #include <linux/delay.h>

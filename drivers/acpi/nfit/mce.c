@@ -4,6 +4,7 @@
  *
  * Copyright(c) 2013-2016 Intel Corporation. All rights reserved.
  */
+#include <linux/mutex_api.h>
 #include <linux/notifier.h>
 #include <linux/acpi.h>
 #include <linux/nd.h>

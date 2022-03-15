@@ -21,6 +21,7 @@
  *
  * Authors: Alex Deucher
  */
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/slab.h>

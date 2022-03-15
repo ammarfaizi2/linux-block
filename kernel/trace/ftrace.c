@@ -14,6 +14,7 @@
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/gfp_api.h>

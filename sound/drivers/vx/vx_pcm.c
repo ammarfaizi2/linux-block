@@ -30,6 +30,7 @@
  *  - scheduled action on the stream.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

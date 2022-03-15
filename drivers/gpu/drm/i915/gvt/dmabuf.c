@@ -28,6 +28,7 @@
  *    Tina Zhang <tina.zhang@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/io.h>
 #include <linux/idr_api.h>

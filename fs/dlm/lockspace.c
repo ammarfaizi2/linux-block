@@ -9,6 +9,7 @@
 *******************************************************************************
 ******************************************************************************/
 
+#include <linux/mutex_api.h>
 #include <linux/kthread.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

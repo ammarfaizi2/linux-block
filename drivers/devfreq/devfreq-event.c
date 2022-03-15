@@ -8,6 +8,7 @@
  * This driver is based on drivers/devfreq/devfreq.c.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/export.h>

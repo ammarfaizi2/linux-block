@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <core/memory.h>
 #include <core/mm.h>

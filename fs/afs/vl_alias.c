@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/namei.h>

@@ -8,6 +8,7 @@
  * Author: Jacek Anaszewski <j.anaszewski@samsung.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/export.h>

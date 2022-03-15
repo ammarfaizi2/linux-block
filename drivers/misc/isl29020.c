@@ -11,6 +11,7 @@
  * Data sheet at: http://www.intersil.com/data/fn/fn6505.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>

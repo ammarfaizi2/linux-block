@@ -10,6 +10,7 @@
  * Link to data sheet: https://www.onsemi.com/pub/Collateral/LV0104CS-D.PDF
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

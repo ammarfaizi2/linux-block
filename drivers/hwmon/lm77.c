@@ -12,6 +12,7 @@
  *	http://www.national.com/pf/LM/LM77.html
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

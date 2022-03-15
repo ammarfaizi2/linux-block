@@ -9,6 +9,7 @@
  *   Based on OSS ACI and ALSA OPTi9xx drivers
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/isa.h>

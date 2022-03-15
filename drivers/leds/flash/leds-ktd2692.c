@@ -6,6 +6,7 @@
  * Ingi Kim <ingi2.kim@samsung.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>

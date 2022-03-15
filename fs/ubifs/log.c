@@ -15,6 +15,8 @@
  * journal.
  */
 
+#include <linux/mutex_api.h>
+
 #include "ubifs.h"
 
 static int dbg_check_bud_bytes(struct ubifs_info *c);

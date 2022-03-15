@@ -11,6 +11,7 @@
  */
 
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

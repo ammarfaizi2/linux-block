@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies. */
 
+#include <linux/mutex_api.h>
 #include <linux/refcount.h>
 #include <linux/list.h>
 #include <linux/rculist.h>

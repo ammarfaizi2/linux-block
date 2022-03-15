@@ -11,6 +11,8 @@
  * search/set/clear bits.
  */
 
+#include <linux/mutex_api.h>
+
 #include "hfs_fs.h"
 
 /*

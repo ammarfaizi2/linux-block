@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "ACPI: IOAPIC: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/slab.h>

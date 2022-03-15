@@ -3,6 +3,7 @@
  *
  *  Copyright (C) 2005-6 DiBcom, SA
  */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

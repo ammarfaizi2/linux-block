@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>

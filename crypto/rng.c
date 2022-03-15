@@ -8,6 +8,7 @@
  * Copyright (c) 2015 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/atomic.h>
 #include <crypto/internal/rng.h>
 #include <linux/err.h>

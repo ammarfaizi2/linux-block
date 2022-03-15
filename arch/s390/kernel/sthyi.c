@@ -5,6 +5,7 @@
  * Copyright IBM Corp. 2016
  * Author(s): Janosch Frank <frankja@linux.vnet.ibm.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/errno.h>

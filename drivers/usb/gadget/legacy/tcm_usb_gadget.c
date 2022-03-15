@@ -6,6 +6,7 @@
  *
  * Author: Sebastian Andrzej Siewior <bigeasy at linutronix dot de>
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>

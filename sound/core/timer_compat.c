@@ -6,6 +6,7 @@
 
 /* This file included from timer.c */
 
+#include <linux/mutex_api.h>
 #include <linux/compat.h>
 
 /*

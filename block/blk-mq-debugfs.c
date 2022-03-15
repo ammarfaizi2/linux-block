@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Facebook
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

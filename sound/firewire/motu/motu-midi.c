@@ -4,6 +4,8 @@
  *
  * Copyright (c) 2015-2017 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
+#include <linux/mutex_api.h>
+
 #include "motu.h"
 
 static int midi_open(struct snd_rawmidi_substream *substream)

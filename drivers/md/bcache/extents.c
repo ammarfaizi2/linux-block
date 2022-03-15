@@ -21,6 +21,7 @@
  * All configuration is done via sysfs; see Documentation/admin-guide/bcache.rst.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 
 #include "bcache.h"

@@ -13,6 +13,7 @@
 
 #define KMSG_COMPONENT "dasd"
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/major.h>
 #include <linux/fs.h>

@@ -21,6 +21,8 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
+#include <linux/mutex_api.h>
+
 #include "pad.h"
 
 static void

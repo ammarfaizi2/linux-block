@@ -13,6 +13,7 @@
  * Copyright (C) 2015 Gabriele Mazzotta <gabriele.mzt@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/acpi.h>

@@ -3,6 +3,7 @@
  * Add configfs and memory store: Kyungchan Koh <kkc6196@fb.com> and
  * Shaohua Li <shli@fb.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>

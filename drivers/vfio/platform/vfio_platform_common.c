@@ -6,6 +6,7 @@
 
 #define dev_fmt(fmt)	"VFIO: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kmod.h>
 #include <linux/ioport.h>

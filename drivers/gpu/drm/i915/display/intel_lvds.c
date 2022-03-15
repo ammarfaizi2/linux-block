@@ -27,6 +27,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <acpi/button.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>

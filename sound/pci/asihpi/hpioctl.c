@@ -17,6 +17,7 @@
 #include "hpioctl.h"
 #include "hpicmn.h"
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/fs.h>

@@ -5,6 +5,7 @@
 // Copyright (c) 2018 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
+#include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

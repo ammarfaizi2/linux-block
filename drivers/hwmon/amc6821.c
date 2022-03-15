@@ -8,6 +8,7 @@
  * Copyright (C) 2007 Hans J. Koch <hjk@hansjkoch.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>	/* Needed for KERN_INFO */
 #include <linux/module.h>

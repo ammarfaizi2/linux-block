@@ -3,6 +3,7 @@
 * Copyright (C) 2012 Invensense, Inc.
 */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/err.h>

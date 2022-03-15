@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/mlx4/cq.h>
 #include <linux/mlx4/qp.h>

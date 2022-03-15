@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Google, Inc
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device.h>
 #include <linux/iio/buffer.h>

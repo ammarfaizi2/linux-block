@@ -29,6 +29,7 @@
  *	doublescan modes are broken
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/device.h>

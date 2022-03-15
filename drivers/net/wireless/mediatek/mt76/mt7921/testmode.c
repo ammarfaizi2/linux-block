@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/mutex_api.h>
+
 #include "mt7921.h"
 #include "mcu.h"
 

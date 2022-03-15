@@ -38,6 +38,7 @@
  * subsequent patch.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

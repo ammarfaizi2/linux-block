@@ -7,6 +7,7 @@
  * Datasheet: https://www.ti.com/lit/ds/symlink/ads8344.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/iio/buffer.h>

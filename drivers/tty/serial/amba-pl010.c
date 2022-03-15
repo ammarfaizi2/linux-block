@@ -15,6 +15,7 @@
  * and hooked into this driver.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

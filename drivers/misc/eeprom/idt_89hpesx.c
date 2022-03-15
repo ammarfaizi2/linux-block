@@ -36,6 +36,7 @@
  * CSR address and value can be any of hexadecimal, decimal or octal format.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

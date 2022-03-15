@@ -7,6 +7,7 @@
  * Authors: Miloslav Trmac <mitr@redhat.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kdev_t.h>
 #include <linux/atomic_api.h>
 #include <linux/audit.h>

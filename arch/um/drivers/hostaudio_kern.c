@@ -3,6 +3,7 @@
  * Copyright (C) 2002 Steve Schmidtke
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/module.h>

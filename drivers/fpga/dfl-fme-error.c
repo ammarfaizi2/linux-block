@@ -15,6 +15,7 @@
  *   Mitchel, Henry <henry.mitchel@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/fpga-dfl.h>
 #include <linux/uaccess.h>

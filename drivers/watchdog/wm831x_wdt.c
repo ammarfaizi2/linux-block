@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Wolfson Microelectronics
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
+
 #include "mlx5_ib.h"
 
 struct mlx5_ib_gsi_wr {

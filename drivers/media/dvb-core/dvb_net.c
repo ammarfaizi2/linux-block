@@ -42,6 +42,7 @@
 
 #define pr_fmt(fmt) "dvb_net: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/fs.h>

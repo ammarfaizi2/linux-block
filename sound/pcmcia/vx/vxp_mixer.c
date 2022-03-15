@@ -7,6 +7,7 @@
  * Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/mutex_api.h>
 #include <sound/core.h>
 #include <sound/control.h>
 #include <sound/tlv.h>

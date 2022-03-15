@@ -6,6 +6,7 @@
  * Copyright (c) 2005-2007 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

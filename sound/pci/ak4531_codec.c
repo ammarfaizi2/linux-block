@@ -4,6 +4,7 @@
  *  Universal routines for AK4531 codec
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/slab.h>

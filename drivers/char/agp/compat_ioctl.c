@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/fs.h>

@@ -3,6 +3,7 @@
  * QLogic iSCSI HBA Driver
  * Copyright (c)  2003-2013 QLogic Corporation
  */
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

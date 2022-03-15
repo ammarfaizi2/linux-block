@@ -5,6 +5,7 @@
  * Copyright (C) 2014-2017 Broadcom
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/phy.h>

@@ -19,6 +19,7 @@
  * 	(jj@sunsite.ms.mff.cuni.cz)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/fs_api_sb.h>

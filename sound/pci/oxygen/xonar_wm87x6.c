@@ -48,6 +48,7 @@
  *   input 2 <- aux
  */
 
+#include <linux/mutex_api.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
 #include <sound/control.h>

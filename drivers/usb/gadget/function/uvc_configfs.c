@@ -10,6 +10,7 @@
  * Author: Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/sort.h>
 

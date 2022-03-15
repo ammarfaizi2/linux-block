@@ -6,6 +6,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/firewire.h>

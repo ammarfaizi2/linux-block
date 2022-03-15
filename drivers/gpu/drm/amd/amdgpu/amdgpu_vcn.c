@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/io_extra.h>
 #include <linux/dma-fence-api.h>

@@ -11,6 +11,7 @@
  *  Copyright (C) 1999 Paul `Rusty' Russell & Michael J. Neuling
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/mutex_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>

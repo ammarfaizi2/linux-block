@@ -10,6 +10,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kthread.h>
 #include <linux/irqdesc.h>
 #include <linux/idr_api.h>

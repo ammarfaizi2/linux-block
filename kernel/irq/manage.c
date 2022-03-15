@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "genirq: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>

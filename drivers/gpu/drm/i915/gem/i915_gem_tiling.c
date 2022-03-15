@@ -4,6 +4,7 @@
  * Copyright © 2008 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/string.h>
 #include <linux/bitops.h>

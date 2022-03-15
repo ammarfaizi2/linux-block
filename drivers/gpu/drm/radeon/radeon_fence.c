@@ -29,6 +29,7 @@
  *    Dave Airlie
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/debugfs.h>

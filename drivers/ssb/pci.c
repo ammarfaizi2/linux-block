@@ -17,6 +17,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/ssb/ssb.h>

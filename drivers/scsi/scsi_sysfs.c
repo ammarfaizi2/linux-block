@@ -7,6 +7,7 @@
  * Created to pull SCSI mid layer sysfs routines into one file.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>

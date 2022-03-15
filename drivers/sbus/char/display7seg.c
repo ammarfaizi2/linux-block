@@ -5,6 +5,7 @@
  * Copyright (c) 2000 Eric Brower (ebrower@usa.net)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

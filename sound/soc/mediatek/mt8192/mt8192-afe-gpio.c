@@ -6,6 +6,7 @@
 // Author: Shane Chien <shane.chien@mediatek.com>
 //
 
+#include <linux/mutex_api.h>
 #include <linux/gpio.h>
 #include <linux/pinctrl/consumer.h>
 

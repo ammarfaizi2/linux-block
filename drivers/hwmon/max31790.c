@@ -6,6 +6,7 @@
  * (C) 2015 by Il Han <corone.il.han@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/err.h>

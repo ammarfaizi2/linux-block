@@ -4,6 +4,7 @@
  * Copyright (c) 2013, Intel Corporation.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

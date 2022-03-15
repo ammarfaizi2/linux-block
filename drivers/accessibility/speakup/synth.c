@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/ctype.h>	/* for isdigit() and friends */
 #include <linux/fs.h>

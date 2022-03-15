@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/delay.h>

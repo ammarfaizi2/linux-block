@@ -5,6 +5,7 @@
 // Copyright (c) 2017 Radioavionica Corporation
 // Author: Alex A. Mihaylov <minimumlaw@rambler.ru>
 
+#include <linux/mutex_api.h>
 #include <linux/regmap.h>
 #include <linux/module.h>
 #include <linux/w1.h>

@@ -5,6 +5,7 @@
  * Copyright 2012 Benjamin Herrenschmidt, IBM Corp.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>

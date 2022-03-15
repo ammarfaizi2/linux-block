@@ -9,6 +9,7 @@
  * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/kvm_host.h>
 #include <linux/slab.h>

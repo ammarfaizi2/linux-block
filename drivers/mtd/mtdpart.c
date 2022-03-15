@@ -7,6 +7,7 @@
  * Copyright © 2000-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

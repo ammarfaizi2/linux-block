@@ -8,6 +8,7 @@
  *
  * Author(s):  Guvenc Gulce
  */
+#include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/mutex.h>

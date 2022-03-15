@@ -14,6 +14,7 @@
  * General Public License for more details.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/circ_buf.h>
 #include <linux/mutex.h>

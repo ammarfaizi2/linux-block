@@ -32,6 +32,7 @@
  */
 
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>

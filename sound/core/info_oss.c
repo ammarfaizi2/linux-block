@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/time.h>
 #include <linux/string.h>

@@ -35,6 +35,7 @@
  *	Copyright (C) 2011 Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <asm/unaligned.h>

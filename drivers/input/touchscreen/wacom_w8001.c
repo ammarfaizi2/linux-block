@@ -12,6 +12,7 @@
  * Layout based on Elo serial touchscreen driver by Vojtech Pavlik
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

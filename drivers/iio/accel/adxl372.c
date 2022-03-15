@@ -5,6 +5,7 @@
  * Copyright 2018 Analog Devices Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/bitfield.h>

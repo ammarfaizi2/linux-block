@@ -6,6 +6,7 @@
  * Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

@@ -9,6 +9,7 @@
 
 /* #define RMH_DEBUG 1 */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/bitops.h>

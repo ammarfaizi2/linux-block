@@ -5,6 +5,7 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io_extra.h>
 #include <linux/delay.h>
 

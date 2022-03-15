@@ -5,6 +5,7 @@
  *  Copyright (c) 2020 Sony Interactive Entertainment
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

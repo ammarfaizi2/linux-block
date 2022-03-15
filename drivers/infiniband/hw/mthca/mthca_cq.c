@@ -34,6 +34,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kallsyms.h>
 #include <linux/gfp.h>
 #include <linux/hardirq.h>

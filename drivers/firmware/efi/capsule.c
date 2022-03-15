@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "efi: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

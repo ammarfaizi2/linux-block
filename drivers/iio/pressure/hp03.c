@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "hp03: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

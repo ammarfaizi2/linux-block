@@ -18,6 +18,7 @@
  *    the userland interface
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/types.h>

@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/capability.h>
 #include <linux/pid.h>

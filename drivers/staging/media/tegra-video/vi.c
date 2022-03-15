@@ -3,6 +3,7 @@
  * Copyright (C) 2020 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>

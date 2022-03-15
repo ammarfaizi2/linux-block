@@ -10,6 +10,7 @@
  * Copyright 2012-2019 Analog Devices Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

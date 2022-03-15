@@ -7,6 +7,7 @@
  *          Christian Ehrhardt <ehrhardt@linux.vnet.ibm.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hardirq.h>

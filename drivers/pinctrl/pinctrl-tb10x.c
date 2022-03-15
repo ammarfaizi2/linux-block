@@ -7,6 +7,7 @@
  * Author: Christian Ruppert <christian.ruppert@abilis.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/stringify.h>
 #include <linux/pinctrl/pinctrl.h>

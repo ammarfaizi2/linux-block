@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Rockchip Electronics Co. Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/irq_api_io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -14,6 +14,7 @@
  * by syed khasim <x0khasim@ti.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

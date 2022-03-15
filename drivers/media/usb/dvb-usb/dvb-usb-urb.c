@@ -7,6 +7,7 @@
  * This file keeps functions for initializing and handling the
  * USB and URB stuff.
  */
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 
 #include "dvb-usb-common.h"

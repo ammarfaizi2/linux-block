@@ -5,6 +5,7 @@
  *  Copyright (c) 2018 Daniel M. Lambea <dmlambea@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/hid.h>

@@ -8,6 +8,7 @@
 // Authors: Keyon Jie <yang.jie@linux.intel.com>
 //
 
+#include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

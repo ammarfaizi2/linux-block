@@ -6,6 +6,7 @@
  *   Author: Stefan Mavrodiev <stefan@olimex.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/crc32.h>

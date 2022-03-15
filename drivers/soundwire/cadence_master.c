@@ -6,6 +6,7 @@
  * Used by Master driver
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

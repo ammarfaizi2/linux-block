@@ -21,6 +21,7 @@
  * 128x1,2,3,4 bytes.
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

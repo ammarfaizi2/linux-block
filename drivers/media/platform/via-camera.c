@@ -6,6 +6,7 @@
  *
  * This work was supported by the One Laptop Per Child project
  */
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/i2c.h>
 #include <linux/fs.h>

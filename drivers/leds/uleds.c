@@ -6,6 +6,7 @@
  *
  * Based on uinput.c: Aristeu Sergio Rozanski Filho <aris@cathedrallabs.org>
  */
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/init.h>

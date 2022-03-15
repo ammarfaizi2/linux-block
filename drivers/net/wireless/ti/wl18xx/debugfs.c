@@ -6,6 +6,7 @@
  * Copyright (C) 2011-2012 Texas Instruments
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/pm_runtime.h>

@@ -13,6 +13,7 @@
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>

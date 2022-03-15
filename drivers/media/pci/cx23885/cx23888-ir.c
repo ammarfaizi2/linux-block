@@ -10,6 +10,7 @@
 #include "cx23885.h"
 #include "cx23888-ir.h"
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/atomic_api.h>
 #include <linux/kfifo.h>

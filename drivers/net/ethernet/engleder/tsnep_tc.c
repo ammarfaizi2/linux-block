@@ -3,6 +3,7 @@
 
 #include "tsnep.h"
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/io.h>
 #include <net/pkt_sched.h>

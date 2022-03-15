@@ -2,6 +2,7 @@
 /*
  * Copyright © 2021 Intel Corporation
  */
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>
 #include <drm/ttm/ttm_bo_driver.h>

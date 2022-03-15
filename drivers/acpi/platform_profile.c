@@ -2,6 +2,7 @@
 
 /* Platform profile sysfs interface */
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/bits.h>

@@ -6,6 +6,7 @@
  * Author: Maxime Ripard <maxime.ripard@bootlin.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/device.h>

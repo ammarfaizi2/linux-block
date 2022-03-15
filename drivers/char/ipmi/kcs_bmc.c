@@ -4,6 +4,7 @@
  * Copyright (c) 2021, IBM Corp.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/device.h>
 #include <linux/list.h>

@@ -7,6 +7,7 @@
  *  Copyright 1999 ARM Limited
  *  Copyright (C) 2000-2001 Deep Blue Solutions Ltd.
  */
+#include <linux/mutex_api.h>
 #include <linux/lockdep.h>
 #include <linux/lockdep_api.h>
 #include <linux/kdev_t.h>

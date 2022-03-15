@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Invensense, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

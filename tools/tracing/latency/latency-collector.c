@@ -7,6 +7,7 @@
 #define _GNU_SOURCE
 #define _POSIX_C_SOURCE 200809L
 
+#include <linux/mutex_api.h>
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>

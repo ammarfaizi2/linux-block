@@ -2,6 +2,7 @@
 /*
  * (C) 2007 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/gen_stats.h>

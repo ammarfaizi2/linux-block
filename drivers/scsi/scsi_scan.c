@@ -26,6 +26,7 @@
  * 		or a LUN is seen that cannot have a device attached to it.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/device/driver.h>

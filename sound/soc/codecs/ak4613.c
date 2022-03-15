@@ -10,6 +10,7 @@
 // Based on ak4535.c by Richard Purdie
 // Based on wm8753.c by Liam Girdwood
 
+#include <linux/mutex_api.h>
 #include <linux/log2.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

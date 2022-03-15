@@ -4,6 +4,7 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/string.h>
 #include "rtl_core.h"
 #include "rtl_wx.h"

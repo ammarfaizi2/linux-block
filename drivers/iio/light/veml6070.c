@@ -9,6 +9,7 @@
  * TODO: integration time, ACK signal
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/mutex.h>

@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/mutex_api.h>
+
 #include "pp_debug.h"
 #include "hwmgr.h"
 #include "smumgr.h"

@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "digital: %s: " fmt, __func__
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 

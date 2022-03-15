@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>

@@ -16,6 +16,7 @@
  * frequency under ITMT.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/sched.h>

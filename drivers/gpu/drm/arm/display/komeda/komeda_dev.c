@@ -4,6 +4,7 @@
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/fs.h>
 #include <linux/device_api_lock.h>

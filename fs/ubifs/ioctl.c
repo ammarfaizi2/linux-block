@@ -12,6 +12,7 @@
 
 /* This file implements EXT2-compatible extended attribute ioctl() calls */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/compat.h>

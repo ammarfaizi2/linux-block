@@ -18,6 +18,7 @@
 
 #define CPIA_VERSION "3.0.1"
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/module.h>

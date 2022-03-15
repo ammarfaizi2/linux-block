@@ -7,6 +7,7 @@
  * Author(s): Cornelia Huck <cohuck@redhat.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/vfio.h>
 #include <linux/mdev.h>
 

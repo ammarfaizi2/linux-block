@@ -7,6 +7,7 @@
  * Copyright (c) 2004 by Digigram <alsa@digigram.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/pci.h>

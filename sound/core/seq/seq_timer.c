@@ -5,6 +5,7 @@
  *                              Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <sound/core.h>
 #include <linux/slab.h>

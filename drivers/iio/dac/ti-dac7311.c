@@ -6,6 +6,7 @@
  * https://www.ti.com/lit/ds/symlink/dac7311.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/iio/iio.h>
 #include <linux/module.h>

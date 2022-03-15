@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Andrew Worsley amworsley@gmail.com
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

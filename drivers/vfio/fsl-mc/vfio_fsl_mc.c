@@ -4,6 +4,7 @@
  * Copyright 2016-2017,2019-2020 NXP
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/ioport.h>

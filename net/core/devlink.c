@@ -7,6 +7,7 @@
  * Copyright (c) 2016 Jiri Pirko <jiri@mellanox.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

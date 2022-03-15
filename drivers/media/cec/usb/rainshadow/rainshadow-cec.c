@@ -16,6 +16,7 @@
  * http://rainshadowtech.com/doc/HDMICECtoUSBandRS232v2.0.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/completion.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>

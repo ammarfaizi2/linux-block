@@ -7,6 +7,7 @@
  *             Kirti Wankhede <kwankhede@nvidia.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>

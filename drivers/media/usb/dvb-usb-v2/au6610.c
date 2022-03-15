@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>

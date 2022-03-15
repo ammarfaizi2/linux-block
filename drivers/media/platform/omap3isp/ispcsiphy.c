@@ -11,6 +11,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/regmap.h>

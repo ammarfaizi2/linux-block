@@ -7,6 +7,7 @@
  * Thanks to Afatech who kindly provided information.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

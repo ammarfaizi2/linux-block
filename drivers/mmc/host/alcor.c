@@ -12,6 +12,7 @@
  * thing what I did. 2018 Oleksij Rempel <linux@rempel-privat.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

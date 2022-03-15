@@ -6,6 +6,7 @@
  * connected to the imx25 ADC.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/iio/adc/fsl-imx25-gcq.h>

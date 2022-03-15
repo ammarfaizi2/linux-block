@@ -6,6 +6,7 @@
  * Copyright (C) 2009 - 2015 Xilinx, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

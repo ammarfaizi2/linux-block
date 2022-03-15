@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Tino Reichardt, 2012
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

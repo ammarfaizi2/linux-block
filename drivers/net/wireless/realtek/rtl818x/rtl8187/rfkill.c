@@ -10,6 +10,7 @@
  * Thanks to Realtek for their support!
  */
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/usb.h>
 #include <net/mac80211.h>

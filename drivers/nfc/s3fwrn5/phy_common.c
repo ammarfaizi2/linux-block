@@ -8,6 +8,7 @@
  * Bongsu Jeon <bongsu.jeon@samsung.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/gpio.h>
 #include <linux/delay.h>
 #include <linux/module.h>

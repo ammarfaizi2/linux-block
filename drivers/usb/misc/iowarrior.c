@@ -15,6 +15,7 @@
  *  Released under the GPLv2.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>

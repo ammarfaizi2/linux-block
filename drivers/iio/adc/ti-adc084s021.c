@@ -7,6 +7,7 @@
  * https://www.ti.com/lit/ds/symlink/adc084s021.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/err.h>

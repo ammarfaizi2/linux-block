@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>

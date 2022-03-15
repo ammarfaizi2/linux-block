@@ -29,6 +29,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/export.h>

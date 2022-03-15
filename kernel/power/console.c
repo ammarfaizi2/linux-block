@@ -5,6 +5,7 @@
  * Originally from swsusp.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/console.h>
 #include <linux/vt_kern.h>
 #include <linux/kbd_kern.h>

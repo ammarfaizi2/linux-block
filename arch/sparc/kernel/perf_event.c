@@ -13,6 +13,7 @@
  *  Copyright (C) 2008-2009 Red Hat, Inc., Peter Zijlstra
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/atomic_api.h>
 #include <asm/local64_api.h>

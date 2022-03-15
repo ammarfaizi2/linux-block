@@ -26,6 +26,7 @@
  * sonic                                     _   _   _.
  * echo:  __________________________________/ \_/ \_/ \________________
  */
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/err.h>
 #include <linux/gpio/consumer.h>

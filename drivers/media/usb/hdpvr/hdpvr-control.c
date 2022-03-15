@@ -5,6 +5,7 @@
  * Copyright (C) 2008      Janne Grunau (j@jannau.net)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/init.h>

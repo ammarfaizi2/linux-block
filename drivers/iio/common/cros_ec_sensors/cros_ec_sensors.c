@@ -8,6 +8,7 @@
  * EC about sensors data. Data access is presented through iio sysfs.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/math64.h>
 #include <linux/device.h>

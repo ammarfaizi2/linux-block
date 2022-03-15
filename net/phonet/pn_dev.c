@@ -10,6 +10,7 @@
  *          Rémi Denis-Courmont
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/net.h>

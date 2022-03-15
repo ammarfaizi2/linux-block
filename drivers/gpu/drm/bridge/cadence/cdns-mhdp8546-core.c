@@ -19,6 +19,7 @@
  *     - Add DRM helper function for cdns_mhdp_lower_link_rate
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>

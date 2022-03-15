@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Max nibble <nibble.max@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

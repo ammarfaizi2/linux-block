@@ -8,6 +8,7 @@
  * For further information, see the Documentation/hwmon/max197.rst file.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

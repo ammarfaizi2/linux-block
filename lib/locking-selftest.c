@@ -11,6 +11,7 @@
  *
  *  Copyright (C) 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/hardirq.h>
 #include <linux/vtime.h>

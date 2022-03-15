@@ -4,6 +4,7 @@
  * Guennadi Liakhovetski, DENX Software Engineering, <lg@denx.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/init.h>
 #include <linux/err.h>

@@ -5,6 +5,7 @@
  */
 
 #include "opl4_local.h"
+#include <linux/mutex_api.h>
 #include <sound/initval.h>
 #include <linux/ioport.h>
 #include <linux/slab.h>

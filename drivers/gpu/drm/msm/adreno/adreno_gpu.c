@@ -6,6 +6,7 @@
  * Copyright (c) 2014 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/kref_api.h>
 #include <linux/ioport.h>

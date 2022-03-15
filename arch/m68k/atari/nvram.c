@@ -8,6 +8,7 @@
  * Wim Van Sebroeck.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/mc146818rtc.h>

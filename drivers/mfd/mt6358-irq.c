@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2020 MediaTek Inc.
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/mfd/mt6358/core.h>

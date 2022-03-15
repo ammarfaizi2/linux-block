@@ -4,6 +4,7 @@
  *    Author(s): Eugene Crosser <eugene.crosser@ru.ibm.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <asm/ebcdic.h>
 #include "qeth_core.h"

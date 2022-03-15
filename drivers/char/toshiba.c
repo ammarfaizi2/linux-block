@@ -46,6 +46,7 @@
 #define TOSH_VERSION "1.11 26/9/2001"
 #define TOSH_DEBUG 0
 
+#include <linux/mutex_api.h>
 #include <linux/irqflags.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

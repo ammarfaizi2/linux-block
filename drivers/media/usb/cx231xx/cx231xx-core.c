@@ -9,6 +9,7 @@
  */
 
 #include "cx231xx.h"
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

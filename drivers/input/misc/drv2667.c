@@ -7,6 +7,7 @@
  * Copyright: (C) 2014 Texas Instruments, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/input.h>

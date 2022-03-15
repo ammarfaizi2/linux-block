@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Stefani Seibold <stefani@seibold.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/errno.h>
 #include <linux/init.h>

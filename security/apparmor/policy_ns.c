@@ -11,6 +11,7 @@
  * to be loaded for tasks within the namespace.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/list.h>
 #include <linux/mutex.h>

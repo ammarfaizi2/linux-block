@@ -8,6 +8,7 @@
  *             pwm-atmel.c from Bo Shen
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/mfd/stm32-timers.h>

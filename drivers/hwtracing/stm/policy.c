@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep.h>
 #include <linux/lockdep_api.h>
 #include <linux/types.h>

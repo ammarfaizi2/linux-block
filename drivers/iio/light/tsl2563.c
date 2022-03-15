@@ -11,6 +11,7 @@
  * Amit Kucheria <amit.kucheria@verdurent.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

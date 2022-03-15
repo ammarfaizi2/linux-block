@@ -6,6 +6,7 @@
  * Copyright (C) 2020-2021 Advanced Micro Devices, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

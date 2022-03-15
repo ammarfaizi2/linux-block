@@ -17,6 +17,7 @@
  *	Copyright (C) 2000 Inside Out Networks, All rights reserved.
  *	Copyright (C) 2001-2002 Greg Kroah-Hartman <greg@kroah.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

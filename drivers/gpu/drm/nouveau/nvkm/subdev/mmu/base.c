@@ -24,6 +24,7 @@
 #include "ummu.h"
 #include "vmm.h"
 
+#include <linux/mutex_api.h>
 #include <subdev/bar.h>
 #include <subdev/fb.h>
 

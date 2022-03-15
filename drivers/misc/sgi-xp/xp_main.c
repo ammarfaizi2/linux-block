@@ -15,6 +15,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include "xp.h"

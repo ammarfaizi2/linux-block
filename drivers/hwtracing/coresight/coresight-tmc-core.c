@@ -4,6 +4,7 @@
  * Description: CoreSight Trace Memory Controller driver
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

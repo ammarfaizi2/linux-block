@@ -40,6 +40,7 @@
  * Copyright 2018-2019 NXP
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

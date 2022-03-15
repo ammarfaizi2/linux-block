@@ -10,6 +10,7 @@
  * iio sysfs.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/delay.h>
 #include <linux/device.h>

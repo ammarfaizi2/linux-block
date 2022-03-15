@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/bitmap.h>
 #include <linux/export.h>

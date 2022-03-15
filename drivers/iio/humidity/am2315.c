@@ -7,6 +7,7 @@
  * 7-bit I2C address: 0x5C.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

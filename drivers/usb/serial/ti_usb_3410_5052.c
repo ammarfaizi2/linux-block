@@ -13,6 +13,7 @@
  * Peter Berger <pberger@brimson.com>.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

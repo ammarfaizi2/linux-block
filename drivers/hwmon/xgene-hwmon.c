@@ -11,6 +11,7 @@
  *  - Retrieve IO total power (uW)
  *  - Retrieve SoC temperature (milli-degree C) and alarm
  */
+#include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

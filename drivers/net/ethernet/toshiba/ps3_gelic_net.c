@@ -15,6 +15,7 @@
 
 #undef DEBUG
 
+#include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

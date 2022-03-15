@@ -8,6 +8,7 @@
  *  Trident chip can handle only 16MByte of the memory at the same time.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/time.h>

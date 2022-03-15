@@ -7,6 +7,7 @@
  * Author: Jon Ringle <jringle@gridpoint.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/init.h>

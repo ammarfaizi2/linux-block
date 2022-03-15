@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)     "opal-powercap: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/of.h>
 #include <linux/kobject.h>

@@ -6,6 +6,7 @@
  * Based on w1_therm.c copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

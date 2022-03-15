@@ -13,6 +13,7 @@
  * https://www.ti.com/product/HDC1080/datasheet
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

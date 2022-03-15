@@ -8,6 +8,7 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

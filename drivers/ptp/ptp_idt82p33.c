@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "IDT_82p33xxx: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>

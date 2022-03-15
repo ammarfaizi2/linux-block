@@ -12,6 +12,7 @@
  *  Copyright (C) 1995-2006 Dell Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io_extra.h>
 #include <linux/platform_device.h>
 #include <linux/acpi.h>

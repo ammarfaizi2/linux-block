@@ -16,6 +16,7 @@
  * a specific device.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kdev_t.h>
 #include <linux/init.h>
 #include <linux/list.h>

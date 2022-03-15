@@ -10,6 +10,7 @@
 #include "cx88.h"
 #include "dvb-pll.h"
 
+#include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

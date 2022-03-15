@@ -10,6 +10,7 @@
  *   Wei Huang    <wei@redhat.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <asm/msr.h>
 #include <linux/types.h>

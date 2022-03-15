@@ -12,6 +12,7 @@
  * Copyright (c) 2011 Vista Silicon S.L.
  * Javier Martin <javier.martin@vista-silicon.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/export.h>

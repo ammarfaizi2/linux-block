@@ -27,6 +27,7 @@
  * UBI_IOCVOLCRBLK and UBI_IOCVOLRMBLK.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>

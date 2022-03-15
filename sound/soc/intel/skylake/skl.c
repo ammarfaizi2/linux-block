@@ -13,6 +13,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

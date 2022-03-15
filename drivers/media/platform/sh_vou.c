@@ -5,6 +5,7 @@
  * Copyright (C) 2010, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>

@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>
 #include <linux/freezer.h>

@@ -10,6 +10,7 @@
 /*
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/types.h>
 #include <linux/errno.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Integrated Device Technology, Inc., a Renesas Company.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/mfd/core.h>

@@ -7,6 +7,7 @@
  *
  * Licensed under the GPL-2.
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/spi/spi.h>

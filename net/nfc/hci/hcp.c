@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "hci: %s: " fmt, __func__
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

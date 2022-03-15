@@ -6,6 +6,7 @@
 
 /* ethtool support for fjes */
 
+#include <linux/mutex_api.h>
 #include <linux/vmalloc.h>
 #include <linux/netdevice.h>
 #include <linux/ethtool.h>

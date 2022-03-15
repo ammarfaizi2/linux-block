@@ -7,6 +7,7 @@
  * Datasheet: https://www.ti.com/lit/ds/symlink/adc0832-n.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>

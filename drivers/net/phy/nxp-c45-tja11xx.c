@@ -4,6 +4,7 @@
  * Author: Radu Pirea <radu-nicolae.pirea@oss.nxp.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>

@@ -4,6 +4,7 @@
  * Written by Chris Hudson <chudson@kionix.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2017-2018 Etnaviv Project
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/bitmap.h>

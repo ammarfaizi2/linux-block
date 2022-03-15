@@ -5,6 +5,7 @@
  *  Routines for control of EMU WaveTable chip
  */
 
+#include <linux/mutex_api.h>
 #include <linux/wait.h>
 #include <linux/slab.h>
 #include <linux/string.h>

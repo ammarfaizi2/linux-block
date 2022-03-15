@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014 Christoph Hellwig.
  */
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

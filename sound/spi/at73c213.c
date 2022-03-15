@@ -7,6 +7,7 @@
 
 /*#define DEBUG*/
 
+#include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/delay.h>

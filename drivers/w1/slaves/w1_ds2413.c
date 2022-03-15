@@ -6,6 +6,7 @@
  * Copyright (c) 2013 Mariusz Bialonczyk <manio@skyboo.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

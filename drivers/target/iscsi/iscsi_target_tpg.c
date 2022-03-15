@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/slab.h>
 #include <target/target_core_base.h>

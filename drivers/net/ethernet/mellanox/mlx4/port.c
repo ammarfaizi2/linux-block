@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/errno.h>
 #include <linux/if_ether.h>

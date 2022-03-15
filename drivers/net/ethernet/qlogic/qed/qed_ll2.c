@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>

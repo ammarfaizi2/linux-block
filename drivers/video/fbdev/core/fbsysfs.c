@@ -11,6 +11,7 @@
  * are converted to use it a sysfsification will open OOPSable races.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device.h>
 #include <linux/device_api_lock.h>

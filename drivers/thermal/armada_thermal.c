@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2013 Marvell
  */
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

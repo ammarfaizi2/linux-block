@@ -6,6 +6,7 @@
  * Copyright (c) 2016 Mentor Graphics Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/of_graph.h>
 #include <linux/of_platform.h>

@@ -6,6 +6,8 @@
  * Copyright (c) 2014 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/mutex_api.h>
+
 #include "dice.h"
 
 static int dice_rate_constraint(struct snd_pcm_hw_params *params,

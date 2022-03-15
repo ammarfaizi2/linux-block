@@ -11,6 +11,7 @@
  * Author: Samu Onkalo <samu.p.onkalo@nokia.com>
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

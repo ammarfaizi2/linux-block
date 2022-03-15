@@ -7,6 +7,7 @@
  * Copyright 2019 NXP
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

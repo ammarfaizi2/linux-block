@@ -3,6 +3,8 @@
  * Copyright © 2014-2019 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
+
 #include "gem/i915_gem_lmem.h"
 #include "gt/intel_gt.h"
 #include "gt/intel_gt_irq.h"

@@ -10,6 +10,7 @@
  * Based on the soc-camera rcar_vin driver
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

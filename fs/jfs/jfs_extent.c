@@ -3,6 +3,7 @@
  *   Copyright (C) International Business Machines Corp., 2000-2004
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>

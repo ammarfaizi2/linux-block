@@ -21,6 +21,7 @@
  */
 #include "priv.h"
 
+#include <linux/mutex_api.h>
 #include <subdev/mc.h>
 #include <subdev/top.h>
 

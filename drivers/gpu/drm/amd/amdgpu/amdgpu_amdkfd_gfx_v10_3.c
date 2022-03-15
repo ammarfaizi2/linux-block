@@ -19,6 +19,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/mmu_context.h>

@@ -7,6 +7,7 @@
  *  All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/module.h>

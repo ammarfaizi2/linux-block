@@ -15,6 +15,7 @@
  * Harsh Jain (harsh@chelsio.com)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

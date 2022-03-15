@@ -9,6 +9,7 @@
  * (C) Copyright David Brownell 2000-2002
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

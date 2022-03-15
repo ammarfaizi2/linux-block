@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

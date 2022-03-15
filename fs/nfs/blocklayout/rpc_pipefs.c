@@ -26,6 +26,7 @@
  * possibility of such damages.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/module.h>

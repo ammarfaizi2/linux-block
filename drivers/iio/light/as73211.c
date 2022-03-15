@@ -12,6 +12,7 @@
  * Datasheet: https://ams.com/documents/20143/36005/AS73211_DS000556_3-01.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/log2.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

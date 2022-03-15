@@ -5,6 +5,7 @@
  *         Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/netdevice.h>
 #include <linux/types.h>

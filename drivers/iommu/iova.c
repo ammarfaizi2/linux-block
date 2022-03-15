@@ -5,6 +5,7 @@
  * Author: Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

@@ -6,6 +6,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

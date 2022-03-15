@@ -11,6 +11,7 @@
  *  - Create channel for sensor time
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/device.h>

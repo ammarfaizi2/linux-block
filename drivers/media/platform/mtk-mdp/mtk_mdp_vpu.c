@@ -5,6 +5,8 @@
  *         Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
  */
 
+#include <linux/mutex_api.h>
+
 #include "mtk_mdp_core.h"
 #include "mtk_mdp_vpu.h"
 #include "mtk_vpu.h"

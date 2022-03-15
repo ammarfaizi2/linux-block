@@ -36,6 +36,7 @@
  *   GPO 0 -> route line-in (0) or AC97 output (1) to ADC input
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/mutex.h>
 #include <linux/pci.h>

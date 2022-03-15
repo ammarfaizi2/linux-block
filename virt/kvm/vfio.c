@@ -6,6 +6,7 @@
  *     Author: Alex Williamson <alex.williamson@redhat.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/errno.h>
 #include <linux/file.h>
 #include <linux/kvm_host.h>

@@ -6,6 +6,7 @@
  *                             Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

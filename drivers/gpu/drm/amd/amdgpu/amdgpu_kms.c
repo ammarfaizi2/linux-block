@@ -27,6 +27,7 @@
  */
 
 #include "amdgpu.h"
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api.h>
 #include <linux/debugfs.h>

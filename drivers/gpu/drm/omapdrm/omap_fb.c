@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob@ti.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 
 #include <drm/drm_modeset_helper.h>

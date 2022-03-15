@@ -8,6 +8,7 @@
  * Author: Jarkko Nikula <jarkko.nikula@linux.intel.com>
  * Author: Raymond Tan <raymond.tan@intel.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/counter.h>

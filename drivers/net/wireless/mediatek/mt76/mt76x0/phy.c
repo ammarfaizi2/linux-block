@@ -6,6 +6,7 @@
  * Copyright (C) 2018 Stanislaw Gruszka <stf_xl@wp.pl>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/etherdevice.h>

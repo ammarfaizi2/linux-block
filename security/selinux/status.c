@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2010 NEC corporation
  */
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>

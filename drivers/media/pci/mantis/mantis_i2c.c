@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/mutex_api.h>
 #include <linux/export.h>
 #include <asm/io.h>
 #include <linux/ioport.h>

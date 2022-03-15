@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/mutex_api.h>
 #include <linux/highmem.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

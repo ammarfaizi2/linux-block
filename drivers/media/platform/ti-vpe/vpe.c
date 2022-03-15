@@ -14,6 +14,7 @@
  * Based on the virtual v4l2-mem2mem example device
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>

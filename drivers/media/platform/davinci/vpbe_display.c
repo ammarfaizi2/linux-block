@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2010 Texas Instruments Incorporated - https://www.ti.com/
  */
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/export.h>

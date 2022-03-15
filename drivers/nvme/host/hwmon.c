@@ -4,6 +4,7 @@
  * Copyright (c) 2019, Guenter Roeck
  */
 
+#include <linux/mutex_api.h>
 #include <linux/hwmon.h>
 #include <linux/units.h>
 #include <asm/unaligned.h>

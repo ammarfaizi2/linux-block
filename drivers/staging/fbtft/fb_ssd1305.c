@@ -5,6 +5,7 @@
  * based on SSD1306 driver by Noralf Tronnes
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

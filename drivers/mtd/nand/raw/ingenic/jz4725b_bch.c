@@ -7,6 +7,7 @@
  * Based on jz4780_bch.c
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/io.h>

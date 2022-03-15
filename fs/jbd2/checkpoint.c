@@ -14,6 +14,7 @@
  * reused.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

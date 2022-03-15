@@ -5,6 +5,7 @@
  *  Proc interface for Emu8k/Emu10k1 WaveTable synth
  */
 
+#include <linux/mutex_api.h>
 #include <linux/wait.h>
 #include <sound/core.h>
 #include <sound/emux_synth.h>

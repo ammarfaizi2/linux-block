@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device/class.h>

@@ -21,6 +21,8 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/mutex_api.h>
+
 #include "aux.h"
 #include "pad.h"
 

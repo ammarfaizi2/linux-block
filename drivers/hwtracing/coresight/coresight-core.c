@@ -3,6 +3,7 @@
  * Copyright (c) 2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

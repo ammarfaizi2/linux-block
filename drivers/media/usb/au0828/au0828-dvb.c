@@ -7,6 +7,7 @@
 
 #include "au0828.h"
 
+#include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>

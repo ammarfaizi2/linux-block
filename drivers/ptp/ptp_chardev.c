@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

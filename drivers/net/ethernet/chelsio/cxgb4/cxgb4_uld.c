@@ -35,6 +35,7 @@
  *  Written by: Hariprasad Shenai (hariprasad@chelsio.com)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

@@ -7,6 +7,7 @@
  *          Christian Ehrhardt <ehrhardt@linux.vnet.ibm.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kvm_host.h>
 #include <linux/fs.h>
 #include <linux/seq_file.h>

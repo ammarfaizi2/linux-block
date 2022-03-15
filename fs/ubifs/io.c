@@ -58,6 +58,7 @@
  * they are read from the flash media.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

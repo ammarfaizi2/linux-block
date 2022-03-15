@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 
 #include "tascam.h"

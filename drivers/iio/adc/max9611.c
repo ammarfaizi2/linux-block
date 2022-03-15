@@ -17,6 +17,7 @@
  * supported by this driver.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/iio/iio.h>

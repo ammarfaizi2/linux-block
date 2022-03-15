@@ -6,6 +6,7 @@
  *
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/sched/signal.h>
 #include <linux/mm.h>
 

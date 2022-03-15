@@ -27,6 +27,7 @@
 
 #define pr_fmt(fmt) "acpiphp_glue: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

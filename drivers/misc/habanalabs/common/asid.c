@@ -7,6 +7,7 @@
 
 #include "habanalabs.h"
 
+#include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/slab.h>
 

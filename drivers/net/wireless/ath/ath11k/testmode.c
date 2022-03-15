@@ -4,6 +4,7 @@
  */
 
 #include "testmode.h"
+#include <linux/mutex_api.h>
 #include <net/netlink.h>
 #include "debug.h"
 #include "wmi.h"

@@ -15,6 +15,7 @@
  *	- Fixed x86_64 cleanness
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

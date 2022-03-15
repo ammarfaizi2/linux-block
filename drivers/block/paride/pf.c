@@ -118,6 +118,7 @@
 #define PF_NAME		"pf"
 #define PF_UNITS	4
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/types.h>
 

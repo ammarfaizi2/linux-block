@@ -19,6 +19,7 @@
  * The w83791g chip is the same as the w83791d but lead-free.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

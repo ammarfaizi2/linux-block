@@ -18,6 +18,7 @@
  * bottom of this file.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/ioctl.h>
 #include <linux/tty.h>

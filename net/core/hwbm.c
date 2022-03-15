@@ -5,6 +5,7 @@
  *
  * Gregory CLEMENT <gregory.clement@free-electrons.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/skbuff.h>

@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "extents.h"
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

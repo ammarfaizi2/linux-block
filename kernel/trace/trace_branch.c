@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 Steven Rostedt <srostedt@redhat.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kallsyms.h>
 #include <linux/seq_file.h>

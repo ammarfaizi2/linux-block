@@ -9,6 +9,7 @@
  */
 
 #include "cx231xx.h"
+#include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

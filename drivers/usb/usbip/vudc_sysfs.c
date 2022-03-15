@@ -6,6 +6,7 @@
  *               Krzysztof Opasiak <k.opasiak@samsung.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/file.h>
 #include <linux/device.h>
 #include <linux/list.h>

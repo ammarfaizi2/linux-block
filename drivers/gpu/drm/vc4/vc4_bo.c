@@ -16,6 +16,7 @@
  * rendering can return quickly.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) Harald Geyer <harald@ccbib.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>

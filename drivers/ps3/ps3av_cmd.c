@@ -6,6 +6,7 @@
  * AV backend support for PS3
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

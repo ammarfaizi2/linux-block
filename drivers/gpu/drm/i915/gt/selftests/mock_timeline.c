@@ -4,6 +4,8 @@
  * Copyright © 2017-2018 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
+
 #include "../intel_timeline.h"
 
 #include "mock_timeline.h"

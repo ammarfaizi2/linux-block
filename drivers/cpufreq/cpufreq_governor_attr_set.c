@@ -6,6 +6,7 @@
  * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 
 #include "cpufreq_governor.h"

@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "damon: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/damon.h>

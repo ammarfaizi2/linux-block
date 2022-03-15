@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/kernel.h>
 #include <linux/pwm.h>

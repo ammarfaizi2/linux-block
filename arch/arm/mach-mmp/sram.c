@@ -10,6 +10,7 @@
  *  Add for mmp sram support - Leo Yan <leoy@marvell.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

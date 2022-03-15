@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/mutex_api.h>
+
 #include "hwmgr.h"
 #include "vega10_hwmgr.h"
 #include "vega10_smumgr.h"

@@ -22,6 +22,7 @@
  * Authors: Ben Skeggs
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/delay.h>

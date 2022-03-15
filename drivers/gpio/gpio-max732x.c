@@ -10,6 +10,7 @@
  *  Derived from drivers/gpio/pca953x.c
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/module.h>

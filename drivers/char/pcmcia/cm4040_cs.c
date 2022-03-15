@@ -17,6 +17,7 @@
  * All rights reserved, Dual BSD/GPL Licensed.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

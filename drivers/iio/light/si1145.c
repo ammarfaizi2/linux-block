@@ -11,6 +11,7 @@
  * SI1145/6/6 (7-bit I2C slave address 0x60)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>

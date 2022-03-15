@@ -11,6 +11,7 @@
  *   - Adaptive compression.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/crypto.h>

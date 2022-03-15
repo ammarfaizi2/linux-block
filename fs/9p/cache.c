@@ -5,6 +5,7 @@
  *  Copyright (C) 2009 by Abhishek Kulkarni <adkulkar@umail.iu.edu>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/jiffies.h>
 #include <linux/file.h>

@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

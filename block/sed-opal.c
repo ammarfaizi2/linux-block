@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":OPAL: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/device.h>

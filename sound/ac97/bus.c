@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Robert Jarzmik <robert.jarzmik@free.fr>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

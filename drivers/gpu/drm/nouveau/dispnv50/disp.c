@@ -28,6 +28,7 @@
 #include "wndw.h"
 #include "handles.h"
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/backlight.h>
 #include <linux/dma-mapping.h>

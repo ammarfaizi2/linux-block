@@ -4,6 +4,7 @@
  * Copyright (c) 2012, Intel Corporation.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/hid.h>

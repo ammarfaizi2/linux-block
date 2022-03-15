@@ -2,6 +2,7 @@
 /*
  * rtmutex API
  */
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <linux/export.h>

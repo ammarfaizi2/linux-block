@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <drm/radeon_drm.h>
 #include "radeon.h"

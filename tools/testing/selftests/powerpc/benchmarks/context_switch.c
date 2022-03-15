@@ -6,6 +6,7 @@
  */
 
 #define _GNU_SOURCE
+#include <linux/mutex_api.h>
 #include <errno.h>
 #include <sched.h>
 #include <string.h>

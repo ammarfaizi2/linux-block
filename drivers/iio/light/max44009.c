@@ -12,6 +12,7 @@
  * Default I2C address: 0x4a
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/bits.h>

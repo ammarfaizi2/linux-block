@@ -3,6 +3,7 @@
  * Tty buffer allocation management
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/lockdep_api.h>
 #include <linux/llist_api.h>

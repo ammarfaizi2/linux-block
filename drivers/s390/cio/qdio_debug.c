@@ -4,6 +4,7 @@
  *
  *  Author: Jan Glauber (jang@linux.vnet.ibm.com)
  */
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/seq_file.h>

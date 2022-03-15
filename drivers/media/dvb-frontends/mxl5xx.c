@@ -11,6 +11,7 @@
  * which was released under GPL V2
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

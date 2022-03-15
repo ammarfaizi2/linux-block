@@ -14,6 +14,7 @@
  * Copyright (C) 2018-2021 ARM Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

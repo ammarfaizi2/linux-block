@@ -17,6 +17,7 @@
  * This file contains the arch-independent routines.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/irqflags.h>

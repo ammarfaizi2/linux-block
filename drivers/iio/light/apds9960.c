@@ -8,6 +8,7 @@
  * TODO: gesture + proximity calib offsets
  */
 
+#include <linux/mutex_api.h>
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <linux/init.h>

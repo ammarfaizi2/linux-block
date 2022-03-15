@@ -44,6 +44,7 @@
 */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
+#include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/module.h>

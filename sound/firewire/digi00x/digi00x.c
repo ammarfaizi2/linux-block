@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2015 Takashi Sakamoto
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device/driver.h>
 
 #include "digi00x.h"

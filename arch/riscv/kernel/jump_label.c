@@ -4,6 +4,7 @@
  *
  * Based on arch/arm64/kernel/jump_label.c
  */
+#include <linux/mutex_api.h>
 #include <linux/jump_label.h>
 #include <linux/kernel.h>
 #include <linux/memory.h>

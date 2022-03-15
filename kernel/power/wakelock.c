@@ -10,6 +10,7 @@
  * manipulate wakelocks on Android.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>

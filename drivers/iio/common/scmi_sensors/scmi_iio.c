@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Google LLC
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/log2.h>
 #include <linux/ktime_api.h>

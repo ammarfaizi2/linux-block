@@ -11,6 +11,7 @@
  *  (C) 2011 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

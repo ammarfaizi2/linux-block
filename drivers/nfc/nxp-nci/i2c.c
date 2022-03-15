@@ -12,6 +12,7 @@
  * Copyright (C) 2012  Intel Corporation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>

@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "request.h"
 
+#include <linux/mutex_api.h>
 #include <linux/ioprio.h>
 #include <linux/atomic_api.h>
 #include <trace/events/bcache.h>

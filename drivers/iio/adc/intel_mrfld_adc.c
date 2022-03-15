@@ -10,6 +10,7 @@
  *	 Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/jiffies.h>
 #include <linux/bitops.h>

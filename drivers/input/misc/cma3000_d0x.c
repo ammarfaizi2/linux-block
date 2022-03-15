@@ -6,6 +6,7 @@
  * Author: Hemanth V <hemanthv@ti.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

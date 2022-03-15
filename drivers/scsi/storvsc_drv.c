@@ -8,6 +8,7 @@
  *   K. Y. Srinivasan <kys@microsoft.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

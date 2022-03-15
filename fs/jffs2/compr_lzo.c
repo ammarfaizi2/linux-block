@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/vmalloc.h>

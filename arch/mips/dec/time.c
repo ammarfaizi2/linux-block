@@ -7,6 +7,7 @@
  * found in some MIPS systems.
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/bcd.h>
 #include <linux/init.h>

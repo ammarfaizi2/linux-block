@@ -20,6 +20,7 @@
  *  This file contains code for allocating/freeing inodes.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/stddef.h>

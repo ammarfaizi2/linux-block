@@ -22,6 +22,7 @@
  *     - Addition of experimental sync support.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <sound/core.h>

@@ -50,6 +50,7 @@
  * Documentation/powerpc/hvcs.rst.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/gfp_api.h>

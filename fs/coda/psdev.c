@@ -13,6 +13,7 @@
  *              Copyright (c) 1997 Carnegie-Mellon University
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

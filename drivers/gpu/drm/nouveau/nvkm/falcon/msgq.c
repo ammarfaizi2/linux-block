@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/mutex_api.h>
+
 #include "qmgr.h"
 
 static void

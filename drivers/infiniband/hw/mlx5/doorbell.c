@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref.h>
 #include <linux/slab.h>
 #include <linux/sched/mm.h>

@@ -6,6 +6,7 @@
  * Copyright © 2015 Broadcom
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/device_api_lock.h>

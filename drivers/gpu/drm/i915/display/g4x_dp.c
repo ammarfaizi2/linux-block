@@ -5,6 +5,7 @@
  * DisplayPort support for G4x,ILK,SNB,IVB,VLV,CHV (HSW+ handled by the DDI code).
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 
 #include "g4x_dp.h"

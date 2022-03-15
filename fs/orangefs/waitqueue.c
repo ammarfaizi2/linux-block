@@ -13,6 +13,8 @@
  *  In-kernel waitqueue operations.
  */
 
+#include <linux/mutex_api.h>
+
 #include "protocol.h"
 #include "orangefs-kernel.h"
 #include "orangefs-bufmap.h"
