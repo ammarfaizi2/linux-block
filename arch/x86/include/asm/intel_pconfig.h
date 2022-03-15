@@ -1,6 +1,7 @@
 #ifndef	_ASM_X86_INTEL_PCONFIG_H
 #define	_ASM_X86_INTEL_PCONFIG_H
 
+#include <linux/err.h>
 #include <asm/asm.h>
 #include <asm/processor.h>
 

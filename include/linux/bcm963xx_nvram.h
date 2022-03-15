@@ -2,6 +2,7 @@
 #ifndef __LINUX_BCM963XX_NVRAM_H__
 #define __LINUX_BCM963XX_NVRAM_H__
 
+#include <linux/err.h>
 #include <linux/crc32.h>
 #include <linux/if_ether.h>
 #include <linux/sizes.h>

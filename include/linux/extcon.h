@@ -18,6 +18,7 @@
 #ifndef __LINUX_EXTCON_H__
 #define __LINUX_EXTCON_H__
 
+#include <linux/err.h>
 #include <linux/device.h>
 
 /*

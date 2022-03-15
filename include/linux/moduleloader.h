@@ -3,6 +3,7 @@
 #define _LINUX_MODULELOADER_H
 /* The stuff needed for archs to support modules. */
 
+#include <linux/err.h>
 #include <linux/module.h>
 #include <linux/elf.h>
 

@@ -31,6 +31,7 @@
 #ifndef _LINUX_VGA_SWITCHEROO_H_
 #define _LINUX_VGA_SWITCHEROO_H_
 
+#include <linux/err.h>
 #include <linux/fb.h>
 
 struct pci_dev;

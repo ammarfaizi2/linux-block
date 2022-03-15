@@ -23,6 +23,7 @@
 #ifndef __DRM_EDID_H__
 #define __DRM_EDID_H__
 
+#include <linux/err.h>
 #include <linux/types.h>
 #include <linux/hdmi.h>
 #include <drm/drm_mode.h>
