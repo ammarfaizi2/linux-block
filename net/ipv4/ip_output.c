@@ -43,6 +43,7 @@
  *		Hirokazu Takahashi:	sendfile() on UDP works now.
  */
 
+#include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/route_api.h>
 #include <net/neighbour_api_output.h>

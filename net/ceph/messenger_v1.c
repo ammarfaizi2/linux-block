@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <net/sock_api.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>
 #include <linux/skbuff_api_frag.h>

@@ -27,6 +27,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <net/ndisc_api.h>
 #include <net/ipv6_api.h>

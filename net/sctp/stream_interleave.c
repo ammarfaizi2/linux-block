@@ -15,6 +15,7 @@
  *    Xin Long <lucien.xin@gmail.com>
  */
 
+#include <net/sock_api.h>
 #include <net/busy_poll.h>
 #include <net/sctp/sctp.h>
 #include <net/sctp/sm.h>

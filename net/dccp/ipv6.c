@@ -8,6 +8,7 @@
  *	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
  */
 
+#include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>

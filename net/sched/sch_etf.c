@@ -6,6 +6,7 @@
  *		Vinicius Costa Gomes <vinicius.gomes@intel.com>
  */
 
+#include <net/sock_api.h>
 #include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/rtnetlink.h>

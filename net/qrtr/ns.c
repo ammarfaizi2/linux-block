@@ -5,6 +5,7 @@
  * Copyright (c) 2020, Linaro Ltd.
  */
 
+#include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/radix-tree-api.h>

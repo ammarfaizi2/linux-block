@@ -4,6 +4,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <net/sock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>

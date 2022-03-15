@@ -10,6 +10,7 @@
  * Since rtnetlink, no real bus is used.
  */
 
+#include <net/sock_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

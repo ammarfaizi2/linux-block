@@ -8,6 +8,7 @@
  *              Jeremy Allison (jra@samba.org)
  *
  */
+#include <net/sock_api.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>

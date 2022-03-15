@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
+#include <net/sock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/mhi.h>

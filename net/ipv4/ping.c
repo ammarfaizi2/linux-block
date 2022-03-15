@@ -15,6 +15,7 @@
  * none of the bugs are Pavel's now.
  */
 
+#include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>

@@ -10,6 +10,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <net/sock_api.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>

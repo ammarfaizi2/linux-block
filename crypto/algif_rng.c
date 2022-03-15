@@ -38,6 +38,7 @@
  * DAMAGE.
  */
 
+#include <net/sock_api.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

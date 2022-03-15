@@ -6,6 +6,7 @@
  * Copyright (C) Joerg Reuter DL1BKE (jreuter@yaina.de)
  * Copyright (C) Frederic Rible F1OAT (frible@teaser.fr)
  */
+#include <net/sock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/types.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <net/sock_api.h>
 #include <net/ipv6_api.h>
 #include <linux/refcount_api.h>
 #include <linux/random.h>

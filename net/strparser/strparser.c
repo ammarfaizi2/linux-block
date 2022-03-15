@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Tom Herbert <tom@herbertland.com>
  */
 
+#include <net/sock_api.h>
 #include <net/sch_generic_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/fs.h>

@@ -4,6 +4,7 @@
  * This file is released under the LGPL.
  */
 
+#include <net/sock_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/capability.h>

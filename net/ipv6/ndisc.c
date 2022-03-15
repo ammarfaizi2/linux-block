@@ -25,6 +25,7 @@
 
 #define pr_fmt(fmt) "ICMPv6: " fmt
 
+#include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/neighbour_api.h>

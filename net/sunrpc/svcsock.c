@@ -20,6 +20,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <net/sock_api.h>
 #include <net/ipv6_api_sock.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>

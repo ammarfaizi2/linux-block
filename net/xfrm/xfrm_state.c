@@ -14,6 +14,7 @@
  *
  */
 
+#include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>

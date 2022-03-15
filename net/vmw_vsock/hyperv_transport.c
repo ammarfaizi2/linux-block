@@ -8,6 +8,7 @@
  *
  * Copyright (c) 2017, Microsoft Corporation.
  */
+#include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>

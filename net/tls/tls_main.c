@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/wait_api.h>

@@ -11,6 +11,7 @@
  * (part of code stolen from loop.c)
  */
 
+#include <net/sock_api.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

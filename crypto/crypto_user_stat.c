@@ -6,6 +6,7 @@
  *
  */
 
+#include <net/sock_api.h>
 #include <net/netlink_api.h>
 #include <linux/refcount_api.h>
 #include <linux/atomic_api.h>

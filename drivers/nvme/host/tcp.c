@@ -4,6 +4,7 @@
  * Copyright (c) 2018 Lightbits Labs. All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/uio_api.h>
 #include <linux/topology.h>

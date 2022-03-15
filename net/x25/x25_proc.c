@@ -12,6 +12,7 @@
  *	2002/10/06	Arnaldo Carvalho de Melo  seq_file support
  */
 
+#include <net/sock_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/proc_fs.h>

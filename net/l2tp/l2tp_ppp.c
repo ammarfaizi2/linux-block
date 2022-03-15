@@ -55,6 +55,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/net_namespace_api.h>
 #include <linux/seq_file_net.h>

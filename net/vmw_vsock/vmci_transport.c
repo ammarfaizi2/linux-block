@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2013 VMware, Inc. All rights reserved.
  */
 
+#include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

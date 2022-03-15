@@ -17,6 +17,7 @@
  *      YOSHIFUJI Hideaki @USAGI:	convert /proc/net/udp6 to seq_file.
  */
 
+#include <net/sock_api.h>
 #include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>

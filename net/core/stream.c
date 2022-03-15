@@ -13,6 +13,7 @@
  *                     Alan Cox <alan@lxorguk.ukuu.org.uk> (Borrowed comments 8-))
  */
 
+#include <net/sock_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2011 Steffen Klassert <steffen.klassert@secunet.com>
  */
 
+#include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/rwsem_api.h>

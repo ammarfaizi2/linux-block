@@ -9,6 +9,7 @@
  * Authors:	Lotsa people, from code originally in tcp
  */
 
+#include <net/sock_api.h>
 #include <net/l3mdev.h>
 #include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2017 - 2018 Covalent IO, Inc. http://covalent.io */
 
+#include <net/sock_api.h>
 #include <net/dst_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

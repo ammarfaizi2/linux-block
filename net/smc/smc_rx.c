@@ -10,6 +10,7 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <net/sock_api.h>
 #include <linux/wait_api.h>
 #include <linux/splice.h>
 #include <linux/slab.h>

@@ -32,6 +32,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <net/sock_api.h>
 #include <linux/uaccess.h>
 #include <linux/tasklet_api.h>
 #include <linux/atomic_api.h>

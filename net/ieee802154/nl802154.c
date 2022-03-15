@@ -7,6 +7,7 @@
  * Based on: net/wireless/nl80211.c
  */
 
+#include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/slab.h>

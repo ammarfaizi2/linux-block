@@ -32,6 +32,7 @@
 #define DRV_DESCRIPTION	"Universal TUN/TAP device driver"
 #define DRV_COPYRIGHT	"(C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>"
 
+#include <net/sock_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>

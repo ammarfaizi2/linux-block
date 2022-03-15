@@ -3,6 +3,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/sock_api.h>
 #include <net/sch_generic_api.h>
 #include <net/route_api.h>
 #include <net/netlink_api.h>

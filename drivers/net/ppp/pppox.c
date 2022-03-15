@@ -14,6 +14,7 @@
  * License:
  */
 
+#include <net/sock_api.h>
 #include <linux/string.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

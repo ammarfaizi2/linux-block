@@ -5,6 +5,7 @@
  * Copyright (C) 2009-2013 VMware, Inc. All rights reserved.
  */
 
+#include <net/sock_api.h>
 #include <linux/sched.h>
 #include <linux/types.h>
 #include <linux/socket.h>
