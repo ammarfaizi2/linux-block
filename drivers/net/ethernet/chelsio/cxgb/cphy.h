@@ -38,6 +38,8 @@
 #ifndef _CXGB_CPHY_H_
 #define _CXGB_CPHY_H_
 
+#include <linux/etherdevice_api.h>
+
 #include "common.h"
 
 struct mdio_ops {

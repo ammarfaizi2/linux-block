@@ -7,6 +7,7 @@
 #ifndef _MACB_H
 #define _MACB_H
 
+#include <linux/etherdevice_api.h>
 #include <linux/clk.h>
 #include <linux/phylink.h>
 #include <linux/ptp_clock_kernel.h>

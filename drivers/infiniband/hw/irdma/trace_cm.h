@@ -3,6 +3,7 @@
 #if !defined(__TRACE_CM_H) || defined(TRACE_HEADER_MULTI_READ)
 #define __TRACE_CM_H
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/tracepoint.h>
 #include <linux/trace_seq.h>
