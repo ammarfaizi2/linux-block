@@ -10,6 +10,7 @@
 #ifndef FIMC_IS_H_
 #define FIMC_IS_H_
 
+#include <linux/debugfs.h>
 #include <asm/barrier.h>
 #include <linux/clk.h>
 #include <linux/device.h>

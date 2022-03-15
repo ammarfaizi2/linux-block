@@ -8,6 +8,7 @@
 #ifndef HVA_H
 #define HVA_H
 
+#include <linux/debugfs.h>
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-device.h>
 #include <media/videobuf2-v4l2.h>

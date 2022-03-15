@@ -4,6 +4,7 @@
  * Authors: Fabien Dessenne <fabien.dessenne@st.com> for STMicroelectronics.
  */
 
+#include <linux/debugfs.h>
 #include <linux/clk.h>
 #include <linux/ktime.h>
 #include <linux/platform_device.h>

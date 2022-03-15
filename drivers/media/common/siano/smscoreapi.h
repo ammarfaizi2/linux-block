@@ -13,6 +13,7 @@ Copyright (C) 2006-2008, Uri Shkolnik, Anatoly Greenblat
 
 #define pr_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
 
+#include <linux/debugfs.h>
 #include <linux/device.h>
 #include <linux/list.h>
 #include <linux/mm.h>

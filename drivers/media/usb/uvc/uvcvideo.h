@@ -6,6 +6,7 @@
 #error "The uvcvideo.h header is deprecated, use linux/uvcvideo.h instead."
 #endif /* __KERNEL__ */
 
+#include <linux/debugfs.h>
 #include <linux/atomic.h>
 #include <linux/kernel.h>
 #include <linux/poll.h>

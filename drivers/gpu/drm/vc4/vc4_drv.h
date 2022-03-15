@@ -5,6 +5,7 @@
 #ifndef _VC4_DRV_H_
 #define _VC4_DRV_H_
 
+#include <linux/debugfs.h>
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/refcount.h>
