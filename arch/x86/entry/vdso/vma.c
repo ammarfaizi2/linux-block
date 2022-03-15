@@ -4,6 +4,7 @@
  *
  * This contains most of the x86 vDSO kernel-side code.
  */
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

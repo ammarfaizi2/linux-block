@@ -7,6 +7,7 @@
 
 #include "common.h"
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/atomic_api.h>

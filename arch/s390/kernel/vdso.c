@@ -6,6 +6,7 @@
  *  Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com)
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/binfmts.h>
 #include <linux/compat.h>

@@ -34,6 +34,7 @@
  *    Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/mmu_context.h>

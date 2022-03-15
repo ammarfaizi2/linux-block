@@ -3,6 +3,7 @@
  * Copyright (C) 2011 Richard Weinberger <richrd@nod.at>
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <asm/elf_api.h>

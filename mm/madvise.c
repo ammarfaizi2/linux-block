@@ -6,6 +6,7 @@
  * Copyright (C) 2002  Christoph Hellwig
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api_tlb_flush.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>

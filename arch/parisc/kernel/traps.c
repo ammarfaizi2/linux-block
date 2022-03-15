@@ -11,6 +11,7 @@
  * state in 'asm.s'.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>

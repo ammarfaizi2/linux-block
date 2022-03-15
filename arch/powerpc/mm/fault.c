@@ -11,6 +11,7 @@
  *  Modified for PPC64 by Dave Engebretsen (engebret@ibm.com)
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/signal.h>
 #include <linux/sched.h>

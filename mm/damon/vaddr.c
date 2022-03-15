@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "damon-va: " fmt
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/huge_mm.h>

@@ -13,6 +13,7 @@
  * DMA mapping callbacks...
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/dma-map-ops.h>
 #include <linux/pagewalk.h>
 

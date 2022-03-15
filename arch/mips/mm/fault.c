@@ -5,6 +5,7 @@
  *
  * Copyright (C) 1995 - 2000 by Ralf Baechle
  */
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/context_tracking.h>
 #include <linux/signal.h>

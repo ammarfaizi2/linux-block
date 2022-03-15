@@ -5,6 +5,7 @@
  * Amit Bhor, Kanika Nema: Codito Technologies 2004
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/errno.h>
 #include <linux/module.h>
