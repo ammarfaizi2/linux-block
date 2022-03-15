@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2014 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <asm/vdso/processor.h>
 #include <linux/io.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>
