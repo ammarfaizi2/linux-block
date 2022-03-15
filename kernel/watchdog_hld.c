@@ -172,6 +172,8 @@ static int hardlockup_detector_event_create(void)
 	wd_attr = &wd_hw_attr;
 	wd_attr->sample_period = hw_nmi_get_sample_period(watchdog_thresh);
 
+	pr_info("%s is executing.\n", __func__);
+
 	/* Try to register using hardware perf events */
 	evt = perf_event_create_kernel_counter(wd_attr, cpu, NULL,
 					       watchdog_overflow_callback, NULL);
@@ -189,6 +191,7 @@ static int hardlockup_detector_event_create(void)
  */
 void hardlockup_detector_perf_enable(void)
 {
+	pr_info("%s is executing.\n", __func__);
 	if (hardlockup_detector_event_create())
 		return;
 
@@ -286,6 +289,7 @@ int __init hardlockup_detector_perf_init(void)
 {
 	int ret = hardlockup_detector_event_create();
 
+	pr_info("%s is executing.\n", __func__);
 	if (ret) {
 		pr_info("Perf NMI watchdog permanently disabled\n");
 	} else {
