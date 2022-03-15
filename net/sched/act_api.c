@@ -5,6 +5,7 @@
  * Author:	Jamal Hadi Salim
  */
 
+#include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

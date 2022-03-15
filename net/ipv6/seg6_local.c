@@ -7,6 +7,7 @@
  *  eBPF support: Mathieu Xhonneux <m.xhonneux@gmail.com>
  */
 
+#include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/filter_api.h>

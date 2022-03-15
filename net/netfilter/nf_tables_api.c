@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
