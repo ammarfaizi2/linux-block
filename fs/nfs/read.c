@@ -8,6 +8,7 @@
  * modified for async RPC by okir@monad.swb.de
  */
 
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>

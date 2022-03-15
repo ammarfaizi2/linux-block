@@ -27,6 +27,7 @@
  *	    Jeremy Kolb  <jkolb@brandeis.edu>
  */
 
+#include <linux/highmem.h>
 #include <linux/dma-fence-api.h>
 #include <drm/drm_vma_manager_api_vm_lock.h>
 #include <linux/dma-mapping.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2019 Christoph Hellwig.
  */
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 
 #include "xfs.h"

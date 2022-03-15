@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  */
 #include "internal.h"
+#include <linux/highmem.h>
 #include <asm/unaligned.h>
 #include <trace/events/erofs.h>
 

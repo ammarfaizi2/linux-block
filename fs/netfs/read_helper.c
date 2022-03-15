@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api.h>
 #include <linux/cacheflush.h>

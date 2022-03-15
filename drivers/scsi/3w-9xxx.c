@@ -78,6 +78,7 @@
    2.26.02.014 - Force 60 second timeout default.
 */
 
+#include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>

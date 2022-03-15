@@ -3,6 +3,7 @@
  * Add configfs and memory store: Kyungchan Koh <kkc6196@fb.com> and
  * Shaohua Li <shli@fb.com>
  */
+#include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

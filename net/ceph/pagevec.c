@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/ceph/ceph_debug.h>

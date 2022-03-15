@@ -30,6 +30,7 @@
  *    Dave Airlie
  */
 
+#include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/io.h>
 #include <linux/list.h>

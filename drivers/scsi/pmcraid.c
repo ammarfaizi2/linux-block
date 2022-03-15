@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2008, 2009 PMC Sierra Inc
  */
+#include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device/class.h>

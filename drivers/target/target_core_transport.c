@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/net.h>
 #include <linux/delay.h>

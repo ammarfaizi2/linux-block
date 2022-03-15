@@ -4,6 +4,7 @@
  * Phillip Lougher <phillip@squashfs.org.uk>
  */
 
+#include <linux/highmem.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/pagemap.h>

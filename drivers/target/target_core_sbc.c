@@ -7,6 +7,7 @@
  * Nicholas A. Bellinger <nab@kernel.org>
  */
 
+#include <linux/highmem.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/ratelimit.h>

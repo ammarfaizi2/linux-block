@@ -4,6 +4,7 @@
  * Copyright (c) 2014, Intel Corporation.
  */
 
+#include <linux/highmem.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/blkdev.h>

@@ -7,6 +7,7 @@
  * Written by Ryusuke Konishi.
  */
 
+#include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <asm/cacheflush.h>
 #include <linux/buffer_head.h>

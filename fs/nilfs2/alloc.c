@@ -8,6 +8,7 @@
  * Two allocators were unified by Ryusuke Konishi and Amagai Yoshiji.
  */
 
+#include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/buffer_head.h>

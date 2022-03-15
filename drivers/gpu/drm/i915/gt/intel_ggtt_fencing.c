@@ -3,6 +3,7 @@
  * Copyright © 2008-2015 Intel Corporation
  */
 
+#include <linux/highmem.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 

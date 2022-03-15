@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * Copyright (C) 2016-2019 Christoph Hellwig.
  */
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api_mapping.h>
 #include <linux/fs_api.h>

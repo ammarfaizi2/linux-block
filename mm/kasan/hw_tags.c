@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "kasan: " fmt
 
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/capability.h>
 #include <linux/init.h>

@@ -11,6 +11,7 @@
 #include "debug.h"
 #include "extents.h"
 
+#include <linux/highmem.h>
 #include <linux/bvec_api.h>
 #include <linux/console.h>
 #include <linux/debugfs.h>

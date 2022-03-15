@@ -6,6 +6,7 @@
  *  Copyright (C) 1997-1999 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
  
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

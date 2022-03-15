@@ -11,6 +11,7 @@
 
 */
 
+#include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/drbd.h>

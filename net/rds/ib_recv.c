@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/highmem.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

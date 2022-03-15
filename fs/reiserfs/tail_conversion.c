@@ -4,6 +4,7 @@
  * details
  */
 
+#include <linux/highmem.h>
 #include <linux/time.h>
 #include <linux/pagemap.h>
 #include <linux/buffer_head.h>

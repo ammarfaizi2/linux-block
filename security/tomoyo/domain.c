@@ -7,6 +7,7 @@
 
 #include "common.h"
 
+#include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/binfmts.h>
 #include <linux/slab.h>

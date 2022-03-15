@@ -11,6 +11,7 @@
  *
  */
  
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>

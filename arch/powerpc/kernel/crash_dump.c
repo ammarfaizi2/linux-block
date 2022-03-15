@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/highmem.h>
 #include <linux/crash_dump.h>
 #include <linux/io.h>
 #include <linux/memblock.h>

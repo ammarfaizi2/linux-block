@@ -7,6 +7,7 @@
  * Written by Koji Sato.
  */
 
+#include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2012 Intel Corp. All rights reserved.
  */
 
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/bitmap.h>

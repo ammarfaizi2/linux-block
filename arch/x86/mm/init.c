@@ -1,3 +1,4 @@
+#include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <asm/processor_api.h>
 #include <linux/gfp.h>

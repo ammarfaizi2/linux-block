@@ -12,6 +12,7 @@
  *	    context.lock
  */
 
+#include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <asm/segment_api.h>
 #include <linux/errno.h>

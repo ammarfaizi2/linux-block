@@ -4,6 +4,7 @@
  *	      Information.
  */
 
+#include <linux/highmem.h>
 #include <linux/bvec_api.h>
 #include <linux/t10-pi.h>
 #include <linux/blk-integrity.h>

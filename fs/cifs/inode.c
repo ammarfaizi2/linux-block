@@ -5,6 +5,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>

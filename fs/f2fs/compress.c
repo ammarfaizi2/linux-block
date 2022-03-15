@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Chao Yu <chao@kernel.org>
  */
 
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

@@ -6,6 +6,7 @@
  * TODO: Merge attr_set_size/attr_data_get_block/attr_allocate_frame?
  */
 
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

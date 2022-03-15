@@ -11,6 +11,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/highmem.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/sched/signal.h>

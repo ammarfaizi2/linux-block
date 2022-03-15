@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_vma_manager.h>
 #include <linux/dma-fence-array.h>
