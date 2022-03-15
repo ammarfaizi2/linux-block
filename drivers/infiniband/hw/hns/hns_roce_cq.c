@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/hardirq.h>
 #include <rdma/ib_umem.h>
 #include <rdma/uverbs_ioctl.h>
 #include "hns_roce_device.h"

@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Hisilicon Limited.
  */
 
+#include <linux/hardirq.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

@@ -10,6 +10,7 @@
  *          Varun Sethi <varun.sethi@freescale.com>
  */
 
+#include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

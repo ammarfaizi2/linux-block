@@ -26,6 +26,7 @@
 
 #undef DEBUG
 
+#include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/export.h>
 #include <linux/threads.h>

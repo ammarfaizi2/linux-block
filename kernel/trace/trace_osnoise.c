@@ -16,6 +16,7 @@
  * Copyright (C) 2021 Daniel Bristot de Oliveira, Red Hat, Inc. <bristot@redhat.com>
  */
 
+#include <linux/hardirq.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

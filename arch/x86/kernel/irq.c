@@ -2,6 +2,7 @@
 /*
  * Common interrupt code for 32 and 64 bit
  */
+#include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/x86_irq.h>

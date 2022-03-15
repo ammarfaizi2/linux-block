@@ -7,6 +7,7 @@
  *
  * SuperH version:  Copyright (C) 1999  Niibe Yutaka
  */
+#include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/irq.h>

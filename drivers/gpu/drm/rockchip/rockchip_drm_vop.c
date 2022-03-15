@@ -4,6 +4,7 @@
  * Author:Mark Yao <mark.yao@rock-chips.com>
  */
 
+#include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/component.h>

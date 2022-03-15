@@ -21,6 +21,7 @@
  * Earlier work by Werner Almesberger, Paul `Rusty' Russell and Paul Mackerras.
  */
 
+#include <linux/hardirq.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

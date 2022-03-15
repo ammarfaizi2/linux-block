@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"UDC core: " fmt
 
+#include <linux/hardirq.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

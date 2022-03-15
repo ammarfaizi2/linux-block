@@ -84,6 +84,7 @@ static const char version[] = "NET3 PLIP version 2.4-parport gniibe@mri.co.jp\n"
     extra grounds are 18,19,20,21,22,23,24
 */
 
+#include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

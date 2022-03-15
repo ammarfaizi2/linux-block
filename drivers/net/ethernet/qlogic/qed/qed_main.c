@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/stddef.h>

@@ -17,6 +17,7 @@
  *  Send feedback to: megaraidlinux.pdl@broadcom.com
  */
 
+#include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>

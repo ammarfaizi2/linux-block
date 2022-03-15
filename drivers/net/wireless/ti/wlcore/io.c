@@ -7,6 +7,7 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
+#include <linux/hardirq.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/spi/spi.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2007 Greg Ungerer <gerg@snapgear.com>
  */
 
+#include <linux/hardirq.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/irqdomain.h>

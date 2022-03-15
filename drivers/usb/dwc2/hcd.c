@@ -39,6 +39,7 @@
  * This file contains the core HCD code, and implements the Linux hc_driver
  * API
  */
+#include <linux/hardirq.h>
 #include <linux/align.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2001 PPC64 Team, IBM Corp
  */
 
+#include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/export.h>
 #include <linux/string.h>

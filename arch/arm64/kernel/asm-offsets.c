@@ -8,6 +8,7 @@
  */
 #include "../../../kernel/sched/per_task_area_struct.h"
 
+#include <linux/hardirq.h>
 #include <linux/arm_sdei.h>
 #include <linux/sched.h>
 #include <linux/kexec.h>

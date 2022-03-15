@@ -5,6 +5,7 @@
 // Copyright (c) 2019 HiSilicon Technologies Co., Ltd.
 // Author: John Garry <john.garry@huawei.com>
 
+#include <linux/hardirq.h>
 #include <linux/align.h>
 #include <linux/bitops.h>
 #include <linux/completion.h>

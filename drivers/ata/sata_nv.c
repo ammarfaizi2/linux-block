@@ -20,6 +20,7 @@
  *  sent through the legacy interface.
  */
 
+#include <linux/hardirq.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

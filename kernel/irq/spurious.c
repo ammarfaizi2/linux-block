@@ -5,6 +5,7 @@
  * This file contains spurious interrupt handling.
  */
 
+#include <linux/hardirq.h>
 #include <linux/atomic_api.h>
 #include <linux/jiffies.h>
 #include <linux/irq.h>

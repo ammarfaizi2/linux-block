@@ -5,6 +5,7 @@
  * Copyright (C) 2007 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
+#include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

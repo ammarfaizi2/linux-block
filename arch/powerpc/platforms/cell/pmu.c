@@ -9,6 +9,7 @@
  *    Kevin Corry (kevcorry@us.ibm.com)
  */
 
+#include <linux/hardirq.h>
 #include <linux/interrupt.h>
 #include <linux/irqdomain.h>
 #include <linux/types.h>

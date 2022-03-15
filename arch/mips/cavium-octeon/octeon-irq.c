@@ -6,6 +6,7 @@
  * Copyright (C) 2004-2016 Cavium, Inc.
  */
 
+#include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/of_address.h>
 #include <linux/interrupt.h>
