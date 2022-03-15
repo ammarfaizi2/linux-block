@@ -5,6 +5,7 @@
 
 #ifdef __KERNEL__
 
+#include <linux/linkage.h>
 #include <asm/alternative.h>
 #include <asm/nops.h>
 #include <asm/processor-flags.h>
