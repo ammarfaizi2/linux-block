@@ -30,6 +30,7 @@
 #ifndef _I915_DRV_H_
 #define _I915_DRV_H_
 
+#include <linux/device_api.h>
 #include <uapi/drm/i915_drm.h>
 #include <uapi/drm/drm_fourcc.h>
 

@@ -10,6 +10,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/device_api.h>
 #include <linux/ethtool.h>
 #include <uapi/linux/rfkill.h>
 #include <linux/netdevice.h>

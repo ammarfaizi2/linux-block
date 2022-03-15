@@ -9,6 +9,7 @@
 #ifndef __LINUX_MFD_88PM80X_H
 #define __LINUX_MFD_88PM80X_H
 
+#include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
 #include <linux/regmap.h>

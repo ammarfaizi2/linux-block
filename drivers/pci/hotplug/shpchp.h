@@ -15,6 +15,7 @@
 #ifndef _SHPCHP_H
 #define _SHPCHP_H
 
+#include <linux/device_api.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/pci_hotplug.h>

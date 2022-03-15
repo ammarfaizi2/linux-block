@@ -14,6 +14,7 @@
 #ifndef _DRBD_INT_H
 #define _DRBD_INT_H
 
+#include <linux/device_api.h>
 #include <crypto/hash.h>
 #include <linux/compiler.h>
 #include <linux/types.h>

@@ -2,6 +2,7 @@
 #ifndef DRIVERS_PCI_H
 #define DRIVERS_PCI_H
 
+#include <linux/device_api.h>
 #include <linux/pci.h>
 
 /* Number of possible devfns: 0.0 to 1f.7 inclusive */
