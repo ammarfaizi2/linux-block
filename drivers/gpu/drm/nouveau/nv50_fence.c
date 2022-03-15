@@ -22,6 +22,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 
+#include <linux/slab.h>
 #include <nvif/os.h>
 #include <nvif/class.h>
 #include <nvif/cl0002.h>

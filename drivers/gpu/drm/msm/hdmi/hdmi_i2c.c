@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 
 #include "hdmi.h"

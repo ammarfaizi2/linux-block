@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/semaphore.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>

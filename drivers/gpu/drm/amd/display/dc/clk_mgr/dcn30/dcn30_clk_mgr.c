@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "dccg.h"
 #include "clk_mgr_internal.h"
 

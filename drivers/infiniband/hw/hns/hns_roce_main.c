@@ -30,6 +30,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

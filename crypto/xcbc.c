@@ -6,6 +6,7 @@
  * 	Kazunori Miyazawa <miyazawa@linux-ipv6.org>
  */
 
+#include <linux/slab.h>
 #include <crypto/internal/cipher.h>
 #include <crypto/internal/hash.h>
 #include <linux/err.h>

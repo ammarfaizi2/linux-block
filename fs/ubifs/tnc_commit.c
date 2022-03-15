@@ -10,6 +10,7 @@
 
 /* This file implements TNC functions for committing */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

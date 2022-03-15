@@ -7,6 +7,7 @@
  *	    Sandeep Singh <sandeep.singh@amd.com>
  *	    Basavaraj Natikar <Basavaraj.Natikar@amd.com>
  */
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/hid.h>
 #include <linux/wait.h>

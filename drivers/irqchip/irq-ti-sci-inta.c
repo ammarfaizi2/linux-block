@@ -6,6 +6,7 @@
  *	Lokesh Vutla <lokeshvutla@ti.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>

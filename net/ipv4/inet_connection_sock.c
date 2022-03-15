@@ -9,6 +9,7 @@
  * Authors:	See the TCP sources
  */
 
+#include <linux/slab.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

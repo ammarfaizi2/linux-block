@@ -22,6 +22,8 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #define nv4e_i2c_bus(p) container_of((p), struct nv4e_i2c_bus, base)
+#include <linux/slab.h>
+
 #include "bus.h"
 
 struct nv4e_i2c_bus {

@@ -14,6 +14,7 @@
  *    Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/list.h>
 #include <net/sctp/sctp.h>

@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>
 #include <linux/firmware.h>

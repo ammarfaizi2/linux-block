@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/slab.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

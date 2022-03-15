@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rculist.h>

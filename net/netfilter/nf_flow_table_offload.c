@@ -1,3 +1,4 @@
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_vlan_types.h>

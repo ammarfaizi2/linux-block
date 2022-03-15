@@ -8,6 +8,7 @@
  * Thiago Jung Bauermann <bauerman@linux.ibm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/module_signature.h>
 #include <keys/asymmetric-type.h>

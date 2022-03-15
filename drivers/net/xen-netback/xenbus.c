@@ -7,6 +7,7 @@
 */
 
 #include "common.h"
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/netdevice_api.h>
 #include <linux/kobject_api.h>

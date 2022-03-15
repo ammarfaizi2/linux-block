@@ -33,6 +33,7 @@
  *   https://github.com/rodrigorc/steamctrl
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

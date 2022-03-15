@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep.h>
 #include <linux/lockdep_api.h>

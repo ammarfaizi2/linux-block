@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2020 Intel Corporation */
 
+#include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>

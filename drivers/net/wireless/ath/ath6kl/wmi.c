@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/if_ether_api.h>
 #include <linux/capability.h>

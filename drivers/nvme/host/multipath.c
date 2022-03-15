@@ -3,6 +3,7 @@
  * Copyright (c) 2017-2018 Christoph Hellwig.
  */
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>

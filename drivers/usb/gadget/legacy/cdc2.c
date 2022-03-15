@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 

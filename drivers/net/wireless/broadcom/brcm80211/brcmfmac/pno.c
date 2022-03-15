@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016 Broadcom
  */
+#include <linux/slab.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>

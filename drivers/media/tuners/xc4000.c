@@ -9,6 +9,7 @@
  *  Copyright (c) 2010 Istvan Varga <istvan_v@mailbox.hu>
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

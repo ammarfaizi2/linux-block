@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 #ifndef __NVKM_PMU_MEMX_H__
 #define __NVKM_PMU_MEMX_H__
+#include <linux/slab.h>
+
 #include "priv.h"
 
 struct nvkm_memx {

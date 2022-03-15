@@ -24,6 +24,7 @@
 #include "bus.h"
 #include "pad.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <core/option.h>

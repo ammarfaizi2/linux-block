@@ -3,6 +3,7 @@
  * Intel I/OAT DMA Linux driver
  * Copyright(c) 2004 - 2015 Intel Corporation.
  */
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/gfp.h>

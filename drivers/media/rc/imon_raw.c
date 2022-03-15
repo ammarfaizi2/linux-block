@@ -2,6 +2,7 @@
 //
 // Copyright (C) 2018 Sean Young <sean@mess.org>
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/module.h>

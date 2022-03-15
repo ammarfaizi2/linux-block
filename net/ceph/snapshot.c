@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Inktank Storage, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/types.h>
 #include <linux/export.h>

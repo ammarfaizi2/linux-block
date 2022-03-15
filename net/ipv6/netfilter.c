@@ -4,6 +4,7 @@
  * Rusty Russell (C) 2000 -- This code is GPL.
  * Patrick McHardy (C) 2006-2012
  */
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

@@ -21,6 +21,7 @@
  *
  * Authors: Lyude Paul
  */
+#include <linux/slab.h>
 #include <core/device.h>
 
 #include "priv.h"

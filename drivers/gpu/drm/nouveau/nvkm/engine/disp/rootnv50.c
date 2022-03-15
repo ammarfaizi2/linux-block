@@ -27,6 +27,7 @@
 #include "head.h"
 #include "ior.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 
 #include <nvif/class.h>

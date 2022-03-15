@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 
 #include "radeon.h"

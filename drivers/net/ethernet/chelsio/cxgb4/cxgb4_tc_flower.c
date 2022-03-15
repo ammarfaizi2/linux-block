@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <net/tc_act/tc_mirred.h>

@@ -23,6 +23,7 @@
  */
 #include "ram.h"
 
+#include <linux/slab.h>
 #include <subdev/bios.h>
 #include <subdev/bios/init.h>
 #include <subdev/bios/rammap.h>

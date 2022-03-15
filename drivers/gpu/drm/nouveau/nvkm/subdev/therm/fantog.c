@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <subdev/gpio.h>
 #include <subdev/timer.h>
 

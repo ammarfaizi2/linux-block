@@ -5,6 +5,7 @@
  * HDMI support for G4x,ILK,SNB,IVB,VLV,CHV (HSW+ handled by the DDI code).
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 

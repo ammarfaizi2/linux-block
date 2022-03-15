@@ -8,6 +8,7 @@
 // Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/bits.h>
 #include <linux/device.h>

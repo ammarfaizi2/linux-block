@@ -4,6 +4,7 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <linux/slab.h>
 #include <linux/cpumask_api.h>
 
 #include "efct_driver.h"

@@ -11,6 +11,7 @@
  *	Max Cohan: Fixed invalid FSINFO offset when info_sector is 0
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pagemap_api_readahead.h>

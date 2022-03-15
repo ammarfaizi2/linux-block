@@ -6,6 +6,7 @@
  *
  *    Author(s): David Hildenbrand <dahi@linux.vnet.ibm.com>
  */
+#include <linux/slab.h>
 #include <linux/kvm_host.h>
 #include <linux/errno.h>
 #include "kvm-s390.h"

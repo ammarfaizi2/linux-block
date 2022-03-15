@@ -2,6 +2,7 @@
 /*
  * Copyright 2018-2020 Broadcom.
  */
+#include <linux/slab.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>

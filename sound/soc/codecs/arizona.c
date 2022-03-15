@@ -7,6 +7,7 @@
  * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/math64.h>
 #include <linux/i2c.h>

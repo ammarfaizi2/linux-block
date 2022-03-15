@@ -14,6 +14,7 @@
  * Miscelanous functionality used in the other GenWQE driver parts.
  */
 
+#include <linux/slab.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

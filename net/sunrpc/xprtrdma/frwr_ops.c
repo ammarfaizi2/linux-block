@@ -40,6 +40,7 @@
  * New MRs are created on demand.
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

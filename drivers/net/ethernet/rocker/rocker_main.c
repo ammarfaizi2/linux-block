@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Scott Feldman <sfeldma@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/notifier_api.h>

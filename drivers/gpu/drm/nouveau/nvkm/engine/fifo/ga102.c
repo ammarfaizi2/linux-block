@@ -21,6 +21,7 @@
  */
 #define ga102_fifo(p) container_of((p), struct ga102_fifo, base.engine)
 #define ga102_chan(p) container_of((p), struct ga102_chan, object)
+#include <linux/slab.h>
 #include <engine/fifo.h>
 #include "user.h"
 

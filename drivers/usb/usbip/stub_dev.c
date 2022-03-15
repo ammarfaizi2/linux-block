@@ -3,6 +3,7 @@
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  */
 
+#include <linux/slab.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/net.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2018 Western Digital Corporation
  */
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/device_api_lock.h>
 

@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "mod_vmid.h"
 
 struct core_vmid {

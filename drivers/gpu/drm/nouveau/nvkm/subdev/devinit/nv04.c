@@ -26,6 +26,7 @@
 #include "nv04.h"
 #include "fbmem.h"
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 #include <subdev/bios.h>
 #include <subdev/bios/init.h>

@@ -41,6 +41,8 @@
  * $Id: //depot/aic7xxx/aic7xxx/aic79xx_pci.c#92 $
  */
 
+#include <linux/slab.h>
+
 #include "aic79xx_osm.h"
 #include "aic79xx_inline.h"
 #include "aic79xx_pci.h"

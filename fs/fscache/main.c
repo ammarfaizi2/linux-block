@@ -6,6 +6,7 @@
  */
 
 #define FSCACHE_DEBUG_LEVEL CACHE
+#include <linux/slab.h>
 #include <linux/kobject_api.h>
 #include <linux/hash.h>
 #include <linux/cpumask_api.h>

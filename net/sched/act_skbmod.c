@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Jamal Hadi Salim <jhs@mojatatu.com>
 */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_vlan_api.h>

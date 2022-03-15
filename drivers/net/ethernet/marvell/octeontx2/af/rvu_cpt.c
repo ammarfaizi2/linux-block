@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2006-2009 Felix Fietkau <nbd@openwrt.org>
  */
 
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>

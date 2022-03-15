@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Ivan Vecera <cera@cera.cz>
  */
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

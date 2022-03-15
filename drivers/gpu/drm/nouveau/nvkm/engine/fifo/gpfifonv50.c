@@ -23,6 +23,7 @@
  */
 #include "channv50.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 #include <core/ramht.h>
 

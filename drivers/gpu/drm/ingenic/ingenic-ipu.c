@@ -8,6 +8,7 @@
 #include "ingenic-drm.h"
 #include "ingenic-ipu.h"
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/component.h>

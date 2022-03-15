@@ -25,6 +25,7 @@
 #include "priv.h"
 #include "ctrl.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <core/client.h>

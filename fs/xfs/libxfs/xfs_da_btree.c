@@ -4,6 +4,7 @@
  * Copyright (c) 2013 Red Hat, Inc.
  * All Rights Reserved.
  */
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 
 #include "xfs.h"

@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

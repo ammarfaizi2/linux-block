@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 
 #include "mlx5_ib.h"

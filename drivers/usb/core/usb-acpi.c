@@ -4,6 +4,7 @@
  *
  * Copyright 2012 Red Hat <mjg@redhat.com>
  */
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/usb.h>
 #include <linux/device.h>

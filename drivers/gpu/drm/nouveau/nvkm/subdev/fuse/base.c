@@ -21,6 +21,8 @@
  *
  * Authors: Martin Peres
  */
+#include <linux/slab.h>
+
 #include "priv.h"
 
 u32

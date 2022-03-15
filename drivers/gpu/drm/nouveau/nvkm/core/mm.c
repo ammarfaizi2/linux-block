@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/slab.h>
 #include <core/mm.h>
 
 #define node(root, dir) ((root)->nl_entry.dir == &mm->nodes) ? NULL :          \

@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * All Rights Reserved.
  */
+#include <linux/slab.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

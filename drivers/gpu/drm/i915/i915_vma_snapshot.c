@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/kref_api.h>
 
 #include "i915_vma_snapshot.h"

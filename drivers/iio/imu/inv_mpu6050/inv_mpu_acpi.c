@@ -6,6 +6,7 @@
 
 #ifdef CONFIG_ACPI
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/i2c.h>
 #include <linux/dmi.h>

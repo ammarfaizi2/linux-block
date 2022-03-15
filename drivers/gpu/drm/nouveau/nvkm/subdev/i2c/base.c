@@ -26,6 +26,7 @@
 #include "bus.h"
 #include "pad.h"
 
+#include <linux/slab.h>
 #include <core/notify.h>
 #include <core/option.h>
 #include <subdev/bios.h>

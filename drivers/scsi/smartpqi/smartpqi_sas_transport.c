@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/kernel.h>
 #include <linux/bsg-lib.h>

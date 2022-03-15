@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019, Vladimir Oltean <olteanv@gmail.com>
  */
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Cavium, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>

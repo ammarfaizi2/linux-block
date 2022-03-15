@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+#include <linux/slab.h>
+
 #include "dpaa2-eth.h"
 /* Copyright 2020 NXP
  */

@@ -6,6 +6,7 @@
  * Copyright (c) 2007 Greg Kroah-Hartman <gregkh@suse.de>
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/moduleparam.h>

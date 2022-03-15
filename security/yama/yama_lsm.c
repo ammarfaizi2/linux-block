@@ -8,6 +8,7 @@
  * Copyright (C) 2011 The Chromium OS Authors.
  */
 
+#include <linux/slab.h>
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/rculist.h>

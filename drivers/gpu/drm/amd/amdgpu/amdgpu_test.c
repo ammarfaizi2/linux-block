@@ -23,6 +23,7 @@
  * Authors: Michel Dänzer
  */
 
+#include <linux/slab.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <drm/amdgpu_drm.h>

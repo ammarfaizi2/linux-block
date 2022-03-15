@@ -10,6 +10,7 @@
 #include "xen.h"
 #include "hyperv.h"
 
+#include <linux/slab.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mutex_api.h>
 #include <linux/kthread.h>

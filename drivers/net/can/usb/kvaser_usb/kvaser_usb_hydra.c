@@ -13,6 +13,7 @@
  *  - Hardware timestamps are not set for CAN Tx frames.
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

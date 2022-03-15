@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Sascha Hauer, Pengutronix
  */
 
+#include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/clk.h>
 #include <linux/component.h>

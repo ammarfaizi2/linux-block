@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/sched/mm.h>
 #include <linux/sched.h>

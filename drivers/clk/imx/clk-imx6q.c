@@ -4,6 +4,7 @@
  * Copyright 2011 Linaro Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/init.h>

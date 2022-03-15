@@ -7,6 +7,7 @@
  *         Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

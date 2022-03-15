@@ -15,6 +15,7 @@
 
 #define _HAL_INIT_C_
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

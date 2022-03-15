@@ -7,6 +7,7 @@
 
 #include "habanalabs.h"
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/pci.h>
 

@@ -3,6 +3,7 @@
  * Copyright (C) 2020 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/host1x.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

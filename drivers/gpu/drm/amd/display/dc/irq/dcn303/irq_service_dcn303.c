@@ -5,6 +5,8 @@
  * Authors: AMD
  */
 
+#include <linux/slab.h>
+
 #include "dm_services.h"
 #include "irq_service_dcn303.h"
 #include "../dce110/irq_service_dce110.h"

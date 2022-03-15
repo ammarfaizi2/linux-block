@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 
 #include "intel_display_types.h"

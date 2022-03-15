@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

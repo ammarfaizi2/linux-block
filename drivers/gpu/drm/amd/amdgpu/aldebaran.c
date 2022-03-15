@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 
 #include "aldebaran.h"

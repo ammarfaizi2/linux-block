@@ -12,6 +12,7 @@
  *  bfad_im.c Linux driver IM module.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

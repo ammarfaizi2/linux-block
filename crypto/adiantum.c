@@ -30,6 +30,7 @@
  * functions could be added here.
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/minmax.h>
 #include <crypto/b128ops.h>

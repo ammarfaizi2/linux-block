@@ -6,6 +6,7 @@
  *      Suman Anna <s-anna@ti.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/atomic_api.h>
 #include <linux/platform_device.h>

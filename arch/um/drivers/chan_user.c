@@ -3,6 +3,7 @@
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{linux.intel,addtoit}.com)
  */
 
+#include <linux/slab.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>

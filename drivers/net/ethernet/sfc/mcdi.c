@@ -4,6 +4,7 @@
  * Copyright 2008-2013 Solarflare Communications Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

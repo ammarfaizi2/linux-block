@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob.clark@linaro.org>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <drm/drm_vblank.h>
 

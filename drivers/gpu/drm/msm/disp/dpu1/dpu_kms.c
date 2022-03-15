@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

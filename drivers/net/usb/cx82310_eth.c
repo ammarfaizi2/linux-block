@@ -5,6 +5,7 @@
  * some parts inspired by the cxacru driver
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/list.h>

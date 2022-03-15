@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/slab.h>
 #include <core/client.h>
 #include <core/device.h>
 #include <core/notify.h>

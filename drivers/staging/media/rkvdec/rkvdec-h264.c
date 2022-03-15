@@ -9,6 +9,7 @@
  *	Jeffy Chen <jeffy.chen@rock-chips.com>
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

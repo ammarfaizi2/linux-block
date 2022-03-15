@@ -4,6 +4,7 @@
  */
 #ifndef __PMSR_H
 #define __PMSR_H
+#include <linux/slab.h>
 #include <linux/lockdep_api.h>
 #include <linux/etherdevice_api.h>
 #include <net/cfg80211.h>

@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/slab.h>
 #include <linux/math.h>
 #include <crypto/hash.h>
 #include <linux/kernel.h>

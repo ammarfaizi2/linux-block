@@ -7,6 +7,8 @@
  * Handling of records in attributes tree
  */
 
+#include <linux/slab.h>
+
 #include "hfsplus_fs.h"
 #include "hfsplus_raw.h"
 

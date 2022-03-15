@@ -15,6 +15,7 @@
  * Copyright (C) 2011-2012 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>

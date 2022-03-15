@@ -8,6 +8,7 @@
  * Tom Haynes <loghyr@primarydata.com>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>

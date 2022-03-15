@@ -38,6 +38,7 @@
  * DAMAGE.
  */
 
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

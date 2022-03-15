@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Microchip Technology Inc. and its subsidiaries.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/device.h>

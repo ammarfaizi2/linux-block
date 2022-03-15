@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_fourcc.h>

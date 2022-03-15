@@ -3,6 +3,7 @@
  * Copyright Gavin Shan, IBM Corporation 2016.
  */
 
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

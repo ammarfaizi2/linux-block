@@ -54,6 +54,7 @@
 #include "ivtv-routing.h"
 #include "ivtv-controls.h"
 #include "ivtv-gpio.h"
+#include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

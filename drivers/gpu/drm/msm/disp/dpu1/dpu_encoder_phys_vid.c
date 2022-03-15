@@ -3,6 +3,7 @@
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/jiffies.h>

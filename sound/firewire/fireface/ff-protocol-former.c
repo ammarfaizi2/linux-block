@@ -5,6 +5,7 @@
 //
 // Licensed under the terms of the GNU General Public License, version 2.
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 
 #include "ff.h"

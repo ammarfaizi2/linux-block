@@ -64,6 +64,7 @@
  *
  * Copyright (C) 2018 Josef Bacik
  */
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/percpu.h>
 #include <linux/math64.h>

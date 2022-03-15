@@ -3,6 +3,7 @@
  * Lynx PCS MDIO helpers
  */
 
+#include <linux/slab.h>
 #include <linux/mdio.h>
 #include <linux/phylink.h>
 #include <linux/pcs-lynx.h>

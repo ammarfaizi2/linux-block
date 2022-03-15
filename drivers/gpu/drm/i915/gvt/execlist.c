@@ -32,6 +32,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 
 #include "i915_drv.h"

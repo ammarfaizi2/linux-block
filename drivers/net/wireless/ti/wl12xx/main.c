@@ -5,6 +5,7 @@
  * Copyright (C) 2008-2010 Nokia Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

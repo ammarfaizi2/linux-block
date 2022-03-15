@@ -4,6 +4,7 @@
  * Author: Chris Zhong <zyw@rock-chips.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

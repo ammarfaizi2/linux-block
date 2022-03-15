@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/nls.h>
 #include <linux/workqueue.h>
 #include <linux/hyperv.h>

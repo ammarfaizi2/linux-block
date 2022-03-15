@@ -42,6 +42,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "secvar: "fmt
 
+#include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/platform_device.h>
 #include <linux/of_platform.h>

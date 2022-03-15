@@ -6,6 +6,7 @@
  * Copyright (C) 2002  Christoph Hellwig
  */
 
+#include <linux/slab.h>
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/ptrace_types.h>

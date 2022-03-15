@@ -36,6 +36,7 @@
 
  */
 
+#include <linux/slab.h>
 #include <linux/math64.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>

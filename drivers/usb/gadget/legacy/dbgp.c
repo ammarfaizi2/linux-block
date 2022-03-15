@@ -8,6 +8,7 @@
  */
 
 /* verbose messages */
+#include <linux/slab.h>
 #include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

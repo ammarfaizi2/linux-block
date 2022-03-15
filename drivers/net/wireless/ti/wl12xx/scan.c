@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Texas Instruments. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/ieee80211.h>
 #include "scan.h"

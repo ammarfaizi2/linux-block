@@ -10,6 +10,8 @@
 
 /* This file implements reading and writing the master node */
 
+#include <linux/slab.h>
+
 #include "ubifs.h"
 
 /**

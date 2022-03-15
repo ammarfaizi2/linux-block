@@ -7,6 +7,7 @@
  * Core driver code with main interface to the I3C subsystem.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

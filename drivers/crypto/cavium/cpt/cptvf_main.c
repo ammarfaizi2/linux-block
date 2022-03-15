@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Cavium, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

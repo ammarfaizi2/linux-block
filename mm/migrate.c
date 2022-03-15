@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/slab.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>

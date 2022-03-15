@@ -5,6 +5,8 @@
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
 
+#include <linux/slab.h>
+
 #include "./bebob.h"
 
 int avc_audio_set_selector(struct fw_unit *unit, unsigned int subunit_id,

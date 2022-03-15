@@ -4,6 +4,7 @@
  *
  * Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  */
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

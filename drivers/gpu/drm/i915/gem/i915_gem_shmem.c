@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pagemap.h>
 #include <linux/mm_page_address.h>

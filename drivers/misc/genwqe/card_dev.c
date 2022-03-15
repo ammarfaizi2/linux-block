@@ -15,6 +15,7 @@
  * user-space applications to communicate with the card.
  */
 
+#include <linux/slab.h>
 #include <linux/pid.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>

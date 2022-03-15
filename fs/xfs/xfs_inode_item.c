@@ -19,6 +19,7 @@
 #include "xfs_log.h"
 #include "xfs_error.h"
 
+#include <linux/slab.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

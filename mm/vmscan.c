@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

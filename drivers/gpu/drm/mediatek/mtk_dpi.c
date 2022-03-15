@@ -4,6 +4,7 @@
  * Author: Jie Qiu <jie.qiu@mediatek.com>
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

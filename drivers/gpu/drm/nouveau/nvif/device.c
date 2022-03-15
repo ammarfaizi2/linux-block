@@ -22,6 +22,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 
+#include <linux/slab.h>
 #include <nvif/device.h>
 
 u64

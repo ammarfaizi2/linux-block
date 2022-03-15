@@ -3,6 +3,8 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/slab.h>
+
 #include "iosm_ipc_imem.h"
 #include "iosm_ipc_task_queue.h"
 

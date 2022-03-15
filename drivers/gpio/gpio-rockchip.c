@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Rockchip Electronics Co. Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irq_api_io.h>

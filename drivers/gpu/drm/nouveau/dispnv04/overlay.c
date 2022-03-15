@@ -23,6 +23,7 @@
  * written by Arthur Huillet.
  */
 
+#include <linux/slab.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_fourcc.h>
 

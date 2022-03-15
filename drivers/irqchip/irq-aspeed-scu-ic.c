@@ -6,6 +6,7 @@
  * Eddie James <eajames@linux.ibm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>

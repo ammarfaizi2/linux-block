@@ -8,6 +8,7 @@
  * Contact: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

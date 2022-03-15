@@ -7,6 +7,7 @@
  * Copyright (c) 2001 Patrick Mochel <mochel@osdl.org>
  */
 
+#include <linux/slab.h>
 #include <linux/perf_event_api.h>
 #include <linux/notifier_api.h>
 #include <linux/cpumask_api.h>

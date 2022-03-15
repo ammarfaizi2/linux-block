@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Red Hat, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>

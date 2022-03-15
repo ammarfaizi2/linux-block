@@ -8,6 +8,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

@@ -6,6 +6,7 @@
  */
 
 #include "dm-verity-fec.h"
+#include <linux/slab.h>
 #include <linux/cpumask_api.h>
 #include <linux/math64.h>
 

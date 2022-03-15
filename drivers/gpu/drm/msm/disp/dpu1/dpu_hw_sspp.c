@@ -8,6 +8,7 @@
 #include "dpu_hw_sspp.h"
 #include "dpu_kms.h"
 
+#include <linux/slab.h>
 #include <linux/debugfs.h>
 #include <drm/drm_file.h>
 

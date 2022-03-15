@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/refcount_api.h>
 #include <linux/lockdep_api.h>

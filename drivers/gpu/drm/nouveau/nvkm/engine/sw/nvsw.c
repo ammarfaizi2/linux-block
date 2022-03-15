@@ -24,6 +24,7 @@
 #include "nvsw.h"
 #include "chan.h"
 
+#include <linux/slab.h>
 #include <nvif/if0004.h>
 
 static int

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021 Mellanox Technologies. */
 
+#include <linux/slab.h>
+
 #include "fs_ft_pool.h"
 
 /* Firmware currently has 4 pool of 4 sizes that it supports (FT_POOLS),

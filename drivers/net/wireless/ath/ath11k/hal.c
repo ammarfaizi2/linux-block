@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
+#include <linux/slab.h>
 #include <linux/prefetch.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

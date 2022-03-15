@@ -22,6 +22,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/slab.h>
 #include <linux/pci.h>
 #include <linux/seq_file.h>
 

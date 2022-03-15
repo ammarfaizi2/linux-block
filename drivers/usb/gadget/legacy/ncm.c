@@ -15,6 +15,7 @@
 /* #define DEBUG */
 /* #define VERBOSE_DEBUG */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/usb/composite.h>

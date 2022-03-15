@@ -25,6 +25,7 @@
  *          Alex Deucher
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/pci.h>

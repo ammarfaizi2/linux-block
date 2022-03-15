@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Jernej Skrabec <jernej.skrabec@siol.net>
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>

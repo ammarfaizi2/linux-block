@@ -37,6 +37,7 @@
  * the PCI back-end driver in Hyper-V.
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irq_api_eff_affinity.h>

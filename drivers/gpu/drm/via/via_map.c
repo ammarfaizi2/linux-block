@@ -22,6 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/idr_api.h>
 #include <linux/pci.h>
 

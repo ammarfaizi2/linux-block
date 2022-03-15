@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

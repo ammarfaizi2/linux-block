@@ -7,6 +7,7 @@
  * Handler for storing security labels as extended attributes.
  */
 
+#include <linux/slab.h>
 #include <linux/security.h>
 #include <linux/nls.h>
 

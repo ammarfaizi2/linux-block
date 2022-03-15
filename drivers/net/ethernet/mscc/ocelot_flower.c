@@ -3,6 +3,7 @@
  * Copyright (c) 2019 Microsemi Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/math64.h>
 #include <linux/etherdevice_api.h>

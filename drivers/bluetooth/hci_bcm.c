@@ -6,6 +6,7 @@
  *  Copyright (C) 2015  Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/resource_ext_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>

@@ -14,6 +14,7 @@
  *   FIXME: Need to port to DVB v5.2 API
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/kernel.h>

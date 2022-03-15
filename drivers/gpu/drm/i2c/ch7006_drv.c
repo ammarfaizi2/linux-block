@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 
 #include "ch7006_priv.h"

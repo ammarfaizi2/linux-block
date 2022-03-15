@@ -9,6 +9,7 @@
  *		 Heiko Carstens <heiko.carstens@de.ibm.com>,
  */
 
+#include <linux/slab.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel_stat.h>
 #include <linux/init.h>

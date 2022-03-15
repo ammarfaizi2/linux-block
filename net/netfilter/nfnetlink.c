@@ -14,6 +14,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/slab.h>
 #include <linux/netlink_api_skb_clone.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

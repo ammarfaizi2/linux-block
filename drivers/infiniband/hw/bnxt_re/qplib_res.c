@@ -38,6 +38,7 @@
 
 #define dev_fmt(fmt) "QPLIB: " fmt
 
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/spinlock.h>

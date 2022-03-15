@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/bitmap.h>

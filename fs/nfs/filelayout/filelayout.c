@@ -29,6 +29,7 @@
  *  such damages.
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/math64.h>
 #include <linux/gfp_api.h>

@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob@ti.com>
  */
 
+#include <linux/slab.h>
 #include <linux/list.h>
 
 #include <drm/drm_bridge.h>

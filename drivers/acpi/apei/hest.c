@@ -15,6 +15,7 @@
  *   Author: Huang Ying <ying.huang@intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

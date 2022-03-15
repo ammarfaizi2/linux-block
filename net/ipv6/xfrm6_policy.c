@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/err.h>

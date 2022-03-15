@@ -7,6 +7,7 @@
  * Copyright (C) 2004 Intel Corp.
  */
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>

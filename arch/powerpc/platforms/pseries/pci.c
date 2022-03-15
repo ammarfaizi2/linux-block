@@ -6,6 +6,7 @@
  * pSeries specific routines for PCI.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/ioport.h>

@@ -4,6 +4,7 @@
  * not configured or static.
  */
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>

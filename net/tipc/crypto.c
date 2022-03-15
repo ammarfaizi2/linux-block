@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

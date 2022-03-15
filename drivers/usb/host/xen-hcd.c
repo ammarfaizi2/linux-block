@@ -8,6 +8,7 @@
  * Author: Noboru Iwamatsu <n_iwamatsu@jp.fujitsu.com>
  */
 
+#include <linux/slab.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>

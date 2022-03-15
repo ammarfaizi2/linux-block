@@ -8,6 +8,7 @@
  *   Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

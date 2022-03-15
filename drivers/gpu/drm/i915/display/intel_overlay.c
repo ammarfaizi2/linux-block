@@ -26,6 +26,7 @@
  * Derived from Xorg ddx, xf86-video-intel, src/i830_video.c
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

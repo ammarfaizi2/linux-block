@@ -28,6 +28,7 @@
 #include "ior.h"
 #include "outp.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 #include <core/notify.h>
 #include <core/oproxy.h>

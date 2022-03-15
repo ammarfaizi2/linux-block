@@ -9,6 +9,7 @@
 #include "dm-cache-policy.h"
 #include "dm.h"
 
+#include <linux/slab.h>
 #include <linux/hash.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

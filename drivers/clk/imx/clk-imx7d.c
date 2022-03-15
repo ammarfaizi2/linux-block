@@ -3,6 +3,7 @@
  * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <dt-bindings/clock/imx7d-clock.h>
 #include <linux/bits.h>

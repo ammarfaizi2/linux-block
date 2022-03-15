@@ -27,6 +27,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pid.h>
 #include <linux/pgtable_api.h>

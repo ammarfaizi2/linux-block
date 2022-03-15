@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Intel Corporation
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/percpu.h>

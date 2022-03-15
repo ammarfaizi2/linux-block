@@ -7,6 +7,7 @@
 
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>

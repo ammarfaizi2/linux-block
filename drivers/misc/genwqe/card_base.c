@@ -16,6 +16,7 @@
  * controlled from here.
  */
 
+#include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright (c) 2021, Microsoft Corporation. */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api_lock.h>

@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/slab.h>
 #include <drv_types.h>
 #include <rtw_debug.h>
 #include <asm/unaligned.h>

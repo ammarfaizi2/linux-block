@@ -14,6 +14,7 @@
  *
  ******************************************************************************/
 
+#include <linux/slab.h>
 #include <linux/rndis.h>
 #include "osdep_service.h"
 #include "drv_types.h"

@@ -5,6 +5,7 @@
  *  Copyright (C) 2012 Lantiq GmbH
  */
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/ioport.h>

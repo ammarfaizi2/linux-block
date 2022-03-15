@@ -3,6 +3,7 @@
  * Copyright(c) 2016 - 2018 Intel Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/dma-mapping.h>

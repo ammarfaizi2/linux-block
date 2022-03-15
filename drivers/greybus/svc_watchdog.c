@@ -5,6 +5,7 @@
  * Copyright 2016 Google Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/notifier_api.h>
 #include <linux/delay.h>
 #include <linux/suspend.h>

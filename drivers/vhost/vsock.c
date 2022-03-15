@@ -6,6 +6,7 @@
  * Author: Asias He <asias@redhat.com>
  *         Stefan Hajnoczi <stefanha@redhat.com>
  */
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/hashtable_api.h>

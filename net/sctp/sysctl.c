@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <net/sctp/structs.h>

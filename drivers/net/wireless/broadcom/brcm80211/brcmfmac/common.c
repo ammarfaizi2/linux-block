@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Broadcom Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/netdevice.h>

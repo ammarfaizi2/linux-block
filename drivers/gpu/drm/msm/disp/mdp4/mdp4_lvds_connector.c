@@ -5,6 +5,8 @@
  * Author: Vinay Simha <vinaysimha@inforcecomputing.com>
  */
 
+#include <linux/slab.h>
+
 #include "mdp4_kms.h"
 
 struct mdp4_lvds_connector {

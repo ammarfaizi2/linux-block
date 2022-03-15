@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018-2019 The Linux Foundation. All rights reserved. */
 
+#include <linux/slab.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/kref_api.h>
 #include <linux/ioport.h>

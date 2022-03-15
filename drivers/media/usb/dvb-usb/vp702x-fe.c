@@ -14,6 +14,7 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 

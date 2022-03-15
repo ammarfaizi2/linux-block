@@ -10,6 +10,7 @@
  * Split from fs/nfs/super.c by David Howells <dhowells@redhat.com>
  */
 
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/compat.h>
 #include <linux/module.h>

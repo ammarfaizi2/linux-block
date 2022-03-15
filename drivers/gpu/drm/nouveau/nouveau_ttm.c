@@ -23,6 +23,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/limits.h>

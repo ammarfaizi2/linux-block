@@ -5,6 +5,8 @@
  * Copyright (c) 2018 Takashi Sakamoto
  */
 
+#include <linux/slab.h>
+
 #include "dice.h"
 
 /* For TCD2210/2220, TCAT defines extension of application protocol. */

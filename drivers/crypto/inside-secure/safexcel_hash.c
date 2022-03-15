@@ -5,6 +5,7 @@
  * Antoine Tenart <antoine.tenart@free-electrons.com>
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/crc32.h>
 #include <crypto/aes.h>

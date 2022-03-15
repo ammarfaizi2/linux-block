@@ -22,6 +22,7 @@
 #define nvkm_mem(p) container_of((p), struct nvkm_mem, memory)
 #include "mem.h"
 
+#include <linux/slab.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

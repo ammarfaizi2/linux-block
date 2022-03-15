@@ -22,6 +22,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 
+#include <linux/slab.h>
 #include <linux/atomic_api.h>
 #include <nvif/client.h>
 #include <nvif/driver.h>

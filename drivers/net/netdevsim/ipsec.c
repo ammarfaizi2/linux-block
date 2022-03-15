@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2018 Oracle and/or its affiliates. All rights reserved. */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/fs_api.h>
 #include <crypto/aead.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2019, Google LLC.
  * Author: Brendan Higgins <brendanhiggins@google.com>
  */
+#include <linux/slab.h>
 #include <kunit/test.h>
 
 #include "try-catch-impl.h"

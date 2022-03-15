@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_crtc_helper.h>

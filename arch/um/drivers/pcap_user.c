@@ -3,6 +3,7 @@
  * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/slab.h>
 #include <errno.h>
 #include <pcap.h>
 #include <string.h>

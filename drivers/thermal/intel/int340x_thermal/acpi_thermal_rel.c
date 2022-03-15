@@ -10,6 +10,7 @@
  * 2. Provide parsing result to kernel drivers
  *
  */
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/export.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

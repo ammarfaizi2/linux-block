@@ -2,6 +2,7 @@
 /* Copyright(c) 1999 - 2006 Intel Corporation. */
 
 #include "e1000.h"
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/pm_wakeup.h>

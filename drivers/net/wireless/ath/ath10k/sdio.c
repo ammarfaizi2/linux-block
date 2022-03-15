@@ -5,6 +5,7 @@
  * Copyright (c) 2016-2017 Erik Stromdahl <erik.stromdahl@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>

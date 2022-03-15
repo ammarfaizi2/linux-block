@@ -15,6 +15,7 @@
  * in the SOFTWARE may be the trademarks of their respective owners.
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api.h>

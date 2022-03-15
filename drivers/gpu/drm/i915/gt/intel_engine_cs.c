@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/seqlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

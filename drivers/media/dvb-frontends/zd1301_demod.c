@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>

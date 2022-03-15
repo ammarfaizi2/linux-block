@@ -4,6 +4,7 @@
 
 */
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/mm_api_kvmalloc.h>

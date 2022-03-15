@@ -27,6 +27,7 @@
  * explicitly allocate a synchronous algorithm.
  */
 
+#include <linux/slab.h>
 #include <linux/minmax.h>
 #include <linux/irqflags.h>
 #include <crypto/cryptd.h>

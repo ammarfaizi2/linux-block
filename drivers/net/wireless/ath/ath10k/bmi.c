@@ -4,6 +4,8 @@
  * Copyright (c) 2011-2014,2016-2017 Qualcomm Atheros, Inc.
  */
 
+#include <linux/slab.h>
+
 #include "bmi.h"
 #include "hif.h"
 #include "debug.h"

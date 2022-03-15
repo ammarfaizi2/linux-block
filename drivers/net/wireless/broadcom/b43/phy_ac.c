@@ -6,6 +6,8 @@
  * Copyright (c) 2015 Rafał Miłecki <zajec5@gmail.com>
  */
 
+#include <linux/slab.h>
+
 #include "b43.h"
 #include "phy_ac.h"
 

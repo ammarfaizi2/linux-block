@@ -2,6 +2,7 @@
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

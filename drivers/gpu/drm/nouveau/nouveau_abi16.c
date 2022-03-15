@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <nvif/client.h>
 #include <nvif/driver.h>

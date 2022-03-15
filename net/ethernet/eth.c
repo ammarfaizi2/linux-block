@@ -33,6 +33,7 @@
  *	Christer Weinigel	: Better rebuild header message.
  *             Andrew Morton    : 26Feb01: kill ether_setup() - use netdev_boot_setup().
  */
+#include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

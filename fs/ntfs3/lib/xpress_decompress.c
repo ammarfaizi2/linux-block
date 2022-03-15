@@ -7,6 +7,8 @@
  * Copyright (C) 2015 Eric Biggers
  */
 
+#include <linux/slab.h>
+
 #include "decompress_common.h"
 #include "lib.h"
 

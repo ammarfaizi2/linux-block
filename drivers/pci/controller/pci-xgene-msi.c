@@ -6,6 +6,7 @@
  * Author: Tanmay Inamdar <tinamdar@apm.com>
  *	   Duc Dang <dhdang@apm.com>
  */
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

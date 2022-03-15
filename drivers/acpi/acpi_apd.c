@@ -7,6 +7,7 @@
  *	Wu, Jeff <Jeff.Wu@amd.com>
  */
 
+#include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

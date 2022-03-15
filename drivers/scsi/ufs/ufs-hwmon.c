@@ -4,6 +4,7 @@
  * Copyright (c) 2021, Western Digital Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/hwmon.h>
 #include <linux/units.h>
 

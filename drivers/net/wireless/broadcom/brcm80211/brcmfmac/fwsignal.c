@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>

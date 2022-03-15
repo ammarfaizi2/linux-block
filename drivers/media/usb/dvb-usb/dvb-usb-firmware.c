@@ -10,6 +10,7 @@
  */
 #include "dvb-usb-common.h"
 
+#include <linux/slab.h>
 #include <linux/usb.h>
 
 struct usb_cypress_controller {

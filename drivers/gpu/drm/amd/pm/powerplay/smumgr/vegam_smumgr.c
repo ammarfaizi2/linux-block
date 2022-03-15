@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/slab.h>
+
 #include "pp_debug.h"
 #include "smumgr.h"
 #include "smu_ucode_xfer_vi.h"

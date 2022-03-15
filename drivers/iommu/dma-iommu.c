@@ -8,6 +8,7 @@
  * Copyright (C) 2000-2004 Russell King
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/resource_ext_api.h>
 #include <linux/pgtable_api.h>

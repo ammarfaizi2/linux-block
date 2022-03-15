@@ -22,6 +22,7 @@
  */
 
 
+#include <linux/slab.h>
 #include <linux/io_extra.h>
 
 #include "pp_debug.h"

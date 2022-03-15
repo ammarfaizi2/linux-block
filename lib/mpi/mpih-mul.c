@@ -14,6 +14,7 @@
  *	 however I decided to publish this code under the plain GPL.
  */
 
+#include <linux/slab.h>
 #include <linux/string.h>
 #include "mpi-internal.h"
 #include "longlong.h"

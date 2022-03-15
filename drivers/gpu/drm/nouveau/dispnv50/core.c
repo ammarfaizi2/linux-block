@@ -21,6 +21,7 @@
  */
 #include "core.h"
 
+#include <linux/slab.h>
 #include <nvif/class.h>
 
 void

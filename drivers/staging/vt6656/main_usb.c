@@ -19,6 +19,7 @@
  */
 #undef __NO_VERSION__
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/crc32.h>

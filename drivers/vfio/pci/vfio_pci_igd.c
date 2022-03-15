@@ -10,6 +10,7 @@
  * address is also virtualized to prevent user modification.
  */
 
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/uaccess.h>

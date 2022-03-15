@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/percpu.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/notifier_types.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Texas Instruments
  */
 
+#include <linux/slab.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>

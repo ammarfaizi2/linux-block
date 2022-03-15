@@ -4,6 +4,7 @@
  * Copyright 2017 Daniel Axtens, IBM Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/crc-t10dif.h>
 #include <linux/crc32.h>

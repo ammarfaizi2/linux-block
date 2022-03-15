@@ -7,6 +7,7 @@
 
 //#define DEBUG
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/types.h>

@@ -25,6 +25,7 @@
 #include "gt215.h"
 #include "pll.h"
 
+#include <linux/slab.h>
 #include <subdev/bios.h>
 #include <subdev/bios/pll.h>
 #include <subdev/timer.h>

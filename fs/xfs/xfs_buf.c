@@ -4,6 +4,7 @@
  * All Rights Reserved.
  */
 #include "xfs.h"
+#include <linux/slab.h>
 #include <linux/sched/mm.h>
 #include <linux/sched.h>
 #include <linux/percpu_counter_api.h>

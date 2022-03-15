@@ -7,6 +7,7 @@
  * All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

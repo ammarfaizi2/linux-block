@@ -11,6 +11,7 @@
 #include "cx23885.h"
 #include "cx23885-reg.h"
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

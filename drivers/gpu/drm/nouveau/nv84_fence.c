@@ -28,6 +28,7 @@
 
 #include "nv50_display.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <nvif/push206e.h>
 

@@ -3,6 +3,8 @@
 
 #define _RTW_WLAN_UTIL_C_
 
+#include <linux/slab.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/wifi.h"

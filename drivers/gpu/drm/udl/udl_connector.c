@@ -7,6 +7,7 @@
  * Copyright (C) 2009 Bernie Thompson <bernie@plugable.com>
  */
 
+#include <linux/slab.h>
 #include <drm/drm_atomic_state_helper.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_probe_helper.h>

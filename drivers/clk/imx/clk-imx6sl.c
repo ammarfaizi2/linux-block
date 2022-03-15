@@ -3,6 +3,7 @@
  * Copyright 2013-2014 Freescale Semiconductor, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/bits.h>

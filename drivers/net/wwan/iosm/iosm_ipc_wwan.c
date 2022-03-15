@@ -3,6 +3,7 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice.h>

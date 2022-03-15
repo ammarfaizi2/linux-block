@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include <linux/capability.h>

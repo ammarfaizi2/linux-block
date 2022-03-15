@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2021 Google, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>

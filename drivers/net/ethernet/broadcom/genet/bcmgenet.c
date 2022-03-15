@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)				"bcmgenet: " fmt
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>

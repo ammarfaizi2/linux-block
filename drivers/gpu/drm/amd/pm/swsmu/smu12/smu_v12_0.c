@@ -22,6 +22,7 @@
 
 #define SWSMU_CODE_LAYER_L3
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include "amdgpu.h"

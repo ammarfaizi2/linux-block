@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 #include <engine/fifo.h>
 

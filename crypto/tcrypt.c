@@ -19,6 +19,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/gfp_api.h>
 #include <linux/sched/cond_resched.h>

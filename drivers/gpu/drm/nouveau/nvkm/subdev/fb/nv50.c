@@ -24,6 +24,7 @@
 #include "nv50.h"
 #include "ram.h"
 
+#include <linux/slab.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <core/client.h>

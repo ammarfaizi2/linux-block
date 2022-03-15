@@ -23,6 +23,7 @@
 #include "isl6423.h"
 #include "lnbp22.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>

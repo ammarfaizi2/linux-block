@@ -20,6 +20,7 @@
 /*
  * This file contains functions for reserved memory pool management
  */
+#include <linux/slab.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

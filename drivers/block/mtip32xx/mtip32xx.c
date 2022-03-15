@@ -8,6 +8,7 @@
  *    Copyright (C) 2009 Integrated Device Technology, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>

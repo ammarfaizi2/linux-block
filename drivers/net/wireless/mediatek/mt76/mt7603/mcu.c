@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/slab.h>
 #include <linux/firmware.h>
 #include "mt7603.h"
 #include "mcu.h"

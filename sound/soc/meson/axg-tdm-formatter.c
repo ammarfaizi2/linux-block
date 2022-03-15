@@ -3,6 +3,7 @@
 // Copyright (c) 2018 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

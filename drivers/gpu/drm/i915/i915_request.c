@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>

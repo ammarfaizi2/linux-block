@@ -7,6 +7,7 @@
  * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
  */
 
+#include <linux/slab.h>
 #include <linux/clk.h>
 #include <linux/mfd/atmel-hlcdc.h>
 #include <linux/pinctrl/consumer.h>

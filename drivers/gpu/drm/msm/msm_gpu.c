@@ -11,6 +11,7 @@
 #include "msm_gpu_trace.h"
 #include "adreno/adreno_gpu.h"
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>

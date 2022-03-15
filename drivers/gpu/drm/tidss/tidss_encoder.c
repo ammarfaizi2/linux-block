@@ -4,6 +4,7 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
+#include <linux/slab.h>
 #include <linux/device_api.h>
 #include <linux/export.h>
 

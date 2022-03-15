@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/slab.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>

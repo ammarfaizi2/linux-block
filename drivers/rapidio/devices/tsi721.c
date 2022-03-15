@@ -7,6 +7,7 @@
  * Chul Kim <chul.kim@idt.com>
  */
 
+#include <linux/slab.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/align.h>
 #include <linux/io.h>

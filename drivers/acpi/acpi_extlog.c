@@ -6,6 +6,7 @@
  * Author: Chen, Gong <gong.chen@intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/notifier_api.h>
 #include <linux/ioport.h>
 #include <linux/atomic_api.h>

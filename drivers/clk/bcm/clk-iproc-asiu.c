@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/err.h>

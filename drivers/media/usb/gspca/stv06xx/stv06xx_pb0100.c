@@ -33,6 +33,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
+
 #include "stv06xx_pb0100.h"
 
 struct pb0100_ctrls {

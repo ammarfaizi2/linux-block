@@ -3,6 +3,7 @@
  * Copyright (c) 2021, Intel Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/acpi.h>
 #include <linux/kobject.h>
 #include <linux/platform_device.h>

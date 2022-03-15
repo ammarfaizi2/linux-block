@@ -38,6 +38,7 @@
  *  Transport switch API copyright (C) 2005, Chuck Lever <cel@netapp.com>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/prandom.h>

@@ -6,6 +6,7 @@
  * Derived from the PCAN project file driver/src/pcan_pccard.c
  * Copyright (C) 2006-2010 PEAK System-Technik GmbH
  */
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2011 John Crispin <john@phrozen.org>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/ioport.h>

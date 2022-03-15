@@ -6,6 +6,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

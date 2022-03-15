@@ -6,6 +6,7 @@
  *  Copyright (C) 2016  Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/skbuff.h>

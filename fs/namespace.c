@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/slab.h>
 #include <linux/seqlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

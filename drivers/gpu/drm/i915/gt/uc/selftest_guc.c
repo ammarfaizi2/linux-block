@@ -3,6 +3,7 @@
  * Copyright �� 2021 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 
 #include "selftests/igt_spinner.h"

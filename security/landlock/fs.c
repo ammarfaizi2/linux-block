@@ -6,6 +6,7 @@
  * Copyright © 2018-2020 ANSSI
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

@@ -10,6 +10,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

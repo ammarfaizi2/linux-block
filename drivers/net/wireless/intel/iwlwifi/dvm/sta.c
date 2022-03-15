@@ -6,6 +6,7 @@
  * Portions of this file are derived from the ipw3945 project, as well
  * as portions of the ieee80211 subsystem header files.
  *****************************************************************************/
+#include <linux/slab.h>
 #include <linux/lockdep_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>

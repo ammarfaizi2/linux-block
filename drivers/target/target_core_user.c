@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Chinamobile, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

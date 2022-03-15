@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <drm/drm_dp_helper.h>

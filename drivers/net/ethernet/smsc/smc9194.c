@@ -57,6 +57,7 @@
 static const char version[] =
 	"smc9194.c:v0.14 12/15/00 by Erik Stahlman (erik@vt.edu)";
 
+#include <linux/slab.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>

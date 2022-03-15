@@ -4,6 +4,7 @@
 // Copyright (c) 2020 Broadcom Corporation
 // Author: Kevin-Ke Li <kevin-ke.li@broadcom.com>
 
+#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

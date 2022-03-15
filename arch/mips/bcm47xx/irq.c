@@ -24,6 +24,7 @@
 
 #include "bcm47xx_private.h"
 
+#include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

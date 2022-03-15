@@ -24,6 +24,7 @@
 #define gf119_dmaobj(p) container_of((p), struct gf119_dmaobj, base)
 #include "user.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 #include <core/gpuobj.h>
 #include <subdev/fb.h>

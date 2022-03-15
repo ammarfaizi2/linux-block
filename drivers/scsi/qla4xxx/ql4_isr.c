@@ -4,6 +4,7 @@
  * Copyright (c)  2003-2013 QLogic Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/kref_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

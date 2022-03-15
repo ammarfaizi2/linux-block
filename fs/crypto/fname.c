@@ -11,6 +11,7 @@
  * This has not yet undergone a rigorous security audit.
  */
 
+#include <linux/slab.h>
 #include <linux/siphash_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/dcache.h>

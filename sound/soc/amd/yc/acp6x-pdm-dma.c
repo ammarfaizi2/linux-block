@@ -5,6 +5,7 @@
  * Copyright 2021 Advanced Micro Devices, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

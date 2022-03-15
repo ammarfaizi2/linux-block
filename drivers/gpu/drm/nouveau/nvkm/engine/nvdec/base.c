@@ -20,6 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include "priv.h"
+#include <linux/slab.h>
 #include <core/firmware.h>
 
 static void *

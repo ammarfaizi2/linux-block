@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/dma-buf-map.h>
 #include <linux/io-mapping.h>

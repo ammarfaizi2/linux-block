@@ -6,6 +6,7 @@
  *  - Altera Avalon EPCS flash controller driver
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

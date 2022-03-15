@@ -23,6 +23,7 @@
  */
 #include "nv31.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 #include <core/gpuobj.h>
 #include <subdev/fb.h>

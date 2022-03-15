@@ -27,6 +27,7 @@
  */
 
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/kref_api.h>
 #include <linux/sync_file.h>

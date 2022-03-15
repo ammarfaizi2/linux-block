@@ -3,6 +3,7 @@
  *  Copyright (C) 2014, Samsung Electronics Co. Ltd. All Rights Reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

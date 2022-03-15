@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

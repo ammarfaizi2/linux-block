@@ -18,6 +18,7 @@
 *******************************************************************************/
 #define SOURCEFILE_NAME "hpi6205.c"
 
+#include <linux/slab.h>
 #include <linux/io.h>
 
 #include "hpi_internal.h"

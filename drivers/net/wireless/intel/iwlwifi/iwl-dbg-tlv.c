@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/firmware.h>

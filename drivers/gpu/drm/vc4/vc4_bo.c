@@ -16,6 +16,7 @@
  * rendering can return quickly.
  */
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

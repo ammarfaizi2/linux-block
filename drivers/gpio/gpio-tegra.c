@@ -9,6 +9,7 @@
  *	Erik Gilling <konkers@google.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/irqdesc.h>

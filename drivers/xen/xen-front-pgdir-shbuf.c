@@ -9,6 +9,7 @@
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
+#include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/module.h>
 #include <linux/errno.h>

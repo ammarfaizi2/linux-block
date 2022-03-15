@@ -5,6 +5,7 @@
  * (c) 2021, Bence Csókás <bence98@sch.bme.hu>
  */
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/errno.h>

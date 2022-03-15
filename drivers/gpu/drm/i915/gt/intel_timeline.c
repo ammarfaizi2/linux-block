@@ -3,6 +3,7 @@
  * Copyright © 2016-2018 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

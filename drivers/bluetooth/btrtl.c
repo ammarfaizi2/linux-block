@@ -5,6 +5,7 @@
  *  Copyright (C) 2015 Endless Mobile, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/delay.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2021 Marvell International Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>

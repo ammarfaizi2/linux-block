@@ -28,6 +28,7 @@
 #include "r600_dpm.h"
 #include "rv6xx_dpm.h"
 #include "atom.h"
+#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/seq_file.h>
 

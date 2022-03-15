@@ -6,6 +6,7 @@
  * Copyright © 2018-2020 ANSSI
  */
 
+#include <linux/slab.h>
 #include <linux/sched/task_flags.h>
 #include <linux/file.h>
 #include <linux/cred.h>

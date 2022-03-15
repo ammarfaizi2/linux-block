@@ -8,6 +8,7 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/module.h>
 #include <linux/sched.h>

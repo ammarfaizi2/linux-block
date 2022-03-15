@@ -16,6 +16,8 @@
 
 #define _RTL871X_STA_MGT_C_
 
+#include <linux/slab.h>
+
 #include "osdep_service.h"
 #include "drv_types.h"
 #include "recv_osdep.h"

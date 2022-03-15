@@ -21,6 +21,7 @@
  */
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <core/falcon.h>
 #include <core/firmware.h>
 #include <core/memory.h>

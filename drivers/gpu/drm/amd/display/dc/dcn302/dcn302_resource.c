@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "dcn302_init.h"
 #include "dcn302_resource.h"
 #include "dcn302_dccg.h"

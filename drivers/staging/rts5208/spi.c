@@ -9,6 +9,7 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
+#include <linux/slab.h>
 #include <linux/blkdev.h>
 #include <linux/kthread.h>
 #include <linux/sched.h>

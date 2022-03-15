@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2018-2020 Intel Corporation. All rights reserved.
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/align.h>
 #include <linux/module.h>

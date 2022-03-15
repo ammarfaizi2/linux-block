@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
+#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <core/pci.h>

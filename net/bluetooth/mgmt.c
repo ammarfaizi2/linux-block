@@ -24,6 +24,7 @@
 
 /* Bluetooth HCI Management interface */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>

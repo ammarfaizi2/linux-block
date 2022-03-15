@@ -5,6 +5,8 @@
  * Authors: AMD
  */
 
+#include <linux/slab.h>
+
 #include "dcn303_init.h"
 #include "dcn303_resource.h"
 #include "dcn303_dccg.h"

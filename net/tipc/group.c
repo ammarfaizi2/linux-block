@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/ratelimit.h>
 

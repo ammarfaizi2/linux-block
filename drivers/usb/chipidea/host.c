@@ -7,6 +7,7 @@
  * Author: Alexander Shishkin
  */
 
+#include <linux/slab.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

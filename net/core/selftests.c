@@ -9,6 +9,7 @@
  * Copyright (C) 2021 Oleksij Rempel <o.rempel@pengutronix.de>
  */
 
+#include <linux/slab.h>
 #include <linux/prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

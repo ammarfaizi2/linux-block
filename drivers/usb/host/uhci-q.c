@@ -17,6 +17,7 @@
  * (C) Copyright 2004-2007 Alan Stern, stern@rowland.harvard.edu
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>

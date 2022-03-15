@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/slab.h>
 #include <linux/math64.h>
 #include <linux/module.h>
 #include <linux/gcd.h>

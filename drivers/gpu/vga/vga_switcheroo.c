@@ -30,6 +30,7 @@
 
 #define pr_fmt(fmt) "vga_switcheroo: " fmt
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/apple-gmux.h>

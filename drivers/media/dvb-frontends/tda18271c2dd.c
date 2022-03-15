@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Digital Devices GmbH
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

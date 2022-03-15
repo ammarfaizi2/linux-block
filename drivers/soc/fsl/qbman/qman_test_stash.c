@@ -30,6 +30,7 @@
 
 #include "qman_test.h"
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/kthread.h>
 #include <linux/cpumask_api.h>

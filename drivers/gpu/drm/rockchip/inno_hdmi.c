@@ -5,6 +5,7 @@
  *    Yakir Yang <ykk@rock-chips.com>
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

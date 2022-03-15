@@ -7,6 +7,7 @@
 
 /* File aq_pci_func.c: Definition of PCI functions. */
 
+#include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>

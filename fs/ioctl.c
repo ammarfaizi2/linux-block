@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/ratelimit.h>

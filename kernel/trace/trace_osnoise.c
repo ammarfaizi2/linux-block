@@ -16,6 +16,7 @@
  * Copyright (C) 2021 Daniel Bristot de Oliveira, Red Hat, Inc. <bristot@redhat.com>
  */
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>

@@ -6,6 +6,7 @@
  * by the DRM_PANEL_SIMPLE driver because its power sequencing is non-standard.
  */
 
+#include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>

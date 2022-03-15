@@ -4,6 +4,7 @@
 // Copyright (C) 2018 Richard Cochran <richardcochran@gmail.com>
 //
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/mii_timestamper.h>

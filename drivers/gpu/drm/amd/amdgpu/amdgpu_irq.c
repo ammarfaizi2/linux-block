@@ -42,6 +42,7 @@
  * support is used (with mapping between virtual and hardware IRQs).
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>

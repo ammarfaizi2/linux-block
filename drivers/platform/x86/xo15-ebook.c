@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/device/driver.h>
 #include <linux/kernel.h>

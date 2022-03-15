@@ -3,6 +3,7 @@
  * Copyright © 2016-2019 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/ktime_api.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

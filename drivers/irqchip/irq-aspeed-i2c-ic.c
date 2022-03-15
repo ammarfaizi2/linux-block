@@ -7,6 +7,7 @@
  *  Copyright 2017 Google, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/bitmap.h>
 #include <linux/irq.h>

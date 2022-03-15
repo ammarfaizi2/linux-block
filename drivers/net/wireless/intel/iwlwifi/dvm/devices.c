@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Intel Corporation
  *****************************************************************************/
 
+#include <linux/slab.h>
 #include <linux/units.h>
 
 /*

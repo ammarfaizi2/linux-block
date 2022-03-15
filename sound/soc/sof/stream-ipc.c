@@ -9,6 +9,7 @@
 
 /* Generic SOF IPC code */
 
+#include <linux/slab.h>
 #include <linux/device.h>
 #include <linux/export.h>
 #include <linux/module.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2017 - 2018 Covalent IO, Inc. http://covalent.io */
 
+#include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

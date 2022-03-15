@@ -24,6 +24,7 @@
 #define anx9805_pad(p) container_of((p), struct anx9805_pad, base)
 #define anx9805_bus(p) container_of((p), struct anx9805_bus, base)
 #define anx9805_aux(p) container_of((p), struct anx9805_aux, base)
+#include <linux/slab.h>
 #include <linux/delay.h>
 
 #include "aux.h"

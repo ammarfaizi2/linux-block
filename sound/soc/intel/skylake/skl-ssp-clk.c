@@ -5,6 +5,7 @@
  *  skl-ssp-clk.c - ASoC skylake ssp clock driver
  */
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

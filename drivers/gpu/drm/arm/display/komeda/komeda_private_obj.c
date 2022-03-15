@@ -4,6 +4,8 @@
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
+#include <linux/slab.h>
+
 #include "komeda_dev.h"
 #include "komeda_kms.h"
 

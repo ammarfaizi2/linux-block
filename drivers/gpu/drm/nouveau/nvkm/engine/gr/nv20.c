@@ -2,6 +2,7 @@
 #include "nv20.h"
 #include "regs.h"
 
+#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <core/client.h>
 #include <core/gpuobj.h>

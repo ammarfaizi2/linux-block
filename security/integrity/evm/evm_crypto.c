@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "EVM: "fmt
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>

@@ -2,6 +2,7 @@
 // Copyright (c) 2016-2018 Nuvoton Technology corporation.
 // Copyright (c) 2016, Dell Inc
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

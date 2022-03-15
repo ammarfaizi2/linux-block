@@ -4,6 +4,7 @@
  * Author: Christoffer Dall <christoffer.dall@linaro.org>
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/cpu.h>

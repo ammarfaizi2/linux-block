@@ -21,6 +21,7 @@
  */
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <core/memory.h>
 #include <core/notify.h>
 

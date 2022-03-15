@@ -26,6 +26,7 @@
 #include "ram.h"
 #include "ramfuc.h"
 
+#include <linux/slab.h>
 #include <core/memory.h>
 #include <core/option.h>
 #include <subdev/bios.h>

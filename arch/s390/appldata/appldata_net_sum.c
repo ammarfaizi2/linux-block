@@ -9,6 +9,7 @@
  * Author: Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/module.h>

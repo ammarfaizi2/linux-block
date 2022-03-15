@@ -23,6 +23,7 @@
 #include "umem.h"
 #include "uvmm.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 
 #include <nvif/if0008.h>

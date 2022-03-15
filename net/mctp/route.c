@@ -10,6 +10,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>

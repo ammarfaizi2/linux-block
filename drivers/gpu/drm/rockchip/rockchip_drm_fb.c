@@ -4,6 +4,7 @@
  * Author:Mark Yao <mark.yao@rock-chips.com>
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 
 #include <drm/drm.h>

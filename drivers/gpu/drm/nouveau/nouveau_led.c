@@ -28,6 +28,7 @@
  *  Martin Peres <martin.peres@free.fr>
  */
 
+#include <linux/slab.h>
 #include <linux/leds.h>
 
 #include "nouveau_led.h"

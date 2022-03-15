@@ -8,6 +8,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

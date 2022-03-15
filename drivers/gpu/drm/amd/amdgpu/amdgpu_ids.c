@@ -22,6 +22,7 @@
  */
 #include "amdgpu_ids.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>

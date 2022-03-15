@@ -5,6 +5,7 @@
  * Author: Naga Sureshkumar Relli <nagasure@xilinx.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/clk.h>

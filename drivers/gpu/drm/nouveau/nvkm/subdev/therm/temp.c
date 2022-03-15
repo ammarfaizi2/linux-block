@@ -21,6 +21,7 @@
  *
  * Authors: Martin Peres
  */
+#include <linux/slab.h>
 #include <linux/sched.h>
 
 #include "priv.h"

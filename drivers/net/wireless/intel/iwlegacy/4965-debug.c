@@ -7,6 +7,7 @@
 *  Intel Linux Wireless <ilw@linux.intel.com>
 * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
 *****************************************************************************/
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 
 #include "common.h"

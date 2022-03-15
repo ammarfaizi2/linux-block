@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/device_api.h>

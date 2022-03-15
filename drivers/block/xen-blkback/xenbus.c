@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "xen-blkback: " fmt
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

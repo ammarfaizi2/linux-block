@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 #include "atomfirmware.h"

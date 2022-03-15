@@ -3,6 +3,7 @@
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_link.h>
 #include <linux/fs_api.h>

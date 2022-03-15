@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2021. Huawei Technologies Co., Ltd
  */
+#include <linux/slab.h>
 #include <linux/filter_api.h>
 #include <linux/kernel.h>
 #include <linux/bpf_verifier.h>

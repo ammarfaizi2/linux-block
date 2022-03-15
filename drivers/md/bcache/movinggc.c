@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "request.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/ioprio.h>
 #include <linux/atomic_api.h>

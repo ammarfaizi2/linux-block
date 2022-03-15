@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/bitmap.h>
 
 #include "port.h"

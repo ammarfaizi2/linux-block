@@ -16,6 +16,7 @@
  * determination.
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/debugfs.h>

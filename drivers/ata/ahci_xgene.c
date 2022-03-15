@@ -9,6 +9,7 @@
  *
  * NOTE: PM support is not currently available.
  */
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/pci.h>
 
 #include "pp_debug.h"

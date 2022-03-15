@@ -28,6 +28,7 @@
  *    Xiaoguang Chen <xiaoguang.chen@intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>

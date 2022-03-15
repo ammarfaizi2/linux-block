@@ -18,6 +18,7 @@
  */
 #define pr_fmt(fmt) "ACPI: VIOT: " fmt
 
+#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi_viot.h>

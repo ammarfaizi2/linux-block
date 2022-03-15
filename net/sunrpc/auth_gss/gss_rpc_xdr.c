@@ -5,6 +5,7 @@
  *  Copyright (C) 2012 Simo Sorce <simo@redhat.com>
  */
 
+#include <linux/slab.h>
 #include <linux/gfp_api.h>
 #include <linux/cred.h>
 #include <linux/sunrpc/svcauth.h>

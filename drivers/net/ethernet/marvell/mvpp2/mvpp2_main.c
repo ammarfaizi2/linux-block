@@ -7,6 +7,7 @@
  * Marcin Wojtas <mw@semihalf.com>
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_page_pool.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/property.h>

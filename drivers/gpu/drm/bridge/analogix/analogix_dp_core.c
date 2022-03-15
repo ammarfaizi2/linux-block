@@ -6,6 +6,7 @@
 * Author: Jingoo Han <jg1.han@samsung.com>
 */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

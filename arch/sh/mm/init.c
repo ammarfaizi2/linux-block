@@ -8,6 +8,7 @@
  *  Based on linux/arch/i386/mm/init.c:
  *   Copyright (C) 1995  Linus Torvalds
  */
+#include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>

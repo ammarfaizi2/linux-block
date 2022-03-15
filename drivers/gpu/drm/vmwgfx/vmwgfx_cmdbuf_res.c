@@ -25,6 +25,8 @@
  *
  **************************************************************************/
 
+#include <linux/slab.h>
+
 #include "vmwgfx_drv.h"
 #include "vmwgfx_resource_priv.h"
 

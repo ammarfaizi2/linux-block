@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/processor.h>
 #include <linux/pci-dma-compat.h>

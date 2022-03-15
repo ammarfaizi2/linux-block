@@ -29,6 +29,8 @@
 
 #define _RTL871X_IO_C_
 
+#include <linux/slab.h>
+
 #include "osdep_service.h"
 #include "drv_types.h"
 #include "rtl871x_io.h"

@@ -7,6 +7,7 @@
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <asm/unaligned.h>
 #include <linux/hid.h>
 #include <linux/kernel.h>

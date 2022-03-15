@@ -17,6 +17,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
+
 #include "stv06xx_hdcs.h"
 
 static struct v4l2_pix_format hdcs1x00_mode[] = {

@@ -27,6 +27,7 @@
 #include "rtl871x_ioctl_set.h"
 #include "rtl871x_mp_ioctl.h"
 #include "mlme_osdep.h"
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>

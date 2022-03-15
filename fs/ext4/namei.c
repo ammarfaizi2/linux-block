@@ -25,6 +25,7 @@
  *	Theodore Ts'o, 2002
  */
 
+#include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

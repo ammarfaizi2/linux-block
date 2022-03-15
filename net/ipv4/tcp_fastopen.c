@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/slab.h>
 #include <linux/siphash_api.h>
 #include <linux/refcount_api.h>
 #include <linux/random.h>

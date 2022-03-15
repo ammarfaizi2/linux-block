@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>

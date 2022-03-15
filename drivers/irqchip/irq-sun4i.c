@@ -14,6 +14,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/irq.h>

@@ -22,6 +22,7 @@
  */
 #include "ecdh_helper.h"
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/scatterlist.h>
 #include <crypto/ecdh.h>

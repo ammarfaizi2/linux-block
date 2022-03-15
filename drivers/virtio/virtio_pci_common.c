@@ -14,6 +14,7 @@
  *  Michael S. Tsirkin <mst@redhat.com>
  */
 
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>

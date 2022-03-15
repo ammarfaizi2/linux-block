@@ -6,6 +6,7 @@
  * Copyright 2014 Linaro Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

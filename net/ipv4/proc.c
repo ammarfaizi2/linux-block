@@ -27,6 +27,7 @@
  *	Andi Kleen		:	Add support for /proc/net/netstat
  *	Arnaldo C. Melo		:	Convert to seq_file
  */
+#include <linux/slab.h>
 #include <linux/preempt.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/interrupt.h>

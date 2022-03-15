@@ -19,6 +19,7 @@
  * Copyright (C) 2015 Glider bvba
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/device_api.h>
 #include <linux/device.h>

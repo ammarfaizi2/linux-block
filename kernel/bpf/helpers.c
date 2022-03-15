@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  */
+#include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2011 Broadcom Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>

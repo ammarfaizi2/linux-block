@@ -23,6 +23,7 @@
  */
 #include "gf100.h"
 
+#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/atomic_api.h>
 #include <core/memory.h>

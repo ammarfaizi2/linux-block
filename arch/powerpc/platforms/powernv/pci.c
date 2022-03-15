@@ -5,6 +5,7 @@
  * Copyright 2011 Benjamin Herrenschmidt, IBM Corp.
  */
 
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

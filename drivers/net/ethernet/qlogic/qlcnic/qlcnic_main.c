@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api_lock.h>

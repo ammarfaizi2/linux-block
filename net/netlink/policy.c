@@ -7,6 +7,7 @@
  * Copyright 2019 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/types.h>

@@ -13,6 +13,7 @@
  ******************************************************************************/
 #define _RTL871X_MP_C_
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 
 #include "osdep_service.h"

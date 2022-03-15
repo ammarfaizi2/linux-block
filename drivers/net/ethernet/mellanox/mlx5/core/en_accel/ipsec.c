@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/idr_api.h>

@@ -3,6 +3,8 @@
  * Copyright(c) 2020-2021 Intel Corporation
  */
 
+#include <linux/slab.h>
+
 #include "iwl-drv.h"
 #include "pnvm.h"
 #include "iwl-prph.h"

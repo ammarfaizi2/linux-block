@@ -21,6 +21,8 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/slab.h>
+
 #include "nv40.h"
 
 static void

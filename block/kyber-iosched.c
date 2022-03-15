@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Facebook
  */
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/percpu.h>
 #include <linux/math64.h>

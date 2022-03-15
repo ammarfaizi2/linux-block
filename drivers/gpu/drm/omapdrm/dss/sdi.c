@@ -6,6 +6,7 @@
 
 #define DSS_SUBSYS_NAME "SDI"
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/err.h>

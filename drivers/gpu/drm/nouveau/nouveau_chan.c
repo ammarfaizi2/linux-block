@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/slab.h>
 #include <linux/highmem.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>

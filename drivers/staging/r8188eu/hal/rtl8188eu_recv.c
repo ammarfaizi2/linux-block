@@ -2,6 +2,8 @@
 /* Copyright(c) 2007 - 2011 Realtek Corporation. */
 
 #define _RTL8188EU_RECV_C_
+#include <linux/slab.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/recv_osdep.h"

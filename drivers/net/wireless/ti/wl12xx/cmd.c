@@ -6,6 +6,8 @@
  * Copyright (C) 2011 Texas Instruments Inc.
  */
 
+#include <linux/slab.h>
+
 #include "../wlcore/cmd.h"
 #include "../wlcore/debug.h"
 

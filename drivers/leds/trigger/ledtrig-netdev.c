@@ -10,6 +10,7 @@
 //  Copyright 2005-2006 Openedhand Ltd.
 //  Author: Richard Purdie <rpurdie@openedhand.com>
 
+#include <linux/slab.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>

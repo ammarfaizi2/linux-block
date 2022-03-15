@@ -3,6 +3,8 @@
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/slab.h>
+
 #include "dpu_kms.h"
 #include "dpu_hw_catalog.h"
 #include "dpu_hwio.h"

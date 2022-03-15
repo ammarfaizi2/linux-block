@@ -29,6 +29,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/slab.h>
+
 #include "port_buffer.h"
 
 int mlx5e_port_query_buffer(struct mlx5e_priv *priv,

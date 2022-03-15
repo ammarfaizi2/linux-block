@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <drm/drm_drv.h>
 #include <drm/i915_pciids.h>

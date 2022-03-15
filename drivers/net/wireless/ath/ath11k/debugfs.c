@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

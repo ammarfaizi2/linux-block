@@ -40,6 +40,7 @@
  * $Id: //depot/aic7xxx/aic7xxx/aic7xxx.c#155 $
  */
 
+#include <linux/slab.h>
 #include <linux/capability.h>
 
 #include "aic7xxx_osm.h"

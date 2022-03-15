@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/net.h>
 #include <linux/nls.h>
 #include <linux/connector.h>

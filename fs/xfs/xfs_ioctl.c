@@ -27,6 +27,7 @@
 #include "xfs_trans.h"
 #include "xfs_acl.h"
 #include "xfs_btree.h"
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_api_sb.h>

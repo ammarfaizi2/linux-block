@@ -7,6 +7,7 @@
  * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  */
 
+#include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/pgtable_api.h>

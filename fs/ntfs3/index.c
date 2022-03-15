@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>

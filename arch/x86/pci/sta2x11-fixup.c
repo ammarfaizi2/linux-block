@@ -7,6 +7,7 @@
  * Copyright (c) 2010-2011 Wind River Systems, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>

@@ -17,6 +17,7 @@
  *  nfs regular file handling functions
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>

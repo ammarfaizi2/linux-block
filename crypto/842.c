@@ -18,6 +18,7 @@
  * drivers/crypto/nx/nx-842-crypto.c
  */
 
+#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/crypto.h>

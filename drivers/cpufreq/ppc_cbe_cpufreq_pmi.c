@@ -7,6 +7,7 @@
  * Author: Christian Krafft <krafft@de.ibm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

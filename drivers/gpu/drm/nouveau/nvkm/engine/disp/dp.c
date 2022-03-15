@@ -26,6 +26,7 @@
 #include "head.h"
 #include "ior.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

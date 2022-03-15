@@ -4,6 +4,7 @@
  * Copyright (C) 2015 Amlogic, Inc. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/dma-mapping.h>

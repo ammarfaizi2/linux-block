@@ -53,6 +53,7 @@ static const char version[] =
 #endif
 
 
+#include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/net.h>

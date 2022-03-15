@@ -5,6 +5,7 @@
  * Copyright Gavin Shan, IBM Corporation 2016.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/kref_api.h>
 #include <linux/interrupt.h>

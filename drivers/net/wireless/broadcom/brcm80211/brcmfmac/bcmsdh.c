@@ -4,6 +4,7 @@
  */
 /* ****************** SDIO CARD Interface Functions **************************/
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

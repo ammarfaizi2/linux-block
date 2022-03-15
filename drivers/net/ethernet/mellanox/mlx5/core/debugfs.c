@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/math64.h>
 #include <linux/fs_api.h>

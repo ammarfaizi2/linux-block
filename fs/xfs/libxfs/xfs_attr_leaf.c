@@ -4,6 +4,7 @@
  * Copyright (c) 2013 Red Hat, Inc.
  * All Rights Reserved.
  */
+#include <linux/slab.h>
 #include <linux/mm_api_kvmalloc.h>
 
 #include "xfs.h"

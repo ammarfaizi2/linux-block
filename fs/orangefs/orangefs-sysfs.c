@@ -136,6 +136,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/ratelimit.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/kobject_api.h>

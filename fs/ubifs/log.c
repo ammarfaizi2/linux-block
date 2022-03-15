@@ -15,6 +15,7 @@
  * journal.
  */
 
+#include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 

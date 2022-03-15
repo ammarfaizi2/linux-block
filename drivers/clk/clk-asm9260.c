@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Oleksij Rempel <linux@rempel-privat.de>.
  */
 
+#include <linux/slab.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>
 #include <linux/err.h>

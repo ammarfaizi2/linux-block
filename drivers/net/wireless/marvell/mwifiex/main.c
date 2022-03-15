@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>

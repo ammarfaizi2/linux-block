@@ -38,6 +38,7 @@
  * forcibly disable it to allow proper screen updates.
  */
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

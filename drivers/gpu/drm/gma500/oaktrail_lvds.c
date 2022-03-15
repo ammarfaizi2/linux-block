@@ -8,6 +8,7 @@
  *	Jesse Barnes <jesse.barnes@intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/i2c.h>

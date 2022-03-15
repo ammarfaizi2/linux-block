@@ -6,6 +6,7 @@
  * Author: Daeho Jeong <daehojeong@google.com>
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>

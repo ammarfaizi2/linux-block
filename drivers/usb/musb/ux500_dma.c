@@ -12,6 +12,7 @@
  *	Rajaram Regupathy <ragupathy.rajaram@stericsson.com>
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/ioport.h>

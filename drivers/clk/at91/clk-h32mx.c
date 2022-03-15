@@ -7,6 +7,7 @@
  * Alexandre Belloni <alexandre.belloni@free-electrons.com>
  */
 
+#include <linux/slab.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>
 #include <linux/clk/at91_pmc.h>

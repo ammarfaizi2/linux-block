@@ -7,6 +7,7 @@
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/gfp_api.h>
 #include <linux/capability.h>
 #include <linux/compat.h>

@@ -6,6 +6,7 @@
 /* Copyright (c) 2008-2019, IBM Corporation */
 /* Copyright (c) 2017, Open Grid Computing, Inc. */
 
+#include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

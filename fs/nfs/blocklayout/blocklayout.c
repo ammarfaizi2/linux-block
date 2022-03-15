@@ -30,6 +30,7 @@
  * possibility of such damages.
  */
 
+#include <linux/slab.h>
 #include <linux/pagemap.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

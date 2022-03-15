@@ -3,6 +3,7 @@
  * Copyright (C) 2003-2014, 2018-2021 Intel Corporation
  * Copyright (C) 2015-2016 Intel Deutschland GmbH
  */
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/device.h>

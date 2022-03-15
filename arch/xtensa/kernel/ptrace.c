@@ -12,6 +12,7 @@
  * Marc Gauthier<marc@tensilica.com> <marc@alumni.uwaterloo.ca>
  */
 
+#include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/signal.h>

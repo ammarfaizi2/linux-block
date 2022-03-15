@@ -5,6 +5,7 @@
  * Author: Vinay Simha <vinaysimha@inforcecomputing.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/delay.h>
 

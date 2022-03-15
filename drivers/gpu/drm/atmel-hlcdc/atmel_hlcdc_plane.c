@@ -6,6 +6,7 @@
  * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
  */
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/dmapool.h>
 #include <linux/mfd/atmel-hlcdc.h>

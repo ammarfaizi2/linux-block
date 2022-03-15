@@ -6,6 +6,7 @@
  *      Thiebaud Weksteen <tweek@google.com>
  */
 
+#include <linux/slab.h>
 #include <linux/efi.h>
 #include <linux/tpm_eventlog.h>
 

@@ -23,6 +23,7 @@
  */
 #include "mxms.h"
 
+#include <linux/slab.h>
 #include <core/option.h>
 #include <subdev/bios.h>
 #include <subdev/bios/mxm.h>

@@ -4,6 +4,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/fs_api_sb.h>

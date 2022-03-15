@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

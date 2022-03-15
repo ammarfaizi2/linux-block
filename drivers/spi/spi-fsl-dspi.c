@@ -6,6 +6,7 @@
 // Freescale DSPI driver
 // This file contains a driver for the Freescale DSPI
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

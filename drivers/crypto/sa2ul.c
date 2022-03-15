@@ -8,6 +8,7 @@
  *		Vitaly Andrianov
  *		Tero Kristo
  */
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -20,6 +20,7 @@
  * Special Publication 800-38E and IEEE P1619/D16.
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

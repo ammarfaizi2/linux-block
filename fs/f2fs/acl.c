@@ -9,6 +9,7 @@
  *
  * Copyright (C) 2001-2003 Andreas Gruenbacher, <agruen@suse.de>
  */
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

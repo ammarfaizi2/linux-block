@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

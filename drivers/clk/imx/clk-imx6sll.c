@@ -4,6 +4,7 @@
  * Copyright 2017-2018 NXP.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <dt-bindings/clock/imx6sll-clock.h>
 #include <linux/clk.h>

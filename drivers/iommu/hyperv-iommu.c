@@ -8,6 +8,7 @@
  * Author : Lan Tianyu <Tianyu.Lan@microsoft.com>
  */
 
+#include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/cpumask_api.h>

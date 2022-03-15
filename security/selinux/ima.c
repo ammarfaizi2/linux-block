@@ -7,6 +7,7 @@
  * Measure critical data structures maintainted by SELinux
  * using IMA subsystem.
  */
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/vmalloc.h>
 #include <linux/ima.h>

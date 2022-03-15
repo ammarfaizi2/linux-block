@@ -23,6 +23,7 @@
 #include "bnx2x_init.h"
 #include "bnx2x_cmn.h"
 #include "bnx2x_sp.h"
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

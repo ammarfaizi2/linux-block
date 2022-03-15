@@ -5,6 +5,7 @@
  * Copyright (C) 2011-2013 ASIX
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/jiffies.h>

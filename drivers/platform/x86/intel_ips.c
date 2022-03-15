@@ -45,6 +45,7 @@
  *   - ref 26921 - Ibex Peak BIOS Specification
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

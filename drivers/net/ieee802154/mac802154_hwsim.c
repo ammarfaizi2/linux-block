@@ -11,6 +11,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

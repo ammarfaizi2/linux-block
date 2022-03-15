@@ -4,6 +4,7 @@
  * Copyright © 2017-2018 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/math64.h>

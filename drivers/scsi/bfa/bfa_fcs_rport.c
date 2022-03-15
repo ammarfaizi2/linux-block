@@ -12,6 +12,8 @@
  *  rport.c Remote port implementation.
  */
 
+#include <linux/slab.h>
+
 #include "bfad_drv.h"
 #include "bfad_im.h"
 #include "bfa_fcs.h"

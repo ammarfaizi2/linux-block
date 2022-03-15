@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Alexander Block.  All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>

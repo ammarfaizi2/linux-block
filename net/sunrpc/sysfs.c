@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2020 Anna Schumaker <Anna.Schumaker@Netapp.com>
  */
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

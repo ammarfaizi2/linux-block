@@ -19,6 +19,7 @@
  *   Host -> LVDS|--(STDP4028)--|DP -> DP|--(STDP2690)--|DP++ -> Video output
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

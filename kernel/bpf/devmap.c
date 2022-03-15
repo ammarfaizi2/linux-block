@@ -44,6 +44,7 @@
  * ifindexes. The setup and packet enqueue/send code is shared between the two
  * types of devmap; only the lookup and insertion is different.
  */
+#include <linux/slab.h>
 #include <linux/sched/task_flags.h>
 #include <linux/rculist.h>
 #include <linux/prefetch.h>

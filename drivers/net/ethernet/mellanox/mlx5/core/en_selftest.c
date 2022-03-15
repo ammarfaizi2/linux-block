@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api_prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

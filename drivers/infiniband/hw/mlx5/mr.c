@@ -32,6 +32,7 @@
  */
 
 
+#include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

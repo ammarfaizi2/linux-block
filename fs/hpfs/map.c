@@ -7,6 +7,8 @@
  *  mapping structures to memory with some minimal checks
  */
 
+#include <linux/slab.h>
+
 #include "hpfs_fn.h"
 
 __le32 *hpfs_map_dnode_bitmap(struct super_block *s, struct quad_buffer_head *qbh)

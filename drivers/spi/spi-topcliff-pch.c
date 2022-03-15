@@ -5,6 +5,7 @@
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/jiffies.h>

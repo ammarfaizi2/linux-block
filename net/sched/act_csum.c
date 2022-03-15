@@ -5,6 +5,7 @@
  * Copyright (c) 2010 Gregoire Baron <baronchon@n7mm.org>
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ipv6.h>

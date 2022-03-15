@@ -4,6 +4,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/net.h>

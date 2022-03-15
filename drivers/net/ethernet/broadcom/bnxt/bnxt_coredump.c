@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

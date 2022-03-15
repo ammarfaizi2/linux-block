@@ -19,6 +19,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/seqlock_api.h>
 #include <linux/semaphore.h>
 #include <linux/sched.h>

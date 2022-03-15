@@ -27,6 +27,7 @@
  *	    Jeremy Kolb  <jkolb@brandeis.edu>
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/highmem.h>

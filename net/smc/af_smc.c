@@ -19,6 +19,7 @@
 #define KMSG_COMPONENT "smc"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>

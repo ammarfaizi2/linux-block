@@ -6,6 +6,8 @@
  */
 
 
+#include <linux/slab.h>
+
 #include "mpi-internal.h"
 #include "longlong.h"
 

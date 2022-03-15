@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/prandom.h>
 #include <linux/pgtable_api.h>

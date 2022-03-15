@@ -5,6 +5,7 @@
  * Copyright (C) 2014-2015 Marvell International Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/gpio.h>

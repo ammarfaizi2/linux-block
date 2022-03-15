@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/firmware.h>

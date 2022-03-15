@@ -8,6 +8,7 @@
  */
 
 #include "hsr_slave.h"
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/netlink.h>
 #include <linux/netdevice_api.h>

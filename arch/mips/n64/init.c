@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2021	Lauri Kasanen
  */
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/init.h>

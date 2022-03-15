@@ -4,6 +4,7 @@
  * Copyright (c) 2008-2009 Marvell Semiconductor
  */
 
+#include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/percpu.h>
 #include <linux/of_api.h>

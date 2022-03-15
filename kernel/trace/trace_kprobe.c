@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt)	"trace_kprobe: " fmt
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/percpu.h>

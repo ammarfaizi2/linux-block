@@ -22,6 +22,7 @@
  * Authors: Ben Skeggs
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>

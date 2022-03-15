@@ -3,6 +3,8 @@
  * Copyright(c) 2017 Intel Corporation.
  */
 
+#include <linux/slab.h>
+
 #include "exp_rcv.h"
 #include "trace.h"
 

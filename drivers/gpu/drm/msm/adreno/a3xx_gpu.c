@@ -6,6 +6,8 @@
  * Copyright (c) 2014 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/slab.h>
+
 #include "a3xx_gpu.h"
 
 #define A3XX_INT0_MASK \

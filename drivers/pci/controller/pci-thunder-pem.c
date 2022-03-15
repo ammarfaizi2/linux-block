@@ -3,6 +3,7 @@
  * Copyright (C) 2015 - 2016 Cavium, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

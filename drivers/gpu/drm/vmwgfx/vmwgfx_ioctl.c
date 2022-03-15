@@ -27,6 +27,7 @@
 
 #include "vmwgfx_drv.h"
 #include "vmwgfx_devcaps.h"
+#include <linux/slab.h>
 #include <drm/vmwgfx_drm.h>
 #include "vmwgfx_kms.h"
 

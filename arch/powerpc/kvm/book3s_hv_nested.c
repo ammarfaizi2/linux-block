@@ -8,6 +8,7 @@
  * on Book3S processors (specifically POWER9 and later).
  */
 
+#include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

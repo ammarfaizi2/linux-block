@@ -5,6 +5,7 @@
  *
  * Gregory CLEMENT <gregory.clement@free-electrons.com>
  */
+#include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/mutex_api.h>

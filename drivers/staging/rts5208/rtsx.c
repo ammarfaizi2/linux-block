@@ -9,6 +9,7 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
+#include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

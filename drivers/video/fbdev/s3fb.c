@@ -11,6 +11,7 @@
  * which is based on the code of neofb.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
