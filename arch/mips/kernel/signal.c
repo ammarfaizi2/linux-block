@@ -8,6 +8,7 @@
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 2014, Imagination Technologies Ltd.
  */
+#include <linux/sched/rseq_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/restart_block_api.h>

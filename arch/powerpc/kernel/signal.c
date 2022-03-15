@@ -9,6 +9,7 @@
  * this archive for more details.
  */
 
+#include <linux/sched/rseq_api.h>
 #include <linux/sched.h>
 #include <linux/preempt.h>
 #include <linux/tracehook.h>

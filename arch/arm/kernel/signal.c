@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2009 Russell King
  */
+#include <linux/sched/rseq_api.h>
 #include <linux/sched.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
