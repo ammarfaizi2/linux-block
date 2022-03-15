@@ -6,6 +6,7 @@
  * Dmitry Kasatkin <dmitry.kasatkin@intel.com>
  */
 
+#include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/ratelimit.h>
 #include <linux/key-type.h>

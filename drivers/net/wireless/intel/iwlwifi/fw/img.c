@@ -3,6 +3,8 @@
  * Copyright(c) 2019 - 2021 Intel Corporation
  */
 
+#include <linux/kernel.h>
+
 #include "img.h"
 
 u8 iwl_fw_lookup_cmd_ver(const struct iwl_fw *fw, u8 grp, u8 cmd, u8 def)

@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
+#include <linux/kernel.h>
 #include <linux/ioport.h>
 #include <linux/overflow.h>
 #include <linux/errno.h>

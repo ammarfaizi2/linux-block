@@ -7,6 +7,7 @@
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
+#include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <media/dvb_frontend.h>
