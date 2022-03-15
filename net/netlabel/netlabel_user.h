@@ -16,6 +16,7 @@
 #ifndef _NETLABEL_USER_H
 #define _NETLABEL_USER_H
 
+#include <linux/security.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
 #include <linux/capability.h>
