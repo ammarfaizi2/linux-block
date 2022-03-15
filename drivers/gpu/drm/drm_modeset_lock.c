@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/stacktrace.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

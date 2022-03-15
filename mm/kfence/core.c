@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "kfence: " fmt
 
+#include <linux/stacktrace.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>

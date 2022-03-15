@@ -5,6 +5,7 @@
  * Copyright IBM Corp. 2008
  */
 
+#include <linux/stacktrace.h>
 #include <linux/kernel.h>
 #include <linux/kprobes.h>
 #include <linux/random.h>

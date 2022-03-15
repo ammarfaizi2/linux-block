@@ -4,6 +4,7 @@
  * Copyright (c) 2005 Linas Vepstas <linas@linas.org>
  */
 
+#include <linux/stacktrace.h>
 #include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/list.h>
