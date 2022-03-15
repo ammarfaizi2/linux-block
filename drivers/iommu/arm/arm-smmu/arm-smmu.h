@@ -10,6 +10,7 @@
 #ifndef _ARM_SMMU_H
 #define _ARM_SMMU_H
 
+#include <linux/bitmap.h>
 #include <linux/atomic.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>

@@ -8,6 +8,7 @@
 #ifndef DLMCOMMON_H
 #define DLMCOMMON_H
 
+#include <linux/bitmap.h>
 #include <linux/kref.h>
 
 #define DLM_HB_NODE_DOWN_PRI     (0xf000000)

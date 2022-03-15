@@ -7,6 +7,7 @@
 #ifndef _GVE_H_
 #define _GVE_H_
 
+#include <linux/bitmap.h>
 #include <linux/dma-mapping.h>
 #include <linux/netdevice.h>
 #include <linux/pci.h>

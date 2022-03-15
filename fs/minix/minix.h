@@ -2,6 +2,7 @@
 #ifndef FS_MINIX_H
 #define FS_MINIX_H
 
+#include <linux/bitmap.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>
 #include <linux/minix_fs.h>
