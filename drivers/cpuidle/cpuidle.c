@@ -8,6 +8,7 @@
  * This code is licenced under the GPL.
  */
 
+#include <linux/device/bus.h>
 #include <linux/cpumask_api.h>
 #include <linux/clockchips.h>
 #include <linux/kernel.h>
