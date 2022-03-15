@@ -112,6 +112,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/refcount_api.h>

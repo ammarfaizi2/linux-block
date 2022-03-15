@@ -10,6 +10,7 @@
  * Losely based on work from sh and powerpc.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/export.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>

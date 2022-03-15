@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2016-20 Intel Corporation. */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>

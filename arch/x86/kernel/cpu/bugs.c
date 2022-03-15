@@ -8,6 +8,7 @@
  *	- Channing Corn (tests & fixes),
  *	- Andrew D. Balsa (code cleanup).
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/mutex_api.h>
 #include <asm/processor_api.h>
 #include <asm/pgtable.h>

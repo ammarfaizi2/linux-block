@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2008-2014 Mathieu Desnoyers
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

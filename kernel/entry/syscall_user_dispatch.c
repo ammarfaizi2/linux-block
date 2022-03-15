@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2020 Collabora Ltd.
  */
+#include <linux/sched/thread_info_api.h>
 #include <asm/processor_api.h>
 #include <asm/elf_api.h>
 #include <linux/sched.h>

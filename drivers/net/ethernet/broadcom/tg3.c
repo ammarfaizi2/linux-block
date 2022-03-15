@@ -22,6 +22,7 @@
  */
 
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>

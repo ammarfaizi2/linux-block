@@ -4,6 +4,7 @@
  * This file handles the architecture independent parts of process handling..
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/compat.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

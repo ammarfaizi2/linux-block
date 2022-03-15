@@ -15,6 +15,7 @@
  * Kevin Chea
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <linux/preempt.h>

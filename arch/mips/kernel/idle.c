@@ -7,6 +7,7 @@
  * Copyright (C) 2003, 2004  Maciej W. Rozycki
  * Copyright (C) 2001, 2004, 2011, 2012	 MIPS Technologies, Inc.
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/cpu.h>
 #include <linux/export.h>
 #include <linux/init.h>

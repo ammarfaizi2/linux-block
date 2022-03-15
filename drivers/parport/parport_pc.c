@@ -43,6 +43,7 @@
  * but rather will start at port->base_hi.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>

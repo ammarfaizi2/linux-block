@@ -6,6 +6,7 @@
  *
  *    Author(s): David Hildenbrand <dahi@linux.vnet.ibm.com>
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/radix-tree-api.h>

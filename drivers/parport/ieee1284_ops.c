@@ -15,6 +15,7 @@
  */
 
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

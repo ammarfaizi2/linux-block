@@ -7,6 +7,7 @@
 
 #define ASM_OFFSETS_C 1
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>
 #include <linux/pid.h>
 #include <linux/clocksource.h>

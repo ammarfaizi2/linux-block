@@ -5,6 +5,7 @@
 /* mangled further by Bob Manson (manson@santafe.edu) */
 /* more mutilation by David Mosberger (davidm@azstarnet.com) */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>

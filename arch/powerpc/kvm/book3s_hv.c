@@ -15,6 +15,7 @@
  * by Alexander Graf <agraf@suse.de>.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>

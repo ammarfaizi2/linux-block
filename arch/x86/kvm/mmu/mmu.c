@@ -26,6 +26,7 @@
 #include "cpuid.h"
 #include "spte.h"
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>

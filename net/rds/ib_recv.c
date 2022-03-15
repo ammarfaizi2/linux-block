@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/clock.h>
 #include <linux/scatterlist_api.h>
 #include <linux/percpu.h>

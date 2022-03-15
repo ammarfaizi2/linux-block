@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2004 Paul Mackerras <paulus@au.ibm.com>, IBM
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/preempt.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Facebook
  * Copyright (c) 2018 Covalent IO, Inc. http://covalent.io
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>
 #include <linux/random.h>
 #include <linux/perf_event_api.h>

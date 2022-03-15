@@ -112,6 +112,7 @@
  * Copyright (C) 2000 by Tim Waugh (added LPSETTIMEOUT ioctl)
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/task_stack.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

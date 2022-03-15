@@ -9,6 +9,7 @@
  *               2009 Johannes Dickgreber <tanzy@gmx.de>
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>

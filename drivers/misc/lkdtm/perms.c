@@ -5,6 +5,7 @@
  * even non-readable regions.
  */
 #include "lkdtm.h"
+#include <linux/sched/thread_info_api.h>
 #include <linux/mm_api.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>

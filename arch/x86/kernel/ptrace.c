@@ -5,6 +5,7 @@
  *	Gareth Hughes <gareth@valinux.com>, May 2000
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>

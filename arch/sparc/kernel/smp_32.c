@@ -6,6 +6,7 @@
  * Copyright (C) 2004 Keith M Wesolowski (wesolows@foobazco.org)
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

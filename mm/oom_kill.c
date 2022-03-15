@@ -18,6 +18,7 @@
  *  kernel subsystems and hints as to where to find out what things do.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/pid.h>

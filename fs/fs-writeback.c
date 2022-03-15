@@ -14,6 +14,7 @@
  *		Additions for address_space-based writeback
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/pagemap_api_readahead.h>

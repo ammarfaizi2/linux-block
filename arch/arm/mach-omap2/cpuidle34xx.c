@@ -19,6 +19,7 @@
  * Based on pm.c for omap2
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/cpuidle.h>
 #include <linux/export.h>

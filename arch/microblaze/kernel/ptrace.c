@@ -24,6 +24,7 @@
  * archive for more details.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>

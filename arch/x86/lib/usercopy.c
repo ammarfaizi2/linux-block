@@ -4,6 +4,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/uaccess.h>
 #include <linux/export.h>

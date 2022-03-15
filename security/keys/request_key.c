@@ -7,6 +7,7 @@
  * See Documentation/security/keys/request-key.rst
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

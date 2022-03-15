@@ -7,6 +7,7 @@
  *
  * FIXME! These routines have not been tested for big endian case.
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/io.h>

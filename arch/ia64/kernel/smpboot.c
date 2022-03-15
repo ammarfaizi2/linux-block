@@ -23,6 +23,7 @@
  *						Setup cpu_sibling_map and cpu_core_map
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>

@@ -16,6 +16,7 @@
  * Various hacks, Fred Barnes <frmb2@ukc.ac.uk>, 04/2000
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

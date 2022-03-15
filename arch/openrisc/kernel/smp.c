@@ -11,6 +11,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/profile.h>
 #include <linux/pgtable_api.h>
