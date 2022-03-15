@@ -4,6 +4,7 @@
  * which don't implement their own.
  */
 
+#include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/buildid.h>

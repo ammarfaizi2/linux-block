@@ -11,6 +11,7 @@
 /*
  */
 
+#include <linux/irqflags.h>
 #include <linux/module.h>
 #include <linux/gameport.h>
 #include <linux/kernel.h>

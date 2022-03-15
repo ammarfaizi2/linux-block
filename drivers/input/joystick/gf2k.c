@@ -10,6 +10,7 @@
 /*
  */
 
+#include <linux/irqflags.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

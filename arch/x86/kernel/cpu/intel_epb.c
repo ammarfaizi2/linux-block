@@ -8,6 +8,7 @@
  *	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpu.h>

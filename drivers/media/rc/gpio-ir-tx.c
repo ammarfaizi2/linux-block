@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Sean Young <sean@mess.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

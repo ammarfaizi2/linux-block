@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2016 Andreas Klinger <ak@it-klinger.de>
  */
+#include <linux/irqflags.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

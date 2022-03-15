@@ -27,6 +27,7 @@
  * explicitly allocate a synchronous algorithm.
  */
 
+#include <linux/irqflags.h>
 #include <crypto/cryptd.h>
 #include <crypto/internal/aead.h>
 #include <crypto/internal/simd.h>
