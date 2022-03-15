@@ -25,6 +25,7 @@
 #ifndef AMDGPU_AMDKFD_H_INCLUDED
 #define AMDGPU_AMDKFD_H_INCLUDED
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/types.h>
 #include <linux/mm.h>
 #include <linux/kthread.h>

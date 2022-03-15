@@ -2,6 +2,7 @@
 #ifndef _KERNEL_EVENTS_INTERNAL_H
 #define _KERNEL_EVENTS_INTERNAL_H
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/hardirq.h>
 #include <linux/uaccess.h>
 #include <linux/refcount.h>
