@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt)    "%s: " fmt, __func__
 
+#include <linux/overflow.h>
 #include <linux/io_extra.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
