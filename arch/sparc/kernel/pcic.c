@@ -11,6 +11,7 @@
  * CP-1200 by Eric Brower.
  */
 
+#include <linux/irq.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
