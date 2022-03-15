@@ -9,6 +9,7 @@
  * based on pm-sh7372.c
  *  Copyright (C) 2011 Magnus Damm
  */
+#include <linux/fwnode.h>
 #include <linux/clk/renesas.h>
 #include <linux/console.h>
 #include <linux/delay.h>

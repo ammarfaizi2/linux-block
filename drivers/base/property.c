@@ -7,6 +7,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/fwnode.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
