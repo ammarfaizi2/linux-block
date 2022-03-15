@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 Steven Rostedt <srostedt@redhat.com>
  */
+#include <asm/local_api.h>
 #include <asm/local64_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/trace_recursion.h>

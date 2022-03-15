@@ -15,6 +15,7 @@
  * generic STM API by Chunyan Zhang
  * (C) 2015-2016 Chunyan Zhang <zhang.chunyan@linaro.org>
  */
+#include <asm/local_api.h>
 #include <asm/local.h>
 #include <linux/acpi.h>
 #include <linux/amba/bus.h>

@@ -172,6 +172,7 @@
  * - usages	: Usage history
  */
 
+#include <asm/local_api.h>
 #include <asm/local64_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
