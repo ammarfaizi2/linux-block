@@ -5,6 +5,7 @@
  * (C) 2016 Pengutronix, Alexander Aring <aar@pengutronix.de>
  */
 
+#include <net/ndisc_api.h>
 #include <linux/spinlock_api.h>
 #include <net/6lowpan.h>
 #include <net/addrconf.h>

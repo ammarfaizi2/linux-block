@@ -22,6 +22,7 @@
  *				for datagram xmit
  */
 
+#include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <net/ip6_route_api_mtu.h>
 #include <net/dst_api.h>

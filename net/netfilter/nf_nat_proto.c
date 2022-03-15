@@ -3,6 +3,7 @@
  * (C) 2002-2006 Netfilter Core Team <coreteam@netfilter.org>
  */
 
+#include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/types.h>

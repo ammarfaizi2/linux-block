@@ -9,6 +9,7 @@
  *	Roopa Prabhu <roopa@cumulusnetworks.com>
  */
 
+#include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
