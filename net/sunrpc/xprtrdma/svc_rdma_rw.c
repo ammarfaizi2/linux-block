@@ -5,6 +5,7 @@
  * Use the core R/W API to move RPC-over-RDMA Read and Write chunks.
  */
 
+#include <linux/percpu_counter_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/llist_api.h>

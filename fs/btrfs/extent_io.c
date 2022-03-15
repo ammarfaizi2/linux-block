@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/percpu_counter_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

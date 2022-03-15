@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/percpu_counter_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api_kvmalloc.h>

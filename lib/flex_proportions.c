@@ -33,6 +33,7 @@
  * occurs. This can bit trivially implemented by remembering last period in
  * which something happened with proportion of type j.
  */
+#include <linux/percpu_counter_api.h>
 #include <linux/math64.h>
 #include <linux/log2.h>
 #include <linux/cpumask_api.h>
