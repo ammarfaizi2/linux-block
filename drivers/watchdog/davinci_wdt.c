@@ -9,6 +9,7 @@
  * 2007 (c) MontaVista Software, Inc.
  */
 
+#include <linux/math.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

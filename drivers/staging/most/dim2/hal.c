@@ -11,6 +11,7 @@
 #include "hal.h"
 #include "errors.h"
 #include "reg.h"
+#include <linux/math.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

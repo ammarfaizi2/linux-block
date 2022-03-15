@@ -17,6 +17,7 @@
  * nct7904d     20    12    4     5      8    0xc5
  */
 
+#include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/device.h>

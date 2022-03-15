@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s, %d: " fmt, __func__, __LINE__
 
+#include <linux/math.h>
 #include <linux/bug.h>
 #include <linux/crc32.h>
 #include <linux/fixp-arith.h>

@@ -3,6 +3,7 @@
  * Copyright 2018 NXP
  */
 
+#include <linux/math.h>
 #include <linux/clk-provider.h>
 #include <linux/errno.h>
 #include <linux/export.h>

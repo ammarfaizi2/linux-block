@@ -3,6 +3,7 @@
  * Copyright (c) 2019, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/math.h>
 #include <linux/dim.h>
 
 static int rdma_dim_step(struct dim *dim)

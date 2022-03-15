@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/math.h>
 #include <linux/export.h>
 #include <asm/processor_api.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  * Copyright 2012 Stefan Roese <sr@denx.de>
  */
 
+#include <linux/math.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>

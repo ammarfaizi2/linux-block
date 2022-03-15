@@ -65,6 +65,7 @@
  * finite fields GF(2^q). In Rapport de recherche INRIA no 2829, 1996.
  */
 
+#include <linux/math.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/init.h>

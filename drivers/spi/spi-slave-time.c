@@ -24,6 +24,7 @@
  *		seconds  microseconds
  */
 
+#include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/module.h>

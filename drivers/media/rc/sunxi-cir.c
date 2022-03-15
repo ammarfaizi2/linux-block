@@ -10,6 +10,7 @@
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
  */
 
+#include <linux/math.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

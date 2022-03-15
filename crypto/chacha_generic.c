@@ -6,6 +6,7 @@
  * Copyright (C) 2018 Google LLC
  */
 
+#include <linux/math.h>
 #include <asm/unaligned.h>
 #include <crypto/algapi.h>
 #include <crypto/internal/chacha.h>

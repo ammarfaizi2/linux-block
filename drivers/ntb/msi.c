@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
 
+#include <linux/math.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

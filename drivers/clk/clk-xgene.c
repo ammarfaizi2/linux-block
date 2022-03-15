@@ -5,6 +5,7 @@
  * Copyright (c) 2013, Applied Micro Circuits Corporation
  * Author: Loc Ho <lho@apm.com>
  */
+#include <linux/math.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>
 #include <linux/io.h>

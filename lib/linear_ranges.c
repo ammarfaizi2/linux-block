@@ -8,6 +8,7 @@
  * Copyright 2020 ROHM Semiconductors
  */
 
+#include <linux/math.h>
 #include <linux/errno.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

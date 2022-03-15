@@ -6,6 +6,7 @@
  * Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/math.h>
 #include <linux/export.h>
 #include <linux/err.h>
 #include <linux/gcd.h>

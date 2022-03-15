@@ -6,6 +6,7 @@
  * Copyright (C) 2015 Martin Willi
  */
 
+#include <linux/math.h>
 #include <asm/processor_api.h>
 #include <asm/fpu/types.h>
 #include <crypto/algapi.h>

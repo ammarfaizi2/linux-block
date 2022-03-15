@@ -13,6 +13,7 @@
  *	info@addi-data.com
  */
 
+#include <linux/math.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

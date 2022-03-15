@@ -12,6 +12,7 @@
  *	info@addi-data.com
  */
 
+#include <linux/math.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

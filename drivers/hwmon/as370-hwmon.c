@@ -6,6 +6,7 @@
  * Author: Jisheng Zhang <jszhang@kernel.org>
  */
 
+#include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/hwmon.h>
