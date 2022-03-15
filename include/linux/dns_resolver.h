@@ -24,6 +24,7 @@
 #ifndef _LINUX_DNS_RESOLVER_H
 #define _LINUX_DNS_RESOLVER_H
 
+#include <linux/time64.h>
 #include <uapi/linux/dns_resolver.h>
 
 struct net;
