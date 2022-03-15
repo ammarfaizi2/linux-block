@@ -10,6 +10,7 @@
  * Send feedback to <support@numascale.com>
  *
  */
+#include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/irqflags.h>
 #include <linux/cpumask_api.h>

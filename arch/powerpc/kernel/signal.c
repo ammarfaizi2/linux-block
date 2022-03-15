@@ -9,6 +9,7 @@
  * this archive for more details.
  */
 
+#include <linux/preempt.h>
 #include <linux/tracehook.h>
 #include <linux/signal.h>
 #include <linux/uprobes.h>

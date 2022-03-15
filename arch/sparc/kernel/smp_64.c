@@ -4,6 +4,7 @@
  * Copyright (C) 1997, 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/mm_page_address.h>

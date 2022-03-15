@@ -6,6 +6,7 @@
  *
  *    Author(s): David Hildenbrand <dahi@linux.vnet.ibm.com>
  */
+#include <linux/preempt.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>

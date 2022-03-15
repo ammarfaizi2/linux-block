@@ -9,6 +9,7 @@
  * This file handles the architecture-dependent parts of process handling.
  */
 
+#include <linux/preempt.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/errno.h>

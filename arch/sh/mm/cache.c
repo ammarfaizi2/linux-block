@@ -5,6 +5,7 @@
  * Copyright (C) 1999, 2000, 2002  Niibe Yutaka
  * Copyright (C) 2002 - 2010  Paul Mundt
  */
+#include <linux/preempt.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

@@ -27,6 +27,7 @@
  * limited to 4k bytes per second.
  */
 
+#include <linux/preempt.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/atomic.h>

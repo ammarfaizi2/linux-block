@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/preempt.h>
 #include <linux/io.h>
 #include <asm/delay.h>
 #include <linux/pci.h>

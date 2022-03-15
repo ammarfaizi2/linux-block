@@ -3,6 +3,7 @@
  * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mm_page_address.h>

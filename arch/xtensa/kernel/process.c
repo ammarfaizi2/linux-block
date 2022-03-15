@@ -15,6 +15,7 @@
  * Kevin Chea
  */
 
+#include <linux/preempt.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>

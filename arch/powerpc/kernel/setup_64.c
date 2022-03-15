@@ -6,6 +6,7 @@
  * Copyright (C) 2001 PPC64 Team, IBM Corp
  */
 
+#include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/of_api.h>

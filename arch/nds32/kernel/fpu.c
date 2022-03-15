@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2005-2018 Andes Technology Corporation
 
+#include <linux/preempt.h>
 #include <linux/sched.h>
 #include <linux/signal.h>
 #include <linux/sched/signal.h>

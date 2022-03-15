@@ -9,6 +9,7 @@
  * by Hollis Blanchard <hollisb@us.ibm.com>.
  */
 
+#include <linux/preempt.h>
 #include <linux/gfp_api.h>
 #include <asm/cacheflush.h>
 #include <linux/kvm_host.h>

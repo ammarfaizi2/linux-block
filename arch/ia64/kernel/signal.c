@@ -8,6 +8,7 @@
  * Derived from i386 and Alpha versions.
  */
 
+#include <linux/preempt.h>
 #include <linux/restart_block_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

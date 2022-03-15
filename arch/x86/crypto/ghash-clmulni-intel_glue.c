@@ -7,6 +7,7 @@
  *   Author: Huang Ying <ying.huang@intel.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/minmax.h>
 #include <linux/err.h>
 #include <linux/module.h>

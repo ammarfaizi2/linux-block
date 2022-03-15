@@ -10,6 +10,7 @@
  *          Varun Sethi <varun.sethi@freescale.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>

@@ -6,6 +6,7 @@
  *    Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com)
  */
 
+#include <linux/preempt.h>
 #include <linux/types.h>
 #include <linux/export.h>
 #include <linux/spinlock.h>

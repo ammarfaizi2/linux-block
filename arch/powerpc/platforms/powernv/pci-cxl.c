@@ -3,6 +3,7 @@
  * Copyright 2014-2016 IBM Corp.
  */
 
+#include <linux/preempt.h>
 #include <linux/module.h>
 #include <asm/pnv-pci.h>
 #include <asm/opal.h>

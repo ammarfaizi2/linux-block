@@ -6,6 +6,7 @@
  * [based on crc32c-vpmsum_glue.c]
  */
 
+#include <linux/preempt.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/crc-t10dif.h>
 #include <crypto/internal/hash.h>

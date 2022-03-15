@@ -28,6 +28,7 @@
  * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
+#include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

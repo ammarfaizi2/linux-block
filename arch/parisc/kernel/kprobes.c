@@ -7,6 +7,7 @@
  * Copyright (c) 2019 Sven Schnelle <svens@stackframe.org>
  */
 
+#include <linux/preempt.h>
 #include <linux/types.h>
 #include <linux/kprobes.h>
 #include <linux/slab.h>

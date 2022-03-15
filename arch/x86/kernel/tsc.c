@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/preempt.h>
 #include <linux/perf_event_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

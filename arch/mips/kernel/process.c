@@ -9,6 +9,7 @@
  * Copyright (C) 2004 Thiemo Seufer
  * Copyright (C) 2013  Imagination Technologies Ltd.
  */
+#include <linux/preempt.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

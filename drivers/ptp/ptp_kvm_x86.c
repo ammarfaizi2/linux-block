@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Red Hat Inc.
  */
 
+#include <linux/preempt.h>
 #include <linux/mm_types.h>
 #include <linux/irqflags.h>
 #include <linux/device.h>

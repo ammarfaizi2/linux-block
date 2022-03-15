@@ -5,6 +5,7 @@
  * Copyright 2017, Anju T, IBM Corp.
  */
 
+#include <linux/preempt.h>
 #include <linux/kprobes.h>
 #include <linux/jump_label.h>
 #include <linux/types.h>

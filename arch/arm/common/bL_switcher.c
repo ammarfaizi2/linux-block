@@ -6,6 +6,7 @@
  * Copyright:	(C) 2012-2013  Linaro Limited
  */
 
+#include <linux/preempt.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

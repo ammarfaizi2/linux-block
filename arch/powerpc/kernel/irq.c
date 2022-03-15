@@ -26,6 +26,7 @@
 
 #undef DEBUG
 
+#include <linux/preempt.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

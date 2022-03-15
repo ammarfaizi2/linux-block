@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/minmax.h>
 #include <linux/ktime_api.h>
 #include <linux/cpumask_api.h>

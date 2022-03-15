@@ -7,6 +7,7 @@
 
 #define DEBUG
 
+#include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

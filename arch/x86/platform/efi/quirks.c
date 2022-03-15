@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) "efi: " fmt
 
+#include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <asm/sections.h>

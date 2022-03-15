@@ -6,6 +6,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <linux/preempt.h>
 #include <linux/perf_event_api.h>
 #include <linux/percpu.h>
 #include <linux/cpuhotplug.h>

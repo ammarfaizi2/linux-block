@@ -9,6 +9,7 @@
  * #defines from the assembly-language output.
  */
 
+#include <linux/preempt.h>
 #include <linux/compat.h>
 #include <linux/signal.h>
 #include <linux/sched.h>

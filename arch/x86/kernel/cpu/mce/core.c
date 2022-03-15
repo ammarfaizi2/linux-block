@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <linux/preempt.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

@@ -1,5 +1,6 @@
 #define pr_fmt(fmt) "SVM: " fmt
 
+#include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>

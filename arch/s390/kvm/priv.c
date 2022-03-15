@@ -8,6 +8,7 @@
  *               Christian Borntraeger <borntraeger@de.ibm.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/preempt.h>
 #include <asm/processor.h>
 #include <linux/compat.h>
 #include <linux/errno.h>

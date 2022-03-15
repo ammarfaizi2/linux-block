@@ -16,6 +16,7 @@
  *   Ben-Ami Yassour <benami@il.ibm.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/perf_event_api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>
