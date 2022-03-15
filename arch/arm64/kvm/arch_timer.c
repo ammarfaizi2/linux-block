@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/rcuwait_api.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

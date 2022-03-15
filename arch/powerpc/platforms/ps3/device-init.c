@@ -6,6 +6,7 @@
  *  Copyright 2007 Sony Corp.
  */
 
+#include <linux/rcuwait_api.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/freezer.h>

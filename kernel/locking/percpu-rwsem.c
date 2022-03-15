@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/rcuwait_api.h>
 #include <linux/rcu_sync_api.h>
 #include <linux/percpu_rwsem_api.h>
 #include <linux/lockdep_api.h>

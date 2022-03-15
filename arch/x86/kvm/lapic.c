@@ -16,6 +16,7 @@
  * Based on Xen 3.1 code, Copyright (c) 2004, Intel Corporation.
  */
 
+#include <linux/rcuwait_api.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
