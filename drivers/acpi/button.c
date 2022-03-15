@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ACPI: button: " fmt
 
+#include <linux/device/driver.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/compiler.h>

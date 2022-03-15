@@ -33,6 +33,7 @@
  *              --  Chris Novakovic <chris@chrisn.me.uk>, April 2018
  */
 
+#include <linux/device/driver.h>
 #include <linux/device_api.h>
 #include <linux/types.h>
 #include <linux/string.h>

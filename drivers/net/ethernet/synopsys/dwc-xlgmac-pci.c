@@ -15,6 +15,7 @@
  * in the SOFTWARE may be the trademarks of their respective owners.
  */
 
+#include <linux/device/driver.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

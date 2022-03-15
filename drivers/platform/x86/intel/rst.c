@@ -3,6 +3,7 @@
  *  Copyright 2013 Matthew Garrett <mjg59@srcf.ucam.org>
  */
 
+#include <linux/device/driver.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/module.h>

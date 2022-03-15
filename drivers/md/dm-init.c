@@ -7,6 +7,7 @@
  * This file is released under the GPLv2.
  */
 
+#include <linux/device/driver.h>
 #include <linux/ctype.h>
 #include <linux/device.h>
 #include <linux/device-mapper.h>

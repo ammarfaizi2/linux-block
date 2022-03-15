@@ -3,6 +3,7 @@
  * Copyright 2019 Broadcom.
  */
 
+#include <linux/device/driver.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/sizes.h>
