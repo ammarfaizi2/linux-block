@@ -2,6 +2,7 @@
 #ifndef _LINUX_MMAN_H
 #define _LINUX_MMAN_H
 
+#include <linux/percpu_counter_api.h>
 #include <linux/mm.h>
 #include <linux/percpu_counter.h>
 

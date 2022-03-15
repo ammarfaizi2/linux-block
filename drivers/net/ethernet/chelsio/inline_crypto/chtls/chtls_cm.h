@@ -6,6 +6,7 @@
 #ifndef __CHTLS_CM_H__
 #define __CHTLS_CM_H__
 
+#include <linux/percpu_counter_api.h>
 #include <linux/types.h>
 
 /*
