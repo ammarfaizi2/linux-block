@@ -2,6 +2,7 @@
 #ifndef __LINUX_PWM_H
 #define __LINUX_PWM_H
 
+#include <linux/errno.h>
 #include <linux/err.h>
 #include <linux/mutex.h>
 #include <linux/of.h>

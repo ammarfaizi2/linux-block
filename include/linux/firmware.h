@@ -2,6 +2,7 @@
 #ifndef _LINUX_FIRMWARE_H
 #define _LINUX_FIRMWARE_H
 
+#include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/compiler.h>
 #include <linux/gfp.h>
