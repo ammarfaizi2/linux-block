@@ -15,6 +15,7 @@
  * ( The serial nature of the boot logic and the CPU hotplug lock
  *   protects against more than 2 CPUs entering this code. )
  */
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/jiffies.h>
