@@ -8,6 +8,7 @@
  *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/percpu_rwsem.h>
 #include <linux/types.h>
 
 #ifndef N_HCI
