@@ -18,6 +18,7 @@
  * in the structure.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/trace_events.h>
 
 #ifndef TRACE_SYSTEM_VAR

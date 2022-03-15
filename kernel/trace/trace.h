@@ -3,6 +3,7 @@
 #ifndef _LINUX_KERNEL_TRACE_H
 #define _LINUX_KERNEL_TRACE_H
 
+#include <linux/cpumask_api.h>
 #include <linux/fs.h>
 #include <linux/atomic.h>
 #include <linux/sched.h>

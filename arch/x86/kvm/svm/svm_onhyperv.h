@@ -7,6 +7,7 @@
 #define __ARCH_X86_KVM_SVM_ONHYPERV_H__
 
 #if IS_ENABLED(CONFIG_HYPERV)
+#include <linux/cpumask_api.h>
 #include <asm/mshyperv.h>
 
 #include "hyperv.h"

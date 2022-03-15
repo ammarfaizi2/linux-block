@@ -8,6 +8,7 @@
 #ifndef _ASM_POWERPC_DBELL_H
 #define _ASM_POWERPC_DBELL_H
 
+#include <linux/cpumask_api.h>
 #include <linux/smp.h>
 #include <linux/threads.h>
 

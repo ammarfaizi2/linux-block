@@ -6,6 +6,7 @@
 #ifndef _QEDFC_H_
 #define _QEDFC_H_
 
+#include <linux/cpumask_api.h>
 #include <scsi/libfcoe.h>
 #include <scsi/libfc.h>
 #include <scsi/fc/fc_fip.h>

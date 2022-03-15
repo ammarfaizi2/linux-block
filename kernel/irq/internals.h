@@ -6,6 +6,7 @@
  * kernel/irq/. Do not even think about using any information outside
  * of this file for your non core code.
  */
+#include <linux/cpumask_api.h>
 #include <linux/irqdesc.h>
 #include <linux/kernel_stat.h>
 #include <linux/pm_runtime.h>

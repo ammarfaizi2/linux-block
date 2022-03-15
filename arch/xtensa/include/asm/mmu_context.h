@@ -12,6 +12,7 @@
 #define _XTENSA_MMU_CONTEXT_H
 
 #ifndef CONFIG_MMU
+#include <linux/cpumask_api.h>
 #include <asm/nommu_context.h>
 #else
 

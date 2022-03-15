@@ -11,6 +11,7 @@
 #ifndef __ASM_IA64_UV_HUB_H__
 #define __ASM_IA64_UV_HUB_H__
 
+#include <linux/cpumask_api.h>
 #include <linux/numa.h>
 #include <linux/percpu.h>
 #include <asm/types.h>

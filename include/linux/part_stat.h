@@ -2,6 +2,7 @@
 #ifndef _LINUX_PART_STAT_H
 #define _LINUX_PART_STAT_H
 
+#include <linux/cpumask_api.h>
 #include <asm/local_api.h>
 #include <linux/genhd.h>
 #include <asm/local.h>

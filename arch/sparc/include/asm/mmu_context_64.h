@@ -6,6 +6,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/cpumask_api.h>
 #include <linux/spinlock.h>
 #include <linux/mm_types.h>
 #include <linux/smp.h>

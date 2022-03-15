@@ -5,6 +5,7 @@
 #if !defined(_TRACE_XEN_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_XEN_H
 
+#include <linux/cpumask_api.h>
 #include <linux/tracepoint.h>
 #include <asm/paravirt_types.h>
 #include <asm/xen/trace_types.h>

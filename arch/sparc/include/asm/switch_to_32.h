@@ -2,6 +2,7 @@
 #ifndef __SPARC_SWITCH_TO_H
 #define __SPARC_SWITCH_TO_H
 
+#include <linux/cpumask_api.h>
 #include <asm/smp.h>
 
 extern struct thread_info *current_set[NR_CPUS];

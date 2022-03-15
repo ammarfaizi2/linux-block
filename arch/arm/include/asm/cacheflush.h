@@ -7,6 +7,7 @@
 #ifndef _ASMARM_CACHEFLUSH_H
 #define _ASMARM_CACHEFLUSH_H
 
+#include <linux/cpumask_api.h>
 #include <linux/mm.h>
 
 #include <asm/glue-cache.h>

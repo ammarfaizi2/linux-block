@@ -12,6 +12,7 @@
 #ifndef _HYPERV_VMBUS_H
 #define _HYPERV_VMBUS_H
 
+#include <linux/cpumask_api.h>
 #include <linux/list.h>
 #include <linux/bitops.h>
 #include <asm/sync_bitops.h>

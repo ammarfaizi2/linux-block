@@ -10,6 +10,7 @@
 #ifdef __KERNEL__
 
 #ifndef __powerpc64__
+#include <linux/cpumask_api.h>
 #include <linux/pgtable.h>
 #endif
 #ifndef __powerpc64__

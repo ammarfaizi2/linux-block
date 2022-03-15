@@ -6,6 +6,7 @@
 #ifndef _ASM_RISCV_SMP_H
 #define _ASM_RISCV_SMP_H
 
+#include <linux/cpumask_api.h>
 #include <linux/cpumask.h>
 #include <linux/irqreturn.h>
 #include <linux/thread_info.h>

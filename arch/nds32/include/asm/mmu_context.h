@@ -4,6 +4,7 @@
 #ifndef __ASM_NDS32_MMU_CONTEXT_H
 #define __ASM_NDS32_MMU_CONTEXT_H
 
+#include <linux/cpumask_api.h>
 #include <linux/spinlock.h>
 #include <asm/tlbflush.h>
 #include <asm/proc-fns.h>
