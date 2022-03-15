@@ -2,6 +2,7 @@
 #ifndef __NITROX_REQ_H
 #define __NITROX_REQ_H
 
+#include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 #include <crypto/aes.h>
 

@@ -5,6 +5,7 @@
 #ifndef __DEVCOREDUMP_H
 #define __DEVCOREDUMP_H
 
+#include <linux/scatterlist_api.h>
 #include <linux/gfp_api.h>
 #include <linux/device.h>
 #include <linux/module.h>

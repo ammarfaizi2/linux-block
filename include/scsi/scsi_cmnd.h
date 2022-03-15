@@ -2,6 +2,7 @@
 #ifndef _SCSI_SCSI_CMND_H
 #define _SCSI_SCSI_CMND_H
 
+#include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/blkdev.h>
 #include <linux/t10-pi.h>

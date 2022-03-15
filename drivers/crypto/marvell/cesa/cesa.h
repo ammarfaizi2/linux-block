@@ -2,6 +2,7 @@
 #ifndef __MARVELL_CESA_H__
 #define __MARVELL_CESA_H__
 
+#include <linux/scatterlist_api.h>
 #include <crypto/internal/hash.h>
 #include <crypto/internal/skcipher.h>
 

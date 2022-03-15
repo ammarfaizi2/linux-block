@@ -2,6 +2,7 @@
 #ifndef _RDS_IB_H
 #define _RDS_IB_H
 
+#include <linux/scatterlist_api.h>
 #include <rdma/ib_verbs.h>
 #include <rdma/rdma_cm.h>
 #include <linux/interrupt.h>

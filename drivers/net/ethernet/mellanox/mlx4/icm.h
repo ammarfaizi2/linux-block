@@ -34,6 +34,7 @@
 #ifndef MLX4_ICM_H
 #define MLX4_ICM_H
 
+#include <linux/scatterlist_api.h>
 #include <linux/list.h>
 #include <linux/pci.h>
 #include <linux/mutex.h>
