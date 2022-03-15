@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 Steven Rostedt <srostedt@redhat.com>
  */
+#include <linux/poll.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

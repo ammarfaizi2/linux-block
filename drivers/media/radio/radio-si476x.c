@@ -8,6 +8,7 @@
  * Author: Andrey Smirnov <andrew.smirnov@gmail.com>
  */
 
+#include <linux/poll.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/export.h>

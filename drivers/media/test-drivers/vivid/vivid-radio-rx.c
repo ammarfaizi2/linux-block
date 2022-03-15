@@ -5,6 +5,7 @@
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/fs.h>

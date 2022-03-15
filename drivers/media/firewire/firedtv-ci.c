@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Henrik Kurelid <henrik@kurelid.se>
  */
 
+#include <linux/poll.h>
 #include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/device.h>

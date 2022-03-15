@@ -20,6 +20,7 @@
 #include "cx18-controls.h"
 #include "cx18-ioctl.h"
 #include "cx18-cards.h"
+#include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs.h>
