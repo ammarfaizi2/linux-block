@@ -36,6 +36,7 @@
 extern struct shared_info *HYPERVISOR_shared_info;
 extern struct start_info *xen_start_info;
 
+#include <linux/init.h>
 #include <asm/processor_api.h>
 #include <asm/processor.h>
 

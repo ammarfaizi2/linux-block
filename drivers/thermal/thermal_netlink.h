@@ -4,6 +4,7 @@
  *  Author: Daniel Lezcano <daniel.lezcano@linaro.org>
  */
 
+#include <linux/init.h>
 #include <linux/types.h>
 
 /* Netlink notification function */
