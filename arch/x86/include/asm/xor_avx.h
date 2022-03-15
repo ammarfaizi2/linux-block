@@ -11,6 +11,7 @@
  * Based on Ingo Molnar and Zach Brown's respective MMX and SSE routines
  */
 
+#include <asm/cpufeature.h>
 #include <linux/compiler.h>
 #include <asm/fpu/api.h>
 

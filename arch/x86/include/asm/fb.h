@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_FB_H
 #define _ASM_X86_FB_H
 
+#include <asm/cpufeature.h>
 #include <linux/fb.h>
 #include <linux/fs.h>
 #include <asm/page.h>

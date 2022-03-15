@@ -5,6 +5,7 @@
 #ifndef __ASSEMBLY__
 #ifndef __GENERATING_BOUNDS_H
 
+#include <asm/cpufeature.h>
 #include <linux/spinlock.h>
 #include <linux/list.h>
 #include <linux/wait.h>
