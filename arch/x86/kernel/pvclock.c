@@ -3,6 +3,7 @@
 
 */
 
+#include <asm/msr.h>
 #include <linux/clocksource.h>
 #include <linux/kernel.h>
 #include <linux/percpu.h>

@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/msr.h>
 #include <linux/stddef.h>
 #include <linux/types.h>
 #include <linux/init.h>

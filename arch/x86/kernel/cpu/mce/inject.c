@@ -16,6 +16,7 @@
  *			   Advanced Micro Devices Inc.
  */
 
+#include <asm/msr.h>
 #include <linux/cpu.h>
 #include <linux/debugfs.h>
 #include <linux/kernel.h>

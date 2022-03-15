@@ -5,6 +5,7 @@
  *
  * Author: Andi Kleen
  */
+#include <asm/msr.h>
 #include <linux/kernel.h>
 #include <linux/seq_file.h>
 #include <linux/init.h>

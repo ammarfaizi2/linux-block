@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <asm/msr.h>
 #include <linux/tboot.h>
 
 #include <asm/cpufeature.h>

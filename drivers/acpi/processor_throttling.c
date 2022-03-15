@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <asm/msr.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

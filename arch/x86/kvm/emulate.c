@@ -18,6 +18,7 @@
  * From: xen-unstable 10676:af9809f51f81a3c43f276f00c81a52ef558afda4
  */
 
+#include <asm/msr.h>
 #include <asm/halt.h>
 #include <linux/kvm_host.h>
 #include "kvm_cache_regs.h"

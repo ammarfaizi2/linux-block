@@ -23,6 +23,7 @@
  * actual ministack invocation is in entry_64.S.
  */
 
+#include <asm/msr.h>
 #include <linux/init.h>
 #include <linux/init_task.h>
 #include <linux/kernel.h>

@@ -25,6 +25,7 @@
 #include "hyperv.h"
 #include "xen.h"
 
+#include <asm/msr.h>
 #include <linux/cpu.h>
 #include <linux/kvm_host.h>
 #include <linux/highmem.h>

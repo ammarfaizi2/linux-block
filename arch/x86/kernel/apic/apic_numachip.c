@@ -10,6 +10,7 @@
  * Send feedback to <support@numascale.com>
  *
  */
+#include <asm/msr.h>
 #include <linux/types.h>
 #include <linux/init.h>
 #include <linux/pgtable.h>

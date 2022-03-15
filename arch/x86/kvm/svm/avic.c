@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "SVM: " fmt
 
+#include <asm/msr.h>
 #include <linux/kvm_types.h>
 #include <linux/hashtable.h>
 #include <linux/amd-iommu.h>
