@@ -4,6 +4,7 @@
 #ifndef _ICE_PTP_H_
 #define _ICE_PTP_H_
 
+#include <uapi/linux/net_tstamp.h>
 #include <linux/ptp_clock_kernel.h>
 #include <linux/kthread.h>
 

@@ -3,6 +3,7 @@
 #ifndef _ETHTOOL_COMMON_H
 #define _ETHTOOL_COMMON_H
 
+#include <uapi/linux/net_tstamp.h>
 #include <linux/netdevice.h>
 #include <linux/ethtool.h>
 
