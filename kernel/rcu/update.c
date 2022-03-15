@@ -17,6 +17,7 @@
  *		http://lse.sourceforge.net/locking/rcupdate.html
  *
  */
+#include <linux/srcu.h>
 #include <linux/sched.h>
 #include <linux/rcuwait_api.h>
 #include <linux/lockdep_api.h>

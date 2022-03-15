@@ -10,6 +10,7 @@
  *          Varun Sethi <varun.sethi@freescale.com>
  */
 
+#include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread.h>
 #include <linux/preempt.h>

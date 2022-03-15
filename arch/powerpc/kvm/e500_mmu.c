@@ -13,6 +13,7 @@
  * by Hollis Blanchard <hollisb@us.ibm.com>.
  */
 
+#include <linux/srcu.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>

@@ -86,6 +86,7 @@
  * page-sizes, we need to break this assumption.
  */
 
+#include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/cond_resched.h>

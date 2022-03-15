@@ -7,6 +7,7 @@
 
 #include "common.h"
 
+#include <linux/srcu.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

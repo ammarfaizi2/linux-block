@@ -11,6 +11,7 @@
  *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
  */
 
+#include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/kvm_host.h>

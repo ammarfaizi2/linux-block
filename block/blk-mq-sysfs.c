@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/srcu.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

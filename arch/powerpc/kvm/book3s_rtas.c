@@ -3,6 +3,7 @@
  * Copyright 2012 Michael Ellerman, IBM Corporation.
  */
 
+#include <linux/srcu.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
