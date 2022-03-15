@@ -9,6 +9,7 @@
 #ifndef _KERNEL_AUDIT_H_
 #define _KERNEL_AUDIT_H_
 
+#include <linux/capability.h>
 #include <linux/fs.h>
 #include <linux/audit.h>
 #include <linux/skbuff.h>

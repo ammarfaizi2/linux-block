@@ -10,6 +10,7 @@
 #ifndef _DT3155_H_
 #define _DT3155_H_
 
+#include <linux/capability.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>
 #include <media/v4l2-device.h>
