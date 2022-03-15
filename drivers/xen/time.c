@@ -2,6 +2,7 @@
 /*
  * Xen stolen ticks accounting.
  */
+#include <asm/paravirt_api_clock.h>
 #include <linux/kernel.h>
 #include <linux/kernel_stat.h>
 #include <linux/math64.h>

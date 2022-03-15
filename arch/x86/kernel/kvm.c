@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "kvm-guest: " fmt
 
+#include <asm/paravirt_api_clock.h>
 #include <asm/msr.h>
 #include <asm/halt.h>
 #include <linux/sched/cond_resched.h>

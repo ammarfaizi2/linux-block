@@ -8,6 +8,7 @@
  *
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
+#include <asm/paravirt_api_clock.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/clocksource.h>
