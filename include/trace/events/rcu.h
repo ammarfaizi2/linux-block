@@ -5,6 +5,7 @@
 #if !defined(_TRACE_RCU_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_RCU_H
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/tracepoint.h>
 
 #ifdef CONFIG_RCU_TRACE

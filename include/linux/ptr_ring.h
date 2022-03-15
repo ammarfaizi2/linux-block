@@ -18,6 +18,7 @@
 #define _LINUX_PTR_RING_H 1
 
 #ifdef __KERNEL__
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/spinlock.h>
 #include <linux/cache.h>
 #include <linux/types.h>

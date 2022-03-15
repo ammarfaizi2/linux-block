@@ -2,6 +2,7 @@
 
 #ifndef _NFT_SET_PIPAPO_H
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/bitmap.h>
 #include <linux/log2.h>
 #include <net/ipv6.h>			/* For the maximum length of a field */

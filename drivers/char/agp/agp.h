@@ -29,6 +29,7 @@
 #ifndef _AGP_BACKEND_PRIV_H
 #define _AGP_BACKEND_PRIV_H 1
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/memory_hotplug.h>
 #include <linux/io.h>
 #include <asm/msr.h>
