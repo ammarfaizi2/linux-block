@@ -7,6 +7,7 @@
  *              - Ingress support
  */
 
+#include <uapi/linux/if_arp.h>
 #include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/wait_api.h>

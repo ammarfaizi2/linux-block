@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <uapi/linux/if_arp.h>
 #include <net/netlink_api.h>
 #include <net/neighbour_api.h>
 #include <net/dst_api.h>
