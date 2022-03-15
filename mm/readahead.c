@@ -8,6 +8,7 @@
  *		Initial version.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_api.h>

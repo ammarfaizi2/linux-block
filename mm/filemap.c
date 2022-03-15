@@ -10,6 +10,7 @@
  * most "normal" filesystems (but you don't /have/ to use this:
  * the NFS filesystem used to do this differently, for example)
  */
+#include <linux/xarray_api.h>
 #include <linux/writeback_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>

@@ -3,6 +3,7 @@
  * Implementation of the IOMMU SVA API for the ARM SMMUv3
  */
 
+#include <linux/xarray_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

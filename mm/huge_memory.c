@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/xarray_api.h>
 #include <linux/vmstat.h>
 #include <linux/uaccess.h>
 #include <linux/sysfs.h>

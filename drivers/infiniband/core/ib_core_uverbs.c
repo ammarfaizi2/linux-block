@@ -4,6 +4,7 @@
  * Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All rights reserved.
  * Copyright 2019 Marvell. All rights reserved.
  */
+#include <linux/xarray_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

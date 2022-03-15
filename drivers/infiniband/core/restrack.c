@@ -3,6 +3,7 @@
  * Copyright (c) 2017-2018 Mellanox Technologies. All rights reserved.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/kref_api.h>

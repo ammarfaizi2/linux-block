@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Linaro Ltd.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

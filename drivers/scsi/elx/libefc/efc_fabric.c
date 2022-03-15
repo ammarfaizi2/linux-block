@@ -18,6 +18,7 @@
  * p2p_sm Node State Machine: Point-to-Point Node States
  */
 
+#include <linux/xarray_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 

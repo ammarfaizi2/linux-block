@@ -3,6 +3,7 @@
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
+#include <linux/xarray_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

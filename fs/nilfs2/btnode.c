@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/xarray_api.h>
 #include <linux/pagemap.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>

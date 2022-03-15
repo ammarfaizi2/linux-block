@@ -7,6 +7,7 @@
 
 #include "dm-zoned.h"
 
+#include <linux/xarray_api.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/uuid_api.h>

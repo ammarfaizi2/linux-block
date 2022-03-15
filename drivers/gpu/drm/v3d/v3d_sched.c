@@ -18,6 +18,7 @@
  * semaphores to interlock between them.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
