@@ -7,6 +7,7 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/ratelimit.h>
 #include <linux/cred.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

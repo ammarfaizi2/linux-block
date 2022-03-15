@@ -4,6 +4,7 @@
  * Copyright (c) 2017 Yotam Gigi <yotamg@mellanox.com>
  */
 
+#include <linux/ratelimit.h>
 #include <linux/ktime_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/ratelimit.h>
 #include <linux/mutex_api.h>
 #include <linux/memcontrol.h>
 #include <linux/kthread.h>

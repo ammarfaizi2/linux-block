@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/ratelimit.h>
 #include <linux/random.h>
 #include <linux/percpu.h>
 #include <linux/lockdep_api.h>

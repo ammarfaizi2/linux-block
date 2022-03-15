@@ -4,6 +4,7 @@
  * (C) 2001 Martin Josefsson <gandalf@wlug.westbo.se>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/ratelimit.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/netfilter.h>

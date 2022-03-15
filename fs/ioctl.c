@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/ratelimit.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>

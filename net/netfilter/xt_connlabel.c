@@ -3,6 +3,7 @@
  * (C) 2013 Astaro GmbH & Co KG
  */
 
+#include <linux/ratelimit.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <net/netfilter/nf_conntrack.h>

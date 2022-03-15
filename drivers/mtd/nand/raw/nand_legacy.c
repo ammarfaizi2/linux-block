@@ -13,6 +13,7 @@
  * at some point.
  */
 
+#include <linux/ratelimit.h>
 #include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/delay.h>

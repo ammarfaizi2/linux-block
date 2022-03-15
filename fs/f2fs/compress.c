@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Chao Yu <chao@kernel.org>
  */
 
+#include <linux/ratelimit.h>
 #include <linux/pagemap.h>
 #include <linux/module.h>
 #include <linux/mm_page_address.h>

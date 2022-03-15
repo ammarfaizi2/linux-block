@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt)	"efi: " fmt
 
+#include <linux/ratelimit.h>
 #include <linux/bug.h>
 #include <linux/efi.h>
 #include <linux/irqflags.h>

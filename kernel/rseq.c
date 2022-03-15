@@ -8,6 +8,7 @@
  * Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
+#include <linux/ratelimit.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/rseq_api.h>
 #include <linux/sched.h>

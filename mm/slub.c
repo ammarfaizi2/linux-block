@@ -10,6 +10,7 @@
  * (C) 2011 Linux Foundation, Christoph Lameter
  */
 
+#include <linux/ratelimit.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>

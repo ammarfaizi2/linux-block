@@ -10,6 +10,7 @@
  * Copyright 2002-2003, Stephen Frost, 2.5.x port by laforge@netfilter.org
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/ratelimit.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>

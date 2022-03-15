@@ -34,6 +34,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/ratelimit.h>
+
 #include "core.h"
 #include "addr.h"
 #include "group.h"

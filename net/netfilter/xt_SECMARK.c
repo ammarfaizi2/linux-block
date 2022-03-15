@@ -9,6 +9,7 @@
  * (C) 2006,2008 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/ratelimit.h>
 #include <linux/module.h>
 #include <linux/security.h>
 #include <linux/skbuff.h>

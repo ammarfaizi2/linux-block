@@ -9,6 +9,7 @@
  * for netfilter/iptables.
  */
 
+#include <linux/ratelimit.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
