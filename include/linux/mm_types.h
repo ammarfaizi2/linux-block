@@ -18,7 +18,6 @@
 #include <linux/seqcount_types.h>
 #include <linux/page-flags-layout.h>
 #include <linux/page-flags-defs.h>
-#include <linux/kref.h>
 
 #include <asm/mmu.h>
 
