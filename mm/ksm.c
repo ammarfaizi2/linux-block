@@ -13,6 +13,7 @@
  *	Hugh Dickins
  */
 
+#include <linux/mm_api_tlb_flush.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/memcontrol.h>

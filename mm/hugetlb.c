@@ -3,6 +3,7 @@
  * Generic hugetlb support.
  * (C) Nadia Yvette Chambers, April 2004
  */
+#include <linux/mm_api_tlb_flush.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/lockdep_api.h>

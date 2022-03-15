@@ -12,6 +12,7 @@
  *	    context.lock
  */
 
+#include <linux/mm_api_tlb_flush.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>
