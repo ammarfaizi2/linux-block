@@ -8,6 +8,7 @@
 #include "gve_adminq.h"
 #include "gve_utils.h"
 #include "gve_dqo.h"
+#include <linux/u64_stats_sync_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/prefetch.h>

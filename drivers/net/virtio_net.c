@@ -4,6 +4,7 @@
  * Copyright 2007 Rusty Russell <rusty@rustcorp.com.au> IBM Corporation
  */
 //#define DEBUG
+#include <linux/u64_stats_sync_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>

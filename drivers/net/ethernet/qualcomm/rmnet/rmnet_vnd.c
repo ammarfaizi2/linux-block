@@ -4,6 +4,7 @@
  * RMNET Data virtual network driver
  */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/hashtable_api.h>

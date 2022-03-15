@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep.h>

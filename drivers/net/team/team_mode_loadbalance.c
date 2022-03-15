@@ -4,6 +4,7 @@
  * Copyright (c) 2012 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/slab.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>

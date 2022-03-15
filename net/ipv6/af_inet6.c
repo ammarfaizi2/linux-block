@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>

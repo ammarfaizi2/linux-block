@@ -3,6 +3,7 @@
 
 /* ethtool support for igb */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>

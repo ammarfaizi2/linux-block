@@ -4,6 +4,7 @@
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>
