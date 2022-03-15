@@ -5,6 +5,7 @@
  */
 
 #ifdef __KERNEL__
+#include <linux/cache.h>
 #include <linux/bootconfig.h>
 #include <linux/bug.h>
 #include <linux/ctype.h>

@@ -5,6 +5,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/cache.h>
 #include <linux/firewire.h>
 #include <linux/export.h>
 #include <linux/slab.h>

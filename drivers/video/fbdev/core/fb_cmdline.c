@@ -14,6 +14,7 @@
  * Authors:
  *    Vetter <danie.vetter@ffwll.ch>
  */
+#include <linux/cache.h>
 #include <linux/init.h>
 #include <linux/fb.h>
 

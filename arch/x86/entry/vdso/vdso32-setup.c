@@ -7,6 +7,7 @@
  * This file contains the needed initializations to support sysenter.
  */
 
+#include <linux/cache.h>
 #include <linux/init.h>
 #include <linux/smp.h>
 #include <linux/kernel.h>

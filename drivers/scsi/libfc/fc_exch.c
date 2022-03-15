@@ -11,6 +11,7 @@
  * Fibre Channel exchange and sequence handling.
  */
 
+#include <linux/cache.h>
 #include <linux/atomic_api.h>
 #include <linux/timer.h>
 #include <linux/slab.h>
