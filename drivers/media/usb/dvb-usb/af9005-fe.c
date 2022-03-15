@@ -12,6 +12,7 @@
 #include "af9005-script.h"
 #include "mt2060.h"
 #include "qt1010.h"
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <asm/div64.h>

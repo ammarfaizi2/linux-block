@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/kmod.h>
 #include <linux/types.h>
 #include <linux/netfilter.h>
 #include <linux/module.h>

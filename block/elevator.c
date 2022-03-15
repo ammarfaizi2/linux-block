@@ -23,6 +23,7 @@
  * - completely modularize elevator setup and teardown
  *
  */
+#include <linux/kmod.h>
 #include <linux/iocontext.h>
 #include <linux/hashtable_api.h>
 #include <linux/kernel.h>

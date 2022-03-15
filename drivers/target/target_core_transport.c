@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/kmod.h>
 #include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/net.h>

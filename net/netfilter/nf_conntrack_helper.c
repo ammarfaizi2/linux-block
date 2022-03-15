@@ -7,6 +7,7 @@
  * (C) 2006-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/kmod.h>
 #include <linux/types.h>
 #include <linux/netfilter.h>
 #include <linux/module.h>

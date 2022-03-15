@@ -3,6 +3,7 @@
  *
  *  Copyright (C) 2005-9 DiBcom, SA et al
  */
+#include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
 

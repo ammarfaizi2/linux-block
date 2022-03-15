@@ -5,6 +5,7 @@
  * Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/kmod.h>
 #include <linux/bitops.h>
 #include <linux/atomic_api.h>
 #include <crypto/algapi.h>

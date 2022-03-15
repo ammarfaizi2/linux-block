@@ -85,6 +85,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/kmod.h>
 #include <linux/ipv6.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2006 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/kmod.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/skbuff.h>

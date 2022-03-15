@@ -7,6 +7,7 @@
  *  Author Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/kmod.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

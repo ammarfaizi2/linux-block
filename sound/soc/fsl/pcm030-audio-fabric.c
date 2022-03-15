@@ -6,6 +6,7 @@
 // Copyright 2008 Jon Smirl, Digispeaker
 // Author: Jon Smirl <jonsmirl@gmail.com>
 
+#include <linux/kmod.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>

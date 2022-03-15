@@ -7,6 +7,7 @@
 
 #include "sms-cards.h"
 #include "smsir.h"
+#include <linux/kmod.h>
 #include <linux/module.h>
 
 static struct sms_board sms_boards[] = {

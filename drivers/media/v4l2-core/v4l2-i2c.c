@@ -3,6 +3,7 @@
  * v4l2-i2c - I2C helpers for Video4Linux2
  */
 
+#include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <media/v4l2-common.h>

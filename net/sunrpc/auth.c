@@ -7,6 +7,7 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>

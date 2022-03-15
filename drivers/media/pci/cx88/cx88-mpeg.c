@@ -11,6 +11,7 @@
 
 #include "cx88.h"
 
+#include <linux/kmod.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/init.h>

@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/kmod.h>
 #include <subdev/bios/extdev.h>
 #include <subdev/i2c.h>
 

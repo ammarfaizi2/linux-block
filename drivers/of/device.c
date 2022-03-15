@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/kmod.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

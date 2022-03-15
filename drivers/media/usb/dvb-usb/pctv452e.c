@@ -23,6 +23,7 @@
 #include "isl6423.h"
 #include "lnbp22.h"
 
+#include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/etherdevice_api.h>

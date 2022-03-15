@@ -6,6 +6,7 @@
 
 #define INCLUDE_VERMAGIC
 
+#include <linux/kmod.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

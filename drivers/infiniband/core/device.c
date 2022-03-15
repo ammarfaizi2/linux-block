@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/kmod.h>
 #include <linux/idr_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/device/class.h>

@@ -77,6 +77,7 @@
  *      open up a beer to watch the compilation going.
  */
 
+#include <linux/kmod.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/types.h>

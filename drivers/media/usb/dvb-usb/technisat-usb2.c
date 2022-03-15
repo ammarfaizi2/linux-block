@@ -27,6 +27,7 @@
  */
 
 #define DVB_USB_LOG_PREFIX "technisat-usb2"
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

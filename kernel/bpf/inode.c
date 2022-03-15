@@ -8,6 +8,7 @@
  *	Daniel Borkmann <daniel@iogearbox.net>
  */
 
+#include <linux/kmod.h>
 #include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

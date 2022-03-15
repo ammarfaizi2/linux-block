@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/kmod.h>
 #include <linux/if.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

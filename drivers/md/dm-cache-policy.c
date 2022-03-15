@@ -7,6 +7,7 @@
 #include "dm-cache-policy-internal.h"
 #include "dm.h"
 
+#include <linux/kmod.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 

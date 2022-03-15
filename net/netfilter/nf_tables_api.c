@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/hashtable_api.h>
 #include <linux/hash.h>

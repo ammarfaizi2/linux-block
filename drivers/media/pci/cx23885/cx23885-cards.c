@@ -7,6 +7,7 @@
 
 #include "cx23885.h"
 
+#include <linux/kmod.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/pci.h>

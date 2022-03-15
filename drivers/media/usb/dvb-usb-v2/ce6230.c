@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>

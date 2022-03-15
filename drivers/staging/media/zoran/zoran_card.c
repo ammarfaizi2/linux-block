@@ -9,6 +9,7 @@
  * Copyright (C) 2000 Serguei Miridonov <mirsev@cicese.mx>
  */
 
+#include <linux/kmod.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/kmod.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>

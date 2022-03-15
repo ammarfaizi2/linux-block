@@ -24,6 +24,7 @@
 #include "cx18-ioctl.h"
 #include "cx18-controls.h"
 #include "tuner-xc2028.h"
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
