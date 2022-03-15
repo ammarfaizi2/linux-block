@@ -2,6 +2,7 @@
 #ifndef TARGET_CORE_BASE_H
 #define TARGET_CORE_BASE_H
 
+#include <linux/workqueue.h>
 #include <linux/configfs.h>      /* struct config_group */
 #include <linux/dma-direction.h> /* enum dma_data_direction */
 #include <linux/sbitmap.h>
