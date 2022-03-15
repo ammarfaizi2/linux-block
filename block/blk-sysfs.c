@@ -2,6 +2,7 @@
 /*
  * Functions related to sysfs handling
  */
+#include <linux/percpu-refcount-api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/kobject_api.h>
