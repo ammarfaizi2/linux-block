@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/backlight.h>
 #include <asm/ptrace.h>
 #include <linux/adb.h>
 #include <linux/pmu.h>

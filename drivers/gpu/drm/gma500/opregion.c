@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/backlight.h>
 #include <linux/acpi.h>
 #include "psb_drv.h"
 #include "psb_intel_reg.h"
