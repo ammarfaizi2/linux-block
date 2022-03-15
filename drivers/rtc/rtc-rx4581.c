@@ -23,6 +23,7 @@
  * Copyright 2005-06 Tower Technologies
  */
 
+#include <linux/log2.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

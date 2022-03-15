@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
+#include <linux/log2.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/bpf.h>

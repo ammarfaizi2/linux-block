@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2015 Scott Feldman <sfeldma@gmail.com>
  */
 
+#include <linux/log2.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/init.h>

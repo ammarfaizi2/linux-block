@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/log2.h>
 #include <linux/kobject_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

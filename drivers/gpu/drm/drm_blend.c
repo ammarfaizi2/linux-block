@@ -24,6 +24,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/log2.h>
 #include <linux/export.h>
 #include <linux/slab.h>
 #include <linux/sort.h>

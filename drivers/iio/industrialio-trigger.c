@@ -4,6 +4,7 @@
  * Copyright (c) 2008 Jonathan Cameron
  */
 
+#include <linux/log2.h>
 #include <linux/irqdesc.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
