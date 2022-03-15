@@ -5,6 +5,7 @@
  *  Copyright (C) 2007 - 2010  Paul Mundt
  *  Copyright (C) 2007  Magnus Damm
  */
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

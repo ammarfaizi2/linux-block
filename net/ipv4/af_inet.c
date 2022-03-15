@@ -63,6 +63,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/errno.h>

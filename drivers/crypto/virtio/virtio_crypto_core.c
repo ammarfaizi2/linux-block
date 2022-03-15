@@ -4,6 +4,7 @@
   * Copyright 2016 HUAWEI TECHNOLOGIES CO., LTD.
   */
 
+#include <linux/cpumask_api.h>
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/virtio_config.h>

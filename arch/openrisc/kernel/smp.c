@@ -11,6 +11,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/smp.h>
 #include <linux/cpu.h>
 #include <linux/sched.h>

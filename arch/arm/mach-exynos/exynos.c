@@ -5,6 +5,7 @@
 // Copyright (c) 2010-2014 Samsung Electronics Co., Ltd.
 //		http://www.samsung.com
 
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/io.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
+#include <linux/cpumask_api.h>
 #include <linux/prefetch.h>
 #include <linux/bpf_trace.h>
 #include <net/xdp.h>

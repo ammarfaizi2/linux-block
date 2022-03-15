@@ -5,6 +5,7 @@
  * Copyright (C) 2002 ARM Ltd.
  * All Rights Reserved
  */
+#include <linux/cpumask_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/of.h>

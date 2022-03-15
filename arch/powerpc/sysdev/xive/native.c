@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xive: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/irq.h>
 #include <linux/debugfs.h>

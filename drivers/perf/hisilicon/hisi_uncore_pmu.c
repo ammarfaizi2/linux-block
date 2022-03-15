@@ -8,6 +8,7 @@
  *
  * This code is based on the uncore PMUs like arm-cci and arm-ccn.
  */
+#include <linux/cpumask_api.h>
 #include <asm/local64_api.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

@@ -4,6 +4,7 @@
  * Copyright 2020 NXP
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/net_tstamp.h>
 #include <linux/nospec.h>
 

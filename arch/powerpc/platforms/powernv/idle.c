@@ -5,6 +5,7 @@
  * Copyright 2015 IBM Corp.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/mm.h>

@@ -12,6 +12,7 @@
  * Pete Delaney <piet@tensilica.com
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/cpu.h>
 #include <linux/cpumask.h>

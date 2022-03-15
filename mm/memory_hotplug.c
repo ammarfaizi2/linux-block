@@ -5,6 +5,7 @@
  *  Copyright (C)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/stddef.h>
 #include <linux/mm.h>

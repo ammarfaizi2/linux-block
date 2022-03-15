@@ -10,6 +10,7 @@
  * Copyright (C) 1999 Silicon Graphics, Inc.
  * Copyright (C) 2000, 2001, 2002, 2007	 Maciej W. Rozycki
  */
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
 #include <linux/export.h>

@@ -1,5 +1,6 @@
 #define pr_fmt(fmt)  "Hyper-V: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/hyperv.h>
 #include <linux/log2.h>
 #include <linux/slab.h>

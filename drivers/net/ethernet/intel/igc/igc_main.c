@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c)  2018 Intel Corporation */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/if_vlan.h>

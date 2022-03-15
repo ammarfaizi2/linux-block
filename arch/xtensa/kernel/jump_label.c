@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Cadence Design Systems Inc.
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/cpu.h>
 #include <linux/jump_label.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016 Christoph Hellwig.
  */
+#include <linux/cpumask_api.h>
 #include <linux/device.h>
 #include <linux/blk-mq.h>
 #include <linux/blk-mq-virtio.h>

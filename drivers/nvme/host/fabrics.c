@@ -4,6 +4,7 @@
  * Copyright (c) 2015-2016 HGST, a Western Digital Company.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/miscdevice.h>
 #include <linux/module.h>

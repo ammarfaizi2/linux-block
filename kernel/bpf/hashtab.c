@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  */
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

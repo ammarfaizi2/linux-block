@@ -21,6 +21,7 @@
  * (Condolences to Napoleon XIV)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bug.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

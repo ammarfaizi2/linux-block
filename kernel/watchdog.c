@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "watchdog: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/mm.h>
 #include <linux/cpu.h>
 #include <linux/nmi.h>

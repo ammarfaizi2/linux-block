@@ -3,6 +3,7 @@
  * Copyright (C) 2020 ARM Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <asm/insn.h>
 #include <linux/bitops.h>

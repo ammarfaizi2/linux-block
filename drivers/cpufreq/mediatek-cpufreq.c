@@ -4,6 +4,7 @@
  * Author: Pi-Cheng Chen <pi-cheng.chen@linaro.org>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/clk.h>
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>

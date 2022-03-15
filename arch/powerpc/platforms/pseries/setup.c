@@ -12,6 +12,7 @@
  * bootup setup stuff..
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

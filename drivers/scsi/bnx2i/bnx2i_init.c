@@ -14,6 +14,7 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 
 #include "bnx2i.h"

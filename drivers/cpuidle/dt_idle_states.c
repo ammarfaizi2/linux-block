@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "DT idle-states: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuidle.h>
 #include <linux/cpumask.h>
 #include <linux/errno.h>

@@ -17,6 +17,7 @@
  * and waking up the secondary CPUs
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/init.h>
 #include <linux/smp.h>

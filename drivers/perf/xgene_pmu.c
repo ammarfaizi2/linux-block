@@ -7,6 +7,7 @@
  *         Tai Nguyen <ttnguyen@apm.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <asm/local64_api.h>
 #include <linux/acpi.h>

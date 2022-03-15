@@ -3,6 +3,7 @@
  * Copyright (c) 2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/acpi.h>
 #include <linux/types.h>
 #include <linux/err.h>

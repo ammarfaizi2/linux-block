@@ -3,6 +3,7 @@
  * Implementation of the IOMMU SVA API for the ARM SMMUv3
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/mm.h>
 #include <linux/mmu_context.h>
 #include <linux/mmu_notifier.h>

@@ -6,6 +6,7 @@
  *    Author(s): Heiko Carstens <heiko.carstens@de.ibm.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/seq_file.h>
 #include <linux/cpu.h>
 #include <linux/cacheinfo.h>

@@ -27,6 +27,7 @@
  * we can possibly sleep.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/swap_slots.h>
 #include <linux/cpu.h>

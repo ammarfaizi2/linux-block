@@ -3,6 +3,7 @@
 
 /* ethtool support for ixgbe */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/interrupt.h>
 #include <linux/types.h>

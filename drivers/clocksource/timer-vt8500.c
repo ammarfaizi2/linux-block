@@ -11,6 +11,7 @@
  * Alexey Charkov. Minor changes have been made for Device Tree Support.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/io.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>

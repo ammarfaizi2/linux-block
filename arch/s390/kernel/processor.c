@@ -7,6 +7,7 @@
 #define KMSG_COMPONENT "cpu"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/stop_machine.h>
 #include <linux/cpufeature.h>
 #include <linux/bitops.h>

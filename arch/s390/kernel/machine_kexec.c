@@ -7,6 +7,7 @@
  *	      Michael Holzheu <holzheu@linux.vnet.ibm.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/device.h>
 #include <linux/mm.h>
 #include <linux/kexec.h>

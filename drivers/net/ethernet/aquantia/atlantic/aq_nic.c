@@ -18,6 +18,7 @@
 #include "aq_ptp.h"
 #include "aq_filters.h"
 
+#include <linux/cpumask_api.h>
 #include <linux/moduleparam.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>

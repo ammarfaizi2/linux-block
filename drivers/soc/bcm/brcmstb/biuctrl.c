@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"brcmstb: " KBUILD_MODNAME ": " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/of_address.h>

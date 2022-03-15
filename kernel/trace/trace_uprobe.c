@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt)	"trace_uprobe: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/bpf-cgroup.h>
 #include <linux/security.h>
 #include <linux/ctype.h>

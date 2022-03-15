@@ -3,6 +3,7 @@
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitfield.h>
 #include <linux/cpufreq.h>
 #include <linux/init.h>

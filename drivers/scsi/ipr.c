@@ -40,6 +40,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

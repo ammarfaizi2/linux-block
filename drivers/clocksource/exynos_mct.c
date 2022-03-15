@@ -7,6 +7,7 @@
  * Exynos4 MCT(Multi-Core Timer) support
 */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

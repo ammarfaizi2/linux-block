@@ -7,6 +7,7 @@
  * is Copyright (c) Steven Rostedt <srostedt@redhat.com>
  *
  */
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/sections.h>
 #include <linux/uaccess.h>

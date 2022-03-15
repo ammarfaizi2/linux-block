@@ -9,6 +9,7 @@
  * Copyright (C) 1996 Thomas K. Dyas (tdyas@eden.rutgers.edu)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/errno.h>
 #include <linux/export.h>
 #include <linux/sched.h>

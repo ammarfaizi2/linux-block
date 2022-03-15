@@ -23,6 +23,7 @@
  *						Setup cpu_sibling_map and cpu_core_map
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/acpi.h>
 #include <linux/memblock.h>

@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/slab.h>

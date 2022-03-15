@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2014 ARM Ltd.
  */
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <asm/arch_timer.h>
 #include <asm/cache.h>

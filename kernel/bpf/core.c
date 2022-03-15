@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <uapi/linux/btf.h>

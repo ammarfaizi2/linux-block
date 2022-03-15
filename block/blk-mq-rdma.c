@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2017 Sagi Grimberg.
  */
+#include <linux/cpumask_api.h>
 #include <linux/blk-mq.h>
 #include <linux/blk-mq-rdma.h>
 #include <rdma/ib_verbs.h>

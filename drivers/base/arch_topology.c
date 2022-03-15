@@ -6,6 +6,7 @@
  * Written by: Juri Lelli, ARM Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/acpi.h>
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>

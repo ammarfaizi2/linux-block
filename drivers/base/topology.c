@@ -8,6 +8,7 @@
  *
  * All rights reserved.
  */
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>

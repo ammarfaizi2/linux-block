@@ -14,6 +14,7 @@
  * Buffermem limits added 12.3.98, Rik van Riel.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/sched.h>

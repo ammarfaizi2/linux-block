@@ -55,6 +55,7 @@
 
 #define pr_fmt(fmt) "RAPL PMU: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <asm/msr.h>
 #include <asm/local64_api.h>

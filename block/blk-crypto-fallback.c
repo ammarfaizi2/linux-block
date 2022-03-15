@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "blk-crypto-fallback: " fmt
 
+#include <linux/cpumask_api.h>
 #include <crypto/skcipher.h>
 #include <linux/blk-cgroup.h>
 #include <linux/blk-crypto.h>

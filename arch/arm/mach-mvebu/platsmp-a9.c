@@ -12,6 +12,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/of.h>

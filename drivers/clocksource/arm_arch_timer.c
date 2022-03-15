@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) 	"arch_timer: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

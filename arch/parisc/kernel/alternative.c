@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/processor.h>
 #include <asm/sections.h>
 #include <asm/alternative.h>

@@ -5,6 +5,8 @@
  *
  */
 
+#include <linux/cpumask_api.h>
+
 #include "cn10k.h"
 #include "otx2_reg.h"
 #include "otx2_struct.h"

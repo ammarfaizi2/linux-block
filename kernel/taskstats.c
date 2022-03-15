@@ -6,6 +6,7 @@
  *           (C) Balbir Singh,   IBM Corp. 2006
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cgroup_api.h>
 #include <linux/kernel.h>
 #include <linux/taskstats_kern.h>

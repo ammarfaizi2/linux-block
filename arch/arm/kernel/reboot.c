@@ -3,6 +3,7 @@
  *  Copyright (C) 1996-2000 Russell King - Converted to ARM.
  *  Original Copyright (C) 1995  Linus Torvalds
  */
+#include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/delay.h>
 #include <linux/reboot.h>

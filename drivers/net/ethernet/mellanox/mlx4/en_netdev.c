@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/bpf.h>
 #include <linux/etherdevice.h>

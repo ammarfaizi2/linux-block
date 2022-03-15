@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016 Christoph Hellwig.
  */
+#include <linux/cpumask_api.h>
 #include <linux/kobject.h>
 #include <linux/blkdev.h>
 #include <linux/blk-mq.h>

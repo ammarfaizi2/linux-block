@@ -7,6 +7,7 @@
  * Copyright (C) 2001-2006 Storlink, Corp.
  * Copyright (C) 2008-2009 Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
  */
+#include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/of.h>

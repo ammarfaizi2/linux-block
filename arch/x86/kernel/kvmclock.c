@@ -3,6 +3,7 @@
     Copyright (C) 2008 Glauber de Oliveira Costa, Red Hat Inc.
 */
 
+#include <linux/cpumask_api.h>
 #include <asm/paravirt_api_clock.h>
 #include <linux/clocksource.h>
 #include <linux/kvm_para.h>

@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2002 ARM Limited, All Rights Reserved.
  */
+#include <linux/cpumask_api.h>
 #include <linux/preempt.h>
 #include <linux/smp.h>
 #include <linux/uaccess.h>

@@ -4,6 +4,7 @@
  *
  * Drives the local APIC in "clustered mode".
  */
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/cpumask.h>
 #include <linux/dmi.h>

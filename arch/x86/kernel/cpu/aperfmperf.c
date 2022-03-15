@@ -7,6 +7,7 @@
  * Author: Len Brown <len.brown@intel.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/msr.h>
 #include <linux/sched/task_flags.h>

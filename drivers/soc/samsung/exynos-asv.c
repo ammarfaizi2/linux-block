@@ -9,6 +9,7 @@
  * Samsung Exynos SoC Adaptive Supply Voltage support
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/device.h>
 #include <linux/errno.h>

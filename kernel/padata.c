@@ -11,6 +11,7 @@
  * Author: Daniel Jordan <daniel.m.jordan@oracle.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <linux/completion.h>

@@ -6,6 +6,7 @@
  *  Copyright (C) 2000  Anton Blanchard (anton@samba.org)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

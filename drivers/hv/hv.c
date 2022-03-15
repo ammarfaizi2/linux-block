@@ -8,6 +8,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

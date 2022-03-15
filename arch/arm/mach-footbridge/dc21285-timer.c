@@ -5,6 +5,7 @@
  *  Copyright (C) 1998 Russell King.
  *  Copyright (C) 1998 Phil Blundell
  */
+#include <linux/cpumask_api.h>
 #include <linux/clockchips.h>
 #include <linux/clocksource.h>
 #include <linux/init.h>

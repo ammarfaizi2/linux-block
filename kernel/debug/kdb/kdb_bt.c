@@ -9,6 +9,7 @@
  * Copyright (c) 2009 Wind River Systems, Inc.  All Rights Reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/ctype.h>
 #include <linux/string.h>
 #include <linux/kernel.h>

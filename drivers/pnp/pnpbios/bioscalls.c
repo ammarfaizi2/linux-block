@@ -3,6 +3,7 @@
  * bioscalls.c - the lowlevel layer of the PnPBIOS driver
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -12,6 +12,7 @@
  *    Copyright (c) 2010, Intel Corporation.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bottom_half.h>
 #include <crypto/internal/hash.h>
 #include <crypto/internal/aead.h>

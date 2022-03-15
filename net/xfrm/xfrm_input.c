@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bottom_half.h>
 #include <linux/cache.h>
 #include <linux/interrupt.h>

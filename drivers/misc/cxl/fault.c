@@ -3,6 +3,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/workqueue.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/mm.h>

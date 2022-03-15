@@ -4,6 +4,7 @@
  * Copyright 2016-2019 NXP
  *
  */
+#include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/fsl/mc.h>
 #include <soc/fsl/dpaa2-io.h>

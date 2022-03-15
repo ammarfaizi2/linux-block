@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Zhang, Keguang <keguang.zhang@gmail.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/sizes.h>

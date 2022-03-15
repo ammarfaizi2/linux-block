@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/irq.h>
 #include "en.h"
 #include "en/txrx.h"

@@ -12,6 +12,7 @@
  * realview smp platform.
  * * Copyright (c) 2002 ARM Limited.
  */
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/device.h>

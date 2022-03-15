@@ -7,6 +7,7 @@
  * Copyright (C) 1996 David S. Miller (davem@caip.rutgers.edu)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/clockchips.h>
 #include <linux/interrupt.h>
 #include <linux/profile.h>

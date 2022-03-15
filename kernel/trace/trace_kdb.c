@@ -9,6 +9,7 @@
  * Copyright (C) 2008 Ingo Molnar <mingo@redhat.com>
  *
  */
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/kgdb.h>

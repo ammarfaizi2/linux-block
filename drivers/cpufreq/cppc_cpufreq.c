@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt)	"CPPC Cpufreq:"	fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/arch_topology.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

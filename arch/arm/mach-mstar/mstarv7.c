@@ -6,6 +6,7 @@
  * Author: Daniel Palmer <daniel@thingy.jp>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/init.h>
 #include <asm/mach/arch.h>

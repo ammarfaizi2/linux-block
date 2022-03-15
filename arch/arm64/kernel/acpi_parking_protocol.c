@@ -5,6 +5,7 @@
  * Authors: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
  *	    Mark Salter <msalter@redhat.com>
  */
+#include <linux/cpumask_api.h>
 #include <linux/acpi.h>
 #include <linux/mm.h>
 #include <linux/types.h>

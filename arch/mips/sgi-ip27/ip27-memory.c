@@ -10,6 +10,7 @@
  * On SGI IP27 the ARC memory configuration data is completely bogus but
  * alternate easier to use mechanisms are available.
  */
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/memblock.h>

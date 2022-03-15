@@ -12,6 +12,7 @@
  *  Copyright (C) 1998-2000 Anton Blanchard (anton@samba.org)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel_stat.h>
 #include <linux/seq_file.h>
 #include <linux/export.h>

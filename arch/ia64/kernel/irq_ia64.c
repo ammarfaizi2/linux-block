@@ -15,6 +15,7 @@
  *						Added CPU Hotplug handling for IPF.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/pgtable.h>
 

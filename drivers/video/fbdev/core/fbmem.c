@@ -11,6 +11,7 @@
  * for more details.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 

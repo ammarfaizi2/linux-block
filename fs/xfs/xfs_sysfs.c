@@ -4,6 +4,8 @@
  * All Rights Reserved.
  */
 
+#include <linux/cpumask_api.h>
+
 #include "xfs.h"
 #include "xfs_shared.h"
 #include "xfs_format.h"

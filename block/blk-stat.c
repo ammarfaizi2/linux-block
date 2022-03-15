@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 Jens Axboe
  */
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/rculist.h>

@@ -32,6 +32,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>

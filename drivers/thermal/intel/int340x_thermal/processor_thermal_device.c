@@ -3,6 +3,7 @@
  * processor_thermal_device.c
  * Copyright (c) 2014, Intel Corporation.
  */
+#include <linux/cpumask_api.h>
 #include <asm/msr.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>

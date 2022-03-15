@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008, Marvell International Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

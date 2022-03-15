@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <net/ip6_checksum.h>

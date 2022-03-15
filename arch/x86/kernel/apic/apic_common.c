@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0
  */
+#include <linux/cpumask_api.h>
 #include <linux/irq.h>
 #include <asm/apic.h>
 

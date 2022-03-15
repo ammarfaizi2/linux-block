@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/percpu.h>
 #include <linux/sched.h>
 #include <linux/sched/topology.h>

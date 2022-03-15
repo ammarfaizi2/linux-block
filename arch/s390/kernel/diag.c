@@ -6,6 +6,7 @@
  * Author(s): Michael Holzheu <holzheu@de.ibm.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/export.h>
 #include <linux/init.h>
 #include <linux/cpu.h>

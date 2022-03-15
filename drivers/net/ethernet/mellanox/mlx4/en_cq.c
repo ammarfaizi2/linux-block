@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/mlx4/cq.h>
 #include <linux/mlx4/qp.h>
 #include <linux/mlx4/cmd.h>

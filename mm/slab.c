@@ -87,6 +87,7 @@
  *	All object allocations for a node occur from node specific slab lists.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>

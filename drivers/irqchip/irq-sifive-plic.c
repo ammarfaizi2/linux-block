@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Christoph Hellwig
  */
 #define pr_fmt(fmt) "plic: " fmt
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpu.h>
 #include <linux/interrupt.h>

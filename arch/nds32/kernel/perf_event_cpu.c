@@ -6,6 +6,7 @@
  * 2010 (c) MontaVista Software, LLC.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/local64_api.h>
 #include <linux/perf_event.h>

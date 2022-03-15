@@ -36,6 +36,7 @@
  * InfiniPath 7322 chip
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

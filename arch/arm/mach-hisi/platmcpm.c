@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2014 Linaro Ltd.
  * Copyright (c) 2013-2014 HiSilicon Limited.
  */
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/smp.h>
 #include <linux/delay.h>

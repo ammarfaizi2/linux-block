@@ -4,6 +4,8 @@
  * Copyright (C) 2015-2021 Google, Inc.
  */
 
+#include <linux/cpumask_api.h>
+
 #include "gve.h"
 #include "gve_adminq.h"
 #include "gve_utils.h"

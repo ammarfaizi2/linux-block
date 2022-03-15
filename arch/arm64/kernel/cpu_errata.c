@@ -5,6 +5,7 @@
  * Copyright (C) 2014 ARM Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/spectre.h>
 #include <linux/arm-smccc.h>
 #include <linux/types.h>

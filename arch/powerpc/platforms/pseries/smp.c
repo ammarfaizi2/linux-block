@@ -9,6 +9,7 @@
  */
 
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/smp.h>

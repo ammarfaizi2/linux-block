@@ -11,6 +11,7 @@
  * Reference: AMD Geode(TM) CS5536 Companion Device Data Book
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/export.h>

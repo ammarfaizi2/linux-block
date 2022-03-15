@@ -5,6 +5,7 @@
  *  Copyright (C) 2002 ARM Ltd.
  *  All Rights Reserved
  */
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

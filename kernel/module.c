@@ -6,6 +6,7 @@
 
 #define INCLUDE_VERMAGIC
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/elf_api.h>
 #include <linux/sched/task_flags.h>

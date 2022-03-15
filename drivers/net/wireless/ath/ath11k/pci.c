@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/msi.h>

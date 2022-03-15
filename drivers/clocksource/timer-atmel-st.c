@@ -6,6 +6,7 @@
  *  Copyright (C) 2003 ATMEL
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

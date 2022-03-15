@@ -10,6 +10,7 @@
  * woken, and where there is no way to hot-unplug CPUs.  Real platforms
  * should not copy this code.
  */
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/errno.h>
 #include <linux/delay.h>

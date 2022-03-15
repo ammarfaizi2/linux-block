@@ -15,6 +15,7 @@
  * using the CPU's debug registers.
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <linux/perf_event.h>
 #include <linux/hw_breakpoint.h>

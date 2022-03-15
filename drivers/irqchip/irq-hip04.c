@@ -22,6 +22,7 @@
  * registers are banked per-cpu for these sources.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

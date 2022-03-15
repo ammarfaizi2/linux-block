@@ -4,6 +4,7 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 

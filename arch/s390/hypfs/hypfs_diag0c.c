@@ -7,6 +7,7 @@
  * Copyright IBM Corp. 2014
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/slab.h>
 #include <linux/cpu.h>
 #include <asm/diag.h>

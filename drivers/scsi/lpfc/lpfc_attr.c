@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>

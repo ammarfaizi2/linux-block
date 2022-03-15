@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/acpi.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

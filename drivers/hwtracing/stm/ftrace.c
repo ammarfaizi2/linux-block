@@ -6,6 +6,7 @@
  * STM Ftrace will be registered as a trace_export.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/stm.h>
 #include <linux/trace.h>

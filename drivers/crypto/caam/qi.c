@@ -7,6 +7,7 @@
  * Copyright 2016-2017, 2019-2020 NXP
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpumask.h>
 #include <linux/kthread.h>
 #include <soc/fsl/qman.h>

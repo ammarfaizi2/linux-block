@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>

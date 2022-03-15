@@ -11,6 +11,7 @@
 
 #include "ext4_jbd2.h"
 #include "mballoc.h"
+#include <linux/cpumask_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

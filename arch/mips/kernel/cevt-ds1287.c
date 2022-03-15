@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2008	Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <linux/cpumask_api.h>
 #include <linux/clockchips.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

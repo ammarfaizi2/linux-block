@@ -5,6 +5,7 @@
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

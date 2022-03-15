@@ -11,6 +11,7 @@
  * for more details.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/arch_topology.h>
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>

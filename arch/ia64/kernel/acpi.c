@@ -15,6 +15,7 @@
  *  Copyright (C) 2004 Ashok Raj <ashok.raj@intel.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

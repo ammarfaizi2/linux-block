@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)     "pseries-hotplug-cpu: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>

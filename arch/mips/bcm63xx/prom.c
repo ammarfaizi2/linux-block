@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/memblock.h>
 #include <linux/smp.h>

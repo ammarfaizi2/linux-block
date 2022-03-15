@@ -33,6 +33,7 @@
  * are rare we hope to get away with this. This avoids impacting the core 
  * VM.
  */
+#include <linux/cpumask_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

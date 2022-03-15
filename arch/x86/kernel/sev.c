@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"SEV: " fmt
 
+#include <linux/cpumask_api.h>
 #include <asm/ptrace.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

@@ -3,6 +3,7 @@
  * CPU subsystem support
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

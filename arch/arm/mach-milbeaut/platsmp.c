@@ -4,6 +4,7 @@
  * Copyright:	(C) 2015 Linaro Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu_pm.h>
 #include <linux/irqchip/arm-gic.h>
 #include <linux/of_address.h>

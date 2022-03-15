@@ -2,6 +2,7 @@
 /*
  * NUMA emulation
  */
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/topology.h>

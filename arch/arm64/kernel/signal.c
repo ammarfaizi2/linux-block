@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/processor.h>
 #include <linux/restart_block_api.h>
 #include <linux/sched/rseq_api.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2017 Facebook
  */
+#include <linux/cpumask_api.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/bpf.h>

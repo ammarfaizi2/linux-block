@@ -4,6 +4,7 @@
  * Copyright 2014 Linaro Limited
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpumask.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
