@@ -6,6 +6,7 @@
 #ifndef IB_UMEM_ODP_H
 #define IB_UMEM_ODP_H
 
+#include <linux/mmu_notifier.h>
 #include <rdma/ib_umem.h>
 #include <rdma/ib_verbs.h>
 

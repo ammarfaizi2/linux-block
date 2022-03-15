@@ -7,6 +7,8 @@
 #ifndef _HFI1_MMU_RB_H
 #define _HFI1_MMU_RB_H
 
+#include <linux/mmu_notifier.h>
+
 #include "hfi.h"
 
 struct mmu_rb_node {
