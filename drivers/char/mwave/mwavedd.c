@@ -46,6 +46,7 @@
 *	First release to the public
 */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

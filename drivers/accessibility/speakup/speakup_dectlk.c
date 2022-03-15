@@ -9,6 +9,7 @@
  * specificly written as a driver for the speakup screenreview
  * s not a general device driver.
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/unistd.h>
 #include <linux/proc_fs.h>

@@ -15,6 +15,7 @@
  * by Alexander Graf <agraf@suse.de>.
  */
 
+#include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

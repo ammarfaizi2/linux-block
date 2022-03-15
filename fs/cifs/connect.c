@@ -5,6 +5,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/wait_api.h>
 #include <linux/uuid_api.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>

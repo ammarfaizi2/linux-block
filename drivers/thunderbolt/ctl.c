@@ -6,6 +6,7 @@
  * Copyright (C) 2018, Intel Corporation
  */
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

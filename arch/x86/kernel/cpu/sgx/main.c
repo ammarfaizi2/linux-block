@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2016-20 Intel Corporation. */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/srcu.h>

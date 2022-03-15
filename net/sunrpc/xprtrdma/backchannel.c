@@ -5,6 +5,7 @@
  * Support for reverse-direction RPCs on RPC/RDMA.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sunrpc/xprt.h>
 #include <linux/sunrpc/svc.h>

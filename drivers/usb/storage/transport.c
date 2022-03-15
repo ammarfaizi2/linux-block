@@ -28,6 +28,7 @@
  * status of a command.
  */
 
+#include <linux/wait_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/sched.h>

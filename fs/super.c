@@ -21,6 +21,7 @@
  *  Heavily rewritten for 'one fs - one tree' dcache architecture. AV, Mar 2000
  */
 
+#include <linux/wait_api.h>
 #include <linux/vfs_pressure.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

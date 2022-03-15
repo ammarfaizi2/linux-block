@@ -19,6 +19,7 @@
  * Copyright (C) 2016 Jens Axboe
  *
  */
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/seq_file.h>
 #include <linux/sched/task_flags.h>

@@ -38,6 +38,7 @@
  *	zspage->lock
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmstat.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>

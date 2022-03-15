@@ -67,6 +67,7 @@
  * root@self# cat $DBG_DIR/run
  */
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

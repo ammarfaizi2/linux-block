@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "ashmem: " fmt
 
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

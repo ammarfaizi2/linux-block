@@ -7,6 +7,7 @@
  * Based on: net/mac80211/cfg.c
  */
 
+#include <linux/wait_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/mutex_api.h>
 #include <net/rtnetlink.h>

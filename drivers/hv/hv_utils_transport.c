@@ -5,6 +5,7 @@
  * Copyright (C) 2015, Vitaly Kuznetsov <vkuznets@redhat.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

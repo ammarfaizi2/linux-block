@@ -38,6 +38,7 @@
    Currently rawusb dma pcm buffer transport (this file) is only available to snd-usb-usx2y.
 */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

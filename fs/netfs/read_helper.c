@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/refcount_api.h>
 #include <linux/pagemap_api_readahead.h>

@@ -35,6 +35,7 @@
  * miss any bits.
  */
 
+#include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

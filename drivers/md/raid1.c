@@ -23,6 +23,7 @@
  * - persistent bitmap code
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mm_page_address.h>

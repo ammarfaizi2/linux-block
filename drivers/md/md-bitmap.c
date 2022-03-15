@@ -16,6 +16,7 @@
  * flush after percent set rather than just time based. (maybe both).
  */
 
+#include <linux/wait_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>

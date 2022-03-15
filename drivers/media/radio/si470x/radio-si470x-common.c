@@ -99,6 +99,7 @@
 
 
 /* kernel includes */
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/poll.h>

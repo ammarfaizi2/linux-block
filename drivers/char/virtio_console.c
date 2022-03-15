@@ -4,6 +4,7 @@
  * Copyright (C) 2009, 2010, 2011 Red Hat, Inc.
  * Copyright (C) 2009, 2010, 2011 Amit Shah <amit.shah@redhat.com>
  */
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

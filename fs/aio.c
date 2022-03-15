@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/sysctl.h>
 #include <linux/syscalls_api.h>

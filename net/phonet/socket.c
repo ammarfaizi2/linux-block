@@ -10,6 +10,7 @@
  *          Rémi Denis-Courmont
  */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/seq_file_net.h>
 #include <linux/seq_file.h>

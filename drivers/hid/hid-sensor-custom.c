@@ -4,6 +4,7 @@
  * Copyright (c) 2015, Intel Corporation.
  */
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/string.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/refcount_api.h>

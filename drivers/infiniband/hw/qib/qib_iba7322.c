@@ -36,6 +36,7 @@
  * InfiniPath 7322 chip
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/tasklet_api.h>

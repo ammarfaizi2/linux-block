@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2017, Linaro Ltd
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>

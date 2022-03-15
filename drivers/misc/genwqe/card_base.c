@@ -16,6 +16,7 @@
  * controlled from here.
  */
 
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/io.h>

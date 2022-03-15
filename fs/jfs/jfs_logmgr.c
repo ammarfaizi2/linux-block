@@ -46,6 +46,7 @@
  * 32-bit lspn and page eor.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

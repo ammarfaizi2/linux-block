@@ -10,6 +10,7 @@
  *	http://www.uglx.org/sony.html
  */
   
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

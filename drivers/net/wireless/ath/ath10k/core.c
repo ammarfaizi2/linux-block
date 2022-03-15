@@ -5,6 +5,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

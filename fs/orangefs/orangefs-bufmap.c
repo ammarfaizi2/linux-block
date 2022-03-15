@@ -4,6 +4,7 @@
  *
  * See COPYING in top-level directory.
  */
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

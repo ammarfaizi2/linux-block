@@ -7,6 +7,7 @@
  *         Andy Gross <andy.gross@ti.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

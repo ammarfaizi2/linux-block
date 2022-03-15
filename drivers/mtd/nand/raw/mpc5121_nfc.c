@@ -11,6 +11,7 @@
  * Reworked and extended by Piotr Ziecik <kosmo@semihalf.com>.
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

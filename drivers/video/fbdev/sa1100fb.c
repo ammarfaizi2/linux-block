@@ -160,6 +160,7 @@
  *	- Add patch 681/1 and clean up stork definitions.
  */
 
+#include <linux/wait_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

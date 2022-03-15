@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/wait_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>

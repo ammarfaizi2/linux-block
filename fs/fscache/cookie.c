@@ -9,6 +9,7 @@
  */
 
 #define FSCACHE_DEBUG_LEVEL COOKIE
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/rwsem_api.h>

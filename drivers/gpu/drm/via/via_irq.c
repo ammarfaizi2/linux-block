@@ -35,6 +35,7 @@
  * The refresh rate is also calculated for video playback sync purposes.
  */
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/atomic_api.h>

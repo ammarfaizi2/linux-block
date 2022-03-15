@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/wait_api.h>
 #include <linux/refcount_api.h>
 #include <linux/pagemap.h>
 #include <linux/mm_api.h>

@@ -14,6 +14,7 @@
  *	Copyright (C) 2004 Texas Instruments
  *	Copyright (C) 2005 Dirk Behme
  */
+#include <linux/wait_api.h>
 #include <linux/sysfs.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

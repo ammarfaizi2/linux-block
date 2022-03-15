@@ -10,6 +10,7 @@
 // Generic firmware loader.
 //
 
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

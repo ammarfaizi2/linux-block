@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/percpu.h>

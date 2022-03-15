@@ -37,6 +37,7 @@
 	pr_debug("xenbus_probe (%s:%d) " fmt ".\n",	\
 		 __func__, __LINE__, ##args)
 
+#include <linux/wait_api.h>
 #include <linux/sysfs.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

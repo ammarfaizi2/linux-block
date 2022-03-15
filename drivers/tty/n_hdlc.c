@@ -78,6 +78,7 @@
 
 #define HDLC_MAGIC 0x239e
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/fs_api.h>

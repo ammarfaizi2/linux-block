@@ -4,6 +4,7 @@
  * Copyright(c) 2015-2020 Intel Corporation.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>

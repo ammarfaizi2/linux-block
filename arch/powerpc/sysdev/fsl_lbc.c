@@ -10,6 +10,7 @@
  * Author: Roy Zang <tie-fei.zang@freescale.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/init.h>

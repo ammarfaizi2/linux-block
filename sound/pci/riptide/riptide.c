@@ -74,6 +74,7 @@
             Adopted for Windows NT driver          01/20/98      CNL
 */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>

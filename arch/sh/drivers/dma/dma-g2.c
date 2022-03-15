@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2003 - 2006  Paul Mundt
  */
+#include <linux/wait_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

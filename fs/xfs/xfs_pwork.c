@@ -13,6 +13,7 @@
 #include "xfs_trace.h"
 #include "xfs_sysctl.h"
 #include "xfs_pwork.h"
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/nmi.h>

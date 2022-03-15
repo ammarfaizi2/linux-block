@@ -7,6 +7,7 @@
  * minimal implementation based on egalax_ts.c and egalax_i2c.c
  */
 
+#include <linux/wait_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

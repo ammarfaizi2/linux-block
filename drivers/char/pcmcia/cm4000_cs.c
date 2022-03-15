@@ -23,6 +23,7 @@
   * All rights reserved. Licensed under dual BSD/GPL license.
   */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

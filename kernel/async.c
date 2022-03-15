@@ -44,6 +44,7 @@ asynchronous and synchronous parts of the kernel.
 
 */
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>

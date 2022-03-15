@@ -4,6 +4,7 @@
  *  Copyright (c) 2010, Microsoft Corporation.
  *  Copyright (c) 2011, Novell Inc.
  */
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mm_api.h>

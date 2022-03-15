@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>

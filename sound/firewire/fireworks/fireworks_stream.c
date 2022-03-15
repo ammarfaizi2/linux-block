@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 
 #include "./fireworks.h"

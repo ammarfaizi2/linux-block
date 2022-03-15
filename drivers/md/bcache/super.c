@@ -15,6 +15,7 @@
 #include "writeback.h"
 #include "features.h"
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

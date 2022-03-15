@@ -9,6 +9,7 @@
  * Copyright (c) 2002, Trond Myklebust <trond.myklebust@fys.uio.no>
  *
  */
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>

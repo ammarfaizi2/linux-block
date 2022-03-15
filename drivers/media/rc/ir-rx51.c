@@ -4,6 +4,7 @@
  *
  *  Based on lirc_serial.c
  */
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>

@@ -6,6 +6,7 @@
  *
  * Author: Dipen Dudhat <Dipen.Dudhat@freescale.com>
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

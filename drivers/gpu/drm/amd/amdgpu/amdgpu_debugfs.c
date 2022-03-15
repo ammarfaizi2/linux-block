@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>

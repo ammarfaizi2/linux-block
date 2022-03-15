@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

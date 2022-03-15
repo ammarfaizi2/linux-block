@@ -18,6 +18,7 @@
  * Author:  Andrew Christian
  *          28 May 2002
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

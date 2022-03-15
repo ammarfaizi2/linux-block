@@ -14,6 +14,7 @@
 /* for debugging ARM communication: */
 //#define COM_DEBUG
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

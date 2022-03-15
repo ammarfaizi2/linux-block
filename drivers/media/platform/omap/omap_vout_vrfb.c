@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/wait_api.h>
 #include <linux/mm_api.h>
 #include <linux/sched.h>
 #include <linux/platform_device.h>

@@ -4,6 +4,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 
 #include "igt_reset.h"

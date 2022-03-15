@@ -91,6 +91,7 @@ Version 0.0.6    2.1.110   07-aug-98   Eduardo Marcelo Serrat
 				       dn_bind fixes
 *******************************************************************************/
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

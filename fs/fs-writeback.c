@@ -14,6 +14,7 @@
  *		Additions for address_space-based writeback
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmstat.h>
 #include <linux/sysctl.h>
 #include <linux/spinlock_api.h>

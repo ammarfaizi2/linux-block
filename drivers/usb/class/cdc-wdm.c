@@ -12,6 +12,7 @@
  *
  * Many thanks to Carl Nordbeck
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/sched.h>

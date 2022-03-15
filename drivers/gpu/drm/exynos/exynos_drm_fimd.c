@@ -7,6 +7,7 @@
  *	Inki Dae <inki.dae@samsung.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

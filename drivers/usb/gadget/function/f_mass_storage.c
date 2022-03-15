@@ -168,6 +168,7 @@
 /* #define VERBOSE_DEBUG */
 /* #define DUMP_MSGS */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

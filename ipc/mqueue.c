@@ -13,6 +13,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/time64_api.h>
 #include <linux/syscalls_api.h>

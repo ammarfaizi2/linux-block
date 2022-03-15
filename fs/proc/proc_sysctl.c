@@ -2,6 +2,7 @@
 /*
  * /proc/sys support
  */
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/stringhash.h>
 #include <linux/spinlock_api.h>

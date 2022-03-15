@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2014-15, Intel Corporation.
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/device.h>

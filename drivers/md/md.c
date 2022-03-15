@@ -37,6 +37,7 @@
 
 */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>

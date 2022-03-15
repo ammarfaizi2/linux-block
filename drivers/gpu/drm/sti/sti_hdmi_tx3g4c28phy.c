@@ -4,6 +4,7 @@
  * Author: Vincent Abriou <vincent.abriou@st.com> for STMicroelectronics.
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <drm/drm_print.h>

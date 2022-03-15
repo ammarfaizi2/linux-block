@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2019 MediaTek Inc.
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

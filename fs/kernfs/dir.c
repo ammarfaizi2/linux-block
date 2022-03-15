@@ -7,6 +7,7 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/string.h>
 #include <linux/stringhash.h>

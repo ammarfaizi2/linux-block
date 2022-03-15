@@ -15,6 +15,7 @@
  /* treated slightly differently for reconnection purposes since we never     */
  /* want to reuse a stale file handle and only the caller knows the file info */
 
+#include <linux/wait_api.h>
 #include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

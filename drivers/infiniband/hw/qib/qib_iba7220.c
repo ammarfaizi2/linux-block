@@ -37,6 +37,7 @@
  * QLogic_IB 7220 chip (except that specific to the SerDes)
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

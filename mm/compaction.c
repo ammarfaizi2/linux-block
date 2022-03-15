@@ -8,6 +8,7 @@
  *
  * Copyright IBM Corp. 2007-2010 Mel Gorman <mel@csn.ul.ie>
  */
+#include <linux/wait_api.h>
 #include <linux/vmstat.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

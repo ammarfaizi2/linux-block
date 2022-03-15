@@ -4,6 +4,7 @@
  * Implementation of primary ALSA driver code base for NVIDIA Tegra HDA.
  */
 
+#include <linux/wait_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

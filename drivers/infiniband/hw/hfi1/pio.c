@@ -3,6 +3,7 @@
  * Copyright(c) 2015-2018 Intel Corporation.
  */
 
+#include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

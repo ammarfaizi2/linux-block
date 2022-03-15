@@ -8,6 +8,7 @@
  * Contact: Samu Onkalo <samu.p.onkalo@nokia.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/sysfs.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

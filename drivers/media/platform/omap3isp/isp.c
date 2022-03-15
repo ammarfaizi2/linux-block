@@ -39,6 +39,7 @@
  *	Troy Laramy <t-laramy@ti.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

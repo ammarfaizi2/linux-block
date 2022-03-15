@@ -13,6 +13,7 @@
  * Some parts borrowed from various video4linux drivers, especially
  * bttv-driver.c and zoran.c, see original files for credits.
  */
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>

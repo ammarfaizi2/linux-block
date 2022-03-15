@@ -7,6 +7,7 @@
  *     Author: Alex Williamson <alex.williamson@redhat.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/eventpoll.h>
 #include <linux/vfio.h>

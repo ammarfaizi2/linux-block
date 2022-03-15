@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/sysctl.h>

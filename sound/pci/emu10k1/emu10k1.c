@@ -7,6 +7,7 @@
  *      Added support for Audigy 2 Value.
  */
 
+#include <linux/wait_api.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/time.h>

@@ -18,6 +18,7 @@
  * 	- Plugged memory leak in cfi_staa_writev().
  */
 
+#include <linux/wait_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

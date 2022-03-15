@@ -21,6 +21,7 @@
  * device/bus interface rather than a group interface.
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

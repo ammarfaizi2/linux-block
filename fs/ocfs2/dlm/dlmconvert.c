@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>

@@ -28,6 +28,7 @@
  * with a SMP machine (dual pentium 100), using pktgen, 432 pps (pkt_size = 60)
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>

@@ -6,6 +6,7 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>

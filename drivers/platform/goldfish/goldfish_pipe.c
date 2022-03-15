@@ -47,6 +47,7 @@
  * exchange is properly mapped during a transfer.
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

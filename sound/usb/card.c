@@ -20,6 +20,7 @@
  */
 
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

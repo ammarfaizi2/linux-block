@@ -9,6 +9,7 @@
  * Copyright 2004 Motorola Inc.
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/prefetch.h>

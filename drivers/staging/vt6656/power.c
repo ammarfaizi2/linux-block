@@ -18,6 +18,8 @@
  *
  */
 
+#include <linux/wait_api.h>
+
 #include "mac.h"
 #include "device.h"
 #include "power.h"

@@ -3,6 +3,7 @@
  *  Copyright (c) 2013, Microsoft Corporation.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mm_api.h>

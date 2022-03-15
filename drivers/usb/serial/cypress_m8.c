@@ -21,6 +21,7 @@
 /* Code originates and was built up from ftdi_sio, belkin, pl2303 and others.*/
 
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

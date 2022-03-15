@@ -5,6 +5,7 @@
  * Copyright (C) 2015, Intel Corporation. All rights reserved.
  */
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

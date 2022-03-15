@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>

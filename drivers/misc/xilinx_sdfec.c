@@ -10,6 +10,7 @@
  * like  open(), close() and ioctl().
  */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>

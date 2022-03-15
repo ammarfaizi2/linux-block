@@ -14,6 +14,7 @@
  * Copyright © 2015 Keith Packard <keithp@keithp.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

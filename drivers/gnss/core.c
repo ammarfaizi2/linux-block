@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>

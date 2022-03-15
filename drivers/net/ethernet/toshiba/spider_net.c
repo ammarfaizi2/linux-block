@@ -9,6 +9,7 @@
  *           Jens Osterkamp <Jens.Osterkamp@de.ibm.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pci-dma-compat.h>

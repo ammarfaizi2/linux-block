@@ -9,6 +9,7 @@
  * Copyright (C) 2011 Renesas Solutions Corp.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

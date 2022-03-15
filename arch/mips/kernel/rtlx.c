@@ -7,6 +7,7 @@
  * Copyright (C) 2005, 06 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

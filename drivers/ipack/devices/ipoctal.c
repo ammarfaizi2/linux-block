@@ -7,6 +7,7 @@
  * Author: Samuel Iglesias Gonsalvez <siglesias@igalia.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/device.h>
 #include <linux/module.h>

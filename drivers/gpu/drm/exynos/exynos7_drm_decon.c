@@ -7,6 +7,7 @@
  *	Ajay Kumar <ajaykumar.rs@samsung.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

@@ -14,6 +14,7 @@
 #define pr_fmt(fmt) "%s" fmt, "IPMI message handler: "
 #define dev_fmt pr_fmt
 
+#include <linux/wait_api.h>
 #include <linux/uuid_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/sysfs.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2020 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

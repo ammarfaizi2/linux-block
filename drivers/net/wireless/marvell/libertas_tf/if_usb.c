@@ -10,6 +10,7 @@
 #include "libertas_tf.h"
 #include "if_usb.h"
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

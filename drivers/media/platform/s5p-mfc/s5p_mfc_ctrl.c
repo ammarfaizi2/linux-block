@@ -6,6 +6,7 @@
  *		http://www.samsung.com/
  */
 
+#include <linux/wait_api.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/firmware.h>

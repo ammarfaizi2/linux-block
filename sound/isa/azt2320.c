@@ -17,6 +17,7 @@
     activation method (full-duplex audio!).
 */
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

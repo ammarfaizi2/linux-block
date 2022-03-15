@@ -11,6 +11,7 @@
  *  HP700 (parisc) series machines.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pci_ids.h>
 #include <linux/ioport.h>

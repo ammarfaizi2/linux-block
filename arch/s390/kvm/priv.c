@@ -8,6 +8,7 @@
  *               Christian Borntraeger <borntraeger@de.ibm.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

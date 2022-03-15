@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

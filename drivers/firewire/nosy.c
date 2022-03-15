@@ -4,6 +4,7 @@
  * Copyright (C) 2002-2007 Kristian Høgsberg
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

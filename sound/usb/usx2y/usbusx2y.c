@@ -116,6 +116,7 @@
  *   Copyright (c) 2002 - 2004 Karsten Wiese
  */
 
+#include <linux/wait_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>

@@ -3,6 +3,7 @@
  * Copyright © 2020-2021 Intel Corporation
  */
 
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/delay.h>

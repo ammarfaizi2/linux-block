@@ -27,6 +27,7 @@
 /* Thanx to gkh and the rest of the usb dev group for all code I have
    assimilated :-) */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

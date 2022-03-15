@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

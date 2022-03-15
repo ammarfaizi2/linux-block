@@ -8,6 +8,7 @@
  *		 2021 Eugen Hristev <eugen.hristev@microchip.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

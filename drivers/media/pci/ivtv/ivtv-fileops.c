@@ -21,6 +21,7 @@
 #include "ivtv-ioctl.h"
 #include "ivtv-cards.h"
 #include "ivtv-firmware.h"
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/sched/signal.h>

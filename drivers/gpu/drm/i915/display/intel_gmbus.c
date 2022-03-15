@@ -27,6 +27,7 @@
  *	Chris Wilson <chris@chris-wilson.co.uk>
  */
 
+#include <linux/wait_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>

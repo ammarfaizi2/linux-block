@@ -10,6 +10,7 @@
  * Author: Joonyoung Shim <jy0922.shim@samsung.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/mutex_api.h>

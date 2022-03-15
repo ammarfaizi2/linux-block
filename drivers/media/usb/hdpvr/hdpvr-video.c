@@ -5,6 +5,7 @@
  * Copyright (C) 2008      Janne Grunau (j@jannau.net)
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>

@@ -8,6 +8,7 @@
  * based on arch/arm/common/rtctime.c
  */
 
+#include <linux/wait_api.h>
 #include <linux/timerqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>

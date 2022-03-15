@@ -37,6 +37,7 @@
  * and only accepts the connection if the higher numbered node is heartbeating.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>
 #include <linux/syscalls_api.h>

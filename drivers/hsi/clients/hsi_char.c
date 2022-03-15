@@ -8,6 +8,7 @@
  * Contact: Andras Domokos <andras.domokos@nokia.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>

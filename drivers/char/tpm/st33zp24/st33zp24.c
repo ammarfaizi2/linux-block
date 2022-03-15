@@ -4,6 +4,7 @@
  * Copyright (C) 2009 - 2016 STMicroelectronics
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/jiffies.h>

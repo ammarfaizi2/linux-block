@@ -3,6 +3,7 @@
  *   Copyright (c) 2006-2008 Daniel Mack, Karsten Wiese
 */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/device.h>

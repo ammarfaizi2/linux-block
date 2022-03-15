@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/mm_api_kvmalloc.h>

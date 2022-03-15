@@ -5,6 +5,7 @@
  * Copyright 2010 Steven King <sfking@fdwdc.com>
 */
 
+#include <linux/wait_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
