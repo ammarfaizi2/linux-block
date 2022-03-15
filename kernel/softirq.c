@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/softirq.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/lockdep_api.h>

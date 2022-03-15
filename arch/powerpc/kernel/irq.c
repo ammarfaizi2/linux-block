@@ -26,6 +26,7 @@
 
 #undef DEBUG
 
+#include <linux/softirq.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/preempt.h>
 #include <linux/irqdesc.h>

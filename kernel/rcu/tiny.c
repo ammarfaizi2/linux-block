@@ -9,6 +9,7 @@
  * For detailed explanation of Read-Copy Update mechanism see -
  *		Documentation/RCU
  */
+#include <linux/softirq.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
