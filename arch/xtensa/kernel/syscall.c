@@ -15,6 +15,7 @@
  * Kevin Chea
  *
  */
+#include <linux/syscalls_api.h>
 #include <linux/mm_api.h>
 #include <linux/uaccess.h>
 #include <asm/syscall.h>

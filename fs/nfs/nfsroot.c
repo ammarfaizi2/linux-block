@@ -71,6 +71,7 @@
  *	Chuck Lever	:	Add "nfsrootdebug".
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/types.h>

@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/semaphore.h>
 #include <linux/rculist.h>

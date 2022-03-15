@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 #define DEBUG
 
+#include <linux/syscalls_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/cond_resched.h>

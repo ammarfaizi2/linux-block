@@ -23,6 +23,7 @@
  * Pavel Emelianov <xemul@openvz.org>
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/stat.h>
 #include <linux/slab.h>
 #include <linux/sched/task.h>

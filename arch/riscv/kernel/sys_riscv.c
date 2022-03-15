@@ -5,6 +5,7 @@
  * Copyright (C) 2017 SiFive
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/sched.h>
 #include <linux/syscalls.h>
 #include <asm/unistd.h>

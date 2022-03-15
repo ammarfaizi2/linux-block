@@ -11,6 +11,7 @@
  * environment. Based heavily on sys_ia32.c and sys_sparc32.c.
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/compat.h>
 #include <linux/kernel.h>
 #include <linux/syscalls.h>

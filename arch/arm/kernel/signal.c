@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2009 Russell King
  */
+#include <linux/syscalls_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/signal.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992, 1999  Linus Torvalds
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/user.h>
 #include <linux/sched/signal.h>

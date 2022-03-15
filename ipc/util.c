@@ -44,6 +44,7 @@
  *  see sem_lock().
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>

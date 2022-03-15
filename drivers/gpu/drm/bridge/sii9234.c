@@ -12,6 +12,7 @@
  *    Shankar Bandal <shankar.b@samsung.com>
  *    Dharam Kumar <dharam.kr@samsung.com>
  */
+#include <linux/syscalls_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

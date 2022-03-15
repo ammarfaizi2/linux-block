@@ -9,6 +9,7 @@
  * Thanks goes to Steven Rostedt for writing the original x86 version.
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/ftrace_pause.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
