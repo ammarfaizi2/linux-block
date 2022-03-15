@@ -92,16 +92,14 @@ int main(void)
   DEFINE(VMA_VM_MM,		offsetof(struct vm_area_struct, vm_mm));
   DEFINE(VMA_VM_FLAGS,		offsetof(struct vm_area_struct, vm_flags));
   BLANK();
-  DEFINE(VM_EXEC,	       	VM_EXEC);
+  DEFINE(PAGE_SZ,				PAGE_SIZE);
   BLANK();
-  DEFINE(PAGE_SZ,	       	PAGE_SIZE);
+  DEFINE(ASM_DMA_TO_DEVICE,			DMA_TO_DEVICE);
+  DEFINE(ASM_DMA_FROM_DEVICE,			DMA_FROM_DEVICE);
   BLANK();
-  DEFINE(DMA_TO_DEVICE,		DMA_TO_DEVICE);
-  DEFINE(DMA_FROM_DEVICE,	DMA_FROM_DEVICE);
-  BLANK();
-  DEFINE(PREEMPT_DISABLE_OFFSET, PREEMPT_DISABLE_OFFSET);
-  DEFINE(SOFTIRQ_SHIFT, SOFTIRQ_SHIFT);
-  DEFINE(IRQ_CPUSTAT_SOFTIRQ_PENDING, offsetof(irq_cpustat_t, __softirq_pending));
+  DEFINE(ASM_PREEMPT_DISABLE_OFFSET,		PREEMPT_DISABLE_OFFSET);
+  DEFINE(ASM_SOFTIRQ_SHIFT,			SOFTIRQ_SHIFT);
+  DEFINE(ASM_IRQ_CPUSTAT_SOFTIRQ_PENDING,	offsetof(irq_cpustat_t, __softirq_pending));
   BLANK();
   DEFINE(CPU_BOOT_TASK,		offsetof(struct secondary_data, task));
   BLANK();
@@ -158,7 +156,7 @@ int main(void)
   DEFINE(ARM64_FTR_SYSVAL,	offsetof(struct arm64_ftr_reg, sys_val));
   BLANK();
 #ifdef CONFIG_UNMAP_KERNEL_AT_EL0
-  DEFINE(TRAMP_VALIAS,		TRAMP_VALIAS);
+  DEFINE(ASM_TRAMP_VALIAS,	TRAMP_VALIAS);
 #endif
 #ifdef CONFIG_ARM_SDE_INTERFACE
   DEFINE(SDEI_EVENT_INTREGS,	offsetof(struct sdei_registered_event, interrupted_regs));

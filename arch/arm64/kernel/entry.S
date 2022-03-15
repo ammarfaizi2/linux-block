@@ -102,7 +102,7 @@
 	.endm
 
 	.macro tramp_alias, dst, sym, tmp
-	mov_q	\dst, TRAMP_VALIAS
+	mov_q	\dst, ASM_TRAMP_VALIAS
 	adr_l	\tmp, \sym
 	add	\dst, \dst, \tmp
 	adr_l	\tmp, .entry.tramp.text
@@ -615,10 +615,10 @@ SYM_CODE_END(ret_to_user)
 #ifdef CONFIG_QCOM_FALKOR_ERRATUM_1003
 alternative_if ARM64_WORKAROUND_QCOM_FALKOR_E1003
 	/* ASID already in \tmp[63:48] */
-	movk	\tmp, #:abs_g2_nc:(TRAMP_VALIAS >> 12)
-	movk	\tmp, #:abs_g1_nc:(TRAMP_VALIAS >> 12)
+	movk	\tmp, #:abs_g2_nc:(ASM_TRAMP_VALIAS >> 12)
+	movk	\tmp, #:abs_g1_nc:(ASM_TRAMP_VALIAS >> 12)
 	/* 2MB boundary containing the vectors, so we nobble the walk cache */
-	movk	\tmp, #:abs_g0_nc:((TRAMP_VALIAS & ~(SZ_2M - 1)) >> 12)
+	movk	\tmp, #:abs_g0_nc:((ASM_TRAMP_VALIAS & ~(SZ_2M - 1)) >> 12)
 	isb
 	tlbi	vae1, \tmp
 	dsb	nsh
@@ -641,7 +641,7 @@ alternative_else_nop_endif
 
 	.macro tramp_data_page	dst
 	adr_l	\dst, .entry.tramp.text
-	sub	\dst, \dst, PAGE_SIZE
+	sub	\dst, \dst, PAGE_SZ
 	.endm
 
 	.macro tramp_data_read_var	dst, var

@@ -785,12 +785,12 @@ alternative_endif
 	 * softirq will not be preempted no matter what we do, so we should
 	 * run to completion as quickly as we can.
 	 */
-	tbnz		\tmp, #SOFTIRQ_SHIFT, .Lnoyield_\@
+	tbnz		\tmp, #ASM_SOFTIRQ_SHIFT, .Lnoyield_\@
 #ifdef CONFIG_PREEMPTION
-	sub		\tmp, \tmp, #PREEMPT_DISABLE_OFFSET
+	sub		\tmp, \tmp, #ASM_PREEMPT_DISABLE_OFFSET
 	cbz		\tmp, \lbl
 #endif
-	adr_l		\tmp, irq_stat + IRQ_CPUSTAT_SOFTIRQ_PENDING
+	adr_l		\tmp, irq_stat + ASM_IRQ_CPUSTAT_SOFTIRQ_PENDING
 	get_this_cpu_offset	\tmp2
 	ldr		w\tmp, [\tmp, \tmp2]
 	cbnz		w\tmp, \lbl	// yield on pending softirq in task context
