@@ -13,6 +13,7 @@
 #ifndef _XENMEM_RESERVATION_H
 #define _XENMEM_RESERVATION_H
 
+#include <linux/highmem_extra.h>
 #include <linux/highmem.h>
 
 #include <xen/page.h>
