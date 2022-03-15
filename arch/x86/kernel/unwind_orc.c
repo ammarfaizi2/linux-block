@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <asm/sections.h>
 #include <linux/objtool.h>
 #include <linux/module.h>
 #include <linux/sort.h>

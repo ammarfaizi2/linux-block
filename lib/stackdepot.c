@@ -19,6 +19,7 @@
  * Based on code by Dmitry Chernenkov.
  */
 
+#include <asm/sections.h>
 #include <linux/gfp.h>
 #include <linux/jhash.h>
 #include <linux/kernel.h>

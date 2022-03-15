@@ -10,6 +10,7 @@
  *
  */
 
+#include <asm/sections.h>
 #include <asm/ptrace.h>
 #include <linux/clocksource.h>
 #include <linux/clockchips.h>
