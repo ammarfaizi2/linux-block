@@ -33,6 +33,7 @@
 #ifndef MLX4_QP_H
 #define MLX4_QP_H
 
+#include <linux/radix-tree-api.h>
 #include <linux/types.h>
 #include <linux/if_ether.h>
 

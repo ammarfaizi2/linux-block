@@ -8,6 +8,7 @@
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
+#include <linux/radix-tree-api.h>
 #include <linux/kref.h>
 #include <linux/mutex.h>
 #include <linux/radix-tree.h>

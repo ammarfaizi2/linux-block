@@ -37,6 +37,7 @@
 #ifndef RDMA_CORE_H
 #define RDMA_CORE_H
 
+#include <linux/radix-tree-api.h>
 #include <linux/idr.h>
 #include <rdma/uverbs_types.h>
 #include <rdma/uverbs_ioctl.h>
