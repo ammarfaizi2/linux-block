@@ -10,6 +10,7 @@
  * storage device to each channel for storing ECC data.
  */
 
+#include <asm/x86_init.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/pci.h>
