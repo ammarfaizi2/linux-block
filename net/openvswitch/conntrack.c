@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Nicira, Inc.
  */
 
+#include <linux/netfilter/nf_conntrack_common_api.h>
 #include <linux/ipv6.h>
 #include <linux/capability.h>
 #include <linux/module.h>
