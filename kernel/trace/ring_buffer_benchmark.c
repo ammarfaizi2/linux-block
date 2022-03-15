@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2009 Steven Rostedt <srostedt@redhat.com>
  */
+#include <linux/node.h>
 #include <linux/mm_types.h>
 #include <linux/ktime_api.h>
 #include <linux/cpumask_api.h>
