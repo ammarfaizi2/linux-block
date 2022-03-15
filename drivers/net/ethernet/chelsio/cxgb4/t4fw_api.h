@@ -1,3 +1,6 @@
+
+#include <uapi/linux/if_ether.h>
+
 /*
  * This file is part of the Chelsio T4 Ethernet driver for Linux.
  *
