@@ -16,6 +16,7 @@
 #ifndef BNX2X_H
 #define BNX2X_H
 
+#include <linux/semaphore.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/dev_printk.h>

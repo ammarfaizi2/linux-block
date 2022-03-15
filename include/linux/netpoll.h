@@ -8,6 +8,7 @@
 #ifndef _LINUX_NETPOLL_H
 #define _LINUX_NETPOLL_H
 
+#include <linux/semaphore.h>
 #include <linux/atomic_api.h>
 #include <linux/netdevice.h>
 #include <linux/interrupt.h>

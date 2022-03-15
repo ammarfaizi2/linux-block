@@ -9,6 +9,7 @@
 #ifndef __NAU8825_H__
 #define __NAU8825_H__
 
+#include <linux/semaphore.h>
 #include <linux/types.h>
 
 #define NAU8825_REG_RESET		0x00

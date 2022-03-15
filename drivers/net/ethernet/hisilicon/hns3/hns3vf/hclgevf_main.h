@@ -3,6 +3,7 @@
 
 #ifndef __HCLGEVF_MAIN_H
 #define __HCLGEVF_MAIN_H
+#include <linux/semaphore.h>
 #include <linux/fs.h>
 #include <linux/if_vlan.h>
 #include <linux/types.h>
