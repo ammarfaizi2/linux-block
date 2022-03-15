@@ -9,6 +9,7 @@
  *	   Paul E. McKenney <paulmck@linux.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irq_work.h>
 #include <linux/cache.h>
 #include <linux/spinlock.h>

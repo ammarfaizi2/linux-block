@@ -19,6 +19,8 @@
 #ifndef _ENIC_DEV_H_
 #define _ENIC_DEV_H_
 
+#include <linux/spinlock_api.h>
+
 #include "vnic_dev.h"
 #include "vnic_vic.h"
 

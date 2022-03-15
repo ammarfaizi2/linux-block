@@ -8,6 +8,7 @@
 #ifndef DLMDOMAIN_H
 #define DLMDOMAIN_H
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 extern spinlock_t dlm_domain_lock;

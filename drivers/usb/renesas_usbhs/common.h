@@ -9,6 +9,7 @@
 #ifndef RENESAS_USB_DRIVER_H
 #define RENESAS_USB_DRIVER_H
 
+#include <linux/spinlock_api.h>
 #include <linux/clk.h>
 #include <linux/extcon.h>
 #include <linux/platform_device.h>

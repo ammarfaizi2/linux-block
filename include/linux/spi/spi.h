@@ -6,6 +6,7 @@
 #ifndef __LINUX_SPI_H
 #define __LINUX_SPI_H
 
+#include <linux/spinlock_api.h>
 #include <linux/minmax.h>
 #include <linux/device/driver.h>
 #include <linux/device_api_lock.h>

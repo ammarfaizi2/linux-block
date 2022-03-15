@@ -10,6 +10,7 @@
 #ifndef __LINUX_RCU_H
 #define __LINUX_RCU_H
 
+#include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/debugobjects.h>
 #include <linux/cpumask_api.h>

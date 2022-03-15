@@ -7,6 +7,7 @@
 #ifndef __LOG_DOT_H__
 #define __LOG_DOT_H__
 
+#include <linux/spinlock_api.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
 #include <linux/writeback.h>

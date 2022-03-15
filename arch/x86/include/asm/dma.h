@@ -9,6 +9,7 @@
 #ifndef _ASM_X86_DMA_H
 #define _ASM_X86_DMA_H
 
+#include <linux/spinlock_api.h>
 #include <linux/spinlock.h>	/* And spinlocks */
 #include <asm/io.h>		/* need byte IO */
 

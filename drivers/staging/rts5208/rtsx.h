@@ -12,6 +12,7 @@
 #ifndef __REALTEK_RTSX_H
 #define __REALTEK_RTSX_H
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

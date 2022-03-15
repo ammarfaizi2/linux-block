@@ -8,6 +8,7 @@
 #ifndef FS_9P_V9FS_VFS_H
 #define FS_9P_V9FS_VFS_H
 
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/types.h>
 

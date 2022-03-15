@@ -12,6 +12,7 @@
 #ifndef _NFP_NET_H_
 #define _NFP_NET_H_
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

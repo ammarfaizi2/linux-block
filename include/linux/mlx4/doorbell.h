@@ -35,6 +35,7 @@
 #ifndef MLX4_DOORBELL_H
 #define MLX4_DOORBELL_H
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/io.h>
 

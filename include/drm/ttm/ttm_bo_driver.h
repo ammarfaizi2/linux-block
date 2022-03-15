@@ -30,6 +30,7 @@
 #ifndef _TTM_BO_DRIVER_H_
 #define _TTM_BO_DRIVER_H_
 
+#include <linux/spinlock_api.h>
 #include <drm/drm_mm.h>
 #include <drm/drm_vma_manager.h>
 #include <linux/workqueue.h>

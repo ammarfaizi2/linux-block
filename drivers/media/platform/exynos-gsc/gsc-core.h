@@ -10,6 +10,7 @@
 #ifndef GSC_CORE_H_
 #define GSC_CORE_H_
 
+#include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>

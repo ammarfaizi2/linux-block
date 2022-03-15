@@ -2,6 +2,7 @@
 #ifndef __LINUX_DCACHE_H
 #define __LINUX_DCACHE_H
 
+#include <linux/spinlock_api.h>
 #include <linux/atomic.h>
 #include <linux/list.h>
 #include <linux/math.h>

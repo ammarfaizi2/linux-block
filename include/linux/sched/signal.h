@@ -2,6 +2,7 @@
 #ifndef _LINUX_SCHED_SIGNAL_H
 #define _LINUX_SCHED_SIGNAL_H
 
+#include <linux/spinlock_api.h>
 #include <linux/signal_types.h>
 #include <linux/seqlock_types.h>
 #include <linux/sched/per_task.h>

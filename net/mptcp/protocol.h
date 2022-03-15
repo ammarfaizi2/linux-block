@@ -7,6 +7,7 @@
 #ifndef __MPTCP_PROTOCOL_H
 #define __MPTCP_PROTOCOL_H
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

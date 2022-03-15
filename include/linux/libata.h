@@ -10,6 +10,7 @@
 #ifndef __LINUX_LIBATA_H__
 #define __LINUX_LIBATA_H__
 
+#include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

@@ -9,6 +9,7 @@
 #ifdef __KERNEL__
 #ifndef __ASSEMBLY__
 
+#include <linux/spinlock_api.h>
 #include <linux/spinlock.h>
 #include <asm/cputable.h>
 #include <asm/cpu_has_feature.h>

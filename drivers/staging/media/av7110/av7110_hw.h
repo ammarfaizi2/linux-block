@@ -2,6 +2,8 @@
 #ifndef _AV7110_HW_H_
 #define _AV7110_HW_H_
 
+#include <linux/spinlock_api.h>
+
 #include "av7110.h"
 
 /* DEBI transfer mode defs */

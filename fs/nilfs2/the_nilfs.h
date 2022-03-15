@@ -11,6 +11,7 @@
 #ifndef _THE_NILFS_H
 #define _THE_NILFS_H
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/types.h>

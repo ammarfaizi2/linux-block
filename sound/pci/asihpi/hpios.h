@@ -18,6 +18,7 @@ HPI Operating System Specific macros for Linux Kernel driver
 #define HPI_OS_DEFINED
 #define HPI_BUILD_KERNEL_MODE
 
+#include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/io.h>
 #include <linux/ioctl.h>

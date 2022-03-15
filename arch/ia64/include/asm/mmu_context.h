@@ -24,6 +24,7 @@
 # include <asm/page.h>
 # ifndef __ASSEMBLY__
 
+#include <linux/spinlock_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/compiler.h>
 #include <linux/percpu.h>

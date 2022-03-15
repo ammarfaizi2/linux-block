@@ -13,6 +13,7 @@
 
 #ifndef HVC_CONSOLE_H
 #define HVC_CONSOLE_H
+#include <linux/spinlock_api.h>
 #include <linux/kref.h>
 #include <linux/tty.h>
 #include <linux/spinlock.h>

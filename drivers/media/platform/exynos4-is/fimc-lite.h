@@ -6,6 +6,7 @@
 #ifndef FIMC_LITE_H_
 #define FIMC_LITE_H_
 
+#include <linux/spinlock_api.h>
 #include <linux/sizes.h>
 #include <linux/io.h>
 #include <linux/irqreturn.h>

@@ -6,6 +6,7 @@
 #ifndef	_H_JFS_LOGMGR
 #define _H_JFS_LOGMGR
 
+#include <linux/spinlock_api.h>
 #include <linux/uuid.h>
 
 #include "jfs_filsys.h"

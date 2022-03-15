@@ -4,6 +4,7 @@
 #ifndef __RTL92D_PHY_H__
 #define __RTL92D_PHY_H__
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 #define MAX_PRECMD_CNT				16

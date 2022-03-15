@@ -11,6 +11,7 @@
 #ifndef _IPC_UTIL_H
 #define _IPC_UTIL_H
 
+#include <linux/spinlock_api.h>
 #include <linux/pid.h>
 #include <linux/ipc.h>
 #include <linux/unistd.h>

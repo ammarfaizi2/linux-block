@@ -7,6 +7,7 @@
 #ifndef DM_IO_TRACKER_H
 #define DM_IO_TRACKER_H
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 
 struct dm_io_tracker {

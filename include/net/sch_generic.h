@@ -2,6 +2,7 @@
 #ifndef __NET_SCHED_GENERIC_H
 #define __NET_SCHED_GENERIC_H
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/netdevice_api.h>

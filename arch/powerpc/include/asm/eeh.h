@@ -8,6 +8,7 @@
 #define _POWERPC_EEH_H
 #ifdef __KERNEL__
 
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/list.h>
 #include <linux/string.h>

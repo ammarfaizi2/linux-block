@@ -2,6 +2,7 @@
 #ifndef __LINUX_NET_AFUNIX_H
 #define __LINUX_NET_AFUNIX_H
 
+#include <linux/spinlock_api.h>
 #include <linux/path.h>
 #include <linux/net.h>
 #include <linux/socket.h>

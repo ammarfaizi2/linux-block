@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <asm/io.h>
 
 #include <linux/vmalloc.h>

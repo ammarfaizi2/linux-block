@@ -5,6 +5,7 @@
 #ifndef	__RTW_HCI_H__
 #define __RTW_HCI_H__
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 /* ops for PCI, USB and SDIO */

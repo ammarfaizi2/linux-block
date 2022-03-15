@@ -8,6 +8,7 @@
 
 /*#define DEBUG*/
 
+#include <linux/spinlock_api.h>
 #include <linux/fs.h>
 #include <linux/platform_device.h>
 #include <linux/regmap.h>

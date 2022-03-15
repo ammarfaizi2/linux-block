@@ -9,6 +9,7 @@
 #ifndef STA_H_INCLUDED
 #define STA_H_INCLUDED
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 /* ******************************************************************** */

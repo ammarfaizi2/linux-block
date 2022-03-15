@@ -16,6 +16,7 @@
 #include "rtsx_chip.h"
 #include "rtsx_card.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 static inline void rtsx_exclusive_enter_ss(struct rtsx_chip *chip)

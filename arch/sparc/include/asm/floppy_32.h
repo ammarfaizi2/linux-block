@@ -7,6 +7,7 @@
 #ifndef __ASM_SPARC_FLOPPY_H
 #define __ASM_SPARC_FLOPPY_H
 
+#include <linux/spinlock_api.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/pgtable.h>

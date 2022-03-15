@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 #define GC_THREAD_MIN_WB_PAGES		1	/*

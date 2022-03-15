@@ -37,6 +37,7 @@
 #ifndef _TIPC_BCAST_H
 #define _TIPC_BCAST_H
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 
 #include "core.h"

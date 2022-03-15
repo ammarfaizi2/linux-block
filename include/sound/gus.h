@@ -7,6 +7,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/spinlock_api.h>
 #include <sound/pcm.h>
 #include <sound/rawmidi.h>
 #include <sound/timer.h>

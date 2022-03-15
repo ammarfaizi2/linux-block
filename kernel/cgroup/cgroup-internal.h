@@ -2,6 +2,7 @@
 #ifndef __CGROUP_INTERNAL_H
 #define __CGROUP_INTERNAL_H
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/cgroup_api.h>
 #include <linux/cgroup.h>

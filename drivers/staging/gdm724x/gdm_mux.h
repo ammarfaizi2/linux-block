@@ -4,6 +4,7 @@
 #ifndef _GDM_MUX_H_
 #define _GDM_MUX_H_
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/usb.h>
 #include <linux/list.h>

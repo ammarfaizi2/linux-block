@@ -1,6 +1,7 @@
 #ifndef __LINUX_MROUTE_BASE_H
 #define __LINUX_MROUTE_BASE_H
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/netdevice.h>
 #include <linux/rhashtable-types.h>

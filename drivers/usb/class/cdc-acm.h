@@ -6,6 +6,7 @@
  * Mainly take from usbnet's cdc-ether part
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 /*

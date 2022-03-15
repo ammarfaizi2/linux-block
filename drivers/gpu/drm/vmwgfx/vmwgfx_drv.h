@@ -28,6 +28,7 @@
 #ifndef _VMWGFX_DRV_H_
 #define _VMWGFX_DRV_H_
 
+#include <linux/spinlock_api.h>
 #include <linux/notifier.h>
 #include <linux/io.h>
 #include <linux/suspend.h>

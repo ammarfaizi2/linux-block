@@ -10,6 +10,7 @@
 #ifndef __ACLINUXEX_H__
 #define __ACLINUXEX_H__
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 #ifdef __KERNEL__

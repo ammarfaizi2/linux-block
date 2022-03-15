@@ -8,6 +8,7 @@
 #ifndef SUNRPC_SVC_XPRT_H
 #define SUNRPC_SVC_XPRT_H
 
+#include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/sunrpc/svc.h>
 

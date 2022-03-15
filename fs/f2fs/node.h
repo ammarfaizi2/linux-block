@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 /* start node id of a node block dedicated to the given node id */

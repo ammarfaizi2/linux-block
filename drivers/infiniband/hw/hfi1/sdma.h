@@ -6,6 +6,7 @@
 #ifndef _HFI1_SDMA_H
 #define _HFI1_SDMA_H
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/list.h>
 #include <asm/byteorder.h>

@@ -7,6 +7,7 @@
 #ifndef VIRT_DMA_H
 #define VIRT_DMA_H
 
+#include <linux/spinlock_api.h>
 #include <linux/dev_printk.h>
 #include <linux/dmaengine.h>
 #include <linux/interrupt.h>

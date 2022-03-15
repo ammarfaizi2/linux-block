@@ -24,6 +24,7 @@
 #undef SISFB_USE_SPINLOCKS
 
 #ifdef SISFB_USE_SPINLOCKS
+#include <linux/spinlock_api.h>
 #include <linux/spinlock.h>
 #define CRITBEGIN  spin_lock_irqsave(&ivideo->lockaccel, critflags);
 #define CRITEND	   spin_unlock_irqrestore(&ivideo->lockaccel, critflags);

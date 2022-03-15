@@ -5,6 +5,7 @@
 # error "please don't include this file directly"
 #endif
 
+#include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/types.h>
 

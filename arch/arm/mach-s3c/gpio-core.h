@@ -12,6 +12,7 @@
 
 /* Bring in machine-local definitions, especially S3C_GPIO_END */
 #include "gpio-samsung.h"
+#include <linux/spinlock_api.h>
 #include <linux/gpio/driver.h>
 
 #define GPIOCON_OFF	(0x00)
