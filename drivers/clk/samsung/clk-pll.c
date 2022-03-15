@@ -6,6 +6,7 @@
  * This file contains the utility functions to register the pll clocks.
 */
 
+#include <vdso/processor.h>
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/hrtimer.h>
