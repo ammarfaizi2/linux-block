@@ -50,6 +50,7 @@
  * granted us permission to leverage.
  */
 
+#include <net/inet_ecn.h>
 #include <linux/timekeeping.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>

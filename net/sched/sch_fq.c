@@ -30,6 +30,7 @@
  *  or SLAB cache will reuse socket for another flow)
  */
 
+#include <net/inet_ecn.h>
 #include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>

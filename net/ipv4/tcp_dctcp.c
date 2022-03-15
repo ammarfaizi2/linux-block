@@ -36,6 +36,7 @@
  *	Glenn Judd <glenn.judd@morganstanley.com>
  */
 
+#include <net/inet_ecn.h>
 #include <linux/btf.h>
 #include <linux/btf_ids.h>
 #include <linux/module.h>

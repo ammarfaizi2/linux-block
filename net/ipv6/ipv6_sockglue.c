@@ -18,6 +18,7 @@
  *		- added multicast source filtering API for MLDv2
  */
 
+#include <net/inet_ecn.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>

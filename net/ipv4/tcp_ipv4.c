@@ -47,6 +47,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <net/inet_ecn.h>
 #include <net/dst_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
