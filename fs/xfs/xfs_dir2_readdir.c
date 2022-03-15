@@ -4,6 +4,7 @@
  * Copyright (c) 2013 Red Hat, Inc.
  * All Rights Reserved.
  */
+#include <linux/fs_entry_types.h>
 #include <linux/fs_api_dir_context.h>
 
 #include "xfs.h"

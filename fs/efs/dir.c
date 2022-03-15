@@ -5,6 +5,7 @@
  * Copyright (c) 1999 Al Smith
  */
 
+#include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/buffer_head.h>
