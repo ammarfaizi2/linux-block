@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/profile.h>
 #include <linux/pgtable_api.h>
 #include <linux/cpumask_api.h>

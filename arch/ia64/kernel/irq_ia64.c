@@ -15,6 +15,7 @@
  *						Added CPU Hotplug handling for IPF.
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>

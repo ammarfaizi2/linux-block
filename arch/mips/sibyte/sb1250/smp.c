@@ -3,6 +3,7 @@
  * Copyright (C) 2001, 2002, 2003 Broadcom Corporation
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
