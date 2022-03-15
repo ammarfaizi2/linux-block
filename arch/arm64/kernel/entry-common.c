@@ -5,6 +5,7 @@
  * Copyright (C) 2019 ARM Ltd.
  */
 
+#include <asm/mte.h>
 #include <linux/context_tracking.h>
 #include <linux/linkage.h>
 #include <linux/lockdep.h>
