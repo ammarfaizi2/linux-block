@@ -25,6 +25,7 @@
 #ifndef _TTM_RESOURCE_H_
 #define _TTM_RESOURCE_H_
 
+#include <linux/dma-fence-api.h>
 #include <linux/types.h>
 #include <linux/mutex.h>
 #include <linux/dma-buf-map.h>

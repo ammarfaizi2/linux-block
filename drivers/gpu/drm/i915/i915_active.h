@@ -7,6 +7,7 @@
 #ifndef _I915_ACTIVE_H_
 #define _I915_ACTIVE_H_
 
+#include <linux/dma-fence-api.h>
 #include <linux/lockdep.h>
 
 #include "i915_active_types.h"
