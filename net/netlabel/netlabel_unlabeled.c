@@ -13,6 +13,7 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2006 - 2008
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

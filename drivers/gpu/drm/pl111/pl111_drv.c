@@ -36,6 +36,7 @@
  *   clock parents.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

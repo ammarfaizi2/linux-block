@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2019-2021 Marvell International Ltd. All rights reserved */
 
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/inetdevice.h>

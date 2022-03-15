@@ -17,6 +17,7 @@
  *   (8802.11: 5.5)
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>

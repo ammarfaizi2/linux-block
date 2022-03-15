@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Richard Cochran <richardcochran@gmail.com>
  *
  */
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

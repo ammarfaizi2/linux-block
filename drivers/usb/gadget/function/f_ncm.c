@@ -11,6 +11,7 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/etherdevice_api.h>

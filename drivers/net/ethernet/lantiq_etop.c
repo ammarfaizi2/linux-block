@@ -4,6 +4,7 @@
  *   Copyright (C) 2011 John Crispin <blogic@openwrt.org>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/kernel.h>

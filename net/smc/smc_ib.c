@@ -12,6 +12,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

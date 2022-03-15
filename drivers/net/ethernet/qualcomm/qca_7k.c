@@ -23,6 +23,7 @@
  *   kernel-based SPI device.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
 #include <linux/spi/spi.h>

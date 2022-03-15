@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/netdevice_api.h>
+
 #include "mt7603.h"
 #include "../trace.h"
 

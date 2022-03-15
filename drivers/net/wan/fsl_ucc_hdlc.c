@@ -4,6 +4,7 @@
  * Copyright 2016 Freescale Semiconductor Inc.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>

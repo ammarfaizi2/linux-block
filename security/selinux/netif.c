@@ -11,6 +11,7 @@
  * Copyright (C) 2007 Hewlett-Packard Development Company, L.P.
  *		      Paul Moore <paul@paul-moore.com>
  */
+#include <linux/netdevice_api.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/slab.h>

@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>

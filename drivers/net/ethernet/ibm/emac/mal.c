@@ -20,6 +20,7 @@
  *      Copyright 2002 MontaVista Softare Inc.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

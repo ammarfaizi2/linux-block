@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

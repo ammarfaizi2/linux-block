@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/net_tstamp.h>
 #include <linux/phy.h>
 #include <linux/platform_device.h>

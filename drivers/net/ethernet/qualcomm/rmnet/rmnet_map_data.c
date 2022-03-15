@@ -4,6 +4,7 @@
  * RMNET Data MAP protocol
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>

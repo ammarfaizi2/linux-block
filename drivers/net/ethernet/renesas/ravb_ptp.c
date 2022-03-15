@@ -6,6 +6,7 @@
  * Copyright (C) 2015-2016 Cogent Embedded, Inc. <source@cogentembedded.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 

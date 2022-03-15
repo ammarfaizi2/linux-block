@@ -5,6 +5,7 @@
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/gfp_api.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>

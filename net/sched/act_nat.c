@@ -5,6 +5,7 @@
  * Copyright (c) 2007 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/init.h>

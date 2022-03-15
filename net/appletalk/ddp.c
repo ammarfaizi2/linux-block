@@ -46,6 +46,7 @@
  *						use seq_file
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

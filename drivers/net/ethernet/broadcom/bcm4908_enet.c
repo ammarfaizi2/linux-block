@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

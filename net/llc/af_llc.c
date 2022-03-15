@@ -20,6 +20,7 @@
  *
  * See the GNU General Public License for more details.
  */
+#include <linux/netdevice_api.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>

@@ -3,6 +3,7 @@
 
 #include "i40e.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/firmware.h>
 
 /**

@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/if_link.h>
 #include <linux/etherdevice_api.h>

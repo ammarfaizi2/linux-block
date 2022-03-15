@@ -14,6 +14,7 @@
  * - RX filtering based on filter configuration (data->rx_filter)
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/ktime_api.h>

@@ -9,6 +9,7 @@
  * ESP GRO support
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/skbuff.h>
 #include <linux/init.h>
 #include <net/protocol.h>

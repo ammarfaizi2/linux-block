@@ -25,6 +25,7 @@
  *                             devices. All mtu based now.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/capability.h>
 #include <linux/module.h>

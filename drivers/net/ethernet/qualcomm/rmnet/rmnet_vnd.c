@@ -4,6 +4,7 @@
  * RMNET Data virtual network driver
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>

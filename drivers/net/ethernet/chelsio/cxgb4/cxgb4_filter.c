@@ -31,6 +31,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/netdevice_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

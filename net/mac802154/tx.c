@@ -9,6 +9,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/if_arp.h>
 #include <linux/crc-ccitt.h>

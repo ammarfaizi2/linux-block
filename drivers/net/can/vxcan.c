@@ -9,6 +9,7 @@
  * Copyright (c) 2017 Oliver Hartkopp <socketcan@hartkopp.net>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/netdevice.h>

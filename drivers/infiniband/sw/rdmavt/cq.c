@@ -3,6 +3,7 @@
  * Copyright(c) 2016 - 2018 Intel Corporation.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kref_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/slab.h>

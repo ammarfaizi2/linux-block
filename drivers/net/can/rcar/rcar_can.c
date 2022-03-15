@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Renesas Solutions Corp.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Florian Westphal <fw@strlen.de>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/gfp.h>
 #include <linux/module.h>

@@ -50,6 +50,7 @@
 
 #include "usbatm.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

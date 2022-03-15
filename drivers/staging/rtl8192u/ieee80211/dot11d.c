@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Implement 802.11d. */
 
+#include <linux/netdevice_api.h>
+
 #include "dot11d.h"
 
 void rtl8192u_dot11d_init(struct ieee80211_device *ieee)

@@ -4,6 +4,7 @@
  * RMNET Data ingress/egress handler
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/netdevice.h>
 #include <linux/netdev_features.h>

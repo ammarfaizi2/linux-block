@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Host AP driver Info Frame processing (part of hostap.o module) */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/if_arp.h>

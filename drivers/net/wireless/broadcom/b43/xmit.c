@@ -14,6 +14,8 @@
 
 */
 
+#include <linux/netdevice_api.h>
+
 #include "xmit.h"
 #include "phy_common.h"
 #include "dma.h"

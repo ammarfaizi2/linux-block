@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/can/dev.h>
 #include <linux/ethtool.h>
 #include <linux/kernel.h>

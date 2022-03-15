@@ -19,6 +19,7 @@
 #include "workarounds.h"
 #include "selftest.h"
 #include "ef10_sriov.h"
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

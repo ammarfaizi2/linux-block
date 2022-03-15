@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2020 Marvell International Ltd. All rights reserved */
 
+#include <linux/netdevice_api.h>
+
 #include "prestera.h"
 #include "prestera_acl.h"
 #include "prestera_flow.h"

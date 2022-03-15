@@ -7,6 +7,8 @@
  *         Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/netdevice_api.h>
+
 #include "mt7615.h"
 #include "../dma.h"
 #include "mac.h"

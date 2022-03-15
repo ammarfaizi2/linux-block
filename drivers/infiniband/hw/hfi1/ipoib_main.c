@@ -8,6 +8,8 @@
  * This file contains HFI1 support for ipoib functionality
  */
 
+#include <linux/netdevice_api.h>
+
 #include "ipoib.h"
 #include "hfi.h"
 

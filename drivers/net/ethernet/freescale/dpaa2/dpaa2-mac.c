@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2019 NXP */
 
+#include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/pcs-lynx.h>

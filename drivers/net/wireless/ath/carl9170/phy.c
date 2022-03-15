@@ -36,6 +36,7 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/bitrev.h>
 #include "carl9170.h"
 #include "cmd.h"

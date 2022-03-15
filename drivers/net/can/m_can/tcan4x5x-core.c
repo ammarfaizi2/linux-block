@@ -2,6 +2,7 @@
 // SPI to CAN driver for the Texas Instruments TCAN4x5x
 // Copyright (C) 2018-19 Texas Instruments Incorporated - http://www.ti.com/
 
+#include <linux/netdevice_api.h>
 #include <linux/delay.h>
 
 #include "tcan4x5x.h"

@@ -23,6 +23,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/compiler.h>
 #include <linux/module.h>

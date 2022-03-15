@@ -9,6 +9,7 @@
  * Author: Rémi Denis-Courmont
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
 #include <linux/if_ether.h>

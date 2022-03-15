@@ -17,6 +17,7 @@
   * Driver for the LanMedia LMC5200, LMC5245, LMC1000, LMC1200 cards.
   */
 
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/timer.h>

@@ -42,6 +42,7 @@
 /*#define DEBUG*/
 /*#define TEST_HITS*/
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/errno.h>

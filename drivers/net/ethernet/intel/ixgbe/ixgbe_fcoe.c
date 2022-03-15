@@ -2,6 +2,7 @@
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
 #include "ixgbe.h"
+#include <linux/netdevice_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

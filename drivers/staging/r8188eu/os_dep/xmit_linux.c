@@ -3,6 +3,8 @@
 
 #define _XMIT_OSDEP_C_
 
+#include <linux/netdevice_api.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/wifi.h"

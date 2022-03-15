@@ -5,6 +5,7 @@
  * Copyright (c) 2003-2007 Cavium Networks
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
 #include <linux/interrupt.h>

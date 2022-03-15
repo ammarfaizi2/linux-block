@@ -7,6 +7,7 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>

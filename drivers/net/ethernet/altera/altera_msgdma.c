@@ -3,6 +3,7 @@
  * Copyright (C) 2014 Altera Corporation. All rights reserved
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include "altera_utils.h"
 #include "altera_tse.h"

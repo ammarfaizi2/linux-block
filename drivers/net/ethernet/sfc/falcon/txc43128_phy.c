@@ -9,6 +9,7 @@
  * see www.transwitch.com, part is TXC-43128
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

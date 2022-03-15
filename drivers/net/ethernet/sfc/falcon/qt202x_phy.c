@@ -7,6 +7,7 @@
  * Driver for AMCC QT202x SFP+ and XFP adapters; see www.amcc.com for details
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/timer.h>

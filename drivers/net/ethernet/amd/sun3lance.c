@@ -24,6 +24,7 @@
 static const char version[] =
 "sun3lance.c: v1.2 1/12/2001  Sam Creasey (sammy@sammy.net)\n";
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

@@ -4,6 +4,7 @@
 /* ethtool support for iavf */
 #include "iavf.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

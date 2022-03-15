@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Corentin Labbe <clabbe.montjoie@gmail.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/io.h>

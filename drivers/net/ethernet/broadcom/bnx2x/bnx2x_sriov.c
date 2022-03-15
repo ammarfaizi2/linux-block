@@ -23,6 +23,7 @@
 #include "bnx2x_init.h"
 #include "bnx2x_cmn.h"
 #include "bnx2x_sp.h"
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/if_link.h>

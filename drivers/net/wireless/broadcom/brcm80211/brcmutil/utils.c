@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/module.h>
 

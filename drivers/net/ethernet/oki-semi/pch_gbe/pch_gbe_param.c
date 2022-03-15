@@ -7,6 +7,7 @@
  */
 
 #include "pch_gbe.h"
+#include <linux/netdevice_api.h>
 #include <linux/module.h>	/* for __MODULE_STRING */
 
 #define OPTION_UNSET   -1

@@ -5,6 +5,7 @@
  * Copyright (c) 2013 Florian Fainelli <florian@openwrt.org>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>

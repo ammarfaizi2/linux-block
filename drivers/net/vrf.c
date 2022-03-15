@@ -9,6 +9,7 @@
  * Based on dummy, team and ipvlan drivers
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/hashtable_api.h>
 #include <linux/etherdevice_api.h>

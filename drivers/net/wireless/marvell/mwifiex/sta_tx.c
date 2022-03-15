@@ -17,6 +17,8 @@
  * this warranty disclaimer.
  */
 
+#include <linux/netdevice_api.h>
+
 #include "decl.h"
 #include "ioctl.h"
 #include "util.h"

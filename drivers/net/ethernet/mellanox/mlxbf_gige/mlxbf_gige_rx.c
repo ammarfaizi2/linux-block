@@ -5,6 +5,7 @@
  * Copyright (C) 2020-2021 NVIDIA CORPORATION & AFFILIATES
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

@@ -15,6 +15,7 @@
 
 */
 
+#include <linux/netdevice_api.h>
 #include <net/dst.h>
 
 #include "xmit.h"

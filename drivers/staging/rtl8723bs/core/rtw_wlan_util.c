@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <drv_types.h>

@@ -3,6 +3,7 @@
  * Copyright Gavin Shan, IBM Corporation 2016.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -16,6 +16,7 @@
 
 #define _RECV_OSDEP_C_
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/usb.h>
 

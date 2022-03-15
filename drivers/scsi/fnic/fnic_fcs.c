@@ -15,6 +15,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>

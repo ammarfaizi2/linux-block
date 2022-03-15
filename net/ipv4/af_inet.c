@@ -63,6 +63,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/math64.h>
 #include <linux/fs_api.h>

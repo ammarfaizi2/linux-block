@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Pablo Neira Ayuso <pablo@netfilter.org>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

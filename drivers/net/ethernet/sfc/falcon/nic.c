@@ -5,6 +5,7 @@
  * Copyright 2006-2013 Solarflare Communications Inc.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

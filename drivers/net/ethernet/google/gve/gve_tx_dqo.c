@@ -8,6 +8,7 @@
 #include "gve_adminq.h"
 #include "gve_utils.h"
 #include "gve_dqo.h"
+#include <linux/netdevice_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>

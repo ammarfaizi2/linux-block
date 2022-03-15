@@ -61,6 +61,7 @@
 static const char version[] =
 "cs89x0.c:v1.02 11/26/96 Russell Nelson <nelson@crynwr.com>\n";
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 

@@ -7,6 +7,7 @@
  * Copyright (c) 2020 Microsemi Corporation
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

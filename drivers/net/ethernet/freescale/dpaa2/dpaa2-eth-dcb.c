@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2020 NXP */
 
+#include <linux/netdevice_api.h>
 #include <linux/dcbnl.h>
 
 #include "dpaa2-eth.h"

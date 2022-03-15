@@ -10,6 +10,7 @@
   supported by this driver and makes no commitment to maintain it.
 */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

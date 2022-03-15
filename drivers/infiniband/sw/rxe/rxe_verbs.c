@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

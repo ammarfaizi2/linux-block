@@ -6,6 +6,8 @@
  *	       Casey Leedom (leedom@chelsio.com)
  */
 
+#include <linux/netdevice_api.h>
+
 #include "cxgb4.h"
 
 /* DCBx version control

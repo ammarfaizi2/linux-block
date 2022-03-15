@@ -3,6 +3,7 @@
 
 /* The driver transmit and receive code */
 
+#include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/ktime_api.h>
 #include <linux/ipv6.h>

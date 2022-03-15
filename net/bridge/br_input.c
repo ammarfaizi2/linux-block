@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>

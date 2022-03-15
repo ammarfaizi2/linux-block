@@ -7,6 +7,7 @@
  * Event handling for HSR and PRP devices.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/netdevice.h>
 #include <net/rtnetlink.h>

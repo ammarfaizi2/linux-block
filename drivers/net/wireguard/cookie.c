@@ -10,6 +10,7 @@
 #include "ratelimiter.h"
 #include "timers.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <crypto/blake2s.h>
 #include <crypto/chacha20poly1305.h>

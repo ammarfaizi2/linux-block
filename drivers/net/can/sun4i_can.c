@@ -47,6 +47,7 @@
  *
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/can.h>
 #include <linux/can/dev.h>

@@ -7,6 +7,7 @@
 // Copyright (C) 2015-2018 Etnaviv Project
 //
 
+#include <linux/netdevice_api.h>
 #include <linux/devcoredump.h>
 
 #include "mcp251xfd.h"

@@ -7,6 +7,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <asm/cacheflush.h>

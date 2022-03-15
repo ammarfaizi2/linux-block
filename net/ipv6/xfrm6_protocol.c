@@ -10,6 +10,7 @@
  * net/ipv4/xfrm4_protocol.c
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ipv6.h>

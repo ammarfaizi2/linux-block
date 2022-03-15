@@ -4,6 +4,7 @@
  * AoE device utility functions; maintains device list.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/hdreg.h>

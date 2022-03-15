@@ -4,6 +4,7 @@
  * Copyright (c) 2003-2004, Jouni Malinen <jkmaline@cc.hut.fi>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

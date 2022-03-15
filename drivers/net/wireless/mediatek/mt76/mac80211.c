@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

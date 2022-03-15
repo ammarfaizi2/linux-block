@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/types.h>
 #include <linux/module.h>

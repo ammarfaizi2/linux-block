@@ -7,6 +7,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/math64.h>
 #include <linux/fs.h>
 #include <linux/cred.h>

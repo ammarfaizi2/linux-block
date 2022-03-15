@@ -18,6 +18,7 @@
  *		- added multicast source filtering API for MLDv2
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

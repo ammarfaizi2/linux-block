@@ -4,6 +4,7 @@
  * Copyright (c) 2013 Cisco Systems, Inc.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/skbuff.h>
 #include <linux/openvswitch.h>

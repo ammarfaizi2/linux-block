@@ -25,6 +25,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/netdevice_api.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/string.h>

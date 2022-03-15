@@ -33,6 +33,7 @@
 #define DRV_NAME	"fmvj18x_cs"
 #define DRV_VERSION	"2.9"
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

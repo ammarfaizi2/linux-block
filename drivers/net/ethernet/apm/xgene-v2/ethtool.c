@@ -7,6 +7,8 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/netdevice_api.h>
+
 #include "main.h"
 
 #define XGE_STAT(m)		{ #m, offsetof(struct xge_pdata, stats.m) }

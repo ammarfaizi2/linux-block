@@ -3,6 +3,7 @@
 
 #define _RTW_IOCTL_SET_C_
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 
 #include "../include/osdep_service.h"

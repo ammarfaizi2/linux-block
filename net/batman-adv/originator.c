@@ -7,6 +7,7 @@
 #include "originator.h"
 #include "main.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/kref_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

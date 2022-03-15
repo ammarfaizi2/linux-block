@@ -3,6 +3,7 @@
  * Copyright 2021, Dario Binacchi <dariobin@libero.it>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ethtool.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

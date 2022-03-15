@@ -8,6 +8,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/netdevice_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>

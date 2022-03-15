@@ -8,6 +8,8 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/netdevice_api.h>
+
 #include "net_driver.h"
 #include "ef100_rx.h"
 #include "rx_common.h"

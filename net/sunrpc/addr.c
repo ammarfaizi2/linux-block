@@ -17,6 +17,7 @@
  * RFC 4291, Section 2.2 for details on IPv6 presentation formats.
  */
 
+#include <linux/netdevice_api.h>
 #include <net/ipv6.h>
 #include <linux/sunrpc/addr.h>
 #include <linux/sunrpc/msg_prot.h>

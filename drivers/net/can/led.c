@@ -4,6 +4,7 @@
  * Copyright 2012, Kurt Van Dijck <kurt.van.dijck@eia.be>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/device.h>

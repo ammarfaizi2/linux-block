@@ -5,6 +5,7 @@
 
 #include "ixgb.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/uaccess.h>
 
 #define IXGB_ALL_RAR_ENTRIES 16

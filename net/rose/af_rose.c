@@ -7,6 +7,7 @@
  * Copyright (C) Tomi Manninen OH2BNS (oh2bns@sral.fi)
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

@@ -66,6 +66,7 @@ static int full_duplex[MAX_UNITS] = { -1, -1, -1, -1, -1, -1, -1, -1 };
 
 
 /* Include files, designed to support most kernel versions 2.0.0 and later. */
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

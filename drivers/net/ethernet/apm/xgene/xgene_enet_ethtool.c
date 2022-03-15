@@ -5,6 +5,7 @@
  * Authors: Iyappan Subramanian <isubramanian@apm.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/ethtool.h>
 #include "xgene_enet_main.h"

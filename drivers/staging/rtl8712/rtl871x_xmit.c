@@ -21,6 +21,7 @@
 #include "osdep_intf.h"
 #include "usb_ops.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/ieee80211.h>
 

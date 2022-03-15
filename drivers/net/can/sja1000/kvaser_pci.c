@@ -18,6 +18,7 @@
  *   38106 Braunschweig, GERMANY
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/device/driver.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

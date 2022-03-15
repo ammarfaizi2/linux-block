@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2013-2014 Stephane Grosjean <s.grosjean@peak-system.com>
  */
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/usb.h>
 #include <linux/module.h>

@@ -18,6 +18,7 @@
  * See the GNU General Public License for more details.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/netdevice.h>
 #include <net/llc.h>

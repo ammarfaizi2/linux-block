@@ -6,6 +6,7 @@
  * Uses the generic 7990.c LANCE code.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

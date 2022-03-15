@@ -7,6 +7,7 @@
  *         Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include <linux/timekeeping.h>

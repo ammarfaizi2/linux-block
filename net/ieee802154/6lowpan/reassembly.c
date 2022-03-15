@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "6LoWPAN: " fmt
 
+#include <linux/netdevice_api.h>
 #include <linux/net.h>
 #include <linux/list.h>
 #include <linux/netdevice.h>

@@ -7,6 +7,7 @@
 #include "gve.h"
 #include "gve_adminq.h"
 #include "gve_utils.h"
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>

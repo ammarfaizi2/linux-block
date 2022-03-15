@@ -23,6 +23,7 @@
  * matching, so you need to enable IFF_PROMISC when using it.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>

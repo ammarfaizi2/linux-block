@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob@ti.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>

@@ -13,6 +13,7 @@
 #include "r8192E_phyreg.h"
 #include "r8190P_rtl8256.h" /* RTL8225 Radio frontend */
 #include "r8192E_cmdpkt.h"
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 

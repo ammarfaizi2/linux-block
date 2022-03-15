@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/kernel.h>
 #include <linux/marvell_phy.h>

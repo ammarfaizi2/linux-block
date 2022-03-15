@@ -19,6 +19,7 @@
  *	YOSHIFUJI Hideaki @USAGI:	convert /proc/net/tcp6 to seq_file.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bottom_half.h>
 #include <linux/module.h>

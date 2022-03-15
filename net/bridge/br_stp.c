@@ -6,6 +6,7 @@
  *	Authors:
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
+#include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

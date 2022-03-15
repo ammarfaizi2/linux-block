@@ -8,6 +8,7 @@
  *	Steffen Klassert <steffen.klassert@secunet.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>
 #include <linux/ipv6.h>
 #include <linux/etherdevice_api.h>

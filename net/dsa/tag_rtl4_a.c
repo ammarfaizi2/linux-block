@@ -15,6 +15,7 @@
  * frames.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/bits.h>
 

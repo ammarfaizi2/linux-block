@@ -4,6 +4,7 @@
  */
 
 
+#include <linux/netdevice_api.h>
 #include <linux/bitfield.h>
 #include <linux/etherdevice.h>
 

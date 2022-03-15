@@ -8,6 +8,7 @@
  *           Jens Osterkamp <Jens.Osterkamp@de.ibm.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/ethtool.h>
 #include <linux/pci.h>

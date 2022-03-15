@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/dcbnl.h>
 #include <linux/math64.h>
 

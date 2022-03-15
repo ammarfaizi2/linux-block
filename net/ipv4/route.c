@@ -60,6 +60,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>

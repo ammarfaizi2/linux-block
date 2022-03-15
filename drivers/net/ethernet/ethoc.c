@@ -8,6 +8,7 @@
  * Written by Thierry Reding <thierry.reding@avionic-design.de>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/hardirq.h>

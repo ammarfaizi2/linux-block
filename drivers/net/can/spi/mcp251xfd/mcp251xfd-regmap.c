@@ -8,6 +8,7 @@
 
 #include "mcp251xfd.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 

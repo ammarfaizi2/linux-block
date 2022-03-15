@@ -148,6 +148,7 @@
 
 /* ----------------------------------------------------------------------- */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/irqnr.h>
 #include <linux/capability.h>

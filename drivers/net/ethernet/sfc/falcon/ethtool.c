@@ -5,6 +5,7 @@
  * Copyright 2006-2013 Solarflare Communications Inc.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

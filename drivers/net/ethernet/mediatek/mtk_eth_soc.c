@@ -6,6 +6,7 @@
  *   Copyright (C) 2013-2016 Michael Lee <igvtee@gmail.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

@@ -4,6 +4,7 @@
  * RMNET configuration engine
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/hashtable_api.h>
 #include <net/sock.h>
 #include <linux/module.h>

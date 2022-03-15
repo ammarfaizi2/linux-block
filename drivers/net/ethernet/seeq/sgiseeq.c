@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

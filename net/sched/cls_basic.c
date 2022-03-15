@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/idr_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>

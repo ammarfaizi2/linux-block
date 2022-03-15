@@ -3,6 +3,7 @@
  * Copyright (C) 2021-2022 Intel Corporation
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>

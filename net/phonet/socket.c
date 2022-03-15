@@ -10,6 +10,7 @@
  *          Rémi Denis-Courmont
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

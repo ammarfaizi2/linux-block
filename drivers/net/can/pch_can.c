@@ -4,6 +4,7 @@
  * Copyright (C) 2010 LAPIS SEMICONDUCTOR CO., LTD.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/io.h>

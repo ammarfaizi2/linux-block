@@ -2,6 +2,7 @@
 /* Copyright (C) 2012, 2020 Oliver Hartkopp <socketcan@hartkopp.net>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/can/dev.h>
 
 /* CAN DLC to real data length conversion helpers */

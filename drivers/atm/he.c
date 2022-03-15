@@ -53,6 +53,7 @@
 
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

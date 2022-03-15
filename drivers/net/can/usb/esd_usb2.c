@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010-2012 Matthias Fuchs <matthias.fuchs@esd.eu>, esd gmbh
  */
+#include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/signal.h>

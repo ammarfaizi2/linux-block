@@ -5,6 +5,7 @@
  * Copyright (C) 2016, Florian Fainelli <f.fainelli@gmail.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/netdevice.h>

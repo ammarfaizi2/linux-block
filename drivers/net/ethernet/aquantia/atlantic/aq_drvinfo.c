@@ -7,6 +7,7 @@
 
 /* File aq_drvinfo.c: Definition of common code for firmware info in sys.*/
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/init.h>
 #include <linux/kobject.h>

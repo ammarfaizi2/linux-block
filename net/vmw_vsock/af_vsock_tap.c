@@ -5,6 +5,7 @@
  * Code based on net/netlink/af_netlink.c tap functions.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <net/sock.h>
 #include <net/af_vsock.h>

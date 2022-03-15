@@ -8,6 +8,7 @@
  * https://github.com/linux-can/can-doc/tree/master/m_can
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/delay.h>
 #include <linux/bitfield.h>
 #include <linux/interrupt.h>

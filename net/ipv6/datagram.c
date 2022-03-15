@@ -7,6 +7,7 @@
  *	Pedro Roque		<roque@di.fc.ul.pt>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/icmpv6.h>
 #include <linux/atomic_api.h>
 #include <linux/capability.h>

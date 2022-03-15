@@ -6,6 +6,7 @@
  *		v 1.0 03/22/99
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/uaccess.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

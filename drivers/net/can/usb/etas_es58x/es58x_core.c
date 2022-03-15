@@ -10,6 +10,7 @@
  * Copyright (c) 2020, 2021 Vincent Mailhol <mailhol.vincent@wanadoo.fr>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

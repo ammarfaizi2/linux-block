@@ -14,6 +14,7 @@
 #include "aq_ring.h"
 #include "aq_hw.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/netdevice.h>
 

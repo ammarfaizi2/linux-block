@@ -16,6 +16,7 @@
 
 #define _RTL8712_CMD_C_
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/compiler.h>

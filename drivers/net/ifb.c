@@ -24,6 +24,7 @@
 */
 
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>

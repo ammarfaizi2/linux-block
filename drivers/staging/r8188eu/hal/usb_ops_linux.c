@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2007 - 2011 Realtek Corporation. */
 
+#include <linux/netdevice_api.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/osdep_intf.h"

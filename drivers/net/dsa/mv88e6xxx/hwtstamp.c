@@ -14,6 +14,7 @@
 #include "global2.h"
 #include "hwtstamp.h"
 #include "ptp.h"
+#include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ptp_classify.h>

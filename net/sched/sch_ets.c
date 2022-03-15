@@ -29,6 +29,7 @@
  * scheduler moves on to the next band in the active list.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <net/gen_stats.h>
 #include <net/netlink.h>

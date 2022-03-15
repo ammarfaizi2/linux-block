@@ -8,6 +8,7 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice.h>
 #include <linux/ethtool.h>
