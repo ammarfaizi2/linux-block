@@ -3,6 +3,7 @@
  * Copyright (c) 2018, The Linux Foundation
  */
 
+#include <linux/irqdomain.h>
 #include <linux/device_api_lock.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>

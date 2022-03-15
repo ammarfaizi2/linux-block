@@ -32,6 +32,7 @@
  *	pca9540.c from Jean Delvare <jdelvare@suse.de>.
  */
 
+#include <linux/irqdomain.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/device.h>
