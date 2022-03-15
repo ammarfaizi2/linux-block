@@ -6,6 +6,7 @@
 #ifndef _I915_FIXED_H_
 #define _I915_FIXED_H_
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/limits.h>
 #include <linux/bug.h>

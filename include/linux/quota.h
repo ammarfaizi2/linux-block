@@ -32,6 +32,7 @@
 #ifndef _LINUX_QUOTA_
 #define _LINUX_QUOTA_
 
+#include <linux/minmax.h>
 #include <linux/bug.h>
 #include <linux/bitops.h>
 #include <linux/list.h>

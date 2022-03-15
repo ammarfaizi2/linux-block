@@ -5,6 +5,7 @@
 #ifndef	_H_JFS_DMAP
 #define _H_JFS_DMAP
 
+#include <linux/minmax.h>
 #include <linux/types.h>
 
 #include "jfs_txnmgr.h"

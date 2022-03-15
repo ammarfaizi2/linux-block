@@ -6,6 +6,7 @@
 #ifndef MEMORY_TEGRA_MC_H
 #define MEMORY_TEGRA_MC_H
 
+#include <linux/minmax.h>
 #include <linux/bits.h>
 #include <linux/io.h>
 #include <linux/types.h>
