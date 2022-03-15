@@ -11,6 +11,7 @@
 #ifndef _UFS_H
 #define _UFS_H
 
+#include <linux/printk.h>
 #include <linux/bits.h>
 #include <linux/mutex.h>
 #include <linux/types.h>

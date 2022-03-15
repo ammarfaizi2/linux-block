@@ -21,6 +21,7 @@
 #ifndef _COMEDI_DRIVERS_TESTS_UNITTEST_H
 #define _COMEDI_DRIVERS_TESTS_UNITTEST_H
 
+#include <linux/printk.h>
 #include <linux/types.h>
 
 static struct unittest_results {

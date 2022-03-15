@@ -4,6 +4,7 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
+#include <linux/printk.h>
 #include <linux/dev_printk.h>
 #include <linux/bitops_types.h>
 #include <linux/types.h>
