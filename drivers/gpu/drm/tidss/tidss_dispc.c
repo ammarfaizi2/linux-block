@@ -4,6 +4,7 @@
  * Author: Jyri Sarha <jsarha@ti.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>

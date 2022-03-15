@@ -119,6 +119,7 @@ that only one external action is invoked at a time.
 
 */
 
+#include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>
 #include <linux/sysfs.h>

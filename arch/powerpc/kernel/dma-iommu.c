@@ -6,6 +6,7 @@
  * busses using the iommu infrastructure
  */
 
+#include <linux/vmalloc.h>
 #include <linux/scatterlist_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

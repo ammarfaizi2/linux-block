@@ -8,6 +8,7 @@
  * Copyright 2003-2004 (C) MontaVista, Software, Inc.
  * Copyright (C) Deepak Saxena <dsaxena@plexity.net>
  */
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/bitmap.h>

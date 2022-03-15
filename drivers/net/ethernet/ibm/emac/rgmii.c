@@ -16,6 +16,7 @@
  * 	Matt Porter <mporter@kernel.crashing.org>
  * 	Copyright 2004 MontaVista Software, Inc.
  */
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

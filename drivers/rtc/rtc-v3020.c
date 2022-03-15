@@ -15,6 +15,7 @@
  *  ??-???-2004: Someone at Compulab
  *			- Initial driver creation.
  */
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>

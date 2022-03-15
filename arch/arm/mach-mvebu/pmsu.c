@@ -18,6 +18,7 @@
 
 #define pr_fmt(fmt) "mvebu-pmsu: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

@@ -3,6 +3,7 @@
  * Purna Chandra Mandal, purna.mandal@microchip.com
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/io.h>

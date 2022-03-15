@@ -7,6 +7,7 @@
  *
  **************************************************************************/
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/io.h>

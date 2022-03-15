@@ -6,6 +6,7 @@
  * Copyright (c) 2006-2009, Intel Corporation
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>

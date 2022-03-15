@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2013 Marvell
  */
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>

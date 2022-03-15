@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/bitmap.h>

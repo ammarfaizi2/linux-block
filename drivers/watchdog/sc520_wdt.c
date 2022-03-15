@@ -50,6 +50,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/fs_api.h>

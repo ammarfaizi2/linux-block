@@ -3,6 +3,7 @@
  * Copyright 2015 IBM Corp.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>

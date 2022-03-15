@@ -27,6 +27,7 @@
  * Based on gamecube_time.c from Torben Nielsen.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

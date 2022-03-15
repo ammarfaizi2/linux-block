@@ -7,6 +7,7 @@
  *   This is a device driver for the OneNAND flash for generic boards.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/slab.h>

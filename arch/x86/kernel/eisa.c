@@ -2,6 +2,7 @@
 /*
  * EISA specific code
  */
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/eisa.h>
 #include <linux/io.h>

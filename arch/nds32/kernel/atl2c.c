@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

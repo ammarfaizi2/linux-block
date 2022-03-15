@@ -5,6 +5,7 @@
  * Copyright (C) 2014  Renesas Electronics Corporation
  * Copyright (C) 2013  Magnus Damm
  */
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

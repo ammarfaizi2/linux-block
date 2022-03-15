@@ -5,6 +5,7 @@
  * Copyright (C) 2007 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

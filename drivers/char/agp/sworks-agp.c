@@ -2,6 +2,7 @@
  * Serverworks AGPGART routines.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>

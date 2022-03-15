@@ -10,6 +10,7 @@
 
 #define DSS_SUBSYS_NAME "HDMICORE"
 
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/err.h>

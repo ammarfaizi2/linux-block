@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/io.h>

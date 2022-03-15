@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2019-2020 Linaro Ltd.
  */
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

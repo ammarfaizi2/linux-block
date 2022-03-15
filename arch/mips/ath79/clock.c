@@ -8,6 +8,7 @@
  *  Parts of this file are based on Atheros' 2.6.15/2.6.31 BSP
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

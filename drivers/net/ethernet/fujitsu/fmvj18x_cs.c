@@ -33,6 +33,7 @@
 #define DRV_NAME	"fmvj18x_cs"
 #define DRV_VERSION	"2.9"
 
+#include <linux/vmalloc.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

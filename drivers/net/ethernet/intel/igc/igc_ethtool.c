@@ -2,6 +2,7 @@
 /* Copyright (c)  2018 Intel Corporation */
 
 /* ethtool support for igc */
+#include <linux/vmalloc.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

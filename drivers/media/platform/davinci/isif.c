@@ -14,6 +14,7 @@
  * TODO: 1) Raw bayer parameter settings and bayer capture
  *	 2) Add support for control ioctl
  */
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/align.h>

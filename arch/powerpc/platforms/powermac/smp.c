@@ -17,6 +17,7 @@
  * Support for DayStar quad CPU cards
  * Copyright (C) XLR8, Inc. 1994-2000
  */
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/io.h>

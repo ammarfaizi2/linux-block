@@ -7,6 +7,7 @@
  * Exynos4 MCT(Multi-Core Timer) support
 */
 
+#include <linux/vmalloc.h>
 #include <linux/timex.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

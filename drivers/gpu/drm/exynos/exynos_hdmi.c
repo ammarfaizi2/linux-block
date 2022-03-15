@@ -9,6 +9,7 @@
  * Based on drivers/media/video/s5p-tv/hdmi_drv.c
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

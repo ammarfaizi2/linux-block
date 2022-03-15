@@ -6,6 +6,7 @@
  *  Copyright (C) 2011 Xilinx
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/io.h>

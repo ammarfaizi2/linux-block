@@ -7,6 +7,7 @@
  * Author: Brijesh Singh <brijesh.singh@amd.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

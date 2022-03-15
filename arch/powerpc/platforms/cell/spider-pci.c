@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/vmalloc.h>
 #include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

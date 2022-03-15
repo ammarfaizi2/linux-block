@@ -4,6 +4,7 @@
  *
  * (C) 2012 Christoph Lameter <cl@linux.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

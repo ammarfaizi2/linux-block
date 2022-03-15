@@ -12,6 +12,7 @@
  *  more details.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

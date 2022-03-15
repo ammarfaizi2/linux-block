@@ -17,6 +17,7 @@
  * As such, the enable set/clear, pending set/clear and active bit
  * registers are banked per-cpu for these sources.
  */
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>

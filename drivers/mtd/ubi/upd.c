@@ -25,6 +25,7 @@
  * transaction with a roll-back capability.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/align.h>
 #include <linux/err.h>

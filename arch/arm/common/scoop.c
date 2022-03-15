@@ -7,6 +7,7 @@
  *	Based on code written by Sharp/Lineo for 2.4 kernels
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/device.h>

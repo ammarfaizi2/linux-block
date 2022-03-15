@@ -4,6 +4,7 @@
  *  		  used in older SNI RM machines
  */
 
+#include <linux/vmalloc.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

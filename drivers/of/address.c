@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 #define pr_fmt(fmt)	"OF: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/device.h>
 #include <linux/fwnode.h>

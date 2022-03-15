@@ -65,6 +65,7 @@
  *			 -- Andrew Morton <andrewm@uow.edu.eu> 17Mar01
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uio.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>

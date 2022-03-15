@@ -32,6 +32,7 @@
  */
 
 #include "ubifs.h"
+#include <linux/vmalloc.h>
 #include <linux/crc16.h>
 #include <linux/math64.h>
 #include <linux/slab.h>

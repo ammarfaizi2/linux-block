@@ -9,6 +9,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/clk.h>
 #include <linux/clk/mmp.h>
 #include <linux/module.h>

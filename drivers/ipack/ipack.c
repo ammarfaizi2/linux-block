@@ -6,6 +6,7 @@
  * Author: Samuel Iglesias Gonsalvez <siglesias@igalia.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/device/bus.h>

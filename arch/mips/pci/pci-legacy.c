@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Wind River Systems,
  *   written by Ralf Baechle (ralf@linux-mips.org)
  */
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

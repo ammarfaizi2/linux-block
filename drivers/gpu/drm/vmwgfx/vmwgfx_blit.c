@@ -27,6 +27,7 @@
  **************************************************************************/
 
 #include "vmwgfx_drv.h"
+#include <linux/vmalloc.h>
 #include <linux/highmem.h>
 
 /*

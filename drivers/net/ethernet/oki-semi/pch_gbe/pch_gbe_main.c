@@ -9,6 +9,7 @@
 #include "pch_gbe.h"
 #include "pch_gbe_phy.h"
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>

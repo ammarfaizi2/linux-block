@@ -28,6 +28,7 @@
  * a timer to limit the rate at which DMA is reset on DMA channels error.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

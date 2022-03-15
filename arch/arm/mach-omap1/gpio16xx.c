@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/gpio.h>

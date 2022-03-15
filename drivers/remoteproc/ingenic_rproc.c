@@ -4,6 +4,7 @@
  * Copyright 2019, Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

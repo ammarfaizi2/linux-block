@@ -10,6 +10,7 @@
  *   Wu Hao <hao.wu@intel.com>
  *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

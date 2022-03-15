@@ -7,6 +7,7 @@
  * Author: Samuel Iglesias Gonsalvez <siglesias@igalia.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/rcupdate.h>
 #include <linux/mutex_api.h>

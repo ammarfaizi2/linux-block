@@ -64,6 +64,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/math.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

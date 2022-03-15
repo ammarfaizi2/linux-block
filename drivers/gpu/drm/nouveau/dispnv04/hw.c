@@ -25,6 +25,7 @@
 #include "nouveau_drv.h"
 #include "hw.h"
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <subdev/bios/pll.h>
 #include <nvif/timer.h>

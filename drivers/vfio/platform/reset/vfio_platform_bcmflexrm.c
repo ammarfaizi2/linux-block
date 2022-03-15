@@ -8,6 +8,7 @@
  * to VFIO platform.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/init.h>

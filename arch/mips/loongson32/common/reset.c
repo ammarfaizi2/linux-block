@@ -3,6 +3,7 @@
  * Copyright (c) 2011 Zhang, Keguang <keguang.zhang@gmail.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/pm.h>
 #include <linux/sizes.h>

@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>
 #include <linux/textsearch.h>

@@ -16,6 +16,7 @@
  * Abstract: Drawbridge specific support functions
  */
 
+#include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

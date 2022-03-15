@@ -3,6 +3,7 @@
  * Copyright (c) 2015 MediaTek Inc.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

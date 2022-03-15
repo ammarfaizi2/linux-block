@@ -8,6 +8,7 @@
  *         Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

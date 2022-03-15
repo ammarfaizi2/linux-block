@@ -3,6 +3,7 @@
  * Copyright 2018 Noralf Trønnes
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/dma-buf-map.h>

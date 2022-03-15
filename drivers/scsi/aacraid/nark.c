@@ -15,6 +15,7 @@
  * Abstract: Hardware Device Interface for NEMER/ARK
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/blkdev.h>

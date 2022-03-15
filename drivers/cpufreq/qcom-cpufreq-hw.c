@@ -3,6 +3,7 @@
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sched/topology.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

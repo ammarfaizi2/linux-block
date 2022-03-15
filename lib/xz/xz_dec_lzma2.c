@@ -8,6 +8,7 @@
  * You can do whatever you want with this file.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/minmax.h>
 

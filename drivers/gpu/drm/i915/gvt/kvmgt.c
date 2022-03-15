@@ -28,6 +28,7 @@
  *    Xiaoguang Chen <xiaoguang.chen@intel.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>

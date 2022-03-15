@@ -3,6 +3,7 @@
  * Copyright 2011 IBM Corporation.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

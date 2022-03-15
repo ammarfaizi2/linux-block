@@ -10,6 +10,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "lpar: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

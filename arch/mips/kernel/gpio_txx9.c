@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Atsushi Nemoto <anemo@mba.ocn.ne.jp>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/spinlock.h>

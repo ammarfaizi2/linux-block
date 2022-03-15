@@ -7,6 +7,7 @@
  * Author: Kent Yoder <yoder1@us.ibm.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

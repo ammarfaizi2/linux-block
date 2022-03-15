@@ -5,6 +5,7 @@
  * Copyright (C) 2005 Bernhard Rosenkraenzer <bero@arklinux.org>
  * Copyright (C) 2005 Dmitry Torokhov <dtor@mail.ru>
  */
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/dmi.h>
 #include <linux/init.h>

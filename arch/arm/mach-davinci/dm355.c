@@ -9,6 +9,7 @@
  * or implied.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/clk-provider.h>
 #include <linux/clk/davinci.h>

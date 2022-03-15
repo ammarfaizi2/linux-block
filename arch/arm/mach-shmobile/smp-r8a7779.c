@@ -5,6 +5,7 @@
  * Copyright (C) 2011  Renesas Solutions Corp.
  * Copyright (C) 2011  Magnus Damm
  */
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/smp.h>

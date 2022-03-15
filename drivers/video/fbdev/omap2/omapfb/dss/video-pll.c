@@ -3,6 +3,7 @@
 * Copyright (C) 2014 Texas Instruments Ltd
 */
 
+#include <linux/vmalloc.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

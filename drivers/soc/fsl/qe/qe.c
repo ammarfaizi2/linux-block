@@ -10,6 +10,7 @@
  * General Purpose functions for the global management of the
  * QUICC Engine (QE).
  */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/overflow.h>
 #include <linux/of_api.h>

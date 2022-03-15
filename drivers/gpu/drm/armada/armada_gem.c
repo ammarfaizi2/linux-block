@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Russell King
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>

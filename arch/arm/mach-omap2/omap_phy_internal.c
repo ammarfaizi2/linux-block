@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/delay.h>

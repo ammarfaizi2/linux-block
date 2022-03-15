@@ -6,6 +6,7 @@
 //
 // Author: Maruthi Srinivas Bayyavarapu <maruthis@xilinx.com>
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

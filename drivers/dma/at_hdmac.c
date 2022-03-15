@@ -9,6 +9,7 @@
  * found on AT91SAM9263.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

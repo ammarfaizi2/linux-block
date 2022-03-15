@@ -12,6 +12,7 @@
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

@@ -8,6 +8,7 @@
 
 #include "fsl_pamu.h"
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

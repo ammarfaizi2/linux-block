@@ -6,6 +6,7 @@
  * Copyright (C) 2010  Magnus Damm
  * Copyright (C) 2008  Yoshihiro Shimoda
  */
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2012  Renesas Solutions Corp.
  * Copyright (C) 2012  Magnus Damm
  */
+#include <linux/vmalloc.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -10,6 +10,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/ioport.h>

@@ -3,6 +3,7 @@
 
 #define _RTW_RECV_C_
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_ether_api.h>

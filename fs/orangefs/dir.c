@@ -3,6 +3,7 @@
  * Copyright 2017 Omnibond Systems, L.L.C.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>

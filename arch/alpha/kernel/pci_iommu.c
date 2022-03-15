@@ -3,6 +3,7 @@
  *	linux/arch/alpha/kernel/pci_iommu.c
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

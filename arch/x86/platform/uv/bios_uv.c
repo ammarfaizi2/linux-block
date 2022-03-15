@@ -7,6 +7,7 @@
  * Copyright (c) Russ Anderson <rja@sgi.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/efi.h>
 #include <linux/export.h>
 #include <linux/slab.h>

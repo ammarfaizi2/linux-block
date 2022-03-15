@@ -67,6 +67,7 @@ static int rx_copybreak;
 #define TX_FIFO_THRESH 256
 #define RX_FIFO_THRESH 1		/* 0-3, 0==32, 64,96, or 3==128 bytes  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api_lock.h>

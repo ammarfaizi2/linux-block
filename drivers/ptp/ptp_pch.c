@@ -8,6 +8,7 @@
  * This code was derived from the IXP46X driver.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/time64_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

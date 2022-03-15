@@ -8,6 +8,7 @@
  * Description:
  * QE UCC Fast API Set - UCC Fast specific routines implementations.
  */
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

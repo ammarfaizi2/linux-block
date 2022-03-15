@@ -9,6 +9,7 @@
  * Copyright (C) 2011 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

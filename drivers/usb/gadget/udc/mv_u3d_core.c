@@ -3,6 +3,7 @@
  * Copyright (C) 2011 Marvell International Ltd. All rights reserved.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/io_extra.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright STMicroelectronics, 2007.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/types.h>
 #include <linux/init.h>
 #include <linux/device.h>

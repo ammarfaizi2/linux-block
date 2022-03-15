@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012 Broadcom Corporation
  */
+#include <linux/vmalloc.h>
 #include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include <linux/netdevice.h>

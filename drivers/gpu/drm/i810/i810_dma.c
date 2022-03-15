@@ -30,6 +30,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mm_api.h>

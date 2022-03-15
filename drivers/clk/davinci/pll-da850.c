@@ -5,6 +5,7 @@
  * Copyright (C) 2018 David Lechner <david@lechnology.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/bitops.h>
 #include <linux/clk-provider.h>
 #include <linux/clk/davinci.h>

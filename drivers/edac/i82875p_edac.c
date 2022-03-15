@@ -13,6 +13,7 @@
  * Note: E7210 appears same as D82875P - zhenyu.z.wang at intel.com
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/init.h>

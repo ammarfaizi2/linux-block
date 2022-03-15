@@ -5,6 +5,7 @@
  */
 
 #include "wil6210.h"
+#include <linux/vmalloc.h>
 #include <linux/rwsem_api.h>
 #include <linux/devcoredump.h>
 

@@ -12,6 +12,7 @@
  *  Serial driver for TX3927/TX4927/TX4925/TX4938 internal SIO controller
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>

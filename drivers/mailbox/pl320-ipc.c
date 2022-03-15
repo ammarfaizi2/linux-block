@@ -2,6 +2,7 @@
 /*
  * Copyright 2012 Calxeda, Inc.
  */
+#include <linux/vmalloc.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

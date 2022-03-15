@@ -12,6 +12,7 @@
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/module.h>

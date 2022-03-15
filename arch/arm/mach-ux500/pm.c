@@ -7,6 +7,7 @@
  * Author: Ulf Hansson <ulf.hansson@linaro.org> for Linaro.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/irqchip/arm-gic.h>

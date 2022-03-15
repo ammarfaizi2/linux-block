@@ -2,6 +2,7 @@
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

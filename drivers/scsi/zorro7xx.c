@@ -10,6 +10,7 @@
  * Rewritten to use 53c700.c by Kars de Jong <jongk@linux-m68k.org>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/init.h>

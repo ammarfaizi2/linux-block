@@ -12,6 +12,7 @@
  * Author: Stephen Chivers <schivers@csc.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

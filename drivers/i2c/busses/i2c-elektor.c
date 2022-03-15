@@ -14,6 +14,7 @@
 /* Partially rewriten by Oleg I. Vdovikin for mmapped support of
    for Alpha Processor Inc. UP-2000(+) boards */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

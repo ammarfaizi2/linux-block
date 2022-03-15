@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/cache.h>
 #include <linux/crc32.h>

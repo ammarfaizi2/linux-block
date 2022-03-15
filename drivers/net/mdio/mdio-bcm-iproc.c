@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Broadcom Corporation
  */
 
+#include <linux/vmalloc.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/io.h>

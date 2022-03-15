@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/vmalloc.h>
 #include <linux/rwsem_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>

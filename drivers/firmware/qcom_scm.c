@@ -2,6 +2,7 @@
 /* Copyright (c) 2010,2015,2019 The Linux Foundation. All rights reserved.
  * Copyright (C) 2015 Linaro Ltd.
  */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

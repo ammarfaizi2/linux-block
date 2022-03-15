@@ -34,6 +34,7 @@
  *	with usb 338x chip. Based on PLX driver
  */
 
+#include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2012 Roland Stigge
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

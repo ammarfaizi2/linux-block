@@ -45,6 +45,7 @@
  * steps.  Probably a wise thing to do.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

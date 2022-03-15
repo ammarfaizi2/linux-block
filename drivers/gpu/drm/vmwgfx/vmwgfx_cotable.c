@@ -30,6 +30,7 @@
  * whenever the backing MOB is evicted.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <drm/ttm/ttm_placement.h>

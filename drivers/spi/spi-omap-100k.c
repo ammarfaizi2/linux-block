@@ -8,6 +8,7 @@
  * Author:      Samuel Ortiz <samuel.ortiz@nokia.com> and
  *              Juha Yrjola <juha.yrjola@nokia.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -12,6 +12,7 @@
  * file, where their drivers can use them.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/property.h>

@@ -8,6 +8,7 @@
 #include "scan.h"
 #include "bcma_private.h"
 
+#include <linux/vmalloc.h>
 #include <linux/bcma/bcma.h>
 #include <linux/bcma/bcma_regs.h>
 #include <linux/pci.h>

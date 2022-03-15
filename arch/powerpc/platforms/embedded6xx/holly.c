@@ -10,6 +10,7 @@
  * Based on code from mpc7448_hpc2.c
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/stddef.h>

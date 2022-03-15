@@ -6,6 +6,7 @@
  * Author: Jose Abreu <Jose.Abreu@synopsys.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>

@@ -8,6 +8,7 @@
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/module.h>

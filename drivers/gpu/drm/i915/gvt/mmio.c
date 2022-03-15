@@ -33,6 +33,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 
 #include "i915_drv.h"

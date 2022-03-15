@@ -11,6 +11,7 @@
  * May 2003: Dominik Brodowski <linux@brodo.de>
  * 	Merge pci_socket.c and yenta.c into one file
  */
+#include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/prefetch.h>

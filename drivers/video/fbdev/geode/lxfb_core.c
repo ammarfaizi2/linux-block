@@ -6,6 +6,7 @@
  * Built from gxfb (which is Copyright (C) 2006 Arcom Control Systems Ltd.)
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/device_api.h>

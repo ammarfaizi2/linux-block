@@ -9,6 +9,7 @@
  *	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

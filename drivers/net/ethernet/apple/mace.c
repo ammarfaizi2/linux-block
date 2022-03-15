@@ -6,6 +6,7 @@
  * Copyright (C) 1996 Paul Mackerras.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

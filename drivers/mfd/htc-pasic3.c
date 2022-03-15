@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Philipp Zabel <philipp.zabel@gmail.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>

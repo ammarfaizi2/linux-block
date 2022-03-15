@@ -8,6 +8,7 @@
 
 #undef DEBUG
 
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

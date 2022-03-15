@@ -7,6 +7,7 @@
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

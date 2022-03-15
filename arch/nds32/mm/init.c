@@ -3,6 +3,7 @@
 // Copyright (C) 2012 ARM Ltd.
 // Copyright (C) 2013-2017 Andes Technology Corporation
 
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <asm/cacheflush.h>

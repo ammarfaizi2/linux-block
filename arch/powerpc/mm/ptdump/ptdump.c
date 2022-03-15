@@ -10,6 +10,7 @@
  * Copyright (c) 2014, The Linux Foundation, Laura Abbott.
  * (C) Copyright 2008 Intel Corporation, Arjan van de Ven.
  */
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/debugfs.h>
 #include <linux/fs.h>

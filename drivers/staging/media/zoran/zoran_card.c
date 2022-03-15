@@ -9,6 +9,7 @@
  * Copyright (C) 2000 Serguei Miridonov <mirsev@cicese.mx>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kmod.h>

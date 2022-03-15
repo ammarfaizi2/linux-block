@@ -52,6 +52,7 @@
  * Configuration Options: not applicable, uses PCI auto config.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

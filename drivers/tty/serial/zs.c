@@ -44,6 +44,7 @@
  * complicated and prevents the use of some automatic modes of operation.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bug.h>

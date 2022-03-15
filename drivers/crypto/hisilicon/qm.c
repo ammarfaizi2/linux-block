@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 HiSilicon Limited. */
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/rwsem_api.h>
 #include <linux/pgtable_api.h>

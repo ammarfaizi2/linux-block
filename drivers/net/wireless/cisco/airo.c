@@ -19,6 +19,7 @@
 
 ======================================================================*/
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/semaphore.h>
 #include <linux/scatterlist_api.h>

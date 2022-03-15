@@ -15,6 +15,7 @@
  *                   - G, Manjunath Kondaiah <manjugk@ti.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/err.h>
 #include <linux/slab.h>

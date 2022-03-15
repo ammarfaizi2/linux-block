@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/mm_api_kvmalloc.h>

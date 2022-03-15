@@ -26,6 +26,7 @@
  *	fix: driver refuses to address self.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/ioport.h>

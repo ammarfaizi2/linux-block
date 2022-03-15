@@ -13,6 +13,7 @@
  * License, or (at your option) any later version.
  *
  */
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/gpio.h>

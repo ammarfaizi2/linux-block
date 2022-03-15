@@ -11,6 +11,7 @@
  * (C) Copyright IBM Deutschland Entwicklung GmbH 2005
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

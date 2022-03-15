@@ -5,6 +5,7 @@
  * Author: Varun Sethi <varun.sethi@freescale.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/irq.h>

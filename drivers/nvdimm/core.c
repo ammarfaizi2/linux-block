@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
+#include <linux/vmalloc.h>
 #include <linux/uuid_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

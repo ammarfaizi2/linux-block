@@ -6,6 +6,7 @@
  *  Copyright (c) Justin Ernst
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/smp_api.h>
 #include <linux/kobject_api.h>

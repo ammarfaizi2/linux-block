@@ -6,6 +6,7 @@
  * based on the AHCI SATA platform driver by Jeff Garzik and Anton Vorontsov
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

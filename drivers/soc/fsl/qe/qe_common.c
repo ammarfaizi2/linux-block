@@ -13,6 +13,7 @@
  * 2006 (c) MontaVista Software, Inc.
  * Vitaly Bordug <vbordug@ru.mvista.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

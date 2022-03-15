@@ -8,6 +8,7 @@
  * Copyright (C) 2007-2012 Florian Fainelli <f.fainelli@gmail.com>
 */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

@@ -31,6 +31,7 @@
  *     Frieder Schrempf <frieder.schrempf@kontron.de>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/property.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>

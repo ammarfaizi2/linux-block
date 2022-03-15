@@ -14,6 +14,7 @@
 #include "orangefs-bufmap.h"
 #include "orangefs-debugfs.h"
 
+#include <linux/vmalloc.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

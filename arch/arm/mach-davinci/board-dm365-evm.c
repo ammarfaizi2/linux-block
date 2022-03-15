@@ -12,6 +12,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+#include <linux/vmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>

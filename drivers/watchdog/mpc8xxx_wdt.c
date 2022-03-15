@@ -13,6 +13,7 @@
  * once after POR. Once enabled, you cannot disable, and vice versa.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

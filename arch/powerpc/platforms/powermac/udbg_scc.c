@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2001-2005 PPC 64 Team, IBM Corp
  */
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/types.h>

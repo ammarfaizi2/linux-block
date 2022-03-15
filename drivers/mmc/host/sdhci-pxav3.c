@@ -7,6 +7,7 @@
  *		Philip Rakity <prakity@marvell.com>
  *		Mark Brown <markb@marvell.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

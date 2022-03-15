@@ -27,6 +27,7 @@
  *		Version 0.03: Rewritten for the new FB and TC APIs.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/compiler.h>

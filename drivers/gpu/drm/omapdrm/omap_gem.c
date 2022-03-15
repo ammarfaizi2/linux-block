@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob.clark@linaro.org>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>

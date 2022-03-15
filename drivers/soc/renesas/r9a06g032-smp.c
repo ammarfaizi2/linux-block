@@ -8,6 +8,7 @@
  * Derived from actions,s500-smp
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

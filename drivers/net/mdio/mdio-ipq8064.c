@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Ansuel Smith <ansuelsmth@gmail.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>

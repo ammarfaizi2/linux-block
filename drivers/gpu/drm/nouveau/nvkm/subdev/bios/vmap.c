@@ -21,6 +21,7 @@
  *
  * Authors: Martin Peres
  */
+#include <linux/vmalloc.h>
 #include <subdev/bios.h>
 #include <subdev/bios/bit.h>
 #include <subdev/bios/vmap.h>

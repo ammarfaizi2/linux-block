@@ -5,6 +5,7 @@
  * Rework for mainline by Oliver Hartkopp <socketcan@hartkopp.net>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>

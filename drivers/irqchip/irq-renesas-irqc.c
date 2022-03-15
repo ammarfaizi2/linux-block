@@ -5,6 +5,7 @@
  *  Copyright (C) 2013 Magnus Damm
  */
 
+#include <linux/vmalloc.h>
 #include <linux/pm_wakeup.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>

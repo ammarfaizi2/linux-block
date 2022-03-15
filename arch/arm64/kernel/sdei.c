@@ -2,6 +2,7 @@
 // Copyright (C) 2017 Arm Ltd.
 #define pr_fmt(fmt) "sdei: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>

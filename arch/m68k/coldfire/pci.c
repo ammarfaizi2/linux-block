@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

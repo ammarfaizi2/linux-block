@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>

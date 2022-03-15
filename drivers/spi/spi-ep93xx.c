@@ -13,6 +13,7 @@
  *     https://www.cirrus.com/en/pubs/manual/EP93xx_Users_Guide_UM1.pdf
  */
 
+#include <linux/vmalloc.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

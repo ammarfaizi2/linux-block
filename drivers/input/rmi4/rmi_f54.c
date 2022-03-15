@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Zodiac Inflight Innovations
  */
 
+#include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2015, Broadcom Corporation
  */
 
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

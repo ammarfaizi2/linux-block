@@ -14,6 +14,7 @@
  * Actually, the TS-5500 and TS-5400 are supported.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

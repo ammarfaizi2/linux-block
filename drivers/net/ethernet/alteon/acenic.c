@@ -46,6 +46,7 @@
  *   Grant Grundler <grundler@cup.hp.com>: PCI write posting fixes.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/pgtable_api.h>

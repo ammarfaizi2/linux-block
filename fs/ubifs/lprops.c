@@ -16,6 +16,7 @@
  * an empty LEB for the journal, or a very dirty LEB for garbage collection.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/sched/cond_resched.h>

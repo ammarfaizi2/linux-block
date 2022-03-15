@@ -19,6 +19,7 @@
 #include "workarounds.h"
 #include "selftest.h"
 #include "ef10_sriov.h"
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>

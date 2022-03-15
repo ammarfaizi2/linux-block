@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2005  Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -5,6 +5,7 @@
  * Copyright 2015-2016, Aneesh Kumar K.V, IBM Corporation.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>

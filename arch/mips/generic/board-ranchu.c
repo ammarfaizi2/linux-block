@@ -5,6 +5,7 @@
  * Author: Miodrag Dinic <miodrag.dinic@mips.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/of_address.h>

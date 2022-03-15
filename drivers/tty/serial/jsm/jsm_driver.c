@@ -10,6 +10,7 @@
  *
  *
  ***********************************************************************/
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

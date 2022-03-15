@@ -9,6 +9,7 @@
  *   Copyright (C) 2010,2013, NVIDIA Corporation
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

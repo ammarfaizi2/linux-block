@@ -5,6 +5,7 @@
  * Copyright 1995-2002, Russell King
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/ioport.h>

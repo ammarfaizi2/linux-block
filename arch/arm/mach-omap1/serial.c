@@ -4,6 +4,7 @@
  *
  * OMAP1 serial support.
  */
+#include <linux/vmalloc.h>
 #include <linux/interrupt.h>
 #include <linux/gpio.h>
 #include <linux/module.h>

@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

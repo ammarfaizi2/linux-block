@@ -16,6 +16,7 @@
  *
  *  Copyright 2007 Juergen Beisert @ Pengutronix (j.beisert@pengutronix.de)
  */
+#include <linux/vmalloc.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

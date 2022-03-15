@@ -3,6 +3,7 @@
  * Copyright 2021 Microsoft
  */
 
+#include <linux/vmalloc.h>
 #include <linux/hyperv.h>
 
 #include <drm/drm_damage_helper.h>

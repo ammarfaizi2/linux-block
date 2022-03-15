@@ -25,6 +25,7 @@
 #include "ctxgf100.h"
 #include "fuc/os.h"
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

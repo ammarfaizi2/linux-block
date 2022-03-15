@@ -8,6 +8,7 @@
 
 /*#define DEBUG*/
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

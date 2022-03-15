@@ -9,6 +9,7 @@
  *        Andrey Konovalov <andreyknvl@gmail.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/mm_api.h>
 #include <linux/bitops.h>

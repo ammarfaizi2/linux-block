@@ -16,6 +16,7 @@
  * Copyright 1999-2001 Jeff Garzik <jgarzik@pobox.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/dma-buf-map.h>
 #include <linux/module.h>

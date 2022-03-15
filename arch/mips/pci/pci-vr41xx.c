@@ -12,6 +12,7 @@
  *  MontaVista Software Inc. <source@mvista.com>
  *  - New creation, NEC VR4122 and VR4131 are supported.
  */
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <asm/cpu-type.h>

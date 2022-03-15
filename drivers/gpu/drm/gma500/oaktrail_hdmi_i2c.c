@@ -24,6 +24,7 @@
  *	Li Peng <peng.li@intel.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

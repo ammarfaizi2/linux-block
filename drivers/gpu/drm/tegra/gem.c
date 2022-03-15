@@ -10,6 +10,7 @@
  * Copyright (c) 2011 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

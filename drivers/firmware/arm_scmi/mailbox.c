@@ -6,6 +6,7 @@
  * Copyright (C) 2019 ARM Ltd.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

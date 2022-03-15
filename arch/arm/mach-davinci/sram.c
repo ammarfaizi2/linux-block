@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2009 David Brownell
  */
+#include <linux/vmalloc.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/io.h>

@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>

@@ -4,6 +4,7 @@
  * Author: James Liao <jamesjj.liao@mediatek.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/io.h>

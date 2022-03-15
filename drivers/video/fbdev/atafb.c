@@ -47,6 +47,7 @@
 #define ATAFB_EXT
 #define ATAFB_FALCON
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

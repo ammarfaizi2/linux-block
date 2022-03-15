@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

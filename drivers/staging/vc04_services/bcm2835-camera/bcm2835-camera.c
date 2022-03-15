@@ -11,6 +11,7 @@
  *          Luke Diamand @ Broadcom
  */
 
+#include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

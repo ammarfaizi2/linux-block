@@ -14,6 +14,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/vmalloc.h>
 #include <linux/ssb/ssb.h>
 #include <linux/ssb/ssb_regs.h>
 #include <linux/pci.h>

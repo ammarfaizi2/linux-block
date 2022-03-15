@@ -11,6 +11,7 @@
  * @Date 	Jun 24 2008
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>

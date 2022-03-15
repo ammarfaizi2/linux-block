@@ -6,6 +6,7 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/io.h>

@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  */
 #include "compress.h"
+#include <linux/vmalloc.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

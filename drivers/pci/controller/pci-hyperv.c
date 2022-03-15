@@ -37,6 +37,7 @@
  * the PCI back-end driver in Hyper-V.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

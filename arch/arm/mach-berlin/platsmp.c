@@ -5,6 +5,7 @@
  * Antoine Ténart <antoine.tenart@free-electrons.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/notifier.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>

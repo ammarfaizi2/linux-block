@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Intel Corporation
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>

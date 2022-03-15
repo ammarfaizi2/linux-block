@@ -20,6 +20,7 @@
  * the corresponding subdriver is initialized (c67x00_probe_sie).
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api.h>

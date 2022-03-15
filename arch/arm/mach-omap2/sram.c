@@ -10,6 +10,7 @@
  * Added OMAP4/5 support - Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

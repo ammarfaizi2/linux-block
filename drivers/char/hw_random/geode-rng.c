@@ -24,6 +24,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/delay.h>
 #include <linux/hw_random.h>
 #include <linux/io.h>

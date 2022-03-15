@@ -78,6 +78,7 @@
  * (isa_irq) is the only exception in this source code.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>

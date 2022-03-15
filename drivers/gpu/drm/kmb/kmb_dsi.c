@@ -3,6 +3,7 @@
  * Copyright © 2019-2020 Intel Corporation
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

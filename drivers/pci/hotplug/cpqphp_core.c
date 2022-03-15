@@ -14,6 +14,7 @@
  *			Torben Mathiasen <torben.mathiasen@hp.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2010 Ira W. Snyder <iws@ovro.caltech.edu>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

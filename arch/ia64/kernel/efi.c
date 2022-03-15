@@ -22,6 +22,7 @@
  * Goutham Rao: <goutham.rao@intel.com>
  *	Skip non-WB memory and ignore empty memory ranges.
  */
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

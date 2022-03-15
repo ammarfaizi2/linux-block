@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)	"GICv3: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/refcount_api.h>
 #include <linux/ratelimit.h>
 #include <linux/of_api.h>

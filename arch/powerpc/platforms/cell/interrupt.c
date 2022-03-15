@@ -16,6 +16,7 @@
  *   a non-active node to the active node)
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>

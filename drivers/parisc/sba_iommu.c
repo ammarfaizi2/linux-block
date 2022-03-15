@@ -16,6 +16,7 @@
 ** FIXME: add DMA hint support programming in both sba and lba modules.
 */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pci-dma-compat.h>

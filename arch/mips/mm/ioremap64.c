@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <ioremap.h>
 

@@ -3,6 +3,7 @@
  * Reset controller portions for the U8500 PRCC
  * Copyright (C) 2021 Linus Walleij <linus.walleij@linaro.org>
  */
+#include <linux/vmalloc.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/slab.h>

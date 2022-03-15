@@ -42,6 +42,7 @@
  *  more details.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

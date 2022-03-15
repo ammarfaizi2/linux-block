@@ -4,6 +4,7 @@
  * Copyright 2010-2011 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/cpumask_api.h>

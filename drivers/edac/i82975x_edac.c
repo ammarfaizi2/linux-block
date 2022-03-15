@@ -9,6 +9,7 @@
  *   Copied from i82875p_edac.c source:
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/init.h>

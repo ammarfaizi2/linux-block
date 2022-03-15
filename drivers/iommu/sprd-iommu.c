@@ -6,6 +6,7 @@
  * Author: Chunyan Zhang <chunyan.zhang@unisoc.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
