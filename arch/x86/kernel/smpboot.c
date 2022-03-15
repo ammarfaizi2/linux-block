@@ -39,6 +39,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/halt.h>
 #include <asm/cpumask_arch.h>
 #include <linux/init.h>
 #include <linux/smp.h>
