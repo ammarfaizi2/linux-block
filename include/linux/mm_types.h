@@ -348,12 +348,6 @@ struct vm_userfaultfd_ctx {
 struct vm_userfaultfd_ctx {};
 #endif /* CONFIG_USERFAULTFD */
 
-struct anon_vma_name {
-	struct kref kref;
-	/* The name needs to be at the end because it is dynamically sized. */
-	char name[];
-};
-
 /*
  * vm_flags in vm_area_struct, see below.
  * When changing, update also include/trace/events/mmflags.h

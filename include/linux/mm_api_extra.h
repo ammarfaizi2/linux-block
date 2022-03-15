@@ -7,6 +7,13 @@
 #include <linux/sched/coredump.h>
 #include <linux/memremap.h>
 #include <linux/pgtable_api.h>
+#include <linux/kref.h>
+
+struct anon_vma_name {
+	struct kref kref;
+	/* The name needs to be at the end because it is dynamically sized. */
+	char name[];
+};
 
 #ifdef CONFIG_MMU
 /*
