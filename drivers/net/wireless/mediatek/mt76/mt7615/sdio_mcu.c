@@ -5,6 +5,7 @@
  *	   Lorenzo Bianconi <lorenzo@kernel.org>
  *	   Sean Wang <sean.wang@mediatek.com>
  */
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/mmc/sdio_func.h>

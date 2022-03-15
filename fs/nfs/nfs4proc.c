@@ -35,6 +35,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

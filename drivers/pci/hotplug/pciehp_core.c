@@ -20,6 +20,7 @@
 #define pr_fmt(fmt) "pciehp: " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/jiffies.h>
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

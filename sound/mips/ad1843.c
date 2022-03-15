@@ -9,6 +9,7 @@
  *     Copyright 1999 Silicon Graphics, Inc.  All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/errno.h>

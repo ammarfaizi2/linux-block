@@ -5,6 +5,7 @@
  *  stream.c - SoundWire Bus stream operations.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/init.h>

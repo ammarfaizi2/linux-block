@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/freezer.h>
 #include "vivid-core.h"
 #include "vivid-kthread-touch.h"

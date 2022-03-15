@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
 #include <asm/io.h>

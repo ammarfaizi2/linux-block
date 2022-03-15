@@ -21,6 +21,7 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>

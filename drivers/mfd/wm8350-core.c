@@ -7,6 +7,7 @@
  * Author: Liam Girdwood, Mark Brown
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/export.h>

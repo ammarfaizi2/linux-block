@@ -21,6 +21,7 @@
 	Abstract: rt2800 generic device routines.
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/capability.h>

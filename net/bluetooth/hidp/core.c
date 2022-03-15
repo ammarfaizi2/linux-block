@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>

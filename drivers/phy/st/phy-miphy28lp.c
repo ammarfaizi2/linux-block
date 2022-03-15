@@ -7,6 +7,7 @@
  * Author: Alexandre Torgue <alexandre.torgue@st.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>

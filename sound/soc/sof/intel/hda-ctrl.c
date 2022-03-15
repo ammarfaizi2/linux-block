@@ -15,6 +15,7 @@
  * Hardware interface for generic Intel audio DSP HDA IP
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/module.h>

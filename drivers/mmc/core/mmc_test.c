@@ -3,6 +3,7 @@
  *  Copyright 2007-2008 Pierre Ossman
  */
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/mmc/core.h>
 #include <linux/mmc/card.h>

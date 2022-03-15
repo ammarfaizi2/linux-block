@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Intel Corporation
  *****************************************************************************/
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

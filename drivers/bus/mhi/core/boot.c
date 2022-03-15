@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/dma-direction.h>

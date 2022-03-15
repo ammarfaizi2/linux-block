@@ -5,6 +5,7 @@
  *  Copyright (C) 2010 Stefan Ringel <stefan.ringel@arcor.de>
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/delay.h>

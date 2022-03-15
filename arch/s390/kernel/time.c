@@ -15,6 +15,7 @@
 #define KMSG_COMPONENT "time"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>

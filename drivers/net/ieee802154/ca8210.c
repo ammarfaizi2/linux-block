@@ -47,6 +47,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/cdev.h>
 #include <linux/clk-provider.h>
 #include <linux/debugfs.h>

@@ -14,6 +14,8 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/jiffies.h>
+
 #include "vp702x.h"
 
 struct vp702x_fe_state {

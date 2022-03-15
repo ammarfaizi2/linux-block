@@ -20,6 +20,7 @@
 #include "ivtv-gpio.h"
 #include "ivtv-controls.h"
 #include "ivtv-cards.h"
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/atomic_api.h>

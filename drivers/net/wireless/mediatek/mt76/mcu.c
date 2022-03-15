@@ -3,6 +3,8 @@
  * Copyright (C) 2019 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/jiffies.h>
+
 #include "mt76.h"
 
 struct sk_buff *

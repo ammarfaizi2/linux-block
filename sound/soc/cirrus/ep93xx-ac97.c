@@ -7,6 +7,7 @@
  * Based on s3c-ac97 ASoC driver by Jaswinder Singh.
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

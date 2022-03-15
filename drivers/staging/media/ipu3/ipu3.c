@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>

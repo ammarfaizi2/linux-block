@@ -4,6 +4,7 @@
  * Author: Chris Zhong <zyw@rock-chips.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/delay.h>

@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/signal.h>

@@ -16,6 +16,7 @@
  * this driver as required for the omap-platform.
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

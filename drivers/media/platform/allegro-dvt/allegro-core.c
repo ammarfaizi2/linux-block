@@ -5,6 +5,7 @@
  * Allegro DVT video encoder driver
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/export.h>

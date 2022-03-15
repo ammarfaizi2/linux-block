@@ -14,6 +14,7 @@
 /* for debugging ARM communication: */
 //#define COM_DEBUG
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

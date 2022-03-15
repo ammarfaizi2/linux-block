@@ -4,6 +4,7 @@
 // Copyright (c) 2017 Samsung Electronics Co., Ltd.
 // Copyright (c) 2017 Andi Shyti <andi@etezian.org>
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

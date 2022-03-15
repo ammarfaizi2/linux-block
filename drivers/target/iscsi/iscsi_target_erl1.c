@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/jiffies.h>
 #include <linux/align.h>
 #include <linux/list.h>
 #include <linux/slab.h>

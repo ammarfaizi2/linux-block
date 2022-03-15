@@ -16,6 +16,7 @@
 
 #define _RTL871X_CMD_C_
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/compiler.h>
 #include <linux/kernel.h>

@@ -26,6 +26,7 @@
 /* The caprices of the preprocessor require that this be declared right here */
 #define CREATE_TRACE_POINTS
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/capability.h>

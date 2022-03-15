@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 // Copyright (c) 2018 Mellanox Technologies
 
+#include <linux/jiffies.h>
+
 #include "en.h"
 #include "en/hv_vhca_stats.h"
 #include "lib/hv_vhca.h"

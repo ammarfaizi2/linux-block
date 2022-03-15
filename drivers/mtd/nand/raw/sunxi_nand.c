@@ -13,6 +13,7 @@
  *	Copyright (C) 2013 Sergey Lapin <slapin@ossfans.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

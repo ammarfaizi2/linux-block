@@ -35,6 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/jiffies.h>
+
 #include "core.h"
 #include "name_table.h"
 #include "subscr.h"

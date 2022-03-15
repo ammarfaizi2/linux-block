@@ -5,6 +5,7 @@
  */
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/debugfs.h>

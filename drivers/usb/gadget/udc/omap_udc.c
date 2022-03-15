@@ -11,6 +11,7 @@
 #undef	DEBUG
 #undef	VERBOSE
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/ioport.h>

@@ -23,6 +23,7 @@
   * All rights reserved. Licensed under dual BSD/GPL license.
   */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

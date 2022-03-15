@@ -18,6 +18,7 @@
  * 	- Plugged memory leak in cfi_staa_writev().
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/types.h>

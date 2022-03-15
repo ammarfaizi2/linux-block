@@ -15,6 +15,7 @@
  * Copyright (C) 2015 Paolo Valente <paolo.valente@unimore.it>
  *                    Arianna Avanzini <avanzini.arianna@gmail.com>
  */
+#include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api.h>

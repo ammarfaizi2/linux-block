@@ -18,6 +18,8 @@
  * p2p_sm Node State Machine: Point-to-Point Node States
  */
 
+#include <linux/jiffies.h>
+
 #include "efc.h"
 
 static void

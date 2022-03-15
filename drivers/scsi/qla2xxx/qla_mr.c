@@ -4,6 +4,7 @@
  * Copyright (c)  2003-2014 QLogic Corporation
  */
 #include "qla_def.h"
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

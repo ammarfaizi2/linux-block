@@ -33,6 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/jiffies.h>
 #include <net/genetlink.h>
 #include "core.h"
 #include "addr.h"

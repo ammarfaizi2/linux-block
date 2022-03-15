@@ -29,6 +29,7 @@
  * down in order to keep the output clock rate within the previous OPP limits.
 */
 
+#include <linux/jiffies.h>
 #include <linux/errno.h>
 #include <linux/io.h>
 #include <linux/slab.h>

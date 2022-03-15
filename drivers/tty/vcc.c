@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Oracle. All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

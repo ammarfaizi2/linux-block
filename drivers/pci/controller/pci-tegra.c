@@ -13,6 +13,7 @@
  * Author: Thierry Reding <treding@nvidia.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

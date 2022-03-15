@@ -7,6 +7,7 @@
  *
  * Some code borrowed from drivers/usb/typec/ucsi/ucsi_acpi.c
  */
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

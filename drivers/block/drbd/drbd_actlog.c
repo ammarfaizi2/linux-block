@@ -11,6 +11,7 @@
 
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/crc32c.h>

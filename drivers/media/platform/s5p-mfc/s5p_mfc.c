@@ -6,6 +6,7 @@
  * Kamil Debski, <k.debski@samsung.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

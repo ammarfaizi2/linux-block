@@ -12,6 +12,7 @@
 
 #define EXT4FS_DEBUG
 
+#include <linux/jiffies.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

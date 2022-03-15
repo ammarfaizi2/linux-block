@@ -19,6 +19,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

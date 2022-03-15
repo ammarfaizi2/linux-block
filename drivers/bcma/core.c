@@ -6,6 +6,7 @@
  */
 
 #include "bcma_private.h"
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/export.h>
 #include <linux/bcma/bcma.h>

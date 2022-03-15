@@ -6,6 +6,7 @@
  * Copyright (c) 2009-2011, NVIDIA Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

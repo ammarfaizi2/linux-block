@@ -21,6 +21,7 @@
  */
 #include "priv.h"
 
+#include <linux/jiffies.h>
 #include <core/memory.h>
 #include <subdev/acr.h>
 #include <subdev/timer.h>

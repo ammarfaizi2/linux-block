@@ -5,6 +5,7 @@
 // Author: Cezary Rojewski <cezary.rojewski@intel.com>
 //
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/firmware.h>

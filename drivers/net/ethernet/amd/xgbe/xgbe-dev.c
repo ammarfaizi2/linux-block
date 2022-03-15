@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>

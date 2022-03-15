@@ -7,6 +7,7 @@
  *  Copyright (C) 2013-2018 Toradex AG <stefan.agner@toradex.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/completion.h>
 #include <linux/err.h>

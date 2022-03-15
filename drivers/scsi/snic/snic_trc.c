@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/mempool.h>
 #include <linux/errno.h>

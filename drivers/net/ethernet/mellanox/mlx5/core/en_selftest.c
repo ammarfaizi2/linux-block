@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/ip.h>
 #include <linux/udp.h>

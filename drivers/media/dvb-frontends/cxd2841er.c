@@ -12,6 +12,7 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
   */
 
+#include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

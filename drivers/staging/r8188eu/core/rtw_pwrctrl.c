@@ -3,6 +3,7 @@
 
 #define _RTW_PWRCTRL_C_
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 
 #include "../include/osdep_service.h"

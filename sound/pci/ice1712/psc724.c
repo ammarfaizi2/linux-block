@@ -7,6 +7,7 @@
  *	Copyright (c) 2012 Ondrej Zary <linux@rainbow-software.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/slab.h>

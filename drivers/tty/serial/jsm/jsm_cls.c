@@ -15,6 +15,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>	/* For udelay */
 #include <linux/io.h>		/* For read[bwl]/write[bwl] */
 #include <linux/serial.h>	/* For struct async_serial */

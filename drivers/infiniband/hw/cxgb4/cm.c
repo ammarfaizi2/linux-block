@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>
 #include <linux/module.h>
 #include <linux/list.h>

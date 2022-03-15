@@ -15,6 +15,7 @@
  *	Zhenyu Wang
  */
 
+#include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <crypto/hash.h>
 #include <linux/types.h>

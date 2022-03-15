@@ -12,6 +12,7 @@
  * by Kurt J. Bosch
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/io.h>

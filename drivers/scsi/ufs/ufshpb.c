@@ -9,6 +9,7 @@
  *	Jinyoung Choi <j-young.choi@samsung.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>

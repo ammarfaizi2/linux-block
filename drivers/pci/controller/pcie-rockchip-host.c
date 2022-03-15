@@ -11,6 +11,7 @@
  * ARM PCI Host generic driver.
  */
 
+#include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

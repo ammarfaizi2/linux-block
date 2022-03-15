@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/workqueue.h>

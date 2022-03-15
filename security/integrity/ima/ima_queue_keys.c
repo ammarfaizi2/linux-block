@@ -8,6 +8,7 @@
  *       Enables deferred processing of keys
  */
 
+#include <linux/jiffies.h>
 #include <linux/user_namespace.h>
 #include <linux/workqueue.h>
 #include <keys/asymmetric-type.h>

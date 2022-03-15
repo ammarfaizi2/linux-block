@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/sched/cond_resched.h>

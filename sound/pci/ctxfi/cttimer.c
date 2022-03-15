@@ -3,6 +3,7 @@
  * PCM timer handling on ctxfi
  */
 
+#include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/math64.h>
 #include <linux/moduleparam.h>

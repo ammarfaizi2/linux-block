@@ -9,6 +9,8 @@
  * specificly written as a driver for the speakup screenreview
  * s not a general device driver.
  */
+#include <linux/jiffies.h>
+
 #include "speakup.h"
 #include "spk_priv.h"
 #include "speakup_dtlk.h" /* local header file for LiteTalk values */

@@ -15,6 +15,8 @@
  * Hardware interface for audio DSP on Cannonlake.
  */
 
+#include <linux/jiffies.h>
+
 #include "../ops.h"
 #include "hda.h"
 #include "hda-ipc.h"

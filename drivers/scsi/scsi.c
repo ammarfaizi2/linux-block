@@ -38,6 +38,7 @@
  *  out_of_space hacks, D. Gilbert (dpg) 990608
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

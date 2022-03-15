@@ -13,6 +13,7 @@
 /*
  */
 
+#include <linux/jiffies.h>
 #include <linux/device.h>
 #include <linux/hid.h>
 #include <linux/module.h>

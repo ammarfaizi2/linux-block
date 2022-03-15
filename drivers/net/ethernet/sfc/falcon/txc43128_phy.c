@@ -9,6 +9,7 @@
  * see www.transwitch.com, part is TXC-43128
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include "efx.h"

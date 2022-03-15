@@ -7,6 +7,7 @@
  *  Copyright (C) 2013 Naveen Krishna Chatradhi <ch.naveen@samsung.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/compiler.h>
 #include <linux/module.h>

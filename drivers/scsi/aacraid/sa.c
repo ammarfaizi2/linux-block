@@ -16,6 +16,7 @@
  * Abstract: Drawbridge specific support functions
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

@@ -10,6 +10,7 @@
  * resulting input.
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>

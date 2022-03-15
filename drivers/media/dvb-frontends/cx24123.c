@@ -9,6 +9,7 @@
  *   Support for CX24123/CX24113-NIM by Patrick Boettcher <pb@linuxtv.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

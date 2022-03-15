@@ -14,6 +14,7 @@
  * Copyright (C) 2002 Trond Myklebust <trond.myklebust@fys.uio.no>
  */
 
+#include <linux/jiffies.h>
 #include <asm/param.h>
 
 #include <linux/types.h>

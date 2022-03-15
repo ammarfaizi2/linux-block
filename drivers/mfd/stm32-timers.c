@@ -4,6 +4,7 @@
  * Author: Benjamin Gaignard <benjamin.gaignard@st.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

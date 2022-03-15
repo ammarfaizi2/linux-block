@@ -9,6 +9,7 @@
  *	based heavily on net/ipv6/mcast.c
  */
 
+#include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/hash.h>
 #include <linux/capability.h>

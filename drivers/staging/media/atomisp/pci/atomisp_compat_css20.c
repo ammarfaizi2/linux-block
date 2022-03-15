@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <media/videobuf-vmalloc.h>
 #include <media/v4l2-dev.h>

@@ -34,6 +34,7 @@
  *        always after h/w and remote ports.
  */
 
+#include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

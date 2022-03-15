@@ -5,6 +5,7 @@
  * Author: Gabriel Fernandez <gabriel.fernandez@st.com> for STMicroelectronics.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

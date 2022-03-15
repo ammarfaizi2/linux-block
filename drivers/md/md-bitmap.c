@@ -16,6 +16,7 @@
  * flush after percent set rather than just time based. (maybe both).
  */
 
+#include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/hashtable_api.h>
 #include <linux/gfp_api.h>

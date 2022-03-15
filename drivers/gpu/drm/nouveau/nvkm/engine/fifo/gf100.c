@@ -24,6 +24,7 @@
 #include "gf100.h"
 #include "changf100.h"
 
+#include <linux/jiffies.h>
 #include <core/client.h>
 #include <core/enum.h>
 #include <core/gpuobj.h>

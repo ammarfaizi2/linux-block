@@ -15,6 +15,7 @@
 
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>

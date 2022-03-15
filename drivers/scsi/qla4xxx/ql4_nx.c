@@ -3,6 +3,7 @@
  * QLogic iSCSI HBA Driver
  * Copyright (c)  2003-2013 QLogic Corporation
  */
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/sched/cond_resched.h>

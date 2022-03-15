@@ -122,6 +122,7 @@ static int xcvr[NUM_UNITS]; 			/* The data transfer mode. */
 	interpretations of the device registers.
 */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/kernel.h>

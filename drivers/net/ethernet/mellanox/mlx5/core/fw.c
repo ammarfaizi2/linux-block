@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mlx5/driver.h>

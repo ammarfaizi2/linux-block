@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/jiffies.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>

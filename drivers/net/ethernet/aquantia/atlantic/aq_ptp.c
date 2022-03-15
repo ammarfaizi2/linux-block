@@ -9,6 +9,7 @@
  * Definition of functions for Linux PTP support.
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

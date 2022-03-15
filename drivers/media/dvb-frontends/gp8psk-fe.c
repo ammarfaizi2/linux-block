@@ -13,6 +13,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include "gp8psk-fe.h"
+#include <linux/jiffies.h>
 #include <media/dvb_frontend.h>
 
 static int debug;

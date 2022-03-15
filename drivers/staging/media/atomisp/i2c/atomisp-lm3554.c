@@ -15,6 +15,7 @@
  *
  *
  */
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/mutex.h>

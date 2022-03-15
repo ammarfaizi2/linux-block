@@ -38,6 +38,7 @@
 /*
  * This file contains the common interrupt handlers
  */
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

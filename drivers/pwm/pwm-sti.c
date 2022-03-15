@@ -8,6 +8,7 @@
  *         Lee Jones <lee.jones@linaro.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

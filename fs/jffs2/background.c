@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/jffs2.h>
 #include <linux/mtd/mtd.h>

@@ -12,6 +12,7 @@
 	Abstract: rt2x00 queue specific routines.
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
  * https://www.analog.com/ADF7242
  */
 
+#include <linux/jiffies.h>
 #include <linux/dcache.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

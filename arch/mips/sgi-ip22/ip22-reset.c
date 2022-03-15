@@ -5,6 +5,7 @@
  *
  * Copyright (C) 1997, 1998, 2001, 03, 05, 06 by Ralf Baechle
  */
+#include <linux/jiffies.h>
 #include <linux/linkage.h>
 #include <linux/init.h>
 #include <linux/rtc/ds1286.h>

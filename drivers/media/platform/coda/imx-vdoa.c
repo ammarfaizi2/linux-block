@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Pengutronix, Michael Tretter <kernel@pengutronix.de>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

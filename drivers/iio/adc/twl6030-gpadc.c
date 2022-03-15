@@ -14,6 +14,7 @@
  * Copyright (C) 2008 Nokia Corporation
  * Mikko Ylinen <mikko.k.ylinen@nokia.com>
  */
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

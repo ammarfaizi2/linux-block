@@ -30,6 +30,7 @@
 
 */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/errno.h>

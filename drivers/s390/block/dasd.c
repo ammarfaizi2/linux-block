@@ -11,6 +11,7 @@
 #define KMSG_COMPONENT "dasd"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kmod.h>

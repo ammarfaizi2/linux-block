@@ -7,6 +7,7 @@
  * Copyright (C) 2002 - 2010 Paul Mundt
  * Copyright (C) 2006 - 2007 Akio Idehara
  */
+#include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

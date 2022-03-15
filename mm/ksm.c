@@ -13,6 +13,7 @@
  *	Hugh Dickins
  */
 
+#include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/hashtable_api.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2013-2015 Intel Corporation. All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/extcon-provider.h>

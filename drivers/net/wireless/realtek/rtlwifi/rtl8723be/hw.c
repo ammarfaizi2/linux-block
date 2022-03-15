@@ -21,6 +21,7 @@
 #include "../pwrseqcmd.h"
 #include "pwrseq.h"
 #include "../btcoexist/rtl_btc.h"
+#include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

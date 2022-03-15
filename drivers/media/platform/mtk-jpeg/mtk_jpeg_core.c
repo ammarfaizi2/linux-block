@@ -6,6 +6,7 @@
  *         Xia Jiang <xia.jiang@mediatek.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/export.h>

@@ -9,6 +9,7 @@
  *	     Anatolij Gustschin <agust@denx.de>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/export.h>

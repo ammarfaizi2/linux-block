@@ -10,6 +10,7 @@
  * package and is not a general device driver.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 
 #include "spk_priv.h"

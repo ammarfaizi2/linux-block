@@ -10,6 +10,7 @@
  *	Juergen Mellinger (juergen.mellinger@t-online.de)
  */
 
+#include <linux/jiffies.h>
 #include <linux/sched.h>
 #include <linux/timer.h>
 

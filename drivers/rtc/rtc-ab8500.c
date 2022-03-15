@@ -9,6 +9,7 @@
  * Linus Walleij <linus.walleij@stericsson.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

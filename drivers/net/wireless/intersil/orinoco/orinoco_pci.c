@@ -44,6 +44,7 @@
 #define DRIVER_NAME "orinoco_pci"
 #define PFX DRIVER_NAME ": "
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

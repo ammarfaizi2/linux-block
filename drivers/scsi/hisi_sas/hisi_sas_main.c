@@ -4,6 +4,7 @@
  * Copyright (c) 2015 Hisilicon Limited.
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>

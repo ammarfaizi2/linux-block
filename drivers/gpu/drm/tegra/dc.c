@@ -4,6 +4,7 @@
  * Copyright (C) 2012 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

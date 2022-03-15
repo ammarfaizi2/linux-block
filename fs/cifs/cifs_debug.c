@@ -5,6 +5,7 @@
  *
  *   Modified by Steve French (sfrench@us.ibm.com)
  */
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>

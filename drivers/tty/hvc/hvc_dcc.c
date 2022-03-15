@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2010, 2014 The Linux Foundation. All rights reserved.  */
 
+#include <linux/jiffies.h>
 #include <linux/console.h>
 #include <linux/init.h>
 #include <linux/serial.h>

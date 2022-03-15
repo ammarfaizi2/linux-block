@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ieee80211.h>
 #include <linux/pm_runtime.h>
 

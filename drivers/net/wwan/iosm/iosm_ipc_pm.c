@@ -3,6 +3,8 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/jiffies.h>
+
 #include "iosm_ipc_protocol.h"
 
 /* Timeout value in MS for the PM to wait for device to reach active state */

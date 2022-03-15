@@ -53,6 +53,7 @@
  *			 :  base.c too.
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/cpumask_api.h>

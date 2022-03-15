@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/i2c-algo-bit.h>
 #include <linux/i2c.h>

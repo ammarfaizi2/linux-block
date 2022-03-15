@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>
 #include <linux/highmem.h>

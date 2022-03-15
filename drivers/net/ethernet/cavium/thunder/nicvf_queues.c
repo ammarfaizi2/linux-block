@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Cavium, Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

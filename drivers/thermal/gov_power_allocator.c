@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "Power allocator: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/rculist.h>
 #include <linux/slab.h>
 #include <linux/thermal.h>

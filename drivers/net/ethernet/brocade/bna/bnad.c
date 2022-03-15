@@ -8,6 +8,7 @@
  * All rights reserved
  * www.qlogic.com
  */
+#include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

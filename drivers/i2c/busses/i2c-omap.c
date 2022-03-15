@@ -15,6 +15,7 @@
  *	Nishant Menon <nm@ti.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>

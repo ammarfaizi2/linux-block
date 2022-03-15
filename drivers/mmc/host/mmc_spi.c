@@ -10,6 +10,7 @@
  * (C) Copyright 2007, ATRON electronic GmbH,
  *		Jan Nikitenko <jan.nikitenko@gmail.com>
  */
+#include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>

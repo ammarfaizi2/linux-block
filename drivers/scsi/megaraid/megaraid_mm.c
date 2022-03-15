@@ -10,6 +10,7 @@
  *
  * Common management module
  */
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/sched.h>

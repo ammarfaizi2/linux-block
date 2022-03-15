@@ -11,6 +11,7 @@
 // it cannot be easily upgraded and EC flash/IRAM space is relatively
 // expensive.
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

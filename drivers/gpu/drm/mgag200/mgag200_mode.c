@@ -8,6 +8,7 @@
  *	    Dave Airlie
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/dma-buf-map.h>

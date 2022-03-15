@@ -6,6 +6,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

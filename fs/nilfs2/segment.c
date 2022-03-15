@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

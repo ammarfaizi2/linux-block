@@ -9,6 +9,7 @@
  * Author: Srinidhi Kasagar <srinidhi.kasagar@stericsson.com>
  * Author: Sachin Verma <sachin.verma@st.com>
  */
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>

@@ -15,6 +15,7 @@
  * been made separate from ucb1x00-core/ucb1x00-ts on Russell's request.
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/sched.h>

@@ -14,6 +14,7 @@
  * 06/07 Michael Schmitz
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

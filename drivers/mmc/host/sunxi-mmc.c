@@ -9,6 +9,7 @@
  * (C) Copyright 2017 Sootech SA
  */
 
+#include <linux/jiffies.h>
 #include <linux/clk.h>
 #include <linux/clk/sunxi-ng.h>
 #include <linux/delay.h>

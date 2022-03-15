@@ -8,6 +8,7 @@
  * Based on previous work from: Felipe Balbi <balbi@ti.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/device.h>

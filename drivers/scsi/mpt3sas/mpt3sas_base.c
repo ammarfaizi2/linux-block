@@ -43,6 +43,7 @@
  * USA.
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>

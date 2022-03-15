@@ -8,6 +8,7 @@
  *               Christian Borntraeger <borntraeger@de.ibm.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/kvm.h>
 #include <linux/kvm_host.h>
 #include <asm/gmap.h>

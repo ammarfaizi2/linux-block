@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2011 by Jarod Wilson <jarod@redhat.com>
  */
+#include <linux/jiffies.h>
 #include <linux/module.h>
 
 #include "rc-core-priv.h"

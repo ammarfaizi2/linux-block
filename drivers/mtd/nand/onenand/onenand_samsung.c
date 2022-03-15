@@ -11,6 +11,7 @@
  *	S5PC110: use DMA
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>

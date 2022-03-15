@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <drm/drm_atomic_helper.h>

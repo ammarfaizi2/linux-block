@@ -7,6 +7,7 @@
  * Copyright (C) 1999 kaz Kojima
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

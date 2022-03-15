@@ -6,6 +6,7 @@
  * Copyright (C) 2007-2008 Peter Stokes <linux@dadeos.co.uk>
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitops.h>
 #include <linux/usb/input.h>
 #include <linux/slab.h>

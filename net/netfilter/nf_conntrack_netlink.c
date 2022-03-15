@@ -15,6 +15,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

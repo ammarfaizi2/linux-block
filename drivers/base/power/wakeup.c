@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>

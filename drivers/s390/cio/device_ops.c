@@ -5,6 +5,7 @@
  * Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com)
  *	      Cornelia Huck (cornelia.huck@de.ibm.com)
  */
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/export.h>

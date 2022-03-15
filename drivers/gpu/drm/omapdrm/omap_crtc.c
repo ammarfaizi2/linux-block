@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob@ti.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/math64.h>
 
 #include <drm/drm_atomic.h>

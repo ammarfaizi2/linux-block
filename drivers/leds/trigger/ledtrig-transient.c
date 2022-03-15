@@ -11,6 +11,7 @@
 // Design and use-case input from Jonas Bonn <jonas@southpole.se> and
 // Neil Brown <neilb@suse.de>
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

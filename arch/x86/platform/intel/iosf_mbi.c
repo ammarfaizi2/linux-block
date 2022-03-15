@@ -9,6 +9,7 @@
  * enumerate the device using PCI.
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>

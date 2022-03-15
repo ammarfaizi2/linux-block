@@ -26,6 +26,7 @@
  *          Jerome Glisse
  *          Christian König
  */
+#include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>

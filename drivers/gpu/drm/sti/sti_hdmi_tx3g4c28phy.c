@@ -4,6 +4,7 @@
  * Author: Vincent Abriou <vincent.abriou@st.com> for STMicroelectronics.
  */
 
+#include <linux/jiffies.h>
 #include <drm/drm_print.h>
 
 #include "sti_hdmi_tx3g4c28phy.h"

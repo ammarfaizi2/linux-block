@@ -7,6 +7,7 @@
  *         Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

@@ -8,6 +8,7 @@
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>

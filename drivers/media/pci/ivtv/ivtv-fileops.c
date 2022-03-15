@@ -21,6 +21,7 @@
 #include "ivtv-ioctl.h"
 #include "ivtv-cards.h"
 #include "ivtv-firmware.h"
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/atomic_api.h>
 #include <media/v4l2-event.h>

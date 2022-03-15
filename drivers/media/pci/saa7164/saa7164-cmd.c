@@ -5,6 +5,7 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/wait.h>
 
 #include "saa7164.h"

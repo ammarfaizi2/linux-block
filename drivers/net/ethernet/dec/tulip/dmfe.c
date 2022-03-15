@@ -57,6 +57,7 @@
 
 #define DRV_NAME	"dmfe"
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>

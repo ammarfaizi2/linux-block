@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Mellanox Technologies
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>

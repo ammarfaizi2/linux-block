@@ -8,6 +8,7 @@
  *
  * Based on drivers under drivers/usb/gadget/udc/
  */
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/dma-mapping.h>

@@ -58,6 +58,7 @@
  * --------------------------------------------------------------------
  */
 
+#include <linux/jiffies.h>
 #include <linux/if_arp.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

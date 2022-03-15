@@ -14,6 +14,7 @@
 	https://bugzilla.stlinux.com/
 *******************************************************************************/
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>
 #include <linux/hrtimer_api.h>

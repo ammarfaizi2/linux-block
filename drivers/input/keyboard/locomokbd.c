@@ -8,6 +8,7 @@
  * Based on from xtkbd.c
  */
 
+#include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/init.h>

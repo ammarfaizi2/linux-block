@@ -11,6 +11,7 @@
  * Copyright (C) 2021 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

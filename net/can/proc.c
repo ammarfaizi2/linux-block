@@ -40,6 +40,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <linux/list.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/io.h>

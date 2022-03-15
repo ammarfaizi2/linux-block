@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (c) 2018-2019 Hisilicon Limited. */
 
+#include <linux/jiffies.h>
 #include <linux/device.h>
 
 #include "hclge_debugfs.h"

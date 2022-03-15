@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>

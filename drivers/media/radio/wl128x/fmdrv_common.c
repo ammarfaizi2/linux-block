@@ -19,6 +19,7 @@
  *  Author: Manjunatha Halli <manjunatha_halli@ti.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>

@@ -6,6 +6,7 @@
  * Author: Jon Ringle <jringle@gridpoint.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>

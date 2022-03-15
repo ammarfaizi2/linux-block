@@ -6,6 +6,7 @@
  *		Aaron.maoye <leafy.myeh@newbietech.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/hardirq.h>
 #include <linux/module.h>

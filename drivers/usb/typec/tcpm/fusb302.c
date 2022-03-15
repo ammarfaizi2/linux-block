@@ -5,6 +5,7 @@
  * Fairchild FUSB302 Type-C Chip Driver
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>

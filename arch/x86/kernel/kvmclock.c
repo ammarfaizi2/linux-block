@@ -3,6 +3,7 @@
     Copyright (C) 2008 Glauber de Oliveira Costa, Red Hat Inc.
 */
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/paravirt_api_clock.h>

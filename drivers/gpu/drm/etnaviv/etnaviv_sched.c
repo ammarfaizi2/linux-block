@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Etnaviv Project
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/device_api.h>

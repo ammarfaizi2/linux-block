@@ -34,6 +34,7 @@
   * we no longer can transmit.
   */
 
+#include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

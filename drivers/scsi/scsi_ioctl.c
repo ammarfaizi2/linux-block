@@ -5,6 +5,7 @@
  * - get rid of some verify_areas and use __copy*user and __get/put_user
  *   for the ones that remain
  */
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/module.h>

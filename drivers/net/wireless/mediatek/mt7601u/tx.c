@@ -4,6 +4,8 @@
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
+#include <linux/jiffies.h>
+
 #include "mt7601u.h"
 #include "trace.h"
 

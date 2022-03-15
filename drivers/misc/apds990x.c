@@ -8,6 +8,7 @@
  * Contact: Samu Onkalo <samu.p.onkalo@nokia.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

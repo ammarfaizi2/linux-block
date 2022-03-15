@@ -53,6 +53,7 @@
 #define DRV_RELDATE		"Mar 22, 2004"
 
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/if_vlan_api.h>

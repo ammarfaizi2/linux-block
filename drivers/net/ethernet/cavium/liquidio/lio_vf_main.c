@@ -15,6 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
  * NONINFRINGEMENT.  See the GNU General Public License for more details.
  ***********************************************************************/
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

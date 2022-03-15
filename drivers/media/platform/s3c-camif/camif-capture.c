@@ -10,6 +10,7 @@
 */
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/bug.h>

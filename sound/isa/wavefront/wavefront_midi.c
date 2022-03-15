@@ -44,6 +44,7 @@
  *  
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/time.h>

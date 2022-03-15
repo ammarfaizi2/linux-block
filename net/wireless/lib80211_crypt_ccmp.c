@@ -6,6 +6,7 @@
  * Copyright (c) 2008, John W. Linville <linville@tuxdriver.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/module.h>

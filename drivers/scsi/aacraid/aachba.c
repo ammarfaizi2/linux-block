@@ -16,6 +16,7 @@
  * Abstract: Contains Interfaces to manage IOs.
  */
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 
 #include "i915_drv.h"

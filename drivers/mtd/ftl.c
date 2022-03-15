@@ -54,6 +54,7 @@
     contact M-Systems directly. M-Systems since acquired by Sandisk. 
 
 ======================================================================*/
+#include <linux/jiffies.h>
 #include <linux/mtd/blktrans.h>
 #include <linux/module.h>
 #include <linux/mtd/mtd.h>

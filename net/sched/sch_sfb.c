@@ -12,6 +12,7 @@
  * http://www.thefengs.com/wuchang/blue/CSE-TR-387-99.pdf
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

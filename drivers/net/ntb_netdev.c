@@ -47,6 +47,7 @@
  * Contact Information:
  * Jon Mason <jon.mason@intel.com>
  */
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/ethtool.h>

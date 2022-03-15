@@ -16,6 +16,7 @@
 
 #define _OS_INTFS_C_
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Google Corporation
  */
 
+#include <linux/jiffies.h>
 #include <net/bluetooth/bluetooth.h>
 #include <net/bluetooth/hci_core.h>
 #include <net/bluetooth/mgmt.h>

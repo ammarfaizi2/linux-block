@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"ax88796c: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/iopoll.h>
 #include <linux/phy.h>

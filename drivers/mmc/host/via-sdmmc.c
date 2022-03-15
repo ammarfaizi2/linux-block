@@ -4,6 +4,7 @@
  *  Copyright (c) 2008, VIA Technologies Inc. All Rights Reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/module.h>

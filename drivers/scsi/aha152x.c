@@ -224,6 +224,7 @@
 
  **************************************************************************/
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <asm/irq.h>
 #include <linux/io.h>

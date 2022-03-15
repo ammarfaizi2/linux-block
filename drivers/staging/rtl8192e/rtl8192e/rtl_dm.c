@@ -4,6 +4,7 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 
 #include "rtl_core.h"

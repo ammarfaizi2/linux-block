@@ -16,6 +16,8 @@
 
 #define _MLME_OSDEP_C_
 
+#include <linux/jiffies.h>
+
 #include "osdep_service.h"
 #include "drv_types.h"
 #include "mlme_osdep.h"

@@ -3,6 +3,8 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/jiffies.h>
+
 #include "i915_drv.h"
 #include "intel_atomic.h"
 #include "intel_de.h"

@@ -10,6 +10,7 @@
  *		Mark Brown <markb@marvell.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>

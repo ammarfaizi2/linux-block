@@ -3,6 +3,7 @@
 
 #define _RTW_CMD_C_
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 

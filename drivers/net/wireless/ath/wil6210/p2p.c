@@ -4,6 +4,8 @@
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/jiffies.h>
+
 #include "wil6210.h"
 #include "wmi.h"
 

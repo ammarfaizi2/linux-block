@@ -14,6 +14,7 @@
  * DESCRIPTION: The Broadcom iProc RNG200 Driver
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/hw_random.h>
 #include <linux/init.h>

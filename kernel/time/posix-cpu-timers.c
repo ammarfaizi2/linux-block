@@ -3,6 +3,7 @@
  * Implement CPU time clocks for the POSIX clock interface.
  */
 
+#include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/atomic_api.h>
 #include <linux/restart_block_api.h>

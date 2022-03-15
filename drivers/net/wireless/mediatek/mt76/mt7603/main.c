@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 #include <linux/etherdevice.h>

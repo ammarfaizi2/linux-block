@@ -23,6 +23,7 @@
  *		Arnaldo C. Melo -	don't mangle rx packets
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/if_arp.h>
 #include <linux/slab.h>

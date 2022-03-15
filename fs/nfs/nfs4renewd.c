@@ -38,6 +38,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/cred.h>
 #include <linux/mm.h>
 #include <linux/pagemap.h>

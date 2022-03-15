@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Renesas Solutions Corp.
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

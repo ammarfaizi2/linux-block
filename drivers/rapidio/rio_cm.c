@@ -7,6 +7,7 @@
  * Copyright (c) 2015, RapidIO Trade Association
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

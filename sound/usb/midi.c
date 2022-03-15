@@ -35,6 +35,7 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

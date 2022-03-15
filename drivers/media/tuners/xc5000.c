@@ -7,6 +7,7 @@
  *  Copyright (c) 2009 Devin Heitmueller <dheitmueller@kernellabs.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/videodev2.h>

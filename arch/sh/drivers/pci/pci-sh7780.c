@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2005 - 2010  Paul Mundt
  */
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

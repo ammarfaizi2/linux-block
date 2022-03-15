@@ -12,6 +12,7 @@
  * Copyright (C) 2010-2011 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

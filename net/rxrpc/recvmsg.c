@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/jiffies.h>
 #include <linux/net.h>
 #include <linux/skbuff.h>
 #include <linux/export.h>

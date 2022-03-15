@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
 

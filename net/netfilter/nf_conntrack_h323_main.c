@@ -11,6 +11,7 @@
  * For more information, please see http://nath323.sourceforge.net/
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/ctype.h>

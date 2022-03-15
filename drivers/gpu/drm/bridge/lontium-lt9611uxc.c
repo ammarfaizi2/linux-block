@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020. Linaro Limited.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>

@@ -13,6 +13,7 @@
  *      Sachin Verma <sachin.verma@st.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  *  Implementation of dentry (directory cache) functions.
  */
 
+#include <linux/jiffies.h>
 #include <linux/dcache.h>
 
 #include "protocol.h"

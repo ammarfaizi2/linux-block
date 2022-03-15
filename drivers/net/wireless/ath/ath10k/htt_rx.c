@@ -13,6 +13,7 @@
 #include "trace.h"
 #include "mac.h"
 
+#include <linux/jiffies.h>
 #include <linux/hashtable_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

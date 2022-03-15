@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2010 by Mauro Carvalho Chehab
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/kthread.h>

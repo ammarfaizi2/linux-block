@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/align.h>
 #include <linux/io.h>

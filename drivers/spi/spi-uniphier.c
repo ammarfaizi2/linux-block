@@ -3,6 +3,7 @@
 // Copyright 2012      Panasonic Corporation
 // Copyright 2016-2018 Socionext Inc.
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

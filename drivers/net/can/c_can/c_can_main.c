@@ -25,6 +25,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

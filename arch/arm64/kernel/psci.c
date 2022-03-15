@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "psci: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/of.h>
 #include <linux/smp.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

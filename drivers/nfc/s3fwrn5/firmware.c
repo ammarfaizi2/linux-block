@@ -6,6 +6,7 @@
  * Robert Baldyga <r.baldyga@samsung.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/completion.h>
 #include <linux/firmware.h>
 #include <crypto/hash.h>

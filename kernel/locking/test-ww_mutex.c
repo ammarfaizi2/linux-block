@@ -3,6 +3,7 @@
  * Module-based API test facility for ww_mutexes
  */
 
+#include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

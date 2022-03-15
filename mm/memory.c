@@ -39,6 +39,7 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/highmem_extra.h>

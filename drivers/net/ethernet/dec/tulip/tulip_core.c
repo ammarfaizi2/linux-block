@@ -13,6 +13,7 @@
 
 #define DRV_NAME	"tulip"
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

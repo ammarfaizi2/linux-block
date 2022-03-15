@@ -8,6 +8,7 @@
  * Copyright 1997 -- 2000 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

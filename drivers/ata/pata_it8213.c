@@ -8,6 +8,7 @@
  *    clutter of later ICH/SATA setups.
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

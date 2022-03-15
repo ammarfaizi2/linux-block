@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2017 Intel Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/firmware.h>
 #include <linux/mutex.h>

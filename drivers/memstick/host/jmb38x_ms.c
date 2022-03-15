@@ -5,6 +5,7 @@
  *  Copyright (C) 2008 Alex Dubov <oakad@yahoo.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/spinlock.h>

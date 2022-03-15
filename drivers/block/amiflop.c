@@ -54,6 +54,7 @@
  * - fixed some race conditions (who finds the next may send it to me ;-)
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 

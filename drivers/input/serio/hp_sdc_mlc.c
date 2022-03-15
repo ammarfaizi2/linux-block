@@ -33,6 +33,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/hil_mlc.h>
 #include <linux/hp_sdc.h>
 #include <linux/errno.h>

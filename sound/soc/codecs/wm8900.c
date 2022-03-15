@@ -13,6 +13,7 @@
  *  - FLL source configuration, currently only MCLK is supported.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

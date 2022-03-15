@@ -4,6 +4,7 @@
  * Copyright (C) 2007 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/string.h>

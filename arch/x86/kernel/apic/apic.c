@@ -15,6 +15,7 @@
  *	Mikael Pettersson	:	PM converted to driver model.
  */
 
+#include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

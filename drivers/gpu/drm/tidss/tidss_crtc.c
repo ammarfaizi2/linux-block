@@ -4,6 +4,7 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>

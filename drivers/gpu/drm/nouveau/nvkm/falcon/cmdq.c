@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/jiffies.h>
+
 #include "qmgr.h"
 
 static bool

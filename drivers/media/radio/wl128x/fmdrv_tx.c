@@ -6,6 +6,7 @@
  *  Copyright (C) 2011 Texas Instruments
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include "fmdrv.h"
 #include "fmdrv_common.h"

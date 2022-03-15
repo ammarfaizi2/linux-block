@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/sched/mm.h>

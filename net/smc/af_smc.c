@@ -19,6 +19,7 @@
 #define KMSG_COMPONENT "smc"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

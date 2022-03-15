@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Facebook
  */
 
+#include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

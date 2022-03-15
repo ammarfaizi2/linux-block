@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/pci.h>

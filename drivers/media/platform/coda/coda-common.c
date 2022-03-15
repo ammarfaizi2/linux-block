@@ -7,6 +7,7 @@
  *    Xavier Duret
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>

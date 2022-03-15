@@ -5,6 +5,7 @@
 
 /* Toplevel file. Relies on dhd_linux.c to send commands to the dongle. */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>

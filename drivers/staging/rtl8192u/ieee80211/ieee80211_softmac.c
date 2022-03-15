@@ -13,6 +13,7 @@
  */
 #include "ieee80211.h"
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 #include <linux/random.h>

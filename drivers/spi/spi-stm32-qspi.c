@@ -3,6 +3,7 @@
  * Copyright (C) STMicroelectronics 2018 - All Rights Reserved
  * Author: Ludovic Barre <ludovic.barre@st.com> for STMicroelectronics.
  */
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/highmem.h>

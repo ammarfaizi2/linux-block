@@ -24,6 +24,7 @@
 #include "bus.h"
 #include "pad.h"
 
+#include <linux/jiffies.h>
 #include <core/option.h>
 
 /*******************************************************************************

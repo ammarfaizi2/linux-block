@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "InES_PTP: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/ethtool.h>
 #include <linux/export.h>

@@ -9,6 +9,7 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/module.h>

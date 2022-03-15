@@ -13,6 +13,7 @@
 #include "protocol.h"
 #include "orangefs-kernel.h"
 #include "orangefs-bufmap.h"
+#include <linux/jiffies.h>
 #include <linux/hashtable_api.h>
 #include <linux/posix_acl_xattr.h>
 #include <linux/xattr.h>

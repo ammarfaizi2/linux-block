@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Andreas Kemnade
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

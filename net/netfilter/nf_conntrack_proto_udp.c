@@ -4,6 +4,7 @@
  * (C) 2006-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/timer.h>
 #include <linux/module.h>

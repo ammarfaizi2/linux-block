@@ -5,6 +5,7 @@
  * Copyright (c) 2005 David Brownell
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

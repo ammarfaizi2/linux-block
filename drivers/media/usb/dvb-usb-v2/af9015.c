@@ -7,6 +7,7 @@
  * Thanks to Afatech who kindly provided information.
  */
 
+#include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>

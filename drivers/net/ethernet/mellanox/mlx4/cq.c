@@ -34,6 +34,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/export.h>
 

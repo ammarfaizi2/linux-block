@@ -13,6 +13,7 @@
  * - Tested Page Sizes: 2048, 4096
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/highmem.h>
 #include <linux/device_api_lock.h>

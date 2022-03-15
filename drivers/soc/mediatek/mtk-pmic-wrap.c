@@ -3,6 +3,7 @@
  * Copyright (c) 2014 MediaTek Inc.
  * Author: Flora Fu, MediaTek
  */
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

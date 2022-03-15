@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2016, IBM Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2002 ARM Limited, All Rights Reserved.
  */
+#include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

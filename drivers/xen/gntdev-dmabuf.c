@@ -8,6 +8,7 @@
  * Copyright (c) 2018 Oleksandr Andrushchenko, EPAM Systems Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/file.h>

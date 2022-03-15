@@ -12,6 +12,7 @@
  *  http://www.sata-io.org/
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

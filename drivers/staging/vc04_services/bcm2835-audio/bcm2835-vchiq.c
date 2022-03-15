@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2011 Broadcom Corporation.  All rights reserved. */
 
+#include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/completion.h>

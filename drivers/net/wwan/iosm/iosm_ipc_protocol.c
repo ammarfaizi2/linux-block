@@ -3,6 +3,7 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 
 #include "iosm_ipc_imem.h"

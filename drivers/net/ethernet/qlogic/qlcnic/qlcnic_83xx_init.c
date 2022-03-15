@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

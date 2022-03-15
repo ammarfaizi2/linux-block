@@ -7,6 +7,7 @@
  *	Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>

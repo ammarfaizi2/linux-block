@@ -44,6 +44,7 @@
 **     Firmware Specification, see Documentation/scsi/arcmsr_spec.rst
 *******************************************************************************
 */
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/capability.h>

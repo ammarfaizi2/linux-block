@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -18,6 +18,7 @@
  *                                 this code was copied from it.
  *
  */
+#include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/string.h>
 #include <linux/net.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2018-2020 Intel Corporation
  */
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>

@@ -53,6 +53,7 @@
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 #include "mptlan.h"
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2018-2020 Linaro Ltd.
  */
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/slab.h>

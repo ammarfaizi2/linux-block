@@ -5,6 +5,7 @@
  * Author: Vitor Soares <vitor.soares@synopsys.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

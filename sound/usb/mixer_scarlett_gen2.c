@@ -122,6 +122,7 @@
  *   to Off and power-cycling the device
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/slab.h>
 #include <linux/usb.h>

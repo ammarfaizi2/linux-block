@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/sysctl.h>
 #include <linux/proc_fs.h>

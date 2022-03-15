@@ -8,6 +8,7 @@
  *	    Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/i2c.h>

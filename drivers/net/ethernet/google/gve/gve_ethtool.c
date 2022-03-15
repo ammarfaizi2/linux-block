@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2021 Google, Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/ethtool.h>
 #include <linux/rtnetlink.h>

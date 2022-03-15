@@ -8,6 +8,7 @@
  * Copyright (C) 2000-2004 Russell King
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

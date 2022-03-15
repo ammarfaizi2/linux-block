@@ -27,6 +27,7 @@
 	* big endian support with CFG:BEM instead of cpu_to_le32
 */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/list.h>
 #include <linux/sched.h>

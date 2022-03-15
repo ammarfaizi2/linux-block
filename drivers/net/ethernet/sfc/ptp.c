@@ -30,6 +30,7 @@
  *	Receive: the packet's reception time is converted to an appropriate
  *	timestamp.
  */
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/ip.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 
 #include "otx2_common.h"

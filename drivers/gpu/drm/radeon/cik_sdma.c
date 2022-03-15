@@ -21,6 +21,7 @@
  *
  * Authors: Alex Deucher
  */
+#include <linux/jiffies.h>
 #include <linux/firmware.h>
 
 #include "radeon.h"

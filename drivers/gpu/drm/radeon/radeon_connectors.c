@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/jiffies.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_fb_helper.h>

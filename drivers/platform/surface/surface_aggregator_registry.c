@@ -9,6 +9,7 @@
  * Copyright (C) 2020-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>

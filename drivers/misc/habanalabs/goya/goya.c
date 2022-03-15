@@ -11,6 +11,7 @@
 #include "../include/goya/asic_reg/goya_masks.h"
 #include "../include/goya/goya_reg_map.h"
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>

@@ -6,6 +6,7 @@
  *  Copyright (C) 2015-2017 Sebastian Reichel <sre@kernel.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/clk.h>

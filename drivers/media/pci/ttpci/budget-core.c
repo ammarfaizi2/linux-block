@@ -18,6 +18,7 @@
  */
 
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 

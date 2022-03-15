@@ -7,6 +7,7 @@
  * Based on previous work by Lars Poeschel <poeschel@lemonage.de>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

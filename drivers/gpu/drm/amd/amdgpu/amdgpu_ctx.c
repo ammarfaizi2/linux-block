@@ -22,6 +22,7 @@
  * Authors: monk liu <monk.liu@amd.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/capability.h>

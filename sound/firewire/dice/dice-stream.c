@@ -6,6 +6,8 @@
  * Copyright (c) 2014 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/jiffies.h>
+
 #include "dice.h"
 
 #define	READY_TIMEOUT_MS	200

@@ -4,6 +4,7 @@
  * Copyright(c) 2004 - 2015 Intel Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/init.h>

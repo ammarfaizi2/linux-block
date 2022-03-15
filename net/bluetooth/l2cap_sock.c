@@ -27,6 +27,7 @@
 
 /* Bluetooth L2CAP sockets. */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/filter_api.h>
 #include <linux/capability.h>

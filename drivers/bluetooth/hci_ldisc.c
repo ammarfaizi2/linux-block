@@ -8,6 +8,7 @@
  *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 

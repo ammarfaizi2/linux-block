@@ -10,6 +10,7 @@
  * Copyright (c) 2006-2007, 2011-2012 Freescale Semiconductor, Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

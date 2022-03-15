@@ -23,6 +23,7 @@
 #define KMSG_COMPONENT "ctcm"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

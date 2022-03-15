@@ -7,6 +7,7 @@
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/skbuff.h>
 #include <linux/wait.h>

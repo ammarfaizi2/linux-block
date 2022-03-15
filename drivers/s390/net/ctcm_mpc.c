@@ -21,6 +21,7 @@
 #define KMSG_COMPONENT "ctcm"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -43,6 +43,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/list.h>
 
 #include "pvrdma.h"

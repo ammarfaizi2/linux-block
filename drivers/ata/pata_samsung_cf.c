@@ -12,6 +12,7 @@
  *	PATA driver for Toshiba SCC controller
 */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

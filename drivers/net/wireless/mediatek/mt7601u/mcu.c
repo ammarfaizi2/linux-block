@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
+#include <linux/jiffies.h>
 #include <asm/unaligned.h>
 #include <linux/kernel.h>
 #include <linux/firmware.h>

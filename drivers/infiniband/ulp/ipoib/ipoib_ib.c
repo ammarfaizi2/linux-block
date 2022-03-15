@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/moduleparam.h>
 #include <linux/dma-mapping.h>

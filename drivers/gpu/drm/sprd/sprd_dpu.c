@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Unisoc Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/component.h>

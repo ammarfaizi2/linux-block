@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/tipc_config.h>
 #include "socket.h"
 #include "msg.h"

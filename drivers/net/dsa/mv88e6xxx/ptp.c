@@ -10,6 +10,8 @@
  *      Dane Wagner <dane.wagner@ni.com>
  */
 
+#include <linux/jiffies.h>
+
 #include "chip.h"
 #include "global2.h"
 #include "hwtstamp.h"

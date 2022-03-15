@@ -9,6 +9,7 @@
  * http://www.samsung.com/
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/io.h>

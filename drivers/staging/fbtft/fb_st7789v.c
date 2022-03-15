@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Dennis Menschel
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

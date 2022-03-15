@@ -14,6 +14,7 @@
 
 #include "cx88.h"
 
+#include <linux/jiffies.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

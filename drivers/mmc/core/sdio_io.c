@@ -5,6 +5,7 @@
  *  Copyright 2007-2008 Pierre Ossman
  */
 
+#include <linux/jiffies.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/mmc/host.h>

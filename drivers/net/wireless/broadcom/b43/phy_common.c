@@ -13,6 +13,7 @@
 
 */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 
 #include "phy_common.h"

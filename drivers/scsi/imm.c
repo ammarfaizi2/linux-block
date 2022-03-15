@@ -9,6 +9,7 @@
  *              future expansion to five letters.
  */
 
+#include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

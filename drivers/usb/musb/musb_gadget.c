@@ -8,6 +8,7 @@
  * Copyright (C) 2009 MontaVista Software, Inc. <source@mvista.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/list.h>

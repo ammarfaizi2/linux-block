@@ -124,6 +124,7 @@
    by default.
 
 */
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 static int verbose = 0;

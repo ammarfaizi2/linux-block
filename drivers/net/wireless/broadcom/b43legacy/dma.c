@@ -20,6 +20,7 @@
 #include "debugfs.h"
 #include "xmit.h"
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

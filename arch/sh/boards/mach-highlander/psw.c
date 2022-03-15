@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2006  Paul Mundt
  */
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

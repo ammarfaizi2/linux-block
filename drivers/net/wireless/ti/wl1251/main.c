@@ -5,6 +5,7 @@
  * Copyright (C) 2008-2009 Nokia Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

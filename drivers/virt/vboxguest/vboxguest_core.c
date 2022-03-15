@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2016 Oracle Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>

@@ -6,6 +6,7 @@
  * Copyright 2014-2015 Linaro Ltd.
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/power_supply.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Red Hat, Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api.h>

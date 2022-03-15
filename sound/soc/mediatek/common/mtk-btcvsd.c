@@ -5,6 +5,7 @@
 // Copyright (c) 2019 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

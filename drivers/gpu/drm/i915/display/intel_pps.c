@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 
 #include "g4x_dp.h"

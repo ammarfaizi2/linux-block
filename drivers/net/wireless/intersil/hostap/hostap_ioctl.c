@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* ioctl() (mostly Linux Wireless Extensions) routines for Host AP driver */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/slab.h>

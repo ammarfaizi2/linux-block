@@ -16,6 +16,7 @@
  * code from rkvdec_vp9_run() followed by rkvdec_vp9_done().
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

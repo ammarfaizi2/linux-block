@@ -5,6 +5,7 @@
  * ADDBAREQ ADDBARSP and DELBA packet is still on consideration. Temporarily use MANAGE QUEUE instead of Normal Queue.
  * WB 2008-05-27
  * *****************************************************************************************************************************/
+#include <linux/jiffies.h>
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>
 #include "ieee80211.h"

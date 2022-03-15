@@ -7,6 +7,7 @@
  * and Measurements PIAP
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

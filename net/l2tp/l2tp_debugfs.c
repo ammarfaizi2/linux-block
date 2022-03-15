@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

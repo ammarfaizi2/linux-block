@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <net/sock.h>
 #include <net/af_rxrpc.h>

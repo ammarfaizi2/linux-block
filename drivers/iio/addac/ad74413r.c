@@ -4,6 +4,7 @@
  * Author: Cosmin Tanislav <cosmin.tanislav@analog.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>

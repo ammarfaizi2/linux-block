@@ -7,6 +7,7 @@
  * Copyright (c) 2017 Andrew Lunn <andrew@lunn.ch>
  */
 
+#include <linux/jiffies.h>
 #include <linux/mdio.h>
 #include <linux/module.h>
 

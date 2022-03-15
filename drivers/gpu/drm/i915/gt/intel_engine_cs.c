@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/file.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_print.h>

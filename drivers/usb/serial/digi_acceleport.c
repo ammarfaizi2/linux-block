@@ -11,6 +11,7 @@
 *  Al Borchers (borchers@steinerpoint.com)
 */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

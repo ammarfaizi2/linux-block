@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>

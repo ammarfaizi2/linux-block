@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/jiffies.h>
 #include <linux/export.h>
 #include <linux/pci.h>
 

@@ -25,6 +25,7 @@
  * Bluetooth RFCOMM core.
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/debugfs.h>
 #include <linux/kthread.h>

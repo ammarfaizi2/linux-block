@@ -12,6 +12,7 @@
  * tpconfig utility (by C. Scott Ananian and Bruce Kall).
  */
 
+#include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/input.h>
 #include <linux/input/mt.h>

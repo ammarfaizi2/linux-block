@@ -18,6 +18,7 @@
 /*
  * @file octeon_console.c
  */
+#include <linux/jiffies.h>
 #include <linux/moduleparam.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>

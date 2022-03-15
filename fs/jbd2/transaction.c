@@ -14,6 +14,7 @@
  * filesystem).
  */
 
+#include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

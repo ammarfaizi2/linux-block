@@ -26,6 +26,7 @@
  *            '-------'
  */
 
+#include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>

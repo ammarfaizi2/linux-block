@@ -32,6 +32,7 @@
  *
  ********************************************************************/
 
+#include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

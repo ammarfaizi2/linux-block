@@ -8,6 +8,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/types.h>
 

@@ -4,6 +4,7 @@
  *
  *   Author(s): Long Li <longli@microsoft.com>
  */
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

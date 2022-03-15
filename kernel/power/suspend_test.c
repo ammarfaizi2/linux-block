@@ -5,6 +5,7 @@
  * Copyright (c) 2009 Pavel Machek <pavel@ucw.cz>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

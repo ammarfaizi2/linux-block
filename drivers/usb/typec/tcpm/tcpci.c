@@ -5,6 +5,7 @@
  * USB Type-C Port Controller Interface.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>

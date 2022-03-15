@@ -5,6 +5,7 @@
  * Copyright (C) 2005 Paul Mackerras, IBM Corp. <paulus@samba.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

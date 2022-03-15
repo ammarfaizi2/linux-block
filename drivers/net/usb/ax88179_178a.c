@@ -5,6 +5,7 @@
  * Copyright (C) 2011-2013 ASIX
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>

@@ -35,6 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/jiffies.h>
+
 #include "addr.h"
 #include "core.h"
 

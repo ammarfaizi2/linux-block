@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"powernv-cpufreq: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/hashtable_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

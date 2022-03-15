@@ -4,6 +4,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2007-2013  Realtek Corporation.*/
 
+#include <linux/jiffies.h>
+
 #include "halbt_precomp.h"
 
 /***************************************************

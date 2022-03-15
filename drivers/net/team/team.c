@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>

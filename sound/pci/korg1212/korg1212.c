@@ -5,6 +5,7 @@
  *	Copyright (c) 2001 Haroldo Gamal <gamal@alternex.com.br>
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

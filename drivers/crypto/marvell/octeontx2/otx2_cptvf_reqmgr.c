@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Marvell. */
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 
 #include "otx2_cptvf.h"

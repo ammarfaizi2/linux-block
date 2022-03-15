@@ -16,6 +16,7 @@
 
 *******************************************************************************/
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>

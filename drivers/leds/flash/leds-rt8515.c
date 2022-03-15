@@ -22,6 +22,7 @@
  *
  * Linus Walleij <linus.walleij@linaro.org>
  */
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>

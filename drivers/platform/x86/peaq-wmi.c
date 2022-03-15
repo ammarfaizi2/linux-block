@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>
 #include <linux/input.h>

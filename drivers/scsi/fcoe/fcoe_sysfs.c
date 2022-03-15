@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

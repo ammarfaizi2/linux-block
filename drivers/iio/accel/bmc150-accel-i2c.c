@@ -4,6 +4,7 @@
  * Copyright (c) 2014, Intel Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>

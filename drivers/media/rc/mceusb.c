@@ -22,6 +22,7 @@
  * Windows-Media-Center-RC-IR-Collection-Green-Button-Specification-03-08-2011-V2.pdf
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/device.h>

@@ -6,6 +6,7 @@
  * Description: Altera PCIe host controller driver
  */
 
+#include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>

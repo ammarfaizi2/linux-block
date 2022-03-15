@@ -7,6 +7,7 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

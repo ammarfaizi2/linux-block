@@ -5,6 +5,7 @@
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/videodev2.h>

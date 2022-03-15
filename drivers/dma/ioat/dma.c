@@ -9,6 +9,7 @@
  * copy operations.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/bitmap.h>
