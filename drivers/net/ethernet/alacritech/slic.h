@@ -3,6 +3,7 @@
 #ifndef _SLIC_H
 #define _SLIC_H
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/io.h>
 #include <linux/types.h>
 #include <linux/netdevice.h>

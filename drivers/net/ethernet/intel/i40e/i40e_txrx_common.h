@@ -4,6 +4,7 @@
 #ifndef I40E_TXRX_COMMON_
 #define I40E_TXRX_COMMON_
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/types.h>
 
 int i40e_xmit_xdp_tx_ring(struct xdp_buff *xdp, struct i40e_ring *xdp_ring);

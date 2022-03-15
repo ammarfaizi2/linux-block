@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef MPLS_INTERNAL_H
 #define MPLS_INTERNAL_H
+#include <linux/u64_stats_sync_api.h>
 #include <net/mpls.h>
 
 /* put a reasonable limit on the number of labels
