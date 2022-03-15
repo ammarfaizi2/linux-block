@@ -3,6 +3,7 @@
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
 
+#include <linux/ipv6.h>
 #include <linux/if_ether_api.h>
 #include <linux/module.h>
 #include <net/ipv6.h>

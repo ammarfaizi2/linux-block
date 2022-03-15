@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/ipv6.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <rdma/ib_cm.h>

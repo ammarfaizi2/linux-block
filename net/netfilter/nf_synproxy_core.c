@@ -3,6 +3,7 @@
  * Copyright (c) 2013 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/ipv6.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

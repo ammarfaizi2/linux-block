@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Intel Corporation
  */
 
+#include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/skbuff.h>

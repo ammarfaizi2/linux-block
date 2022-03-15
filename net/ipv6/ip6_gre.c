@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ipv6.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

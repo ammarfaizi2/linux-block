@@ -5,6 +5,7 @@
  * Copyright (c) 2007 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/ipv6.h>
 #include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

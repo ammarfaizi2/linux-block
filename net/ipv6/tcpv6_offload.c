@@ -5,6 +5,7 @@
  *
  *      TCPv6 GSO/GRO support
  */
+#include <linux/ipv6.h>
 #include <linux/indirect_call_wrapper.h>
 #include <linux/skbuff.h>
 #include <net/gro.h>

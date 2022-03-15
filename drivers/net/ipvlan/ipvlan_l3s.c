@@ -2,6 +2,8 @@
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <linux/ipv6.h>
+
 #include "ipvlan.h"
 
 static unsigned int ipvlan_netid __read_mostly;

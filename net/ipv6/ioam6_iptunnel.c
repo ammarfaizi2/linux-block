@@ -6,6 +6,7 @@
  *  Justin Iurman <justin.iurman@uliege.be>
  */
 
+#include <linux/ipv6.h>
 #include <linux/kernel.h>
 #include <linux/skbuff.h>
 #include <linux/net.h>

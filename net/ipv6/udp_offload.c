@@ -5,6 +5,7 @@
  *
  *      UDPv6 GSO support
  */
+#include <linux/ipv6.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
 #include <linux/indirect_call_wrapper.h>

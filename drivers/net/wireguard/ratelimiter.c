@@ -4,6 +4,7 @@
  */
 
 #include "ratelimiter.h"
+#include <linux/ipv6.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/siphash.h>

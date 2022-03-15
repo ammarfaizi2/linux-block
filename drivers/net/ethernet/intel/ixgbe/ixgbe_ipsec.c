@@ -2,6 +2,7 @@
 /* Copyright(c) 2017 Oracle and/or its affiliates. All rights reserved. */
 
 #include "ixgbe.h"
+#include <linux/ipv6.h>
 #include <linux/hashtable_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

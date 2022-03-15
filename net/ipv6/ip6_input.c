@@ -15,6 +15,7 @@
  *	YOSHIFUJI Hideaki @USAGI: Remove ipv6_parse_exthdrs().
  */
 
+#include <linux/ipv6.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/socket.h>

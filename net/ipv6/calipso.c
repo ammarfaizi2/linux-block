@@ -13,6 +13,7 @@
  * (c) Copyright Huw Davies <huw@codeweavers.com>, 2015
  */
 
+#include <linux/ipv6.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/types.h>

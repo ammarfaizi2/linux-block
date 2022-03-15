@@ -14,6 +14,7 @@
  *	Kazunori MIYAZAWA @USAGI:	change process style to use ip6_append_data
  */
 
+#include <linux/ipv6.h>
 #include <linux/fs_api.h>
 #include <linux/filter_api.h>
 #include <linux/atomic_api.h>

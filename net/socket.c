@@ -52,6 +52,7 @@
  *	Based upon Swansea University Computer Society NET3.039
  */
 
+#include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

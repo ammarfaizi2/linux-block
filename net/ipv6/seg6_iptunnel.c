@@ -6,6 +6,7 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  */
 
+#include <linux/ipv6.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
 #include <linux/net.h>

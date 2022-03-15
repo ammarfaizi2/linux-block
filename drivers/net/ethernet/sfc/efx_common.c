@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/ipv6.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

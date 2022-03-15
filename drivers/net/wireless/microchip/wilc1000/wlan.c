@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/ipv6.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/if_ether.h>

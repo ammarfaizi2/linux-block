@@ -5,6 +5,7 @@
  *
  * Authors:	Roopa Prabhu, <roopa@cumulusnetworks.com>
  */
+#include <linux/ipv6.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
 #include <linux/net.h>

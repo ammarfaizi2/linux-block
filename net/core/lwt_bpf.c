@@ -2,6 +2,7 @@
 /* Copyright (c) 2016 Thomas Graf <tgraf@tgraf.ch>
  */
 
+#include <linux/ipv6.h>
 #include <linux/filter_api.h>
 #include <linux/filter.h>
 #include <linux/kernel.h>

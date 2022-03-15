@@ -6,6 +6,7 @@
  * (C) 2011 Patrick McHardy <kaber@trash.net>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/ipv6.h>
 #include <linux/in.h>
 #include <linux/ip.h>
 #include <net/ip.h>

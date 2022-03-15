@@ -243,6 +243,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/ipv6.h>
 #include <linux/cpumask_api.h>
 #include <linux/compat.h>
 #include <linux/capability.h>

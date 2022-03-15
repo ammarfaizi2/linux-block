@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/net.h>
 #include <linux/skbuff.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2010 Gregoire Baron <baronchon@n7mm.org>
  */
 
+#include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

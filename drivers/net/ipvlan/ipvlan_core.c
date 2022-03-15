@@ -2,6 +2,7 @@
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <linux/ipv6.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

@@ -17,6 +17,7 @@
  *				  handlers as inet6_protocol{}.
  */
 
+#include <linux/ipv6.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/socket.h>

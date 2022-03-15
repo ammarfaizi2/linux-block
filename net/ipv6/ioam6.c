@@ -6,6 +6,7 @@
  *  Justin Iurman <justin.iurman@uliege.be>
  */
 
+#include <linux/ipv6.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

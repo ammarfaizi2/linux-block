@@ -1,3 +1,4 @@
+#include <linux/ipv6.h>
 #include <linux/errno.h>
 #include <linux/ip.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * (C) 2003-2006 Netfilter Core Team <coreteam@netfilter.org>
  * (C) 2007-2012 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/gfp.h>
 #include <linux/types.h>

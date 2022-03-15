@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/ipv6.h>
 #include <net/6lowpan.h>
 #include <net/ndisc.h>
 #include <net/ieee802154_netdev.h>
