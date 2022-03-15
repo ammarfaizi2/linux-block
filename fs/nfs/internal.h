@@ -4,6 +4,7 @@
  */
 
 #include "nfs4_fs.h"
+#include <linux/backing-dev-api.h>
 #include <linux/fs_context.h>
 #include <linux/security.h>
 #include <linux/crc32.h>
