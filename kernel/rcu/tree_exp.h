@@ -911,7 +911,6 @@ static void sync_rcu_do_polled_gp(struct work_struct *wp)
 
 	raw_spin_lock_irqsave(&rnp->exp_poll_lock, flags);
 	s = rnp->exp_seq_poll_rq;
-	rnp->exp_seq_poll_rq |= 0x1;
 	raw_spin_unlock_irqrestore(&rnp->exp_poll_lock, flags);
 	if (s & 0x1)
 		return;
