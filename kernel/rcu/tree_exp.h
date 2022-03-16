@@ -910,14 +910,14 @@ static void sync_rcu_do_polled_gp(struct work_struct *wp)
 	unsigned long s;
 
 	s = READ_ONCE(rnp->exp_seq_poll_rq);
-	if (s & 0x1)
+	if (s & RCU_EXP_SEQ_POLL_DONE)
 		return;
 	while (!sync_exp_work_done(s))
 		__synchronize_rcu_expedited(true);
 	raw_spin_lock_irqsave(&rnp->exp_poll_lock, flags);
 	s = rnp->exp_seq_poll_rq;
-	if (!(s & 0x1) && sync_exp_work_done(s))
-		WRITE_ONCE(rnp->exp_seq_poll_rq, s | 0x1);
+	if (!(s & RCU_EXP_SEQ_POLL_DONE) && sync_exp_work_done(s))
+		WRITE_ONCE(rnp->exp_seq_poll_rq, s | RCU_EXP_SEQ_POLL_DONE);
 	raw_spin_unlock_irqrestore(&rnp->exp_poll_lock, flags);
 }
 
@@ -946,7 +946,8 @@ unsigned long start_poll_synchronize_rcu_expedited(void)
 	rnp = rdp->mynode;
 	if (rcu_init_invoked())
 		raw_spin_lock_irqsave(&rnp->exp_poll_lock, flags);
-	if ((rnp->exp_seq_poll_rq & 0x1) || ULONG_CMP_LT(rnp->exp_seq_poll_rq, s)) {
+	if ((rnp->exp_seq_poll_rq & RCU_EXP_SEQ_POLL_DONE) ||
+	    ULONG_CMP_LT(rnp->exp_seq_poll_rq, s)) {
 		WRITE_ONCE(rnp->exp_seq_poll_rq, s);
 		if (rcu_init_invoked())
 			queue_work(rcu_gp_wq, &rnp->exp_poll_wq);

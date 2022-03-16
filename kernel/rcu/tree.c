@@ -4679,7 +4679,7 @@ static void __init rcu_init_one(void)
 			spin_lock_init(&rnp->exp_lock);
 			mutex_init(&rnp->boost_kthread_mutex);
 			raw_spin_lock_init(&rnp->exp_poll_lock);
-			rnp->exp_seq_poll_rq = 0x1;
+			rnp->exp_seq_poll_rq = RCU_EXP_SEQ_POLL_DONE;
 			INIT_WORK(&rnp->exp_poll_wq, sync_rcu_do_polled_gp);
 		}
 	}
