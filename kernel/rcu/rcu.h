@@ -31,6 +31,11 @@
 #define RCU_GET_STATE_BAD_FOR_NORMAL	(RCU_GET_STATE_FROM_EXPEDITED | RCU_GET_STATE_USE_NORMAL)
 
 /*
+ * Low-order bit definitions for polled grace-period internals.
+ */
+#define RCU_EXP_SEQ_POLL_DONE 0x1
+
+/*
  * Return the counter portion of a sequence number previously returned
  * by rcu_seq_snap() or rcu_seq_current().
  */
