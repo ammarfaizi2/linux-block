@@ -15,8 +15,7 @@
 #ifndef __ASM_OPENRISC_SPINLOCK_H
 #define __ASM_OPENRISC_SPINLOCK_H
 
-#include <asm/qspinlock.h>
-
+#include <asm/ticket-lock.h>
 #include <asm/qrwlock.h>
 
 #define arch_spin_relax(lock)	cpu_relax()
