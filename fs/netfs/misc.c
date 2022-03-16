@@ -106,6 +106,7 @@ int netfs_set_up_buffer(struct xarray *buffer,
 	 */
 	if (ractl) {
 		while ((folio = readahead_folio(ractl))) {
+			kdebug("folio[%lx] size=%lx", folio->index, folio_size(folio));
 			folio_get(folio);
 			if (folio == keep)
 				folio_get(folio);
