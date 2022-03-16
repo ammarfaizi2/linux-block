@@ -390,15 +390,27 @@ struct p9_fid *v9fs_session_init(struct v9fs_session_info *v9ses,
 		  const char *dev_name, char *data)
 {
 	struct p9_fid *fid;
+	char *aname, *discard = NULL;
 	int rc = -ENOMEM;
 
 	v9ses->uname = kstrdup(V9FS_DEFUSER, GFP_KERNEL);
 	if (!v9ses->uname)
 		goto err_names;
 
-	v9ses->aname = kstrdup(V9FS_DEFANAME, GFP_KERNEL);
-	if (!v9ses->aname)
-		goto err_names;
+	if ((aname = strchr(dev_name, '/'))) {
+		v9ses->aname = kstrdup(aname, GFP_KERNEL);
+		if (!v9ses->aname)
+			goto err_names;
+		discard = kmemdup_nul(dev_name, aname - dev_name, GFP_KERNEL);
+		if (!discard)
+			goto err_names;
+		dev_name = discard;
+	} else {
+		v9ses->aname = kstrdup(V9FS_DEFANAME, GFP_KERNEL);
+		if (!v9ses->aname)
+			goto err_names;
+	}
+
 	init_rwsem(&v9ses->rename_sem);
 
 	v9ses->uid = INVALID_UID;
@@ -479,6 +491,7 @@ struct p9_fid *v9fs_session_init(struct v9fs_session_info *v9ses,
 	list_add(&v9ses->slist, &v9fs_sessionlist);
 	spin_unlock(&v9fs_sessionlist_lock);
 
+	kfree(discard);
 	return fid;
 
 err_clnt:
@@ -489,6 +502,7 @@ err_clnt:
 err_names:
 	kfree(v9ses->uname);
 	kfree(v9ses->aname);
+	kfree(discard);
 	return ERR_PTR(rc);
 }
 
