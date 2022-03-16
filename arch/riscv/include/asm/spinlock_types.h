@@ -10,11 +10,7 @@
 # error "please don't include this file directly"
 #endif
 
-typedef struct {
-	volatile unsigned int lock;
-} arch_spinlock_t;
-
-#define __ARCH_SPIN_LOCK_UNLOCKED	{ 0 }
+#include <asm-generic/ticket-lock-types.h>
 
 typedef struct {
 	volatile unsigned int lock;
