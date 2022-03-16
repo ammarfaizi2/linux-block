@@ -216,6 +216,17 @@ void __show_regs(struct pt_regs *regs)
 	show_regs_print_info(KERN_DEFAULT);
 	print_pstate(regs);
 
+	switch (read_sysreg(CurrentEL)) {
+	case CurrentEL_EL1:
+		printk("tpidr_el1 : %016llx\n", read_sysreg(TPIDR_EL1));
+		break;
+	case CurrentEL_EL2:
+		printk("tpidr_el2 : %016llx\n", read_sysreg(TPIDR_EL2));
+		break;
+	default:
+		break;
+	}
+
 	if (!user_mode(regs)) {
 		printk("pc : %pS\n", (void *)regs->pc);
 		printk("lr : %pS\n", (void *)ptrauth_strip_insn_pac(lr));
