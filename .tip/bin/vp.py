@@ -7,11 +7,13 @@ vp.py - Patch verifier and massager tool
 
 # TODO (and potential ideas):
 #
-# - warn for EXPORT_SYMBOL
+# Add a _verify.cfg.example config file so that the user can adjust it herself
 #
-# - add a check against hunks with file paths arch/x86/boot/(compressed/)? which #include <linux/*>
-# headers and warn if so.
-# 
+# Check for BUG(_ON)*s
+#
+# extend the function-name-needs-a-verb check to when the patch is adding a new function - there
+# check the name too.
+#
 # - a8: switch to logging module maybe:
 #   https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
 
@@ -46,6 +48,7 @@ from git import Repo
 verbose = 0
 tmp_dir = None
 sob = None
+git_repo = None
 
 ### generic helpers
 
@@ -145,9 +148,11 @@ def strip_brackets(w):
 #
 # @s: the commit reference string to check
 def verify_commit_ref(sha1, name):
+    global git_repo
+
     print(("Checking commit ref [%s %s]" % (sha1, name, )))
 
-    repo = Repo(".")
+    repo = Repo(git_repo)
     git = repo.git
 
     # check sha1 is all hex
@@ -187,28 +192,29 @@ dc = None
 # my words
 dc_words = [ "ABI", "ACPI", "AMD", "AMD64",
          # that's some stupid dictionary
-         "amongst",
-         "AMX", "API", "APM", "APU", "arm64", "asm", "BHB",
-         "binutils", "bitmask", "bitfield", "BSP", "CMCI", "cmdline", "config", "CPPC", "CPUID",
-         "DF", "DMA", "DIMM", "e820", "EAX", "EDAC", "EFI", "EHCI", "enablement", "ENQCMD", "EPT", "fixup",
+         "amongst", "AMX", "APEI", "arm64", "asm", "BHB",
+         "binutils", "bitmask", "bitfield", "bool", "breakpoint", "BSP", "CMCI", "cmdline", "config",
+         "CPER", "CPPC", "CPUID",
+         "DF", "DMA", "DIMM", "e820", "EAX", "ECC", "EDAC", "EHCI", "enablement", "ENQCMD", "EPT", "fixup",
          "FRU", "gcc", "goto", "GPR", "GUID", "hotplug", "hugepage", "Hygon",
-         "hypercall", "HV", "i387", "I/O", "IBT", "initializer", "initrd", "IRET", "IRQ", "JMP", "kallsyms",
-         "KASAN", "kdump", "kexec", "KVM", "LFENCE", "livepatch", "lvalue",
-         "MCA", "MCE", "memmove",
+         "hypercall", "HyperV", "HV", "hwpoison", "i387", "I/O", "IBT", "initializer", "initrd", "IRET", "IRQ",
+         "JMP", "kallsyms", "KASAN", "kdump", "kexec", "KVM",
+         "LFENCE", "livepatch", "LSB", "lvalue", "maintainership",
+         "MCE", "memmove",
          "memtype", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
-         "NX", "OEM", "ok", "oneliner", "PCI", "pdf", "percpu", "perf", "PPIN",
+         "NX", "OEM", "ok", "oneliner", "OVMF", "PCI", "pdf", "percpu", "perf", "PPIN",
          "preemptible",
          "prepend", # derived from append, not in the dictionaries
          "PTE", "ptrace",
          "PV", "PVALIDATE", "RDMSR", "repurposing", "RET", "retpoline", "rFLAGS", "RTM", "Ryzen",
          "SIGSEGV", "Skylake", "SNP", "SRAR", "STI", "STLF", "strtab", "struct", "SVA", "swiotlb",
-         "symtab", "sysfs", "TDCALL", "TDGETVEINFO", "TDVMCALL", "TLB", "TODO", "tracepoint",
+         "symtab", "sysfs", "TCC", "TDCALL", "TDGETVEINFO", "TDVMCALL", "TLB", "TODO", "tracepoint",
          "UMC", "UML",
          # too late for that one to enforce even as the dictionary says it is wrong
          "untrusted",
          "userspace", "vCPU",
-         "VM", "VMM", "VMCALL", "VMCB", "VMEXIT",
-         "VMGEXIT", "VMLAUNCH", "VMSA", "vTOM", "WBINVD", "WRMSR", "XCR0", "Xen", "Xeon", "XSS" ]
+         "VMCALL", "VMCB", "VMEXIT",
+         "VMGEXIT", "VMLAUNCH", "VMSA", "VMware", "vTOM", "WBINVD", "WRMSR", "XCR0", "Xen", "Xeon", "XSS" ]
 
 dc_non_words = [ "E820", "X86" ]
 
@@ -221,21 +227,25 @@ known_vars = [ '__BOOT_DS', 'boot_params', 'cpumask', 'earlyprintk',
            'vmlinux', 'xfeatures' ]
 
 # known words as regexes to avoid duplication in the list above
-regexes_pats = [ r'^all(mod|yes)config$', r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
-             r'^cpuinfo(_x86)?$', 
-             r'default_(attrs|groups)', r'^DDR([1-5])?$', r'^[Ee].g.$', r'^[eE]?IBRS$', r'^E?VEX$',
+regexes_pats = [ r'^all(mod|yes)config$',
+             r'^AP[IMU]$',
+             r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
+             r'^cpuinfo(_x86)?$',
+             r'default_(attrs|groups)', r'^DDR([1-5])?$',
+             r'^S?DRAM$',
+             r'^[Ee].g.$', r'^[eE]?IBRS$', r'^E?VEX$',
             r'^GHC(B|I)$',
             r'^HL[ET]$',
             r'^Icelake(-D)?$', r'I[DS]T', r'^(in|off)lining$',
-            r'^[ku]probes?$', r'MOVSB?',
+            r'^[ku]probes?$', r'S?MCA$', r'MOVSB?',
             r'^param(s)?$',
             r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$',
             # embedded modifier which goes at the beginning of the regex
-            r'(?i)^pasid$', r'PS[CP]',
+            r'(?i)^pasid$', r'PS[CP]', r'^P[MU]D$',
             r'^RMP(ADJUST)?$',
             r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'^SM[ET]$',
             r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$',
-            r'T[DS]X', r'^u(16|32|64)$', r'^v?syscall$',
+            r'T[DS]X', r'^u(16|32|64)$', r'^U?EFI$', r'^v?syscall$', r'^VME(xit|XIT)$', r'^VM[MX]?$',
             r'^VMPL([0-3])?$', r'^x86(-(32|64))?$', r'^XSAVE[CS]?$' ]
 
 def load_spellchecker():
@@ -288,7 +298,9 @@ rex_word_split, rex_x86_traps
     rex_opts        = re.compile(r'^-[\w\d=-]+$')    # assumption: tool options are lowercase
     # path spec can begin on a new line
     rex_paths       = re.compile(r'(^|\s)/[\w/_\*-]+\s')
-    rex_reg_field   = re.compile(r'\w+\[\d+(:\d+)?\]', re.I)
+
+    # xx:xx, with and without brackets around it
+    rex_reg_field   = re.compile(r'(\w+)?\[?\d+(:\d+)?\]?', re.I)
     rex_sections    = re.compile(r'\.(bss|data|head|noinstr(\.text)?|text)')
 
     rex_sent_end    = re.compile(r"""\.((\s+)?      # catch all spaces after the end of the sentence
@@ -299,7 +311,7 @@ rex_word_split, rex_x86_traps
 
     rex_struct_mem  = re.compile(r'\w+->\w+')
     rex_sha1        = re.compile(r'[a-f0-9]{12,40}', re.I)
-    rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9a-f]+(K|Mb))$')
+    rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9a-f]+(K|Mb))$', re.I)
     rex_url         = re.compile(r'https?://[a-z0-9:/.-]+')
     rex_version     = re.compile(r'v\d+$', re.I)
     rex_word_bla    = re.compile(r'non-(\w+)')
@@ -309,6 +321,16 @@ rex_word_split, rex_x86_traps
     # precompile all regexes
     for pat in regexes_pats:
         regexes.append(re.compile(pat))
+
+
+# heuristic: check if any of the words in @w is a verb
+def function_name_has_a_verb(w):
+    for i in nltk.pos_tag(nltk.word_tokenize(w.replace('_', ' ')), tagset='universal'):
+        print(i)
+        if i[1] == 'VERB':
+            return True
+
+    return False
 
 def spellcheck_func_name(w):
     """
@@ -340,9 +362,7 @@ def spellcheck_func_name(w):
         return True
 
     # heuristic: check if any of the words is a verb
-    for i in nltk.pos_tag(nltk.word_tokenize(w.replace('_', ' ')), tagset='universal'):
-        print(i)
-        if i[1] == 'VERB':
+    if function_name_has_a_verb(w):
             return False
 
     return True
@@ -423,7 +443,8 @@ def spellcheck(s, where, flags):
             continue
 
         # specially formatted text (cmdline output, etc) in the commit message, do not check
-        if where == "commit message" and line.startswith("  "):
+        if where == "commit message" and \
+          (line.startswith("  ") or line.startswith("$ ")):
             continue
 
         # URLs - ignore them
@@ -858,6 +879,8 @@ class Patch:
 
                 verify_binutils_version(f, hunk)
                 verify_comment_style(f, hunk)
+                verify_symbol_exports(f, hunk)
+                verify_include_paths(f, hunk)
 
     def __insert_tag(self, tag, name):
         if name in self.od[tag]:
@@ -1306,7 +1329,35 @@ def verify_comment_style(pfile, h):
         l = str(line)
 
         warn_on(rex_tail_comment.match(l), "No tail comments please:\n %s:%d [%s]\n" %
-             (pfile, line.target_line_no, l.strip(), ))
+                (pfile, line.target_line_no, l.strip(), ))
+
+def verify_symbol_exports(pfile, h):
+
+    rex_export_symbol = re.compile(r'^\+EXPORT_SYMBOL\W.*$')
+
+    for line in h.target_lines():
+        l = str(line)
+        warn_on(rex_export_symbol.match(l), "Non-GPL symbol export at %s:%d [%s]\n" %
+                (pfile, line.target_line_no, l.strip(), ))
+
+# Check if the decompressor kernel includes kernel proper headers
+def verify_include_paths(pfile, h):
+
+    if not h.added:
+        return
+
+    if not pfile.startswith("arch/x86/boot"):
+        return
+
+    rex_include = re.compile(r'^\+#include\s+<linux/.*$')
+
+    for line in h.target_lines():
+        l = str(line)
+        warn_on(rex_include.match(l), "Kernel-proper include at %s:%d [%s]\n" %
+                (pfile, line.target_line_no, l.strip(), ))
+
+###
+###
 
 
 def verify_commit_quotation(linenum, prev, cur, nxt):
@@ -1361,7 +1412,7 @@ def main(args):
     p.format_patch(not args.no_link_check)
 
 def parse_config_file():
-    global tmp_dir, sob
+    global tmp_dir, sob, git_repo
 
     cfg = configparser.ConfigParser()
     cfg.read(os.path.expanduser('~/.verify.cfg'))
@@ -1375,6 +1426,11 @@ def parse_config_file():
         sob = cfg['main']['sob']
     except:
         warn_on(1, "No author SOB email configured")
+
+    try:
+        git_repo = cfg['main']['repo']
+    except:
+        warn_on(1, "No git repo configured")
 
 def init_parser():
     """ read cmdline args
@@ -1411,6 +1467,20 @@ def init_parser():
 
     return parser.parse_args()
 
+# fetch all NLTK resources: TODO: this should be behind a cmdline option: ./vp.py
+# --refresh-helper-modules or so
+def refresh_ntlk_modules():
+    modules = [ 'punkt', 'averaged_perceptron_tagger', 'universal_tagset' ]
+
+    dl = nltk.downloader.Downloader()
+
+    for m in modules:
+        try:
+            if not dl.is_installed(m) or dl.is_stale(m):
+                dl.download(m)
+        except:
+            warn("cannot download ntlk module %s" % (m, ))
+
 if __name__ == '__main__':
     global args
 
@@ -1418,18 +1488,7 @@ if __name__ == '__main__':
 
     args = init_parser()
 
-    # fetch all NLTK resources: TODO: this should be behind a cmdline option: ./vp.py
-    # --refresh-helper-modules or so
-    dl = nltk.downloader.Downloader()
-
-    if dl.is_stale('punkt'):
-        dl.download('punkt')
-
-    if dl.is_stale('averaged_perceptron_tagger'):
-        dl.download('averaged_perceptron_tagger')
-
-    if dl.is_stale('universal_tagset'):
-        dl.download('universal_tagset')
+    refresh_ntlk_modules()
 
     # check if we're in a git repo
     if not os.path.exists(os.getcwd() + "/.git"):
