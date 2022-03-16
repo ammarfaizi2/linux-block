@@ -13,6 +13,7 @@
 #include <net/mac80211.h>
 
 struct rtw89_dev;
+struct rtw89_pci_info;
 
 extern const struct ieee80211_ops rtw89_ops;
 
@@ -1991,6 +1992,8 @@ struct rtw89_vif {
 	struct ieee80211_tx_queue_params tx_params[IEEE80211_NUM_ACS];
 	struct rtw89_traffic_stats stats;
 	struct rtw89_phy_rate_pattern rate_pattern;
+	struct cfg80211_scan_request *scan_req;
+	struct ieee80211_scan_ies *scan_ies;
 };
 
 enum rtw89_lv1_rcvy_step {
@@ -2063,6 +2066,8 @@ struct rtw89_chip_ops {
 	void (*bb_ctrl_btc_preagc)(struct rtw89_dev *rtwdev, bool bt_en);
 	void (*set_txpwr_ul_tb_offset)(struct rtw89_dev *rtwdev,
 				       s16 pw_ofst, enum rtw89_mac_idx mac_idx);
+	int (*pwr_on_func)(struct rtw89_dev *rtwdev);
+	int (*pwr_off_func)(struct rtw89_dev *rtwdev);
 
 	void (*btc_set_rfe)(struct rtw89_dev *rtwdev);
 	void (*btc_init_cfg)(struct rtw89_dev *rtwdev);
@@ -2183,6 +2188,7 @@ struct rtw89_ple_quota {
 	u16 bb_rpt;
 	u16 wd_rel;
 	u16 cpu_io;
+	u16 tx_rpt;
 };
 
 struct rtw89_dle_mem {
@@ -2232,6 +2238,21 @@ struct rtw89_txpwr_table {
 		     const struct rtw89_txpwr_table *tbl);
 };
 
+struct rtw89_page_regs {
+	u32 hci_fc_ctrl;
+	u32 ch_page_ctrl;
+	u32 ach_page_ctrl;
+	u32 ach_page_info;
+	u32 pub_page_info3;
+	u32 pub_page_ctrl1;
+	u32 pub_page_ctrl2;
+	u32 pub_page_info1;
+	u32 pub_page_info2;
+	u32 wp_page_ctrl1;
+	u32 wp_page_ctrl2;
+	u32 wp_page_info1;
+};
+
 struct rtw89_chip_info {
 	enum rtw89_core_chip_id chip_id;
 	const struct rtw89_chip_ops *ops;
@@ -2255,6 +2276,8 @@ struct rtw89_chip_info {
 	u32 physical_efuse_size;
 	u32 logical_efuse_size;
 	u32 limit_efuse_size;
+	u32 dav_phy_efuse_size;
+	u32 dav_log_efuse_size;
 	u32 phycap_addr;
 	u32 phycap_size;
 
@@ -2302,10 +2325,22 @@ struct rtw89_chip_info {
 	u8 rf_para_dlink_num;
 	const struct rtw89_btc_rf_trx_para *rf_para_dlink;
 	u8 ps_mode_supported;
+
+	u32 hci_func_en_addr;
+	u32 h2c_ctrl_reg;
+	const u32 *h2c_regs;
+	u32 c2h_ctrl_reg;
+	const u32 *c2h_regs;
+	const struct rtw89_page_regs *page_regs;
+};
+
+union rtw89_bus_info {
+	const struct rtw89_pci_info *pci;
 };
 
 struct rtw89_driver_info {
 	const struct rtw89_chip_info *chip;
+	union rtw89_bus_info bus;
 };
 
 enum rtw89_hcifc_mode {
@@ -2373,6 +2408,8 @@ struct rtw89_fw_info {
 	struct rtw89_fw_suit wowlan;
 	bool fw_log_enable;
 	bool old_ht_ra_format;
+	bool scan_offload;
+	bool tx_wake;
 };
 
 struct rtw89_cam_info {
@@ -2414,6 +2451,7 @@ struct rtw89_hal {
 	u8 current_primary_channel;
 	enum rtw89_subband current_subband;
 	u8 current_band_width;
+	u8 prev_band_type;
 	u8 current_band_type;
 	u32 sw_amsdu_max_size;
 	u32 antenna_tx;
@@ -2424,6 +2462,7 @@ struct rtw89_hal {
 };
 
 #define RTW89_MAX_MAC_ID_NUM 128
+#define RTW89_MAX_PKT_OFLD_NUM 255
 
 enum rtw89_flags {
 	RTW89_FLAG_POWERON,
@@ -2627,18 +2666,22 @@ struct rtw89_cfo_tracking_info {
 
 /* 2GL, 2GH, 5GL1, 5GH1, 5GM1, 5GM2, 5GH1, 5GH2 */
 #define TSSI_TRIM_CH_GROUP_NUM 8
+#define TSSI_TRIM_CH_GROUP_NUM_6G 16
 
 #define TSSI_CCK_CH_GROUP_NUM 6
 #define TSSI_MCS_2G_CH_GROUP_NUM 5
 #define TSSI_MCS_5G_CH_GROUP_NUM 14
+#define TSSI_MCS_6G_CH_GROUP_NUM 32
 #define TSSI_MCS_CH_GROUP_NUM \
 	(TSSI_MCS_2G_CH_GROUP_NUM + TSSI_MCS_5G_CH_GROUP_NUM)
 
 struct rtw89_tssi_info {
 	u8 thermal[RF_PATH_MAX];
 	s8 tssi_trim[RF_PATH_MAX][TSSI_TRIM_CH_GROUP_NUM];
+	s8 tssi_trim_6g[RF_PATH_MAX][TSSI_TRIM_CH_GROUP_NUM_6G];
 	s8 tssi_cck[RF_PATH_MAX][TSSI_CCK_CH_GROUP_NUM];
 	s8 tssi_mcs[RF_PATH_MAX][TSSI_MCS_CH_GROUP_NUM];
+	s8 tssi_6g_mcs[RF_PATH_MAX][TSSI_MCS_6G_CH_GROUP_NUM];
 	s8 extra_ofst[RF_PATH_MAX];
 	bool tssi_tracking_check[RF_PATH_MAX];
 	u8 default_txagc_offset[RF_PATH_MAX];
@@ -2836,12 +2879,23 @@ struct rtw89_early_h2c {
 	u16 h2c_len;
 };
 
+struct rtw89_hw_scan_info {
+	struct ieee80211_vif *scanning_vif;
+	struct list_head pkt_list[NUM_NL80211_BANDS];
+	u8 op_pri_ch;
+	u8 op_chan;
+	u8 op_bw;
+	u8 op_band;
+};
+
 struct rtw89_dev {
 	struct ieee80211_hw *hw;
 	struct device *dev;
 
 	bool dbcc_en;
+	struct rtw89_hw_scan_info scan_info;
 	const struct rtw89_chip_info *chip;
+	const struct rtw89_pci_info *pci_info;
 	struct rtw89_hal hal;
 	struct rtw89_mac_info mac;
 	struct rtw89_fw_info fw;
@@ -2862,11 +2916,14 @@ struct rtw89_dev {
 	/* txqs to setup ba session */
 	struct list_head ba_list;
 	struct work_struct ba_work;
+	/* used to protect rpwm */
+	spinlock_t rpwm_lock;
 
 	struct rtw89_cam_info cam_info;
 
 	struct sk_buff_head c2h_queue;
 	struct work_struct c2h_work;
+	struct work_struct ips_work;
 
 	struct list_head early_h2c_list;
 
@@ -2875,6 +2932,7 @@ struct rtw89_dev {
 	DECLARE_BITMAP(hw_port, RTW89_PORT_NUM);
 	DECLARE_BITMAP(mac_id_map, RTW89_MAX_MAC_ID_NUM);
 	DECLARE_BITMAP(flags, NUM_OF_RTW89_FLAGS);
+	DECLARE_BITMAP(pkt_offload, RTW89_MAX_PKT_OFLD_NUM);
 
 	struct rtw89_phy_stat phystat;
 	struct rtw89_dack_info dack;
@@ -3491,5 +3549,9 @@ void rtw89_traffic_stats_init(struct rtw89_dev *rtwdev,
 int rtw89_core_start(struct rtw89_dev *rtwdev);
 void rtw89_core_stop(struct rtw89_dev *rtwdev);
 void rtw89_core_update_beacon_work(struct work_struct *work);
+void rtw89_core_scan_start(struct rtw89_dev *rtwdev, struct rtw89_vif *rtwvif,
+			   const u8 *mac_addr, bool hw_scan);
+void rtw89_core_scan_complete(struct rtw89_dev *rtwdev,
+			      struct ieee80211_vif *vif, bool hw_scan);
 
 #endif

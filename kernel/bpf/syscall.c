@@ -985,6 +985,7 @@ struct bpf_map *bpf_map_get(u32 ufd)
 
 	return map;
 }
+EXPORT_SYMBOL(bpf_map_get);
 
 struct bpf_map *bpf_map_get_with_uref(u32 ufd)
 {
@@ -1351,7 +1352,6 @@ int generic_map_delete_batch(struct bpf_map *map,
 		err = map->ops->map_delete_elem(map, key);
 		rcu_read_unlock();
 		bpf_enable_instrumentation();
-		maybe_wait_bpf_programs(map);
 		if (err)
 			break;
 		cond_resched();
@@ -1360,6 +1360,8 @@ int generic_map_delete_batch(struct bpf_map *map,
 		err = -EFAULT;
 
 	kvfree(key);
+
+	maybe_wait_bpf_programs(map);
 	return err;
 }
 
@@ -2492,6 +2494,7 @@ void bpf_link_put(struct bpf_link *link)
 		bpf_link_free(link);
 	}
 }
+EXPORT_SYMBOL(bpf_link_put);
 
 static int bpf_link_release(struct inode *inode, struct file *filp)
 {
@@ -2563,7 +2566,7 @@ static int bpf_link_alloc_id(struct bpf_link *link)
  * pre-allocated resources are to be freed with bpf_cleanup() call. All the
  * transient state is passed around in struct bpf_link_primer.
  * This is preferred way to create and initialize bpf_link, especially when
- * there are complicated and expensive operations inbetween creating bpf_link
+ * there are complicated and expensive operations in between creating bpf_link
  * itself and attaching it to BPF hook. By using bpf_link_prime() and
  * bpf_link_settle() kernel code using bpf_link doesn't have to perform
  * expensive (and potentially failing) roll back operations in a rare case
@@ -2634,6 +2637,7 @@ struct bpf_link *bpf_link_get_from_fd(u32 ufd)
 
 	return link;
 }
+EXPORT_SYMBOL(bpf_link_get_from_fd);
 
 struct bpf_tracing_link {
 	struct bpf_link link;
@@ -4759,23 +4763,52 @@ static bool syscall_prog_is_valid_access(int off, int size,
 	return true;
 }
 
-BPF_CALL_3(bpf_sys_bpf, int, cmd, void *, attr, u32, attr_size)
+BPF_CALL_3(bpf_sys_bpf, int, cmd, union bpf_attr *, attr, u32, attr_size)
 {
+	struct bpf_prog * __maybe_unused prog;
+
 	switch (cmd) {
 	case BPF_MAP_CREATE:
 	case BPF_MAP_UPDATE_ELEM:
 	case BPF_MAP_FREEZE:
 	case BPF_PROG_LOAD:
 	case BPF_BTF_LOAD:
+	case BPF_LINK_CREATE:
+	case BPF_RAW_TRACEPOINT_OPEN:
 		break;
-	/* case BPF_PROG_TEST_RUN:
-	 * is not part of this list to prevent recursive test_run
-	 */
+#ifdef CONFIG_BPF_JIT /* __bpf_prog_enter_sleepable used by trampoline and JIT */
+	case BPF_PROG_TEST_RUN:
+		if (attr->test.data_in || attr->test.data_out ||
+		    attr->test.ctx_out || attr->test.duration ||
+		    attr->test.repeat || attr->test.flags)
+			return -EINVAL;
+
+		prog = bpf_prog_get_type(attr->test.prog_fd, BPF_PROG_TYPE_SYSCALL);
+		if (IS_ERR(prog))
+			return PTR_ERR(prog);
+
+		if (attr->test.ctx_size_in < prog->aux->max_ctx_offset ||
+		    attr->test.ctx_size_in > U16_MAX) {
+			bpf_prog_put(prog);
+			return -EINVAL;
+		}
+
+		if (!__bpf_prog_enter_sleepable(prog)) {
+			/* recursion detected */
+			bpf_prog_put(prog);
+			return -EBUSY;
+		}
+		attr->test.retval = bpf_prog_run(prog, (void *) (long) attr->test.ctx_in);
+		__bpf_prog_exit_sleepable(prog, 0 /* bpf_prog_run does runtime stats */);
+		bpf_prog_put(prog);
+		return 0;
+#endif
 	default:
 		return -EINVAL;
 	}
 	return __sys_bpf(cmd, KERNEL_BPFPTR(attr), attr_size);
 }
+EXPORT_SYMBOL(bpf_sys_bpf);
 
 static const struct bpf_func_proto bpf_sys_bpf_proto = {
 	.func		= bpf_sys_bpf,

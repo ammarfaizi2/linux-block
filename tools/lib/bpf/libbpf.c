@@ -1374,22 +1374,20 @@ static bool bpf_map_type__is_map_in_map(enum bpf_map_type type)
 
 static int find_elf_sec_sz(const struct bpf_object *obj, const char *name, __u32 *size)
 {
-	int ret = -ENOENT;
 	Elf_Data *data;
 	Elf_Scn *scn;
 
-	*size = 0;
 	if (!name)
 		return -EINVAL;
 
 	scn = elf_sec_by_name(obj, name);
 	data = elf_sec_data(obj, scn);
 	if (data) {
-		ret = 0; /* found it */
 		*size = data->d_size;
+		return 0; /* found it */
 	}
 
-	return *size ? 0 : ret;
+	return -ENOENT;
 }
 
 static int find_elf_var_offset(const struct bpf_object *obj, const char *name, __u32 *off)
@@ -2795,7 +2793,7 @@ static int btf_fixup_datasec(struct bpf_object *obj, struct btf *btf,
 		goto sort_vars;
 
 	ret = find_elf_sec_sz(obj, name, &size);
-	if (ret || !size || (t->size && t->size != size)) {
+	if (ret || !size) {
 		pr_debug("Invalid size for section %s: %u bytes\n", name, size);
 		return -ENOENT;
 	}
@@ -4861,7 +4859,6 @@ static int bpf_object__create_map(struct bpf_object *obj, struct bpf_map *map, b
 	LIBBPF_OPTS(bpf_map_create_opts, create_attr);
 	struct bpf_map_def *def = &map->def;
 	const char *map_name = NULL;
-	__u32 max_entries;
 	int err = 0;
 
 	if (kernel_supports(obj, FEAT_PROG_NAME))
@@ -4870,21 +4867,6 @@ static int bpf_object__create_map(struct bpf_object *obj, struct bpf_map *map, b
 	create_attr.map_flags = def->map_flags;
 	create_attr.numa_node = map->numa_node;
 	create_attr.map_extra = map->map_extra;
-
-	if (def->type == BPF_MAP_TYPE_PERF_EVENT_ARRAY && !def->max_entries) {
-		int nr_cpus;
-
-		nr_cpus = libbpf_num_possible_cpus();
-		if (nr_cpus < 0) {
-			pr_warn("map '%s': failed to determine number of system CPUs: %d\n",
-				map->name, nr_cpus);
-			return nr_cpus;
-		}
-		pr_debug("map '%s': setting size to %d\n", map->name, nr_cpus);
-		max_entries = nr_cpus;
-	} else {
-		max_entries = def->max_entries;
-	}
 
 	if (bpf_map__is_struct_ops(map))
 		create_attr.btf_vmlinux_value_type_id = map->btf_vmlinux_value_type_id;
@@ -4935,7 +4917,7 @@ static int bpf_object__create_map(struct bpf_object *obj, struct bpf_map *map, b
 
 	if (obj->gen_loader) {
 		bpf_gen__map_create(obj->gen_loader, def->type, map_name,
-				    def->key_size, def->value_size, max_entries,
+				    def->key_size, def->value_size, def->max_entries,
 				    &create_attr, is_inner ? -1 : map - obj->maps);
 		/* Pretend to have valid FD to pass various fd >= 0 checks.
 		 * This fd == 0 will not be used with any syscall and will be reset to -1 eventually.
@@ -4944,7 +4926,7 @@ static int bpf_object__create_map(struct bpf_object *obj, struct bpf_map *map, b
 	} else {
 		map->fd = bpf_map_create(def->type, map_name,
 					 def->key_size, def->value_size,
-					 max_entries, &create_attr);
+					 def->max_entries, &create_attr);
 	}
 	if (map->fd < 0 && (create_attr.btf_key_type_id ||
 			    create_attr.btf_value_type_id)) {
@@ -4961,7 +4943,7 @@ static int bpf_object__create_map(struct bpf_object *obj, struct bpf_map *map, b
 		map->btf_value_type_id = 0;
 		map->fd = bpf_map_create(def->type, map_name,
 					 def->key_size, def->value_size,
-					 max_entries, &create_attr);
+					 def->max_entries, &create_attr);
 	}
 
 	err = map->fd < 0 ? -errno : 0;
@@ -5065,6 +5047,24 @@ static int bpf_object_init_prog_arrays(struct bpf_object *obj)
 	return 0;
 }
 
+static int map_set_def_max_entries(struct bpf_map *map)
+{
+	if (map->def.type == BPF_MAP_TYPE_PERF_EVENT_ARRAY && !map->def.max_entries) {
+		int nr_cpus;
+
+		nr_cpus = libbpf_num_possible_cpus();
+		if (nr_cpus < 0) {
+			pr_warn("map '%s': failed to determine number of system CPUs: %d\n",
+				map->name, nr_cpus);
+			return nr_cpus;
+		}
+		pr_debug("map '%s': setting size to %d\n", map->name, nr_cpus);
+		map->def.max_entries = nr_cpus;
+	}
+
+	return 0;
+}
+
 static int
 bpf_object__create_maps(struct bpf_object *obj)
 {
@@ -5096,6 +5096,10 @@ bpf_object__create_maps(struct bpf_object *obj)
 			map->skipped = true;
 			continue;
 		}
+
+		err = map_set_def_max_entries(map);
+		if (err)
+			goto err_out;
 
 		retried = false;
 retry:
@@ -5192,18 +5196,21 @@ size_t bpf_core_essential_name_len(const char *name)
 	return n;
 }
 
-static void bpf_core_free_cands(struct bpf_core_cand_list *cands)
+void bpf_core_free_cands(struct bpf_core_cand_list *cands)
 {
+	if (!cands)
+		return;
+
 	free(cands->cands);
 	free(cands);
 }
 
-static int bpf_core_add_cands(struct bpf_core_cand *local_cand,
-			      size_t local_essent_len,
-			      const struct btf *targ_btf,
-			      const char *targ_btf_name,
-			      int targ_start_id,
-			      struct bpf_core_cand_list *cands)
+int bpf_core_add_cands(struct bpf_core_cand *local_cand,
+		       size_t local_essent_len,
+		       const struct btf *targ_btf,
+		       const char *targ_btf_name,
+		       int targ_start_id,
+		       struct bpf_core_cand_list *cands)
 {
 	struct bpf_core_cand *new_cands, *cand;
 	const struct btf_type *t, *local_t;
@@ -5530,11 +5537,12 @@ static int record_relo_core(struct bpf_program *prog,
 	return 0;
 }
 
-static int bpf_core_apply_relo(struct bpf_program *prog,
-			       const struct bpf_core_relo *relo,
-			       int relo_idx,
-			       const struct btf *local_btf,
-			       struct hashmap *cand_cache)
+static int bpf_core_resolve_relo(struct bpf_program *prog,
+				 const struct bpf_core_relo *relo,
+				 int relo_idx,
+				 const struct btf *local_btf,
+				 struct hashmap *cand_cache,
+				 struct bpf_core_relo_res *targ_res)
 {
 	struct bpf_core_spec specs_scratch[3] = {};
 	const void *type_key = u32_as_hash_key(relo->type_id);
@@ -5543,20 +5551,7 @@ static int bpf_core_apply_relo(struct bpf_program *prog,
 	const struct btf_type *local_type;
 	const char *local_name;
 	__u32 local_id = relo->type_id;
-	struct bpf_insn *insn;
-	int insn_idx, err;
-
-	if (relo->insn_off % BPF_INSN_SZ)
-		return -EINVAL;
-	insn_idx = relo->insn_off / BPF_INSN_SZ;
-	/* adjust insn_idx from section frame of reference to the local
-	 * program's frame of reference; (sub-)program code is not yet
-	 * relocated, so it's enough to just subtract in-section offset
-	 */
-	insn_idx = insn_idx - prog->sec_insn_off;
-	if (insn_idx >= prog->insns_cnt)
-		return -EINVAL;
-	insn = &prog->insns[insn_idx];
+	int err;
 
 	local_type = btf__type_by_id(local_btf, local_id);
 	if (!local_type)
@@ -5565,15 +5560,6 @@ static int bpf_core_apply_relo(struct bpf_program *prog,
 	local_name = btf__name_by_offset(local_btf, local_type->name_off);
 	if (!local_name)
 		return -EINVAL;
-
-	if (prog->obj->gen_loader) {
-		const char *spec_str = btf__name_by_offset(local_btf, relo->access_str_off);
-
-		pr_debug("record_relo_core: prog %td insn[%d] %s %s %s final insn_idx %d\n",
-			prog - prog->obj->programs, relo->insn_off / 8,
-			btf_kind_str(local_type), local_name, spec_str, insn_idx);
-		return record_relo_core(prog, relo, insn_idx);
-	}
 
 	if (relo->kind != BPF_CORE_TYPE_ID_LOCAL &&
 	    !hashmap__find(cand_cache, type_key, (void **)&cands)) {
@@ -5591,19 +5577,21 @@ static int bpf_core_apply_relo(struct bpf_program *prog,
 		}
 	}
 
-	return bpf_core_apply_relo_insn(prog_name, insn, insn_idx, relo,
-					relo_idx, local_btf, cands, specs_scratch);
+	return bpf_core_calc_relo_insn(prog_name, relo, relo_idx, local_btf, cands, specs_scratch,
+				       targ_res);
 }
 
 static int
 bpf_object__relocate_core(struct bpf_object *obj, const char *targ_btf_path)
 {
 	const struct btf_ext_info_sec *sec;
+	struct bpf_core_relo_res targ_res;
 	const struct bpf_core_relo *rec;
 	const struct btf_ext_info *seg;
 	struct hashmap_entry *entry;
 	struct hashmap *cand_cache = NULL;
 	struct bpf_program *prog;
+	struct bpf_insn *insn;
 	const char *sec_name;
 	int i, err = 0, insn_idx, sec_idx;
 
@@ -5654,6 +5642,8 @@ bpf_object__relocate_core(struct bpf_object *obj, const char *targ_btf_path)
 			 sec_name, sec->num_info);
 
 		for_each_btf_ext_rec(seg, sec, i, rec) {
+			if (rec->insn_off % BPF_INSN_SZ)
+				return -EINVAL;
 			insn_idx = rec->insn_off / BPF_INSN_SZ;
 			prog = find_prog_by_sec_insn(obj, sec_idx, insn_idx);
 			if (!prog) {
@@ -5668,10 +5658,36 @@ bpf_object__relocate_core(struct bpf_object *obj, const char *targ_btf_path)
 			if (!prog->load)
 				continue;
 
-			err = bpf_core_apply_relo(prog, rec, i, obj->btf, cand_cache);
+			/* adjust insn_idx from section frame of reference to the local
+			 * program's frame of reference; (sub-)program code is not yet
+			 * relocated, so it's enough to just subtract in-section offset
+			 */
+			insn_idx = insn_idx - prog->sec_insn_off;
+			if (insn_idx >= prog->insns_cnt)
+				return -EINVAL;
+			insn = &prog->insns[insn_idx];
+
+			if (prog->obj->gen_loader) {
+				err = record_relo_core(prog, rec, insn_idx);
+				if (err) {
+					pr_warn("prog '%s': relo #%d: failed to record relocation: %d\n",
+						prog->name, i, err);
+					goto out;
+				}
+				continue;
+			}
+
+			err = bpf_core_resolve_relo(prog, rec, i, obj->btf, cand_cache, &targ_res);
 			if (err) {
 				pr_warn("prog '%s': relo #%d: failed to relocate: %d\n",
 					prog->name, i, err);
+				goto out;
+			}
+
+			err = bpf_core_patch_insn(prog->name, insn, insn_idx, rec, i, &targ_res);
+			if (err) {
+				pr_warn("prog '%s': relo #%d: failed to patch insn #%u: %d\n",
+					prog->name, i, insn_idx, err);
 				goto out;
 			}
 		}
@@ -10935,7 +10951,7 @@ struct perf_buffer *perf_buffer__new_raw_v0_6_0(int map_fd, size_t page_cnt,
 {
 	struct perf_buffer_params p = {};
 
-	if (page_cnt == 0 || !attr)
+	if (!attr)
 		return libbpf_err_ptr(-EINVAL);
 
 	if (!OPTS_VALID(opts, perf_buffer_raw_opts))
@@ -10976,7 +10992,7 @@ static struct perf_buffer *__perf_buffer__new(int map_fd, size_t page_cnt,
 	__u32 map_info_len;
 	int err, i, j, n;
 
-	if (page_cnt & (page_cnt - 1)) {
+	if (page_cnt == 0 || (page_cnt & (page_cnt - 1))) {
 		pr_warn("page count should be power of two, but is %zu\n",
 			page_cnt);
 		return ERR_PTR(-EINVAL);

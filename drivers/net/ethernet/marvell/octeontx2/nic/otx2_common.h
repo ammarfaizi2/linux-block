@@ -17,6 +17,7 @@
 #include <linux/soc/marvell/octeontx2/asm.h>
 #include <net/pkt_cls.h>
 #include <net/devlink.h>
+#include <linux/time64.h>
 
 #include <mbox.h>
 #include <npc.h>
@@ -180,6 +181,7 @@ struct otx2_hw {
 
 #define OTX2_DEFAULT_RBUF_LEN	2048
 	u16			rbuf_len;
+	u32			xqe_size;
 
 	/* NPA */
 	u32			stack_pg_ptrs;  /* No of ptrs per stack page */
@@ -275,6 +277,8 @@ struct otx2_ptp {
 	u64 thresh;
 
 	struct ptp_pin_desc extts_config;
+	u64 (*convert_rx_ptp_tstmp)(u64 timestamp);
+	u64 (*convert_tx_ptp_tstmp)(u64 timestamp);
 };
 
 #define OTX2_HW_TIMESTAMP_LEN	8

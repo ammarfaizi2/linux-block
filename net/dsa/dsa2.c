@@ -72,27 +72,24 @@ int dsa_broadcast(unsigned long e, void *v)
 }
 
 /**
- * dsa_lag_map() - Map LAG netdev to a linear LAG ID
+ * dsa_lag_map() - Map LAG structure to a linear LAG array
  * @dst: Tree in which to record the mapping.
- * @lag: Netdev that is to be mapped to an ID.
+ * @lag: LAG structure that is to be mapped to the tree's array.
  *
- * dsa_lag_id/dsa_lag_dev can then be used to translate between the
+ * dsa_lag_id/dsa_lag_by_id can then be used to translate between the
  * two spaces. The size of the mapping space is determined by the
  * driver by setting ds->num_lag_ids. It is perfectly legal to leave
  * it unset if it is not needed, in which case these functions become
  * no-ops.
  */
-void dsa_lag_map(struct dsa_switch_tree *dst, struct net_device *lag)
+void dsa_lag_map(struct dsa_switch_tree *dst, struct dsa_lag *lag)
 {
 	unsigned int id;
 
-	if (dsa_lag_id(dst, lag) >= 0)
-		/* Already mapped */
-		return;
-
-	for (id = 0; id < dst->lags_len; id++) {
-		if (!dsa_lag_dev(dst, id)) {
-			dst->lags[id] = lag;
+	for (id = 1; id <= dst->lags_len; id++) {
+		if (!dsa_lag_by_id(dst, id)) {
+			dst->lags[id - 1] = lag;
+			lag->id = id;
 			return;
 		}
 	}
@@ -108,26 +105,34 @@ void dsa_lag_map(struct dsa_switch_tree *dst, struct net_device *lag)
 /**
  * dsa_lag_unmap() - Remove a LAG ID mapping
  * @dst: Tree in which the mapping is recorded.
- * @lag: Netdev that was mapped.
+ * @lag: LAG structure that was mapped.
  *
  * As there may be multiple users of the mapping, it is only removed
  * if there are no other references to it.
  */
-void dsa_lag_unmap(struct dsa_switch_tree *dst, struct net_device *lag)
+void dsa_lag_unmap(struct dsa_switch_tree *dst, struct dsa_lag *lag)
 {
-	struct dsa_port *dp;
 	unsigned int id;
 
-	dsa_lag_foreach_port(dp, dst, lag)
-		/* There are remaining users of this mapping */
-		return;
-
 	dsa_lags_foreach_id(id, dst) {
-		if (dsa_lag_dev(dst, id) == lag) {
-			dst->lags[id] = NULL;
+		if (dsa_lag_by_id(dst, id) == lag) {
+			dst->lags[id - 1] = NULL;
+			lag->id = 0;
 			break;
 		}
 	}
+}
+
+struct dsa_lag *dsa_tree_lag_find(struct dsa_switch_tree *dst,
+				  const struct net_device *lag_dev)
+{
+	struct dsa_port *dp;
+
+	list_for_each_entry(dp, &dst->ports, list)
+		if (dsa_port_lag_dev_get(dp) == lag_dev)
+			return dp->lag;
+
+	return NULL;
 }
 
 struct dsa_bridge *dsa_tree_bridge_find(struct dsa_switch_tree *dst,
@@ -452,10 +457,6 @@ static int dsa_port_setup(struct dsa_port *dp)
 	if (dp->setup)
 		return 0;
 
-	mutex_init(&dp->addr_lists_lock);
-	INIT_LIST_HEAD(&dp->fdbs);
-	INIT_LIST_HEAD(&dp->mdbs);
-
 	if (ds->ops->port_setup) {
 		err = ds->ops->port_setup(ds, dp->index);
 		if (err)
@@ -561,7 +562,6 @@ static void dsa_port_teardown(struct dsa_port *dp)
 {
 	struct devlink_port *dlp = &dp->devlink_port;
 	struct dsa_switch *ds = dp->ds;
-	struct dsa_mac_addr *a, *tmp;
 	struct net_device *slave;
 
 	if (!dp->setup)
@@ -591,16 +591,6 @@ static void dsa_port_teardown(struct dsa_port *dp)
 			dsa_slave_destroy(slave);
 		}
 		break;
-	}
-
-	list_for_each_entry_safe(a, tmp, &dp->fdbs, list) {
-		list_del(&a->list);
-		kfree(a);
-	}
-
-	list_for_each_entry_safe(a, tmp, &dp->mdbs, list) {
-		list_del(&a->list);
-		kfree(a);
 	}
 
 	dp->setup = false;
@@ -1059,7 +1049,7 @@ static int dsa_tree_setup_switches(struct dsa_switch_tree *dst)
 static int dsa_tree_setup_master(struct dsa_switch_tree *dst)
 {
 	struct dsa_port *dp;
-	int err;
+	int err = 0;
 
 	rtnl_lock();
 
@@ -1071,7 +1061,7 @@ static int dsa_tree_setup_master(struct dsa_switch_tree *dst)
 
 			err = dsa_master_setup(master, dp);
 			if (err)
-				return err;
+				break;
 
 			/* Replay master state event */
 			dsa_tree_master_admin_state_change(dst, master, admin_up);
@@ -1082,7 +1072,7 @@ static int dsa_tree_setup_master(struct dsa_switch_tree *dst)
 
 	rtnl_unlock();
 
-	return 0;
+	return err;
 }
 
 static void dsa_tree_teardown_master(struct dsa_switch_tree *dst)
@@ -1281,7 +1271,7 @@ int dsa_tree_change_tag_proto(struct dsa_switch_tree *dst,
 	info.tag_ops = tag_ops;
 	err = dsa_tree_notify(dst, DSA_NOTIFIER_TAG_PROTO, &info);
 	if (err)
-		goto out_unlock;
+		goto out_unwind_tagger;
 
 	err = dsa_tree_bind_tag_proto(dst, tag_ops);
 	if (err)
@@ -1361,6 +1351,11 @@ static struct dsa_port *dsa_port_touch(struct dsa_switch *ds, int index)
 	dp->ds = ds;
 	dp->index = index;
 
+	mutex_init(&dp->addr_lists_lock);
+	mutex_init(&dp->vlans_lock);
+	INIT_LIST_HEAD(&dp->fdbs);
+	INIT_LIST_HEAD(&dp->mdbs);
+	INIT_LIST_HEAD(&dp->vlans);
 	INIT_LIST_HEAD(&dp->list);
 	list_add_tail(&dp->list, &dst->ports);
 
@@ -1699,6 +1694,9 @@ static void dsa_switch_release_ports(struct dsa_switch *ds)
 	struct dsa_port *dp, *next;
 
 	dsa_switch_for_each_port_safe(dp, next, ds) {
+		WARN_ON(!list_empty(&dp->fdbs));
+		WARN_ON(!list_empty(&dp->mdbs));
+		WARN_ON(!list_empty(&dp->vlans));
 		list_del(&dp->list);
 		kfree(dp);
 	}

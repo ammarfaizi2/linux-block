@@ -185,6 +185,9 @@ static int lan966x_port_inj_ready(struct lan966x *lan966x, u8 grp)
 {
 	u32 val;
 
+	if (lan_rd(lan966x, QS_INJ_STATUS) & QS_INJ_STATUS_FIFO_RDY_SET(BIT(grp)))
+		return 0;
+
 	return readx_poll_timeout_atomic(lan966x_port_inj_status, lan966x, val,
 					 QS_INJ_STATUS_FIFO_RDY_GET(val) & BIT(grp),
 					 READL_SLEEP_US, READL_TIMEOUT_US);
@@ -318,6 +321,7 @@ static void lan966x_ifh_set_timestamp(void *ifh, u64 timestamp)
 static int lan966x_port_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	struct lan966x_port *port = netdev_priv(dev);
+	struct lan966x *lan966x = port->lan966x;
 	__be32 ifh[IFH_LEN];
 	int err;
 
@@ -338,7 +342,11 @@ static int lan966x_port_xmit(struct sk_buff *skb, struct net_device *dev)
 		lan966x_ifh_set_timestamp(ifh, LAN966X_SKB_CB(skb)->ts_id);
 	}
 
-	return lan966x_port_ifh_xmit(skb, ifh, dev);
+	spin_lock(&lan966x->tx_lock);
+	err = lan966x_port_ifh_xmit(skb, ifh, dev);
+	spin_unlock(&lan966x->tx_lock);
+
+	return err;
 }
 
 static int lan966x_port_change_mtu(struct net_device *dev, int new_mtu)
@@ -439,7 +447,8 @@ static bool lan966x_hw_offload(struct lan966x *lan966x, u32 port,
 	    ip_hdr(skb)->protocol == IPPROTO_IGMP)
 		return false;
 
-	if (skb->protocol == htons(ETH_P_IPV6) &&
+	if (IS_ENABLED(CONFIG_IPV6) &&
+	    skb->protocol == htons(ETH_P_IPV6) &&
 	    ipv6_addr_is_multicast(&ipv6_hdr(skb)->daddr) &&
 	    !ipv6_mc_check_mld(skb))
 		return false;
@@ -599,7 +608,9 @@ static irqreturn_t lan966x_xtr_irq_handler(int irq, void *args)
 				skb->offload_fwd_mark = 0;
 		}
 
-		netif_rx_ni(skb);
+		if (!skb_defer_rx_timestamp(skb))
+			netif_rx(skb);
+
 		dev->stats.rx_bytes += len;
 		dev->stats.rx_packets++;
 
@@ -882,6 +893,8 @@ static void lan966x_init(struct lan966x *lan966x)
 	lan_rmw(ANA_ANAINTR_INTR_ENA_SET(1),
 		ANA_ANAINTR_INTR_ENA,
 		lan966x, ANA_ANAINTR);
+
+	spin_lock_init(&lan966x->tx_lock);
 }
 
 static int lan966x_ram_init(struct lan966x *lan966x)

@@ -566,6 +566,7 @@ struct rtl8365mb_port {
  * @chip_ver: chip silicon revision
  * @port_mask: mask of all ports
  * @learn_limit_max: maximum number of L2 addresses the chip can learn
+ * @cpu: CPU tagging and CPU port configuration for this chip
  * @mib_lock: prevent concurrent reads of MIB counters
  * @ports: per-port data
  * @jam_table: chip-specific initialization jam table
@@ -580,6 +581,7 @@ struct rtl8365mb {
 	u32 chip_ver;
 	u32 port_mask;
 	u32 learn_limit_max;
+	struct rtl8365mb_cpu cpu;
 	struct mutex mib_lock;
 	struct rtl8365mb_port ports[RTL8365MB_MAX_NUM_PORTS];
 	const struct rtl8365mb_jam_tbl_entry *jam_table;
@@ -590,7 +592,7 @@ static int rtl8365mb_phy_poll_busy(struct realtek_priv *priv)
 {
 	u32 val;
 
-	return regmap_read_poll_timeout(priv->map,
+	return regmap_read_poll_timeout(priv->map_nolock,
 					RTL8365MB_INDIRECT_ACCESS_STATUS_REG,
 					val, !val, 10, 100);
 }
@@ -604,7 +606,7 @@ static int rtl8365mb_phy_ocp_prepare(struct realtek_priv *priv, int phy,
 	/* Set OCP prefix */
 	val = FIELD_GET(RTL8365MB_PHY_OCP_ADDR_PREFIX_MASK, ocp_addr);
 	ret = regmap_update_bits(
-		priv->map, RTL8365MB_GPHY_OCP_MSB_0_REG,
+		priv->map_nolock, RTL8365MB_GPHY_OCP_MSB_0_REG,
 		RTL8365MB_GPHY_OCP_MSB_0_CFG_CPU_OCPADR_MASK,
 		FIELD_PREP(RTL8365MB_GPHY_OCP_MSB_0_CFG_CPU_OCPADR_MASK, val));
 	if (ret)
@@ -617,8 +619,8 @@ static int rtl8365mb_phy_ocp_prepare(struct realtek_priv *priv, int phy,
 			  ocp_addr >> 1);
 	val |= FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_ADDRESS_OCPADR_9_6_MASK,
 			  ocp_addr >> 6);
-	ret = regmap_write(priv->map, RTL8365MB_INDIRECT_ACCESS_ADDRESS_REG,
-			   val);
+	ret = regmap_write(priv->map_nolock,
+			   RTL8365MB_INDIRECT_ACCESS_ADDRESS_REG, val);
 	if (ret)
 		return ret;
 
@@ -631,36 +633,42 @@ static int rtl8365mb_phy_ocp_read(struct realtek_priv *priv, int phy,
 	u32 val;
 	int ret;
 
+	mutex_lock(&priv->map_lock);
+
 	ret = rtl8365mb_phy_poll_busy(priv);
 	if (ret)
-		return ret;
+		goto out;
 
 	ret = rtl8365mb_phy_ocp_prepare(priv, phy, ocp_addr);
 	if (ret)
-		return ret;
+		goto out;
 
 	/* Execute read operation */
 	val = FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_CTRL_CMD_MASK,
 			 RTL8365MB_INDIRECT_ACCESS_CTRL_CMD_VALUE) |
 	      FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_CTRL_RW_MASK,
 			 RTL8365MB_INDIRECT_ACCESS_CTRL_RW_READ);
-	ret = regmap_write(priv->map, RTL8365MB_INDIRECT_ACCESS_CTRL_REG, val);
+	ret = regmap_write(priv->map_nolock, RTL8365MB_INDIRECT_ACCESS_CTRL_REG,
+			   val);
 	if (ret)
-		return ret;
+		goto out;
 
 	ret = rtl8365mb_phy_poll_busy(priv);
 	if (ret)
-		return ret;
+		goto out;
 
 	/* Get PHY register data */
-	ret = regmap_read(priv->map, RTL8365MB_INDIRECT_ACCESS_READ_DATA_REG,
-			  &val);
+	ret = regmap_read(priv->map_nolock,
+			  RTL8365MB_INDIRECT_ACCESS_READ_DATA_REG, &val);
 	if (ret)
-		return ret;
+		goto out;
 
 	*data = val & 0xFFFF;
 
-	return 0;
+out:
+	mutex_unlock(&priv->map_lock);
+
+	return ret;
 }
 
 static int rtl8365mb_phy_ocp_write(struct realtek_priv *priv, int phy,
@@ -669,32 +677,38 @@ static int rtl8365mb_phy_ocp_write(struct realtek_priv *priv, int phy,
 	u32 val;
 	int ret;
 
+	mutex_lock(&priv->map_lock);
+
 	ret = rtl8365mb_phy_poll_busy(priv);
 	if (ret)
-		return ret;
+		goto out;
 
 	ret = rtl8365mb_phy_ocp_prepare(priv, phy, ocp_addr);
 	if (ret)
-		return ret;
+		goto out;
 
 	/* Set PHY register data */
-	ret = regmap_write(priv->map, RTL8365MB_INDIRECT_ACCESS_WRITE_DATA_REG,
-			   data);
+	ret = regmap_write(priv->map_nolock,
+			   RTL8365MB_INDIRECT_ACCESS_WRITE_DATA_REG, data);
 	if (ret)
-		return ret;
+		goto out;
 
 	/* Execute write operation */
 	val = FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_CTRL_CMD_MASK,
 			 RTL8365MB_INDIRECT_ACCESS_CTRL_CMD_VALUE) |
 	      FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_CTRL_RW_MASK,
 			 RTL8365MB_INDIRECT_ACCESS_CTRL_RW_WRITE);
-	ret = regmap_write(priv->map, RTL8365MB_INDIRECT_ACCESS_CTRL_REG, val);
+	ret = regmap_write(priv->map_nolock, RTL8365MB_INDIRECT_ACCESS_CTRL_REG,
+			   val);
 	if (ret)
-		return ret;
+		goto out;
 
 	ret = rtl8365mb_phy_poll_busy(priv);
 	if (ret)
-		return ret;
+		goto out;
+
+out:
+	mutex_unlock(&priv->map_lock);
 
 	return 0;
 }
@@ -770,6 +784,16 @@ static enum dsa_tag_protocol
 rtl8365mb_get_tag_protocol(struct dsa_switch *ds, int port,
 			   enum dsa_tag_protocol mp)
 {
+	struct realtek_priv *priv = ds->priv;
+	struct rtl8365mb_cpu *cpu;
+	struct rtl8365mb *mb;
+
+	mb = priv->chip_data;
+	cpu = &mb->cpu;
+
+	if (cpu->position == RTL8365MB_CPU_POS_BEFORE_CRC)
+		return DSA_TAG_PROTO_RTL8_4T;
+
 	return DSA_TAG_PROTO_RTL8_4;
 }
 
@@ -1725,8 +1749,10 @@ static void rtl8365mb_irq_teardown(struct realtek_priv *priv)
 	}
 }
 
-static int rtl8365mb_cpu_config(struct realtek_priv *priv, const struct rtl8365mb_cpu *cpu)
+static int rtl8365mb_cpu_config(struct realtek_priv *priv)
 {
+	struct rtl8365mb *mb = priv->chip_data;
+	struct rtl8365mb_cpu *cpu = &mb->cpu;
 	u32 val;
 	int ret;
 
@@ -1750,6 +1776,37 @@ static int rtl8365mb_cpu_config(struct realtek_priv *priv, const struct rtl8365m
 		return ret;
 
 	return 0;
+}
+
+static int rtl8365mb_change_tag_protocol(struct dsa_switch *ds, int cpu_index,
+					 enum dsa_tag_protocol proto)
+{
+	struct realtek_priv *priv = ds->priv;
+	struct rtl8365mb_cpu *cpu;
+	struct rtl8365mb *mb;
+
+	mb = priv->chip_data;
+	cpu = &mb->cpu;
+
+	switch (proto) {
+	case DSA_TAG_PROTO_RTL8_4:
+		cpu->format = RTL8365MB_CPU_FORMAT_8BYTES;
+		cpu->position = RTL8365MB_CPU_POS_AFTER_SA;
+		break;
+	case DSA_TAG_PROTO_RTL8_4T:
+		cpu->format = RTL8365MB_CPU_FORMAT_8BYTES;
+		cpu->position = RTL8365MB_CPU_POS_BEFORE_CRC;
+		break;
+	/* The switch also supports a 4-byte format, similar to rtl4a but with
+	 * the same 0x04 8-bit version and probably 8-bit port source/dest.
+	 * There is no public doc about it. Not supported yet and it will probably
+	 * never be.
+	 */
+	default:
+		return -EPROTONOSUPPORT;
+	}
+
+	return rtl8365mb_cpu_config(priv);
 }
 
 static int rtl8365mb_switch_init(struct realtek_priv *priv)
@@ -1798,13 +1855,14 @@ static int rtl8365mb_reset_chip(struct realtek_priv *priv)
 static int rtl8365mb_setup(struct dsa_switch *ds)
 {
 	struct realtek_priv *priv = ds->priv;
-	struct rtl8365mb_cpu cpu = {0};
+	struct rtl8365mb_cpu *cpu;
 	struct dsa_port *cpu_dp;
 	struct rtl8365mb *mb;
 	int ret;
 	int i;
 
 	mb = priv->chip_data;
+	cpu = &mb->cpu;
 
 	ret = rtl8365mb_reset_chip(priv);
 	if (ret) {
@@ -1827,21 +1885,14 @@ static int rtl8365mb_setup(struct dsa_switch *ds)
 		dev_info(priv->dev, "no interrupt support\n");
 
 	/* Configure CPU tagging */
-	cpu.trap_port = RTL8365MB_MAX_NUM_PORTS;
 	dsa_switch_for_each_cpu_port(cpu_dp, priv->ds) {
-		cpu.mask |= BIT(cpu_dp->index);
+		cpu->mask |= BIT(cpu_dp->index);
 
-		if (cpu.trap_port == RTL8365MB_MAX_NUM_PORTS)
-			cpu.trap_port = cpu_dp->index;
+		if (cpu->trap_port == RTL8365MB_MAX_NUM_PORTS)
+			cpu->trap_port = cpu_dp->index;
 	}
-
-	cpu.enable = cpu.mask > 0;
-	cpu.insert = RTL8365MB_CPU_INSERT_TO_ALL;
-	cpu.position = RTL8365MB_CPU_POS_AFTER_SA;
-	cpu.rx_length = RTL8365MB_CPU_RXLEN_64BYTES;
-	cpu.format = RTL8365MB_CPU_FORMAT_8BYTES;
-
-	ret = rtl8365mb_cpu_config(priv, &cpu);
+	cpu->enable = cpu->mask > 0;
+	ret = rtl8365mb_cpu_config(priv);
 	if (ret)
 		goto out_teardown_irq;
 
@@ -1853,7 +1904,7 @@ static int rtl8365mb_setup(struct dsa_switch *ds)
 			continue;
 
 		/* Forward only to the CPU */
-		ret = rtl8365mb_port_set_isolation(priv, i, cpu.mask);
+		ret = rtl8365mb_port_set_isolation(priv, i, cpu->mask);
 		if (ret)
 			goto out_teardown_irq;
 
@@ -1983,6 +2034,12 @@ static int rtl8365mb_detect(struct realtek_priv *priv)
 		mb->jam_table = rtl8365mb_init_jam_8365mb_vc;
 		mb->jam_size = ARRAY_SIZE(rtl8365mb_init_jam_8365mb_vc);
 
+		mb->cpu.trap_port = RTL8365MB_MAX_NUM_PORTS;
+		mb->cpu.insert = RTL8365MB_CPU_INSERT_TO_ALL;
+		mb->cpu.position = RTL8365MB_CPU_POS_AFTER_SA;
+		mb->cpu.rx_length = RTL8365MB_CPU_RXLEN_64BYTES;
+		mb->cpu.format = RTL8365MB_CPU_FORMAT_8BYTES;
+
 		break;
 	default:
 		dev_err(priv->dev,
@@ -1996,6 +2053,7 @@ static int rtl8365mb_detect(struct realtek_priv *priv)
 
 static const struct dsa_switch_ops rtl8365mb_switch_ops_smi = {
 	.get_tag_protocol = rtl8365mb_get_tag_protocol,
+	.change_tag_protocol = rtl8365mb_change_tag_protocol,
 	.setup = rtl8365mb_setup,
 	.teardown = rtl8365mb_teardown,
 	.phylink_get_caps = rtl8365mb_phylink_get_caps,
@@ -2014,6 +2072,7 @@ static const struct dsa_switch_ops rtl8365mb_switch_ops_smi = {
 
 static const struct dsa_switch_ops rtl8365mb_switch_ops_mdio = {
 	.get_tag_protocol = rtl8365mb_get_tag_protocol,
+	.change_tag_protocol = rtl8365mb_change_tag_protocol,
 	.setup = rtl8365mb_setup,
 	.teardown = rtl8365mb_teardown,
 	.phylink_get_caps = rtl8365mb_phylink_get_caps,

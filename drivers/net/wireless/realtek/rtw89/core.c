@@ -374,6 +374,7 @@ void rtw89_set_channel(struct rtw89_dev *rtwdev)
 	hal->current_channel = center_chan;
 	hal->current_freq = ch_param.center_freq;
 	hal->prev_primary_channel = hal->current_primary_channel;
+	hal->prev_band_type = hal->current_band_type;
 	hal->current_primary_channel = ch_param.primary_chan;
 	hal->current_band_type = ch_param.band_type;
 	hal->current_subband = ch_param.subband_type;
@@ -755,6 +756,22 @@ rtw89_core_tx_btc_spec_pkt_notify(struct rtw89_dev *rtwdev,
 }
 
 static void
+rtw89_core_tx_wake(struct rtw89_dev *rtwdev,
+		   struct rtw89_core_tx_request *tx_req)
+{
+	if (!rtwdev->fw.tx_wake)
+		return;
+
+	if (!test_bit(RTW89_FLAG_LOW_POWER_MODE, rtwdev->flags))
+		return;
+
+	if (tx_req->tx_type != RTW89_CORE_TX_TYPE_MGMT)
+		return;
+
+	rtw89_mac_notify_wake(rtwdev);
+}
+
+static void
 rtw89_core_tx_update_desc_info(struct rtw89_dev *rtwdev,
 			       struct rtw89_core_tx_request *tx_req)
 {
@@ -852,6 +869,8 @@ int rtw89_core_tx_write(struct rtw89_dev *rtwdev, struct ieee80211_vif *vif,
 	rtw89_traffic_stats_accu(rtwdev, &rtwdev->stats, skb, true);
 	rtw89_traffic_stats_accu(rtwdev, &rtwvif->stats, skb, true);
 	rtw89_core_tx_update_desc_info(rtwdev, &tx_req);
+	rtw89_core_tx_wake(rtwdev, &tx_req);
+
 	ret = rtw89_hci_tx_write(rtwdev, &tx_req);
 	if (ret) {
 		rtw89_err(rtwdev, "failed to transmit skb to HCI\n");
@@ -1242,6 +1261,15 @@ static void rtw89_core_hw_to_sband_rate(struct ieee80211_rx_status *rx_status)
 	if (rx_status->band == NL80211_BAND_2GHZ ||
 	    rx_status->encoding != RX_ENC_LEGACY)
 		return;
+
+	/* Some control frames' freq(ACKs in this case) are reported wrong due
+	 * to FW notify timing, set to lowest rate to prevent overflow.
+	 */
+	if (rx_status->rate_idx < RTW89_HW_RATE_OFDM6) {
+		rx_status->rate_idx = 0;
+		return;
+	}
+
 	/* No 4 CCK rates for non-2G */
 	rx_status->rate_idx -= 4;
 }
@@ -1418,12 +1446,20 @@ static void rtw89_core_update_rx_status(struct rtw89_dev *rtwdev,
 					struct ieee80211_rx_status *rx_status)
 {
 	struct ieee80211_hw *hw = rtwdev->hw;
+	struct rtw89_hal *hal = &rtwdev->hal;
 	u16 data_rate;
 	u8 data_rate_mode;
 
 	/* currently using single PHY */
 	rx_status->freq = hw->conf.chandef.chan->center_freq;
 	rx_status->band = hw->conf.chandef.chan->band;
+
+	if (rtwdev->scanning && rtwdev->fw.scan_offload) {
+		rx_status->freq =
+			ieee80211_channel_to_frequency(hal->current_channel,
+						       hal->current_band_type);
+		rx_status->band = rtwdev->hal.current_band_type;
+	}
 
 	if (desc_info->icv_err || desc_info->crc32_err)
 		rx_status->flag |= RX_FLAG_FAILED_FCS_CRC;
@@ -1755,6 +1791,16 @@ static void rtw89_core_txq_schedule(struct rtw89_dev *rtwdev, u8 ac, bool *reinv
 			rtw89_core_tx_kick_off(rtwdev, rtw89_core_get_qsel(rtwdev, txq->tid));
 	}
 	ieee80211_txq_schedule_end(hw, ac);
+}
+
+static void rtw89_ips_work(struct work_struct *work)
+{
+	struct rtw89_dev *rtwdev = container_of(work, struct rtw89_dev,
+						ips_work);
+
+	mutex_lock(&rtwdev->mutex);
+	rtw89_enter_ips(rtwdev);
+	mutex_unlock(&rtwdev->mutex);
 }
 
 static void rtw89_core_txq_work(struct work_struct *w)
@@ -2333,10 +2379,15 @@ static void rtw89_init_he_cap(struct rtw89_dev *rtwdev,
 				  IEEE80211_HE_MAC_CAP4_AMSDU_IN_AMPDU;
 		if (i == NL80211_IFTYPE_STATION)
 			mac_cap_info[5] = IEEE80211_HE_MAC_CAP5_HT_VHT_TRIG_FRAME_RX;
-		phy_cap_info[0] = IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_40MHZ_IN_2G |
-				  IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_40MHZ_80MHZ_IN_5G;
-		if (chip->support_bw160)
-			phy_cap_info[0] |= IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_160MHZ_IN_5G;
+		if (band == NL80211_BAND_2GHZ) {
+			phy_cap_info[0] =
+				IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_40MHZ_IN_2G;
+		} else {
+			phy_cap_info[0] =
+				IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_40MHZ_80MHZ_IN_5G;
+			if (chip->support_bw160)
+				phy_cap_info[0] |= IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_160MHZ_IN_5G;
+		}
 		phy_cap_info[1] = IEEE80211_HE_PHY_CAP1_DEVICE_CLASS_A |
 				  IEEE80211_HE_PHY_CAP1_LDPC_CODING_IN_PAYLOAD |
 				  IEEE80211_HE_PHY_CAP1_HE_LTF_AND_GI_FOR_HE_PPDUS_0_8US;
@@ -2381,6 +2432,18 @@ static void rtw89_init_he_cap(struct rtw89_dev *rtwdev,
 		if (chip->support_bw160) {
 			he_cap->he_mcs_nss_supp.rx_mcs_160 = cpu_to_le16(mcs_map);
 			he_cap->he_mcs_nss_supp.tx_mcs_160 = cpu_to_le16(mcs_map);
+		}
+
+		if (band == NL80211_BAND_6GHZ) {
+			__le16 capa;
+
+			capa = le16_encode_bits(IEEE80211_HT_MPDU_DENSITY_NONE,
+						IEEE80211_HE_6GHZ_CAP_MIN_MPDU_START) |
+			       le16_encode_bits(IEEE80211_VHT_MAX_AMPDU_1024K,
+						IEEE80211_HE_6GHZ_CAP_MAX_AMPDU_LEN_EXP) |
+			       le16_encode_bits(IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_11454,
+						IEEE80211_HE_6GHZ_CAP_MAX_MPDU_LEN);
+			iftype_data[idx].he_6ghz_capa.capa = capa;
 		}
 
 		idx++;
@@ -2570,10 +2633,16 @@ int rtw89_core_init(struct rtw89_dev *rtwdev)
 {
 	struct rtw89_btc *btc = &rtwdev->btc;
 	int ret;
+	u8 band;
 
 	INIT_LIST_HEAD(&rtwdev->ba_list);
 	INIT_LIST_HEAD(&rtwdev->rtwvifs_list);
 	INIT_LIST_HEAD(&rtwdev->early_h2c_list);
+	for (band = NL80211_BAND_2GHZ; band < NUM_NL80211_BANDS; band++) {
+		if (!(rtwdev->chip->support_bands & BIT(band)))
+			continue;
+		INIT_LIST_HEAD(&rtwdev->scan_info.pkt_list[band]);
+	}
 	INIT_WORK(&rtwdev->ba_work, rtw89_core_ba_work);
 	INIT_WORK(&rtwdev->txq_work, rtw89_core_txq_work);
 	INIT_DELAYED_WORK(&rtwdev->txq_reinvoke_work, rtw89_core_txq_reinvoke_work);
@@ -2584,11 +2653,13 @@ int rtw89_core_init(struct rtw89_dev *rtwdev)
 	INIT_DELAYED_WORK(&rtwdev->cfo_track_work, rtw89_phy_cfo_track_work);
 	rtwdev->txq_wq = alloc_workqueue("rtw89_tx_wq", WQ_UNBOUND | WQ_HIGHPRI, 0);
 	spin_lock_init(&rtwdev->ba_lock);
+	spin_lock_init(&rtwdev->rpwm_lock);
 	mutex_init(&rtwdev->mutex);
 	mutex_init(&rtwdev->rf_mutex);
 	rtwdev->total_sta_assoc = 0;
 
 	INIT_WORK(&rtwdev->c2h_work, rtw89_fw_c2h_work);
+	INIT_WORK(&rtwdev->ips_work, rtw89_ips_work);
 	skb_queue_head_init(&rtwdev->c2h_queue);
 	rtw89_core_ppdu_sts_init(rtwdev);
 	rtw89_traffic_stats_init(rtwdev, &rtwdev->stats);
@@ -2624,12 +2695,48 @@ void rtw89_core_deinit(struct rtw89_dev *rtwdev)
 }
 EXPORT_SYMBOL(rtw89_core_deinit);
 
+void rtw89_core_scan_start(struct rtw89_dev *rtwdev, struct rtw89_vif *rtwvif,
+			   const u8 *mac_addr, bool hw_scan)
+{
+	struct rtw89_hal *hal = &rtwdev->hal;
+
+	rtwdev->scanning = true;
+	rtw89_leave_lps(rtwdev);
+	if (hw_scan && rtwvif->net_type == RTW89_NET_TYPE_NO_LINK)
+		rtw89_leave_ips(rtwdev);
+
+	ether_addr_copy(rtwvif->mac_addr, mac_addr);
+	rtw89_btc_ntfy_scan_start(rtwdev, RTW89_PHY_0, hal->current_band_type);
+	rtw89_chip_rfk_scan(rtwdev, true);
+	rtw89_hci_recalc_int_mit(rtwdev);
+
+	rtw89_fw_h2c_cam(rtwdev, rtwvif, NULL, mac_addr);
+}
+
+void rtw89_core_scan_complete(struct rtw89_dev *rtwdev,
+			      struct ieee80211_vif *vif, bool hw_scan)
+{
+	struct rtw89_vif *rtwvif = (struct rtw89_vif *)vif->drv_priv;
+
+	ether_addr_copy(rtwvif->mac_addr, vif->addr);
+	rtw89_fw_h2c_cam(rtwdev, rtwvif, NULL, NULL);
+
+	rtw89_chip_rfk_scan(rtwdev, false);
+	rtw89_btc_ntfy_scan_finish(rtwdev, RTW89_PHY_0);
+
+	rtwdev->scanning = false;
+	rtwdev->dig.bypass_dig = true;
+	if (hw_scan && rtwvif->net_type == RTW89_NET_TYPE_NO_LINK)
+		ieee80211_queue_work(rtwdev->hw, &rtwdev->ips_work);
+}
+
 static void rtw89_read_chip_ver(struct rtw89_dev *rtwdev)
 {
+	const struct rtw89_chip_info *chip = rtwdev->chip;
 	u8 cv;
 
 	cv = rtw89_read32_mask(rtwdev, R_AX_SYS_CFG1, B_AX_CHIP_VER_MASK);
-	if (cv <= CHIP_CBV) {
+	if (chip->chip_id == RTL8852A && cv <= CHIP_CBV) {
 		if (rtw89_read32(rtwdev, R_AX_GPIO0_7_FUNC_SEL) == RTW89_R32_DEAD)
 			cv = CHIP_CAV;
 		else
@@ -2739,6 +2846,7 @@ static int rtw89_core_register_hw(struct rtw89_dev *rtwdev)
 	ieee80211_hw_set(hw, SUPPORTS_AMSDU_IN_AMPDU);
 	ieee80211_hw_set(hw, SUPPORTS_PS);
 	ieee80211_hw_set(hw, SUPPORTS_DYNAMIC_PS);
+	ieee80211_hw_set(hw, SINGLE_SCAN_ON_ALL_BANDS);
 
 	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
 				     BIT(NL80211_IFTYPE_AP);
@@ -2746,6 +2854,9 @@ static int rtw89_core_register_hw(struct rtw89_dev *rtwdev)
 	hw->wiphy->available_antennas_rx = BIT(rtwdev->chip->rf_path_num) - 1;
 
 	hw->wiphy->features |= NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR;
+
+	hw->wiphy->max_scan_ssids = RTW89_SCANOFLD_MAX_SSID;
+	hw->wiphy->max_scan_ie_len = RTW89_SCANOFLD_MAX_IE_LEN;
 
 	wiphy_ext_feature_set(hw->wiphy, NL80211_EXT_FEATURE_CAN_REPLACE_PTK0);
 

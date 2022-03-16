@@ -456,7 +456,6 @@ static int mctp_route_input(struct mctp_route *route, struct sk_buff *skb)
 		 * the reassembly/response key
 		 */
 		if (!rc && flags & MCTP_HDR_FLAG_EOM) {
-			msk = container_of(key->sk, struct mctp_sock, sk);
 			sock_queue_rcv_skb(key->sk, key->reasm_head);
 			key->reasm_head = NULL;
 			__mctp_key_done_in(key, net, f, MCTP_TRACE_KEY_REPLIED);
@@ -836,9 +835,8 @@ int mctp_local_output(struct sock *sk, struct mctp_route *rt,
 {
 	struct mctp_sock *msk = container_of(sk, struct mctp_sock, sk);
 	struct mctp_skb_cb *cb = mctp_cb(skb);
-	struct mctp_route tmp_rt;
+	struct mctp_route tmp_rt = {0};
 	struct mctp_sk_key *key;
-	struct net_device *dev;
 	struct mctp_hdr *hdr;
 	unsigned long flags;
 	unsigned int mtu;
@@ -851,12 +849,12 @@ int mctp_local_output(struct sock *sk, struct mctp_route *rt,
 
 	if (rt) {
 		ext_rt = false;
-		dev = NULL;
-
 		if (WARN_ON(!rt->dev))
 			goto out_release;
 
 	} else if (cb->ifindex) {
+		struct net_device *dev;
+
 		ext_rt = true;
 		rt = &tmp_rt;
 
@@ -866,7 +864,6 @@ int mctp_local_output(struct sock *sk, struct mctp_route *rt,
 			rcu_read_unlock();
 			return rc;
 		}
-
 		rt->dev = __mctp_dev_get(dev);
 		rcu_read_unlock();
 
@@ -947,10 +944,9 @@ out_release:
 	if (!ext_rt)
 		mctp_route_release(rt);
 
-	dev_put(dev);
+	mctp_dev_put(tmp_rt.dev);
 
 	return rc;
-
 }
 
 /* route management */
@@ -962,7 +958,7 @@ static int mctp_route_add(struct mctp_dev *mdev, mctp_eid_t daddr_start,
 	struct net *net = dev_net(mdev->dev);
 	struct mctp_route *rt, *ert;
 
-	if (!mctp_address_ok(daddr_start))
+	if (!mctp_address_unicast(daddr_start))
 		return -EINVAL;
 
 	if (daddr_extent > 0xff || daddr_start + daddr_extent >= 255)
@@ -1092,6 +1088,17 @@ static int mctp_pkttype_receive(struct sk_buff *skb, struct net_device *dev,
 	if (mh->ver < MCTP_VER_MIN || mh->ver > MCTP_VER_MAX)
 		goto err_drop;
 
+	/* source must be valid unicast or null; drop reserved ranges and
+	 * broadcast
+	 */
+	if (!(mctp_address_unicast(mh->src) || mctp_address_null(mh->src)))
+		goto err_drop;
+
+	/* dest address: as above, but allow broadcast */
+	if (!(mctp_address_unicast(mh->dest) || mctp_address_null(mh->dest) ||
+	      mctp_address_broadcast(mh->dest)))
+		goto err_drop;
+
 	/* MCTP drivers must populate halen/haddr */
 	if (dev->type == ARPHRD_MCTP) {
 		cb = mctp_cb(skb);
@@ -1113,11 +1120,13 @@ static int mctp_pkttype_receive(struct sk_buff *skb, struct net_device *dev,
 
 	rt->output(rt, skb);
 	mctp_route_release(rt);
+	mctp_dev_put(mdev);
 
 	return NET_RX_SUCCESS;
 
 err_drop:
 	kfree_skb(skb);
+	mctp_dev_put(mdev);
 	return NET_RX_DROP;
 }
 

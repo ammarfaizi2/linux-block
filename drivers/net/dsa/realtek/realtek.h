@@ -5,13 +5,16 @@
  * Copyright (C) 2009-2010 Gabor Juhos <juhosg@openwrt.org>
  */
 
-#ifndef _REALTEK_SMI_H
-#define _REALTEK_SMI_H
+#ifndef _REALTEK_H
+#define _REALTEK_H
 
 #include <linux/phy.h>
 #include <linux/platform_device.h>
 #include <linux/gpio/consumer.h>
 #include <net/dsa.h>
+
+#define REALTEK_HW_STOP_DELAY		25	/* msecs */
+#define REALTEK_HW_START_DELAY		100	/* msecs */
 
 struct realtek_ops;
 struct dentry;
@@ -49,6 +52,8 @@ struct realtek_priv {
 	struct gpio_desc	*mdc;
 	struct gpio_desc	*mdio;
 	struct regmap		*map;
+	struct regmap		*map_nolock;
+	struct mutex		map_lock;
 	struct mii_bus		*slave_mii_bus;
 	struct mii_bus		*bus;
 	int			mdio_addr;
@@ -142,4 +147,4 @@ void rtl8366_get_ethtool_stats(struct dsa_switch *ds, int port, uint64_t *data);
 extern const struct realtek_variant rtl8366rb_variant;
 extern const struct realtek_variant rtl8365mb_variant;
 
-#endif /*  _REALTEK_SMI_H */
+#endif /*  _REALTEK_H */

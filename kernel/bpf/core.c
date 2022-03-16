@@ -827,7 +827,7 @@ int bpf_jit_add_poke_descriptor(struct bpf_prog *prog,
 struct bpf_prog_pack {
 	struct list_head list;
 	void *ptr;
-	unsigned long bitmap[BITS_TO_LONGS(BPF_PROG_CHUNK_COUNT)];
+	unsigned long bitmap[];
 };
 
 #define BPF_PROG_MAX_PACK_PROG_SIZE	BPF_PROG_PACK_SIZE
@@ -840,7 +840,7 @@ static struct bpf_prog_pack *alloc_new_pack(void)
 {
 	struct bpf_prog_pack *pack;
 
-	pack = kzalloc(sizeof(*pack), GFP_KERNEL);
+	pack = kzalloc(sizeof(*pack) + BITS_TO_BYTES(BPF_PROG_CHUNK_COUNT), GFP_KERNEL);
 	if (!pack)
 		return NULL;
 	pack->ptr = module_alloc(BPF_PROG_PACK_SIZE);
@@ -1069,6 +1069,7 @@ bpf_jit_binary_pack_alloc(unsigned int proglen, u8 **image_ptr,
 
 	*rw_header = kvmalloc(size, GFP_KERNEL);
 	if (!*rw_header) {
+		bpf_arch_text_copy(&ro_header->size, &size, sizeof(size));
 		bpf_prog_pack_free(ro_header);
 		bpf_jit_uncharge_modmem(size);
 		return NULL;
@@ -1111,13 +1112,16 @@ int bpf_jit_binary_pack_finalize(struct bpf_prog *prog,
  *   1) when the program is freed after;
  *   2) when the JIT engine fails (before bpf_jit_binary_pack_finalize).
  * For case 2), we need to free both the RO memory and the RW buffer.
- * Also, ro_header->size in 2) is not properly set yet, so rw_header->size
- * is used for uncharge.
+ *
+ * bpf_jit_binary_pack_free requires proper ro_header->size. However,
+ * bpf_jit_binary_pack_alloc does not set it. Therefore, ro_header->size
+ * must be set with either bpf_jit_binary_pack_finalize (normal path) or
+ * bpf_arch_text_copy (when jit fails).
  */
 void bpf_jit_binary_pack_free(struct bpf_binary_header *ro_header,
 			      struct bpf_binary_header *rw_header)
 {
-	u32 size = rw_header ? rw_header->size : ro_header->size;
+	u32 size = ro_header->size;
 
 	bpf_prog_pack_free(ro_header);
 	kvfree(rw_header);

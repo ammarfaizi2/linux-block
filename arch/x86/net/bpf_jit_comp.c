@@ -390,7 +390,7 @@ static void emit_indirect_jump(u8 **pprog, int reg, u8 *ip)
 	u8 *prog = *pprog;
 
 #ifdef CONFIG_RETPOLINE
-	if (cpu_feature_enabled(X86_FEATURE_RETPOLINE_AMD)) {
+	if (cpu_feature_enabled(X86_FEATURE_RETPOLINE_LFENCE)) {
 		EMIT_LFENCE();
 		EMIT2(0xFF, 0xE0 + reg);
 	} else if (cpu_feature_enabled(X86_FEATURE_RETPOLINE)) {
@@ -2330,8 +2330,11 @@ skip_init_addrs:
 		if (proglen <= 0) {
 out_image:
 			image = NULL;
-			if (header)
+			if (header) {
+				bpf_arch_text_copy(&header->size, &rw_header->size,
+						   sizeof(rw_header->size));
 				bpf_jit_binary_pack_free(header, rw_header);
+			}
 			prog = orig_prog;
 			goto out_addrs;
 		}

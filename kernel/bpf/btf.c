@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018 Facebook */
 
 #include <uapi/linux/btf.h>
@@ -2547,7 +2547,7 @@ static int btf_ptr_resolve(struct btf_verifier_env *env,
 	 *
 	 * We now need to continue from the last-resolved-ptr to
 	 * ensure the last-resolved-ptr will not referring back to
-	 * the currenct ptr (t).
+	 * the current ptr (t).
 	 */
 	if (btf_type_is_modifier(next_type)) {
 		const struct btf_type *resolved_type;
@@ -6148,7 +6148,7 @@ int btf_type_snprintf_show(const struct btf *btf, u32 type_id, void *obj,
 
 	btf_type_show(btf, type_id, obj, (struct btf_show *)&ssnprintf);
 
-	/* If we encontered an error, return it. */
+	/* If we encountered an error, return it. */
 	if (ssnprintf.show.state.status)
 		return ssnprintf.show.state.status;
 
@@ -6398,7 +6398,8 @@ static int btf_module_notify(struct notifier_block *nb, unsigned long op,
 			pr_warn("failed to validate module [%s] BTF: %ld\n",
 				mod->name, PTR_ERR(btf));
 			kfree(btf_mod);
-			err = PTR_ERR(btf);
+			if (!IS_ENABLED(CONFIG_MODULE_ALLOW_BTF_MISMATCH))
+				err = PTR_ERR(btf);
 			goto out;
 		}
 		err = btf_alloc_id(btf);
@@ -6706,7 +6707,7 @@ static int btf_populate_kfunc_set(struct btf *btf, enum btf_kfunc_hook hook,
 				  const struct btf_kfunc_id_set *kset)
 {
 	bool vmlinux_set = !btf_is_module(btf);
-	int type, ret;
+	int type, ret = 0;
 
 	for (type = 0; type < ARRAY_SIZE(kset->sets); type++) {
 		if (!kset->sets[type])
@@ -7226,6 +7227,7 @@ int bpf_core_apply(struct bpf_core_ctx *ctx, const struct bpf_core_relo *relo,
 {
 	bool need_cands = relo->kind != BPF_CORE_TYPE_ID_LOCAL;
 	struct bpf_core_cand_list cands = {};
+	struct bpf_core_relo_res targ_res;
 	struct bpf_core_spec *specs;
 	int err;
 
@@ -7265,13 +7267,19 @@ int bpf_core_apply(struct bpf_core_ctx *ctx, const struct bpf_core_relo *relo,
 		cands.len = cc->cnt;
 		/* cand_cache_mutex needs to span the cache lookup and
 		 * copy of btf pointer into bpf_core_cand_list,
-		 * since module can be unloaded while bpf_core_apply_relo_insn
+		 * since module can be unloaded while bpf_core_calc_relo_insn
 		 * is working with module's btf.
 		 */
 	}
 
-	err = bpf_core_apply_relo_insn((void *)ctx->log, insn, relo->insn_off / 8,
-				       relo, relo_idx, ctx->btf, &cands, specs);
+	err = bpf_core_calc_relo_insn((void *)ctx->log, relo, relo_idx, ctx->btf, &cands, specs,
+				      &targ_res);
+	if (err)
+		goto out;
+
+	err = bpf_core_patch_insn((void *)ctx->log, insn, relo->insn_off / 8, relo, relo_idx,
+				  &targ_res);
+
 out:
 	kfree(specs);
 	if (need_cands) {
