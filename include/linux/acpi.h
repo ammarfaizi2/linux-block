@@ -526,7 +526,7 @@ acpi_status acpi_release_memory(acpi_handle handle, struct resource *res,
 int acpi_resources_are_enforced(void);
 
 #ifdef CONFIG_HIBERNATION
-void __init acpi_check_s4_hw_signature(int check);
+extern int acpi_check_s4_hw_signature;
 #endif
 
 #ifdef CONFIG_PM_SLEEP
@@ -691,7 +691,7 @@ int acpi_device_uevent_modalias(struct device *, struct kobj_uevent_env *);
 int acpi_device_modalias(struct device *, char *, int);
 
 struct platform_device *acpi_create_platform_device(struct acpi_device *,
-						    struct property_entry *);
+						    const struct property_entry *);
 #define ACPI_PTR(_ptr)	(_ptr)
 
 static inline void acpi_device_set_enumerated(struct acpi_device *adev)
@@ -930,7 +930,7 @@ static inline int acpi_device_modalias(struct device *dev,
 
 static inline struct platform_device *
 acpi_create_platform_device(struct acpi_device *adev,
-			    struct property_entry *properties)
+			    const struct property_entry *properties)
 {
 	return NULL;
 }
