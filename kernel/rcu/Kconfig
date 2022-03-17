@@ -96,7 +96,9 @@ config TASKS_RUDE_RCU
 	  with caution.
 
 config TASKS_TRACE_RCU
-	def_bool 0
+	bool "Enable Tasks Trace RCU"
+	depends on RCU_EXPERT
+	default n
 	select IRQ_WORK
 	help
 	  This option enables a task-based RCU implementation that uses
@@ -227,7 +229,7 @@ config RCU_NOCB_CPU
 
 config TASKS_TRACE_RCU_READ_MB
 	bool "Tasks Trace RCU readers use memory barriers in user and idle"
-	depends on RCU_EXPERT
+	depends on RCU_EXPERT && TASKS_TRACE_RCU
 	default PREEMPT_RT || NR_CPUS < 8
 	help
 	  Use this option to further reduce the number of IPIs sent
