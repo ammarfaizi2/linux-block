@@ -88,7 +88,9 @@ config TASKS_RCU
 	  user-mode execution as quiescent states.  Not for manual selection.
 
 config TASKS_RUDE_RCU
-	def_bool 0
+	bool "Enable Tasks Rude RCU"
+	depends on RCU_EXPERT
+	default n
 	select IRQ_WORK
 	help
 	  This option enables a task-based RCU implementation that uses
