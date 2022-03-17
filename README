@@ -78,6 +78,11 @@ Preparing system for tests:
 	     - setenv TEST_LOGDEV "device for test-fs external log"
              - setenv TEST_RTDEV "device for test-fs realtime data"
              - if TEST_LOGDEV and/or TEST_RTDEV, these will always be used.
+             - set IDMAPPED_MOUNTS=true to run all tests on top of idmapped
+               mounts. While this option is supported for all filesystems
+               currently only -overlay is expected to run without issues. For
+               other filesystems additional patches and fixes to the test suite
+               might be needed.
              - if SCRATCH_LOGDEV and/or SCRATCH_RTDEV, the USE_EXTERNAL
                environment variable set to "yes" will enable their use.
              - setenv DIFF_LENGTH "number of diff lines to print from a failed test",
