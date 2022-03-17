@@ -167,6 +167,72 @@ struct sys_stat_struct {
 	_ret;                                                                 \
 })
 
+
+/*
+ * Both Clang and GCC cannot use %ebp in the clobber list and in the "r"
+ * constraint without using -fomit-frame-pointer. To make it always
+ * available for any kind of compilation, the below workaround is
+ * implemented.
+ *
+ * For clang (the Assembly statement can't clobber %ebp):
+ *   1) Push the 6-th argument.
+ *   2) Push %ebp.
+ *   3) Load the 6-th argument from 4(%esp) to %ebp.
+ *   4) Do the syscall (int $0x80).
+ *   5) Pop %ebp (restore the old value of %ebp).
+ *   6) Add %esp by 4 (undo the stack pointer).
+ *
+ * For GCC, fortunately it has a #pragma that can force a specific function
+ * to be compiled with -fomit-frame-pointer, so it can use "r"(var) where
+ * var is a variable bound to %ebp.
+ *
+ */
+#if defined(__clang__)
+static inline long ____do_syscall6(long eax, long ebx, long ecx, long edx,
+				   long esi, long edi, long ebp)
+{
+	__asm__ volatile (
+		"pushl	%[arg6]\n\t"
+		"pushl	%%ebp\n\t"
+		"movl	4(%%esp), %%ebp\n\t"
+		"int	$0x80\n\t"
+		"popl	%%ebp\n\t"
+		"addl	$4,%%esp\n\t"
+		: "=a"(eax)
+		: "a"(eax), "b"(ebx), "c"(ecx), "d"(edx), "S"(esi), "D"(edi),
+		  [arg6]"m"(ebp)
+		: "memory", "cc"
+	);
+	return eax;
+}
+
+#else /* #if defined(__clang__) */
+#pragma GCC push_options
+#pragma GCC optimize "-fomit-frame-pointer"
+static long ____do_syscall6(long eax, long ebx, long ecx, long edx, long esi,
+			    long edi, long ebp)
+{
+	register long __ebp __asm__("ebp") = ebp;
+	__asm__ volatile (
+		"int	$0x80"
+		: "=a"(eax)
+		: "a"(eax), "b"(ebx), "c"(ecx), "d"(edx), "S"(esi), "D"(edi),
+		  "r"(__ebp)
+		: "memory", "cc"
+	);
+	return eax;
+}
+#pragma GCC pop_options
+#endif /* #if defined(__clang__) */
+
+#define my_syscall6(num, arg1, arg2, arg3, arg4, arg5, arg6) (   \
+	____do_syscall6((long)(num), (long)(arg1),               \
+			(long)(arg2), (long)(arg3),              \
+			(long)(arg4), (long)(arg5),              \
+			(long)(arg6))                            \
+)
+
+
 /* startup code */
 /*
  * i386 System V ABI mandates:
