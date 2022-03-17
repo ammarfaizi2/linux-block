@@ -4185,7 +4185,8 @@ _check_dmesg_for()
 _check_dmesg_filter()
 {
 	egrep -v -e "BUG: MAX_LOCKDEP_CHAIN_HLOCKS too low" \
-		-e "BUG: MAX_STACK_TRACE_ENTRIES too low"
+		-e "BUG: MAX_STACK_TRACE_ENTRIES too low" \
+		 -e "WARNING: workqueue cpumask:"
 }
 
 # check dmesg log for WARNING/Oops/etc.
