@@ -589,6 +589,9 @@ enum {
 /* dirty segments threshold for triggering CP */
 #define DEFAULT_DIRTY_THRESHOLD		4
 
+/* count of section which will be written in-batch during disabling checkpoint */
+#define INBATCH_WRITE_SECTION_COUNT	8
+
 /* for in-memory extent cache entry */
 #define F2FS_MIN_EXTENT_LEN	64	/* minimum extent length */
 
