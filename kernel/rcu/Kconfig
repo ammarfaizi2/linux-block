@@ -78,7 +78,9 @@ config TASKS_RCU_GENERIC
 	  task-based RCU implementations.  Not for manual selection.
 
 config TASKS_RCU
-	def_bool 0
+	bool "Enable Tasks RCU"
+	depends on RCU_EXPERT
+	default n
 	select IRQ_WORK
 	help
 	  This option enables a task-based RCU implementation that uses
