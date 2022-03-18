@@ -11,7 +11,7 @@ config ERRATA_SIFIVE
 
 config ERRATA_SIFIVE_CIP_453
 	bool "Apply SiFive errata CIP-453"
-	depends on ERRATA_SIFIVE && 64BIT
+	depends on ERRATA_SIFIVE && 64BIT && !XIP_KERNEL
 	default y
 	help
 	  This will apply the SiFive CIP-453 errata to add sign extension
@@ -22,7 +22,7 @@ config ERRATA_SIFIVE_CIP_453
 
 config ERRATA_SIFIVE_CIP_1200
 	bool "Apply SiFive errata CIP-1200"
-	depends on ERRATA_SIFIVE && 64BIT
+	depends on ERRATA_SIFIVE && 64BIT && !XIP_KERNEL
 	default y
 	help
 	  This will apply the SiFive CIP-1200 errata to repalce all
@@ -42,7 +42,7 @@ config ERRATA_THEAD
 
 config ERRATA_THEAD_PBMT
 	bool "Apply T-Head memory type errata"
-	depends on ERRATA_THEAD && 64BIT
+	depends on ERRATA_THEAD && 64BIT && !XIP_KERNEL
 	default y
 	help
 	  This will apply the memory type errata to handle the non-standard
