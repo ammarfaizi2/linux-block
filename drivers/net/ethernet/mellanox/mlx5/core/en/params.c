@@ -178,16 +178,28 @@ u8 mlx5e_mpwqe_get_log_num_strides(struct mlx5_core_dev *mdev,
 		mlx5e_mpwqe_get_log_stride_size(mdev, params, xsk);
 }
 
+u8 mlx5e_mpwqe_get_min_wqe_bulk(unsigned int wq_sz)
+{
+#define UMR_WQE_BULK (2)
+	return min_t(unsigned int, UMR_WQE_BULK, wq_sz / 2 - 1);
+}
+
 u16 mlx5e_get_rq_headroom(struct mlx5_core_dev *mdev,
 			  struct mlx5e_params *params,
 			  struct mlx5e_xsk_param *xsk)
 {
-	bool is_linear_skb = (params->rq_wq_type == MLX5_WQ_TYPE_CYCLIC) ?
-		mlx5e_rx_is_linear_skb(params, xsk) :
-		mlx5e_rx_mpwqe_is_linear_skb(mdev, params, xsk);
+	u16 linear_headroom = mlx5e_get_linear_rq_headroom(params, xsk);
 
-	return is_linear_skb || params->packet_merge.type == MLX5E_PACKET_MERGE_SHAMPO ?
-		mlx5e_get_linear_rq_headroom(params, xsk) : 0;
+	if (params->rq_wq_type == MLX5_WQ_TYPE_CYCLIC)
+		return linear_headroom;
+
+	if (mlx5e_rx_mpwqe_is_linear_skb(mdev, params, xsk))
+		return linear_headroom;
+
+	if (params->packet_merge.type == MLX5E_PACKET_MERGE_SHAMPO)
+		return linear_headroom;
+
+	return 0;
 }
 
 u16 mlx5e_calc_sq_stop_room(struct mlx5_core_dev *mdev, struct mlx5e_params *params)
@@ -196,13 +208,13 @@ u16 mlx5e_calc_sq_stop_room(struct mlx5_core_dev *mdev, struct mlx5e_params *par
 	u16 stop_room;
 
 	stop_room  = mlx5e_tls_get_stop_room(mdev, params);
-	stop_room += mlx5e_stop_room_for_wqe(MLX5_SEND_WQE_MAX_WQEBBS);
+	stop_room += mlx5e_stop_room_for_max_wqe(mdev);
 	if (is_mpwqe)
 		/* A MPWQE can take up to the maximum-sized WQE + all the normal
 		 * stop room can be taken if a new packet breaks the active
 		 * MPWQE session and allocates its WQEs right away.
 		 */
-		stop_room += mlx5e_stop_room_for_wqe(MLX5_SEND_WQE_MAX_WQEBBS);
+		stop_room += mlx5e_stop_room_for_max_wqe(mdev);
 
 	return stop_room;
 }
@@ -359,12 +371,13 @@ void mlx5e_build_rq_params(struct mlx5_core_dev *mdev,
 {
 	/* Prefer Striding RQ, unless any of the following holds:
 	 * - Striding RQ configuration is not possible/supported.
-	 * - Slow PCI heuristic.
+	 * - CQE compression is ON, and stride_index mini_cqe layout is not supported.
 	 * - Legacy RQ would use linear SKB while Striding RQ would use non-linear.
 	 *
 	 * No XSK params: checking the availability of striding RQ in general.
 	 */
-	if (!slow_pci_heuristic(mdev) &&
+	if ((!MLX5E_GET_PFLAG(params, MLX5E_PFLAG_RX_CQE_COMPRESS) ||
+	     MLX5_CAP_GEN(mdev, mini_cqe_resp_stride_index)) &&
 	    mlx5e_striding_rq_possible(mdev, params) &&
 	    (mlx5e_rx_mpwqe_is_linear_skb(mdev, params, NULL) ||
 	     !mlx5e_rx_is_linear_skb(params, NULL)))
@@ -385,16 +398,25 @@ void mlx5e_build_create_cq_param(struct mlx5e_create_cq_param *ccp, struct mlx5e
 	};
 }
 
+static int mlx5e_max_nonlinear_mtu(int first_frag_size, int frag_size)
+{
+	/* Optimization for small packets: the last fragment is bigger than the others. */
+	return first_frag_size + (MLX5E_MAX_RX_FRAGS - 2) * frag_size + PAGE_SIZE;
+}
+
 #define DEFAULT_FRAG_SIZE (2048)
 
-static void mlx5e_build_rq_frags_info(struct mlx5_core_dev *mdev,
-				      struct mlx5e_params *params,
-				      struct mlx5e_xsk_param *xsk,
-				      struct mlx5e_rq_frags_info *info)
+static int mlx5e_build_rq_frags_info(struct mlx5_core_dev *mdev,
+				     struct mlx5e_params *params,
+				     struct mlx5e_xsk_param *xsk,
+				     struct mlx5e_rq_frags_info *info)
 {
 	u32 byte_count = MLX5E_SW2HW_MTU(params, params->sw_mtu);
 	int frag_size_max = DEFAULT_FRAG_SIZE;
+	int first_frag_size_max;
 	u32 buf_size = 0;
+	u16 headroom;
+	int max_mtu;
 	int i;
 
 	if (mlx5_fpga_is_ipsec_device(mdev))
@@ -413,21 +435,42 @@ static void mlx5e_build_rq_frags_info(struct mlx5_core_dev *mdev,
 		goto out;
 	}
 
-	if (byte_count > PAGE_SIZE +
-	    (MLX5E_MAX_RX_FRAGS - 1) * frag_size_max)
+	headroom = mlx5e_get_linear_rq_headroom(params, xsk);
+	first_frag_size_max = SKB_WITH_OVERHEAD(frag_size_max - headroom);
+
+	max_mtu = mlx5e_max_nonlinear_mtu(first_frag_size_max, frag_size_max);
+	if (byte_count > max_mtu) {
 		frag_size_max = PAGE_SIZE;
+		first_frag_size_max = SKB_WITH_OVERHEAD(frag_size_max - headroom);
+
+		max_mtu = mlx5e_max_nonlinear_mtu(first_frag_size_max, frag_size_max);
+		if (byte_count > max_mtu) {
+			mlx5_core_err(mdev, "MTU %u is too big for non-linear legacy RQ (max %d)\n",
+				      params->sw_mtu, max_mtu);
+			return -EINVAL;
+		}
+	}
 
 	i = 0;
 	while (buf_size < byte_count) {
 		int frag_size = byte_count - buf_size;
 
-		if (i < MLX5E_MAX_RX_FRAGS - 1)
+		if (i == 0)
+			frag_size = min(frag_size, first_frag_size_max);
+		else if (i < MLX5E_MAX_RX_FRAGS - 1)
 			frag_size = min(frag_size, frag_size_max);
 
 		info->arr[i].frag_size = frag_size;
+		buf_size += frag_size;
+
+		if (i == 0) {
+			/* Ensure that headroom and tailroom are included. */
+			frag_size += headroom;
+			frag_size += SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
+		}
+
 		info->arr[i].frag_stride = roundup_pow_of_two(frag_size);
 
-		buf_size += frag_size;
 		i++;
 	}
 	info->num_frags = i;
@@ -437,6 +480,8 @@ static void mlx5e_build_rq_frags_info(struct mlx5_core_dev *mdev,
 out:
 	info->wqe_bulk = max_t(u8, info->wqe_bulk, 8);
 	info->log_num_frags = order_base_2(info->num_frags);
+
+	return 0;
 }
 
 static u8 mlx5e_get_rqwq_log_stride(u8 wq_type, int ndsegs)
@@ -533,6 +578,7 @@ int mlx5e_build_rq_param(struct mlx5_core_dev *mdev,
 	void *rqc = param->rqc;
 	void *wq = MLX5_ADDR_OF(rqc, rqc, wq);
 	int ndsegs = 1;
+	int err;
 
 	switch (params->rq_wq_type) {
 	case MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ: {
@@ -572,7 +618,9 @@ int mlx5e_build_rq_param(struct mlx5_core_dev *mdev,
 	}
 	default: /* MLX5_WQ_TYPE_CYCLIC */
 		MLX5_SET(wq, wq, log_wq_sz, params->log_rq_mtu_frames);
-		mlx5e_build_rq_frags_info(mdev, params, xsk, &param->frags_info);
+		err = mlx5e_build_rq_frags_info(mdev, params, xsk, &param->frags_info);
+		if (err)
+			return err;
 		ndsegs = param->frags_info.num_frags;
 	}
 
@@ -717,7 +765,7 @@ static u32 mlx5e_shampo_icosq_sz(struct mlx5_core_dev *mdev,
 	int wq_size = BIT(MLX5_GET(wq, wqc, log_wq_sz));
 	u32 wqebbs;
 
-	max_klm_per_umr = MLX5E_MAX_KLM_PER_WQE;
+	max_klm_per_umr = MLX5E_MAX_KLM_PER_WQE(mdev);
 	max_hd_per_wqe = mlx5e_shampo_hd_per_wqe(mdev, params, rq_param);
 	max_num_of_umr_per_wqe = max_hd_per_wqe / max_klm_per_umr;
 	rest = max_hd_per_wqe % max_klm_per_umr;
@@ -774,10 +822,10 @@ static void mlx5e_build_async_icosq_param(struct mlx5_core_dev *mdev,
 	void *wq = MLX5_ADDR_OF(sqc, sqc, wq);
 
 	mlx5e_build_sq_param_common(mdev, param);
-	param->stop_room = mlx5e_stop_room_for_wqe(1); /* for XSK NOP */
+	param->stop_room = mlx5e_stop_room_for_wqe(mdev, 1); /* for XSK NOP */
 	param->is_tls = mlx5e_accel_is_ktls_rx(mdev);
 	if (param->is_tls)
-		param->stop_room += mlx5e_stop_room_for_wqe(1); /* for TLS RX resync NOP */
+		param->stop_room += mlx5e_stop_room_for_wqe(mdev, 1); /* for TLS RX resync NOP */
 	MLX5_SET(sqc, sqc, reg_umr, MLX5_CAP_ETH(mdev, reg_umr_sq));
 	MLX5_SET(wq, wq, log_wq_sz, log_wq_size);
 	mlx5e_build_ico_cq_param(mdev, log_wq_size, &param->cqp);
