@@ -6,6 +6,11 @@
 
 #include <net/mac80211.h>
 #include <linux/etherdevice.h>
+#include <linux/bitfield.h>
+#include <linux/inetdevice.h>
+#include <net/if_inet6.h>
+#include <net/ipv6.h>
+
 #include "mac.h"
 #include "core.h"
 #include "debug.h"
@@ -16,6 +21,8 @@
 #include "testmode.h"
 #include "peer.h"
 #include "debugfs_sta.h"
+#include "hif.h"
+#include "wow.h"
 
 #define CHAN2G(_channel, _freq, _flags) { \
 	.band                   = NL80211_BAND_2GHZ, \
@@ -2750,6 +2757,7 @@ static void ath11k_bss_assoc(struct ieee80211_hw *hw,
 	}
 
 	arvif->is_up = true;
+	arvif->rekey_data.enable_offload = false;
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 		   "mac vdev %d up (associated) bssid %pM aid %d\n",
@@ -2806,6 +2814,8 @@ static void ath11k_bss_disassoc(struct ieee80211_hw *hw,
 			    arvif->vdev_id, ret);
 
 	arvif->is_up = false;
+
+	memset(&arvif->rekey_data, 0, sizeof(arvif->rekey_data));
 
 	cancel_delayed_work_sync(&arvif->connection_loss_work);
 }
@@ -3093,6 +3103,7 @@ static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 	int ret = 0;
 	u8 rateidx;
 	u32 rate;
+	u32 ipv4_cnt;
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -3384,6 +3395,18 @@ static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 	if (changed & BSS_CHANGED_FILS_DISCOVERY ||
 	    changed & BSS_CHANGED_UNSOL_BCAST_PROBE_RESP)
 		ath11k_mac_fils_discovery(arvif, info);
+
+	if (changed & BSS_CHANGED_ARP_FILTER) {
+		ipv4_cnt = min(info->arp_addr_cnt, ATH11K_IPV4_MAX_COUNT);
+		memcpy(arvif->arp_ns_offload.ipv4_addr, info->arp_addr_list,
+		       ipv4_cnt * sizeof(u32));
+		memcpy(arvif->arp_ns_offload.mac_addr, vif->addr, ETH_ALEN);
+		arvif->arp_ns_offload.ipv4_count = ipv4_cnt;
+
+		ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac arp_addr_cnt %d vif->addr %pM, offload_addr %pI4\n",
+			   info->arp_addr_cnt,
+			   vif->addr, arvif->arp_ns_offload.ipv4_addr);
+	}
 
 	mutex_unlock(&ar->conf_mutex);
 }
@@ -6364,22 +6387,12 @@ static int ath11k_mac_op_add_interface(struct ieee80211_hw *hw,
 
 err_peer_del:
 	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
-		reinit_completion(&ar->peer_delete_done);
-
-		fbret = ath11k_wmi_send_peer_delete_cmd(ar, vif->addr,
-							arvif->vdev_id);
+		fbret = ath11k_peer_delete(ar, arvif->vdev_id, vif->addr);
 		if (fbret) {
-			ath11k_warn(ar->ab, "failed to delete peer vdev_id %d addr %pM\n",
-				    arvif->vdev_id, vif->addr);
+			ath11k_warn(ar->ab, "fallback fail to delete peer addr %pM vdev_id %d ret %d\n",
+				    vif->addr, arvif->vdev_id, fbret);
 			goto err;
 		}
-
-		fbret = ath11k_wait_for_peer_delete_done(ar, arvif->vdev_id,
-							 vif->addr);
-		if (fbret)
-			goto err;
-
-		ar->num_peers--;
 	}
 
 err_vdev_del:
@@ -7258,31 +7271,47 @@ static int ath11k_mac_op_set_frag_threshold(struct ieee80211_hw *hw, u32 value)
 	return -EOPNOTSUPP;
 }
 
-static void ath11k_mac_op_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-				u32 queues, bool drop)
+static int ath11k_mac_flush_tx_complete(struct ath11k *ar)
 {
-	struct ath11k *ar = hw->priv;
 	long time_left;
-
-	if (drop)
-		return;
+	int ret = 0;
 
 	time_left = wait_event_timeout(ar->dp.tx_empty_waitq,
 				       (atomic_read(&ar->dp.num_tx_pending) == 0),
 				       ATH11K_FLUSH_TIMEOUT);
-	if (time_left == 0)
-		ath11k_warn(ar->ab, "failed to flush transmit queue %ld\n", time_left);
+	if (time_left == 0) {
+		ath11k_warn(ar->ab, "failed to flush transmit queue, data pkts pending %d\n",
+			    atomic_read(&ar->dp.num_tx_pending));
+		ret = -ETIMEDOUT;
+	}
 
 	time_left = wait_event_timeout(ar->txmgmt_empty_waitq,
 				       (atomic_read(&ar->num_pending_mgmt_tx) == 0),
 				       ATH11K_FLUSH_TIMEOUT);
-	if (time_left == 0)
-		ath11k_warn(ar->ab, "failed to flush mgmt transmit queue %ld\n",
-			    time_left);
+	if (time_left == 0) {
+		ath11k_warn(ar->ab, "failed to flush mgmt transmit queue, mgmt pkts pending %d\n",
+			    atomic_read(&ar->num_pending_mgmt_tx));
+		ret = -ETIMEDOUT;
+	}
 
-	ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
-		   "mac mgmt tx flush mgmt pending %d\n",
-		   atomic_read(&ar->num_pending_mgmt_tx));
+	return ret;
+}
+
+int ath11k_mac_wait_tx_complete(struct ath11k *ar)
+{
+	ath11k_mac_drain_tx(ar);
+	return ath11k_mac_flush_tx_complete(ar);
+}
+
+static void ath11k_mac_op_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+				u32 queues, bool drop)
+{
+	struct ath11k *ar = hw->priv;
+
+	if (drop)
+		return;
+
+	ath11k_mac_flush_tx_complete(ar);
 }
 
 static int
@@ -8069,6 +8098,134 @@ static void ath11k_mac_op_sta_statistics(struct ieee80211_hw *hw,
 	}
 }
 
+static void ath11k_generate_ns_mc_addr(struct ath11k *ar,
+				       struct ath11k_arp_ns_offload *offload)
+{
+	int i;
+
+	for (i = 0; i < offload->ipv6_count; i++) {
+		offload->self_ipv6_addr[i][0] = 0xff;
+		offload->self_ipv6_addr[i][1] = 0x02;
+		offload->self_ipv6_addr[i][11] = 0x01;
+		offload->self_ipv6_addr[i][12] = 0xff;
+		offload->self_ipv6_addr[i][13] =
+					offload->ipv6_addr[i][13];
+		offload->self_ipv6_addr[i][14] =
+					offload->ipv6_addr[i][14];
+		offload->self_ipv6_addr[i][15] =
+					offload->ipv6_addr[i][15];
+		ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "NS solicited addr %pI6\n",
+			   offload->self_ipv6_addr[i]);
+	}
+}
+
+static void ath11k_mac_op_ipv6_changed(struct ieee80211_hw *hw,
+				       struct ieee80211_vif *vif,
+				       struct inet6_dev *idev)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_arp_ns_offload *offload;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct inet6_ifaddr *ifa6;
+	struct ifacaddr6 *ifaca6;
+	struct list_head *p;
+	u32 count, scope;
+
+	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac op ipv6 changed\n");
+
+	offload = &arvif->arp_ns_offload;
+	count = 0;
+
+	read_lock_bh(&idev->lock);
+
+	memset(offload->ipv6_addr, 0, sizeof(offload->ipv6_addr));
+	memset(offload->self_ipv6_addr, 0, sizeof(offload->self_ipv6_addr));
+	memcpy(offload->mac_addr, vif->addr, ETH_ALEN);
+
+	/* get unicast address */
+	list_for_each(p, &idev->addr_list) {
+		if (count >= ATH11K_IPV6_MAX_COUNT)
+			goto generate;
+
+		ifa6 = list_entry(p, struct inet6_ifaddr, if_list);
+		if (ifa6->flags & IFA_F_DADFAILED)
+			continue;
+		scope = ipv6_addr_src_scope(&ifa6->addr);
+		if (scope == IPV6_ADDR_SCOPE_LINKLOCAL ||
+		    scope == IPV6_ADDR_SCOPE_GLOBAL) {
+			memcpy(offload->ipv6_addr[count], &ifa6->addr.s6_addr,
+			       sizeof(ifa6->addr.s6_addr));
+			offload->ipv6_type[count] = ATH11K_IPV6_UC_TYPE;
+			ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac count %d ipv6 uc %pI6 scope %d\n",
+				   count, offload->ipv6_addr[count],
+				   scope);
+			count++;
+		} else {
+			ath11k_warn(ar->ab, "Unsupported ipv6 scope: %d\n", scope);
+		}
+	}
+
+	/* get anycast address */
+	for (ifaca6 = idev->ac_list; ifaca6; ifaca6 = ifaca6->aca_next) {
+		if (count >= ATH11K_IPV6_MAX_COUNT)
+			goto generate;
+
+		scope = ipv6_addr_src_scope(&ifaca6->aca_addr);
+		if (scope == IPV6_ADDR_SCOPE_LINKLOCAL ||
+		    scope == IPV6_ADDR_SCOPE_GLOBAL) {
+			memcpy(offload->ipv6_addr[count], &ifaca6->aca_addr,
+			       sizeof(ifaca6->aca_addr));
+			offload->ipv6_type[count] = ATH11K_IPV6_AC_TYPE;
+			ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac count %d ipv6 ac %pI6 scope %d\n",
+				   count, offload->ipv6_addr[count],
+				   scope);
+			count++;
+		} else {
+			ath11k_warn(ar->ab, "Unsupported ipv scope: %d\n", scope);
+		}
+	}
+
+generate:
+	offload->ipv6_count = count;
+	read_unlock_bh(&idev->lock);
+
+	/* generate ns multicast address */
+	ath11k_generate_ns_mc_addr(ar, offload);
+}
+
+static void ath11k_mac_op_set_rekey_data(struct ieee80211_hw *hw,
+					 struct ieee80211_vif *vif,
+					 struct cfg80211_gtk_rekey_data *data)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct ath11k_rekey_data *rekey_data = &arvif->rekey_data;
+
+	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac set rekey data vdev %d\n",
+		   arvif->vdev_id);
+
+	mutex_lock(&ar->conf_mutex);
+
+	memcpy(rekey_data->kck, data->kck, NL80211_KCK_LEN);
+	memcpy(rekey_data->kek, data->kek, NL80211_KEK_LEN);
+
+	/* The supplicant works on big-endian, the firmware expects it on
+	 * little endian.
+	 */
+	rekey_data->replay_ctr = get_unaligned_be64(data->replay_ctr);
+
+	arvif->rekey_data.enable_offload = true;
+
+	ath11k_dbg_dump(ar->ab, ATH11K_DBG_MAC, "kck", NULL,
+			rekey_data->kck, NL80211_KCK_LEN);
+	ath11k_dbg_dump(ar->ab, ATH11K_DBG_MAC, "kek", NULL,
+			rekey_data->kck, NL80211_KEK_LEN);
+	ath11k_dbg_dump(ar->ab, ATH11K_DBG_MAC, "replay ctr", NULL,
+			&rekey_data->replay_ctr, sizeof(rekey_data->replay_ctr));
+
+	mutex_unlock(&ar->conf_mutex);
+}
+
 static const struct ieee80211_ops ath11k_ops = {
 	.tx				= ath11k_mac_op_tx,
 	.start                          = ath11k_mac_op_start,
@@ -8083,6 +8240,7 @@ static const struct ieee80211_ops ath11k_ops = {
 	.hw_scan                        = ath11k_mac_op_hw_scan,
 	.cancel_hw_scan                 = ath11k_mac_op_cancel_hw_scan,
 	.set_key                        = ath11k_mac_op_set_key,
+	.set_rekey_data	                = ath11k_mac_op_set_rekey_data,
 	.sta_state                      = ath11k_mac_op_sta_state,
 	.sta_set_4addr                  = ath11k_mac_op_sta_set_4addr,
 	.sta_set_txpwr			= ath11k_mac_op_sta_set_txpwr,
@@ -8104,9 +8262,21 @@ static const struct ieee80211_ops ath11k_ops = {
 	.flush				= ath11k_mac_op_flush,
 	.sta_statistics			= ath11k_mac_op_sta_statistics,
 	CFG80211_TESTMODE_CMD(ath11k_tm_cmd)
+
+#ifdef CONFIG_PM
+	.suspend			= ath11k_wow_op_suspend,
+	.resume				= ath11k_wow_op_resume,
+	.set_wakeup			= ath11k_wow_op_set_wakeup,
+#endif
+
 #ifdef CONFIG_ATH11K_DEBUGFS
 	.sta_add_debugfs		= ath11k_debugfs_sta_op_add,
 #endif
+
+#if IS_ENABLED(CONFIG_IPV6)
+	.ipv6_addr_change = ath11k_mac_op_ipv6_changed,
+#endif
+
 };
 
 static void ath11k_mac_update_ch_list(struct ath11k *ar,
@@ -8471,6 +8641,24 @@ static int __ath11k_mac_register(struct ath11k *ar)
 	if (test_bit(WMI_TLV_SERVICE_SPOOF_MAC_SUPPORT, ar->wmi->wmi_ab->svc_map)) {
 		ar->hw->wiphy->features |=
 			NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR;
+	}
+
+	if (test_bit(WMI_TLV_SERVICE_NLO, ar->wmi->wmi_ab->svc_map)) {
+		ar->hw->wiphy->max_sched_scan_ssids = WMI_PNO_MAX_SUPP_NETWORKS;
+		ar->hw->wiphy->max_match_sets = WMI_PNO_MAX_SUPP_NETWORKS;
+		ar->hw->wiphy->max_sched_scan_ie_len = WMI_PNO_MAX_IE_LENGTH;
+		ar->hw->wiphy->max_sched_scan_plans = WMI_PNO_MAX_SCHED_SCAN_PLANS;
+		ar->hw->wiphy->max_sched_scan_plan_interval =
+			WMI_PNO_MAX_SCHED_SCAN_PLAN_INT;
+		ar->hw->wiphy->max_sched_scan_plan_iterations =
+			WMI_PNO_MAX_SCHED_SCAN_PLAN_ITRNS;
+		ar->hw->wiphy->features |= NL80211_FEATURE_ND_RANDOM_MAC_ADDR;
+	}
+
+	ret = ath11k_wow_init(ar);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to init wow: %d\n", ret);
+		goto err_free_if_combs;
 	}
 
 	ar->hw->queues = ATH11K_HW_MAX_QUEUES;
