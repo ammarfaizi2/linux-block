@@ -116,6 +116,9 @@
 				REQ_F_POLLED | REQ_F_INFLIGHT | REQ_F_CREDS | \
 				REQ_F_ASYNC_DATA)
 
+#define IO_REQ_CLEAN_SLOW_FLAGS (REQ_F_REFCOUNT | REQ_F_LINK | REQ_F_HARDLINK |\
+				 IO_REQ_CLEAN_FLAGS)
+
 #define IO_TCTX_REFS_CACHE_NR	(1U << 10)
 
 struct io_uring {
@@ -1947,8 +1950,7 @@ static bool __io_cqring_overflow_flush(struct io_ring_ctx *ctx, bool force)
 			   ctx->rings->sq_flags & ~IORING_SQ_CQ_OVERFLOW);
 	}
 
-	if (posted)
-		io_commit_cqring(ctx);
+	io_commit_cqring(ctx);
 	spin_unlock(&ctx->completion_lock);
 	if (posted)
 		io_cqring_ev_posted(ctx);
@@ -2382,8 +2384,7 @@ static void __io_req_find_next_prep(struct io_kiocb *req)
 
 	spin_lock(&ctx->completion_lock);
 	posted = io_disarm_next(req);
-	if (posted)
-		io_commit_cqring(ctx);
+	io_commit_cqring(ctx);
 	spin_unlock(&ctx->completion_lock);
 	if (posted)
 		io_cqring_ev_posted(ctx);
@@ -2393,8 +2394,6 @@ static inline struct io_kiocb *io_req_find_next(struct io_kiocb *req)
 {
 	struct io_kiocb *nxt;
 
-	if (likely(!(req->flags & (REQ_F_LINK|REQ_F_HARDLINK))))
-		return NULL;
 	/*
 	 * If LINK is set, we have dependent requests in this chain. If we
 	 * didn't fail this request, queue the first one up, moving any other
@@ -2492,10 +2491,6 @@ static void tctx_task_work(struct callback_head *cb)
 	while (1) {
 		struct io_wq_work_node *node1, *node2;
 
-		if (!tctx->task_list.first &&
-		    !tctx->prior_task_list.first && uring_locked)
-			io_submit_flush_completions(ctx);
-
 		spin_lock_irq(&tctx->task_lock);
 		node1 = tctx->prior_task_list.first;
 		node2 = tctx->task_list.first;
@@ -2509,10 +2504,13 @@ static void tctx_task_work(struct callback_head *cb)
 
 		if (node1)
 			handle_prev_tw_list(node1, &ctx, &uring_locked);
-
 		if (node2)
 			handle_tw_list(node2, &ctx, &uring_locked);
 		cond_resched();
+
+		if (!tctx->task_list.first &&
+		    !tctx->prior_task_list.first && uring_locked)
+			io_submit_flush_completions(ctx);
 	}
 
 	ctx_flush_and_put(ctx, &uring_locked);
@@ -2614,7 +2612,7 @@ static void io_req_task_queue_reissue(struct io_kiocb *req)
 	io_req_task_work_add(req, false);
 }
 
-static inline void io_queue_next(struct io_kiocb *req)
+static void io_queue_next(struct io_kiocb *req)
 {
 	struct io_kiocb *nxt = io_req_find_next(req);
 
@@ -2644,15 +2642,30 @@ static void io_free_batch_list(struct io_ring_ctx *ctx,
 		struct io_kiocb *req = container_of(node, struct io_kiocb,
 						    comp_list);
 
-		if (unlikely(req->flags & REQ_F_REFCOUNT)) {
-			node = req->comp_list.next;
-			if (!req_ref_put_and_test(req))
-				continue;
+		if (unlikely(req->flags & IO_REQ_CLEAN_SLOW_FLAGS)) {
+			if (req->flags & REQ_F_REFCOUNT) {
+				node = req->comp_list.next;
+				if (!req_ref_put_and_test(req))
+					continue;
+			}
+			if ((req->flags & REQ_F_POLLED) && req->apoll) {
+				struct async_poll *apoll = req->apoll;
+
+				if (apoll->double_poll)
+					kfree(apoll->double_poll);
+				list_add(&apoll->poll.wait.entry,
+						&ctx->apoll_cache);
+				req->flags &= ~REQ_F_POLLED;
+			}
+			if (req->flags & (REQ_F_LINK|REQ_F_HARDLINK))
+				io_queue_next(req);
+			if (unlikely(req->flags & IO_REQ_CLEAN_FLAGS))
+				io_clean_op(req);
 		}
+		if (!(req->flags & REQ_F_FIXED_FILE))
+			io_put_file(req->file);
 
 		io_req_put_rsrc_locked(req, ctx);
-		io_queue_next(req);
-		io_dismantle_req(req);
 
 		if (req->task != task) {
 			if (task)
@@ -2683,15 +2696,6 @@ static void __io_submit_flush_completions(struct io_ring_ctx *ctx)
 
 			if (!(req->flags & REQ_F_CQE_SKIP))
 				__io_fill_cqe_req(req, req->result, req->cflags);
-			if ((req->flags & REQ_F_POLLED) && req->apoll) {
-				struct async_poll *apoll = req->apoll;
-
-				if (apoll->double_poll)
-					kfree(apoll->double_poll);
-				list_add(&apoll->poll.wait.entry,
-						&ctx->apoll_cache);
-				req->flags &= ~REQ_F_POLLED;
-			}
 		}
 
 		io_commit_cqring(ctx);
@@ -2713,7 +2717,8 @@ static inline struct io_kiocb *io_put_req_find_next(struct io_kiocb *req)
 	struct io_kiocb *nxt = NULL;
 
 	if (req_ref_put_and_test(req)) {
-		nxt = io_req_find_next(req);
+		if (unlikely(req->flags & (REQ_F_LINK|REQ_F_HARDLINK)))
+			nxt = io_req_find_next(req);
 		__io_free_req(req);
 	}
 	return nxt;
@@ -10275,8 +10280,7 @@ static __cold bool io_kill_timeouts(struct io_ring_ctx *ctx,
 		}
 	}
 	spin_unlock_irq(&ctx->timeout_lock);
-	if (canceled != 0)
-		io_commit_cqring(ctx);
+	io_commit_cqring(ctx);
 	spin_unlock(&ctx->completion_lock);
 	if (canceled != 0)
 		io_cqring_ev_posted(ctx);
