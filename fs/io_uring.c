@@ -1386,7 +1386,7 @@ static struct io_buffer_list *io_buffer_get_list(struct io_ring_ctx *ctx,
 	return NULL;
 }
 
-static void io_kbuf_recycle(struct io_kiocb *req)
+static void io_kbuf_recycle(struct io_kiocb *req, unsigned issue_flags)
 {
 	struct io_ring_ctx *ctx = req->ctx;
 	struct io_buffer_list *bl;
@@ -1395,6 +1395,9 @@ static void io_kbuf_recycle(struct io_kiocb *req)
 	if (likely(!(req->flags & REQ_F_BUFFER_SELECTED)))
 		return;
 
+	if (issue_flags & IO_URING_F_UNLOCKED)
+		mutex_lock(&ctx->uring_lock);
+
 	lockdep_assert_held(&ctx->uring_lock);
 
 	buf = req->kbuf;
@@ -1402,6 +1405,9 @@ static void io_kbuf_recycle(struct io_kiocb *req)
 	list_add(&buf->list, &bl->buf_list);
 	req->flags &= ~REQ_F_BUFFER_SELECTED;
 	req->kbuf = NULL;
+
+	if (issue_flags & IO_URING_F_UNLOCKED)
+		mutex_unlock(&ctx->uring_lock);
 }
 
 static bool io_match_task(struct io_kiocb *head, struct task_struct *task,
@@ -6259,7 +6265,7 @@ static int io_arm_poll_handler(struct io_kiocb *req, unsigned issue_flags)
 	req->flags |= REQ_F_POLLED;
 	ipt.pt._qproc = io_async_queue_proc;
 
-	io_kbuf_recycle(req);
+	io_kbuf_recycle(req, issue_flags);
 
 	ret = __io_arm_poll_handler(req, &apoll->poll, &ipt, mask);
 	if (ret || ipt.error)
@@ -7509,7 +7515,6 @@ static void io_queue_sqe_arm_apoll(struct io_kiocb *req)
 		 * Queued up for async execution, worker will release
 		 * submit reference when the iocb is actually submitted.
 		 */
-		io_kbuf_recycle(req);
 		io_queue_async_work(req, NULL);
 		break;
 	case IO_APOLL_OK:
