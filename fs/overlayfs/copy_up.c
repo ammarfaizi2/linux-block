@@ -44,10 +44,10 @@ static bool ovl_must_copy_xattr(const char *name)
 	       !strncmp(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN);
 }
 
-int ovl_copy_xattr(struct super_block *sb, struct dentry *old,
-		   struct dentry *new)
+int ovl_copy_xattr(struct super_block *sb, struct path *path, struct dentry *new)
 {
 	struct ovl_fs *ofs = OVL_FS(sb);
+	struct dentry *old = path->dentry;
 	ssize_t list_size, size, value_size = 0;
 	char *buf, *name, *value = NULL;
 	int error = 0;
@@ -95,9 +95,9 @@ int ovl_copy_xattr(struct super_block *sb, struct dentry *old,
 			continue; /* Discard */
 		}
 retry:
-		size = vfs_getxattr(&init_user_ns, old, name, value, value_size);
+		size = ovl_do_getxattr(path, name, value, value_size);
 		if (size == -ERANGE)
-			size = vfs_getxattr(&init_user_ns, old, name, NULL, 0);
+			size = ovl_do_getxattr(path, name, NULL, 0);
 
 		if (size < 0) {
 			error = size;
@@ -583,7 +583,7 @@ static int ovl_copy_up_inode(struct ovl_copy_up_ctx *c, struct dentry *temp)
 			return err;
 	}
 
-	err = ovl_copy_xattr(c->dentry->d_sb, c->lowerpath.dentry, temp);
+	err = ovl_copy_xattr(c->dentry->d_sb, &c->lowerpath, temp);
 	if (err)
 		return err;
 
@@ -879,8 +879,12 @@ static ssize_t ovl_getxattr_value(struct ovl_fs *ofs, struct dentry *dentry,
 {
 	ssize_t res;
 	char *buf;
+	struct path upperpath = {
+		.dentry = dentry,
+		.mnt = ovl_upper_mnt(ofs),
+	};
 
-	res = ovl_do_getxattr(ofs, dentry, name, NULL, 0);
+	res = ovl_do_getxattr(&upperpath, name, NULL, 0);
 	if (res == -ENODATA || res == -EOPNOTSUPP)
 		res = 0;
 
@@ -889,7 +893,7 @@ static ssize_t ovl_getxattr_value(struct ovl_fs *ofs, struct dentry *dentry,
 		if (!buf)
 			return -ENOMEM;
 
-		res = ovl_do_getxattr(ofs, dentry, name, buf, res);
+		res = ovl_do_getxattr(&upperpath, name, buf, res);
 		if (res < 0)
 			kfree(buf);
 		else
@@ -965,6 +969,7 @@ static int ovl_copy_up_one(struct dentry *parent, struct dentry *dentry,
 		return -EROFS;
 
 	ovl_path_lower(dentry, &ctx.lowerpath);
+
 	err = vfs_getattr(&ctx.lowerpath, &ctx.stat,
 			  STATX_BASIC_STATS, AT_STATX_SYNC_AS_STAT);
 	if (err)
