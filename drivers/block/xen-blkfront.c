@@ -576,7 +576,7 @@ struct setup_rw_req {
 	struct blkif_request *ring_req;
 	grant_ref_t gref_head;
 	unsigned int id;
-	/* Only used when persistent grant is used and it's a read request */
+	/* Only used when persistent grant is used and it's a write request */
 	bool need_copy;
 	unsigned int bvec_off;
 	char *bvec_data;
@@ -2533,6 +2533,7 @@ static void purge_persistent_grants(struct blkfront_info *info)
 
 	for_each_rinfo(info, rinfo, i) {
 		struct grant *gnt_list_entry, *tmp;
+		LIST_HEAD(grants);
 
 		spin_lock_irqsave(&rinfo->ring_lock, flags);
 
@@ -2550,8 +2551,10 @@ static void purge_persistent_grants(struct blkfront_info *info)
 			list_del(&gnt_list_entry->node);
 			rinfo->persistent_gnts_c--;
 			gnt_list_entry->gref = GRANT_INVALID_REF;
-			list_add_tail(&gnt_list_entry->node, &rinfo->grants);
+			list_add_tail(&gnt_list_entry->node, &grants);
 		}
+
+		list_splice_tail(&grants, &rinfo->grants);
 
 		spin_unlock_irqrestore(&rinfo->ring_lock, flags);
 	}
