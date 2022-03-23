@@ -23,6 +23,7 @@
 #include "thermal.h"
 #include "dbring.h"
 #include "spectral.h"
+#include "wow.h"
 
 #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
 
@@ -39,6 +40,12 @@
 extern unsigned int ath11k_frame_mode;
 
 #define ATH11K_MON_TIMER_INTERVAL  10
+#define ATH11K_RESET_TIMEOUT_HZ (20 * HZ)
+#define ATH11K_RESET_MAX_FAIL_COUNT_FIRST 3
+#define ATH11K_RESET_MAX_FAIL_COUNT_FINAL 5
+#define ATH11K_RESET_FAIL_TIMEOUT_HZ (20 * HZ)
+#define ATH11K_RECONFIGURE_TIMEOUT_HZ (10 * HZ)
+#define ATH11K_RECOVER_START_TIMEOUT_HZ (20 * HZ)
 
 enum ath11k_supported_bw {
 	ATH11K_BW_20	= 0,
@@ -212,6 +219,30 @@ enum ath11k_monitor_flags {
 	ATH11K_FLAG_MONITOR_VDEV_CREATED,
 };
 
+#define ATH11K_IPV6_UC_TYPE     0
+#define ATH11K_IPV6_AC_TYPE     1
+
+#define ATH11K_IPV6_MAX_COUNT   16
+#define ATH11K_IPV4_MAX_COUNT   2
+
+struct ath11k_arp_ns_offload {
+	u8  ipv4_addr[ATH11K_IPV4_MAX_COUNT][4];
+	u32 ipv4_count;
+	u32 ipv6_count;
+	u8  ipv6_addr[ATH11K_IPV6_MAX_COUNT][16];
+	u8  self_ipv6_addr[ATH11K_IPV6_MAX_COUNT][16];
+	u8  ipv6_type[ATH11K_IPV6_MAX_COUNT];
+	bool ipv6_valid[ATH11K_IPV6_MAX_COUNT];
+	u8  mac_addr[ETH_ALEN];
+};
+
+struct ath11k_rekey_data {
+	u8 kck[NL80211_KCK_LEN];
+	u8 kek[NL80211_KCK_LEN];
+	u64 replay_ctr;
+	bool enable_offload;
+};
+
 struct ath11k_vif {
 	u32 vdev_id;
 	enum wmi_vdev_type vdev_type;
@@ -263,6 +294,9 @@ struct ath11k_vif {
 	bool bcca_zero_sent;
 	bool do_not_send_tmpl;
 	struct ieee80211_chanctx_conf chanctx;
+	struct ath11k_arp_ns_offload arp_ns_offload;
+	struct ath11k_rekey_data rekey_data;
+
 #ifdef CONFIG_ATH11K_DEBUGFS
 	struct dentry *debugfs_twt;
 #endif /* CONFIG_ATH11K_DEBUGFS */
@@ -590,6 +624,9 @@ struct ath11k {
 	struct work_struct wmi_mgmt_tx_work;
 	struct sk_buff_head wmi_mgmt_tx_queue;
 
+	struct ath11k_wow wow;
+	struct completion target_suspend;
+	bool target_suspend_ack;
 	struct ath11k_per_peer_tx_stats peer_tx_stats;
 	struct list_head ppdu_stats_info;
 	u32 ppdu_stat_list_depth;
@@ -613,6 +650,7 @@ struct ath11k {
 	bool regdom_set_by_user;
 	int hw_rate_code;
 	u8 twt_enabled;
+	bool nlo_enabled;
 };
 
 struct ath11k_band_cap {
@@ -788,6 +826,18 @@ struct ath11k_base {
 	struct work_struct restart_work;
 	struct work_struct update_11d_work;
 	u8 new_alpha2[3];
+	struct workqueue_struct *workqueue_aux;
+	struct work_struct reset_work;
+	atomic_t reset_count;
+	atomic_t recovery_count;
+	atomic_t recovery_start_count;
+	bool is_reset;
+	struct completion reset_complete;
+	struct completion reconfigure_complete;
+	struct completion recovery_start;
+	/* continuous recovery fail count */
+	atomic_t fail_cont_count;
+	unsigned long reset_fail_timeout;
 	struct {
 		/* protected by data_lock */
 		u32 fw_crash_counter;
