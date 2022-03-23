@@ -374,10 +374,13 @@ static int devm_of_pci_get_host_bridge_resources(struct device *dev,
 		 * If we failed translation or got a zero-sized region
 		 * then skip this range
 		 */
-		if (((range.flags & IORESOURCE_TYPE_BITS) != IORESOURCE_MEM) ||
-		    range.cpu_addr == OF_BAD_ADDR || range.size == 0)
+		if (range.cpu_addr == OF_BAD_ADDR || range.size == 0)
 			continue;
-
+		if ((range.flags & IORESOURCE_TYPE_BITS) != IORESOURCE_MEM) {
+			range.flags &= ~IORESOURCE_TYPE_BITS;
+			range.flags |= IORESOURCE_MEM;
+			dev_warn(dev,  "memory type not set in 'dma-ranges', assuming memory. Fix your DT.");
+		}
 		dev_info(dev, "  %6s %#012llx..%#012llx -> %#012llx\n",
 			 "IB MEM", range.cpu_addr,
 			 range.cpu_addr + range.size - 1, range.pci_addr);
