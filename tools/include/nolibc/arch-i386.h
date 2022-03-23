@@ -63,108 +63,86 @@ struct sys_stat_struct {
  */
 #define __ARCH_WANT_SYS_OLD_SELECT
 
-#define my_syscall0(num)                                                      \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num __asm__("eax") = (num);                            \
-	                                                                      \
-	__asm__ volatile (                                                    \
-		"int $0x80\n"                                                 \
-		: "=a" (_ret)                                                 \
-		: "0"(_num)                                                   \
-		: "memory", "cc"                                              \
-	);                                                                    \
-	_ret;                                                                 \
+#define my_syscall0(num)				\
+({							\
+	long _ret = (num);				\
+	__asm__ volatile (				\
+		"int $0x80\n"				\
+		: "+a"(_ret)	/* %eax */		\
+		:					\
+		: "memory", "cc"			\
+	);						\
+	_ret;						\
 })
 
-#define my_syscall1(num, arg1)                                                \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num __asm__("eax") = (num);                            \
-	register long _arg1 __asm__("ebx") = (long)(arg1);                    \
-	                                                                      \
-	__asm__ volatile (                                                    \
-		"int $0x80\n"                                                 \
-		: "=a" (_ret)                                                 \
-		: "r"(_arg1),                                                 \
-		  "0"(_num)                                                   \
-		: "memory", "cc"                                              \
-	);                                                                    \
-	_ret;                                                                 \
+#define my_syscall1(num, arg1)				\
+({							\
+	long _ret = (num);				\
+	__asm__ volatile (				\
+		"int $0x80\n"				\
+		: "+a"(_ret)	/* %eax */		\
+		: "b"(arg1)	/* %ebx */		\
+		: "memory", "cc"			\
+	);						\
+	_ret;						\
 })
 
-#define my_syscall2(num, arg1, arg2)                                          \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num __asm__("eax") = (num);                            \
-	register long _arg1 __asm__("ebx") = (long)(arg1);                    \
-	register long _arg2 __asm__("ecx") = (long)(arg2);                    \
-	                                                                      \
-	__asm__ volatile (                                                    \
-		"int $0x80\n"                                                 \
-		: "=a" (_ret)                                                 \
-		: "r"(_arg1), "r"(_arg2),                                     \
-		  "0"(_num)                                                   \
-		: "memory", "cc"                                              \
-	);                                                                    \
-	_ret;                                                                 \
+#define my_syscall2(num, arg1, arg2)			\
+({							\
+	long _ret = (num);				\
+	__asm__ volatile (				\
+		"int $0x80\n"				\
+		: "+a"(_ret)	/* %eax */		\
+		: "b"(arg1),	/* %ebx */		\
+		  "c"(arg2)	/* %ecx */		\
+		: "memory", "cc"			\
+	);						\
+	_ret;						\
 })
 
-#define my_syscall3(num, arg1, arg2, arg3)                                    \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num __asm__("eax") = (num);                            \
-	register long _arg1 __asm__("ebx") = (long)(arg1);                    \
-	register long _arg2 __asm__("ecx") = (long)(arg2);                    \
-	register long _arg3 __asm__("edx") = (long)(arg3);                    \
-	                                                                      \
-	__asm__ volatile (                                                    \
-		"int $0x80\n"                                                 \
-		: "=a" (_ret)                                                 \
-		: "r"(_arg1), "r"(_arg2), "r"(_arg3),                         \
-		  "0"(_num)                                                   \
-		: "memory", "cc"                                              \
-	);                                                                    \
-	_ret;                                                                 \
+#define my_syscall3(num, arg1, arg2, arg3)		\
+({							\
+	long _ret = (num);				\
+	__asm__ volatile (				\
+		"int $0x80\n"				\
+		: "+a"(_ret)	/* %eax */		\
+		: "b"(arg1),	/* %ebx */		\
+		  "c"(arg2),	/* %ecx */		\
+		  "d"(arg3)	/* %edx */		\
+		: "memory", "cc"			\
+	);						\
+	_ret;						\
 })
 
-#define my_syscall4(num, arg1, arg2, arg3, arg4)                              \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num __asm__("eax") = (num);                            \
-	register long _arg1 __asm__("ebx") = (long)(arg1);                    \
-	register long _arg2 __asm__("ecx") = (long)(arg2);                    \
-	register long _arg3 __asm__("edx") = (long)(arg3);                    \
-	register long _arg4 __asm__("esi") = (long)(arg4);                    \
-	                                                                      \
-	__asm__ volatile (                                                    \
-		"int $0x80\n"                                                 \
-		: "=a" (_ret)                                                 \
-		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4),             \
-		  "0"(_num)                                                   \
-		: "memory", "cc"                                              \
-	);                                                                    \
-	_ret;                                                                 \
+#define my_syscall4(num, arg1, arg2, arg3, arg4)	\
+({							\
+	long _ret = (num);				\
+	__asm__ volatile (				\
+		"int $0x80\n"				\
+		: "+a"(_ret)	/* %eax */		\
+		: "b"(arg1),	/* %ebx */		\
+		  "c"(arg2),	/* %ecx */		\
+		  "d"(arg3),	/* %edx */		\
+		  "S"(arg4)	/* %esi */		\
+		: "memory", "cc"			\
+	);						\
+	_ret;						\
 })
 
-#define my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num __asm__("eax") = (num);                            \
-	register long _arg1 __asm__("ebx") = (long)(arg1);                    \
-	register long _arg2 __asm__("ecx") = (long)(arg2);                    \
-	register long _arg3 __asm__("edx") = (long)(arg3);                    \
-	register long _arg4 __asm__("esi") = (long)(arg4);                    \
-	register long _arg5 __asm__("edi") = (long)(arg5);                    \
-	                                                                      \
-	__asm__ volatile (                                                    \
-		"int $0x80\n"                                                 \
-		: "=a" (_ret)                                                 \
-		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4), "r"(_arg5), \
-		  "0"(_num)                                                   \
-		: "memory", "cc"                                              \
-	);                                                                    \
-	_ret;                                                                 \
+#define my_syscall5(num, arg1, arg2, arg3, arg4, arg5)	\
+({							\
+	long _ret = (num);				\
+	__asm__ volatile (				\
+		"int $0x80\n"				\
+		: "+a"(_ret)	/* %eax */		\
+		: "b"(arg1),	/* %ebx */		\
+		  "c"(arg2),	/* %ecx */		\
+		  "d"(arg3),	/* %edx */		\
+		  "S"(arg4),	/* %esi */		\
+		  "D"(arg5)	/* %edi */		\
+		: "memory", "cc"			\
+	);						\
+	_ret;						\
 })
 
 /* startup code */
