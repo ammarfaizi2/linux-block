@@ -5749,6 +5749,27 @@ static int ath11k_mac_config_mon_status_default(struct ath11k *ar, bool enable)
 	return ret;
 }
 
+static void ath11k_mac_wait_reconfigure(struct ath11k_base *ab)
+{
+	int recovery_start_count;
+
+	if (!ab->is_reset)
+		return;
+
+	recovery_start_count = atomic_inc_return(&ab->recovery_start_count);
+	ath11k_dbg(ab, ATH11K_DBG_MAC, "recovery start count %d\n", recovery_start_count);
+
+	if (recovery_start_count == ab->num_radios) {
+		complete(&ab->recovery_start);
+		ath11k_dbg(ab, ATH11K_DBG_MAC, "recovery started success\n");
+	}
+
+	ath11k_dbg(ab, ATH11K_DBG_MAC, "waiting reconfigure...\n");
+
+	wait_for_completion_timeout(&ab->reconfigure_complete,
+				    ATH11K_RECONFIGURE_TIMEOUT_HZ);
+}
+
 static int ath11k_mac_op_start(struct ieee80211_hw *hw)
 {
 	struct ath11k *ar = hw->priv;
@@ -5765,6 +5786,7 @@ static int ath11k_mac_op_start(struct ieee80211_hw *hw)
 		break;
 	case ATH11K_STATE_RESTARTING:
 		ar->state = ATH11K_STATE_RESTARTED;
+		ath11k_mac_wait_reconfigure(ab);
 		break;
 	case ATH11K_STATE_RESTARTED:
 	case ATH11K_STATE_WEDGED:
@@ -7133,6 +7155,7 @@ ath11k_mac_op_unassign_vif_chanctx(struct ieee80211_hw *hw,
 	struct ath11k *ar = hw->priv;
 	struct ath11k_base *ab = ar->ab;
 	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct ath11k_peer *peer;
 	int ret;
 
 	mutex_lock(&ar->conf_mutex);
@@ -7144,9 +7167,13 @@ ath11k_mac_op_unassign_vif_chanctx(struct ieee80211_hw *hw,
 	WARN_ON(!arvif->is_started);
 
 	if (ab->hw_params.vdev_start_delay &&
-	    arvif->vdev_type == WMI_VDEV_TYPE_MONITOR &&
-	    ath11k_peer_find_by_addr(ab, ar->mac_addr))
-		ath11k_peer_delete(ar, arvif->vdev_id, ar->mac_addr);
+	    arvif->vdev_type == WMI_VDEV_TYPE_MONITOR) {
+		spin_lock_bh(&ab->base_lock);
+		peer = ath11k_peer_find_by_addr(ab, ar->mac_addr);
+		spin_unlock_bh(&ab->base_lock);
+		if (peer)
+			ath11k_peer_delete(ar, arvif->vdev_id, ar->mac_addr);
+	}
 
 	if (arvif->vdev_type == WMI_VDEV_TYPE_MONITOR) {
 		ret = ath11k_mac_monitor_stop(ar);
@@ -7910,6 +7937,8 @@ ath11k_mac_op_reconfig_complete(struct ieee80211_hw *hw,
 				enum ieee80211_reconfig_type reconfig_type)
 {
 	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
+	int recovery_count;
 
 	if (reconfig_type != IEEE80211_RECONFIG_TYPE_RESTART)
 		return;
@@ -7921,6 +7950,22 @@ ath11k_mac_op_reconfig_complete(struct ieee80211_hw *hw,
 			    ar->pdev->pdev_id);
 		ar->state = ATH11K_STATE_ON;
 		ieee80211_wake_queues(ar->hw);
+
+		if (ab->is_reset) {
+			recovery_count = atomic_inc_return(&ab->recovery_count);
+			ath11k_dbg(ab, ATH11K_DBG_BOOT,
+				   "recovery count %d\n", recovery_count);
+			/* When there are multiple radios in an SOC,
+			 * the recovery has to be done for each radio
+			 */
+			if (recovery_count == ab->num_radios) {
+				atomic_dec(&ab->reset_count);
+				complete(&ab->reset_complete);
+				ab->is_reset = false;
+				atomic_set(&ab->fail_cont_count, 0);
+				ath11k_dbg(ab, ATH11K_DBG_BOOT, "reset success\n");
+			}
+		}
 	}
 
 	mutex_unlock(&ar->conf_mutex);
