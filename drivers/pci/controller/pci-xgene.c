@@ -458,14 +458,14 @@ static void xgene_pcie_setup_pims(struct xgene_pcie *port, u32 pim_reg,
  * X-Gene PCIe support maximum 3 inbound memory regions
  * This function helps to select a region based on size of region
  */
-static int xgene_pcie_select_ib_reg(u8 *ib_reg_mask, u64 size)
+static int xgene_pcie_select_ib_reg(u8 *ib_reg_mask, u64 base, u64 size)
 {
 	if ((size > 4) && (size < SZ_16M) && !(*ib_reg_mask & (1 << 1))) {
 		*ib_reg_mask |= (1 << 1);
 		return 1;
 	}
 
-	if ((size > SZ_1K) && (size < SZ_4G) && !(*ib_reg_mask & (1 << 0))) {
+	if ((base >= SZ_4G) && (size > SZ_1K) && (size < SZ_1T) && !(*ib_reg_mask & (1 << 0))) {
 		*ib_reg_mask |= (1 << 0);
 		return 0;
 	}
@@ -494,7 +494,7 @@ static void xgene_pcie_setup_ib_reg(struct xgene_pcie *port,
 	u32 bar_low;
 	int region;
 
-	region = xgene_pcie_select_ib_reg(ib_reg_mask, size);
+	region = xgene_pcie_select_ib_reg(ib_reg_mask, cpu_addr, size);
 	if (region < 0) {
 		dev_warn(dev, "invalid pcie dma-range config\n");
 		return;
