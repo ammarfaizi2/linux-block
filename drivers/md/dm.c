@@ -986,7 +986,7 @@ static void clone_endio(struct bio *bio)
 			disable_write_zeroes(md);
 	}
 
-	if (blk_queue_is_zoned(q))
+	if (unlikely(blk_queue_is_zoned(q)))
 		dm_zone_endio(io, bio);
 
 	if (endio) {
@@ -1283,7 +1283,7 @@ static void __map_bio(struct bio *clone)
 	 * on zoned target. In this case, dm_zone_map_bio() calls the target
 	 * map operation.
 	 */
-	if (dm_emulate_zone_append(io->md))
+	if (unlikely(dm_emulate_zone_append(io->md)))
 		r = dm_zone_map_bio(tio);
 	else
 		r = ti->type->map(ti, clone);
@@ -1556,10 +1556,6 @@ static void init_clone_info(struct clone_info *ci, struct mapped_device *md,
 	ci->submit_as_polled = false;
 	ci->sector = bio->bi_iter.bi_sector;
 	ci->sector_count = bio_sectors(bio);
-
-	/* Shouldn't happen but sector_count was being set to 0 so... */
-	if (WARN_ON_ONCE(op_is_zone_mgmt(bio_op(bio)) && ci->sector_count))
-		ci->sector_count = 0;
 }
 
 /*
@@ -1643,7 +1639,7 @@ static void dm_submit_bio(struct bio *bio)
 	 * Use blk_queue_split() for abnormal IO (e.g. discard, writesame, etc)
 	 * otherwise associated queue_limits won't be imposed.
 	 */
-	if (is_abnormal_io(bio))
+	if (unlikely(is_abnormal_io(bio)))
 		blk_queue_split(&bio);
 
 	dm_split_and_process_bio(md, map, bio);
