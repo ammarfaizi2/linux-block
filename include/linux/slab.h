@@ -217,16 +217,29 @@ void kmem_dump_obj(void *object);
 #endif
 
 /*
+ * slob does not support independent control of ARCH_KMALLOC_MINALIGN and
+ * ARCH_DMA_MINALIGN.
+ */
+#ifdef CONFIG_SLOB
+#undef ARCH_KMALLOC_MINALIGN
+#endif
+
+/*
  * Some archs want to perform DMA into kmalloc caches and need a guaranteed
  * alignment larger than the alignment of a 64-bit integer.
  * Setting ARCH_DMA_MINALIGN in arch headers allows that.
  */
-#if defined(ARCH_DMA_MINALIGN) && ARCH_DMA_MINALIGN > 8
+#ifndef ARCH_DMA_MINALIGN
+#define ARCH_DMA_MINALIGN __alignof__(unsigned long long)
+#elif ARCH_DMA_MINALIGN > 8 && !defined(ARCH_KMALLOC_MINALIGN)
 #define ARCH_KMALLOC_MINALIGN ARCH_DMA_MINALIGN
-#define KMALLOC_MIN_SIZE ARCH_DMA_MINALIGN
-#define KMALLOC_SHIFT_LOW ilog2(ARCH_DMA_MINALIGN)
-#else
+#endif
+
+#ifndef ARCH_KMALLOC_MINALIGN
 #define ARCH_KMALLOC_MINALIGN __alignof__(unsigned long long)
+#else
+#define KMALLOC_MIN_SIZE ARCH_KMALLOC_MINALIGN
+#define KMALLOC_SHIFT_LOW ilog2(KMALLOC_MIN_SIZE)
 #endif
 
 /*
