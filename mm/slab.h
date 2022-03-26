@@ -288,6 +288,8 @@ int __kmem_cache_create(struct kmem_cache *, slab_flags_t flags);
 struct kmem_cache *create_kmalloc_cache(const char *name, unsigned int size,
 			slab_flags_t flags, unsigned int useroffset,
 			unsigned int usersize);
+void __init new_kmalloc_cache(int idx, enum kmalloc_cache_type type,
+			      slab_flags_t flags);
 extern void create_boot_cache(struct kmem_cache *, const char *name,
 			unsigned int size, slab_flags_t flags,
 			unsigned int useroffset, unsigned int usersize);
