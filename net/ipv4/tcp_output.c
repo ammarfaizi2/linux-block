@@ -1100,6 +1100,7 @@ void tcp_release_cb(struct sock *sk)
 	 * But following code is meant to be called from BH handlers,
 	 * so we should keep BH disabled, but early release socket ownership
 	 */
+	bh_lock_sock_on_nolock(sk);
 	sock_release_ownership(sk);
 
 	if (flags & TCPF_WRITE_TIMER_DEFERRED) {
@@ -1114,6 +1115,7 @@ void tcp_release_cb(struct sock *sk)
 		inet_csk(sk)->icsk_af_ops->mtu_reduced(sk);
 		__sock_put(sk);
 	}
+	bh_unlock_sock_on_nolock(sk);
 }
 EXPORT_SYMBOL(tcp_release_cb);
 

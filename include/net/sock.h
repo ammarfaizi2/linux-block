@@ -1696,6 +1696,16 @@ void release_sock(struct sock *sk);
 				SINGLE_DEPTH_NESTING)
 #define bh_unlock_sock(__sk)	spin_unlock(&((__sk)->sk_lock.slock))
 
+/* nolock helpers */
+#define bh_lock_sock_on_nolock(__sk)	do {			\
+	if ((__sk)->sk_no_lock)					\
+		spin_lock_bh(&(__sk)->sk_lock.slock);		\
+} while (0)
+#define bh_unlock_sock_on_nolock(__sk)	do {			\
+	if ((__sk)->sk_no_lock)					\
+		spin_unlock_bh(&(__sk)->sk_lock.slock);		\
+} while (0)
+
 bool __lock_sock_fast(struct sock *sk) __acquires(&sk->sk_lock.slock);
 
 /**

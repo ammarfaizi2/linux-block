@@ -201,10 +201,12 @@ static void smc_release_cb(struct sock *sk)
 {
 	struct smc_sock *smc = smc_sk(sk);
 
+	bh_lock_sock_on_nolock(sk);
 	if (smc->conn.tx_in_release_sock) {
 		smc_tx_pending(&smc->conn);
 		smc->conn.tx_in_release_sock = false;
 	}
+	bh_unlock_sock_on_nolock(sk);
 }
 
 struct proto smc_proto = {
