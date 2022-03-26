@@ -2764,6 +2764,9 @@ void __lock_sock(struct sock *sk)
 {
 	DEFINE_WAIT(wait);
 
+	if (WARN_ON_ONCE(sk->sk_no_lock))
+		return;
+
 	for (;;) {
 		prepare_to_wait_exclusive(&sk->sk_lock.wq, &wait,
 					TASK_UNINTERRUPTIBLE);
@@ -3307,8 +3310,21 @@ void sock_init_data(struct socket *sock, struct sock *sk)
 }
 EXPORT_SYMBOL(sock_init_data);
 
+static inline bool lock_sock_nolock(struct sock *sk)
+{
+	if (sk->sk_no_lock) {
+		sk->sk_lock.owned = 1;
+		smp_wmb();
+		return true;
+	}
+	return false;
+}
+
 void lock_sock_nested(struct sock *sk, int subclass)
 {
+	if (lock_sock_nolock(sk))
+		return;
+
 	/* The sk_lock has mutex_lock() semantics here. */
 	mutex_acquire(&sk->sk_lock.dep_map, subclass, 0, _RET_IP_);
 
@@ -3321,8 +3337,23 @@ void lock_sock_nested(struct sock *sk, int subclass)
 }
 EXPORT_SYMBOL(lock_sock_nested);
 
+static inline bool release_sock_nolock(struct sock *sk)
+{
+	if (!sk->sk_no_lock)
+		return false;
+	if (READ_ONCE(sk->sk_backlog.tail))
+		return false;
+	if (sk->sk_prot->release_cb)
+		sk->sk_prot->release_cb(sk);
+	sock_release_ownership(sk);
+	return true;
+}
+
 void release_sock(struct sock *sk)
 {
+	if (release_sock_nolock(sk))
+		return;
+
 	spin_lock_bh(&sk->sk_lock.slock);
 	if (sk->sk_backlog.tail)
 		__release_sock(sk);
