@@ -1786,14 +1786,16 @@ static void subflow_ulp_clone(const struct request_sock *req,
 	}
 }
 
-static void tcp_release_cb_override(struct sock *ssk)
+static void tcp_release_cb_override(struct sock *ssk, bool locked)
 {
 	struct mptcp_subflow_context *subflow = mptcp_subflow_ctx(ssk);
 
+	bh_lock_sock_release(ssk, locked);
 	if (mptcp_subflow_has_delegated_action(subflow))
 		mptcp_subflow_process_delegated(ssk);
 
-	tcp_release_cb(ssk);
+	tcp_release_cb(ssk, true);
+	bh_lock_sock_release(ssk, locked);
 }
 
 static struct tcp_ulp_ops subflow_ulp_ops __read_mostly = {

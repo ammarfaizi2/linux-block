@@ -1075,7 +1075,7 @@ static void tcp_tasklet_func(struct tasklet_struct *t)
  * called from release_sock() to perform protocol dependent
  * actions before socket release.
  */
-void tcp_release_cb(struct sock *sk)
+void tcp_release_cb(struct sock *sk, bool locked)
 {
 	unsigned long flags, nflags;
 
@@ -1086,6 +1086,8 @@ void tcp_release_cb(struct sock *sk)
 			return;
 		nflags = flags & ~TCP_DEFERRED_ALL;
 	} while (cmpxchg(&sk->sk_tsq_flags, flags, nflags) != flags);
+
+	bh_lock_sock_release(sk, locked);
 
 	if (flags & TCPF_TSQ_DEFERRED) {
 		tcp_tsq_write(sk);
@@ -1114,6 +1116,7 @@ void tcp_release_cb(struct sock *sk)
 		inet_csk(sk)->icsk_af_ops->mtu_reduced(sk);
 		__sock_put(sk);
 	}
+	bh_unlock_sock_release(sk, locked);
 }
 EXPORT_SYMBOL(tcp_release_cb);
 

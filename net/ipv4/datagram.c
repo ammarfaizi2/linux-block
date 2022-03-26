@@ -96,7 +96,7 @@ EXPORT_SYMBOL(ip4_datagram_connect);
  * socket lock, we need to use sk_dst_set() here,
  * even if we own the socket lock.
  */
-void ip4_datagram_release_cb(struct sock *sk)
+void ip4_datagram_release_cb(struct sock *sk, bool locked)
 {
 	const struct inet_sock *inet = inet_sk(sk);
 	const struct ip_options_rcu *inet_opt;
@@ -112,6 +112,7 @@ void ip4_datagram_release_cb(struct sock *sk)
 		rcu_read_unlock();
 		return;
 	}
+	bh_lock_sock_release(sk, locked);
 	inet_opt = rcu_dereference(inet->inet_opt);
 	if (inet_opt && inet_opt->opt.srr)
 		daddr = inet_opt->opt.faddr;
@@ -124,5 +125,6 @@ void ip4_datagram_release_cb(struct sock *sk)
 	sk_dst_set(sk, dst);
 
 	rcu_read_unlock();
+	bh_unlock_sock_release(sk, locked);
 }
 EXPORT_SYMBOL_GPL(ip4_datagram_release_cb);

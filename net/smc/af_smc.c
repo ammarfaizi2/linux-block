@@ -207,14 +207,16 @@ EXPORT_SYMBOL_GPL(smc_unhash_sk);
  * work which we didn't do because of user hold the sock_lock in the
  * BH context
  */
-static void smc_release_cb(struct sock *sk)
+static void smc_release_cb(struct sock *sk, bool locked)
 {
 	struct smc_sock *smc = smc_sk(sk);
 
+	bh_lock_sock_release(sk, locked);
 	if (smc->conn.tx_in_release_sock) {
 		smc_tx_pending(&smc->conn);
 		smc->conn.tx_in_release_sock = false;
 	}
+	bh_unlock_sock_release(sk, locked);
 }
 
 struct proto smc_proto = {

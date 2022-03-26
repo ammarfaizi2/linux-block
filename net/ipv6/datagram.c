@@ -111,7 +111,7 @@ out:
 	return err;
 }
 
-void ip6_datagram_release_cb(struct sock *sk)
+void ip6_datagram_release_cb(struct sock *sk, bool locked)
 {
 	struct dst_entry *dst;
 
@@ -127,7 +127,9 @@ void ip6_datagram_release_cb(struct sock *sk)
 	}
 	rcu_read_unlock();
 
+	bh_lock_sock_release(sk, locked);
 	ip6_datagram_dst_update(sk, false);
+	bh_unlock_sock_release(sk, locked);
 }
 EXPORT_SYMBOL_GPL(ip6_datagram_release_cb);
 

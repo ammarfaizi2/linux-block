@@ -3060,10 +3060,12 @@ void __mptcp_check_push(struct sock *sk, struct sock *ssk)
 				      BIT(MPTCP_FLUSH_JOIN_LIST))
 
 /* processes deferred events and flush wmem */
-static void mptcp_release_cb(struct sock *sk)
+static void mptcp_release_cb(struct sock *sk, bool locked)
 	__must_hold(&sk->sk_lock.slock)
 {
 	struct mptcp_sock *msk = mptcp_sk(sk);
+
+	bh_lock_sock_release(sk, locked);
 
 	for (;;) {
 		unsigned long flags = (msk->cb_flags & MPTCP_FLAGS_PROCESS_CTX_NEED) |
@@ -3103,6 +3105,7 @@ static void mptcp_release_cb(struct sock *sk)
 		__mptcp_error_report(sk);
 
 	__mptcp_update_rmem(sk);
+	bh_unlock_sock_release(sk, locked);
 }
 
 /* MP_JOIN client subflow must wait for 4th ack before sending any data:

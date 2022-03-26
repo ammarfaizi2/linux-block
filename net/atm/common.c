@@ -122,12 +122,15 @@ static void vcc_write_space(struct sock *sk)
 	rcu_read_unlock();
 }
 
-static void vcc_release_cb(struct sock *sk)
+static void vcc_release_cb(struct sock *sk, bool locked)
 {
 	struct atm_vcc *vcc = atm_sk(sk);
 
-	if (vcc->release_cb)
+	if (vcc->release_cb) {
+		bh_lock_sock_release(sk, locked);
 		vcc->release_cb(vcc);
+		bh_unlock_sock_release(sk, locked);
+	}
 }
 
 static struct proto vcc_proto = {

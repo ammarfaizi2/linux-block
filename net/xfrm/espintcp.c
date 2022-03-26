@@ -499,19 +499,21 @@ free:
 	return err;
 }
 
-static void espintcp_release(struct sock *sk)
+static void espintcp_release(struct sock *sk, bool locked)
 {
 	struct espintcp_ctx *ctx = espintcp_getctx(sk);
 	struct sk_buff_head queue;
 	struct sk_buff *skb;
 
+	bh_lock_sock_release(sk, locked);
 	__skb_queue_head_init(&queue);
 	skb_queue_splice_init(&ctx->out_queue, &queue);
 
 	while ((skb = __skb_dequeue(&queue)))
 		espintcp_push_skb(sk, skb);
 
-	tcp_release_cb(sk);
+	tcp_release_cb(sk, true);
+	bh_unlock_sock_release(sk, locked);
 }
 
 static void espintcp_close(struct sock *sk, long timeout)

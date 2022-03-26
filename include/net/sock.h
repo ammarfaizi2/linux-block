@@ -1216,7 +1216,7 @@ struct proto {
 	bool			(*bpf_bypass_getsockopt)(int level,
 							 int optname);
 
-	void		(*release_cb)(struct sock *sk);
+	void		(*release_cb)(struct sock *sk, bool locked);
 
 	/* Keeping track of sk's, looking them up, and port selection methods. */
 	int			(*hash)(struct sock *sk);
@@ -1692,6 +1692,16 @@ void release_sock(struct sock *sk);
 				spin_lock_nested(&((__sk)->sk_lock.slock), \
 				SINGLE_DEPTH_NESTING)
 #define bh_unlock_sock(__sk)	spin_unlock(&((__sk)->sk_lock.slock))
+
+/* dependent socket locking */
+#define bh_lock_sock_release(__sk, locked)	do {			\
+	if (!(locked))							\
+		spin_lock_bh(&(__sk)->sk_lock.slock);			\
+} while (0)
+#define bh_unlock_sock_release(__sk, locked)	do {			\
+	if (!(locked))							\
+		spin_unlock_bh(&(__sk)->sk_lock.slock);			\
+} while (0)
 
 bool __lock_sock_fast(struct sock *sk) __acquires(&sk->sk_lock.slock);
 

@@ -3324,10 +3324,10 @@ static inline bool release_sock_fast(struct sock *sk)
 {
 	if (READ_ONCE(sk->sk_backlog.tail))
 		return false;
-	if (sk->sk_prot->release_cb)
-		return false;
 	if (wq_has_sleeper(&sk->sk_lock.wq))
 		return false;
+	if (sk->sk_prot->release_cb)
+		sk->sk_prot->release_cb(sk, false);
 	sock_release_ownership(sk);
 	return true;
 }
@@ -3345,7 +3345,7 @@ void release_sock(struct sock *sk)
 	 * ie call sock_release_ownership(sk) before us.
 	 */
 	if (sk->sk_prot->release_cb)
-		sk->sk_prot->release_cb(sk);
+		sk->sk_prot->release_cb(sk, true);
 
 	sock_release_ownership(sk);
 	if (waitqueue_active(&sk->sk_lock.wq))
