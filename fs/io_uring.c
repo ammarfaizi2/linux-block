@@ -5918,6 +5918,19 @@ static int io_accept_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	return 0;
 }
 
+/*
+ * Mark the socket as not needing locking, io_uring will serialize access
+ * to it. Note there's no matching clear of this condition, as this is only
+ * applicable for a fixed/registerd file, and those go away when we unregister
+ * anyway.
+ */
+static void io_sock_nolock_set(struct file *file)
+{
+	struct sock *sk = sock_from_file(file)->sk;
+
+	sk->sk_no_lock = true;
+}
+
 static int io_accept(struct io_kiocb *req, unsigned int issue_flags)
 {
 	struct io_accept *accept = &req->accept;
@@ -5947,6 +5960,7 @@ static int io_accept(struct io_kiocb *req, unsigned int issue_flags)
 		fd_install(fd, file);
 		ret = fd;
 	} else {
+		io_sock_nolock_set(file);
 		ret = io_install_fixed_file(req, file, issue_flags,
 					    accept->file_slot - 1);
 	}
@@ -7604,11 +7618,31 @@ static struct io_wq_work *io_wq_free_work(struct io_wq_work *work)
 	return req ? &req->work : NULL;
 }
 
+/*
+ * This could be improved with an FFS flag, but since it's only done for
+ * the slower path of io-wq offload, no point in optimizing it further.
+ */
+static bool io_req_needs_lock(struct io_kiocb *req)
+{
+#if defined(CONFIG_NET)
+	struct socket *sock;
+
+	if (!req->file)
+		return false;
+
+	sock = sock_from_file(req->file);
+	if (sock && sock->sk->sk_no_lock)
+		return true;
+#endif
+	return false;
+}
+
 static void io_wq_submit_work(struct io_wq_work *work)
 {
 	struct io_kiocb *req = container_of(work, struct io_kiocb, work);
 	const struct io_op_def *def = &io_op_defs[req->opcode];
 	unsigned int issue_flags = IO_URING_F_UNLOCKED;
+	struct io_ring_ctx *ctx = req->ctx;
 	bool needs_poll = false;
 	struct io_kiocb *timeout;
 	int ret = 0, err = -ECANCELED;
@@ -7645,6 +7679,11 @@ fail:
 		}
 	}
 
+	if (io_req_needs_lock(req)) {
+		mutex_lock(&ctx->uring_lock);
+		issue_flags &= ~IO_URING_F_UNLOCKED;
+	}
+
 	do {
 		ret = io_issue_sqe(req, issue_flags);
 		if (ret != -EAGAIN)
@@ -7659,8 +7698,10 @@ fail:
 			continue;
 		}
 
-		if (io_arm_poll_handler(req, issue_flags) == IO_APOLL_OK)
-			return;
+		if (io_arm_poll_handler(req, issue_flags) == IO_APOLL_OK) {
+			ret = 0;
+			break;
+		}
 		/* aborted or ready, in either case retry blocking */
 		needs_poll = false;
 		issue_flags &= ~IO_URING_F_NONBLOCK;
@@ -7669,6 +7710,9 @@ fail:
 	/* avoid locking problems by failing it from a clean context */
 	if (ret)
 		io_req_task_queue_fail(req, ret);
+
+	if (!(issue_flags & IO_URING_F_UNLOCKED))
+		mutex_unlock(&ctx->uring_lock);
 }
 
 static inline struct io_fixed_file *io_fixed_file_slot(struct io_file_table *table,
