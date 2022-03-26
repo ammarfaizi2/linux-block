@@ -1768,11 +1768,13 @@ static inline void sock_owned_by_me(const struct sock *sk)
 static inline bool sock_owned_by_user(const struct sock *sk)
 {
 	sock_owned_by_me(sk);
+	smp_rmb();
 	return sk->sk_lock.owned;
 }
 
 static inline bool sock_owned_by_user_nocheck(const struct sock *sk)
 {
+	smp_rmb();
 	return sk->sk_lock.owned;
 }
 

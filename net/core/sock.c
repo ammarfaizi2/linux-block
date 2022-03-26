@@ -3320,8 +3320,23 @@ void lock_sock_nested(struct sock *sk, int subclass)
 }
 EXPORT_SYMBOL(lock_sock_nested);
 
+static inline bool release_sock_fast(struct sock *sk)
+{
+	if (READ_ONCE(sk->sk_backlog.tail))
+		return false;
+	if (sk->sk_prot->release_cb)
+		return false;
+	if (wq_has_sleeper(&sk->sk_lock.wq))
+		return false;
+	sock_release_ownership(sk);
+	return true;
+}
+
 void release_sock(struct sock *sk)
 {
+	if (release_sock_fast(sk))
+		return;
+
 	spin_lock_bh(&sk->sk_lock.slock);
 	if (sk->sk_backlog.tail)
 		__release_sock(sk);
