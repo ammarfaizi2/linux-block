@@ -167,7 +167,7 @@
  * maintenance for non-coherent DMA (cache invalidation in particular) does not
  * affect data that may be accessed by the CPU concurrently.
  */
-#define CRYPTO_MINALIGN ARCH_KMALLOC_MINALIGN
+#define CRYPTO_MINALIGN ARCH_DMA_MINALIGN
 
 #define CRYPTO_MINALIGN_ATTR __attribute__ ((__aligned__(CRYPTO_MINALIGN)))
 
