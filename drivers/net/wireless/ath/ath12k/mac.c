@@ -5521,17 +5521,17 @@ ath12k_mac_update_vif_chan(struct ath12k *ar,
 		if (WARN_ON(!arvif->is_up))
 			continue;
 
-		ret = ath12k_mac_setup_bcn_tmpl(arvif);
-		if (ret)
-			ath12k_warn(ab, "failed to update bcn tmpl during csa: %d\n",
-				    ret);
-
 		ret = ath12k_mac_vdev_restart(arvif, &vifs[i].new_ctx->def);
 		if (ret) {
 			ath12k_warn(ab, "failed to restart vdev %d: %d\n",
 				    arvif->vdev_id, ret);
 			continue;
 		}
+
+		ret = ath12k_mac_setup_bcn_tmpl(arvif);
+		if (ret)
+			ath12k_warn(ab, "failed to update bcn tmpl during csa: %d\n",
+				    ret);
 
 		ret = ath12k_wmi_vdev_up(arvif->ar, arvif->vdev_id, arvif->aid,
 					 arvif->bssid);
