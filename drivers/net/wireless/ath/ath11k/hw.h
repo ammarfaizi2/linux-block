@@ -194,6 +194,7 @@ struct ath11k_hw_params {
 	bool fw_wmi_diag_event;
 	bool current_cc_support;
 	bool dbr_debug_support;
+	bool global_reset;
 };
 
 struct ath11k_hw_ops {
@@ -293,7 +294,6 @@ enum ath11k_bd_ie_board_type {
 enum ath11k_bd_ie_type {
 	/* contains sub IEs of enum ath11k_bd_ie_board_type */
 	ATH11K_BD_IE_BOARD = 0,
-	ATH11K_BD_IE_BOARD_EXT = 1,
 };
 
 struct ath11k_hw_regs {

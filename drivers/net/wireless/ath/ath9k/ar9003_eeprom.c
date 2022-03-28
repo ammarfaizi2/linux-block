@@ -3911,7 +3911,7 @@ static void ar9003_hw_atten_apply(struct ath_hw *ah, struct ath9k_channel *chan)
 	}
 
 	/* Test value. if 0 then attenuation is unused. Don't load anything. */
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < AR9300_MAX_CHAINS; i++) {
 		if (ah->txchainmask & BIT(i)) {
 			value = ar9003_hw_atten_chain_get(ah, i, chan);
 			REG_RMW_FIELD(ah, ext_atten_reg[i],
@@ -5126,7 +5126,7 @@ static int ar9003_hw_calibration_apply(struct ath_hw *ah, int frequency)
 		frequency, correction[0], correction[1], correction[2]);
 
 	/* Store calibrated noise floor values */
-	for (ichain = 0; ichain < AR5416_MAX_CHAINS; ichain++)
+	for (ichain = 0; ichain < AR9300_MAX_CHAINS; ichain++)
 		if (mode) {
 			ah->nf_5g.cal[ichain] = nf_cal[ichain];
 			ah->nf_5g.pwr[ichain] = nf_pwr[ichain];
@@ -5449,8 +5449,6 @@ static void ath9k_hw_ar9300_set_txpower(struct ath_hw *ah,
 {
 	struct ath_regulatory *regulatory = ath9k_hw_regulatory(ah);
 	struct ath_common *common = ath9k_hw_common(ah);
-	struct ar9300_eeprom *eep = &ah->eeprom.ar9300_eep;
-	struct ar9300_modal_eep_header *modal_hdr;
 	u8 targetPowerValT2[ar9300RateSize];
 	u8 target_power_val_t2_eep[ar9300RateSize];
 	u8 targetPowerValT2_tpc[ar9300RateSize];
@@ -5465,17 +5463,12 @@ static void ath9k_hw_ar9300_set_txpower(struct ath_hw *ah,
 	ar9003_hw_get_target_power_eeprom(ah, chan, targetPowerValT2);
 
 	if (ar9003_is_paprd_enabled(ah)) {
-		if (IS_CHAN_2GHZ(chan))
-			modal_hdr = &eep->modalHeader2G;
-		else
-			modal_hdr = &eep->modalHeader5G;
-
 		ah->paprd_ratemask =
-			le32_to_cpu(modal_hdr->papdRateMaskHt20) &
+			ar9003_get_paprd_rate_mask_ht20(ah, IS_CHAN_2GHZ(chan)) &
 			AR9300_PAPRD_RATE_MASK;
 
 		ah->paprd_ratemask_ht40 =
-			le32_to_cpu(modal_hdr->papdRateMaskHt40) &
+			ar9003_get_paprd_rate_mask_ht40(ah, IS_CHAN_2GHZ(chan)) &
 			AR9300_PAPRD_RATE_MASK;
 
 		paprd_scale_factor = ar9003_get_paprd_scale_factor(ah, chan);
@@ -5592,30 +5585,40 @@ u8 *ar9003_get_spur_chan_ptr(struct ath_hw *ah, bool is2ghz)
 	return ar9003_modal_header(ah, is2ghz)->spurChans;
 }
 
+u32 ar9003_get_paprd_rate_mask_ht20(struct ath_hw *ah, bool is2ghz)
+{
+	return le32_to_cpu(ar9003_modal_header(ah, is2ghz)->papdRateMaskHt20);
+}
+
+u32 ar9003_get_paprd_rate_mask_ht40(struct ath_hw *ah, bool is2ghz)
+{
+	return le32_to_cpu(ar9003_modal_header(ah, is2ghz)->papdRateMaskHt40);
+}
+
 unsigned int ar9003_get_paprd_scale_factor(struct ath_hw *ah,
 					   struct ath9k_channel *chan)
 {
-	struct ar9300_eeprom *eep = &ah->eeprom.ar9300_eep;
+	bool is2ghz = IS_CHAN_2GHZ(chan);
 
-	if (IS_CHAN_2GHZ(chan))
-		return MS(le32_to_cpu(eep->modalHeader2G.papdRateMaskHt20),
+	if (is2ghz)
+		return MS(ar9003_get_paprd_rate_mask_ht20(ah, is2ghz),
 			  AR9300_PAPRD_SCALE_1);
 	else {
 		if (chan->channel >= 5700)
-			return MS(le32_to_cpu(eep->modalHeader5G.papdRateMaskHt20),
+			return MS(ar9003_get_paprd_rate_mask_ht20(ah, is2ghz),
 				  AR9300_PAPRD_SCALE_1);
 		else if (chan->channel >= 5400)
-			return MS(le32_to_cpu(eep->modalHeader5G.papdRateMaskHt40),
+			return MS(ar9003_get_paprd_rate_mask_ht40(ah, is2ghz),
 				  AR9300_PAPRD_SCALE_2);
 		else
-			return MS(le32_to_cpu(eep->modalHeader5G.papdRateMaskHt40),
+			return MS(ar9003_get_paprd_rate_mask_ht40(ah, is2ghz),
 				  AR9300_PAPRD_SCALE_1);
 	}
 }
 
 static u8 ar9003_get_eepmisc(struct ath_hw *ah)
 {
-	return ah->eeprom.map4k.baseEepHeader.eepMisc;
+	return ah->eeprom.ar9300_eep.baseEepHeader.opCapFlags.eepMisc;
 }
 
 const struct eeprom_ops eep_ar9300_ops = {
