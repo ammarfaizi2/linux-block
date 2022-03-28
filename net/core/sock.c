@@ -2101,6 +2101,7 @@ EXPORT_SYMBOL(sk_free);
 
 static void sk_init_common(struct sock *sk)
 {
+	sk->sk_no_lock = false;
 	skb_queue_head_init(&sk->sk_receive_queue);
 	skb_queue_head_init(&sk->sk_write_queue);
 	skb_queue_head_init(&sk->sk_error_queue);
