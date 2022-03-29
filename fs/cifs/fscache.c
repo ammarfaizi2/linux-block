@@ -108,6 +108,9 @@ void cifs_fscache_get_inode_cookie(struct inode *inode)
 				       &cifsi->uniqueid, sizeof(cifsi->uniqueid),
 				       &cd, sizeof(cd),
 				       i_size_read(&cifsi->vfs_inode));
+	if (cifsi->netfs_ctx.cache)
+		set_bit(AS_NOTIFY_REMOVING_FOLIO, inode->i_mapping->flags);
+
 }
 
 void cifs_fscache_unuse_inode_cookie(struct inode *inode, bool update)

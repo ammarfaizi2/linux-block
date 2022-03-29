@@ -686,6 +686,8 @@ static inline void afs_vnode_set_cache(struct afs_vnode *vnode,
 {
 #ifdef CONFIG_AFS_FSCACHE
 	vnode->netfs_ctx.cache = cookie;
+	if (cookie)
+		set_bit(AS_NOTIFY_REMOVING_FOLIO, &vnode->vfs_inode.i_mapping->flags);
 #endif
 }
 

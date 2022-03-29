@@ -210,6 +210,20 @@ static void filemap_unaccount_folio(struct address_space *mapping,
 }
 
 /*
+ * Note that a page is about to be removed from the pagecache.  If a page that
+ * is about to be removed had been copied to the cache, then in future fscache
+ * won't be able to skip checking in the cache.  We do, however, need to do the
+ * notification before the removal lest we race with the page being brought
+ * back again.
+ */
+static void fscache_notify_removing_page(struct address_space *mapping,
+					 struct folio *folio)
+{
+	if (unlikely(test_bit(AS_NOTIFY_REMOVING_FOLIO, &mapping->flags)))
+		mapping->a_ops->removing_folio(mapping, folio);
+}
+
+/*
  * Delete a page from the page cache and free it. Caller has to make
  * sure the page is locked and that nobody else uses it - or that usage
  * is safe.  The caller must hold the i_pages lock.
@@ -219,6 +233,7 @@ void __filemap_remove_folio(struct folio *folio, void *shadow)
 	struct address_space *mapping = folio->mapping;
 
 	trace_mm_filemap_delete_from_page_cache(folio);
+	fscache_notify_removing_page(mapping, folio);
 	filemap_unaccount_folio(mapping, folio);
 	page_cache_delete(mapping, folio, shadow);
 }

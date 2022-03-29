@@ -54,6 +54,7 @@ const struct address_space_operations afs_file_aops = {
 	.launder_folio	= afs_launder_folio,
 	.releasepage	= netfs_releasepage,
 	.invalidate_folio = netfs_invalidate_folio,
+	.removing_folio	= netfs_removing_folio,
 	.write_begin	= afs_write_begin,
 	.write_end	= afs_write_end,
 	.writepage	= afs_writepage,

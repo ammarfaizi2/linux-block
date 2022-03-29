@@ -179,7 +179,18 @@ int netfs_releasepage(struct page *page, gfp_t gfp)
 		folio_wait_fscache(folio);
 	}
 
-	fscache_note_page_release(netfs_i_cookie(folio_inode(folio)));
 	return true;
 }
 EXPORT_SYMBOL(netfs_releasepage);
+
+/**
+ * netfs_removing_folio - Notification of a folio about to be removed
+ * @mapping: The pagecache about to be altered
+ * @folio: The folio about to be removed
+ */
+void netfs_removing_folio(struct address_space *mapping, struct folio *folio)
+{
+	netfs_stat(&netfs_n_rh_remove_folio);
+	fscache_note_page_release(netfs_i_cookie(mapping->host));
+}
+EXPORT_SYMBOL(netfs_removing_folio);

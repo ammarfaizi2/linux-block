@@ -199,6 +199,7 @@ enum mapping_flags {
 	/* writeback related tags are not used */
 	AS_NO_WRITEBACK_TAGS = 5,
 	AS_LARGE_FOLIO_SUPPORT = 6,
+	AS_NOTIFY_REMOVING_FOLIO,	/* Call aops->removing_folio() */
 };
 
 /**
