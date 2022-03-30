@@ -1176,8 +1176,13 @@ struct inode *ovl_get_inode(struct super_block *sb,
 
 	/* Check for non-merge dir that may have whiteouts */
 	if (is_dir) {
+		struct path realpath = {
+			.dentry = upperdentry ?: lowerdentry,
+			.mnt = upperdentry ? ovl_upper_mnt(ofs) : lowerpath->layer->mnt,
+		};
+
 		if (((upperdentry && lowerdentry) || oip->numlower > 1) ||
-		    ovl_check_origin_xattr(ofs, upperdentry ?: lowerdentry)) {
+		    ovl_path_check_origin_xattr(ofs, &realpath)) {
 			ovl_set_flag(OVL_WHITEOUTS, inode);
 		}
 	}
