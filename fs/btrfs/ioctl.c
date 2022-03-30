@@ -4353,6 +4353,12 @@ static long btrfs_ioctl_balance(struct file *file, void __user *arg)
 	if (ret)
 		return ret;
 
+	bargs = memdup_user(arg, sizeof(*bargs));
+	if (IS_ERR(bargs)) {
+		ret = PTR_ERR(bargs);
+		goto out;
+	}
+
 again:
 	if (btrfs_exclop_start(fs_info, BTRFS_EXCLOP_BALANCE)) {
 		mutex_lock(&fs_info->balance_mutex);
@@ -4400,13 +4406,6 @@ again:
 	}
 
 locked:
-
-	bargs = memdup_user(arg, sizeof(*bargs));
-	if (IS_ERR(bargs)) {
-		ret = PTR_ERR(bargs);
-		goto out_unlock;
-	}
-
 	if (bargs->flags & BTRFS_BALANCE_RESUME) {
 		if (!fs_info->balance_ctl) {
 			ret = -ENOTCONN;
@@ -4420,6 +4419,11 @@ locked:
 		btrfs_exclop_balance(fs_info, BTRFS_EXCLOP_BALANCE);
 
 		goto do_balance;
+	}
+
+	if (bargs->flags & ~(BTRFS_BALANCE_ARGS_MASK | BTRFS_BALANCE_TYPE_MASK)) {
+		ret = -EINVAL;
+		goto out_bargs;
 	}
 
 	if (fs_info->balance_ctl) {
@@ -4438,12 +4442,6 @@ locked:
 	memcpy(&bctl->sys, &bargs->sys, sizeof(bctl->sys));
 
 	bctl->flags = bargs->flags;
-
-	if (bctl->flags & ~(BTRFS_BALANCE_ARGS_MASK | BTRFS_BALANCE_TYPE_MASK)) {
-		ret = -EINVAL;
-		goto out_bctl;
-	}
-
 do_balance:
 	/*
 	 * Ownership of bctl and exclusive operation goes to btrfs_balance.
@@ -4461,11 +4459,9 @@ do_balance:
 			ret = -EFAULT;
 	}
 
-out_bctl:
 	kfree(bctl);
 out_bargs:
 	kfree(bargs);
-out_unlock:
 	mutex_unlock(&fs_info->balance_mutex);
 	if (need_unlock)
 		btrfs_exclop_finish(fs_info);
