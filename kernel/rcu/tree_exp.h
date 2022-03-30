@@ -992,7 +992,7 @@ bool poll_state_synchronize_rcu_expedited(unsigned long oldstate)
 	WARN_ON_ONCE(!(oldstate & RCU_GET_STATE_FROM_EXPEDITED));
 	if (oldstate & RCU_GET_STATE_USE_NORMAL)
 		return poll_state_synchronize_rcu(oldstate & ~RCU_GET_STATE_BAD_FOR_NORMAL);
-	if (!rcu_exp_gp_seq_done(oldstate & ~RCU_SEQ_STATE_MASK))
+	if (!rcu_seq_done_exact(&rcu_state.expedited_sequence, oldstate & ~RCU_SEQ_STATE_MASK))
 		return false;
 	smp_mb(); /* Ensure GP ends before subsequent accesses. */
 	return true;
