@@ -3994,8 +3994,6 @@ void __init shmem_init(void)
 
 	shm_mnt = kern_mount(&shmem_fs_type);
 	BUG_ON(IS_ERR(shm_mnt));
-
-	return;
 }
 
 int shmem_unuse(unsigned int type)
