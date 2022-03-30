@@ -1242,6 +1242,9 @@ static void xs_inject_disconnect(struct rpc_xprt *xprt)
 
 static void xs_xprt_free(struct rpc_xprt *xprt)
 {
+	/* Ensure we flush any closed sockets before releasing the netns */
+	flush_delayed_fput();
+
 	xs_free_peer_addresses(xprt);
 	xprt_free(xprt);
 }
