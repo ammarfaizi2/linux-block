@@ -34,7 +34,7 @@ struct rxrpc_txbuf *rxrpc_alloc_txbuf(struct rxrpc_call *call, u8 packet_type,
 		txb->offset		= 0;
 		txb->flags		= 0;
 		txb->ack_why		= 0;
-		txb->seq		= call->tx_top + 1;
+		txb->seq		= call->tx_prepared + 1;
 		txb->wire.epoch		= htonl(call->conn->proto.epoch);
 		txb->wire.cid		= htonl(call->cid);
 		txb->wire.callNumber	= htonl(call->call_id);
