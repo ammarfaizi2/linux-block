@@ -60,9 +60,6 @@ int arch_stack_walk_reliable(stack_trace_consume_fn consume_entry, void *cookie,
 
 void arch_stack_walk_user(stack_trace_consume_fn consume_entry, void *cookie,
 			  const struct pt_regs *regs);
-
-int arch_stack_walk_shadow(unsigned long *store, unsigned int size,
-			   unsigned int skipnr);
 #endif /* CONFIG_ARCH_STACKWALK */
 
 #ifdef CONFIG_STACKTRACE
@@ -106,18 +103,6 @@ int stack_trace_save_tsk_reliable(struct task_struct *tsk, unsigned long *store,
 static inline int stack_trace_save_tsk_reliable(struct task_struct *tsk,
 						unsigned long *store,
 						unsigned int size)
-{
-	return -ENOSYS;
-}
-#endif
-
-#if defined(CONFIG_STACKTRACE) && defined(CONFIG_HAVE_SHADOW_STACKTRACE)
-int stack_trace_save_shadow(unsigned long *store, unsigned int size,
-			    unsigned int skipnr);
-#else
-static inline int stack_trace_save_shadow(unsigned long *store,
-					  unsigned int size,
-					  unsigned int skipnr)
 {
 	return -ENOSYS;
 }
