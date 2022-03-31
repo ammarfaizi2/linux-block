@@ -270,18 +270,6 @@ alternative_endif
 	ldr	\dst, [\dst, \tmp]
 	.endm
 
-	/*
-	 * @src: Register whose value gets stored in sym
-	 * @sym: The name of the per-cpu variable
-	 * @tmp0: Scratch register
-	 * @tmp1: Another scratch register
-	 */
-	.macro str_this_cpu src, sym, tmp0, tmp1
-	adr_l	\tmp0, \sym
-	get_this_cpu_offset \tmp1
-	str	\src, [\tmp0, \tmp1]
-	.endm
-
 /*
  * vma_vm_mm - get mm pointer from vma pointer (vma->vm_mm)
  */

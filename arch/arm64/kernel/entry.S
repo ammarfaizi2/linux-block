@@ -880,8 +880,7 @@ NOKPROBE(ret_from_fork)
  */
 SYM_FUNC_START(call_on_irq_stack)
 #ifdef CONFIG_SHADOW_CALL_STACK
-	/* Save the current SCS pointer and load the per-IRQ one. */
-	str_this_cpu scs_sp, irq_shadow_call_stack_saved_ptr, x15, x17
+	stp	scs_sp, xzr, [sp, #-16]!
 	ldr_this_cpu scs_sp, irq_shadow_call_stack_ptr, x17
 #endif
 	/* Create a frame record to save our LR and SP (implicit in FP) */
@@ -903,9 +902,7 @@ SYM_FUNC_START(call_on_irq_stack)
 	mov	sp, x29
 	ldp	x29, x30, [sp], #16
 #ifdef CONFIG_SHADOW_CALL_STACK
-	/* Restore saved SCS pointer and reset the saved value. */
-	ldr_this_cpu scs_sp, irq_shadow_call_stack_saved_ptr, x17
-	str_this_cpu xzr, irq_shadow_call_stack_saved_ptr, x15, x17
+	ldp	scs_sp, xzr, [sp], #16
 #endif
 	ret
 SYM_FUNC_END(call_on_irq_stack)
@@ -1027,16 +1024,11 @@ SYM_CODE_START(__sdei_asm_handler)
 #endif
 
 #ifdef CONFIG_SHADOW_CALL_STACK
-	/*
-	 * Use a separate shadow call stack for normal and critical events.
-	 * Save the current SCS pointer and load the per-SDEI one.
-	 */
+	/* Use a separate shadow call stack for normal and critical events */
 	cbnz	w4, 3f
-	str_this_cpu src=scs_sp, sym=sdei_shadow_call_stack_normal_saved_ptr, tmp0=x5, tmp1=x6
 	ldr_this_cpu dst=scs_sp, sym=sdei_shadow_call_stack_normal_ptr, tmp=x6
 	b	4f
-3:	str_this_cpu src=scs_sp, sym=sdei_shadow_call_stack_critical_saved_ptr, tmp0=x5, tmp1=x6
-	ldr_this_cpu dst=scs_sp, sym=sdei_shadow_call_stack_critical_ptr, tmp=x6
+3:	ldr_this_cpu dst=scs_sp, sym=sdei_shadow_call_stack_critical_ptr, tmp=x6
 4:
 #endif
 
@@ -1069,18 +1061,6 @@ SYM_CODE_START(__sdei_asm_handler)
 	ldp	x18, x19, [x4, #SDEI_EVENT_INTREGS + 16 * 9]
 	ldp	lr, x1, [x4, #SDEI_EVENT_INTREGS + S_LR]
 	mov	sp, x1
-
-#ifdef CONFIG_SHADOW_CALL_STACK
-	/* Restore saved SCS pointer and reset the saved value. */
-	ldrb	w5, [x4, #SDEI_EVENT_PRIORITY]
-	cbnz	w5, 5f
-	ldr_this_cpu dst=scs_sp, sym=sdei_shadow_call_stack_normal_saved_ptr, tmp=x6
-	str_this_cpu src=xzr, sym=sdei_shadow_call_stack_normal_saved_ptr, tmp0=x5, tmp1=x6
-	b	6f
-5:	ldr_this_cpu dst=scs_sp, sym=sdei_shadow_call_stack_critical_saved_ptr, tmp=x6
-	str_this_cpu src=xzr, sym=sdei_shadow_call_stack_critical_saved_ptr, tmp0=x5, tmp1=x6
-6:
-#endif
 
 	mov	x1, x0			// address to complete_and_resume
 	/* x0 = (x0 <= SDEI_EV_FAILED) ?

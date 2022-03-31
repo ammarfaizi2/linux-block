@@ -39,11 +39,12 @@ DEFINE_PER_CPU(unsigned long *, sdei_stack_normal_ptr);
 DEFINE_PER_CPU(unsigned long *, sdei_stack_critical_ptr);
 #endif
 
+DECLARE_PER_CPU(unsigned long *, sdei_shadow_call_stack_normal_ptr);
+DECLARE_PER_CPU(unsigned long *, sdei_shadow_call_stack_critical_ptr);
+
 #ifdef CONFIG_SHADOW_CALL_STACK
 DEFINE_PER_CPU(unsigned long *, sdei_shadow_call_stack_normal_ptr);
-DEFINE_PER_CPU(unsigned long *, sdei_shadow_call_stack_normal_saved_ptr);
 DEFINE_PER_CPU(unsigned long *, sdei_shadow_call_stack_critical_ptr);
-DEFINE_PER_CPU(unsigned long *, sdei_shadow_call_stack_critical_saved_ptr);
 #endif
 
 static void _free_sdei_stack(unsigned long * __percpu *ptr, int cpu)
