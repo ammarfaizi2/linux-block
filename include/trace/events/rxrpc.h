@@ -270,6 +270,7 @@
 	EM(rxrpc_txbuf_get_retrans,		"GET RETRANS")	\
 	EM(rxrpc_txbuf_put_ack_tx,		"PUT ACK TX ")	\
 	EM(rxrpc_txbuf_put_cleaned,		"PUT CLEANED")	\
+	EM(rxrpc_txbuf_put_data_tx,		"PUT DATA TX")	\
 	EM(rxrpc_txbuf_put_nomem,		"PUT NOMEM  ")	\
 	EM(rxrpc_txbuf_put_rotated,		"PUT ROTATED")	\
 	EM(rxrpc_txbuf_put_send_aborted,	"PUT SEND-X ")	\
@@ -624,6 +625,7 @@ TRACE_EVENT(rxrpc_txqueue,
 		    __field(rxrpc_seq_t,		acks_hard_ack	)
 		    __field(rxrpc_seq_t,		tx_bottom	)
 		    __field(rxrpc_seq_t,		tx_top		)
+		    __field(rxrpc_seq_t,		tx_prepared	)
 		    __field(int,			tx_winsize	)
 			     ),
 
@@ -633,16 +635,18 @@ TRACE_EVENT(rxrpc_txqueue,
 		    __entry->acks_hard_ack = call->acks_hard_ack;
 		    __entry->tx_bottom = call->tx_bottom;
 		    __entry->tx_top = call->tx_top;
+		    __entry->tx_prepared = call->tx_prepared;
 		    __entry->tx_winsize = call->tx_winsize;
 			   ),
 
-	    TP_printk("c=%08x %s f=%08x h=%08x n=%u/%u/%u",
+	    TP_printk("c=%08x %s f=%08x h=%08x n=%u/%u/%u/%u",
 		      __entry->call,
 		      __print_symbolic(__entry->why, rxrpc_txqueue_traces),
 		      __entry->tx_bottom,
 		      __entry->acks_hard_ack,
 		      __entry->tx_top - __entry->tx_bottom,
 		      __entry->tx_top - __entry->acks_hard_ack,
+		      __entry->tx_prepared - __entry->tx_bottom,
 		      __entry->tx_winsize)
 	    );
 

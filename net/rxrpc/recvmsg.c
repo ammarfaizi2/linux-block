@@ -36,16 +36,16 @@ void rxrpc_notify_socket(struct rxrpc_call *call)
 	sk = &rx->sk;
 	if (rx && sk->sk_state < RXRPC_CLOSE) {
 		if (call->notify_rx) {
-			spin_lock_bh(&call->notify_lock);
+			spin_lock(&call->notify_lock);
 			call->notify_rx(sk, call, call->user_call_ID);
-			spin_unlock_bh(&call->notify_lock);
+			spin_unlock(&call->notify_lock);
 		} else {
-			write_lock_bh(&rx->recvmsg_lock);
+			write_lock(&rx->recvmsg_lock);
 			if (list_empty(&call->recvmsg_link)) {
 				rxrpc_get_call(call, rxrpc_call_got);
 				list_add_tail(&call->recvmsg_link, &rx->recvmsg_q);
 			}
-			write_unlock_bh(&rx->recvmsg_lock);
+			write_unlock(&rx->recvmsg_lock);
 
 			if (!sock_flag(sk, SOCK_DEAD)) {
 				_debug("call %ps", sk->sk_data_ready);
@@ -269,9 +269,8 @@ further_rotation:
 	acked = atomic_add_return(call->rx_consumed - old_consumed,
 				  &call->ackr_nr_consumed);
 	if (acked > 2 &&
-	    !test_and_set_bit(RXRPC_CALL_IDLE_ACK_PENDING, &call->flags))
-		rxrpc_send_ACK(call, RXRPC_ACK_IDLE, serial,
-			       rxrpc_propose_ack_rotate_rx);
+	    !test_and_set_bit(RXRPC_CALL_RX_IS_IDLE, &call->flags))
+		rxrpc_queue_call(call);
 }
 
 /*
@@ -470,8 +469,7 @@ done:
 	trace_rxrpc_recvdata(call, rxrpc_recvmsg_data_return, seq,
 			     rx_pkt_sub, rx_pkt_offset, rx_pkt_len, ret);
 	if (ret == -EAGAIN)
-		rxrpc_send_ACK(call, RXRPC_ACK_IDLE, 0,
-			       rxrpc_propose_ack_rx_underrun);
+		set_bit(RXRPC_CALL_RX_IS_IDLE, &call->flags);
 	return ret;
 }
 
@@ -539,14 +537,14 @@ try_again:
 	/* Find the next call and dequeue it if we're not just peeking.  If we
 	 * do dequeue it, that comes with a ref that we will need to release.
 	 */
-	write_lock_bh(&rx->recvmsg_lock);
+	write_lock(&rx->recvmsg_lock);
 	l = rx->recvmsg_q.next;
 	call = list_entry(l, struct rxrpc_call, recvmsg_link);
 	if (!(flags & MSG_PEEK))
 		list_del_init(&call->recvmsg_link);
 	else
 		rxrpc_get_call(call, rxrpc_call_got);
-	write_unlock_bh(&rx->recvmsg_lock);
+	write_unlock(&rx->recvmsg_lock);
 
 	trace_rxrpc_recvmsg(call, rxrpc_recvmsg_dequeue, 0);
 
@@ -636,9 +634,9 @@ error_unlock_call:
 
 error_requeue_call:
 	if (!(flags & MSG_PEEK)) {
-		write_lock_bh(&rx->recvmsg_lock);
+		write_lock(&rx->recvmsg_lock);
 		list_add(&call->recvmsg_link, &rx->recvmsg_q);
-		write_unlock_bh(&rx->recvmsg_lock);
+		write_unlock(&rx->recvmsg_lock);
 		trace_rxrpc_recvmsg(call, rxrpc_recvmsg_requeue, 0);
 	} else {
 		rxrpc_put_call(call, rxrpc_call_put);
