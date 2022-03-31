@@ -12,11 +12,9 @@
 #include <linux/sched/debug.h>
 #include <linux/sched/task_stack.h>
 #include <linux/stacktrace.h>
-#include <linux/scs.h>
 
 #include <asm/irq.h>
 #include <asm/pointer_auth.h>
-#include <asm/scs.h>
 #include <asm/stack_pointer.h>
 #include <asm/stacktrace.h>
 
@@ -211,85 +209,4 @@ noinline notrace void arch_stack_walk(stack_trace_consume_fn consume_entry,
 				thread_saved_pc(task));
 
 	walk_stackframe(task, &frame, consume_entry, cookie);
-}
-
-static const struct {
-	unsigned long ** __percpu saved;
-	unsigned long ** __percpu base;
-} scs_parts[] = {
-#ifdef CONFIG_ARM_SDE_INTERFACE
-	{
-		.saved = &sdei_shadow_call_stack_critical_saved_ptr,
-		.base = &sdei_shadow_call_stack_critical_ptr,
-	},
-	{
-		.saved = &sdei_shadow_call_stack_normal_saved_ptr,
-		.base = &sdei_shadow_call_stack_normal_ptr,
-	},
-#endif /* CONFIG_ARM_SDE_INTERFACE */
-	{
-		.saved = &irq_shadow_call_stack_saved_ptr,
-		.base = &irq_shadow_call_stack_ptr,
-	},
-};
-
-static inline bool walk_shadow_stack_part(
-				unsigned long *scs_top, unsigned long *scs_base,
-				unsigned long *store, unsigned int size,
-				unsigned int *skipnr, unsigned int *len)
-{
-	unsigned long *frame;
-
-	for (frame = scs_top; frame >= scs_base; frame--) {
-		if (*skipnr > 0) {
-			(*skipnr)--;
-			continue;
-		}
-		/*
-		 * Do not leak PTR_AUTH tags in stack traces.
-		 * Use READ_ONCE_NOCHECK as SCS is poisoned with Generic KASAN.
-		 */
-		store[(*len)++] =
-			ptrauth_strip_insn_pac(READ_ONCE_NOCHECK(*frame));
-		if (*len >= size)
-			return true;
-	}
-
-	return false;
-}
-
-noinline notrace int arch_stack_walk_shadow(unsigned long *store,
-					    unsigned int size,
-					    unsigned int skipnr)
-{
-	unsigned long *scs_top, *scs_base, *scs_next;
-	unsigned int len = 0, part;
-
-	preempt_disable();
-
-	/* Get the SCS pointer. */
-	asm volatile("mov %0, x18" : "=&r" (scs_top));
-
-	/* The top SCS slot is empty. */
-	scs_top -= 1;
-
-	/* Handle SDEI and hardirq frames. */
-	for (part = 0; part < ARRAY_SIZE(scs_parts); part++) {
-		scs_next = *this_cpu_ptr(scs_parts[part].saved);
-		if (scs_next) {
-			scs_base = *this_cpu_ptr(scs_parts[part].base);
-			if (walk_shadow_stack_part(scs_top, scs_base, store,
-						   size, &skipnr, &len))
-				goto out;
-			scs_top = scs_next;
-		}
-	}
-
-	/* Handle task and softirq frames. */
-	scs_base = task_scs(current);
-	walk_shadow_stack_part(scs_top, scs_base, store, size, &skipnr, &len);
-
-out:
-	preempt_enable();
-	return len;
 }
