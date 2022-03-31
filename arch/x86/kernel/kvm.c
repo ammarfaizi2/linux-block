@@ -752,7 +752,9 @@ static void kvm_crash_shutdown(struct pt_regs *regs)
 }
 #endif
 
-#ifdef CONFIG_X86_32
+#if defined(CONFIG_X86_32) || !defined(CONFIG_SMP)
+bool __kvm_vcpu_is_preempted(long cpu);
+
 __visible bool __kvm_vcpu_is_preempted(long cpu)
 {
 	struct kvm_steal_time *src = &per_cpu(steal_time, cpu);
