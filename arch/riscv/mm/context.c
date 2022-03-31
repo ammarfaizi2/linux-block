@@ -12,6 +12,7 @@
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/static_key.h>
+#include <asm/atomic.h>
 #include <asm/tlbflush.h>
 #include <asm/cacheflush.h>
 #include <asm/mmu_context.h>
@@ -300,6 +301,11 @@ static inline void flush_icache_deferred(struct mm_struct *mm, unsigned int cpu)
 	}
 
 #endif
+}
+
+unsigned long get_mm_asid(struct mm_struct *mm)
+{
+	return atomic_long_read(&mm->context.id) & asid_mask;
 }
 
 void switch_mm(struct mm_struct *prev, struct mm_struct *next,
