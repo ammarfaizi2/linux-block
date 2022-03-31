@@ -87,9 +87,11 @@ static struct rxrpc_local *rxrpc_alloc_local(struct rxrpc_net *rxnet,
 		init_rwsem(&local->defrag_sem);
 		skb_queue_head_init(&local->reject_queue);
 		skb_queue_head_init(&local->event_queue);
+		INIT_LIST_HEAD(&local->tx_queue);
 		local->client_bundles = RB_ROOT;
 		spin_lock_init(&local->client_bundles_lock);
 		spin_lock_init(&local->lock);
+		spin_lock_init(&local->tx_lock);
 		rwlock_init(&local->services_lock);
 		local->debug_id = atomic_inc_return(&rxrpc_debug_id);
 		memcpy(&local->srx, srx, sizeof(*srx));
@@ -110,6 +112,7 @@ static int rxrpc_open_socket(struct rxrpc_local *local, struct net *net)
 	struct udp_tunnel_sock_cfg tuncfg = {NULL};
 	struct sockaddr_rxrpc *srx = &local->srx;
 	struct udp_port_cfg udp_conf = {0};
+	struct task_struct *transmitter;
 	struct sock *usk;
 	int ret;
 
@@ -168,8 +171,23 @@ static int rxrpc_open_socket(struct rxrpc_local *local, struct net *net)
 		BUG();
 	}
 
+	transmitter = kthread_run(rxrpc_transmitter, local,
+				  "krxrpctxd/%u", ntohs(udp_conf.local_udp_port));
+	if (IS_ERR(transmitter)) {
+		ret = PTR_ERR(transmitter);
+		goto error_sock;
+	}
+
+	local->transmitter = transmitter;
 	_leave(" = 0");
 	return 0;
+
+error_sock:
+	kernel_sock_shutdown(local->socket, SHUT_RDWR);
+	local->socket->sk->sk_user_data = NULL;
+	sock_release(local->socket);
+	local->socket = NULL;
+	return ret;
 }
 
 /*
@@ -394,6 +412,9 @@ static void rxrpc_local_destroyer(struct rxrpc_local *local)
 	rxrpc_clean_up_local_conns(local);
 	rxrpc_service_connection_reaper(&rxnet->service_conn_reaper);
 	ASSERT(!local->service);
+
+	kthread_stop(local->transmitter);
+	local->transmitter = NULL;
 
 	if (socket) {
 		local->socket = NULL;

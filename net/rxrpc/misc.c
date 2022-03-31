@@ -47,7 +47,7 @@ unsigned long rxrpc_idle_ack_delay = HZ / 2;
  * packets.
  */
 unsigned int rxrpc_rx_window_size = RXRPC_INIT_RX_WINDOW_SIZE;
-#if (RXRPC_RXTX_BUFF_SIZE - 1) < RXRPC_INIT_RX_WINDOW_SIZE
+#if (RXRPC_RX_BUFF_SIZE - 1) < RXRPC_INIT_RX_WINDOW_SIZE
 #error Need to reduce RXRPC_INIT_RX_WINDOW_SIZE
 #endif
 

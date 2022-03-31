@@ -129,14 +129,13 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	if (!call)
 		return NULL;
 
-	call->rxtx_buffer = kcalloc(RXRPC_RXTX_BUFF_SIZE,
-				    sizeof(struct sk_buff *),
-				    gfp);
-	if (!call->rxtx_buffer)
+	call->rx_buffer = kcalloc(RXRPC_RX_BUFF_SIZE, sizeof(struct sk_buff *),
+				  gfp);
+	if (!call->rx_buffer)
 		goto nomem;
 
-	call->rxtx_annotations = kcalloc(RXRPC_RXTX_BUFF_SIZE, sizeof(u8), gfp);
-	if (!call->rxtx_annotations)
+	call->rx_annotations = kcalloc(RXRPC_RX_BUFF_SIZE, sizeof(u8), gfp);
+	if (!call->rx_annotations)
 		goto nomem_2;
 
 	mutex_init(&call->user_mutex);
@@ -155,10 +154,12 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	INIT_LIST_HEAD(&call->accept_link);
 	INIT_LIST_HEAD(&call->recvmsg_link);
 	INIT_LIST_HEAD(&call->sock_link);
+	INIT_LIST_HEAD(&call->tx_buffer);
 	init_waitqueue_head(&call->waitq);
 	spin_lock_init(&call->lock);
 	spin_lock_init(&call->notify_lock);
 	spin_lock_init(&call->input_lock);
+	spin_lock_init(&call->tx_lock);
 	rwlock_init(&call->state_lock);
 	refcount_set(&call->ref, 1);
 	call->debug_id = debug_id;
@@ -174,7 +175,7 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	call->rx_expect_next = 1;
 
 	call->cong_cwnd = 2;
-	call->cong_ssthresh = RXRPC_RXTX_BUFF_SIZE - 1;
+	call->cong_ssthresh = RXRPC_TX_MAX_WINDOW;
 
 	call->rxnet = rxnet;
 	call->rtt_avail = RXRPC_CALL_RTT_AVAIL_MASK;
@@ -182,7 +183,7 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	return call;
 
 nomem_2:
-	kfree(call->rxtx_buffer);
+	kfree(call->rx_buffer);
 nomem:
 	kmem_cache_free(rxrpc_call_jar, call);
 	return NULL;
@@ -508,15 +509,15 @@ void rxrpc_get_call(struct rxrpc_call *call, enum rxrpc_call_trace op)
 }
 
 /*
- * Clean up the RxTx skb ring.
+ * Clean up the Rx skb ring.
  */
 static void rxrpc_cleanup_ring(struct rxrpc_call *call)
 {
 	int i;
 
-	for (i = 0; i < RXRPC_RXTX_BUFF_SIZE; i++) {
-		rxrpc_free_skb(call->rxtx_buffer[i], rxrpc_skb_cleaned);
-		call->rxtx_buffer[i] = NULL;
+	for (i = 0; i < RXRPC_RX_BUFF_SIZE; i++) {
+		rxrpc_free_skb(call->rx_buffer[i], rxrpc_skb_cleaned);
+		call->rx_buffer[i] = NULL;
 	}
 }
 
@@ -654,8 +655,8 @@ static void rxrpc_destroy_call(struct work_struct *work)
 
 	rxrpc_put_connection(call->conn);
 	rxrpc_put_peer(call->peer);
-	kfree(call->rxtx_buffer);
-	kfree(call->rxtx_annotations);
+	kfree(call->rx_buffer);
+	kfree(call->rx_annotations);
 	kmem_cache_free(rxrpc_call_jar, call);
 	if (atomic_dec_and_test(&rxnet->nr_calls))
 		wake_up_var(&rxnet->nr_calls);
@@ -682,6 +683,8 @@ static void rxrpc_rcu_destroy_call(struct rcu_head *rcu)
  */
 void rxrpc_cleanup_call(struct rxrpc_call *call)
 {
+	struct rxrpc_txbuf *txb;
+
 	_net("DESTROY CALL %d", call->debug_id);
 
 	memset(&call->sock_node, 0xcd, sizeof(call->sock_node));
@@ -690,7 +693,12 @@ void rxrpc_cleanup_call(struct rxrpc_call *call)
 	ASSERT(test_bit(RXRPC_CALL_RELEASED, &call->flags));
 
 	rxrpc_cleanup_ring(call);
-	rxrpc_free_skb(call->tx_pending, rxrpc_skb_cleaned);
+	while ((txb = list_first_entry_or_null(&call->tx_buffer,
+					       struct rxrpc_txbuf, call_link))) {
+		list_del(&txb->call_link);
+		rxrpc_put_txbuf(txb, rxrpc_txbuf_put_cleaned);
+	}
+	rxrpc_put_txbuf(call->tx_pending, rxrpc_txbuf_put_cleaned);
 
 	call_rcu(&call->rcu, rxrpc_rcu_destroy_call);
 }

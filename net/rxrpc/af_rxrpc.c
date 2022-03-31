@@ -979,7 +979,7 @@ static int __init af_rxrpc_init(void)
 		goto error_call_jar;
 	}
 
-	rxrpc_workqueue = alloc_workqueue("krxrpcd", 0, 1);
+	rxrpc_workqueue = alloc_workqueue("krxrpcd", WQ_HIGHPRI | WQ_MEM_RECLAIM | WQ_UNBOUND, 1);
 	if (!rxrpc_workqueue) {
 		pr_notice("Failed to allocate work queue\n");
 		goto error_work_queue;

@@ -236,20 +236,20 @@ static void rxrpc_rotate_rx_window(struct rxrpc_call *call)
 	ASSERT(before(hard_ack, top));
 
 	hard_ack++;
-	ix = hard_ack & RXRPC_RXTX_BUFF_MASK;
-	skb = call->rxtx_buffer[ix];
+	ix = hard_ack & RXRPC_RX_BUFF_MASK;
+	skb = call->rx_buffer[ix];
 	rxrpc_see_skb(skb, rxrpc_skb_rotated);
 	sp = rxrpc_skb(skb);
 
-	subpacket = call->rxtx_annotations[ix] & RXRPC_RX_ANNO_SUBPACKET;
+	subpacket = call->rx_annotations[ix] & RXRPC_RX_ANNO_SUBPACKET;
 	serial = sp->hdr.serial + subpacket;
 
 	if (subpacket == sp->nr_subpackets - 1 &&
 	    sp->rx_flags & RXRPC_SKB_INCL_LAST)
 		last = true;
 
-	call->rxtx_buffer[ix] = NULL;
-	call->rxtx_annotations[ix] = 0;
+	call->rx_buffer[ix] = NULL;
+	call->rx_annotations[ix] = 0;
 	/* Barrier against rxrpc_input_data(). */
 	smp_store_release(&call->rx_hard_ack, hard_ack);
 
@@ -385,8 +385,8 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 	while (top = smp_load_acquire(&call->rx_top),
 	       before_eq(seq, top)
 	       ) {
-		ix = seq & RXRPC_RXTX_BUFF_MASK;
-		skb = call->rxtx_buffer[ix];
+		ix = seq & RXRPC_RX_BUFF_MASK;
+		skb = call->rx_buffer[ix];
 		if (!skb) {
 			trace_rxrpc_recvmsg(call, rxrpc_recvmsg_hole, seq,
 					    rx_pkt_offset, rx_pkt_len, 0);
@@ -398,7 +398,7 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 
 		if (!(flags & MSG_PEEK)) {
 			serial = sp->hdr.serial;
-			serial += call->rxtx_annotations[ix] & RXRPC_RX_ANNO_SUBPACKET;
+			serial += call->rx_annotations[ix] & RXRPC_RX_ANNO_SUBPACKET;
 			trace_rxrpc_receive(call, rxrpc_receive_front,
 					    serial, seq);
 		}
@@ -408,7 +408,7 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 
 		if (rx_pkt_offset == 0) {
 			ret2 = rxrpc_locate_data(call, skb,
-						 &call->rxtx_annotations[ix],
+						 &call->rx_annotations[ix],
 						 &rx_pkt_offset, &rx_pkt_len,
 						 &rx_pkt_last);
 			trace_rxrpc_recvmsg(call, rxrpc_recvmsg_next, seq,
@@ -606,7 +606,7 @@ try_again:
 			ret = 0;
 
 		if (after(call->rx_top, call->rx_hard_ack) &&
-		    call->rxtx_buffer[(call->rx_hard_ack + 1) & RXRPC_RXTX_BUFF_MASK])
+		    call->rx_buffer[(call->rx_hard_ack + 1) & RXRPC_RX_BUFF_MASK])
 			rxrpc_notify_socket(call);
 		break;
 	default:
@@ -802,7 +802,7 @@ bool rxrpc_kernel_get_reply_time(struct socket *sock, struct rxrpc_call *call,
 	if (after(seq, top))
 		goto out;
 
-	skb = call->rxtx_buffer[seq & RXRPC_RXTX_BUFF_MASK];
+	skb = call->rx_buffer[seq & RXRPC_RX_BUFF_MASK];
 	if (!skb)
 		goto out;
 
