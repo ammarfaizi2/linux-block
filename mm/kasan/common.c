@@ -33,13 +33,10 @@
 depot_stack_handle_t kasan_save_stack(gfp_t flags, bool can_alloc)
 {
 	unsigned long entries[KASAN_STACK_DEPTH];
-	unsigned int size;
+	unsigned int nr_entries;
 
-	if (IS_ENABLED(CONFIG_HAVE_SHADOW_STACKTRACE))
-		size = stack_trace_save_shadow(entries, ARRAY_SIZE(entries), 0);
-	else
-		size = stack_trace_save(entries, ARRAY_SIZE(entries), 0);
-	return __stack_depot_save(entries, size, flags, can_alloc);
+	nr_entries = stack_trace_save(entries, ARRAY_SIZE(entries), 0);
+	return __stack_depot_save(entries, nr_entries, flags, can_alloc);
 }
 
 void kasan_set_track(struct kasan_track *track, gfp_t flags)
