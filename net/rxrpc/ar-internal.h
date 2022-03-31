@@ -290,13 +290,16 @@ struct rxrpc_local {
 	struct work_struct	processor;
 	struct list_head	ack_tx_queue;	/* List of ACKs that need sending */
 	spinlock_t		ack_tx_lock;	/* ACK list lock */
+	struct task_struct	*transmitter;	/* Transmitter thread */
 	struct rxrpc_sock __rcu	*service;	/* Service(s) listening on this endpoint */
 	struct rw_semaphore	defrag_sem;	/* control re-enablement of IP DF bit */
 	struct sk_buff_head	reject_queue;	/* packets awaiting rejection */
 	struct sk_buff_head	event_queue;	/* endpoint event packets awaiting processing */
+	struct list_head	tx_queue;	/* Transmission queue */
 	struct rb_root		client_bundles;	/* Client connection bundles by socket params */
 	spinlock_t		client_bundles_lock; /* Lock for client_bundles */
 	spinlock_t		lock;		/* access lock */
+	spinlock_t		tx_lock;	/* Transmission queue lock */
 	rwlock_t		services_lock;	/* lock for services list */
 	int			debug_id;	/* debug ID for printks */
 	bool			dead;
@@ -1023,9 +1026,13 @@ static inline struct rxrpc_net *rxrpc_net(struct net *net)
  */
 void rxrpc_transmit_ack_packets(struct rxrpc_local *);
 int rxrpc_send_abort_packet(struct rxrpc_call *);
-int rxrpc_send_data_packet(struct rxrpc_call *, struct rxrpc_txbuf *);
 void rxrpc_reject_packets(struct rxrpc_local *);
 void rxrpc_send_keepalive(struct rxrpc_peer *);
+int rxrpc_transmitter(void *data);
+static inline void rxrpc_wake_up_transmitter(struct rxrpc_local *local)
+{
+	wake_up_process(local->transmitter);
+}
 
 /*
  * peer_event.c

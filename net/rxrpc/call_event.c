@@ -132,6 +132,7 @@ static void rxrpc_congestion_timeout(struct rxrpc_call *call)
  */
 static void rxrpc_resend(struct rxrpc_call *call, unsigned long now_j)
 {
+	struct rxrpc_local *local = call->peer->local;
 	struct rxrpc_ackpacket *ack = NULL;
 	struct rxrpc_txbuf *txb;
 	struct sk_buff *ack_skb = NULL;
@@ -242,6 +243,7 @@ static void rxrpc_resend(struct rxrpc_call *call, unsigned long now_j)
 	do_resend:
 		unacked = true;
 		if (list_empty(&txb->tx_link)) {
+			rxrpc_get_call(call, rxrpc_call_got_tx);
 			rxrpc_get_txbuf(txb, rxrpc_txbuf_get_retrans);
 			list_add_tail(&txb->tx_link, &retrans_queue);
 			set_bit(RXRPC_TXBUF_RESENT, &txb->flags);
@@ -276,16 +278,16 @@ no_resend:
 			       rxrpc_propose_ack_ping_for_lost_ack);
 	}
 
-	while ((txb = list_first_entry_or_null(&retrans_queue,
-					       struct rxrpc_txbuf, tx_link))) {
-		list_del_init(&txb->tx_link);
-		rxrpc_send_data_packet(call, txb);
-		rxrpc_put_txbuf(txb, rxrpc_txbuf_put_trans);
-
-		trace_rxrpc_retransmit(call, txb->seq,
-				       ktime_to_ns(ktime_sub(txb->last_sent,
-							     max_age)));
-	}
+	/* Push the packets to be retransmitted onto the transmission queue and
+	 * wake up the transmitter worker.  Note that it's possible that an ACK
+	 * might come in whilst a packet is on the queue.
+	 */
+	spin_lock(&local->tx_lock);
+	if (rxrpc_is_client_call(call))
+		rxrpc_expose_client_call(call);
+	list_splice_tail(&retrans_queue, &local->tx_queue);
+	spin_unlock(&local->tx_lock);
+	rxrpc_wake_up_transmitter(local);
 
 out:
 	_leave("");

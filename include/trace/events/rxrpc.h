@@ -268,6 +268,7 @@
 	EM(rxrpc_txbuf_get_retrans,		"GET RETRANS")	\
 	EM(rxrpc_txbuf_put_ack_tx,		"PUT ACK TX ")	\
 	EM(rxrpc_txbuf_put_cleaned,		"PUT CLEANED")	\
+	EM(rxrpc_txbuf_put_data_tx,		"PUT DATA TX")	\
 	EM(rxrpc_txbuf_put_nomem,		"PUT NOMEM  ")	\
 	EM(rxrpc_txbuf_put_rotated,		"PUT ROTATED")	\
 	EM(rxrpc_txbuf_put_send_aborted,	"PUT SEND-X ")	\

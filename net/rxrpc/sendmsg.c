@@ -188,10 +188,10 @@ static void rxrpc_queue_packet(struct rxrpc_sock *rx, struct rxrpc_call *call,
 			       struct rxrpc_txbuf *txb,
 			       rxrpc_notify_end_tx_t notify_end_tx)
 {
+	struct rxrpc_local *local = call->peer->local;
 	unsigned long now;
 	rxrpc_seq_t seq = txb->seq;
 	bool last = test_bit(RXRPC_TXBUF_LAST, &txb->flags);
-	int ret;
 
 	rxrpc_inc_stat(call->rxnet, stat_tx_data);
 
@@ -203,7 +203,6 @@ static void rxrpc_queue_packet(struct rxrpc_sock *rx, struct rxrpc_call *call,
 	txb->last_sent = ktime_get_real();
 
 	/* Add the packet to the call's output buffer */
-	rxrpc_get_txbuf(txb, rxrpc_txbuf_get_buffer);
 	spin_lock(&call->tx_lock);
 	list_add_tail(&txb->call_link, &call->tx_buffer);
 	call->tx_top = seq;
@@ -245,27 +244,17 @@ static void rxrpc_queue_packet(struct rxrpc_sock *rx, struct rxrpc_call *call,
 	if (seq == 1 && rxrpc_is_client_call(call))
 		rxrpc_expose_client_call(call);
 
-	ret = rxrpc_send_data_packet(call, txb);
-	if (ret < 0) {
-		switch (ret) {
-		case -ENETUNREACH:
-		case -EHOSTUNREACH:
-		case -ECONNREFUSED:
-			rxrpc_set_call_completion(call, RXRPC_CALL_LOCAL_ERROR,
-						  0, ret);
-			goto out;
-		}
-	} else {
-		unsigned long now = jiffies;
-		unsigned long resend_at = now + call->peer->rto_j;
-
-		WRITE_ONCE(call->resend_at, resend_at);
-		rxrpc_reduce_call_timer(call, resend_at, now,
-					rxrpc_timer_set_for_send);
-	}
-
-out:
-	rxrpc_put_txbuf(txb, rxrpc_txbuf_put_trans);
+	/* Stick the packet on the crypto queue or the transmission queue as
+	 * appropriate.
+	 */
+	rxrpc_get_txbuf(txb, rxrpc_txbuf_get_trans);
+	rxrpc_get_call(call, rxrpc_call_got_tx);
+	spin_lock(&local->tx_lock);
+	if (!list_empty(&txb->tx_link))
+		kdebug("!!! NOT YET SENT q=%08x", txb->seq);
+	list_add_tail(&txb->tx_link, &local->tx_queue);
+	spin_unlock(&local->tx_lock);
+	rxrpc_wake_up_transmitter(local);
 }
 
 /*

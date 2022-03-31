@@ -385,7 +385,7 @@ int rxrpc_send_abort_packet(struct rxrpc_call *call)
 /*
  * send a packet through the transport endpoint
  */
-int rxrpc_send_data_packet(struct rxrpc_call *call, struct rxrpc_txbuf *txb)
+static int rxrpc_send_data_packet(struct rxrpc_call *call, struct rxrpc_txbuf *txb)
 {
 	enum rxrpc_req_ack_trace why;
 	struct rxrpc_connection *conn = call->conn;
@@ -468,6 +468,14 @@ dont_set_request_ack:
 
 	trace_rxrpc_tx_data(call, txb->seq, serial, txb->wire.flags,
 			    test_bit(RXRPC_TXBUF_RESENT, &txb->flags), false);
+
+	/* Track what we've attempted to transmit at least once so that the
+	 * retransmission algorithm doesn't try to resend what we haven't sent
+	 * yet.  However, this can race as we can receive an ACK before we get
+	 * to this point.  But, OTOH, if we won't get an ACK mentioning this
+	 * packet unless the far side received it (though it could have
+	 * discarded it anyway and NAK'd it).
+	 */
 	cmpxchg(&call->tx_transmitted, txb->seq - 1, txb->seq);
 
 	/* send the packet with the don't fragment bit set if we currently
@@ -715,4 +723,96 @@ void rxrpc_send_keepalive(struct rxrpc_peer *peer)
 
 	peer->last_tx_at = ktime_get_seconds();
 	_leave("");
+}
+
+/*
+ * Schedule an instant Tx resend.
+ */
+static inline void rxrpc_instant_resend(struct rxrpc_call *call,
+					struct rxrpc_txbuf *txb)
+{
+	struct rxrpc_local *local = call->peer->local;
+
+	if (call->state < RXRPC_CALL_COMPLETE) {
+		rxrpc_get_txbuf(txb, rxrpc_txbuf_get_trans);
+		rxrpc_get_call(call, rxrpc_call_got_tx);
+		spin_lock(&local->tx_lock);
+		list_move_tail(&txb->tx_link, &local->tx_queue);
+		spin_unlock(&local->tx_lock);
+		rxrpc_wake_up_transmitter(local);
+	}
+}
+
+/*
+ * Transmit one packet.
+ */
+static void rxrpc_transmit_one(struct rxrpc_local *local,
+			       struct rxrpc_call *call,
+			       struct rxrpc_txbuf *txb)
+{
+	int ret;
+
+	ret = rxrpc_send_data_packet(call, txb);
+	if (ret < 0) {
+		switch (ret) {
+		case -ENETUNREACH:
+		case -EHOSTUNREACH:
+		case -ECONNREFUSED:
+			rxrpc_set_call_completion(call, RXRPC_CALL_LOCAL_ERROR,
+						  0, ret);
+			break;
+		default:
+			_debug("need instant resend %d", ret);
+			rxrpc_instant_resend(call, txb);
+		}
+	} else {
+		unsigned long now = jiffies;
+		unsigned long resend_at = now + call->peer->rto_j;
+
+		WRITE_ONCE(call->resend_at, resend_at);
+		rxrpc_reduce_call_timer(call, resend_at, now,
+					rxrpc_timer_set_for_send);
+	}
+}
+
+/*
+ * Transmit messages.
+ */
+int rxrpc_transmitter(void *data)
+{
+	struct rxrpc_local *local = data;
+	struct rxrpc_txbuf *txb;
+	struct rxrpc_call *call;
+
+	set_user_nice(current, MIN_NICE);
+
+	for (;;) {
+		spin_lock(&local->tx_lock);
+		txb = list_first_entry_or_null(&local->tx_queue,
+					       struct rxrpc_txbuf, tx_link);
+		if (txb) {
+			call = txb->call;
+			list_del_init(&txb->tx_link);
+			spin_unlock(&local->tx_lock);
+
+			rxrpc_transmit_one(local, call, txb);
+
+			rxrpc_put_txbuf(txb, rxrpc_txbuf_put_data_tx);
+			rxrpc_put_call(call, rxrpc_call_put_tx);
+			continue;
+		}
+		spin_unlock(&local->tx_lock);
+
+		set_current_state(TASK_INTERRUPTIBLE);
+		if (kthread_should_stop())
+			break;
+		if (!list_empty(&local->tx_queue)) {
+			__set_current_state(TASK_RUNNING);
+			continue;
+		}
+		schedule();
+	}
+	__set_current_state(TASK_RUNNING);
+	local->transmitter = NULL;
+	return 0;
 }
