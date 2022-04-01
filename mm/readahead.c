@@ -142,82 +142,6 @@ file_ra_state_init(struct file_ra_state *ra, struct address_space *mapping)
 }
 EXPORT_SYMBOL_GPL(file_ra_state_init);
 
-/*
- * see if a page needs releasing upon read_cache_pages() failure
- * - the caller of read_cache_pages() may have set PG_private or PG_fscache
- *   before calling, such as the NFS fs marking pages that are cached locally
- *   on disk, thus we need to give the fs a chance to clean up in the event of
- *   an error
- */
-static void read_cache_pages_invalidate_page(struct address_space *mapping,
-					     struct page *page)
-{
-	if (page_has_private(page)) {
-		if (!trylock_page(page))
-			BUG();
-		page->mapping = mapping;
-		folio_invalidate(page_folio(page), 0, PAGE_SIZE);
-		page->mapping = NULL;
-		unlock_page(page);
-	}
-	put_page(page);
-}
-
-/*
- * release a list of pages, invalidating them first if need be
- */
-static void read_cache_pages_invalidate_pages(struct address_space *mapping,
-					      struct list_head *pages)
-{
-	struct page *victim;
-
-	while (!list_empty(pages)) {
-		victim = lru_to_page(pages);
-		list_del(&victim->lru);
-		read_cache_pages_invalidate_page(mapping, victim);
-	}
-}
-
-/**
- * read_cache_pages - populate an address space with some pages & start reads against them
- * @mapping: the address_space
- * @pages: The address of a list_head which contains the target pages.  These
- *   pages have their ->index populated and are otherwise uninitialised.
- * @filler: callback routine for filling a single page.
- * @data: private data for the callback routine.
- *
- * Hides the details of the LRU cache etc from the filesystems.
- *
- * Returns: %0 on success, error return by @filler otherwise
- */
-int read_cache_pages(struct address_space *mapping, struct list_head *pages,
-			int (*filler)(void *, struct page *), void *data)
-{
-	struct page *page;
-	int ret = 0;
-
-	while (!list_empty(pages)) {
-		page = lru_to_page(pages);
-		list_del(&page->lru);
-		if (add_to_page_cache_lru(page, mapping, page->index,
-				readahead_gfp_mask(mapping))) {
-			read_cache_pages_invalidate_page(mapping, page);
-			continue;
-		}
-		put_page(page);
-
-		ret = filler(data, page);
-		if (unlikely(ret)) {
-			read_cache_pages_invalidate_pages(mapping, pages);
-			break;
-		}
-		task_io_account_read(PAGE_SIZE);
-	}
-	return ret;
-}
-
-EXPORT_SYMBOL(read_cache_pages);
-
 static void read_pages(struct readahead_control *rac, struct list_head *pages,
 		bool skip_page)
 {
@@ -246,13 +170,6 @@ static void read_pages(struct readahead_control *rac, struct list_head *pages,
 			unlock_page(page);
 			put_page(page);
 		}
-	} else if (aops->readpages) {
-		aops->readpages(rac->file, rac->mapping, pages,
-				readahead_count(rac));
-		/* Clean up the remaining pages */
-		put_pages_list(pages);
-		rac->_index += rac->_nr_pages;
-		rac->_nr_pages = 0;
 	} else {
 		while ((page = readahead_page(rac))) {
 			aops->readpage(rac->file, page);
@@ -329,10 +246,7 @@ void page_cache_ra_unbounded(struct readahead_control *ractl,
 		folio = filemap_alloc_folio(gfp_mask, 0);
 		if (!folio)
 			break;
-		if (mapping->a_ops->readpages) {
-			folio->index = index + i;
-			list_add(&folio->lru, &page_pool);
-		} else if (filemap_add_folio(mapping, folio, index + i,
+		if (filemap_add_folio(mapping, folio, index + i,
 					gfp_mask) < 0) {
 			folio_put(folio);
 			read_pages(ractl, &page_pool, true);
@@ -394,8 +308,7 @@ void force_page_cache_ra(struct readahead_control *ractl,
 	struct backing_dev_info *bdi = inode_to_bdi(mapping->host);
 	unsigned long max_pages, index;
 
-	if (unlikely(!mapping->a_ops->readpage && !mapping->a_ops->readpages &&
-			!mapping->a_ops->readahead))
+	if (unlikely(!mapping->a_ops->readpage && !mapping->a_ops->readahead))
 		return;
 
 	/*
