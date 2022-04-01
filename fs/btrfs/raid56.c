@@ -946,15 +946,6 @@ static struct page *page_in_rbio(struct btrfs_raid_bio *rbio,
 }
 
 /*
- * number of pages we need for the entire stripe across all the
- * drives
- */
-static unsigned long rbio_nr_pages(unsigned long stripe_len, int nr_stripes)
-{
-	return DIV_ROUND_UP(stripe_len, PAGE_SIZE) * nr_stripes;
-}
-
-/*
  * allocation and initial setup for the btrfs_raid_bio.  Not
  * this does not allocate any pages for rbio->pages.
  */
@@ -962,11 +953,12 @@ static struct btrfs_raid_bio *alloc_rbio(struct btrfs_fs_info *fs_info,
 					 struct btrfs_io_context *bioc,
 					 u64 stripe_len)
 {
+	const unsigned int real_stripes = bioc->num_stripes - bioc->num_tgtdevs;
+	const unsigned int num_pages = DIV_ROUND_UP(stripe_len, PAGE_SIZE) *
+				       real_stripes;
+	const unsigned int stripe_npages = DIV_ROUND_UP(stripe_len, PAGE_SIZE);
 	struct btrfs_raid_bio *rbio;
 	int nr_data = 0;
-	int real_stripes = bioc->num_stripes - bioc->num_tgtdevs;
-	int num_pages = rbio_nr_pages(stripe_len, real_stripes);
-	int stripe_npages = DIV_ROUND_UP(stripe_len, PAGE_SIZE);
 	void *p;
 
 	rbio = kzalloc(sizeof(*rbio) +
