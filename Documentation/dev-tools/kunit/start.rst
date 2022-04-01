@@ -85,7 +85,7 @@ Running Tests (KUnit Wrapper)
 
 If everything worked correctly, you should see the following:
 
-.. code-block::
+.. code-block:: none
 
 	Generating .config ...
 	Building KUnit Kernel ...

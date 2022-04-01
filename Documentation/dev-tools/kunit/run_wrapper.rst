@@ -14,13 +14,13 @@ tests, and formats the test results.
 
 Run command:
 
-.. code-block::
+::
 
 	./tools/testing/kunit/kunit.py run
 
 We should see the following:
 
-.. code-block::
+::
 
 	Generating .config...
 	Building KUnit kernel...
@@ -28,7 +28,7 @@ We should see the following:
 
 We may want to use the following options:
 
-.. code-block::
+::
 
 	./tools/testing/kunit/kunit.py run --timeout=30 --jobs=`nproc --all
 
@@ -48,13 +48,13 @@ test configs for certain subsystems.
 To use a different ``.kunitconfig`` file (such as one
 provided to test a particular subsystem), pass it as an option:
 
-.. code-block::
+::
 
 	./tools/testing/kunit/kunit.py run --kunitconfig=fs/ext4/.kunitconfig
 
 To view kunit_tool flags (optional command-line arguments), run:
 
-.. code-block::
+::
 
 	./tools/testing/kunit/kunit.py run --help
 
@@ -75,14 +75,14 @@ certain code blocks, arch configs and so on).
 
 To create a ``.kunitconfig``, using the KUnit ``defconfig``:
 
-.. code-block::
+::
 
 	cd $PATH_TO_LINUX_REPO
 	cp tools/testing/kunit/configs/default.config .kunit/.kunitconfig
 
 We can then add any other Kconfig options. For example:
 
-.. code-block::
+::
 
 	CONFIG_LIST_KUNIT_TEST=y
 
@@ -106,14 +106,14 @@ can run part of the KUnit build process independently.
 When running kunit_tool, from a ``.kunitconfig``, we can generate a
 ``.config`` by using the ``config`` argument:
 
-.. code-block::
+::
 
 	./tools/testing/kunit/kunit.py config
 
 To build a KUnit kernel from the current ``.config``, we can use the
 ``build`` argument:
 
-.. code-block::
+::
 
 	./tools/testing/kunit/kunit.py build
 
@@ -121,7 +121,7 @@ If we already have built UML kernel with built-in KUnit tests, we
 can run the kernel, and display the test results with the ``exec``
 argument:
 
-.. code-block::
+::
 
 	./tools/testing/kunit/kunit.py exec
 
@@ -136,7 +136,7 @@ format. When running tests, kunit_tool parses this output and prints
 a summary. To see the raw test results in TAP format, we can pass the
 ``--raw_output`` argument:
 
-.. code-block::
+::
 
 	./tools/testing/kunit/kunit.py run --raw_output
 
@@ -159,7 +159,7 @@ By passing a bash style glob filter to the ``exec`` or ``run``
 commands, we can run a subset of the tests built into a kernel . For
 example: if we only want to run KUnit resource tests, use:
 
-.. code-block::
+::
 
 	./tools/testing/kunit/kunit.py run 'kunit-resource*'
 
