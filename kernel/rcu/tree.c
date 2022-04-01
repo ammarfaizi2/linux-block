@@ -4559,6 +4559,33 @@ static int rcu_pm_notify(struct notifier_block *self,
 	return NOTIFY_OK;
 }
 
+struct kthread_worker *rcu_exp_gp_kworker;
+struct kthread_worker *rcu_exp_par_gp_kworker;
+
+static void __init rcu_start_exp_gp_kworkers(void)
+{
+	const char *par_gp_kworker_name = "rcu_exp_par_gp_kthread_worker";
+	const char *gp_kworker_name = "rcu_exp_gp_kthread_worker";
+	struct sched_param param = { .sched_priority = kthread_prio };
+
+	rcu_exp_gp_kworker = kthread_create_worker(0, gp_kworker_name);
+	if (IS_ERR_OR_NULL(rcu_exp_gp_kworker)) {
+		pr_err("Failed to create %s!\n", gp_kworker_name);
+		return;
+	}
+
+	rcu_exp_par_gp_kworker = kthread_create_worker(0, par_gp_kworker_name);
+	if (IS_ERR_OR_NULL(rcu_exp_par_gp_kworker)) {
+		pr_err("Failed to create %s!\n", par_gp_kworker_name);
+		kthread_destroy_worker(rcu_exp_gp_kworker);
+		return;
+	}
+
+	sched_setscheduler_nocheck(rcu_exp_gp_kworker->task, SCHED_FIFO, &param);
+	sched_setscheduler_nocheck(rcu_exp_par_gp_kworker->task, SCHED_FIFO,
+				   &param);
+}
+
 /*
  * Spawn the kthreads that handle RCU's grace periods.
  */
@@ -4595,6 +4622,10 @@ static int __init rcu_spawn_gp_kthread(void)
 	rcu_spawn_cpu_nocb_kthread(smp_processor_id());
 	rcu_spawn_one_boost_kthread(rdp->mynode);
 	rcu_spawn_core_kthreads();
+
+	/* Create kthread worker for expedited GPs */
+	rcu_start_exp_gp_kworkers();
+
 	return 0;
 }
 early_initcall(rcu_spawn_gp_kthread);
@@ -4843,7 +4874,6 @@ static void __init rcu_dump_rcu_node_tree(void)
 }
 
 struct workqueue_struct *rcu_gp_wq;
-struct workqueue_struct *rcu_par_gp_wq;
 
 static void __init kfree_rcu_batch_init(void)
 {
@@ -4905,11 +4935,14 @@ void __init rcu_init(void)
 	rcu_cpu_starting(cpu);
 	rcutree_online_cpu(cpu);
 
-	/* Create workqueue for Tree SRCU and for expedited GPs. */
+	/*
+	 * Create workqueue for Tree SRCU.
+	 *
+	 * Expedited GPs use RT kthread_worker.
+	 * See: rcu_start_exp_gp_kworkers()
+	 */
 	rcu_gp_wq = alloc_workqueue("rcu_gp", WQ_MEM_RECLAIM, 0);
 	WARN_ON(!rcu_gp_wq);
-	rcu_par_gp_wq = alloc_workqueue("rcu_par_gp", WQ_MEM_RECLAIM, 0);
-	WARN_ON(!rcu_par_gp_wq);
 
 	/* Fill in default value for rcutree.qovld boot parameter. */
 	/* -After- the rcu_node ->lock fields are initialized! */

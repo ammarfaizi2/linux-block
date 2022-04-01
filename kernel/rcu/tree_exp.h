@@ -334,7 +334,7 @@ fastpath:
  * Select the CPUs within the specified rcu_node that the upcoming
  * expedited grace period needs to wait for.
  */
-static void sync_rcu_exp_select_node_cpus(struct work_struct *wp)
+static void sync_rcu_exp_select_node_cpus(struct kthread_work *wp)
 {
 	int cpu;
 	unsigned long flags;
@@ -423,7 +423,6 @@ retry_ipi:
  */
 static void sync_rcu_exp_select_cpus(void)
 {
-	int cpu;
 	struct rcu_node *rnp;
 
 	trace_rcu_exp_grace_period(rcu_state.name, rcu_exp_gp_seq_endval(), TPS("reset"));
@@ -435,28 +434,27 @@ static void sync_rcu_exp_select_cpus(void)
 		rnp->exp_need_flush = false;
 		if (!READ_ONCE(rnp->expmask))
 			continue; /* Avoid early boot non-existent wq. */
-		if (!READ_ONCE(rcu_par_gp_wq) ||
+		if (!READ_ONCE(rcu_exp_par_gp_kworker) ||
 		    rcu_scheduler_active != RCU_SCHEDULER_RUNNING ||
 		    rcu_is_last_leaf_node(rnp)) {
-			/* No workqueues yet or last leaf, do direct call. */
+			/* kthread worker not started yet or last leaf, do direct call. */
 			sync_rcu_exp_select_node_cpus(&rnp->rew.rew_work);
 			continue;
 		}
-		INIT_WORK(&rnp->rew.rew_work, sync_rcu_exp_select_node_cpus);
-		cpu = find_next_bit(&rnp->ffmask, BITS_PER_LONG, -1);
-		/* If all offline, queue the work on an unbound CPU. */
-		if (unlikely(cpu > rnp->grphi - rnp->grplo))
-			cpu = WORK_CPU_UNBOUND;
-		else
-			cpu += rnp->grplo;
-		queue_work_on(cpu, rcu_par_gp_wq, &rnp->rew.rew_work);
+		kthread_init_work(&rnp->rew.rew_work, sync_rcu_exp_select_node_cpus);
+		/*
+		 * Use rcu_exp_par_gp_kworker, because flushing a work item from
+		 * another work item on the same kthread worker can result in
+		 * deadlock.
+		 */
+		kthread_queue_work(rcu_exp_par_gp_kworker, &rnp->rew.rew_work);
 		rnp->exp_need_flush = true;
 	}
 
 	/* Wait for workqueue jobs (if any) to complete. */
 	rcu_for_each_leaf_node(rnp)
 		if (rnp->exp_need_flush)
-			flush_work(&rnp->rew.rew_work);
+			kthread_flush_work(&rnp->rew.rew_work);
 }
 
 /*
@@ -625,7 +623,7 @@ static void rcu_exp_sel_wait_wake(unsigned long s)
 /*
  * Work-queue handler to drive an expedited grace period forward.
  */
-static void wait_rcu_exp_gp(struct work_struct *wp)
+static void wait_rcu_exp_gp(struct kthread_work *wp)
 {
 	struct rcu_exp_work *rewp;
 
@@ -835,22 +833,18 @@ static void __synchronize_rcu_expedited(bool polling)
 	} else {
 		/* Marshall arguments & schedule the expedited grace period. */
 		rew.rew_s = s;
-		INIT_WORK_ONSTACK(&rew.rew_work, wait_rcu_exp_gp);
-		queue_work(rcu_gp_wq, &rew.rew_work);
+		kthread_init_work(&rew.rew_work, wait_rcu_exp_gp);
+		kthread_queue_work(rcu_exp_gp_kworker, &rew.rew_work);
 	}
 
 	/* Wait for expedited grace period to complete. */
 	rnp = rcu_get_root();
 	wait_event(rnp->exp_wq[rcu_seq_ctr(s) & 0x3],
 		   sync_exp_work_done(s));
-	smp_mb(); /* Workqueue actions happen before return. */
+	smp_mb(); /* kthread actions happen before return. */
 
 	/* Let the next expedited grace period start. */
 	mutex_unlock(&rcu_state.exp_mutex);
-
-	if (likely(!boottime))
-		destroy_work_on_stack(&rew.rew_work);
-
 }
 
 /**
