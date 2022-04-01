@@ -237,6 +237,27 @@ unsigned int stack_trace_save_user(unsigned long *store, unsigned int size)
 }
 #endif
 
+#ifdef CONFIG_HAVE_SHADOW_STACKTRACE
+/**
+ * stack_trace_save_shadow - Save a stack trace based on shadow call stack
+ * @store:	Pointer to the storage array
+ * @size:	Size of the storage array
+ * @skipnr:	Number of entries to skip at the start of the stack trace
+ *
+ * Return: Number of trace entries stored.
+ */
+int stack_trace_save_shadow(unsigned long *store, unsigned int size,
+			    unsigned int skipnr)
+{
+	/*
+	 * Do not use stack_trace_consume_fn to avoid making a function
+	 * call for each collected frame to improve performance.
+	 * Skip + 1 frame to skip stack_trace_save_shadow.
+	 */
+	return arch_stack_walk_shadow(store, size, skipnr + 1);
+}
+#endif
+
 #else /* CONFIG_ARCH_STACKWALK */
 
 /*

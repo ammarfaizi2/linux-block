@@ -24,7 +24,7 @@ struct folio_batch;
 #define GFP_RECLAIM_MASK (__GFP_RECLAIM|__GFP_HIGH|__GFP_IO|__GFP_FS|\
 			__GFP_NOWARN|__GFP_RETRY_MAYFAIL|__GFP_NOFAIL|\
 			__GFP_NORETRY|__GFP_MEMALLOC|__GFP_NOMEMALLOC|\
-			__GFP_ATOMIC|__GFP_NOLOCKDEP)
+			__GFP_NOLOCKDEP)
 
 /* The GFP flags allowed during early boot */
 #define GFP_BOOT_MASK (__GFP_BITS_MASK & ~(__GFP_RECLAIM|__GFP_IO|__GFP_FS))
@@ -456,7 +456,8 @@ static inline void munlock_vma_page(struct page *page,
 }
 void mlock_new_page(struct page *page);
 bool need_mlock_page_drain(int cpu);
-void mlock_page_drain(int cpu);
+void mlock_page_drain_local(void);
+void mlock_page_drain_remote(int cpu);
 
 extern pmd_t maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma);
 
@@ -539,7 +540,8 @@ static inline void munlock_vma_page(struct page *page,
 			struct vm_area_struct *vma, bool compound) { }
 static inline void mlock_new_page(struct page *page) { }
 static inline bool need_mlock_page_drain(int cpu) { return false; }
-static inline void mlock_page_drain(int cpu) { }
+static inline void mlock_page_drain_local(void) { }
+static inline void mlock_page_drain_remote(int cpu) { }
 static inline void vunmap_range_noflush(unsigned long start, unsigned long end)
 {
 }
