@@ -63,6 +63,12 @@ struct io_uring_sqe {
 	};
 	__u64	addr3;
 	__u64	__pad2[1];
+
+	/*
+	 * If the ring is initialized with IORING_SETUP_SQE128, then this field
+	 * contains 64-bytes of padding, doubling the size of the SQE.
+	 */
+	__u64	__big_sqe_pad[0];
 };
 
 enum {
@@ -104,6 +110,7 @@ enum {
 #define IORING_SETUP_ATTACH_WQ	(1U << 5)	/* attach to existing wq */
 #define IORING_SETUP_R_DISABLED	(1U << 6)	/* start with ring disabled */
 #define IORING_SETUP_SUBMIT_ALL	(1U << 7)	/* continue submit on error */
+#define IORING_SETUP_SQE128	(1U << 8)	/* SQEs are 128b */
 
 enum io_uring_op {
 	IORING_OP_NOP,
