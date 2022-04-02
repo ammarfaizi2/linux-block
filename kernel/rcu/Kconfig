@@ -77,15 +77,21 @@ config TASKS_RCU_GENERIC
 	  This option enables generic infrastructure code supporting
 	  task-based RCU implementations.  Not for manual selection.
 
-config TASKS_RCU
-	bool "Enable Tasks RCU"
+config FORCE_TASKS_RCU
+	bool "Force selection of TASKS_RCU"
 	depends on RCU_EXPERT
+	select TASKS_RCU
+	default n
+	help
+	  This option force-enables a task-based RCU implementation
+	  that uses only voluntary context switch (not preemption!),
+	  idle, and user-mode execution as quiescent states.  Not for
+	  manual selection in most cases.
+
+config TASKS_RCU
+	bool
 	default n
 	select IRQ_WORK
-	help
-	  This option enables a task-based RCU implementation that uses
-	  only voluntary context switch (not preemption!), idle, and
-	  user-mode execution as quiescent states.  Not for manual selection.
 
 config TASKS_RUDE_RCU
 	bool "Enable Tasks Rude RCU"
