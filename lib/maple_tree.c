@@ -4939,6 +4939,7 @@ retry:
 
 	return entry;
 }
+EXPORT_SYMBOL_GPL(mas_walk);
 
 static inline bool mas_rewind_node(struct ma_state *mas)
 {
@@ -5521,6 +5522,7 @@ void *mas_store(struct ma_state *mas, void *entry)
 	mas_wr_store_entry(&wr_mas);
 	return wr_mas.content;
 }
+EXPORT_SYMBOL_GPL(mas_store);
 
 /**
  * mas_store_gfp() - Store a value into the tree.
@@ -5604,6 +5606,7 @@ int mas_expected_entries(struct ma_state *mas, unsigned long nr_entries)
 	return ret;
 
 }
+EXPORT_SYMBOL_GPL(mas_expected_entries);
 
 /*
  * mas_destroy() - destroy a maple state.
@@ -5648,6 +5651,7 @@ void mas_destroy(struct ma_state *mas)
 	}
 	mas->alloc = NULL;
 }
+EXPORT_SYMBOL_GPL(mas_destroy);
 
 /**
  * mas_next() - Get the next entry.
