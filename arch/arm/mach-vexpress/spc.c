@@ -228,7 +228,7 @@ static u32 standbywfi_cpu_mask(u32 cpu, u32 cluster)
 }
 
 /**
- * ve_spc_cpu_in_wfi(u32 cpu, u32 cluster)
+ * ve_spc_cpu_in_wfi() - Checks if the specified CPU is in WFI or not
  *
  * @cpu: mpidr[7:0] bitfield describing CPU affinity level within cluster
  * @cluster: mpidr[15:8] bitfield describing cluster affinity level
