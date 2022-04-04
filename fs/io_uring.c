@@ -1184,7 +1184,8 @@ static int __io_register_rsrc_update(struct io_ring_ctx *ctx, unsigned type,
 				     unsigned nr_args);
 static void io_clean_op(struct io_kiocb *req);
 static struct file *io_file_get(struct io_ring_ctx *ctx,
-				struct io_kiocb *req, int fd, bool fixed);
+				struct io_kiocb *req, int fd, bool fixed,
+				bool locked);
 static void __io_queue_sqe(struct io_kiocb *req);
 static void io_rsrc_put_work(struct work_struct *work);
 
@@ -1314,13 +1315,18 @@ static void io_rsrc_refs_refill(struct io_ring_ctx *ctx)
 }
 
 static inline void io_req_set_rsrc_node(struct io_kiocb *req,
-					struct io_ring_ctx *ctx)
+					struct io_ring_ctx *ctx, bool locked)
 {
 	if (!req->fixed_rsrc_refs) {
 		req->fixed_rsrc_refs = &ctx->rsrc_node->refs;
-		ctx->rsrc_cached_refs--;
-		if (unlikely(ctx->rsrc_cached_refs < 0))
-			io_rsrc_refs_refill(ctx);
+
+		if (locked) {
+			ctx->rsrc_cached_refs--;
+			if (unlikely(ctx->rsrc_cached_refs < 0))
+				io_rsrc_refs_refill(ctx);
+		} else {
+			percpu_ref_get(req->fixed_rsrc_refs);
+		}
 	}
 }
 
@@ -3330,7 +3336,8 @@ static int __io_import_fixed(struct io_kiocb *req, int rw, struct iov_iter *iter
 	return 0;
 }
 
-static int io_import_fixed(struct io_kiocb *req, int rw, struct iov_iter *iter)
+static int io_import_fixed(struct io_kiocb *req, int rw, struct iov_iter *iter,
+			   bool locked)
 {
 	struct io_mapped_ubuf *imu = req->imu;
 	u16 index, buf_index = req->buf_index;
@@ -3340,7 +3347,7 @@ static int io_import_fixed(struct io_kiocb *req, int rw, struct iov_iter *iter)
 
 		if (unlikely(buf_index >= ctx->nr_user_bufs))
 			return -EFAULT;
-		io_req_set_rsrc_node(req, ctx);
+		io_req_set_rsrc_node(req, ctx, locked);
 		index = array_index_nospec(buf_index, ctx->nr_user_bufs);
 		imu = READ_ONCE(ctx->user_bufs[index]);
 		req->imu = imu;
@@ -3502,7 +3509,8 @@ static struct iovec *__io_import_iovec(int rw, struct io_kiocb *req,
 	ssize_t ret;
 
 	if (opcode == IORING_OP_READ_FIXED || opcode == IORING_OP_WRITE_FIXED) {
-		ret = io_import_fixed(req, rw, iter);
+		ret = io_import_fixed(req, rw, iter,
+					!(issue_flags & IO_URING_F_UNLOCKED));
 		if (ret)
 			return ERR_PTR(ret);
 		return NULL;
@@ -4395,7 +4403,8 @@ static int io_tee(struct io_kiocb *req, unsigned int issue_flags)
 		return -EAGAIN;
 
 	in = io_file_get(req->ctx, req, sp->splice_fd_in,
-				  (sp->flags & SPLICE_F_FD_IN_FIXED));
+				  (sp->flags & SPLICE_F_FD_IN_FIXED),
+				  !(issue_flags & IO_URING_F_UNLOCKED));
 	if (!in) {
 		ret = -EBADF;
 		goto done;
@@ -4435,7 +4444,8 @@ static int io_splice(struct io_kiocb *req, unsigned int issue_flags)
 		return -EAGAIN;
 
 	in = io_file_get(req->ctx, req, sp->splice_fd_in,
-				  (sp->flags & SPLICE_F_FD_IN_FIXED));
+				  (sp->flags & SPLICE_F_FD_IN_FIXED),
+				  !(issue_flags & IO_URING_F_UNLOCKED));
 	if (!in) {
 		ret = -EBADF;
 		goto done;
@@ -5973,7 +5983,7 @@ static void io_poll_remove_entries(struct io_kiocb *req)
  * either spurious wakeup or multishot CQE is served. 0 when it's done with
  * the request, then the mask is stored in req->result.
  */
-static int io_poll_check_events(struct io_kiocb *req)
+static int io_poll_check_events(struct io_kiocb *req, bool locked)
 {
 	struct io_ring_ctx *ctx = req->ctx;
 	struct io_poll_iocb *poll = io_poll_get_single(req);
@@ -6030,7 +6040,7 @@ static void io_poll_task_func(struct io_kiocb *req, bool *locked)
 	struct io_ring_ctx *ctx = req->ctx;
 	int ret;
 
-	ret = io_poll_check_events(req);
+	ret = io_poll_check_events(req, *locked);
 	if (ret > 0)
 		return;
 
@@ -6055,7 +6065,7 @@ static void io_apoll_task_func(struct io_kiocb *req, bool *locked)
 	struct io_ring_ctx *ctx = req->ctx;
 	int ret;
 
-	ret = io_poll_check_events(req);
+	ret = io_poll_check_events(req, *locked);
 	if (ret > 0)
 		return;
 
@@ -7461,7 +7471,8 @@ static void io_fixed_file_set(struct io_fixed_file *file_slot, struct file *file
 }
 
 static inline struct file *io_file_get_fixed(struct io_ring_ctx *ctx,
-					     struct io_kiocb *req, int fd)
+					     struct io_kiocb *req, int fd,
+					     bool locked)
 {
 	struct file *file;
 	unsigned long file_ptr;
@@ -7474,7 +7485,7 @@ static inline struct file *io_file_get_fixed(struct io_ring_ctx *ctx,
 	file_ptr &= ~FFS_MASK;
 	/* mask in overlapping REQ_F and FFS bits */
 	req->flags |= (file_ptr << REQ_F_SUPPORT_NOWAIT_BIT);
-	io_req_set_rsrc_node(req, ctx);
+	io_req_set_rsrc_node(req, ctx, locked);
 	return file;
 }
 
@@ -7492,10 +7503,11 @@ static struct file *io_file_get_normal(struct io_ring_ctx *ctx,
 }
 
 static inline struct file *io_file_get(struct io_ring_ctx *ctx,
-				       struct io_kiocb *req, int fd, bool fixed)
+				       struct io_kiocb *req, int fd, bool fixed,
+				       bool locked)
 {
 	if (fixed)
-		return io_file_get_fixed(ctx, req, fd);
+		return io_file_get_fixed(ctx, req, fd, locked);
 	else
 		return io_file_get_normal(ctx, req, fd);
 }
@@ -7750,7 +7762,7 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 		}
 
 		req->file = io_file_get(ctx, req, READ_ONCE(sqe->fd),
-					(sqe_flags & IOSQE_FIXED_FILE));
+					(sqe_flags & IOSQE_FIXED_FILE), true);
 		if (unlikely(!req->file))
 			return -EBADF;
 	}
