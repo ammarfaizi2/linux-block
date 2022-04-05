@@ -217,6 +217,21 @@ void rtw_set_ps_mode(struct adapter *padapter, u8 ps_mode, u8 smart_ps, u8 bcn_a
 
 }
 
+static bool lps_rf_on(struct adapter *adapter)
+{
+	/* When we halt NIC, we should check if FW LPS is leave. */
+	if (adapter->pwrctrlpriv.rf_pwrstate == rf_off) {
+		/*  If it is in HW/SW Radio OFF or IPS state, we do not check Fw LPS Leave, */
+		/*  because Fw is unload. */
+		return true;
+	}
+
+	if (rtw_read32(adapter, REG_RCR) & 0x00070000)
+		return false;
+
+	return true;
+}
+
 /*
  * Return:
  *	0:	Leave OK
@@ -226,13 +241,11 @@ void rtw_set_ps_mode(struct adapter *padapter, u8 ps_mode, u8 smart_ps, u8 bcn_a
 s32 LPS_RF_ON_check(struct adapter *padapter, u32 delay_ms)
 {
 	u32 start_time;
-	u8 bAwake = false;
 	s32 err = 0;
 
 	start_time = jiffies;
 	while (1) {
-		GetHwReg8188EU(padapter, HW_VAR_FWLPS_RF_ON, &bAwake);
-		if (bAwake)
+		if (lps_rf_on(padapter))
 			break;
 
 		if (padapter->bSurpriseRemoved) {
@@ -346,19 +359,17 @@ void rtw_init_pwrctrl_priv(struct adapter *padapter)
 	timer_setup(&pwrctrlpriv->pwr_state_check_timer, pwr_state_check_handler, 0);
 }
 
-/*
-* rtw_pwr_wakeup - Wake the NIC up from: 1)IPS. 2)USB autosuspend
-* @adapter: pointer to struct adapter structure
-* @ips_deffer_ms: the ms wiil prevent from falling into IPS after wakeup
-* Return _SUCCESS or _FAIL
-*/
-
-int _rtw_pwr_wakeup(struct adapter *padapter, u32 ips_deffer_ms, const char *caller)
+/* Wake the NIC up from: 1)IPS 2)USB autosuspend */
+int rtw_pwr_wakeup(struct adapter *padapter)
 {
 	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	int ret = _SUCCESS;
 	u32 start = jiffies;
+	u32 ips_deffer_ms;
+
+	/* the ms will prevent from falling into IPS after wakeup */
+	ips_deffer_ms = RTW_PWR_STATE_CHK_INTERVAL;
 
 	if (pwrpriv->ips_deny_time < jiffies + rtw_ms_to_systime(ips_deffer_ms))
 		pwrpriv->ips_deny_time = jiffies + rtw_ms_to_systime(ips_deffer_ms);

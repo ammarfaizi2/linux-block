@@ -749,6 +749,7 @@ static int sta2ap_data_frame(struct adapter *adapter,
 	struct	sta_priv *pstapriv = &adapter->stapriv;
 	struct	mlme_priv *pmlmepriv = &adapter->mlmepriv;
 	u8 *ptr = precv_frame->rx_data;
+	__le16 fc = *(__le16 *)ptr;
 	unsigned char *mybssid  = get_bssid(pmlmepriv);
 	int ret = _SUCCESS;
 
@@ -769,9 +770,8 @@ static int sta2ap_data_frame(struct adapter *adapter,
 
 		process_pwrbit_data(adapter, precv_frame);
 
-		if ((GetFrameSubType(ptr) & WIFI_QOS_DATA_TYPE) == WIFI_QOS_DATA_TYPE) {
+		if (ieee80211_is_data_qos(fc))
 			process_wmmps_data(adapter, precv_frame);
-		}
 
 		if (GetFrameSubType(ptr) & BIT(6)) {
 			/* No data, will not indicate to upper layer, temporily count it here */
@@ -801,9 +801,10 @@ static int validate_recv_ctrl_frame(struct adapter *padapter,
 	struct rx_pkt_attrib *pattrib = &precv_frame->attrib;
 	struct sta_priv *pstapriv = &padapter->stapriv;
 	u8 *pframe = precv_frame->rx_data;
+	__le16 fc = *(__le16 *)pframe;
 	/* uint len = precv_frame->len; */
 
-	if (GetFrameType(pframe) != WIFI_CTRL_TYPE)
+	if (!ieee80211_is_ctl(fc))
 		return _FAIL;
 
 	/* receive the frames that ra(a1) is my address */
@@ -1059,11 +1060,9 @@ static int validate_recv_frame(struct adapter *adapter, struct recv_frame *precv
 	/* then call check if rx seq/frag. duplicated. */
 
 	int retval = _FAIL;
-	u8 bDumpRxPkt;
 	struct rx_pkt_attrib *pattrib = &precv_frame->attrib;
 	u8 *ptr = precv_frame->rx_data;
-	__le16 fc = *(__le16 *)ptr;
-	u8  ver = (unsigned char)(*ptr) & 0x3;
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)precv_frame->rx_data;
 	struct mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
 
 	if (pmlmeext->sitesurvey_res.state == SCAN_PROCESS) {
@@ -1072,32 +1071,28 @@ static int validate_recv_frame(struct adapter *adapter, struct recv_frame *precv
 			pmlmeext->channel_set[ch_set_idx].rx_count++;
 	}
 
-	/* add version chk */
-	if (ver != 0)
+	if ((hdr->frame_control & cpu_to_le16(IEEE80211_FCTL_VERS)) != 0)
 		return _FAIL;
 
 	pattrib->to_fr_ds = get_tofr_ds(ptr);
 
-	pattrib->frag_num = GetFragNum(ptr);
-	pattrib->seq_num = GetSequence(ptr);
+	pattrib->frag_num = le16_to_cpu(hdr->seq_ctrl) & IEEE80211_SCTL_FRAG;
+	pattrib->seq_num = IEEE80211_SEQ_TO_SN(le16_to_cpu(hdr->seq_ctrl));
 
-	pattrib->pw_save = GetPwrMgt(ptr);
-	pattrib->mfrag = ieee80211_has_morefrags(fc);
-	pattrib->mdata = ieee80211_has_moredata(fc);
-	pattrib->privacy = ieee80211_has_protected(fc);
-	pattrib->order = ieee80211_has_order(fc);
-
-	/* Dump rx packets */
-	GetHalDefVar8188EUsb(adapter, HAL_DEF_DBG_DUMP_RXPKT, &bDumpRxPkt);
+	pattrib->pw_save = ieee80211_has_pm(hdr->frame_control);
+	pattrib->mfrag = ieee80211_has_morefrags(hdr->frame_control);
+	pattrib->mdata = ieee80211_has_moredata(hdr->frame_control);
+	pattrib->privacy = ieee80211_has_protected(hdr->frame_control);
+	pattrib->order = ieee80211_has_order(hdr->frame_control);
 
 	/* We return _SUCCESS only for data frames. */
-	if (ieee80211_is_mgmt(fc))
+	if (ieee80211_is_mgmt(hdr->frame_control))
 		validate_recv_mgnt_frame(adapter, precv_frame);
-	else if (ieee80211_is_ctl(fc))
+	else if (ieee80211_is_ctl(hdr->frame_control))
 		validate_recv_ctrl_frame(adapter, precv_frame);
-	else if (ieee80211_is_data(fc)) {
+	else if (ieee80211_is_data(hdr->frame_control)) {
 		rtw_led_control(adapter, LED_CTL_RX);
-		pattrib->qos = ieee80211_is_data_qos(fc);
+		pattrib->qos = ieee80211_is_data_qos(hdr->frame_control);
 		retval = validate_recv_data_frame(adapter, precv_frame);
 		if (retval == _FAIL) {
 			struct recv_priv *precvpriv = &adapter->recvpriv;
@@ -1284,8 +1279,9 @@ struct recv_frame *recvframe_chk_defrag(struct adapter *padapter, struct recv_fr
 	psta_addr = pfhdr->attrib.ta;
 	psta = rtw_get_stainfo(pstapriv, psta_addr);
 	if (!psta) {
-		u8 type = GetFrameType(pfhdr->rx_data);
-		if (type != WIFI_DATA_TYPE) {
+		__le16 fc = *(__le16 *)pfhdr->rx_data;
+
+		if (ieee80211_is_data(fc)) {
 			psta = rtw_get_bcmc_stainfo(padapter);
 			pdefrag_q = &psta->sta_recvpriv.defrag_q;
 		} else {

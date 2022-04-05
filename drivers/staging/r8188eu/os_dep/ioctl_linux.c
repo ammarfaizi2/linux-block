@@ -3620,9 +3620,7 @@ static int rtw_dbg_port(struct net_device *dev,
 			break;
 		case 0x06:
 			{
-				u32	ODMFlag;
-				GetHwReg8188EU(padapter, HW_VAR_DM_FLAG, (u8 *)(&ODMFlag));
-				ODMFlag = (u32)(0x0f & arg);
+				u32 ODMFlag = (u32)(0x0f & arg);
 				SetHwReg8188EU(padapter, HW_VAR_DM_FLAG, (u8 *)(&ODMFlag));
 			}
 			break;
@@ -3631,13 +3629,6 @@ static int rtw_dbg_port(struct net_device *dev,
 		case 0x08:
 			break;
 		case 0x09:
-			break;
-		case 0x0c:/* dump rx/tx packet */
-			if (arg == 0) {
-				SetHalDefVar8188EUsb(padapter, HAL_DEF_DBG_DUMP_RXPKT, &extra_arg);
-			} else if (arg == 1) {
-				SetHalDefVar8188EUsb(padapter, HAL_DEF_DBG_DUMP_TXPKT, &extra_arg);
-			}
 			break;
 		case 0x15:
 			break;
@@ -3958,10 +3949,10 @@ static struct iw_statistics *rtw_get_wireless_stats(struct net_device *dev)
 
 struct iw_handler_def rtw_handlers_def = {
 	.standard = rtw_handlers,
-	.num_standard = sizeof(rtw_handlers) / sizeof(iw_handler),
+	.num_standard = ARRAY_SIZE(rtw_handlers),
 	.private = rtw_private_handler,
 	.private_args = (struct iw_priv_args *)rtw_private_args,
-	.num_private = sizeof(rtw_private_handler) / sizeof(iw_handler),
-	.num_private_args = sizeof(rtw_private_args) / sizeof(struct iw_priv_args),
+	.num_private = ARRAY_SIZE(rtw_private_handler),
+	.num_private_args = ARRAY_SIZE(rtw_private_args),
 	.get_wireless_stats = rtw_get_wireless_stats,
 };

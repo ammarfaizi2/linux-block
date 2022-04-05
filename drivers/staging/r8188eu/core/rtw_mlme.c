@@ -16,7 +16,6 @@
 #include "../include/usb_osintf.h"
 #include "../include/rtl8188e_dm.h"
 
-extern unsigned char	MCS_rate_2R[16];
 extern unsigned char	MCS_rate_1R[16];
 
 void rtw_set_roaming(struct adapter *adapter, u8 to_roaming)
@@ -31,7 +30,7 @@ u8 rtw_to_roaming(struct adapter *adapter)
 	return adapter->mlmepriv.to_roaming;
 }
 
-int _rtw_init_mlme_priv(struct adapter *padapter)
+static int _rtw_init_mlme_priv(struct adapter *padapter)
 {
 	int	i;
 	u8	*pbuf;
@@ -748,14 +747,6 @@ void rtw_surveydone_event_callback(struct adapter	*adapter, u8 *pbuf)
 	rtw_os_xmit_schedule(adapter);
 }
 
-void rtw_dummy_event_callback(struct adapter *adapter, u8 *pbuf)
-{
-}
-
-void rtw_fwdbg_event_callback(struct adapter *adapter, u8 *pbuf)
-{
-}
-
 static void free_scanqueue(struct	mlme_priv *pmlmepriv)
 {
 	struct __queue *free_queue = &pmlmepriv->free_bss_pool;
@@ -1105,6 +1096,11 @@ void rtw_joinbss_event_callback(struct adapter *adapter, u8 *pbuf)
 
 }
 
+void rtw_set_max_rpt_macid(struct adapter *adapter, u8 macid)
+{
+	rtw_write8(adapter, REG_TX_RPT_CTRL + 1, macid + 1);
+}
+
 static u8 search_max_mac_id(struct adapter *padapter)
 {
 	u8 mac_id;
@@ -1141,7 +1137,8 @@ void rtw_sta_media_status_rpt(struct adapter *adapter, struct sta_info *psta,
 		return;
 
 	macid = search_max_mac_id(adapter);
-	SetHwReg8188EU(adapter, HW_VAR_TX_RPT_MAX_MACID, (u8 *)&macid);
+	rtw_set_max_rpt_macid(adapter, macid);
+
 	/* MACID|OPMODE:1 connect */
 	media_status_rpt = (u16)((psta->mac_id << 8) | mstatus);
 	SetHwReg8188EU(adapter, HW_VAR_H2C_MEDIA_STATUS_RPT, (u8 *)&media_status_rpt);
@@ -1509,13 +1506,13 @@ int rtw_set_auth(struct adapter *adapter, struct security_priv *psecuritypriv)
 	struct	cmd_priv *pcmdpriv = &adapter->cmdpriv;
 	int		res = _SUCCESS;
 
-	pcmd = kzalloc(sizeof(struct cmd_obj), GFP_KERNEL);
+	pcmd = kzalloc(sizeof(*pcmd), GFP_KERNEL);
 	if (!pcmd) {
 		res = _FAIL;  /* try again */
 		goto exit;
 	}
 
-	psetauthparm = kzalloc(sizeof(struct setauth_parm), GFP_KERNEL);
+	psetauthparm = kzalloc(sizeof(*psetauthparm), GFP_KERNEL);
 	if (!psetauthparm) {
 		kfree(pcmd);
 		res = _FAIL;
@@ -1796,10 +1793,23 @@ void rtw_update_registrypriv_dev_network(struct adapter *adapter)
 
 }
 
+static void rtw_set_threshold(struct adapter *adapter)
+{
+	struct mlme_priv *mlmepriv = &adapter->mlmepriv;
+	struct ht_priv *htpriv = &mlmepriv->htpriv;
+
+	if (htpriv->ht_option && adapter->registrypriv.wifi_spec != 1) {
+		/* validate usb rx aggregation, use init value. */
+		rtw_write8(adapter, REG_RXDMA_AGG_PG_TH, USB_RXAGG_PAGE_COUNT);
+	} else {
+		/* invalidate usb rx aggregation */
+		rtw_write8(adapter, REG_RXDMA_AGG_PG_TH, 1);
+	}
+}
+
 /* the function is at passive_level */
 void rtw_joinbss_reset(struct adapter *padapter)
 {
-	u8	threshold;
 	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
 	struct ht_priv		*phtpriv = &pmlmepriv->htpriv;
 
@@ -1810,18 +1820,7 @@ void rtw_joinbss_reset(struct adapter *padapter)
 
 	phtpriv->ampdu_enable = false;/* reset to disabled */
 
-	/*  TH = 1 => means that invalidate usb rx aggregation */
-	/*  TH = 0 => means that validate usb rx aggregation, use init value. */
-	if (phtpriv->ht_option) {
-		if (padapter->registrypriv.wifi_spec == 1)
-			threshold = 1;
-		else
-			threshold = 0;
-		SetHwReg8188EU(padapter, HW_VAR_RXDMA_AGG_PG_TH, (u8 *)(&threshold));
-	} else {
-		threshold = 1;
-		SetHwReg8188EU(padapter, HW_VAR_RXDMA_AGG_PG_TH, (u8 *)(&threshold));
-	}
+	rtw_set_threshold(padapter);
 }
 
 /* the function is >= passive_level */
