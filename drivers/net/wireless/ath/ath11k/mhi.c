@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
-/* Copyright (c) 2020 The Linux Foundation. All rights reserved. */
+/*
+ * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ */
 
 #include <linux/msi.h>
 #include <linux/pci.h>
@@ -11,6 +14,7 @@
 #include "debug.h"
 #include "mhi.h"
 #include "pci.h"
+#include "pcic.h"
 
 #define MHI_TIMEOUT_DEFAULT_MS	90000
 #define RDDM_DUMP_SIZE	0x420000
@@ -205,7 +209,7 @@ void ath11k_mhi_set_mhictrl_reset(struct ath11k_base *ab)
 {
 	u32 val;
 
-	val = ath11k_pci_read32(ab, MHISTATUS);
+	val = ath11k_pcic_read32(ab, MHISTATUS);
 
 	ath11k_dbg(ab, ATH11K_DBG_PCI, "MHISTATUS 0x%x\n", val);
 
@@ -213,29 +217,29 @@ void ath11k_mhi_set_mhictrl_reset(struct ath11k_base *ab)
 	 * has SYSERR bit set and thus need to set MHICTRL_RESET
 	 * to clear SYSERR.
 	 */
-	ath11k_pci_write32(ab, MHICTRL, MHICTRL_RESET_MASK);
+	ath11k_pcic_write32(ab, MHICTRL, MHICTRL_RESET_MASK);
 
 	mdelay(10);
 }
 
 static void ath11k_mhi_reset_txvecdb(struct ath11k_base *ab)
 {
-	ath11k_pci_write32(ab, PCIE_TXVECDB, 0);
+	ath11k_pcic_write32(ab, PCIE_TXVECDB, 0);
 }
 
 static void ath11k_mhi_reset_txvecstatus(struct ath11k_base *ab)
 {
-	ath11k_pci_write32(ab, PCIE_TXVECSTATUS, 0);
+	ath11k_pcic_write32(ab, PCIE_TXVECSTATUS, 0);
 }
 
 static void ath11k_mhi_reset_rxvecdb(struct ath11k_base *ab)
 {
-	ath11k_pci_write32(ab, PCIE_RXVECDB, 0);
+	ath11k_pcic_write32(ab, PCIE_RXVECDB, 0);
 }
 
 static void ath11k_mhi_reset_rxvecstatus(struct ath11k_base *ab)
 {
-	ath11k_pci_write32(ab, PCIE_RXVECSTATUS, 0);
+	ath11k_pcic_write32(ab, PCIE_RXVECSTATUS, 0);
 }
 
 void ath11k_mhi_clear_vector(struct ath11k_base *ab)
@@ -254,9 +258,8 @@ static int ath11k_mhi_get_msi(struct ath11k_pci *ab_pci)
 	int *irq;
 	unsigned int msi_data;
 
-	ret = ath11k_pci_get_user_msi_assignment(ab_pci,
-						 "MHI", &num_vectors,
-						 &user_base_data, &base_vector);
+	ret = ath11k_pcic_get_user_msi_assignment(ab, "MHI", &num_vectors,
+						  &user_base_data, &base_vector);
 	if (ret)
 		return ret;
 
@@ -270,11 +273,10 @@ static int ath11k_mhi_get_msi(struct ath11k_pci *ab_pci)
 	for (i = 0; i < num_vectors; i++) {
 		msi_data = base_vector;
 
-		if (test_bit(ATH11K_PCI_FLAG_MULTI_MSI_VECTORS, &ab_pci->flags))
+		if (test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, &ab->dev_flags))
 			msi_data += i;
 
-		irq[i] = ath11k_pci_get_msi_irq(ab->dev,
-						msi_data);
+		irq[i] = ath11k_pci_get_msi_irq(ab, msi_data);
 	}
 
 	ab_pci->mhi_ctrl->irq = irq;
@@ -292,14 +294,47 @@ static void ath11k_mhi_op_runtime_put(struct mhi_controller *mhi_cntrl)
 {
 }
 
+static char *ath11k_mhi_op_callback_to_str(enum mhi_callback reason)
+{
+	switch (reason) {
+	case MHI_CB_IDLE:
+		return "MHI_CB_IDLE";
+	case MHI_CB_PENDING_DATA:
+		return "MHI_CB_PENDING_DATA";
+	case MHI_CB_LPM_ENTER:
+		return "MHI_CB_LPM_ENTER";
+	case MHI_CB_LPM_EXIT:
+		return "MHI_CB_LPM_EXIT";
+	case MHI_CB_EE_RDDM:
+		return "MHI_CB_EE_RDDM";
+	case MHI_CB_EE_MISSION_MODE:
+		return "MHI_CB_EE_MISSION_MODE";
+	case MHI_CB_SYS_ERROR:
+		return "MHI_CB_SYS_ERROR";
+	case MHI_CB_FATAL_ERROR:
+		return "MHI_CB_FATAL_ERROR";
+	case MHI_CB_BW_REQ:
+		return "MHI_CB_BW_REQ";
+	default:
+		return "UNKNOWN";
+	}
+};
+
 static void ath11k_mhi_op_status_cb(struct mhi_controller *mhi_cntrl,
 				    enum mhi_callback cb)
 {
 	struct ath11k_base *ab = dev_get_drvdata(mhi_cntrl->cntrl_dev);
 
+	ath11k_dbg(ab, ATH11K_DBG_BOOT, "mhi notify status reason %s\n",
+		   ath11k_mhi_op_callback_to_str(cb));
+
 	switch (cb) {
 	case MHI_CB_SYS_ERROR:
 		ath11k_warn(ab, "firmware crashed: MHI_CB_SYS_ERROR\n");
+		break;
+	case MHI_CB_EE_RDDM:
+		if (!(test_bit(ATH11K_FLAG_UNREGISTERING, &ab->dev_flags)))
+			queue_work(ab->workqueue_aux, &ab->reset_work);
 		break;
 	default:
 		break;
@@ -371,7 +406,7 @@ int ath11k_mhi_register(struct ath11k_pci *ab_pci)
 		return ret;
 	}
 
-	if (!test_bit(ATH11K_PCI_FLAG_MULTI_MSI_VECTORS, &ab_pci->flags))
+	if (!test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, &ab->dev_flags))
 		mhi_ctrl->irq_flags = IRQF_SHARED | IRQF_NOBALANCING;
 
 	if (test_bit(ATH11K_FLAG_FIXED_MEM_RGN, &ab->dev_flags)) {
