@@ -15,13 +15,99 @@
 #include <linux/of_pci.h>
 #include "pci.h"
 
+struct device_node *make_node(void)
+{
+	struct device_node *node;
+
+	node = kzalloc(sizeof(*node), GFP_KERNEL);
+	of_node_set_flag(node, OF_DYNAMIC);
+	of_node_set_flag(node, OF_DETACHED);
+	of_node_init(node);
+	return node;
+}
+
+void add_bus_props(struct device_node *node)
+{
+	struct property *prop;
+	__be32 *val;
+
+	prop = kzalloc(sizeof(*prop), GFP_KERNEL);
+	prop->name = "ranges";
+	prop->value = prop + 1;
+	prop->next = node->properties;
+	node->properties = prop;
+
+	prop = kzalloc(sizeof(*prop) + sizeof(__be32), GFP_KERNEL);
+	prop->name = "#address-cells";
+	prop->value = prop + 1;
+	prop->length = sizeof(__be32);
+	val = prop->value;
+	val[0] = __cpu_to_be32(3);
+	prop->next = node->properties;
+	node->properties = prop;
+
+	prop = kzalloc(sizeof(*prop) + sizeof(__be32), GFP_KERNEL);
+	prop->name = "#size-cells";
+	prop->value = prop + 1;
+	prop->length = sizeof(__be32);
+	val = prop->value;
+	val[0] = __cpu_to_be32(2);
+	prop->next = node->properties;
+	node->properties = prop;
+
+}
+
+void make_dev_node(struct pci_dev *dev)
+{
+	struct device_node *node;
+	struct property *prop;
+	__be32 *val;
+
+	node = make_node();
+
+	prop = kzalloc(sizeof(*prop) + sizeof(__be32) * 5, GFP_KERNEL);
+	prop->name = "reg";
+	prop->value = prop + 1;
+	prop->length = sizeof(__be32) * 5;
+	val = prop->value;
+	val[0] = __cpu_to_be32(dev->devfn << 8);
+	val[4] = __cpu_to_be32(SZ_4K);
+	node->properties = prop;
+
+	if (pci_is_bridge(dev)) {
+		add_bus_props(node);
+		node->full_name = kasprintf(GFP_KERNEL, "pci@%x,%x", PCI_SLOT(dev->devfn), PCI_FUNC(dev->devfn));
+	} else
+		node->full_name = kasprintf(GFP_KERNEL, "dev@%x,%x", PCI_SLOT(dev->devfn), PCI_FUNC(dev->devfn));
+
+	node->parent = dev->bus->dev.of_node;
+	of_attach_node(node);
+	dev->dev.of_node = node;
+}
+
+struct device_node *make_bus_node(struct pci_bus *bus)
+{
+	struct device_node *node;
+
+	node = make_node();
+	node->full_name = "pci";
+
+	add_bus_props(node);
+	node->parent = of_root;
+	of_attach_node(node);
+	return node;
+}
+
 #ifdef CONFIG_PCI
 void pci_set_of_node(struct pci_dev *dev)
 {
+	printk("%s - %p\n", __func__, dev->bus->dev.of_node);
 	if (!dev->bus->dev.of_node)
 		return;
 	dev->dev.of_node = of_pci_find_child_device(dev->bus->dev.of_node,
 						    dev->devfn);
+	if (!dev->dev.of_node)
+		make_dev_node(dev);
 	if (dev->dev.of_node)
 		dev->dev.fwnode = &dev->dev.of_node->fwnode;
 }
@@ -39,6 +125,7 @@ void pci_set_bus_of_node(struct pci_bus *bus)
 
 	if (bus->self == NULL) {
 		node = pcibios_get_phb_of_node(bus);
+		node = make_bus_node(bus);
 	} else {
 		node = of_node_get(bus->self->dev.of_node);
 		if (node && of_property_read_bool(node, "external-facing"))
@@ -46,6 +133,7 @@ void pci_set_bus_of_node(struct pci_bus *bus)
 	}
 
 	bus->dev.of_node = node;
+	printk("%s - %p\n", __func__, bus->dev.of_node);
 
 	if (bus->dev.of_node)
 		bus->dev.fwnode = &bus->dev.of_node->fwnode;
