@@ -254,6 +254,16 @@
 	EM(rxrpc_txbuf_see_send_more,		"SEE SEND+  ")	\
 	E_(rxrpc_txbuf_see_unacked,		"SEE UNACKED")
 
+#define rxrpc_req_ack_traces \
+	EM(rxrpc_reqack_ack_lost,		"ACK-LOST  ")	\
+	EM(rxrpc_reqack_already_on,		"ALREADY-ON")	\
+	EM(rxrpc_reqack_more_rtt,		"MORE-RTT  ")	\
+	EM(rxrpc_reqack_no_srv_last,		"NO-SRVLAST")	\
+	EM(rxrpc_reqack_old_rtt,		"OLD-RTT   ")	\
+	EM(rxrpc_reqack_retrans,		"RETRANS   ")	\
+	EM(rxrpc_reqack_slow_start,		"SLOW-START")	\
+	E_(rxrpc_reqack_small_txwin,		"SMALL-TXWN")
+
 /*
  * Generate enums for tracing information.
  */
@@ -275,6 +285,7 @@ enum rxrpc_propose_ack_outcome	{ rxrpc_propose_ack_outcomes } __mode(byte);
 enum rxrpc_propose_ack_trace	{ rxrpc_propose_ack_traces } __mode(byte);
 enum rxrpc_receive_trace	{ rxrpc_receive_traces } __mode(byte);
 enum rxrpc_recvmsg_trace	{ rxrpc_recvmsg_traces } __mode(byte);
+enum rxrpc_req_ack_trace	{ rxrpc_req_ack_traces } __mode(byte);
 enum rxrpc_rtt_rx_trace		{ rxrpc_rtt_rx_traces } __mode(byte);
 enum rxrpc_rtt_tx_trace		{ rxrpc_rtt_tx_traces } __mode(byte);
 enum rxrpc_skb_trace		{ rxrpc_skb_traces } __mode(byte);
@@ -303,6 +314,7 @@ rxrpc_propose_ack_outcomes;
 rxrpc_propose_ack_traces;
 rxrpc_receive_traces;
 rxrpc_recvmsg_traces;
+rxrpc_req_ack_traces;
 rxrpc_rtt_rx_traces;
 rxrpc_rtt_tx_traces;
 rxrpc_skb_traces;
@@ -1434,6 +1446,30 @@ TRACE_EVENT(rxrpc_txbuf,
 		      __entry->seq,
 		      __print_symbolic(__entry->what, rxrpc_txbuf_traces),
 		      __entry->ref)
+	    );
+
+TRACE_EVENT(rxrpc_req_ack,
+	    TP_PROTO(unsigned int call_debug_id, rxrpc_seq_t seq,
+		     enum rxrpc_req_ack_trace why),
+
+	    TP_ARGS(call_debug_id, seq, why),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		call_debug_id	)
+		    __field(rxrpc_seq_t,		seq		)
+		    __field(enum rxrpc_req_ack_trace,	why		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->call_debug_id = call_debug_id;
+		    __entry->seq = seq;
+		    __entry->why = why;
+			   ),
+
+	    TP_printk("c=%08x q=%08x REQ-%s",
+		      __entry->call_debug_id,
+		      __entry->seq,
+		      __print_symbolic(__entry->why, rxrpc_req_ack_traces))
 	    );
 
 #undef EM
