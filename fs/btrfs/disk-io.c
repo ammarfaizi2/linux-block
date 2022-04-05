@@ -374,9 +374,9 @@ int btrfs_verify_level_key(struct extent_buffer *eb, int level,
  * @level:		expected level, mandatory check
  * @first_key:		expected key of first slot, skip check if NULL
  */
-static int btree_read_extent_buffer_pages(struct extent_buffer *eb,
-					  u64 parent_transid, int level,
-					  struct btrfs_key *first_key)
+int btrfs_read_extent_buffer(struct extent_buffer *eb,
+			     u64 parent_transid, int level,
+			     struct btrfs_key *first_key)
 {
 	struct btrfs_fs_info *fs_info = eb->fs_info;
 	struct extent_io_tree *io_tree;
@@ -519,7 +519,7 @@ static int csum_dirty_buffer(struct btrfs_fs_info *fs_info, struct bio_vec *bvec
 	u64 found_start;
 	struct extent_buffer *eb;
 
-	if (fs_info->sectorsize < PAGE_SIZE)
+	if (fs_info->nodesize < PAGE_SIZE)
 		return csum_dirty_subpage_buffers(fs_info, bvec);
 
 	eb = (struct extent_buffer *)page->private;
@@ -704,7 +704,7 @@ int btrfs_validate_metadata_buffer(struct btrfs_bio *bbio,
 
 	ASSERT(page->private);
 
-	if (btrfs_sb(page->mapping->host->i_sb)->sectorsize < PAGE_SIZE)
+	if (btrfs_sb(page->mapping->host->i_sb)->nodesize < PAGE_SIZE)
 		return validate_subpage_buffer(page, start, end, mirror);
 
 	eb = (struct extent_buffer *)page->private;
@@ -1118,11 +1118,14 @@ struct extent_buffer *read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	if (IS_ERR(buf))
 		return buf;
 
-	ret = btree_read_extent_buffer_pages(buf, parent_transid,
-					     level, first_key);
+	ret = btrfs_read_extent_buffer(buf, parent_transid, level, first_key);
 	if (ret) {
 		free_extent_buffer_stale(buf);
 		return ERR_PTR(ret);
+	}
+	if (btrfs_check_eb_owner(buf, owner_root)) {
+		free_extent_buffer_stale(buf);
+		return ERR_PTR(-EUCLEAN);
 	}
 	return buf;
 
@@ -1563,6 +1566,23 @@ static struct btrfs_root *read_tree_root_path(struct btrfs_root *tree_root,
 		ret = -EIO;
 		goto fail;
 	}
+
+	/*
+	 * For real fs, and not log/reloc trees, root owner must
+	 * match its root node owner
+	 */
+	if (!test_bit(BTRFS_FS_STATE_DUMMY_FS_INFO, &fs_info->fs_state) &&
+	    root->root_key.objectid != BTRFS_TREE_LOG_OBJECTID &&
+	    root->root_key.objectid != BTRFS_TREE_RELOC_OBJECTID &&
+	    root->root_key.objectid != btrfs_header_owner(root->node)) {
+		btrfs_crit(fs_info,
+"root=%llu block=%llu, tree root owner mismatch, have %llu expect %llu",
+			   root->root_key.objectid, root->node->start,
+			   btrfs_header_owner(root->node),
+			   root->root_key.objectid);
+		ret = -EUCLEAN;
+		goto fail;
+	}
 	root->commit_root = btrfs_root_node(root);
 	return root;
 fail:
@@ -1850,9 +1870,10 @@ again:
 
 	ret = btrfs_insert_fs_root(fs_info, root);
 	if (ret) {
-		btrfs_put_root(root);
-		if (ret == -EEXIST)
+		if (ret == -EEXIST) {
+			btrfs_put_root(root);
 			goto again;
+		}
 		goto fail;
 	}
 	return root;
@@ -1963,7 +1984,7 @@ static void end_workqueue_fn(struct btrfs_work *work)
 
 static int cleaner_kthread(void *arg)
 {
-	struct btrfs_fs_info *fs_info = (struct btrfs_fs_info *)arg;
+	struct btrfs_fs_info *fs_info = arg;
 	int again;
 
 	while (1) {
@@ -2814,12 +2835,14 @@ static int validate_super(struct btrfs_fs_info *fs_info,
 	}
 
 	/*
-	 * For 4K page size, we only support 4K sector size.
-	 * For 64K page size, we support 64K and 4K sector sizes.
+	 * We only support at most two sectorsizes: 4K and PAGE_SIZE.
+	 *
+	 * We can support 16K sectorsize with 64K page size without problem,
+	 * but such sectorsize/pagesize combination doesn't make much sense.
+	 * 4K will be our future standard, PAGE_SIZE is supported from the very
+	 * beginning.
 	 */
-	if ((PAGE_SIZE == SZ_4K && sectorsize != PAGE_SIZE) ||
-	    (PAGE_SIZE == SZ_64K && (sectorsize != SZ_4K &&
-				     sectorsize != SZ_64K))) {
+	if (sectorsize > PAGE_SIZE || (sectorsize != SZ_4K && sectorsize != PAGE_SIZE)) {
 		btrfs_err(fs_info,
 			"sectorsize %llu not yet supported for page size %lu",
 			sectorsize, PAGE_SIZE);
@@ -3293,7 +3316,7 @@ static int init_mount_fs_info(struct btrfs_fs_info *fs_info, struct super_block 
 
 static int btrfs_uuid_rescan_kthread(void *data)
 {
-	struct btrfs_fs_info *fs_info = (struct btrfs_fs_info *)data;
+	struct btrfs_fs_info *fs_info = data;
 	int ret;
 
 	/*
@@ -4847,13 +4870,6 @@ void btrfs_btree_balance_dirty(struct btrfs_fs_info *fs_info)
 void btrfs_btree_balance_dirty_nodelay(struct btrfs_fs_info *fs_info)
 {
 	__btrfs_btree_balance_dirty(fs_info, 0);
-}
-
-int btrfs_read_buffer(struct extent_buffer *buf, u64 parent_transid, int level,
-		      struct btrfs_key *first_key)
-{
-	return btree_read_extent_buffer_pages(buf, parent_transid,
-					      level, first_key);
 }
 
 static void btrfs_error_commit_super(struct btrfs_fs_info *fs_info)
