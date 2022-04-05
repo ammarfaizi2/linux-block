@@ -49,7 +49,7 @@ struct taskstats {
 
 	/* The accounting flags of a task as defined in <linux/acct.h>
 	 * Defined values are AFORK, ASU, ACOMPAT, ACORE, AXSIG, and AGROUP.
-	 * (AGROUP since version 11).
+	 * (AGROUP since version 12).
 	 */
 	__u8	ac_flag;		/* Record flags */
 	__u8	ac_nice;		/* task_nice */
