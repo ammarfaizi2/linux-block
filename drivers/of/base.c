@@ -176,6 +176,13 @@ void __init of_core_init(void)
 		pr_err("failed to register existing nodes\n");
 		return;
 	}
+
+	if (!of_root) {
+		of_root = kzalloc(sizeof(*of_root), GFP_KERNEL);
+		of_root->full_name = "/";
+		of_node_init(of_root);
+	}
+
 	for_each_of_allnodes(np) {
 		__of_attach_node_sysfs(np);
 		if (np->phandle && !phandle_cache[of_phandle_cache_hash(np->phandle)])
