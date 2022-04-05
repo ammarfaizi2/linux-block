@@ -239,6 +239,8 @@ enum ath11k_dev_flags {
 	ATH11K_FLAG_CE_IRQ_ENABLED,
 	ATH11K_FLAG_EXT_IRQ_ENABLED,
 	ATH11K_FLAG_FIXED_MEM_RGN,
+	ATH11K_FLAG_DEVICE_INIT_DONE,
+	ATH11K_FLAG_MULTI_MSI_VECTORS,
 };
 
 enum ath11k_monitor_flags {
@@ -728,6 +730,14 @@ struct ath11k_bus_params {
 	bool static_window_map;
 };
 
+struct ath11k_pci_ops {
+	int (*wakeup)(struct ath11k_base *ab);
+	void (*release)(struct ath11k_base *ab);
+	int (*get_msi_irq)(struct ath11k_base *ab, unsigned int vector);
+	void (*window_write32)(struct ath11k_base *ab, u32 offset, u32 value);
+	u32 (*window_read32)(struct ath11k_base *ab, u32 offset);
+};
+
 /* IPQ8074 HW channel counters frequency value in hertz */
 #define IPQ8074_CC_FREQ_HERTZ 320000
 
@@ -767,6 +777,19 @@ struct ath11k_soc_dp_stats {
 	u32 hal_reo_error[DP_REO_DST_RING_MAX];
 	struct ath11k_soc_dp_tx_err_stats tx_err;
 	struct ath11k_dp_ring_bp_stats bp_stats;
+};
+
+struct ath11k_msi_user {
+	char *name;
+	int num_vectors;
+	u32 base_vector;
+};
+
+struct ath11k_msi_config {
+	int total_vectors;
+	int total_users;
+	struct ath11k_msi_user *users;
+	u16 hw_rev;
 };
 
 /* Master structure to hold the hw data which may be used in core module */
@@ -904,6 +927,17 @@ struct ath11k_base {
 		u32 subsystem_vendor;
 		u32 subsystem_device;
 	} id;
+
+	struct {
+		struct {
+			const struct ath11k_msi_config *config;
+			u32 ep_base_data;
+			u32 addr_lo;
+			u32 addr_hi;
+		} msi;
+
+		const struct ath11k_pci_ops *ops;
+	} pci;
 
 	/* must be last */
 	u8 drv_priv[] __aligned(sizeof(void *));
