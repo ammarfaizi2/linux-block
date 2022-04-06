@@ -1460,7 +1460,6 @@ static void rpc_kill_sb(struct super_block *sb)
 	mutex_unlock(&sn->pipefs_sb_lock);
 out:
 	kill_litter_super(sb);
-	put_net(net);
 }
 
 static struct file_system_type rpc_pipe_fs_type = {
