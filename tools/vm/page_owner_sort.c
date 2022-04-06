@@ -53,12 +53,29 @@ enum CULL_BIT {
 	CULL_COMM = 1<<4,
 	CULL_STACKTRACE = 1<<5
 };
+enum ARG_TYPE {
+	ARG_TXT, ARG_COMM, ARG_STACKTRACE, ARG_ALLOC_TS, ARG_FREE_TS,
+	ARG_CULL_TIME, ARG_PAGE_NUM, ARG_PID, ARG_TGID, ARG_UNKNOWN, ARG_FREE
+};
+enum SORT_ORDER {
+	SORT_ASC = 1,
+	SORT_DESC = -1,
+};
 struct filter_condition {
-	pid_t tgid;
-	pid_t pid;
-	char comm[TASK_COMM_LEN];
+	pid_t *pids;
+	pid_t *tgids;
+	char **comms;
+	int pids_size;
+	int tgids_size;
+	int comms_size;
+};
+struct sort_condition {
+	int (**cmps)(const void *, const void *);
+	int *signs;
+	int size;
 };
 static struct filter_condition fc;
+static struct sort_condition sc;
 static regex_t order_pattern;
 static regex_t pid_pattern;
 static regex_t tgid_pattern;
@@ -104,14 +121,14 @@ static int compare_num(const void *p1, const void *p2)
 {
 	const struct block_list *l1 = p1, *l2 = p2;
 
-	return l2->num - l1->num;
+	return l1->num - l2->num;
 }
 
 static int compare_page_num(const void *p1, const void *p2)
 {
 	const struct block_list *l1 = p1, *l2 = p2;
 
-	return l2->page_num - l1->page_num;
+	return l1->page_num - l2->page_num;
 }
 
 static int compare_pid(const void *p1, const void *p2)
@@ -149,7 +166,6 @@ static int compare_free_ts(const void *p1, const void *p2)
 	return l1->free_ts_nsec < l2->free_ts_nsec ? -1 : 1;
 }
 
-
 static int compare_release(const void *p1, const void *p2)
 {
 	const struct block_list *l1 = p1, *l2 = p2;
@@ -160,7 +176,6 @@ static int compare_release(const void *p1, const void *p2)
 		return 0;
 	return l1->free_ts_nsec ? 1 : -1;
 }
-
 
 static int compare_cull_condition(const void *p1, const void *p2)
 {
@@ -179,6 +194,16 @@ static int compare_cull_condition(const void *p1, const void *p2)
 	return 0;
 }
 
+static int compare_sort_condition(const void *p1, const void *p2)
+{
+	int cmp = 0;
+
+	for (int i = 0; i < sc.size; ++i)
+		if (cmp == 0)
+			cmp = sc.signs[i] * sc.cmps[i](p1, p2);
+	return cmp;
+}
+
 static int search_pattern(regex_t *pattern, char *pattern_str, char *buf)
 {
 	int err, val_len;
@@ -186,7 +211,7 @@ static int search_pattern(regex_t *pattern, char *pattern_str, char *buf)
 
 	err = regexec(pattern, buf, 2, pmatch, REG_NOTBOL);
 	if (err != 0 || pmatch[1].rm_so == -1) {
-		printf("no matching pattern in %s\n", buf);
+		fprintf(stderr, "no matching pattern in %s\n", buf);
 		return -1;
 	}
 	val_len = pmatch[1].rm_eo - pmatch[1].rm_so;
@@ -202,7 +227,7 @@ static void check_regcomp(regex_t *pattern, const char *regex)
 
 	err = regcomp(pattern, regex, REG_EXTENDED | REG_NEWLINE);
 	if (err != 0 || pattern->re_nsub != 1) {
-		printf("Invalid pattern %s code %d\n", regex, err);
+		fprintf(stderr, "Invalid pattern %s code %d\n", regex, err);
 		exit(1);
 	}
 }
@@ -251,7 +276,7 @@ static int get_page_num(char *buf)
 	errno = 0;
 	order_val = strtol(order_str, &endptr, 10);
 	if (order_val > 64 || errno != 0 || endptr == order_str || *endptr != '\0') {
-		printf("wrong order in follow buf:\n%s\n", buf);
+		fprintf(stderr, "wrong order in follow buf:\n%s\n", buf);
 		return 0;
 	}
 
@@ -268,7 +293,7 @@ static pid_t get_pid(char *buf)
 	errno = 0;
 	pid = strtol(pid_str, &endptr, 10);
 	if (errno != 0 || endptr == pid_str || *endptr != '\0') {
-		printf("wrong/invalid pid in follow buf:\n%s\n", buf);
+		fprintf(stderr, "wrong/invalid pid in follow buf:\n%s\n", buf);
 		return -1;
 	}
 
@@ -286,7 +311,7 @@ static pid_t get_tgid(char *buf)
 	errno = 0;
 	tgid = strtol(tgid_str, &endptr, 10);
 	if (errno != 0 || endptr == tgid_str || *endptr != '\0') {
-		printf("wrong/invalid tgid in follow buf:\n%s\n", buf);
+		fprintf(stderr, "wrong/invalid tgid in follow buf:\n%s\n", buf);
 		return -1;
 	}
 
@@ -304,7 +329,7 @@ static __u64 get_ts_nsec(char *buf)
 	errno = 0;
 	ts_nsec = strtoull(ts_nsec_str, &endptr, 10);
 	if (errno != 0 || endptr == ts_nsec_str || *endptr != '\0') {
-		printf("wrong ts_nsec in follow buf:\n%s\n", buf);
+		fprintf(stderr, "wrong ts_nsec in follow buf:\n%s\n", buf);
 		return -1;
 	}
 
@@ -321,7 +346,7 @@ static __u64 get_free_ts_nsec(char *buf)
 	errno = 0;
 	free_ts_nsec = strtoull(free_ts_nsec_str, &endptr, 10);
 	if (errno != 0 || endptr == free_ts_nsec_str || *endptr != '\0') {
-		printf("wrong free_ts_nsec in follow buf:\n%s\n", buf);
+		fprintf(stderr, "wrong free_ts_nsec in follow buf:\n%s\n", buf);
 		return -1;
 	}
 
@@ -337,29 +362,70 @@ static char *get_comm(char *buf)
 	search_pattern(&comm_pattern, comm_str, buf);
 	errno = 0;
 	if (errno != 0) {
-		printf("wrong comm in follow buf:\n%s\n", buf);
+		fprintf(stderr, "wrong comm in follow buf:\n%s\n", buf);
 		return NULL;
 	}
 
 	return comm_str;
 }
 
+static int get_arg_type(const char *arg)
+{
+	if (!strcmp(arg, "pid") || !strcmp(arg, "p"))
+		return ARG_PID;
+	else if (!strcmp(arg, "tgid") || !strcmp(arg, "tg"))
+		return ARG_TGID;
+	else if (!strcmp(arg, "name") || !strcmp(arg, "n"))
+		return  ARG_COMM;
+	else if (!strcmp(arg, "stacktrace") || !strcmp(arg, "st"))
+		return ARG_STACKTRACE;
+	else if (!strcmp(arg, "free") || !strcmp(arg, "f"))
+		return ARG_FREE;
+	else if (!strcmp(arg, "txt") || !strcmp(arg, "T"))
+		return ARG_TXT;
+	else if (!strcmp(arg, "free_ts") || !strcmp(arg, "ft"))
+		return ARG_FREE_TS;
+	else if (!strcmp(arg, "alloc_ts") || !strcmp(arg, "at"))
+		return ARG_ALLOC_TS;
+	else {
+		return ARG_UNKNOWN;
+	}
+}
+
+static bool match_num_list(int num, int *list, int list_size)
+{
+	for (int i = 0; i < list_size; ++i)
+		if (list[i] == num)
+			return true;
+	return false;
+}
+
+static bool match_str_list(const char *str, char **list, int list_size)
+{
+	for (int i = 0; i < list_size; ++i)
+		if (!strcmp(list[i], str))
+			return true;
+	return false;
+}
+
 static bool is_need(char *buf)
 {
 		if ((filter & FILTER_UNRELEASE) && get_free_ts_nsec(buf) != 0)
 			return false;
-		if ((filter & FILTER_PID) && get_pid(buf) != fc.pid)
+		if ((filter & FILTER_PID) && !match_num_list(get_pid(buf), fc.pids, fc.pids_size))
 			return false;
-		if ((filter & FILTER_TGID) && get_tgid(buf) != fc.tgid)
+		if ((filter & FILTER_TGID) &&
+			!match_num_list(get_tgid(buf), fc.tgids, fc.tgids_size))
 			return false;
 
 		char *comm = get_comm(buf);
 
 		if ((filter & FILTER_COMM) &&
-		strncmp(comm, fc.comm, TASK_COMM_LEN) != 0) {
+		!match_str_list(comm, fc.comms, fc.comms_size)) {
 			free(comm);
 			return false;
 		}
+		free(comm);
 		return true;
 }
 
@@ -373,7 +439,7 @@ static void add_list(char *buf, int len)
 		return;
 	}
 	if (list_size == max_size) {
-		printf("max_size too small??\n");
+		fprintf(stderr, "max_size too small??\n");
 		exit(1);
 	}
 	if (!is_need(buf))
@@ -383,7 +449,7 @@ static void add_list(char *buf, int len)
 	list[list_size].comm = get_comm(buf);
 	list[list_size].txt = malloc(len+1);
 	if (!list[list_size].txt) {
-		printf("Out of memory\n");
+		fprintf(stderr, "Out of memory\n");
 		exit(1);
 	}
 	memcpy(list[list_size].txt, buf, len);
@@ -409,23 +475,109 @@ static bool parse_cull_args(const char *arg_str)
 	int size = 0;
 	char **args = explode(',', arg_str, &size);
 
-	for (int i = 0; i < size; ++i)
-		if (!strcmp(args[i], "pid") || !strcmp(args[i], "p"))
+	for (int i = 0; i < size; ++i) {
+		int arg_type = get_arg_type(args[i]);
+
+		if (arg_type == ARG_PID)
 			cull |= CULL_PID;
-		else if (!strcmp(args[i], "tgid") || !strcmp(args[i], "tg"))
+		else if (arg_type == ARG_TGID)
 			cull |= CULL_TGID;
-		else if (!strcmp(args[i], "name") || !strcmp(args[i], "n"))
+		else if (arg_type == ARG_COMM)
 			cull |= CULL_COMM;
-		else if (!strcmp(args[i], "stacktrace") || !strcmp(args[i], "st"))
+		else if (arg_type == ARG_STACKTRACE)
 			cull |= CULL_STACKTRACE;
-		else if (!strcmp(args[i], "free") || !strcmp(args[i], "f"))
+		else if (arg_type == ARG_FREE)
 			cull |= CULL_UNRELEASE;
 		else {
 			free_explode(args, size);
 			return false;
 		}
+	}
 	free_explode(args, size);
 	return true;
+}
+
+static void set_single_cmp(int (*cmp)(const void *, const void *), int sign)
+{
+	if (sc.signs == NULL || sc.size < 1)
+		sc.signs = calloc(1, sizeof(int));
+	sc.signs[0] = sign;
+	if (sc.cmps == NULL || sc.size < 1)
+		sc.cmps = calloc(1, sizeof(int *));
+	sc.cmps[0] = cmp;
+	sc.size = 1;
+}
+
+static bool parse_sort_args(const char *arg_str)
+{
+	int size = 0;
+
+	if (sc.size != 0) { /* reset sort_condition */
+		free(sc.signs);
+		free(sc.cmps);
+		size = 0;
+	}
+
+	char **args = explode(',', arg_str, &size);
+
+	sc.signs = calloc(size, sizeof(int));
+	sc.cmps = calloc(size, sizeof(int *));
+	for (int i = 0; i < size; ++i) {
+		int offset = 0;
+
+		sc.signs[i] = SORT_ASC;
+		if (args[i][0] == '-' || args[i][0] == '+') {
+			if (args[i][0] == '-')
+				sc.signs[i] = SORT_DESC;
+			offset = 1;
+		}
+
+		int arg_type = get_arg_type(args[i]+offset);
+
+		if (arg_type == ARG_PID)
+			sc.cmps[i] = compare_pid;
+		else if (arg_type == ARG_TGID)
+			sc.cmps[i] = compare_tgid;
+		else if (arg_type == ARG_COMM)
+			sc.cmps[i] = compare_comm;
+		else if (arg_type == ARG_STACKTRACE)
+			sc.cmps[i] = compare_stacktrace;
+		else if (arg_type == ARG_ALLOC_TS)
+			sc.cmps[i] = compare_ts;
+		else if (arg_type == ARG_FREE_TS)
+			sc.cmps[i] = compare_free_ts;
+		else if (arg_type == ARG_TXT)
+			sc.cmps[i] = compare_txt;
+		else {
+			free_explode(args, size);
+			sc.size = 0;
+			return false;
+		}
+	}
+	sc.size = size;
+	free_explode(args, size);
+	return true;
+}
+
+static int *parse_nums_list(char *arg_str, int *list_size)
+{
+	int size = 0;
+	char **args = explode(',', arg_str, &size);
+	int *list = calloc(size, sizeof(int));
+
+	errno = 0;
+	for (int i = 0; i < size; ++i) {
+		char *endptr = NULL;
+
+		list[i] = strtol(args[i], &endptr, 10);
+		if (errno != 0 || endptr == args[i] || *endptr != '\0') {
+			free(list);
+			return NULL;
+		}
+	}
+	*list_size = size;
+	free_explode(args, size);
+	return list;
 }
 
 #define BUF_SIZE	(128 * 1024)
@@ -442,18 +594,18 @@ static void usage(void)
 		"-a\t\tSort by memory allocate time.\n"
 		"-r\t\tSort by memory release time.\n"
 		"-f\t\tFilter out the information of blocks whose memory has been released.\n"
-		"--pid <PID>\tSelect by pid. This selects the information of blocks whose process ID number equals to <PID>.\n"
-		"--tgid <TGID>\tSelect by tgid. This selects the information of blocks whose Thread Group ID number equals to <TGID>.\n"
-		"--name <command>\n\t\tSelect by command name. This selects the information of blocks whose command name identical to <command>.\n"
-		"--cull <rules>\tCull by user-defined rules. <rules> is a single argument in the form of a comma-separated list with some common fields predefined\n"
+		"--pid <pidlist>\tSelect by pid. This selects the information of blocks whose process ID numbers appear in <pidlist>.\n"
+		"--tgid <tgidlist>\tSelect by tgid. This selects the information of blocks whose Thread Group ID numbers appear in <tgidlist>.\n"
+		"--name <cmdlist>\n\t\tSelect by command name. This selects the information of blocks whose command name appears in <cmdlist>.\n"
+		"--cull <rules>\tCull by user-defined rules.<rules> is a single argument in the form of a comma-separated list with some common fields predefined\n"
+		"--sort <order>\tSpecify sort order as: [+|-]key[,[+|-]key[,...]]\n"
 	);
 }
 
 int main(int argc, char **argv)
 {
-	int (*cmp)(const void *, const void *) = compare_num;
 	FILE *fin, *fout;
-	char *buf, *endptr;
+	char *buf;
 	int ret, i, count;
 	struct stat st;
 	int opt;
@@ -462,64 +614,71 @@ int main(int argc, char **argv)
 		{ "tgid", required_argument, NULL, 2 },
 		{ "name", required_argument, NULL, 3 },
 		{ "cull",  required_argument, NULL, 4 },
+		{ "sort",  required_argument, NULL, 5 },
 		{ 0, 0, 0, 0},
 	};
 
 	while ((opt = getopt_long(argc, argv, "afmnprstP", longopts, NULL)) != -1)
 		switch (opt) {
 		case 'a':
-			cmp = compare_ts;
+			set_single_cmp(compare_ts, SORT_ASC);
 			break;
 		case 'f':
 			filter = filter | FILTER_UNRELEASE;
 			break;
 		case 'm':
-			cmp = compare_page_num;
+			set_single_cmp(compare_page_num, SORT_DESC);
 			break;
 		case 'p':
-			cmp = compare_pid;
+			set_single_cmp(compare_pid, SORT_ASC);
 			break;
 		case 'r':
-			cmp = compare_free_ts;
+			set_single_cmp(compare_free_ts, SORT_ASC);
 			break;
 		case 's':
-			cmp = compare_stacktrace;
+			set_single_cmp(compare_stacktrace, SORT_ASC);
 			break;
 		case 't':
-			cmp = compare_num;
+			set_single_cmp(compare_num, SORT_DESC);
 			break;
 		case 'P':
-			cmp = compare_tgid;
+			set_single_cmp(compare_tgid, SORT_ASC);
 			break;
 		case 'n':
-			cmp = compare_comm;
+			set_single_cmp(compare_comm, SORT_ASC);
 			break;
 		case 1:
 			filter = filter | FILTER_PID;
-			errno = 0;
-			fc.pid = strtol(optarg, &endptr, 10);
-			if (errno != 0 || endptr == optarg || *endptr != '\0') {
-				printf("wrong/invalid pid in from the command line:%s\n", optarg);
+			fc.pids = parse_nums_list(optarg, &fc.pids_size);
+			if (fc.pids == NULL) {
+				fprintf(stderr, "wrong/invalid pid in from the command line:%s\n",
+						optarg);
 				exit(1);
 			}
 			break;
 		case 2:
 			filter = filter | FILTER_TGID;
-			errno = 0;
-			fc.tgid = strtol(optarg, &endptr, 10);
-			if (errno != 0 || endptr == optarg || *endptr != '\0') {
-				printf("wrong/invalid tgid in from the command line:%s\n", optarg);
+			fc.tgids = parse_nums_list(optarg, &fc.tgids_size);
+			if (fc.tgids == NULL) {
+				fprintf(stderr, "wrong/invalid tgid in from the command line:%s\n",
+						optarg);
 				exit(1);
 			}
 			break;
 		case 3:
 			filter = filter | FILTER_COMM;
-			strncpy(fc.comm, optarg, TASK_COMM_LEN);
-			fc.comm[TASK_COMM_LEN-1] = '\0';
+			fc.comms = explode(',', optarg, &fc.comms_size);
 			break;
 		case 4:
 			if (!parse_cull_args(optarg)) {
-				printf("wrong argument after --cull in from the command line:%s\n",
+				fprintf(stderr, "wrong argument after --cull option:%s\n",
+						optarg);
+				exit(1);
+			}
+			break;
+		case 5:
+			if (!parse_sort_args(optarg)) {
+				fprintf(stderr, "wrong argument after --sort option:%s\n",
 						optarg);
 				exit(1);
 			}
@@ -554,7 +713,7 @@ int main(int argc, char **argv)
 	list = malloc(max_size * sizeof(*list));
 	buf = malloc(BUF_SIZE);
 	if (!list || !buf) {
-		printf("Out of memory\n");
+		fprintf(stderr, "Out of memory\n");
 		exit(1);
 	}
 
@@ -562,7 +721,6 @@ int main(int argc, char **argv)
 		ret = read_block(buf, BUF_SIZE, fin);
 		if (ret < 0)
 			break;
-
 		add_list(buf, ret);
 	}
 
@@ -584,7 +742,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	qsort(list, count, sizeof(list[0]), cmp);
+	qsort(list, count, sizeof(list[0]), compare_sort_condition);
 
 	for (i = 0; i < count; i++) {
 		if (cull == 0)
