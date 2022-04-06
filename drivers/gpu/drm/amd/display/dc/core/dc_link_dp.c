@@ -4085,9 +4085,32 @@ static bool handle_hpd_irq_psr_sink(struct dc_link *link)
 	return false;
 }
 
+static enum dc_link_rate get_link_rate_from_test_link_rate(uint8_t test_rate)
+{
+	switch (test_rate) {
+	case DP_TEST_LINK_RATE_RBR:
+		return LINK_RATE_LOW;
+	case DP_TEST_LINK_RATE_HBR:
+		return LINK_RATE_HIGH;
+	case DP_TEST_LINK_RATE_HBR2:
+		return LINK_RATE_HIGH2;
+	case DP_TEST_LINK_RATE_HBR3:
+		return LINK_RATE_HIGH3;
+	case DP_TEST_LINK_RATE_UHBR10:
+		return LINK_RATE_UHBR10;
+	case DP_TEST_LINK_RATE_UHBR20:
+		return LINK_RATE_UHBR20;
+	case DP_TEST_LINK_RATE_UHBR13_5:
+		return LINK_RATE_UHBR13_5;
+	default:
+		return LINK_RATE_UNKNOWN;
+	}
+}
+
 static void dp_test_send_link_training(struct dc_link *link)
 {
 	struct dc_link_settings link_settings = {0};
+	uint8_t test_rate = 0;
 
 	core_link_read_dpcd(
 			link,
@@ -4097,8 +4120,9 @@ static void dp_test_send_link_training(struct dc_link *link)
 	core_link_read_dpcd(
 			link,
 			DP_TEST_LINK_RATE,
-			(unsigned char *)(&link_settings.link_rate),
+			&test_rate,
 			1);
+	link_settings.link_rate = get_link_rate_from_test_link_rate(test_rate);
 
 	/* Set preferred link settings */
 	link->verified_link_cap.lane_count = link_settings.lane_count;
@@ -5216,6 +5240,62 @@ static void retrieve_cable_id(struct dc_link *link)
 				&link->dpcd_caps.cable_id, &usbc_cable_id);
 }
 
+/* DPRX may take some time to respond to AUX messages after HPD asserted.
+ * If AUX read unsuccessful, try to wake unresponsive DPRX by toggling DPCD SET_POWER (0x600).
+ */
+static enum dc_status wa_try_to_wake_dprx(struct dc_link *link, uint64_t timeout_ms)
+{
+	enum dc_status status = DC_ERROR_UNEXPECTED;
+	uint8_t dpcd_data = 0;
+	uint64_t start_ts = 0;
+	uint64_t current_ts = 0;
+	uint64_t time_taken_ms = 0;
+	enum dc_connection_type type = dc_connection_none;
+
+	status = core_link_read_dpcd(
+			link,
+			DP_LT_TUNABLE_PHY_REPEATER_FIELD_DATA_STRUCTURE_REV,
+			&dpcd_data,
+			sizeof(dpcd_data));
+
+	if (status != DC_OK) {
+		DC_LOG_WARNING("%s: Read DPCD LTTPR_CAP failed - try to toggle DPCD SET_POWER for %lld ms.",
+				__func__,
+				timeout_ms);
+		start_ts = dm_get_timestamp(link->ctx);
+
+		do {
+			if (!dc_link_detect_sink(link, &type) || type == dc_connection_none)
+				break;
+
+			dpcd_data = DP_SET_POWER_D3;
+			status = core_link_write_dpcd(
+					link,
+					DP_SET_POWER,
+					&dpcd_data,
+					sizeof(dpcd_data));
+
+			dpcd_data = DP_SET_POWER_D0;
+			status = core_link_write_dpcd(
+					link,
+					DP_SET_POWER,
+					&dpcd_data,
+					sizeof(dpcd_data));
+
+			current_ts = dm_get_timestamp(link->ctx);
+			time_taken_ms = div_u64(dm_get_elapse_time_in_ns(link->ctx, current_ts, start_ts), 1000000);
+		} while (status != DC_OK && time_taken_ms < timeout_ms);
+
+		DC_LOG_WARNING("%s: DPCD SET_POWER %s after %lld ms%s",
+				__func__,
+				(status == DC_OK) ? "succeeded" : "failed",
+				time_taken_ms,
+				(type == dc_connection_none) ? ". Unplugged." : ".");
+	}
+
+	return status;
+}
+
 static bool retrieve_link_cap(struct dc_link *link)
 {
 	/* DP_ADAPTER_CAP - DP_DPCD_REV + 1 == 16 and also DP_DSC_BITS_PER_PIXEL_INC - DP_DSC_SUPPORT + 1 == 16,
@@ -5250,6 +5330,15 @@ static bool retrieve_link_cap(struct dc_link *link)
 	 */
 	dc_link_aux_try_to_configure_timeout(link->ddc,
 			LINK_AUX_DEFAULT_LTTPR_TIMEOUT_PERIOD);
+
+	/* Try to ensure AUX channel active before proceeding. */
+	if (link->dc->debug.aux_wake_wa.bits.enable_wa) {
+		uint64_t timeout_ms = link->dc->debug.aux_wake_wa.bits.timeout_ms;
+
+		if (link->dc->debug.aux_wake_wa.bits.use_default_timeout)
+			timeout_ms = LINK_AUX_WAKE_TIMEOUT_MS;
+		status = wa_try_to_wake_dprx(link, timeout_ms);
+	}
 
 	is_lttpr_present = dp_retrieve_lttpr_cap(link);
 	/* Read DP tunneling information. */

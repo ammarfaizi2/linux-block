@@ -1076,6 +1076,15 @@ bool resource_build_scaling_params(struct pipe_ctx *pipe_ctx)
 	bool res = false;
 	DC_LOGGER_INIT(pipe_ctx->stream->ctx->logger);
 
+	/* Invalid input */
+	if (!plane_state->dst_rect.width ||
+			!plane_state->dst_rect.height ||
+			!plane_state->src_rect.width ||
+			!plane_state->src_rect.height) {
+		ASSERT(0);
+		return false;
+	}
+
 	pipe_ctx->plane_res.scl_data.format = convert_pixel_format_to_dalsurface(
 			pipe_ctx->plane_state->format);
 
@@ -1685,8 +1694,8 @@ bool dc_is_stream_unchanged(
 	if (old_stream->ignore_msa_timing_param != stream->ignore_msa_timing_param)
 		return false;
 
-	// Only Have Audio left to check whether it is same or not. This is a corner case for Tiled sinks
-	if (old_stream->audio_info.mode_count != stream->audio_info.mode_count)
+	/*compare audio info*/
+	if (memcmp(&old_stream->audio_info, &stream->audio_info, sizeof(stream->audio_info)) != 0)
 		return false;
 
 	return true;
