@@ -32,7 +32,8 @@ struct vc4_ctm_state {
 	int fifo;
 };
 
-static struct vc4_ctm_state *to_vc4_ctm_state(struct drm_private_state *priv)
+static struct vc4_ctm_state *
+to_vc4_ctm_state(const struct drm_private_state *priv)
 {
 	return container_of(priv, struct vc4_ctm_state, base);
 }
@@ -49,7 +50,7 @@ struct vc4_hvs_state {
 };
 
 static struct vc4_hvs_state *
-to_vc4_hvs_state(struct drm_private_state *priv)
+to_vc4_hvs_state(const struct drm_private_state *priv)
 {
 	return container_of(priv, struct vc4_hvs_state, base);
 }
@@ -61,7 +62,7 @@ struct vc4_load_tracker_state {
 };
 
 static struct vc4_load_tracker_state *
-to_vc4_load_tracker_state(struct drm_private_state *priv)
+to_vc4_load_tracker_state(const struct drm_private_state *priv)
 {
 	return container_of(priv, struct vc4_load_tracker_state, base);
 }
@@ -700,9 +701,26 @@ static void vc4_hvs_channels_destroy_state(struct drm_private_obj *obj,
 	kfree(hvs_state);
 }
 
+static void vc4_hvs_channels_print_state(struct drm_printer *p,
+					 const struct drm_private_state *state)
+{
+	struct vc4_hvs_state *hvs_state = to_vc4_hvs_state(state);
+	unsigned int i;
+
+	drm_printf(p, "HVS State\n");
+	drm_printf(p, "\tCore Clock Rate: %lu\n", hvs_state->core_clock_rate);
+
+	for (i = 0; i < HVS_NUM_CHANNELS; i++) {
+		drm_printf(p, "\tChannel %d\n", i);
+		drm_printf(p, "\t\tin use=%d\n", hvs_state->fifo_state[i].in_use);
+		drm_printf(p, "\t\tload=%lu\n", hvs_state->fifo_state[i].fifo_load);
+	}
+}
+
 static const struct drm_private_state_funcs vc4_hvs_state_funcs = {
 	.atomic_duplicate_state = vc4_hvs_channels_duplicate_state,
 	.atomic_destroy_state = vc4_hvs_channels_destroy_state,
+	.atomic_print_state = vc4_hvs_channels_print_state,
 };
 
 static void vc4_hvs_channels_obj_fini(struct drm_device *dev, void *unused)
