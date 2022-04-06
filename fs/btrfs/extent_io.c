@@ -6,6 +6,7 @@
 #include <linux/mm.h>
 #include <linux/pagemap.h>
 #include <linux/page-flags.h>
+#include <linux/sched/mm.h>
 #include <linux/spinlock.h>
 #include <linux/blkdev.h>
 #include <linux/swap.h>
@@ -3159,6 +3160,8 @@ int btrfs_alloc_page_array(unsigned int nr_pages, struct page **page_array)
 		 */
 		if (allocated == last)
 			return -ENOMEM;
+
+		memalloc_retry_wait(GFP_NOFS);
 	}
 	return 0;
 }
