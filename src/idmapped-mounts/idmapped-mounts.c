@@ -8031,6 +8031,27 @@ out:
 	return fret;
 }
 
+static int setgid_create_umask(void)
+{
+	pid_t pid;
+
+	umask(S_IXGRP);
+	pid = fork();
+	if (pid < 0)
+		die("failure: fork");
+
+	if (pid == 0) {
+		if (setgid_create())
+			die("failure: setgid");
+		exit(EXIT_SUCCESS);
+	}
+
+	if (wait_for_pid(pid))
+		return -1;
+	else
+		return 0;
+}
+
 static int setgid_create_idmapped(void)
 {
 	int fret = -1;
@@ -8155,6 +8176,27 @@ out:
 	safe_close(open_tree_fd);
 
 	return fret;
+}
+
+static int setgid_create_idmapped_umask(void)
+{
+	pid_t pid;
+
+	umask(S_IXGRP);
+	pid = fork();
+	if (pid < 0)
+		die("failure: fork");
+
+	if (pid == 0) {
+		if (setgid_create_idmapped())
+			die("failure: setgid");
+		exit(EXIT_SUCCESS);
+	}
+
+	if (wait_for_pid(pid))
+		return -1;
+	else
+		return 0;
 }
 
 static int setgid_create_idmapped_in_userns(void)
@@ -8490,6 +8532,27 @@ out:
 	safe_close(open_tree_fd);
 
 	return fret;
+}
+
+static int setgid_create_idmapped_in_userns_umask(void)
+{
+	pid_t pid;
+
+	umask(S_IXGRP);
+	pid = fork();
+	if (pid < 0)
+		die("failure: fork");
+
+	if (pid == 0) {
+		if (setgid_create_idmapped_in_userns())
+			die("failure: setgid");
+		exit(EXIT_SUCCESS);
+	}
+
+	if (wait_for_pid(pid))
+		return -1;
+	else
+		return 0;
 }
 
 #define PTR_TO_INT(p) ((int)((intptr_t)(p)))
@@ -14100,8 +14163,11 @@ struct t_idmapped_mounts t_setattr_fix_968219708108[] = {
 
 struct t_idmapped_mounts t_setgid[] = {
 	{ setgid_create,						false,	"create operations in directories with setgid bit set",						},
+	{ setgid_create_umask,						false,	"create operations in directories with setgid bit set by umask(S_IXGRP)",			},
 	{ setgid_create_idmapped,					true,	"create operations in directories with setgid bit set on idmapped mounts",			},
+	{ setgid_create_idmapped_umask,					true,	"create operations in directories with setgid bit set on idmapped mounts by umask(S_IXGRP)",	},
 	{ setgid_create_idmapped_in_userns,				true,	"create operations in directories with setgid bit set on idmapped mounts in user namespace",	},
+	{ setgid_create_idmapped_in_userns_umask,			true,   "create operations in directories with setgid bit set on idmapped mounts in user namespace by umask(S_IXGRP)",	},
 };
 
 static bool run_test(struct t_idmapped_mounts suite[], size_t suite_size)
