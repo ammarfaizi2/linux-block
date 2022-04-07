@@ -337,6 +337,24 @@ out:
 	return fret;
 }
 
+static bool openat_tmpfile_supported(int dirfd)
+{
+	int fd = -1;
+
+	fd = openat(dirfd, ".", O_TMPFILE | O_RDWR, S_IXGRP | S_ISGID);
+	if (fd == -1) {
+		if (errno == ENOTSUP)
+			return false;
+		else
+			return log_errno(false, "failure: create");
+	}
+
+	if (close(fd))
+		log_stderr("failure: close");
+
+	return true;
+}
+
 /* __expected_uid_gid - check whether file is owned by the provided uid and gid */
 static bool __expected_uid_gid(int dfd, const char *path, int flags,
 			       uid_t expected_uid, gid_t expected_gid, bool log)
@@ -7841,7 +7859,10 @@ static int setgid_create(void)
 {
 	int fret = -1;
 	int file1_fd = -EBADF;
+	int tmpfile_fd = -EBADF;
 	pid_t pid;
+	bool supported = false;
+	char path[PATH_MAX];
 
 	if (!caps_supported())
 		return 0;
@@ -7866,6 +7887,8 @@ static int setgid_create(void)
 		goto out;
 	}
 
+	supported = openat_tmpfile_supported(t_dir1_fd);
+
 	pid = fork();
 	if (pid < 0) {
 		log_stderr("failure: fork");
@@ -7883,9 +7906,24 @@ static int setgid_create(void)
 		if (!is_setgid(t_dir1_fd, FILE1, 0))
 			die("failure: is_setgid");
 
+		/* create tmpfile via filesystem tmpfile api */
+		if (supported) {
+			tmpfile_fd = openat(t_dir1_fd, ".", O_TMPFILE | O_RDWR, S_IXGRP | S_ISGID);
+			if (tmpfile_fd < 0)
+				die("failure: create");
+			/* link the temporary file into the filesystem, making it permanent */
+			snprintf(path, PATH_MAX,  "/proc/self/fd/%d", tmpfile_fd);
+			if (linkat(AT_FDCWD, path, t_dir1_fd, FILE2, AT_SYMLINK_FOLLOW))
+				die("failure: linkat");
+			if (close(tmpfile_fd))
+				die("failure: close");
+			if (!is_setgid(t_dir1_fd, FILE2, 0))
+				die("failure: is_setgid");
+		}
+
 		/* create directory */
 		if (mkdirat(t_dir1_fd, DIR1, 0000))
-			die("failure: create");
+			die("failure: mkdirat");
 
 		/* Directories always inherit the setgid bit. */
 		if (!is_setgid(t_dir1_fd, DIR1, 0))
@@ -7908,6 +7946,9 @@ static int setgid_create(void)
 		if (!expected_uid_gid(t_dir1_fd, FILE1, 0, 0, 0))
 			die("failure: check ownership");
 
+		if (supported && !expected_uid_gid(t_dir1_fd, FILE2, 0, 0, 0))
+			die("failure: check ownership");
+
 		if (!expected_uid_gid(t_dir1_fd, DIR1 "/" FILE1, 0, 0, 0))
 			die("failure: check ownership");
 
@@ -7918,6 +7959,9 @@ static int setgid_create(void)
 			die("failure: check ownership");
 
 		if (unlinkat(t_dir1_fd, FILE1, 0))
+			die("failure: delete");
+
+		if (supported && unlinkat(t_dir1_fd, FILE2, 0))
 			die("failure: delete");
 
 		if (unlinkat(t_dir1_fd, DIR1 "/" FILE1, 0))
@@ -7957,6 +8001,21 @@ static int setgid_create(void)
 		if (is_setgid(t_dir1_fd, FILE1, 0))
 			die("failure: is_setgid");
 
+		/* create tmpfile via filesystem tmpfile api */
+		if (supported) {
+			tmpfile_fd = openat(t_dir1_fd, ".", O_TMPFILE | O_RDWR, S_IXGRP | S_ISGID);
+			if (tmpfile_fd < 0)
+				die("failure: create");
+			/* link the temporary file into the filesystem, making it permanent */
+			snprintf(path, PATH_MAX,  "/proc/self/fd/%d", tmpfile_fd);
+			if (linkat(AT_FDCWD, path, t_dir1_fd, FILE2, AT_SYMLINK_FOLLOW))
+				die("failure: linkat");
+			if (close(tmpfile_fd))
+				die("failure: close");
+			if (is_setgid(t_dir1_fd, FILE2, 0))
+				die("failure: is_setgid");
+		}
+
 		/* create directory */
 		if (mkdirat(t_dir1_fd, DIR1, 0000))
 			die("failure: create");
@@ -7992,6 +8051,9 @@ static int setgid_create(void)
 		if (!expected_uid_gid(t_dir1_fd, FILE1, 0, 0, 0))
 			die("failure: check ownership");
 
+		if (supported && !expected_uid_gid(t_dir1_fd, FILE2, 0, 0, 0))
+			die("failure: check ownership");
+
 		/*
 		 * In setgid directories newly created directories always
 		 * inherit the gid from the parent directory. Verify that the
@@ -8007,6 +8069,9 @@ static int setgid_create(void)
 			die("failure: check ownership");
 
 		if (unlinkat(t_dir1_fd, FILE1, 0))
+			die("failure: delete");
+
+		if (supported && unlinkat(t_dir1_fd, FILE2, 0))
 			die("failure: delete");
 
 		if (unlinkat(t_dir1_fd, DIR1 "/" FILE1, 0))
@@ -8083,7 +8148,10 @@ static int setgid_create_idmapped(void)
 	struct mount_attr attr = {
 		.attr_set = MOUNT_ATTR_IDMAP,
 	};
+	int tmpfile_fd = -EBADF;
 	pid_t pid;
+	bool supported = false;
+	char path[PATH_MAX];
 
 	if (!caps_supported())
 		return 0;
@@ -8131,6 +8199,7 @@ static int setgid_create_idmapped(void)
 		goto out;
 	}
 
+	supported = openat_tmpfile_supported(open_tree_fd);
 	pid = fork();
 	if (pid < 0) {
 		log_stderr("failure: fork");
@@ -8150,6 +8219,21 @@ static int setgid_create_idmapped(void)
 		 */
 		if (is_setgid(open_tree_fd, FILE1, 0))
 			die("failure: is_setgid");
+
+		/* create tmpfile via filesystem tmpfile api */
+		if (supported) {
+			tmpfile_fd = openat(open_tree_fd, ".", O_TMPFILE | O_RDWR, S_IXGRP | S_ISGID);
+			if (tmpfile_fd < 0)
+				die("failure: create");
+			/* link the temporary file into the filesystem, making it permanent */
+			snprintf(path, PATH_MAX,  "/proc/self/fd/%d", tmpfile_fd);
+			if (linkat(AT_FDCWD, path, open_tree_fd, FILE2, AT_SYMLINK_FOLLOW))
+				die("failure: linkat");
+			if (close(tmpfile_fd))
+				die("failure: close");
+			if (is_setgid(open_tree_fd, FILE2, 0))
+				die("failure: is_setgid");
+		}
 
 		/* create directory */
 		if (mkdirat(open_tree_fd, DIR1, 0000))
@@ -8171,6 +8255,9 @@ static int setgid_create_idmapped(void)
 		 * by gid 10000, not by gid 11000.
 		 */
 		if (!expected_uid_gid(open_tree_fd, FILE1, 0, 10000, 10000))
+			die("failure: check ownership");
+
+		if (supported && !expected_uid_gid(open_tree_fd, FILE2, 0, 10000, 10000))
 			die("failure: check ownership");
 
 		/*
@@ -8254,7 +8341,10 @@ static int setgid_create_idmapped_in_userns(void)
 	struct mount_attr attr = {
 		.attr_set = MOUNT_ATTR_IDMAP,
 	};
+	int tmpfile_fd = -EBADF;
 	pid_t pid;
+	bool supported = false;
+	char path[PATH_MAX];
 
 	if (!caps_supported())
 		return 0;
@@ -8302,6 +8392,7 @@ static int setgid_create_idmapped_in_userns(void)
 		goto out;
 	}
 
+	supported = openat_tmpfile_supported(open_tree_fd);
 	pid = fork();
 	if (pid < 0) {
 		log_stderr("failure: fork");
@@ -8321,6 +8412,21 @@ static int setgid_create_idmapped_in_userns(void)
 		 */
 		if (!is_setgid(open_tree_fd, FILE1, 0))
 			die("failure: is_setgid");
+
+		/* create tmpfile via filesystem tmpfile api */
+		if (supported) {
+			tmpfile_fd = openat(open_tree_fd, ".", O_TMPFILE | O_RDWR, S_IXGRP | S_ISGID);
+			if (tmpfile_fd < 0)
+				die("failure: create");
+			/* link the temporary file into the filesystem, making it permanent */
+			snprintf(path, PATH_MAX,  "/proc/self/fd/%d", tmpfile_fd);
+			if (linkat(AT_FDCWD, path, open_tree_fd, FILE2, AT_SYMLINK_FOLLOW))
+				die("failure: linkat");
+			if (close(tmpfile_fd))
+				die("failure: close");
+			if (!is_setgid(open_tree_fd, FILE2, 0))
+				die("failure: is_setgid");
+		}
 
 		/* create directory */
 		if (mkdirat(open_tree_fd, DIR1, 0000))
@@ -8346,6 +8452,9 @@ static int setgid_create_idmapped_in_userns(void)
 		if (!expected_uid_gid(open_tree_fd, FILE1, 0, 0, 0))
 			die("failure: check ownership");
 
+		if (supported && !expected_uid_gid(open_tree_fd, FILE2, 0, 0, 0))
+			die("failure: check ownership");
+
 		if (!expected_uid_gid(open_tree_fd, DIR1, 0, 0, 0))
 			die("failure: check ownership");
 
@@ -8356,6 +8465,8 @@ static int setgid_create_idmapped_in_userns(void)
 			die("failure: check ownership");
 
 		if (unlinkat(open_tree_fd, FILE1, 0))
+			die("failure: delete");
+		if (supported && unlinkat(open_tree_fd, FILE2, 0))
 			die("failure: delete");
 		if (unlinkat(open_tree_fd, DIR1 "/" FILE1, 0))
 			die("failure: delete");
@@ -8410,6 +8521,21 @@ static int setgid_create_idmapped_in_userns(void)
 		if (is_setgid(open_tree_fd, FILE1, 0))
 			die("failure: is_setgid");
 
+		/* create tmpfile via filesystem tmpfile api */
+		if (supported) {
+			tmpfile_fd = openat(open_tree_fd, ".", O_TMPFILE | O_RDWR, S_IXGRP | S_ISGID);
+			if (tmpfile_fd < 0)
+				die("failure: create");
+			/* link the temporary file into the filesystem, making it permanent */
+			snprintf(path, PATH_MAX,  "/proc/self/fd/%d", tmpfile_fd);
+			if (linkat(AT_FDCWD, path, open_tree_fd, FILE2, AT_SYMLINK_FOLLOW))
+				die("failure: linkat");
+			if (close(tmpfile_fd))
+				die("failure: close");
+			if (is_setgid(open_tree_fd, FILE2, 0))
+				die("failure: is_setgid");
+		}
+
 		/* create directory */
 		if (mkdirat(open_tree_fd, DIR1, 0000))
 			die("failure: create");
@@ -8446,6 +8572,9 @@ static int setgid_create_idmapped_in_userns(void)
 		if (!expected_uid_gid(open_tree_fd, FILE1, 0, 0, 1000))
 			die("failure: check ownership");
 
+		if (supported && !expected_uid_gid(open_tree_fd, FILE2, 0, 0, 1000))
+			die("failure: check ownership");
+
 		/*
 		 * In setgid directories newly created directories always
 		 * inherit the gid from the parent directory. Verify that the
@@ -8461,6 +8590,9 @@ static int setgid_create_idmapped_in_userns(void)
 			die("failure: check ownership");
 
 		if (unlinkat(open_tree_fd, FILE1, 0))
+			die("failure: delete");
+
+		if (supported && unlinkat(open_tree_fd, FILE2, 0))
 			die("failure: delete");
 
 		if (unlinkat(open_tree_fd, DIR1 "/" FILE1, 0))
@@ -8515,6 +8647,21 @@ static int setgid_create_idmapped_in_userns(void)
 		if (is_setgid(open_tree_fd, FILE1, 0))
 			die("failure: is_setgid");
 
+		/* create tmpfile via filesystem tmpfile api */
+		if (supported) {
+			tmpfile_fd = openat(open_tree_fd, ".", O_TMPFILE | O_RDWR, S_IXGRP | S_ISGID);
+			if (tmpfile_fd < 0)
+				die("failure: create");
+			/* link the temporary file into the filesystem, making it permanent */
+			snprintf(path, PATH_MAX,  "/proc/self/fd/%d", tmpfile_fd);
+			if (linkat(AT_FDCWD, path, open_tree_fd, FILE2, AT_SYMLINK_FOLLOW))
+				die("failure: linkat");
+			if (close(tmpfile_fd))
+				die("failure: close");
+			if (is_setgid(open_tree_fd, FILE2, 0))
+				die("failure: is_setgid");
+		}
+
 		/* create directory */
 		if (mkdirat(open_tree_fd, DIR1, 0000))
 			die("failure: create");
@@ -8546,6 +8693,9 @@ static int setgid_create_idmapped_in_userns(void)
 		if (!expected_uid_gid(open_tree_fd, FILE1, 0, 0, 0))
 			die("failure: check ownership");
 
+		if (supported && !expected_uid_gid(open_tree_fd, FILE2, 0, 0, 0))
+			die("failure: check ownership");
+
 		if (!expected_uid_gid(open_tree_fd, DIR1, 0, 0, 0))
 			die("failure: check ownership");
 
@@ -8556,6 +8706,9 @@ static int setgid_create_idmapped_in_userns(void)
 			die("failure: check ownership");
 
 		if (unlinkat(open_tree_fd, FILE1, 0))
+			die("failure: delete");
+
+		if (supported && unlinkat(open_tree_fd, FILE2, 0))
 			die("failure: delete");
 
 		if (unlinkat(open_tree_fd, DIR1 "/" FILE1, 0))
