@@ -8052,6 +8052,30 @@ static int setgid_create_umask(void)
 		return 0;
 }
 
+static int setgid_create_acl(void)
+{
+	pid_t pid;
+
+	snprintf(t_buf, sizeof(t_buf), "setfacl -d -m u::rwx,g::rw,o::rwx %s/%s", t_mountpoint, T_DIR1);
+	if (system(t_buf))
+		die("failure: system");
+
+	pid = fork();
+	if (pid < 0)
+		die("failure: fork");
+
+	if (pid == 0) {
+		if (setgid_create())
+			die("failure: setgid");
+		exit(EXIT_SUCCESS);
+	}
+
+	if (wait_for_pid(pid))
+		return -1;
+	else
+		return 0;
+}
+
 static int setgid_create_idmapped(void)
 {
 	int fret = -1;
@@ -8183,6 +8207,30 @@ static int setgid_create_idmapped_umask(void)
 	pid_t pid;
 
 	umask(S_IXGRP);
+	pid = fork();
+	if (pid < 0)
+		die("failure: fork");
+
+	if (pid == 0) {
+		if (setgid_create_idmapped())
+			die("failure: setgid");
+		exit(EXIT_SUCCESS);
+	}
+
+	if (wait_for_pid(pid))
+		return -1;
+	else
+		return 0;
+}
+
+static int setgid_create_idmapped_acl(void)
+{
+	pid_t pid;
+
+	snprintf(t_buf, sizeof(t_buf), "setfacl -d -m u::rwx,g::rw,o::rwx %s/%s", t_mountpoint, T_DIR1);
+	if (system(t_buf))
+		die("failure: system");
+
 	pid = fork();
 	if (pid < 0)
 		die("failure: fork");
@@ -8546,6 +8594,30 @@ static int setgid_create_idmapped_in_userns_umask(void)
 	if (pid == 0) {
 		if (setgid_create_idmapped_in_userns())
 			die("failure: setgid");
+		exit(EXIT_SUCCESS);
+	}
+
+	if (wait_for_pid(pid))
+		return -1;
+	else
+		return 0;
+}
+
+static int setgid_create_idmapped_in_userns_acl(void)
+{
+	pid_t pid;
+
+	snprintf(t_buf, sizeof(t_buf), "setfacl -d -m u::rwx,g::rw,o::rwx %s/%s", t_mountpoint, T_DIR1);
+	if (system(t_buf))
+		die("failure: system");
+
+	pid = fork();
+	if (pid < 0)
+		die("failure: fork");
+
+	if (pid == 0) {
+		if (setgid_create_idmapped_in_userns())
+			die("failure: setgid_create");
 		exit(EXIT_SUCCESS);
 	}
 
@@ -14164,10 +14236,13 @@ struct t_idmapped_mounts t_setattr_fix_968219708108[] = {
 struct t_idmapped_mounts t_setgid[] = {
 	{ setgid_create,						false,	"create operations in directories with setgid bit set",						},
 	{ setgid_create_umask,						false,	"create operations in directories with setgid bit set by umask(S_IXGRP)",			},
+	{ setgid_create_acl,						false,	"create operations in directories with setgid bit set by setfacl(S_IXGRP)",			},
 	{ setgid_create_idmapped,					true,	"create operations in directories with setgid bit set on idmapped mounts",			},
 	{ setgid_create_idmapped_umask,					true,	"create operations in directories with setgid bit set on idmapped mounts by umask(S_IXGRP)",	},
+	{ setgid_create_idmapped_acl,					true,	"create operations in directories with setgid bit set on idmapped mounts by setfacl(S_IXGRP)",	},
 	{ setgid_create_idmapped_in_userns,				true,	"create operations in directories with setgid bit set on idmapped mounts in user namespace",	},
 	{ setgid_create_idmapped_in_userns_umask,			true,   "create operations in directories with setgid bit set on idmapped mounts in user namespace by umask(S_IXGRP)",	},
+	{ setgid_create_idmapped_in_userns_acl,				true,	"create operations in directories with setgid bit set on idmapped mounts in user namespace by setfacl(S_IXGRP)",},
 };
 
 static bool run_test(struct t_idmapped_mounts suite[], size_t suite_size)
