@@ -441,7 +441,6 @@ static void rtw_init_default_value(struct adapter *padapter)
 u8 rtw_reset_drv_sw(struct adapter *padapter)
 {
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
 
 	/* hal_priv */
 	rtl8188eu_init_default_value(padapter);
@@ -456,8 +455,6 @@ u8 rtw_reset_drv_sw(struct adapter *padapter)
 	pmlmepriv->LinkDetectInfo.bBusyTraffic = false;
 
 	_clr_fwstate_(pmlmepriv, _FW_UNDER_SURVEY | _FW_UNDER_LINKING);
-
-	pwrctrlpriv->pwr_state_check_cnts = 0;
 
 	/* mlmeextpriv */
 	padapter->mlmeextpriv.sitesurvey_res.state = SCAN_DISABLE;
@@ -490,10 +487,7 @@ u8 rtw_init_drv_sw(struct adapter *padapter)
 	init_wifidirect_info(padapter, P2P_ROLE_DISABLE);
 	reset_global_wifidirect_info(padapter);
 
-	if (init_mlme_ext_priv(padapter) == _FAIL) {
-		dev_err(dvobj_to_dev(padapter->dvobj), "init_mlme_ext_priv failed\n");
-		goto free_mlme_priv;
-	}
+	init_mlme_ext_priv(padapter);
 
 	if (_rtw_init_xmit_priv(&padapter->xmitpriv, padapter) == _FAIL) {
 		dev_err(dvobj_to_dev(padapter->dvobj), "_rtw_init_xmit_priv failed\n");
@@ -534,7 +528,6 @@ free_xmit_priv:
 free_mlme_ext:
 	free_mlme_ext_priv(&padapter->mlmeextpriv);
 
-free_mlme_priv:
 	rtw_free_mlme_priv(&padapter->mlmepriv);
 
 free_evt_priv:
@@ -632,12 +625,6 @@ int _netdev_open(struct net_device *pnetdev)
 {
 	uint status;
 	struct adapter *padapter = (struct adapter *)rtw_netdev_priv(pnetdev);
-	struct pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
-
-	if (pwrctrlpriv->ps_flag) {
-		padapter->net_closed = false;
-		goto netdev_open_normal_process;
-	}
 
 	if (!padapter->bup) {
 		padapter->bDriverStopped = false;
@@ -681,7 +668,6 @@ int _netdev_open(struct net_device *pnetdev)
 
 	netdev_br_init(pnetdev);
 
-netdev_open_normal_process:
 	return 0;
 
 netdev_open_error:

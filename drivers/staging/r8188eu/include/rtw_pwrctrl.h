@@ -47,16 +47,8 @@ struct pwrctrl_priv {
 	u8	smart_ps;
 	u8	bcn_ant_mode;
 
-	u32	alives;
-	struct work_struct cpwm_event;
 	bool	bpower_saving;
 
-	u8	reg_rfoff;
-	u8	reg_pdnmode; /* powerdown mode */
-
-	/* RF OFF Level */
-	u32	cur_ps_level;
-	u32	reg_rfps_level;
 	uint	ips_enter_cnts;
 	uint	ips_leave_cnts;
 
@@ -72,21 +64,15 @@ struct pwrctrl_priv {
 	u8	power_mgnt;
 	u8	bFwCurrentInPSMode;
 	u32	DelayLPSLastTimeStamp;
-	s32		pnp_current_pwr_state;
-	u8		pnp_bstop_trx;
 
 	u8		bInSuspend;
 	u8		bSupportRemoteWakeup;
 	struct timer_list pwr_state_check_timer;
 	int		pwr_state_check_interval;
-	u8		pwr_state_check_cnts;
-
-	int		ps_flag;
 
 	enum rt_rf_power_state	rf_pwrstate;/* cur power state */
 	enum rt_rf_power_state	change_rfpwrstate;
 
-	u8		wepkeymask;
 	u8		bkeepfwalive;
 };
 
@@ -121,10 +107,7 @@ s32 LPS_RF_ON_check(struct adapter *adapter, u32 delay_ms);
 void LPS_Enter(struct adapter *adapter);
 void LPS_Leave(struct adapter *adapter);
 
-int _rtw_pwr_wakeup(struct adapter *adapter, u32 ips_defer_ms,
-		    const char *caller);
-#define rtw_pwr_wakeup(adapter)						\
-	 _rtw_pwr_wakeup(adapter, RTW_PWR_STATE_CHK_INTERVAL, __func__)
+int rtw_pwr_wakeup(struct adapter *adapter);
 int rtw_pm_set_ips(struct adapter *adapter, u8 mode);
 int rtw_pm_set_lps(struct adapter *adapter, u8 mode);
 
