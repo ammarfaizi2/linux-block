@@ -1686,7 +1686,7 @@ static void rtw89_phy_c2h_ra_rpt_iter(void *data, struct ieee80211_sta *sta)
 		break;
 	case RTW89_RA_RPT_MODE_HT:
 		ra_report->txrate.flags |= RATE_INFO_FLAGS_MCS;
-		if (rtwdev->fw.old_ht_ra_format)
+		if (RTW89_CHK_FW_FEATURE(OLD_HT_RA_FORMAT, &rtwdev->fw))
 			rate = RTW89_MK_HT_RATE(FIELD_GET(RTW89_RA_RATE_MASK_NSS, rate),
 						FIELD_GET(RTW89_RA_RATE_MASK_MCS, rate));
 		else
@@ -3180,6 +3180,21 @@ static void rtw89_phy_dig_sdagc_follow_pagc_config(struct rtw89_dev *rtwdev,
 	rtw89_debug(rtwdev, RTW89_DBG_DIG, "sdagc_follow_pagc=%d\n", enable);
 }
 
+static void rtw89_phy_dig_config_igi(struct rtw89_dev *rtwdev)
+{
+	struct rtw89_dig_info *dig = &rtwdev->dig;
+
+	if (dig->force_gaincode_idx_en) {
+		rtw89_phy_dig_set_igi_cr(rtwdev, dig->force_gaincode);
+		rtw89_debug(rtwdev, RTW89_DBG_DIG,
+			    "Force gaincode index enabled.\n");
+	} else {
+		rtw89_phy_dig_gaincode_by_rssi(rtwdev, dig->igi_fa_rssi,
+					       &dig->cur_gaincode);
+		rtw89_phy_dig_set_igi_cr(rtwdev, dig->cur_gaincode);
+	}
+}
+
 static void rtw89_phy_dig_dyn_pd_th(struct rtw89_dev *rtwdev, u8 rssi,
 				    bool enable)
 {
@@ -3294,15 +3309,8 @@ void rtw89_phy_dig(struct rtw89_dev *rtwdev)
 		    dig->igi_rssi, dig->dyn_igi_max, dig->dyn_igi_min,
 		    dig->igi_fa_rssi);
 
-	if (dig->force_gaincode_idx_en) {
-		rtw89_phy_dig_set_igi_cr(rtwdev, dig->force_gaincode);
-		rtw89_debug(rtwdev, RTW89_DBG_DIG,
-			    "Force gaincode index enabled.\n");
-	} else {
-		rtw89_phy_dig_gaincode_by_rssi(rtwdev, dig->igi_fa_rssi,
-					       &dig->cur_gaincode);
-		rtw89_phy_dig_set_igi_cr(rtwdev, dig->cur_gaincode);
-	}
+	if (rtwdev->hal.support_igi)
+		rtw89_phy_dig_config_igi(rtwdev);
 
 	rtw89_phy_dig_dyn_pd_th(rtwdev, dig->igi_fa_rssi, dig->dyn_pd_th_en);
 
