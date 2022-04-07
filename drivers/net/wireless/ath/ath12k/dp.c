@@ -1242,7 +1242,7 @@ void ath12k_dp_cc_config(struct ath12k_base *ab)
 	/* Enable conversion complete indication */
 	val = ath12k_hif_read32(ab, wbm_base + HAL_WBM_SW_COOKIE_CFG2);
 	val |= FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_RELEASE_PATH_EN, 1) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_ERR_PATH_EN, 1);
+		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_ERR_PATH_EN, 1) |
 		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_CONV_IND_EN, 1);
 
 	ath12k_hif_write32(ab, wbm_base + HAL_WBM_SW_COOKIE_CFG2, val);
