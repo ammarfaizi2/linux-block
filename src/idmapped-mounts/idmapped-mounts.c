@@ -13809,6 +13809,7 @@ static void usage(void)
 	fprintf(stderr, "--test-nested-userns                Run nested userns idmapped mount testsuite\n");
 	fprintf(stderr, "--test-btrfs                        Run btrfs specific idmapped mount testsuite\n");
 	fprintf(stderr, "--test-setattr-fix-968219708108     Run setattr regression tests\n");
+	fprintf(stderr, "--test-setgid                       Run setgid create tests\n");
 
 	_exit(EXIT_SUCCESS);
 }
@@ -13826,6 +13827,7 @@ static const struct option longopts[] = {
 	{"test-nested-userns",			no_argument,		0,	'n'},
 	{"test-btrfs",				no_argument,		0,	'b'},
 	{"test-setattr-fix-968219708108",	no_argument,		0,	'i'},
+	{"test-setgid",				no_argument,		0,	'j'},
 	{NULL,					0,			0,	  0},
 };
 
@@ -13866,9 +13868,6 @@ struct t_idmapped_mounts {
 	{ setattr_truncate,						false,	"setattr truncate",										},
 	{ setattr_truncate_idmapped,					true,	"setattr truncate on idmapped mounts",								},
 	{ setattr_truncate_idmapped_in_userns,				true,	"setattr truncate on idmapped mounts in user namespace",					},
-	{ setgid_create,						false,	"create operations in directories with setgid bit set",						},
-	{ setgid_create_idmapped,					true,	"create operations in directories with setgid bit set on idmapped mounts",			},
-	{ setgid_create_idmapped_in_userns,				true,	"create operations in directories with setgid bit set on idmapped mounts in user namespace",	},
 	{ setid_binaries,						false,	"setid binaries on regular mounts",								},
 	{ setid_binaries_idmapped_mounts,				true,	"setid binaries on idmapped mounts",								},
 	{ setid_binaries_idmapped_mounts_in_userns,			true,	"setid binaries on idmapped mounts in user namespace",						},
@@ -13921,6 +13920,12 @@ struct t_idmapped_mounts t_btrfs[] = {
 /* Test for commit 968219708108 ("fs: handle circular mappings correctly"). */
 struct t_idmapped_mounts t_setattr_fix_968219708108[] = {
 	{ setattr_fix_968219708108,					true,	"test that setattr works correctly",								},
+};
+
+struct t_idmapped_mounts t_setgid[] = {
+	{ setgid_create,						false,	"create operations in directories with setgid bit set",						},
+	{ setgid_create_idmapped,					true,	"create operations in directories with setgid bit set on idmapped mounts",			},
+	{ setgid_create_idmapped_in_userns,				true,	"create operations in directories with setgid bit set on idmapped mounts in user namespace",	},
 };
 
 static bool run_test(struct t_idmapped_mounts suite[], size_t suite_size)
@@ -14000,7 +14005,7 @@ int main(int argc, char *argv[])
 	int index = 0;
 	bool supported = false, test_btrfs = false, test_core = false,
 	     test_fscaps_regression = false, test_nested_userns = false,
-	     test_setattr_fix_968219708108 = false;
+	     test_setattr_fix_968219708108 = false, test_setgid = false;
 
 	while ((ret = getopt_long_only(argc, argv, "", longopts, &index)) != -1) {
 		switch (ret) {
@@ -14036,6 +14041,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'i':
 			test_setattr_fix_968219708108 = true;
+			break;
+		case 'j':
+			test_setgid = true;
 			break;
 		case 'h':
 			/* fallthrough */
@@ -14104,6 +14112,9 @@ int main(int argc, char *argv[])
 	if (test_setattr_fix_968219708108 &&
 	    !run_test(t_setattr_fix_968219708108,
 		      ARRAY_SIZE(t_setattr_fix_968219708108)))
+		goto out;
+
+	if (test_setgid && !run_test(t_setgid, ARRAY_SIZE(t_setgid)))
 		goto out;
 
 	fret = EXIT_SUCCESS;

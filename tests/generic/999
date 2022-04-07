@@ -1,0 +1,26 @@
+#! /bin/bash
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (c) 2022 FUJITSU LIMITED. All rights reserved
+#
+# FS QA Test 999
+#
+# Test that setgid bit behave correctly.
+#
+. ./common/preamble
+_begin_fstest auto quick cap idmapped mount perms rw
+
+# Import common functions.
+. ./common/filter
+
+# real QA test starts here
+
+_supported_fs generic
+_require_test
+
+echo "Silence is golden"
+
+$here/src/idmapped-mounts/idmapped-mounts --test-setgid --device "$TEST_DEV" \
+	--mount "$TEST_DIR" --fstype "$FSTYP"
+
+status=$?
+exit
