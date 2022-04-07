@@ -14254,6 +14254,8 @@ int main(int argc, char *argv[])
 		die("failed to open %s", t_mountpoint_scratch);
 
 	t_fs_allow_idmap = fs_allow_idmap();
+	/*Don't copy ENOSYS errno to child proecss on older kernel*/
+	errno = 0;
 	if (supported) {
 		/*
 		 * Caller just wants to know whether the filesystem we're on
