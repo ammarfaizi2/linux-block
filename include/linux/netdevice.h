@@ -862,6 +862,7 @@ enum net_device_path_type {
 	DEV_PATH_BRIDGE,
 	DEV_PATH_PPPOE,
 	DEV_PATH_DSA,
+	DEV_PATH_MTK_WDMA,
 };
 
 struct net_device_path {
@@ -887,6 +888,12 @@ struct net_device_path {
 			int port;
 			u16 proto;
 		} dsa;
+		struct {
+			u8 wdma_idx;
+			u8 queue;
+			u16 wcid;
+			u8 bss;
+		} mtk_wdma;
 	};
 };
 
@@ -3894,7 +3901,8 @@ void dev_queue_xmit_nit(struct sk_buff *skb, struct net_device *dev);
 extern int		netdev_budget;
 extern unsigned int	netdev_budget_usecs;
 
-/* Called by rtnetlink.c:rtnl_unlock() */
+/* Used by rtnetlink.c:__rtnl_unlock()/rtnl_unlock() */
+extern struct list_head net_todo_list;
 void netdev_run_todo(void);
 
 static inline void __dev_put(struct net_device *dev)
