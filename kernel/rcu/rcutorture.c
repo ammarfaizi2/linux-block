@@ -1178,7 +1178,7 @@ rcu_torture_writer(void *arg)
 			 " GP expediting controlled from boot/sysfs for %s.\n",
 			 torture_type, cur_ops->name);
 	if (WARN_ONCE(nsynctypes == 0,
-		      "rcu_torture_writer: No update-side primitives.\n")) {
+		      "%s: No update-side primitives.\n", __func__)) {
 		/*
 		 * No updates primitives, so don't try updating.
 		 * The resulting test won't be testing much, hence the
@@ -1186,6 +1186,7 @@ rcu_torture_writer(void *arg)
 		 */
 		rcu_torture_writer_state = RTWS_STOPPING;
 		torture_kthread_stopping("rcu_torture_writer");
+		return 0;
 	}
 
 	do {
@@ -1321,6 +1322,17 @@ rcu_torture_fakewriter(void *arg)
 
 	VERBOSE_TOROUT_STRING("rcu_torture_fakewriter task started");
 	set_user_nice(current, MAX_NICE);
+
+	if (WARN_ONCE(nsynctypes == 0,
+		      "%s: No update-side primitives.\n", __func__)) {
+		/*
+		 * No updates primitives, so don't try updating.
+		 * The resulting test won't be testing much, hence the
+		 * above WARN_ONCE().
+		 */
+		torture_kthread_stopping("rcu_torture_fakewriter");
+		return 0;
+	}
 
 	do {
 		torture_hrtimeout_jiffies(torture_random(&rand) % 10, &rand);
@@ -2916,10 +2928,12 @@ rcu_torture_cleanup(void)
 			pr_info("%s: Invoking %pS().\n", __func__, cur_ops->cb_barrier);
 			cur_ops->cb_barrier();
 		}
+		rcu_gp_slow_unregister(NULL);
 		return;
 	}
 	if (!cur_ops) {
 		torture_cleanup_end();
+		rcu_gp_slow_unregister(NULL);
 		return;
 	}
 
@@ -3016,6 +3030,7 @@ rcu_torture_cleanup(void)
 	else
 		rcu_torture_print_module_parms(cur_ops, "End of test: SUCCESS");
 	torture_cleanup_end();
+	rcu_gp_slow_unregister(&rcu_fwd_cb_nodelay);
 }
 
 #ifdef CONFIG_DEBUG_OBJECTS_RCU_HEAD
@@ -3320,6 +3335,7 @@ rcu_torture_init(void)
 	if (object_debug)
 		rcu_test_debug_objects();
 	torture_init_end();
+	rcu_gp_slow_register(&rcu_fwd_cb_nodelay);
 	return 0;
 
 unwind:
