@@ -12,6 +12,7 @@
 #ifdef __KERNEL__
 
 #include <linux/compiler.h>
+#include <linux/timekeeping.h>
 
 #include <asm/cpu.h>
 #include <asm/cpu-features.h>
@@ -94,7 +95,7 @@ static inline unsigned long random_get_entropy(void)
 	else if (likely(imp != PRID_IMP_R6000 && imp != PRID_IMP_R6000A))
 		return read_c0_random();
 	else
-		return 0;	/* no usable register */
+		return ktime_read_raw_clock();	/* no usable register */
 }
 #define random_get_entropy random_get_entropy
 
