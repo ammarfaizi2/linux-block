@@ -183,12 +183,29 @@ extern int timer_reduce(struct timer_list *timer, unsigned long expires);
 extern void add_timer(struct timer_list *timer);
 
 extern int try_to_del_timer_sync(struct timer_list *timer);
+extern int __del_timer_sync(struct timer_list *timer, bool free);
 
-#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
-  extern int del_timer_sync(struct timer_list *timer);
-#else
-# define del_timer_sync(t)		del_timer(t)
-#endif
+static inline int del_timer_sync(struct timer_list *timer)
+{
+	return __del_timer_sync(timer, false);
+}
+
+/**
+ * del_timer_shutdown - called before freeing the timer
+ * @timer: The timer to be freed
+ *
+ * Shutdown the timer before freeing. This will return when all pending timers
+ * have finished and it is safe to free the timer.
+ *
+ * Note, after calling this, if the timer is added back to the queue
+ * it will fail to be added and a WARNING will be triggered.
+ *
+ * Returns if it deactivated a pending timer or not.
+ */
+static inline int del_timer_shutdown(struct timer_list *timer)
+{
+	return __del_timer_sync(timer, true);
+}
 
 #define del_singleshot_timer_sync(t) del_timer_sync(t)
 

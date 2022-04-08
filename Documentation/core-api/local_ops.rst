@@ -191,7 +191,7 @@ Here is a sample module which implements a basic per cpu counter using
 
     static void __exit test_exit(void)
     {
-            del_timer_sync(&test_timer);
+            del_timer_shutdown(&test_timer);
     }
 
     module_init(test_init);
