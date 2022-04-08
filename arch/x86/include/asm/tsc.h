@@ -5,6 +5,7 @@
 #ifndef _ASM_X86_TSC_H
 #define _ASM_X86_TSC_H
 
+#include <linux/timekeeping.h>
 #include <asm/processor.h>
 #include <asm/cpufeature.h>
 
@@ -27,6 +28,16 @@ static inline cycles_t get_cycles(void)
 
 	return rdtsc();
 }
+
+static inline unsigned long random_get_entropy(void)
+{
+#ifndef CONFIG_X86_TSC
+	if (!boot_cpu_has(X86_FEATURE_TSC))
+		return ktime_read_raw_clock();
+#endif
+	return rdtsc();
+}
+#define random_get_entropy random_get_entropy
 
 extern struct system_counterval_t convert_art_to_tsc(u64 art);
 extern struct system_counterval_t convert_art_ns_to_tsc(u64 art_ns);
