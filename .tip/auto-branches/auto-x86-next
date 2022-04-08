@@ -29,5 +29,6 @@ x86/sev
 x86/sgx
 x86/splitlock
 x86/timers
+x86/tdx
 x86/vdso
 x86/vmware
