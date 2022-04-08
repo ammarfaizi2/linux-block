@@ -7,6 +7,8 @@
 #ifndef _ASMm68K_TIMEX_H
 #define _ASMm68K_TIMEX_H
 
+#include <linux/timekeeping.h>
+
 #ifdef CONFIG_COLDFIRE
 /*
  * CLOCK_TICK_RATE should give the underlying frequency of the tick timer
@@ -35,7 +37,7 @@ static inline unsigned long random_get_entropy(void)
 {
 	if (mach_random_get_entropy)
 		return mach_random_get_entropy();
-	return 0;
+	return ktime_read_raw_clock();
 }
 #define random_get_entropy	random_get_entropy
 
