@@ -104,6 +104,7 @@
 #include <linux/swapops.h>
 
 #include <asm/tlbflush.h>
+#include <asm/tlb.h>
 #include <linux/uaccess.h>
 
 #include "internal.h"
@@ -636,11 +637,17 @@ unlock:
 unsigned long change_prot_numa(struct vm_area_struct *vma,
 			unsigned long addr, unsigned long end)
 {
+	struct mmu_gather tlb;
 	int nr_updated;
 
-	nr_updated = change_protection(vma, addr, end, PAGE_NONE, MM_CP_PROT_NUMA);
+	tlb_gather_mmu(&tlb, vma->vm_mm);
+
+	nr_updated = change_protection(&tlb, vma, addr, end, PAGE_NONE,
+				       MM_CP_PROT_NUMA);
 	if (nr_updated)
 		count_vm_numa_events(NUMA_PTE_UPDATES, nr_updated);
+
+	tlb_finish_mmu(&tlb);
 
 	return nr_updated;
 }
@@ -2743,6 +2750,7 @@ alloc_new:
 	mpol_new = kmem_cache_alloc(policy_cache, GFP_KERNEL);
 	if (!mpol_new)
 		goto err_out;
+	atomic_set(&mpol_new->refcnt, 1);
 	goto restart;
 }
 

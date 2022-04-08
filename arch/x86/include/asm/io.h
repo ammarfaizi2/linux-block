@@ -210,7 +210,7 @@ void __iomem *ioremap(resource_size_t offset, unsigned long size);
 extern void iounmap(volatile void __iomem *addr);
 #define iounmap iounmap
 
-extern void set_iounmap_nonlazy(void);
+void iounmap_purge_vmap_area(void);
 
 #ifdef __KERNEL__
 
