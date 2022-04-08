@@ -7,6 +7,7 @@
 #define _ASM_RISCV_TIMEX_H
 
 #include <asm/csr.h>
+#include <linux/timekeeping.h>
 
 typedef unsigned long cycles_t;
 
@@ -41,7 +42,7 @@ static inline u32 get_cycles_hi(void)
 static inline unsigned long random_get_entropy(void)
 {
 	if (unlikely(clint_time_val == NULL))
-		return 0;
+		return ktime_read_raw_clock();
 	return get_cycles();
 }
 #define random_get_entropy()	random_get_entropy()
