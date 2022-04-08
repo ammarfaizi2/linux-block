@@ -1710,8 +1710,7 @@ static void io_kill_timeout(struct io_kiocb *req, int status)
 	if (hrtimer_try_to_cancel(&io->timer) != -1) {
 		if (status)
 			req_set_fail(req);
-		atomic_set(&req->ctx->cq_timeouts,
-			atomic_read(&req->ctx->cq_timeouts) + 1);
+		atomic_inc(&req->ctx->cq_timeouts);
 		list_del_init(&req->timeout.list);
 		io_fill_cqe_req(req, status, 0);
 		io_put_req_deferred(req);
@@ -1736,12 +1735,11 @@ static __cold void io_flush_timeouts(struct io_ring_ctx *ctx)
 	__must_hold(&ctx->completion_lock)
 {
 	u32 seq = ctx->cached_cq_tail - atomic_read(&ctx->cq_timeouts);
+	struct io_kiocb *req, *tmp;
 
 	spin_lock_irq(&ctx->timeout_lock);
-	while (!list_empty(&ctx->timeout_list)) {
+	list_for_each_entry_safe(req, tmp, &ctx->timeout_list, timeout.list) {
 		u32 events_needed, events_got;
-		struct io_kiocb *req = list_first_entry(&ctx->timeout_list,
-						struct io_kiocb, timeout.list);
 
 		if (io_is_timeout_noseq(req))
 			break;
@@ -1758,7 +1756,6 @@ static __cold void io_flush_timeouts(struct io_ring_ctx *ctx)
 		if (events_got < events_needed)
 			break;
 
-		list_del_init(&req->timeout.list);
 		io_kill_timeout(req, 0);
 	}
 	ctx->cq_last_tm_flush = seq;
@@ -6406,8 +6403,7 @@ static enum hrtimer_restart io_timeout_fn(struct hrtimer *timer)
 
 	spin_lock_irqsave(&ctx->timeout_lock, flags);
 	list_del_init(&req->timeout.list);
-	atomic_set(&req->ctx->cq_timeouts,
-		atomic_read(&req->ctx->cq_timeouts) + 1);
+	atomic_inc(&req->ctx->cq_timeouts);
 	spin_unlock_irqrestore(&ctx->timeout_lock, flags);
 
 	if (!(data->flags & IORING_TIMEOUT_ETIME_SUCCESS))
@@ -6628,6 +6624,7 @@ static int io_timeout_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 	if (data->ts.tv_sec < 0 || data->ts.tv_nsec < 0)
 		return -EINVAL;
 
+	INIT_LIST_HEAD(&req->timeout.list);
 	data->mode = io_translate_timeout_mode(flags);
 	hrtimer_init(&data->timer, io_timeout_get_clock(data), data->mode);
 
