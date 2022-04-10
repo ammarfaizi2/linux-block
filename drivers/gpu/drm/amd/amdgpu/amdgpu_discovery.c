@@ -430,7 +430,7 @@ static void amdgpu_discovery_read_harvest_bit_per_ip(struct amdgpu_device *adev,
                                 }
                         }
 next_ip:
-			ip_offset += sizeof(*ip) + 4 * (ip->num_base_address - 1);
+			ip_offset += struct_size(ip, base_address, ip->num_base_address);
 		}
 	}
 }
@@ -1147,13 +1147,6 @@ void amdgpu_discovery_harvest_ip(struct amdgpu_device *adev)
 	amdgpu_discovery_harvest_config_quirk(adev);
 
 	if (vcn_harvest_count == adev->vcn.num_vcn_inst) {
-		adev->harvest_ip_mask |= AMD_HARVEST_IP_VCN_MASK;
-		adev->harvest_ip_mask |= AMD_HARVEST_IP_JPEG_MASK;
-	}
-	if ((adev->pdev->device == 0x731E &&
-	     (adev->pdev->revision == 0xC6 || adev->pdev->revision == 0xC7)) ||
-	    (adev->pdev->device == 0x7340 && adev->pdev->revision == 0xC9)  ||
-	    (adev->pdev->device == 0x7360 && adev->pdev->revision == 0xC7)) {
 		adev->harvest_ip_mask |= AMD_HARVEST_IP_VCN_MASK;
 		adev->harvest_ip_mask |= AMD_HARVEST_IP_JPEG_MASK;
 	}
