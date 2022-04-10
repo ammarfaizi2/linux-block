@@ -6,6 +6,7 @@
 #include <linux/mm.h>
 #include <linux/pagemap.h>
 #include <linux/page-flags.h>
+#include <linux/sched/mm.h>
 #include <linux/spinlock.h>
 #include <linux/blkdev.h>
 #include <linux/swap.h>
@@ -75,6 +76,7 @@ void btrfs_extent_buffer_leak_debug_check(struct btrfs_fs_info *fs_info)
 	if (!fs_info->allocated_ebs.next)
 		return;
 
+	WARN_ON(!list_empty(&fs_info->allocated_ebs));
 	spin_lock_irqsave(&fs_info->eb_leak_lock, flags);
 	while (!list_empty(&fs_info->allocated_ebs)) {
 		eb = list_first_entry(&fs_info->allocated_ebs,
@@ -2303,12 +2305,13 @@ static int repair_io_failure(struct btrfs_fs_info *fs_info, u64 ino, u64 start,
 			     u64 length, u64 logical, struct page *page,
 			     unsigned int pg_offset, int mirror_num)
 {
-	struct bio *bio;
 	struct btrfs_device *dev;
+	struct bio_vec bvec;
+	struct bio bio;
 	u64 map_length = 0;
 	u64 sector;
 	struct btrfs_io_context *bioc = NULL;
-	int ret;
+	int ret = 0;
 
 	ASSERT(!(fs_info->sb->s_flags & SB_RDONLY));
 	BUG_ON(!mirror_num);
@@ -2316,8 +2319,6 @@ static int repair_io_failure(struct btrfs_fs_info *fs_info, u64 ino, u64 start,
 	if (btrfs_repair_one_zone(fs_info, logical))
 		return 0;
 
-	bio = btrfs_bio_alloc(1);
-	bio->bi_iter.bi_size = 0;
 	map_length = length;
 
 	/*
@@ -2335,52 +2336,50 @@ static int repair_io_failure(struct btrfs_fs_info *fs_info, u64 ino, u64 start,
 		 */
 		ret = btrfs_map_block(fs_info, BTRFS_MAP_READ, logical,
 				      &map_length, &bioc, 0);
-		if (ret) {
-			btrfs_bio_counter_dec(fs_info);
-			bio_put(bio);
-			return -EIO;
-		}
+		if (ret)
+			goto out_counter_dec;
 		ASSERT(bioc->mirror_num == 1);
 	} else {
 		ret = btrfs_map_block(fs_info, BTRFS_MAP_WRITE, logical,
 				      &map_length, &bioc, mirror_num);
-		if (ret) {
-			btrfs_bio_counter_dec(fs_info);
-			bio_put(bio);
-			return -EIO;
-		}
+		if (ret)
+			goto out_counter_dec;
 		BUG_ON(mirror_num != bioc->mirror_num);
 	}
 
 	sector = bioc->stripes[bioc->mirror_num - 1].physical >> 9;
-	bio->bi_iter.bi_sector = sector;
 	dev = bioc->stripes[bioc->mirror_num - 1].dev;
 	btrfs_put_bioc(bioc);
+
 	if (!dev || !dev->bdev ||
 	    !test_bit(BTRFS_DEV_STATE_WRITEABLE, &dev->dev_state)) {
-		btrfs_bio_counter_dec(fs_info);
-		bio_put(bio);
-		return -EIO;
+		ret = -EIO;
+		goto out_counter_dec;
 	}
-	bio_set_dev(bio, dev->bdev);
-	bio->bi_opf = REQ_OP_WRITE | REQ_SYNC;
-	bio_add_page(bio, page, length, pg_offset);
 
-	if (btrfsic_submit_bio_wait(bio)) {
+	bio_init(&bio, dev->bdev, &bvec, 1, REQ_OP_WRITE | REQ_SYNC);
+	bio.bi_iter.bi_sector = sector;
+	__bio_add_page(&bio, page, length, pg_offset);
+
+	btrfsic_check_bio(&bio);
+	ret = submit_bio_wait(&bio);
+	if (ret) {
 		/* try to remap that extent elsewhere? */
-		btrfs_bio_counter_dec(fs_info);
-		bio_put(bio);
 		btrfs_dev_stat_inc_and_print(dev, BTRFS_DEV_STAT_WRITE_ERRS);
-		return -EIO;
+		goto out_bio_uninit;
 	}
 
 	btrfs_info_rl_in_rcu(fs_info,
 		"read error corrected: ino %llu off %llu (dev %s sector %llu)",
 				  ino, start,
 				  rcu_str_deref(dev->name), sector);
+	ret = 0;
+
+out_bio_uninit:
+	bio_uninit(&bio);
+out_counter_dec:
 	btrfs_bio_counter_dec(fs_info);
-	bio_put(bio);
-	return 0;
+	return ret;
 }
 
 int btrfs_repair_eb_io_failure(const struct extent_buffer *eb, int mirror_num)
@@ -2709,7 +2708,7 @@ static void end_page_read(struct page *page, bool uptodate, u64 start, u32 len)
 		btrfs_page_set_error(fs_info, page, start, len);
 	}
 
-	if (fs_info->sectorsize == PAGE_SIZE)
+	if (!btrfs_is_subpage(fs_info, page))
 		unlock_page(page);
 	else
 		btrfs_subpage_end_reader(fs_info, page, start, len);
@@ -2942,7 +2941,7 @@ update:
 static void begin_page_read(struct btrfs_fs_info *fs_info, struct page *page)
 {
 	ASSERT(PageLocked(page));
-	if (fs_info->sectorsize == PAGE_SIZE)
+	if (!btrfs_is_subpage(fs_info, page))
 		return;
 
 	ASSERT(PagePrivate(page));
@@ -2964,7 +2963,7 @@ static struct extent_buffer *find_extent_buffer_readpage(
 	 * For regular sectorsize, we can use page->private to grab extent
 	 * buffer
 	 */
-	if (fs_info->sectorsize == PAGE_SIZE) {
+	if (fs_info->nodesize >= PAGE_SIZE) {
 		ASSERT(PagePrivate(page) && page->private);
 		return (struct extent_buffer *)page->private;
 	}
@@ -3131,6 +3130,39 @@ readpage_ok:
 	bio_put(bio);
 }
 
+/**
+ * Populate every free slot in a provided array with pages.
+ *
+ * @nr_pages:   number of pages to allocate
+ * @page_array: the array to fill with pages; any existing non-null entries in
+ * 		the array will be skipped
+ *
+ * Return: 0        if all pages were able to be allocated;
+ *         -ENOMEM  otherwise, and the caller is responsible for freeing all
+ *                  non-null page pointers in the array.
+ */
+int btrfs_alloc_page_array(unsigned int nr_pages, struct page **page_array)
+{
+	unsigned int allocated;
+
+	for (allocated = 0; allocated < nr_pages;) {
+		unsigned int last = allocated;
+
+		allocated = alloc_pages_bulk_array(GFP_NOFS, nr_pages, page_array);
+
+		/*
+		 * During this iteration, no page could be allocated, even
+		 * though alloc_pages_bulk_array() falls back to alloc_page()
+		 * if  it could not bulk-allocate. So we must be out of memory.
+		 */
+		if (allocated == last)
+			return -ENOMEM;
+
+		memalloc_retry_wait(GFP_NOFS);
+	}
+	return 0;
+}
+
 /*
  * Initialize the members up to but not including 'bio'. Use after allocating a
  * new bio by bio_alloc_bioset as it does not initialize the bytes outside of
@@ -3156,13 +3188,13 @@ struct bio *btrfs_bio_alloc(unsigned int nr_iovecs)
 	return bio;
 }
 
-struct bio *btrfs_bio_clone(struct bio *bio)
+struct bio *btrfs_bio_clone(struct block_device *bdev, struct bio *bio)
 {
 	struct btrfs_bio *bbio;
 	struct bio *new;
 
 	/* Bio allocation backed by a bioset does not fail */
-	new = bio_alloc_clone(bio->bi_bdev, bio, GFP_NOFS, &btrfs_bioset);
+	new = bio_alloc_clone(bdev, bio, GFP_NOFS, &btrfs_bioset);
 	bbio = btrfs_bio(new);
 	btrfs_bio_init(bbio);
 	bbio->iter = bio->bi_iter;
@@ -3464,7 +3496,7 @@ static int attach_extent_buffer_page(struct extent_buffer *eb,
 	if (page->mapping)
 		lockdep_assert_held(&page->mapping->private_lock);
 
-	if (fs_info->sectorsize == PAGE_SIZE) {
+	if (fs_info->nodesize >= PAGE_SIZE) {
 		if (!PagePrivate(page))
 			attach_page_private(page, eb);
 		else
@@ -3499,7 +3531,7 @@ int set_page_extent_mapped(struct page *page)
 
 	fs_info = btrfs_sb(page->mapping->host->i_sb);
 
-	if (fs_info->sectorsize < PAGE_SIZE)
+	if (btrfs_is_subpage(fs_info, page))
 		return btrfs_attach_subpage(fs_info, page, BTRFS_SUBPAGE_DATA);
 
 	attach_page_private(page, (void *)EXTENT_PAGE_PRIVATE);
@@ -3516,7 +3548,7 @@ void clear_page_extent_mapped(struct page *page)
 		return;
 
 	fs_info = btrfs_sb(page->mapping->host->i_sb);
-	if (fs_info->sectorsize < PAGE_SIZE)
+	if (btrfs_is_subpage(fs_info, page))
 		return btrfs_detach_subpage(fs_info, page);
 
 	detach_page_private(page);
@@ -3863,7 +3895,7 @@ static void find_next_dirty_byte(struct btrfs_fs_info *fs_info,
 	 * For regular sector size == page size case, since one page only
 	 * contains one sector, we return the page offset directly.
 	 */
-	if (fs_info->sectorsize == PAGE_SIZE) {
+	if (!btrfs_is_subpage(fs_info, page)) {
 		*start = page_offset(page);
 		*end = page_offset(page) + PAGE_SIZE;
 		return;
@@ -4246,7 +4278,7 @@ static noinline_for_stack int lock_extent_buffer_for_io(struct extent_buffer *eb
 	 * Subpage metadata doesn't use page locking at all, so we can skip
 	 * the page locking.
 	 */
-	if (!ret || fs_info->sectorsize < PAGE_SIZE)
+	if (!ret || fs_info->nodesize < PAGE_SIZE)
 		return ret;
 
 	num_pages = num_extent_pages(eb);
@@ -4406,7 +4438,7 @@ static void end_bio_subpage_eb_writepage(struct bio *bio)
 	struct bvec_iter_all iter_all;
 
 	fs_info = btrfs_sb(bio_first_page_all(bio)->mapping->host->i_sb);
-	ASSERT(fs_info->sectorsize < PAGE_SIZE);
+	ASSERT(fs_info->nodesize < PAGE_SIZE);
 
 	ASSERT(!bio_flagged(bio, BIO_CLONED));
 	bio_for_each_segment_all(bvec, bio, iter_all) {
@@ -4733,7 +4765,7 @@ static int submit_eb_page(struct page *page, struct writeback_control *wbc,
 	if (!PagePrivate(page))
 		return 0;
 
-	if (btrfs_sb(page->mapping->host->i_sb)->sectorsize < PAGE_SIZE)
+	if (btrfs_sb(page->mapping->host->i_sb)->nodesize < PAGE_SIZE)
 		return submit_eb_subpage(page, wbc, epd);
 
 	spin_lock(&mapping->private_lock);
@@ -5790,7 +5822,7 @@ static void detach_extent_buffer_page(struct extent_buffer *eb, struct page *pag
 		return;
 	}
 
-	if (fs_info->sectorsize == PAGE_SIZE) {
+	if (fs_info->nodesize >= PAGE_SIZE) {
 		/*
 		 * We do this since we'll remove the pages after we've
 		 * removed the eb from the radix tree, so we could race
@@ -5897,9 +5929,9 @@ __alloc_extent_buffer(struct btrfs_fs_info *fs_info, u64 start,
 struct extent_buffer *btrfs_clone_extent_buffer(const struct extent_buffer *src)
 {
 	int i;
-	struct page *p;
 	struct extent_buffer *new;
 	int num_pages = num_extent_pages(src);
+	int ret;
 
 	new = __alloc_extent_buffer(src->fs_info, src->start, src->len);
 	if (new == NULL)
@@ -5912,22 +5944,23 @@ struct extent_buffer *btrfs_clone_extent_buffer(const struct extent_buffer *src)
 	 */
 	set_bit(EXTENT_BUFFER_UNMAPPED, &new->bflags);
 
+	memset(new->pages, 0, sizeof(*new->pages) * num_pages);
+	ret = btrfs_alloc_page_array(num_pages, new->pages);
+	if (ret) {
+		btrfs_release_extent_buffer(new);
+		return NULL;
+	}
+
 	for (i = 0; i < num_pages; i++) {
 		int ret;
+		struct page *p = new->pages[i];
 
-		p = alloc_page(GFP_NOFS);
-		if (!p) {
-			btrfs_release_extent_buffer(new);
-			return NULL;
-		}
 		ret = attach_extent_buffer_page(new, p, NULL);
 		if (ret < 0) {
-			put_page(p);
 			btrfs_release_extent_buffer(new);
 			return NULL;
 		}
 		WARN_ON(PageDirty(p));
-		new->pages[i] = p;
 		copy_page(page_address(p), page_address(src->pages[i]));
 	}
 	set_extent_buffer_uptodate(new);
@@ -5941,31 +5974,36 @@ struct extent_buffer *__alloc_dummy_extent_buffer(struct btrfs_fs_info *fs_info,
 	struct extent_buffer *eb;
 	int num_pages;
 	int i;
+	int ret;
 
 	eb = __alloc_extent_buffer(fs_info, start, len);
 	if (!eb)
 		return NULL;
 
 	num_pages = num_extent_pages(eb);
-	for (i = 0; i < num_pages; i++) {
-		int ret;
+	ret = btrfs_alloc_page_array(num_pages, eb->pages);
+	if (ret)
+		goto err;
 
-		eb->pages[i] = alloc_page(GFP_NOFS);
-		if (!eb->pages[i])
-			goto err;
-		ret = attach_extent_buffer_page(eb, eb->pages[i], NULL);
+	for (i = 0; i < num_pages; i++) {
+		struct page *p = eb->pages[i];
+
+		ret = attach_extent_buffer_page(eb, p, NULL);
 		if (ret < 0)
 			goto err;
 	}
+
 	set_extent_buffer_uptodate(eb);
 	btrfs_set_header_nritems(eb, 0);
 	set_bit(EXTENT_BUFFER_UNMAPPED, &eb->bflags);
 
 	return eb;
 err:
-	for (; i > 0; i--) {
-		detach_extent_buffer_page(eb, eb->pages[i - 1]);
-		__free_page(eb->pages[i - 1]);
+	for (i = 0; i < num_pages; i++) {
+		if (eb->pages[i]) {
+			detach_extent_buffer_page(eb, eb->pages[i]);
+			__free_page(eb->pages[i]);
+		}
 	}
 	__free_extent_buffer(eb);
 	return NULL;
@@ -6110,7 +6148,7 @@ static struct extent_buffer *grab_extent_buffer(
 	 * don't try to insert two ebs for the same bytenr.  So here we always
 	 * return NULL and just continue.
 	 */
-	if (fs_info->sectorsize < PAGE_SIZE)
+	if (fs_info->nodesize < PAGE_SIZE)
 		return NULL;
 
 	/* Page not yet attached to an extent buffer */
@@ -6132,6 +6170,30 @@ static struct extent_buffer *grab_extent_buffer(
 	return NULL;
 }
 
+static int check_eb_alignment(struct btrfs_fs_info *fs_info, u64 start)
+{
+	if (!IS_ALIGNED(start, fs_info->sectorsize)) {
+		btrfs_err(fs_info, "bad tree block start %llu", start);
+		return -EINVAL;
+	}
+
+	if (fs_info->nodesize < PAGE_SIZE &&
+	    offset_in_page(start) + fs_info->nodesize > PAGE_SIZE) {
+		btrfs_err(fs_info,
+		"tree block crosses page boundary, start %llu nodesize %u",
+			  start, fs_info->nodesize);
+		return -EINVAL;
+	}
+	if (fs_info->nodesize >= PAGE_SIZE &&
+	    !IS_ALIGNED(start, PAGE_SIZE)) {
+		btrfs_err(fs_info,
+		"tree block is not page aligned, start %llu nodesize %u",
+			  start, fs_info->nodesize);
+		return -EINVAL;
+	}
+	return 0;
+}
+
 struct extent_buffer *alloc_extent_buffer(struct btrfs_fs_info *fs_info,
 					  u64 start, u64 owner_root, int level)
 {
@@ -6146,10 +6208,8 @@ struct extent_buffer *alloc_extent_buffer(struct btrfs_fs_info *fs_info,
 	int uptodate = 1;
 	int ret;
 
-	if (!IS_ALIGNED(start, fs_info->sectorsize)) {
-		btrfs_err(fs_info, "bad tree block start %llu", start);
+	if (check_eb_alignment(fs_info, start))
 		return ERR_PTR(-EINVAL);
-	}
 
 #if BITS_PER_LONG == 32
 	if (start >= MAX_LFS_FILESIZE) {
@@ -6161,14 +6221,6 @@ struct extent_buffer *alloc_extent_buffer(struct btrfs_fs_info *fs_info,
 	if (start >= BTRFS_32BIT_EARLY_WARN_THRESHOLD)
 		btrfs_warn_32bit_limit(fs_info);
 #endif
-
-	if (fs_info->sectorsize < PAGE_SIZE &&
-	    offset_in_page(start) + len > PAGE_SIZE) {
-		btrfs_err(fs_info,
-		"tree block crosses page boundary, start %llu nodesize %lu",
-			  start, len);
-		return ERR_PTR(-EINVAL);
-	}
 
 	eb = find_extent_buffer(fs_info, start);
 	if (eb)
@@ -6199,7 +6251,7 @@ struct extent_buffer *alloc_extent_buffer(struct btrfs_fs_info *fs_info,
 		 * page, but it may change in the future for 16K page size
 		 * support, so we still preallocate the memory in the loop.
 		 */
-		if (fs_info->sectorsize < PAGE_SIZE) {
+		if (fs_info->nodesize < PAGE_SIZE) {
 			prealloc = btrfs_alloc_subpage(fs_info, BTRFS_SUBPAGE_METADATA);
 			if (IS_ERR(prealloc)) {
 				ret = PTR_ERR(prealloc);
@@ -6418,7 +6470,7 @@ void clear_extent_buffer_dirty(const struct extent_buffer *eb)
 	int num_pages;
 	struct page *page;
 
-	if (eb->fs_info->sectorsize < PAGE_SIZE)
+	if (eb->fs_info->nodesize < PAGE_SIZE)
 		return clear_subpage_extent_buffer_dirty(eb);
 
 	num_pages = num_extent_pages(eb);
@@ -6450,7 +6502,7 @@ bool set_extent_buffer_dirty(struct extent_buffer *eb)
 	WARN_ON(!test_bit(EXTENT_BUFFER_TREE_REF, &eb->bflags));
 
 	if (!was_dirty) {
-		bool subpage = eb->fs_info->sectorsize < PAGE_SIZE;
+		bool subpage = eb->fs_info->nodesize < PAGE_SIZE;
 
 		/*
 		 * For subpage case, we can have other extent buffers in the
@@ -6490,9 +6542,18 @@ void clear_extent_buffer_uptodate(struct extent_buffer *eb)
 	num_pages = num_extent_pages(eb);
 	for (i = 0; i < num_pages; i++) {
 		page = eb->pages[i];
-		if (page)
-			btrfs_page_clear_uptodate(fs_info, page,
-						  eb->start, eb->len);
+		if (!page)
+			continue;
+
+		/*
+		 * This is special handling for metadata subpage, as regular
+		 * btrfs_is_subpage() can not handle cloned/dummy metadata.
+		 */
+		if (fs_info->nodesize >= PAGE_SIZE)
+			ClearPageUptodate(page);
+		else
+			btrfs_subpage_clear_uptodate(fs_info, page, eb->start,
+						     eb->len);
 	}
 }
 
@@ -6507,7 +6568,16 @@ void set_extent_buffer_uptodate(struct extent_buffer *eb)
 	num_pages = num_extent_pages(eb);
 	for (i = 0; i < num_pages; i++) {
 		page = eb->pages[i];
-		btrfs_page_set_uptodate(fs_info, page, eb->start, eb->len);
+
+		/*
+		 * This is special handling for metadata subpage, as regular
+		 * btrfs_is_subpage() can not handle cloned/dummy metadata.
+		 */
+		if (fs_info->nodesize >= PAGE_SIZE)
+			SetPageUptodate(page);
+		else
+			btrfs_subpage_set_uptodate(fs_info, page, eb->start,
+						   eb->len);
 	}
 }
 
@@ -6602,7 +6672,7 @@ int read_extent_buffer_pages(struct extent_buffer *eb, int wait, int mirror_num)
 	if (unlikely(test_bit(EXTENT_BUFFER_WRITE_ERR, &eb->bflags)))
 		return -EIO;
 
-	if (eb->fs_info->sectorsize < PAGE_SIZE)
+	if (eb->fs_info->nodesize < PAGE_SIZE)
 		return read_extent_buffer_subpage(eb, wait, mirror_num);
 
 	num_pages = num_extent_pages(eb);
@@ -6857,7 +6927,7 @@ static void assert_eb_page_uptodate(const struct extent_buffer *eb,
 	 * would have !PageUptodate && !PageError, as we clear PageError before
 	 * reading.
 	 */
-	if (fs_info->sectorsize < PAGE_SIZE) {
+	if (fs_info->nodesize < PAGE_SIZE) {
 		bool uptodate, error;
 
 		uptodate = btrfs_subpage_test_uptodate(fs_info, page,
@@ -6959,7 +7029,7 @@ void copy_extent_buffer_full(const struct extent_buffer *dst,
 
 	ASSERT(dst->len == src->len);
 
-	if (dst->fs_info->sectorsize == PAGE_SIZE) {
+	if (dst->fs_info->nodesize >= PAGE_SIZE) {
 		num_pages = num_extent_pages(dst);
 		for (i = 0; i < num_pages; i++)
 			copy_page(page_address(dst->pages[i]),
@@ -6968,7 +7038,7 @@ void copy_extent_buffer_full(const struct extent_buffer *dst,
 		size_t src_offset = get_eb_offset_in_page(src, 0);
 		size_t dst_offset = get_eb_offset_in_page(dst, 0);
 
-		ASSERT(src->fs_info->sectorsize < PAGE_SIZE);
+		ASSERT(src->fs_info->nodesize < PAGE_SIZE);
 		memcpy(page_address(dst->pages[0]) + dst_offset,
 		       page_address(src->pages[0]) + src_offset,
 		       src->len);
@@ -7361,7 +7431,7 @@ int try_release_extent_buffer(struct page *page)
 {
 	struct extent_buffer *eb;
 
-	if (btrfs_sb(page->mapping->host->i_sb)->sectorsize < PAGE_SIZE)
+	if (btrfs_sb(page->mapping->host->i_sb)->nodesize < PAGE_SIZE)
 		return try_release_subpage_extent_buffer(page);
 
 	/*
