@@ -179,6 +179,8 @@ extern u64 ktime_get_raw_fast_ns(void);
 extern u64 ktime_get_boot_fast_ns(void);
 extern u64 ktime_get_real_fast_ns(void);
 
+extern u64 ktime_read_raw_clock(void);
+
 /*
  * timespec64/time64_t interfaces utilizing the ktime based ones
  * for API completeness, these could be implemented more efficiently

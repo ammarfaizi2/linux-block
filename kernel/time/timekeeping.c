@@ -940,6 +940,14 @@ ktime_t ktime_get_raw(void)
 EXPORT_SYMBOL_GPL(ktime_get_raw);
 
 /**
+ * ktime_read_raw_clock - Returns the raw clock source value
+ */
+u64 ktime_read_raw_clock(void)
+{
+	return tk_clock_read(&tk_core.timekeeper.tkr_mono);
+}
+
+/**
  * ktime_get_ts64 - get the monotonic clock in timespec64 format
  * @ts:		pointer to timespec variable
  *
