@@ -486,6 +486,7 @@ rcu_preempt_deferred_qs_irqrestore(struct task_struct *t, unsigned long flags)
 	t->rcu_read_unlock_special.s = 0;
 	if (special.b.need_qs) {
 		if (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD)) {
+			rdp->cpu_no_qs.b.norm = false;
 			rcu_report_qs_rdp(rdp);
 			udelay(rcu_unlock_delay);
 		} else {
@@ -1226,18 +1227,6 @@ static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu)
 	free_cpumask_var(cm);
 }
 
-/*
- * Spawn boost kthreads -- called as soon as the scheduler is running.
- */
-static void __init rcu_spawn_boost_kthreads(void)
-{
-	struct rcu_node *rnp;
-
-	rcu_for_each_leaf_node(rnp)
-		if (rcu_rnp_online_cpus(rnp))
-			rcu_spawn_one_boost_kthread(rnp);
-}
-
 #else /* #ifdef CONFIG_RCU_BOOST */
 
 static void rcu_initiate_boost(struct rcu_node *rnp, unsigned long flags)
@@ -1260,10 +1249,6 @@ static void rcu_spawn_one_boost_kthread(struct rcu_node *rnp)
 }
 
 static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu)
-{
-}
-
-static void __init rcu_spawn_boost_kthreads(void)
 {
 }
 
