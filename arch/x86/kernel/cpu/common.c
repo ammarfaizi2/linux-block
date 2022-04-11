@@ -1868,6 +1868,8 @@ void identify_secondary_cpu(struct cpuinfo_x86 *c)
 	validate_apic_and_package_id(c);
 	x86_spec_ctrl_setup_ap();
 	update_srbds_msr();
+
+	tsx_ap_init();
 }
 
 void print_cpu_info(struct cpuinfo_x86 *c)
