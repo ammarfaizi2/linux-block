@@ -151,6 +151,7 @@
 #include <linux/prandom.h>
 #include <linux/once_lite.h>
 
+#include "dev.h"
 #include "net-sysfs.h"
 
 
@@ -701,6 +702,10 @@ int dev_fill_forward_path(const struct net_device *dev, const u8 *daddr,
 		if (WARN_ON_ONCE(last_dev == ctx.dev))
 			return -1;
 	}
+
+	if (!ctx.dev)
+		return ret;
+
 	path = dev_fwd_path(stack);
 	if (!path)
 		return -1;
@@ -5370,13 +5375,11 @@ check_vlan_id:
 		*ppt_prev = pt_prev;
 	} else {
 drop:
-		if (!deliver_exact) {
+		if (!deliver_exact)
 			dev_core_stats_rx_dropped_inc(skb->dev);
-			kfree_skb_reason(skb, SKB_DROP_REASON_PTYPE_ABSENT);
-		} else {
+		else
 			dev_core_stats_rx_nohandler_inc(skb->dev);
-			kfree_skb(skb);
-		}
+		kfree_skb_reason(skb, SKB_DROP_REASON_UNHANDLED_PROTO);
 		/* Jamal, now you will not able to escape explaining
 		 * me how you were going to use this. :-)
 		 */
@@ -8641,7 +8644,6 @@ void dev_set_group(struct net_device *dev, int new_group)
 {
 	dev->group = new_group;
 }
-EXPORT_SYMBOL(dev_set_group);
 
 /**
  *	dev_pre_changeaddr_notify - Call NETDEV_PRE_CHANGEADDR.
@@ -8756,7 +8758,6 @@ int dev_change_carrier(struct net_device *dev, bool new_carrier)
 		return -ENODEV;
 	return ops->ndo_change_carrier(dev, new_carrier);
 }
-EXPORT_SYMBOL(dev_change_carrier);
 
 /**
  *	dev_get_phys_port_id - Get device physical port ID
@@ -8774,7 +8775,6 @@ int dev_get_phys_port_id(struct net_device *dev,
 		return -EOPNOTSUPP;
 	return ops->ndo_get_phys_port_id(dev, ppid);
 }
-EXPORT_SYMBOL(dev_get_phys_port_id);
 
 /**
  *	dev_get_phys_port_name - Get device physical port name
@@ -8797,7 +8797,6 @@ int dev_get_phys_port_name(struct net_device *dev,
 	}
 	return devlink_compat_phys_port_name_get(dev, name, len);
 }
-EXPORT_SYMBOL(dev_get_phys_port_name);
 
 /**
  *	dev_get_port_parent_id - Get the device's port parent identifier
@@ -8879,7 +8878,6 @@ int dev_change_proto_down(struct net_device *dev, bool proto_down)
 	dev->proto_down = proto_down;
 	return 0;
 }
-EXPORT_SYMBOL(dev_change_proto_down);
 
 /**
  *	dev_change_proto_down_reason - proto down reason
@@ -8904,7 +8902,6 @@ void dev_change_proto_down_reason(struct net_device *dev, unsigned long mask,
 		}
 	}
 }
-EXPORT_SYMBOL(dev_change_proto_down_reason);
 
 struct bpf_xdp_link {
 	struct bpf_link link;
@@ -9431,7 +9428,7 @@ static int dev_new_index(struct net *net)
 }
 
 /* Delayed registration/unregisteration */
-static LIST_HEAD(net_todo_list);
+LIST_HEAD(net_todo_list);
 DECLARE_WAIT_QUEUE_HEAD(netdev_unregistering_wq);
 
 static void net_set_todo(struct net_device *dev)
@@ -10359,6 +10356,7 @@ struct rtnl_link_stats64 *dev_get_stats(struct net_device *dev,
 			storage->rx_dropped += local_read(&core_stats->rx_dropped);
 			storage->tx_dropped += local_read(&core_stats->tx_dropped);
 			storage->rx_nohandler += local_read(&core_stats->rx_nohandler);
+			storage->rx_otherhost_dropped += local_read(&core_stats->rx_otherhost_dropped);
 		}
 	}
 	return storage;
