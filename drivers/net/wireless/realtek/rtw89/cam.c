@@ -18,7 +18,7 @@ rtw89_cam_get_sec_key_cmd(struct rtw89_dev *rtwdev,
 	u8 *cmd;
 	int i, j;
 
-	skb = rtw89_fw_h2c_alloc_skb_with_hdr(cmd_len);
+	skb = rtw89_fw_h2c_alloc_skb_with_hdr(rtwdev, cmd_len);
 	if (!skb)
 		return NULL;
 
@@ -320,6 +320,7 @@ int rtw89_cam_sec_key_add(struct rtw89_dev *rtwdev,
 			  struct ieee80211_sta *sta,
 			  struct ieee80211_key_conf *key)
 {
+	const struct rtw89_chip_info *chip = rtwdev->chip;
 	u8 hw_key_type;
 	bool ext_key = false;
 	int ret;
@@ -353,7 +354,8 @@ int rtw89_cam_sec_key_add(struct rtw89_dev *rtwdev,
 		return -EOPNOTSUPP;
 	}
 
-	key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV;
+	if (!chip->hw_sec_hdr)
+		key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV;
 
 	ret = rtw89_cam_sec_key_install(rtwdev, vif, sta, key, hw_key_type,
 					ext_key);
@@ -421,10 +423,8 @@ static void rtw89_cam_reset_key_iter(struct ieee80211_hw *hw,
 				     void *data)
 {
 	struct rtw89_dev *rtwdev = (struct rtw89_dev *)data;
-	struct rtw89_vif *rtwvif = (struct rtw89_vif *)vif->drv_priv;
 
 	rtw89_cam_sec_key_del(rtwdev, vif, sta, key, false);
-	rtw89_cam_deinit(rtwdev, rtwvif);
 }
 
 void rtw89_cam_deinit_addr_cam(struct rtw89_dev *rtwdev,
@@ -480,6 +480,12 @@ int rtw89_cam_init_addr_cam(struct rtw89_dev *rtwdev,
 	int i;
 	int ret;
 
+	if (unlikely(addr_cam->valid)) {
+		rtw89_debug(rtwdev, RTW89_DBG_FW,
+			    "addr cam is already valid; skip init\n");
+		return 0;
+	}
+
 	ret = rtw89_cam_get_avail_addr_cam(rtwdev, &addr_cam_idx);
 	if (ret) {
 		rtw89_err(rtwdev, "failed to get available addr cam\n");
@@ -530,6 +536,12 @@ static int rtw89_cam_init_bssid_cam(struct rtw89_dev *rtwdev,
 	struct rtw89_bssid_cam_entry *bssid_cam = &rtwvif->bssid_cam;
 	u8 bssid_cam_idx;
 	int ret;
+
+	if (unlikely(bssid_cam->valid)) {
+		rtw89_debug(rtwdev, RTW89_DBG_FW,
+			    "bssid cam is already valid; skip init\n");
+		return 0;
+	}
 
 	ret = rtw89_cam_get_avail_bssid_cam(rtwdev, &bssid_cam_idx);
 	if (ret) {
