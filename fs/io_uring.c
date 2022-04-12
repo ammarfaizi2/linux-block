@@ -907,7 +907,11 @@ struct io_kiocb {
 
 	u64				user_data;
 	u32				result;
-	u32				cflags;
+	/* fd initially, then cflags for completion */
+	union {
+		u32			cflags;
+		int			fd;
+	};
 
 	struct io_ring_ctx		*ctx;
 	struct task_struct		*task;
@@ -916,8 +920,12 @@ struct io_kiocb {
 	/* store used ubuf, so we can prevent reloading */
 	struct io_mapped_ubuf		*imu;
 
-	/* used by request caches, completion batching and iopoll */
-	struct io_wq_work_node		comp_list;
+	union {
+		/* used by request caches, completion batching and iopoll */
+		struct io_wq_work_node	comp_list;
+		/* cache ->apoll->events */
+		int apoll_events;
+	};
 	atomic_t			refs;
 	atomic_t			poll_refs;
 	struct io_task_work		io_task_work;
@@ -3183,19 +3191,18 @@ static inline void io_rw_done(struct kiocb *kiocb, ssize_t ret)
 static inline loff_t *io_kiocb_update_pos(struct io_kiocb *req)
 {
 	struct kiocb *kiocb = &req->rw.kiocb;
-	bool is_stream = req->file->f_mode & FMODE_STREAM;
 
-	if (kiocb->ki_pos == -1) {
-		if (!is_stream) {
-			req->flags |= REQ_F_CUR_POS;
-			kiocb->ki_pos = req->file->f_pos;
-			return &kiocb->ki_pos;
-		} else {
-			kiocb->ki_pos = 0;
-			return NULL;
-		}
+	if (kiocb->ki_pos != -1)
+		return &kiocb->ki_pos;
+
+	if (!(req->file->f_mode & FMODE_STREAM)) {
+		req->flags |= REQ_F_CUR_POS;
+		kiocb->ki_pos = req->file->f_pos;
+		return &kiocb->ki_pos;
 	}
-	return is_stream ? NULL : &kiocb->ki_pos;
+
+	kiocb->ki_pos = 0;
+	return NULL;
 }
 
 static void kiocb_done(struct io_kiocb *req, ssize_t ret,
@@ -5834,7 +5841,6 @@ static void io_poll_remove_entries(struct io_kiocb *req)
 static int io_poll_check_events(struct io_kiocb *req, bool locked)
 {
 	struct io_ring_ctx *ctx = req->ctx;
-	struct io_poll_iocb *poll = io_poll_get_single(req);
 	int v;
 
 	/* req->task == current here, checking PF_EXITING is safe */
@@ -5851,17 +5857,17 @@ static int io_poll_check_events(struct io_kiocb *req, bool locked)
 			return -ECANCELED;
 
 		if (!req->result) {
-			struct poll_table_struct pt = { ._key = req->cflags };
+			struct poll_table_struct pt = { ._key = req->apoll_events };
 
 			if (unlikely(!io_assign_file(req, IO_URING_F_UNLOCKED)))
 				req->result = -EBADF;
 			else
-				req->result = vfs_poll(req->file, &pt) & req->cflags;
+				req->result = vfs_poll(req->file, &pt) & req->apoll_events;
 		}
 
 		/* multishot, just fill an CQE and proceed */
-		if (req->result && !(req->cflags & EPOLLONESHOT)) {
-			__poll_t mask = mangle_poll(req->result & poll->events);
+		if (req->result && !(req->apoll_events & EPOLLONESHOT)) {
+			__poll_t mask = mangle_poll(req->result & req->apoll_events);
 			bool filled;
 
 			spin_lock(&ctx->completion_lock);
@@ -5939,7 +5945,7 @@ static void __io_poll_execute(struct io_kiocb *req, int mask, int events)
 	 * CPU. We want to avoid pulling in req->apoll->events for that
 	 * case.
 	 */
-	req->cflags = events;
+	req->apoll_events = events;
 	if (req->opcode == IORING_OP_POLL_ADD)
 		req->io_task_work.func = io_poll_task_func;
 	else
@@ -6331,7 +6337,7 @@ static int io_poll_add_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe
 		return -EINVAL;
 
 	io_req_set_refcount(req);
-	req->cflags = poll->events = io_poll_parse_events(sqe, flags);
+	req->apoll_events = poll->events = io_poll_parse_events(sqe, flags);
 	return 0;
 }
 
@@ -7088,9 +7094,9 @@ static bool io_assign_file(struct io_kiocb *req, unsigned int issue_flags)
 		return true;
 
 	if (req->flags & REQ_F_FIXED_FILE)
-		req->file = io_file_get_fixed(req, req->work.fd, issue_flags);
+		req->file = io_file_get_fixed(req, req->fd, issue_flags);
 	else
-		req->file = io_file_get_normal(req, req->work.fd);
+		req->file = io_file_get_normal(req, req->fd);
 	if (req->file)
 		return true;
 
@@ -7271,15 +7277,17 @@ static void io_wq_submit_work(struct io_wq_work *work)
 	if (timeout)
 		io_queue_linked_timeout(timeout);
 
-	if (!io_assign_file(req, issue_flags)) {
-		err = -EBADF;
-		work->flags |= IO_WQ_WORK_CANCEL;
-	}
 
 	/* either cancelled or io-wq is dying, so don't touch tctx->iowq */
 	if (work->flags & IO_WQ_WORK_CANCEL) {
+fail:
 		io_req_task_queue_fail(req, err);
 		return;
+	}
+	if (!io_assign_file(req, issue_flags)) {
+		err = -EBADF;
+		work->flags |= IO_WQ_WORK_CANCEL;
+		goto fail;
 	}
 
 	if (req->flags & REQ_F_FORCE_ASYNC) {
@@ -7628,7 +7636,7 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	if (io_op_defs[opcode].needs_file) {
 		struct io_submit_state *state = &ctx->submit_state;
 
-		req->work.fd = READ_ONCE(sqe->fd);
+		req->fd = READ_ONCE(sqe->fd);
 
 		/*
 		 * Plug now if we have more than 2 IO left after this, and the
@@ -11178,7 +11186,8 @@ static __cold int io_uring_create(unsigned entries, struct io_uring_params *p,
 			IORING_FEAT_CUR_PERSONALITY | IORING_FEAT_FAST_POLL |
 			IORING_FEAT_POLL_32BITS | IORING_FEAT_SQPOLL_NONFIXED |
 			IORING_FEAT_EXT_ARG | IORING_FEAT_NATIVE_WORKERS |
-			IORING_FEAT_RSRC_TAGS | IORING_FEAT_CQE_SKIP;
+			IORING_FEAT_RSRC_TAGS | IORING_FEAT_CQE_SKIP |
+			IORING_FEAT_LINKED_FILE;
 
 	if (copy_to_user(params, p, sizeof(*p))) {
 		ret = -EFAULT;
