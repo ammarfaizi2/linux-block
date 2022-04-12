@@ -647,6 +647,29 @@ static void rtw89_pci_disable_intr(struct rtw89_dev *rtwdev,
 	rtw89_write32(rtwdev, R_AX_PCIE_HIMR10, 0);
 }
 
+static void rtw89_pci_ops_recovery_start(struct rtw89_dev *rtwdev)
+{
+	struct rtw89_pci *rtwpci = (struct rtw89_pci *)rtwdev->priv;
+	unsigned long flags;
+
+	spin_lock_irqsave(&rtwpci->irq_lock, flags);
+	rtwpci->under_recovery = true;
+	rtw89_write32(rtwdev, R_AX_PCIE_HIMR00, 0);
+	rtw89_write32(rtwdev, R_AX_PCIE_HIMR10, 0);
+	spin_unlock_irqrestore(&rtwpci->irq_lock, flags);
+}
+
+static void rtw89_pci_ops_recovery_complete(struct rtw89_dev *rtwdev)
+{
+	struct rtw89_pci *rtwpci = (struct rtw89_pci *)rtwdev->priv;
+	unsigned long flags;
+
+	spin_lock_irqsave(&rtwpci->irq_lock, flags);
+	rtwpci->under_recovery = false;
+	rtw89_pci_enable_intr(rtwdev, rtwpci);
+	spin_unlock_irqrestore(&rtwpci->irq_lock, flags);
+}
+
 static irqreturn_t rtw89_pci_interrupt_threadfn(int irq, void *dev)
 {
 	struct rtw89_dev *rtwdev = dev;
@@ -663,6 +686,9 @@ static irqreturn_t rtw89_pci_interrupt_threadfn(int irq, void *dev)
 
 	if (unlikely(isrs.halt_c2h_isrs & B_AX_HALT_C2H_INT_EN))
 		rtw89_ser_notify(rtwdev, rtw89_mac_get_err_status(rtwdev));
+
+	if (unlikely(rtwpci->under_recovery))
+		return IRQ_HANDLED;
 
 	if (likely(rtwpci->running)) {
 		local_bh_disable();
@@ -951,17 +977,69 @@ static void rtw89_pci_ops_flush_queues(struct rtw89_dev *rtwdev, u32 queues,
 	__rtw89_pci_ops_flush_txchs(rtwdev, BIT(RTW89_TXCH_NUM) - 1, drop);
 }
 
+u32 rtw89_pci_fill_txaddr_info(struct rtw89_dev *rtwdev,
+			       void *txaddr_info_addr, u32 total_len,
+			       dma_addr_t dma, u8 *add_info_nr)
+{
+	struct rtw89_pci_tx_addr_info_32 *txaddr_info = txaddr_info_addr;
+
+	txaddr_info->length = cpu_to_le16(total_len);
+	txaddr_info->option = cpu_to_le16(RTW89_PCI_ADDR_MSDU_LS |
+					  RTW89_PCI_ADDR_NUM(1));
+	txaddr_info->dma = cpu_to_le32(dma);
+
+	*add_info_nr = 1;
+
+	return sizeof(*txaddr_info);
+}
+EXPORT_SYMBOL(rtw89_pci_fill_txaddr_info);
+
+u32 rtw89_pci_fill_txaddr_info_v1(struct rtw89_dev *rtwdev,
+				  void *txaddr_info_addr, u32 total_len,
+				  dma_addr_t dma, u8 *add_info_nr)
+{
+	struct rtw89_pci_tx_addr_info_32_v1 *txaddr_info = txaddr_info_addr;
+	u32 remain = total_len;
+	u32 len;
+	u16 length_option;
+	int n;
+
+	for (n = 0; n < RTW89_TXADDR_INFO_NR_V1 && remain; n++) {
+		len = remain >= TXADDR_INFO_LENTHG_V1_MAX ?
+		      TXADDR_INFO_LENTHG_V1_MAX : remain;
+		remain -= len;
+
+		length_option = FIELD_PREP(B_PCIADDR_LEN_V1_MASK, len) |
+				FIELD_PREP(B_PCIADDR_HIGH_SEL_V1_MASK, 0) |
+				FIELD_PREP(B_PCIADDR_LS_V1_MASK, remain == 0);
+		txaddr_info->length_opt = cpu_to_le16(length_option);
+		txaddr_info->dma_low_lsb = cpu_to_le16(FIELD_GET(GENMASK(15, 0), dma));
+		txaddr_info->dma_low_msb = cpu_to_le16(FIELD_GET(GENMASK(31, 16), dma));
+
+		dma += len;
+		txaddr_info++;
+	}
+
+	WARN_ONCE(remain, "length overflow remain=%u total_len=%u",
+		  remain, total_len);
+
+	*add_info_nr = n;
+
+	return n * sizeof(*txaddr_info);
+}
+EXPORT_SYMBOL(rtw89_pci_fill_txaddr_info_v1);
+
 static int rtw89_pci_txwd_submit(struct rtw89_dev *rtwdev,
 				 struct rtw89_pci_tx_ring *tx_ring,
 				 struct rtw89_pci_tx_wd *txwd,
 				 struct rtw89_core_tx_request *tx_req)
 {
 	struct rtw89_pci *rtwpci = (struct rtw89_pci *)rtwdev->priv;
+	const struct rtw89_chip_info *chip = rtwdev->chip;
 	struct rtw89_tx_desc_info *desc_info = &tx_req->desc_info;
-	struct rtw89_txwd_body *txwd_body;
 	struct rtw89_txwd_info *txwd_info;
 	struct rtw89_pci_tx_wp_info *txwp_info;
-	struct rtw89_pci_tx_addr_info_32 *txaddr_info;
+	void *txaddr_info_addr;
 	struct pci_dev *pdev = rtwpci->pdev;
 	struct sk_buff *skb = tx_req->skb;
 	struct rtw89_pci_tx_data *tx_data = RTW89_PCI_TX_SKB_CB(skb);
@@ -972,8 +1050,6 @@ static int rtw89_pci_txwd_submit(struct rtw89_dev *rtwdev,
 	dma_addr_t dma;
 	int ret;
 
-	rtw89_core_fill_txdesc(rtwdev, desc_info, txwd->vaddr);
-
 	dma = dma_map_single(&pdev->dev, skb->data, skb->len, DMA_TO_DEVICE);
 	if (dma_mapping_error(&pdev->dev, dma)) {
 		rtw89_err(rtwdev, "failed to map skb dma data\n");
@@ -983,9 +1059,8 @@ static int rtw89_pci_txwd_submit(struct rtw89_dev *rtwdev,
 
 	tx_data->dma = dma;
 
-	txaddr_info_len = sizeof(*txaddr_info);
 	txwp_len = sizeof(*txwp_info);
-	txwd_len = sizeof(*txwd_body);
+	txwd_len = chip->txwd_body_size;
 	txwd_len += en_wd_info ? sizeof(*txwd_info) : 0;
 
 	txwp_info = txwd->vaddr + txwd_len;
@@ -995,13 +1070,14 @@ static int rtw89_pci_txwd_submit(struct rtw89_dev *rtwdev,
 	txwp_info->seq3 = 0;
 
 	tx_ring->tx_cnt++;
-	txaddr_info = txwd->vaddr + txwd_len + txwp_len;
-	txaddr_info->length = cpu_to_le16(skb->len);
-	txaddr_info->option = cpu_to_le16(RTW89_PCI_ADDR_MSDU_LS |
-					  RTW89_PCI_ADDR_NUM(1));
-	txaddr_info->dma = cpu_to_le32(dma);
+	txaddr_info_addr = txwd->vaddr + txwd_len + txwp_len;
+	txaddr_info_len =
+		rtw89_chip_fill_txaddr_info(rtwdev, txaddr_info_addr, skb->len,
+					    dma, &desc_info->addr_info_nr);
 
 	txwd->len = txwd_len + txwp_len + txaddr_info_len;
+
+	rtw89_chip_fill_txdesc(rtwdev, desc_info, txwd->vaddr);
 
 	skb_queue_tail(&txwd->queue, skb);
 
@@ -1017,16 +1093,18 @@ static int rtw89_pci_fwcmd_submit(struct rtw89_dev *rtwdev,
 				  struct rtw89_core_tx_request *tx_req)
 {
 	struct rtw89_pci *rtwpci = (struct rtw89_pci *)rtwdev->priv;
+	const struct rtw89_chip_info *chip = rtwdev->chip;
 	struct rtw89_tx_desc_info *desc_info = &tx_req->desc_info;
-	struct rtw89_txwd_body *txwd_body;
+	void *txdesc;
+	int txdesc_size = chip->h2c_desc_size;
 	struct pci_dev *pdev = rtwpci->pdev;
 	struct sk_buff *skb = tx_req->skb;
 	struct rtw89_pci_tx_data *tx_data = RTW89_PCI_TX_SKB_CB(skb);
 	dma_addr_t dma;
 
-	txwd_body = (struct rtw89_txwd_body *)skb_push(skb, sizeof(*txwd_body));
-	memset(txwd_body, 0, sizeof(*txwd_body));
-	rtw89_core_fill_txdesc(rtwdev, desc_info, txwd_body);
+	txdesc = skb_push(skb, txdesc_size);
+	memset(txdesc, 0, txdesc_size);
+	rtw89_chip_fill_txdesc_fwcmd(rtwdev, desc_info, txdesc);
 
 	dma = dma_map_single(&pdev->dev, skb->data, skb->len, DMA_TO_DEVICE);
 	if (dma_mapping_error(&pdev->dev, dma)) {
@@ -2931,6 +3009,9 @@ static const struct rtw89_hci_ops rtw89_pci_ops = {
 	.mac_lv1_rcvy	= rtw89_pci_ops_mac_lv1_recovery,
 	.dump_err_status = rtw89_pci_ops_dump_err_status,
 	.napi_poll	= rtw89_pci_napi_poll,
+
+	.recovery_start = rtw89_pci_ops_recovery_start,
+	.recovery_complete = rtw89_pci_ops_recovery_complete,
 };
 
 int rtw89_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)

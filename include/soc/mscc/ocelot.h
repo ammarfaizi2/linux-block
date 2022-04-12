@@ -642,6 +642,11 @@ struct ocelot_lag_fdb {
 	struct list_head list;
 };
 
+struct ocelot_mirror {
+	refcount_t refcount;
+	int to;
+};
+
 struct ocelot_port {
 	struct ocelot			*ocelot;
 
@@ -723,6 +728,7 @@ struct ocelot {
 	struct ocelot_vcap_block	block[3];
 	struct ocelot_vcap_policer	vcap_pol;
 	struct vcap_props		*vcap;
+	struct ocelot_mirror		*mirror;
 
 	struct ocelot_psfp_list		psfp;
 
@@ -869,6 +875,11 @@ int ocelot_port_pre_bridge_flags(struct ocelot *ocelot, int port,
 				 struct switchdev_brport_flags val);
 void ocelot_port_bridge_flags(struct ocelot *ocelot, int port,
 			      struct switchdev_brport_flags val);
+int ocelot_port_get_default_prio(struct ocelot *ocelot, int port);
+int ocelot_port_set_default_prio(struct ocelot *ocelot, int port, u8 prio);
+int ocelot_port_get_dscp_prio(struct ocelot *ocelot, int port, u8 dscp);
+int ocelot_port_add_dscp_prio(struct ocelot *ocelot, int port, u8 dscp, u8 prio);
+int ocelot_port_del_dscp_prio(struct ocelot *ocelot, int port, u8 dscp, u8 prio);
 int ocelot_port_bridge_join(struct ocelot *ocelot, int port,
 			    struct net_device *bridge, int bridge_num,
 			    struct netlink_ext_ack *extack);
@@ -903,6 +914,9 @@ int ocelot_get_max_mtu(struct ocelot *ocelot, int port);
 int ocelot_port_policer_add(struct ocelot *ocelot, int port,
 			    struct ocelot_policer *pol);
 int ocelot_port_policer_del(struct ocelot *ocelot, int port);
+int ocelot_port_mirror_add(struct ocelot *ocelot, int from, int to,
+			   bool ingress, struct netlink_ext_ack *extack);
+void ocelot_port_mirror_del(struct ocelot *ocelot, int from, bool ingress);
 int ocelot_cls_flower_replace(struct ocelot *ocelot, int port,
 			      struct flow_cls_offload *f, bool ingress);
 int ocelot_cls_flower_destroy(struct ocelot *ocelot, int port,

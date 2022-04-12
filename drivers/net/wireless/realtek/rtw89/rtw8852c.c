@@ -5,16 +5,19 @@
 #include "debug.h"
 #include "fw.h"
 #include "mac.h"
+#include "phy.h"
 #include "reg.h"
 #include "rtw8852c.h"
 
 static const struct rtw89_dle_mem rtw8852c_dle_mem_pcie[] = {
-	[RTW89_QTA_SCC] = {RTW89_QTA_SCC, &rtw89_wde_size19, &rtw89_ple_size19,
-			   &rtw89_wde_qt18, &rtw89_wde_qt18, &rtw89_ple_qt46,
-			   &rtw89_ple_qt47},
-	[RTW89_QTA_DLFW] = {RTW89_QTA_DLFW, &rtw89_wde_size18,
-			    &rtw89_ple_size18, &rtw89_wde_qt17, &rtw89_wde_qt17,
-			    &rtw89_ple_qt44, &rtw89_ple_qt45},
+	[RTW89_QTA_SCC] = {RTW89_QTA_SCC, &rtw89_mac_size.wde_size19,
+			   &rtw89_mac_size.ple_size19, &rtw89_mac_size.wde_qt18,
+			   &rtw89_mac_size.wde_qt18, &rtw89_mac_size.ple_qt46,
+			   &rtw89_mac_size.ple_qt47},
+	[RTW89_QTA_DLFW] = {RTW89_QTA_DLFW, &rtw89_mac_size.wde_size18,
+			    &rtw89_mac_size.ple_size18, &rtw89_mac_size.wde_qt17,
+			    &rtw89_mac_size.wde_qt17, &rtw89_mac_size.ple_qt44,
+			    &rtw89_mac_size.ple_qt45},
 	[RTW89_QTA_INVALID] = {RTW89_QTA_INVALID, NULL, NULL, NULL, NULL, NULL,
 			       NULL},
 };
@@ -42,6 +45,10 @@ static const struct rtw89_page_regs rtw8852c_page_regs = {
 	.wp_page_ctrl1	= R_AX_WP_PAGE_CTRL1_V1,
 	.wp_page_ctrl2	= R_AX_WP_PAGE_CTRL2_V1,
 	.wp_page_info1	= R_AX_WP_PAGE_INFO1_V1,
+};
+
+static const struct rtw89_reg_def rtw8852c_dcfo_comp = {
+	R_DCFO_COMP_S0_V1, B_DCFO_COMP_S0_V1_MSK
 };
 
 static int rtw8852c_pwr_on_func(struct rtw89_dev *rtwdev)
@@ -441,12 +448,56 @@ static void rtw8852c_power_trim(struct rtw89_dev *rtwdev)
 	rtw8852c_pa_bias_trim(rtwdev);
 }
 
+static
+void rtw8852c_set_txpwr_ul_tb_offset(struct rtw89_dev *rtwdev,
+				     s8 pw_ofst, enum rtw89_mac_idx mac_idx)
+{
+	s8 pw_ofst_2tx;
+	s8 val_1t;
+	s8 val_2t;
+	u32 reg;
+	u8 i;
+
+	if (pw_ofst < -32 || pw_ofst > 31) {
+		rtw89_warn(rtwdev, "[ULTB] Err pwr_offset=%d\n", pw_ofst);
+		return;
+	}
+	val_1t = pw_ofst << 2;
+	pw_ofst_2tx = max(pw_ofst - 3, -32);
+	val_2t = pw_ofst_2tx << 2;
+
+	rtw89_debug(rtwdev, RTW89_DBG_TXPWR, "[ULTB] val_1tx=0x%x\n", val_1t);
+	rtw89_debug(rtwdev, RTW89_DBG_TXPWR, "[ULTB] val_2tx=0x%x\n", val_2t);
+
+	for (i = 0; i < 4; i++) {
+		/* 1TX */
+		reg = rtw89_mac_reg_by_idx(R_AX_PWR_UL_TB_1T, mac_idx);
+		rtw89_write32_mask(rtwdev, reg,
+				   B_AX_PWR_UL_TB_1T_V1_MASK << (8 * i),
+				   val_1t);
+		/* 2TX */
+		reg = rtw89_mac_reg_by_idx(R_AX_PWR_UL_TB_2T, mac_idx);
+		rtw89_write32_mask(rtwdev, reg,
+				   B_AX_PWR_UL_TB_2T_V1_MASK << (8 * i),
+				   val_2t);
+	}
+}
+
 static const struct rtw89_chip_ops rtw8852c_chip_ops = {
 	.read_efuse		= rtw8852c_read_efuse,
 	.read_phycap		= rtw8852c_read_phycap,
 	.power_trim		= rtw8852c_power_trim,
+	.read_rf		= rtw89_phy_read_rf_v1,
+	.write_rf		= rtw89_phy_write_rf_v1,
+	.set_txpwr_ul_tb_offset	= rtw8852c_set_txpwr_ul_tb_offset,
 	.pwr_on_func		= rtw8852c_pwr_on_func,
 	.pwr_off_func		= rtw8852c_pwr_off_func,
+	.fill_txdesc		= rtw89_core_fill_txdesc_v1,
+	.fill_txdesc_fwcmd	= rtw89_core_fill_txdesc_fwcmd_v1,
+	.cfg_ctrl_path		= rtw89_mac_cfg_ctrl_path_v1,
+	.mac_cfg_gnt		= rtw89_mac_cfg_gnt_v1,
+	.stop_sch_tx		= rtw89_mac_stop_sch_tx_v1,
+	.resume_sch_tx		= rtw89_mac_resume_sch_tx_v1,
 };
 
 const struct rtw89_chip_info rtw8852c_chip_info = {
@@ -454,8 +505,10 @@ const struct rtw89_chip_info rtw8852c_chip_info = {
 	.ops			= &rtw8852c_chip_ops,
 	.fw_name		= "rtw89/rtw8852c_fw.bin",
 	.dle_mem		= rtw8852c_dle_mem_pcie,
+	.rf_base_addr		= {0xe000, 0xf000},
 	.pwr_on_seq		= NULL,
 	.pwr_off_seq		= NULL,
+	.hw_sec_hdr		= true,
 	.sec_ctrl_efuse_size	= 4,
 	.physical_efuse_size	= 1216,
 	.logical_efuse_size	= 2048,
@@ -465,11 +518,15 @@ const struct rtw89_chip_info rtw8852c_chip_info = {
 	.phycap_addr		= 0x590,
 	.phycap_size		= 0x60,
 	.hci_func_en_addr	= R_AX_HCI_FUNC_EN_V1,
+	.h2c_desc_size		= sizeof(struct rtw89_rxdesc_short),
+	.txwd_body_size		= sizeof(struct rtw89_txwd_body_v1),
 	.h2c_ctrl_reg		= R_AX_H2CREG_CTRL_V1,
 	.h2c_regs		= rtw8852c_h2c_regs,
 	.c2h_ctrl_reg		= R_AX_C2HREG_CTRL_V1,
 	.c2h_regs		= rtw8852c_c2h_regs,
 	.page_regs		= &rtw8852c_page_regs,
+	.dcfo_comp		= &rtw8852c_dcfo_comp,
+	.dcfo_comp_sft		= 5,
 };
 EXPORT_SYMBOL(rtw8852c_chip_info);
 

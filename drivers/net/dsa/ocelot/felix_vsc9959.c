@@ -37,6 +37,7 @@ static const u32 vsc9959_port_modes[VSC9959_NUM_PORTS] = {
 	VSC9959_PORT_MODE_SERDES,
 	VSC9959_PORT_MODE_SERDES,
 	OCELOT_PORT_MODE_INTERNAL,
+	OCELOT_PORT_MODE_INTERNAL,
 };
 
 static const u32 vsc9959_ana_regmap[] = {
@@ -1927,6 +1928,10 @@ static int vsc9959_psfp_filter_add(struct ocelot *ocelot, int port,
 		case FLOW_ACTION_GATE:
 			size = struct_size(sgi, entries, a->gate.num_entries);
 			sgi = kzalloc(size, GFP_KERNEL);
+			if (!sgi) {
+				ret = -ENOMEM;
+				goto err;
+			}
 			vsc9959_psfp_parse_gate(a, sgi);
 			ret = vsc9959_psfp_sgi_table_add(ocelot, sgi);
 			if (ret) {

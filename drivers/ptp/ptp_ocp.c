@@ -970,13 +970,25 @@ ptp_ocp_verify(struct ptp_clock_info *ptp_info, unsigned pin,
 	struct ptp_ocp *bp = container_of(ptp_info, struct ptp_ocp, ptp_info);
 	char buf[16];
 
-	if (func != PTP_PF_PEROUT)
+	switch (func) {
+	case PTP_PF_NONE:
+		snprintf(buf, sizeof(buf), "IN: None");
+		break;
+	case PTP_PF_EXTTS:
+		/* Allow timestamps, but require sysfs configuration. */
+		return 0;
+	case PTP_PF_PEROUT:
+		/* channel 0 is 1PPS from PHC.
+		 * channels 1..4 are the frequency generators.
+		 */
+		if (chan)
+			snprintf(buf, sizeof(buf), "OUT: GEN%d", chan);
+		else
+			snprintf(buf, sizeof(buf), "OUT: PHC");
+		break;
+	default:
 		return -EOPNOTSUPP;
-
-	if (chan)
-		sprintf(buf, "OUT: GEN%d", chan);
-	else
-		sprintf(buf, "OUT: PHC");
+	}
 
 	return ptp_ocp_sma_store(bp, buf, pin + 1);
 }
@@ -1202,10 +1214,9 @@ ptp_ocp_nvmem_device_get(struct ptp_ocp *bp, const void * const tag)
 static inline void
 ptp_ocp_nvmem_device_put(struct nvmem_device **nvmemp)
 {
-	if (*nvmemp != NULL) {
+	if (!IS_ERR_OR_NULL(*nvmemp))
 		nvmem_device_put(*nvmemp);
-		*nvmemp = NULL;
-	}
+	*nvmemp = NULL;
 }
 
 static void
@@ -1229,13 +1240,15 @@ ptp_ocp_read_eeprom(struct ptp_ocp *bp)
 		}
 		if (!nvmem) {
 			nvmem = ptp_ocp_nvmem_device_get(bp, tag);
-			if (!nvmem)
-				goto out;
+			if (IS_ERR(nvmem)) {
+				ret = PTR_ERR(nvmem);
+				goto fail;
+			}
 		}
 		ret = nvmem_device_read(nvmem, map->off, map->len,
 					BP_MAP_ENTRY_ADDR(bp, map));
 		if (ret != map->len)
-			goto read_fail;
+			goto fail;
 	}
 
 	bp->has_eeprom_data = true;
@@ -1244,7 +1257,7 @@ out:
 	ptp_ocp_nvmem_device_put(&nvmem);
 	return;
 
-read_fail:
+fail:
 	dev_err(&bp->pdev->dev, "could not read eeprom: %d\n", ret);
 	goto out;
 }
@@ -2922,7 +2935,7 @@ _signal_summary_show(struct seq_file *s, struct ptp_ocp *bp, int nr)
 		return;
 
 	on = signal->running;
-	sprintf(label, "GEN%d", nr);
+	sprintf(label, "GEN%d", nr + 1);
 	seq_printf(s, "%7s: %s, period:%llu duty:%d%% phase:%llu pol:%d",
 		   label, on ? " ON" : "OFF",
 		   signal->period, signal->duty, signal->phase,
@@ -2947,7 +2960,7 @@ _frequency_summary_show(struct seq_file *s, int nr,
 	if (!reg)
 		return;
 
-	sprintf(label, "FREQ%d", nr);
+	sprintf(label, "FREQ%d", nr + 1);
 	val = ioread32(&reg->ctrl);
 	on = val & 1;
 	val = (val >> 8) & 0xff;
@@ -2971,11 +2984,12 @@ ptp_ocp_summary_show(struct seq_file *s, void *data)
 {
 	struct device *dev = s->private;
 	struct ptp_system_timestamp sts;
-	u16 sma_val[4][2], ctrl, val;
 	struct ts_reg __iomem *ts_reg;
 	struct timespec64 ts;
 	struct ptp_ocp *bp;
+	u16 sma_val[4][2];
 	char *src, *buf;
+	u32 ctrl, val;
 	bool on, map;
 	int i;
 

@@ -1899,6 +1899,8 @@ enum netdev_ml_priv_type {
  *	@garp_port:	GARP
  *	@mrp_port:	MRP
  *
+ *	@dm_private:	Drop monitor private
+ *
  *	@dev:		Class/net/name entry
  *	@sysfs_groups:	Space for optional device, statistics and wireless
  *			sysfs groups
@@ -3664,7 +3666,6 @@ static inline unsigned int get_netdev_rx_queue_index(
 }
 #endif
 
-#define DEFAULT_MAX_NUM_RSS_QUEUES	(8)
 int netif_get_num_default_rss_queues(void);
 
 enum skb_free_reason {
@@ -3858,10 +3859,14 @@ static inline struct net_device_core_stats *dev_core_stats(struct net_device *de
 #define DEV_CORE_STATS_INC(FIELD)						\
 static inline void dev_core_stats_##FIELD##_inc(struct net_device *dev)		\
 {										\
-	struct net_device_core_stats *p = dev_core_stats(dev);			\
+	struct net_device_core_stats *p;					\
+										\
+	preempt_disable();							\
+	p = dev_core_stats(dev);						\
 										\
 	if (p)									\
 		local_inc(&p->FIELD);						\
+	preempt_enable();							\
 }
 DEV_CORE_STATS_INC(rx_dropped)
 DEV_CORE_STATS_INC(tx_dropped)
@@ -3889,7 +3894,8 @@ void dev_queue_xmit_nit(struct sk_buff *skb, struct net_device *dev);
 extern int		netdev_budget;
 extern unsigned int	netdev_budget_usecs;
 
-/* Called by rtnetlink.c:rtnl_unlock() */
+/* Used by rtnetlink.c:__rtnl_unlock()/rtnl_unlock() */
+extern struct list_head net_todo_list;
 void netdev_run_todo(void);
 
 static inline void __dev_put(struct net_device *dev)
@@ -4595,16 +4601,6 @@ struct netdev_nested_priv {
 bool netdev_has_upper_dev(struct net_device *dev, struct net_device *upper_dev);
 struct net_device *netdev_upper_get_next_dev_rcu(struct net_device *dev,
 						     struct list_head **iter);
-
-#ifdef CONFIG_LOCKDEP
-static LIST_HEAD(net_unlink_list);
-
-static inline void net_unlink_todo(struct net_device *dev)
-{
-	if (list_empty(&dev->unlink_list))
-		list_add_tail(&dev->unlink_list, &net_unlink_list);
-}
-#endif
 
 /* iterate through upper list, must be called under RCU read lock */
 #define netdev_for_each_upper_dev_rcu(dev, updev, iter) \

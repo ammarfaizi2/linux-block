@@ -1650,6 +1650,24 @@ static void felix_port_policer_del(struct dsa_switch *ds, int port)
 	ocelot_port_policer_del(ocelot, port);
 }
 
+static int felix_port_mirror_add(struct dsa_switch *ds, int port,
+				 struct dsa_mall_mirror_tc_entry *mirror,
+				 bool ingress, struct netlink_ext_ack *extack)
+{
+	struct ocelot *ocelot = ds->priv;
+
+	return ocelot_port_mirror_add(ocelot, port, mirror->to_local_port,
+				      ingress, extack);
+}
+
+static void felix_port_mirror_del(struct dsa_switch *ds, int port,
+				  struct dsa_mall_mirror_tc_entry *mirror)
+{
+	struct ocelot *ocelot = ds->priv;
+
+	ocelot_port_mirror_del(ocelot, port, mirror->ingress);
+}
+
 static int felix_port_setup_tc(struct dsa_switch *ds, int port,
 			       enum tc_setup_type type,
 			       void *type_data)
@@ -1799,6 +1817,44 @@ felix_mrp_del_ring_role(struct dsa_switch *ds, int port,
 	return ocelot_mrp_del_ring_role(ocelot, port, mrp);
 }
 
+static int felix_port_get_default_prio(struct dsa_switch *ds, int port)
+{
+	struct ocelot *ocelot = ds->priv;
+
+	return ocelot_port_get_default_prio(ocelot, port);
+}
+
+static int felix_port_set_default_prio(struct dsa_switch *ds, int port,
+				       u8 prio)
+{
+	struct ocelot *ocelot = ds->priv;
+
+	return ocelot_port_set_default_prio(ocelot, port, prio);
+}
+
+static int felix_port_get_dscp_prio(struct dsa_switch *ds, int port, u8 dscp)
+{
+	struct ocelot *ocelot = ds->priv;
+
+	return ocelot_port_get_dscp_prio(ocelot, port, dscp);
+}
+
+static int felix_port_add_dscp_prio(struct dsa_switch *ds, int port, u8 dscp,
+				    u8 prio)
+{
+	struct ocelot *ocelot = ds->priv;
+
+	return ocelot_port_add_dscp_prio(ocelot, port, dscp, prio);
+}
+
+static int felix_port_del_dscp_prio(struct dsa_switch *ds, int port, u8 dscp,
+				    u8 prio)
+{
+	struct ocelot *ocelot = ds->priv;
+
+	return ocelot_port_del_dscp_prio(ocelot, port, dscp, prio);
+}
+
 const struct dsa_switch_ops felix_switch_ops = {
 	.get_tag_protocol		= felix_get_tag_protocol,
 	.change_tag_protocol		= felix_change_tag_protocol,
@@ -1842,6 +1898,8 @@ const struct dsa_switch_ops felix_switch_ops = {
 	.port_max_mtu			= felix_get_max_mtu,
 	.port_policer_add		= felix_port_policer_add,
 	.port_policer_del		= felix_port_policer_del,
+	.port_mirror_add		= felix_port_mirror_add,
+	.port_mirror_del		= felix_port_mirror_del,
 	.cls_flower_add			= felix_cls_flower_add,
 	.cls_flower_del			= felix_cls_flower_del,
 	.cls_flower_stats		= felix_cls_flower_stats,
@@ -1862,6 +1920,11 @@ const struct dsa_switch_ops felix_switch_ops = {
 	.port_mrp_del_ring_role		= felix_mrp_del_ring_role,
 	.tag_8021q_vlan_add		= felix_tag_8021q_vlan_add,
 	.tag_8021q_vlan_del		= felix_tag_8021q_vlan_del,
+	.port_get_default_prio		= felix_port_get_default_prio,
+	.port_set_default_prio		= felix_port_set_default_prio,
+	.port_get_dscp_prio		= felix_port_get_dscp_prio,
+	.port_add_dscp_prio		= felix_port_add_dscp_prio,
+	.port_del_dscp_prio		= felix_port_del_dscp_prio,
 };
 
 struct net_device *felix_port_to_netdev(struct ocelot *ocelot, int port)

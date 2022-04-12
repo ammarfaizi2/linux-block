@@ -448,6 +448,10 @@ struct rtw89_pci_ch_dma_addr_set {
 
 struct rtw89_pci_info {
 	const struct rtw89_pci_ch_dma_addr_set *dma_addr_set;
+
+	u32 (*fill_txaddr_info)(struct rtw89_dev *rtwdev,
+				void *txaddr_info_addr, u32 total_len,
+				dma_addr_t dma, u8 *add_info_nr);
 };
 
 struct rtw89_pci_bd_ram {
@@ -491,6 +495,18 @@ struct rtw89_pci_tx_addr_info_32 {
 	__le16 length;
 	__le16 option;
 	__le32 dma;
+} __packed;
+
+#define RTW89_TXADDR_INFO_NR_V1		10
+
+struct rtw89_pci_tx_addr_info_32_v1 {
+	__le16 length_opt;
+#define B_PCIADDR_LEN_V1_MASK		GENMASK(10, 0)
+#define B_PCIADDR_HIGH_SEL_V1_MASK	GENMASK(14, 11)
+#define B_PCIADDR_LS_V1_MASK		BIT(15)
+#define TXADDR_INFO_LENTHG_V1_MAX	ALIGN_DOWN(BIT(11) - 1, 4)
+	__le16 dma_low_lsb;
+	__le16 dma_low_msb;
 } __packed;
 
 #define RTW89_PCI_RPP_POLLUTED		BIT(31)
@@ -594,6 +610,7 @@ struct rtw89_pci {
 	/* protect TRX resources (exclude RXQ) */
 	spinlock_t trx_lock;
 	bool running;
+	bool under_recovery;
 	struct rtw89_pci_tx_ring tx_rings[RTW89_TXCH_NUM];
 	struct rtw89_pci_rx_ring rx_rings[RTW89_RXCH_NUM];
 	struct sk_buff_head h2c_queue;
@@ -697,5 +714,22 @@ struct pci_device_id;
 
 int rtw89_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id);
 void rtw89_pci_remove(struct pci_dev *pdev);
+u32 rtw89_pci_fill_txaddr_info(struct rtw89_dev *rtwdev,
+			       void *txaddr_info_addr, u32 total_len,
+			       dma_addr_t dma, u8 *add_info_nr);
+u32 rtw89_pci_fill_txaddr_info_v1(struct rtw89_dev *rtwdev,
+				  void *txaddr_info_addr, u32 total_len,
+				  dma_addr_t dma, u8 *add_info_nr);
+
+static inline
+u32 rtw89_chip_fill_txaddr_info(struct rtw89_dev *rtwdev,
+				void *txaddr_info_addr, u32 total_len,
+				dma_addr_t dma, u8 *add_info_nr)
+{
+	const struct rtw89_pci_info *info = rtwdev->pci_info;
+
+	return info->fill_txaddr_info(rtwdev, txaddr_info_addr, total_len,
+				      dma, add_info_nr);
+}
 
 #endif
