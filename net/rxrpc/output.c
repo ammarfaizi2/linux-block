@@ -258,15 +258,15 @@ static void rxrpc_cancel_rtt_probe(struct rxrpc_call *call,
 /*
  * Send an ACK call packet.
  */
-static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *txb)
+static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *txb,
+				 bool *_queued)
 {
 	struct rxrpc_connection *conn;
-	struct rxrpc_ack_buffer *pkt;
 	struct rxrpc_call *call = txb->call;
 	struct msghdr msg;
-	struct kvec iov[1];
+	struct bio_vec bv[1];
 	rxrpc_serial_t serial;
-	size_t len, n;
+	size_t n;
 	int ret, rtt_slot = -1;
 
 	if (test_bit(RXRPC_CALL_DISCONNECTED, &call->flags))
@@ -278,7 +278,7 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 	msg.msg_namelen	= call->peer->srx.transport_len;
 	msg.msg_control	= NULL;
 	msg.msg_controllen = 0;
-	msg.msg_flags	= 0;
+	msg.msg_flags	= MSG_ZEROCOPY;
 
 	if (txb->ack.reason == RXRPC_ACK_PING)
 		txb->wire.flags |= RXRPC_REQUEST_ACK;
@@ -292,9 +292,11 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 	if (n == 0)
 		return 0;
 
-	iov[0].iov_base	= &txb->wire;
-	iov[0].iov_len	= sizeof(txb->wire) + sizeof(txb->ack) + n;
-	len = iov[0].iov_len;
+	txb->len = sizeof(txb->ack) + n;
+	bv[0].bv_page	= virt_to_page(&txb->wire);
+	bv[0].bv_offset	= (unsigned long)&txb->wire & ~PAGE_MASK;
+	bv[0].bv_len	= sizeof(txb->wire) + sizeof(txb->ack) + n;
+	iov_iter_bvec(&msg.msg_iter, WRITE, bv, 1, bv[0].bv_len);
 
 	serial = atomic_inc_return(&conn->serial);
 	txb->wire.serial = htonl(serial);
@@ -307,8 +309,7 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 	if (txb->ack.reason == RXRPC_ACK_PING)
 		rtt_slot = rxrpc_begin_rtt_probe(call, serial, rxrpc_rtt_tx_ping);
 
-	iov_iter_kvec(&msg.msg_iter, WRITE, iov, 1, len);
-	ret = do_udp_sendmsg(conn->params.local->socket, &msg, len);
+	ret = rxrpc_zcopy_sendmsg(conn->params.local, txb, &msg, _queued);
 	call->peer->last_tx_at = ktime_get_seconds();
 	if (ret < 0)
 		trace_rxrpc_tx_fail(call->debug_id, serial, ret,
@@ -324,7 +325,6 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 		rxrpc_set_keepalive(call);
 	}
 
-	kfree(pkt);
 	return ret;
 }
 
@@ -336,6 +336,7 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 static void rxrpc_ack_transmitter(struct rxrpc_local *local)
 {
 	LIST_HEAD(queue);
+	bool queued;
 	int ret;
 
 	trace_rxrpc_local(local->debug_id, rxrpc_local_tx_ack,
@@ -349,7 +350,8 @@ static void rxrpc_ack_transmitter(struct rxrpc_local *local)
 		struct rxrpc_txbuf *txb =
 			list_entry(queue.next, struct rxrpc_txbuf, tx_link);
 
-		ret = rxrpc_send_ack_packet(local, txb);
+		queued = false;
+		ret = rxrpc_send_ack_packet(local, txb, &queued);
 		if (ret < 0 && ret != -ECONNRESET) {
 			spin_lock_bh(&local->ack_tx_lock);
 			list_splice_init(&queue, &local->ack_tx_queue);
@@ -358,8 +360,10 @@ static void rxrpc_ack_transmitter(struct rxrpc_local *local)
 		}
 
 		list_del_init(&txb->tx_link);
-		rxrpc_put_call(txb->call, rxrpc_call_put);
-		rxrpc_put_txbuf(txb, rxrpc_txbuf_put_trans);
+		if (!queued) {
+			rxrpc_put_call(txb->call, rxrpc_call_put);
+			rxrpc_put_txbuf(txb, rxrpc_txbuf_put_trans);
+		}
 	}
 }
 
