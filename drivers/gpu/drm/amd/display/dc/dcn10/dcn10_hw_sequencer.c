@@ -1493,8 +1493,12 @@ void dcn10_init_hw(struct dc *dc)
 
 		/* Check for enabled DIG to identify enabled display */
 		if (link->link_enc->funcs->is_dig_enabled &&
-			link->link_enc->funcs->is_dig_enabled(link->link_enc))
+			link->link_enc->funcs->is_dig_enabled(link->link_enc)) {
 			link->link_status.link_active = true;
+			if (link->link_enc->funcs->fec_is_active &&
+					link->link_enc->funcs->fec_is_active(link->link_enc))
+				link->fec_state = dc_link_fec_enabled;
+		}
 	}
 
 	/* we want to turn off all dp displays before doing detection */
@@ -2522,13 +2526,17 @@ void dcn10_update_mpcc(struct dc *dc, struct pipe_ctx *pipe_ctx)
 	struct mpc *mpc = dc->res_pool->mpc;
 	struct mpc_tree *mpc_tree_params = &(pipe_ctx->stream_res.opp->mpc_tree_params);
 
-	if (per_pixel_alpha)
-		blnd_cfg.alpha_mode = MPCC_ALPHA_BLEND_MODE_PER_PIXEL_ALPHA;
-	else
-		blnd_cfg.alpha_mode = MPCC_ALPHA_BLEND_MODE_GLOBAL_ALPHA;
-
 	blnd_cfg.overlap_only = false;
 	blnd_cfg.global_gain = 0xff;
+
+	if (per_pixel_alpha && pipe_ctx->plane_state->global_alpha) {
+		blnd_cfg.alpha_mode = MPCC_ALPHA_BLEND_MODE_PER_PIXEL_ALPHA_COMBINED_GLOBAL_GAIN;
+		blnd_cfg.global_gain = pipe_ctx->plane_state->global_alpha_value;
+	} else if (per_pixel_alpha) {
+		blnd_cfg.alpha_mode = MPCC_ALPHA_BLEND_MODE_PER_PIXEL_ALPHA;
+	} else {
+		blnd_cfg.alpha_mode = MPCC_ALPHA_BLEND_MODE_GLOBAL_ALPHA;
+	}
 
 	if (pipe_ctx->plane_state->global_alpha)
 		blnd_cfg.global_alpha = pipe_ctx->plane_state->global_alpha_value;
@@ -2979,8 +2987,11 @@ void dcn10_prepare_bandwidth(
 			true);
 	dcn10_stereo_hw_frame_pack_wa(dc, context);
 
-	if (dc->debug.pplib_wm_report_mode == WM_REPORT_OVERRIDE)
+	if (dc->debug.pplib_wm_report_mode == WM_REPORT_OVERRIDE) {
+		DC_FP_START();
 		dcn_bw_notify_pplib_of_wm_ranges(dc);
+		DC_FP_END();
+	}
 
 	if (dc->debug.sanity_checks)
 		hws->funcs.verify_allow_pstate_change_high(dc);
@@ -3013,8 +3024,11 @@ void dcn10_optimize_bandwidth(
 
 	dcn10_stereo_hw_frame_pack_wa(dc, context);
 
-	if (dc->debug.pplib_wm_report_mode == WM_REPORT_OVERRIDE)
+	if (dc->debug.pplib_wm_report_mode == WM_REPORT_OVERRIDE) {
+		DC_FP_START();
 		dcn_bw_notify_pplib_of_wm_ranges(dc);
+		DC_FP_END();
+	}
 
 	if (dc->debug.sanity_checks)
 		hws->funcs.verify_allow_pstate_change_high(dc);
@@ -3175,7 +3189,8 @@ void dcn10_wait_for_mpcc_disconnect(
 		if (pipe_ctx->stream_res.opp->mpcc_disconnect_pending[mpcc_inst]) {
 			struct hubp *hubp = get_hubp_by_inst(res_pool, mpcc_inst);
 
-			res_pool->mpc->funcs->wait_for_idle(res_pool->mpc, mpcc_inst);
+			if (pipe_ctx->stream_res.tg->funcs->is_tg_enabled(pipe_ctx->stream_res.tg))
+				res_pool->mpc->funcs->wait_for_idle(res_pool->mpc, mpcc_inst);
 			pipe_ctx->stream_res.opp->mpcc_disconnect_pending[mpcc_inst] = false;
 			hubp->funcs->set_blank(hubp, true);
 		}
