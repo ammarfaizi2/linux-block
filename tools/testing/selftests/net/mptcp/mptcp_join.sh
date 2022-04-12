@@ -1675,24 +1675,6 @@ signal_address_tests()
 	fi
 
 	# signal addresses race test
-	reset
-	pm_nl_set_limits $ns1 4 4
-	pm_nl_set_limits $ns2 4 4
-	pm_nl_add_endpoint $ns1 10.0.1.1 flags signal
-	pm_nl_add_endpoint $ns1 10.0.2.1 flags signal
-	pm_nl_add_endpoint $ns1 10.0.3.1 flags signal
-	pm_nl_add_endpoint $ns1 10.0.4.1 flags signal
-	pm_nl_add_endpoint $ns2 10.0.1.2 flags signal
-	pm_nl_add_endpoint $ns2 10.0.2.2 flags signal
-	pm_nl_add_endpoint $ns2 10.0.3.2 flags signal
-	pm_nl_add_endpoint $ns2 10.0.4.2 flags signal
-	run_tests $ns1 $ns2 10.0.1.1
-	chk_join_nr "signal addresses race test" 3 3 3
-
-	# the server will not signal the address terminating
-	# the MPC subflow
-	chk_add_nr 3 3
-
 	if reset "signal addresses race test"; then
 		pm_nl_set_limits $ns1 4 4
 		pm_nl_set_limits $ns2 4 4

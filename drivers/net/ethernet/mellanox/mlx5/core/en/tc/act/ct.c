@@ -48,7 +48,7 @@ tc_act_parse_ct(struct mlx5e_tc_act_parse_state *parse_state,
 	if (!clear_action) {
 		attr->flags |= MLX5_ATTR_FLAG_CT;
 		flow_flag_set(parse_state->flow, CT);
-		parse_state->ct_clear = true;
+		parse_state->ct = true;
 	}
 	parse_state->ct_clear = clear_action;
 
