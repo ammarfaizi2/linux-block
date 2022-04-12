@@ -664,34 +664,6 @@ static ssize_t afs_write_back_from_locked_folio(struct address_space *mapping,
 }
 
 /*
- * write a page back to the server
- * - the caller locked the page for us
- */
-int afs_writepage(struct page *subpage, struct writeback_control *wbc)
-{
-	struct folio *folio = page_folio(subpage);
-	ssize_t ret;
-	loff_t start;
-
-	_enter("{%lx},", folio_index(folio));
-
-#ifdef CONFIG_AFS_FSCACHE
-	folio_wait_fscache(folio);
-#endif
-
-	start = folio_index(folio) * PAGE_SIZE;
-	ret = afs_write_back_from_locked_folio(folio_mapping(folio), wbc,
-					       folio, start, LLONG_MAX - start);
-	if (ret < 0) {
-		_leave(" = %zd", ret);
-		return ret;
-	}
-
-	_leave(" = 0");
-	return 0;
-}
-
-/*
  * write a region of pages back to the server
  */
 static int afs_writepages_region(struct address_space *mapping,

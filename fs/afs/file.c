@@ -56,7 +56,6 @@ const struct address_space_operations afs_file_aops = {
 	.invalidate_folio = netfs_invalidate_folio,
 	.write_begin	= afs_write_begin,
 	.write_end	= afs_write_end,
-	.writepage	= afs_writepage,
 	.writepages	= afs_writepages,
 };
 
