@@ -308,7 +308,6 @@ static int next_opcode(struct rxe_qp *qp, struct rxe_send_wqe *wqe,
 	case IB_QPT_UC:
 		return next_opcode_uc(qp, opcode, fits);
 
-	case IB_QPT_SMI:
 	case IB_QPT_UD:
 	case IB_QPT_GSI:
 		switch (opcode) {
@@ -414,8 +413,7 @@ static struct sk_buff *init_req_packet(struct rxe_qp *qp,
 
 	if (pkt->mask & RXE_ATMETH_MASK) {
 		atmeth_set_va(pkt, wqe->iova);
-		if (opcode == IB_OPCODE_RC_COMPARE_SWAP ||
-		    opcode == IB_OPCODE_RD_COMPARE_SWAP) {
+		if (opcode == IB_OPCODE_RC_COMPARE_SWAP) {
 			atmeth_set_swap_add(pkt, ibwr->wr.atomic.swap);
 			atmeth_set_comp(pkt, ibwr->wr.atomic.compare_add);
 		} else {
