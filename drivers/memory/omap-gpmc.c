@@ -12,7 +12,6 @@
 #include <linux/cpu_pm.h>
 #include <linux/irq.h>
 #include <linux/kernel.h>
-#include <linux/module.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/clk.h>
@@ -1890,6 +1889,16 @@ int gpmc_cs_program_settings(int cs, struct gpmc_settings *p)
 }
 
 #ifdef CONFIG_OF
+static const struct of_device_id gpmc_dt_ids[] = {
+	{ .compatible = "ti,omap2420-gpmc" },
+	{ .compatible = "ti,omap2430-gpmc" },
+	{ .compatible = "ti,omap3430-gpmc" },	/* omap3430 & omap3630 */
+	{ .compatible = "ti,omap4430-gpmc" },	/* omap4430 & omap4460 & omap543x */
+	{ .compatible = "ti,am3352-gpmc" },	/* am335x devices */
+	{ .compatible = "ti,am64-gpmc" },
+	{ }
+};
+
 static void gpmc_cs_set_name(int cs, const char *name)
 {
 	struct gpmc_cs_data *gpmc = &gpmc_cs[cs];
@@ -2248,9 +2257,11 @@ no_timings:
 	if (!of_platform_device_create(child, NULL, &pdev->dev))
 		goto err_child_fail;
 
-	/* create children and other common bus children */
-	if (of_platform_default_populate(child, NULL, &pdev->dev))
-		goto err_child_fail;
+	/* is child a common bus? */
+	if (of_match_node(of_default_bus_match_table, child))
+		/* create children and other common bus children */
+		if (of_platform_default_populate(child, NULL, &pdev->dev))
+			goto err_child_fail;
 
 	return 0;
 
@@ -2266,8 +2277,6 @@ err:
 
 	return ret;
 }
-
-static const struct of_device_id gpmc_dt_ids[];
 
 static int gpmc_probe_dt(struct platform_device *pdev)
 {
@@ -2635,19 +2644,6 @@ static int gpmc_resume(struct device *dev)
 
 static SIMPLE_DEV_PM_OPS(gpmc_pm_ops, gpmc_suspend, gpmc_resume);
 
-#ifdef CONFIG_OF
-static const struct of_device_id gpmc_dt_ids[] = {
-	{ .compatible = "ti,omap2420-gpmc" },
-	{ .compatible = "ti,omap2430-gpmc" },
-	{ .compatible = "ti,omap3430-gpmc" },	/* omap3430 & omap3630 */
-	{ .compatible = "ti,omap4430-gpmc" },	/* omap4430 & omap4460 & omap543x */
-	{ .compatible = "ti,am3352-gpmc" },	/* am335x devices */
-	{ .compatible = "ti,am64-gpmc" },
-	{ }
-};
-MODULE_DEVICE_TABLE(of, gpmc_dt_ids);
-#endif
-
 static struct platform_driver gpmc_driver = {
 	.probe		= gpmc_probe,
 	.remove		= gpmc_remove,
@@ -2658,7 +2654,8 @@ static struct platform_driver gpmc_driver = {
 	},
 };
 
-module_platform_driver(gpmc_driver);
-
-MODULE_DESCRIPTION("Texas Instruments GPMC driver");
-MODULE_LICENSE("GPL v2");
+static __init int gpmc_init(void)
+{
+	return platform_driver_register(&gpmc_driver);
+}
+postcore_initcall(gpmc_init);
