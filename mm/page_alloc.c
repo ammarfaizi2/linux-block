@@ -2522,6 +2522,10 @@ static int move_freepages(struct zone *zone,
 
 	for (pfn = start_pfn; pfn <= end_pfn;) {
 		if (!pfn_valid(pfn)) {
+			/*
+			 * Pageblock alignment may cause us to try to access
+			 * into a hole
+			 */
 			pfn++;
 			continue;
 		}
