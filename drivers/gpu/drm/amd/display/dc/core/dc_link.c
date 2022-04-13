@@ -345,6 +345,7 @@ static enum signal_type get_basic_signal_type(struct graphics_object_id encoder,
 		case CONNECTOR_ID_LVDS:
 			return SIGNAL_TYPE_LVDS;
 		case CONNECTOR_ID_DISPLAY_PORT:
+		case CONNECTOR_ID_USBC:
 			return SIGNAL_TYPE_DISPLAY_PORT;
 		case CONNECTOR_ID_EDP:
 			return SIGNAL_TYPE_EDP;
@@ -380,7 +381,8 @@ bool dc_link_is_dp_sink_present(struct dc_link *link)
 
 	bool present =
 		((connector_id == CONNECTOR_ID_DISPLAY_PORT) ||
-		(connector_id == CONNECTOR_ID_EDP));
+		(connector_id == CONNECTOR_ID_EDP) ||
+		(connector_id == CONNECTOR_ID_USBC));
 
 	ddc = dal_ddc_service_get_ddc_pin(link->ddc);
 
@@ -476,7 +478,8 @@ static enum signal_type link_detect_sink(struct dc_link *link,
 				result = SIGNAL_TYPE_DVI_SINGLE_LINK;
 	}
 	break;
-	case CONNECTOR_ID_DISPLAY_PORT: {
+	case CONNECTOR_ID_DISPLAY_PORT:
+	case CONNECTOR_ID_USBC: {
 		/* DP HPD short pulse. Passive DP dongle will not
 		 * have short pulse
 		 */
@@ -1591,6 +1594,7 @@ static bool dc_link_construct_legacy(struct dc_link *link,
 		link->connector_signal = SIGNAL_TYPE_DVI_DUAL_LINK;
 		break;
 	case CONNECTOR_ID_DISPLAY_PORT:
+	case CONNECTOR_ID_USBC:
 		link->connector_signal = SIGNAL_TYPE_DISPLAY_PORT;
 
 		if (link->hpd_gpio)
@@ -3075,6 +3079,11 @@ bool dc_link_set_psr_allow_active(struct dc_link *link, const bool *allow_active
 	if (!dc_get_edp_link_panel_inst(dc, link, &panel_inst))
 		return false;
 
+	if (allow_active && link->type == dc_connection_none) {
+		// Don't enter PSR if panel is not connected
+		return false;
+	}
+
 	/* Set power optimization flag */
 	if (power_opts && link->psr_settings.psr_power_opt != *power_opts) {
 		link->psr_settings.psr_power_opt = *power_opts;
@@ -4119,6 +4128,7 @@ void core_link_enable_stream(
 	struct link_encoder *link_enc;
 	enum otg_out_mux_dest otg_out_dest = OUT_MUX_DIO;
 	struct vpg *vpg = pipe_ctx->stream_res.stream_enc->vpg;
+	const struct link_hwss *link_hwss = get_link_hwss(link, &pipe_ctx->link_res);
 
 	if (is_dp_128b_132b_signal(pipe_ctx))
 		vpg = pipe_ctx->stream_res.hpo_dp_stream_enc->vpg;
@@ -4147,56 +4157,19 @@ void core_link_enable_stream(
 			link_enc->funcs->setup(
 				link_enc,
 				pipe_ctx->stream->signal);
-		pipe_ctx->stream_res.stream_enc->funcs->setup_stereo_sync(
-			pipe_ctx->stream_res.stream_enc,
-			pipe_ctx->stream_res.tg->inst,
-			stream->timing.timing_3d_format != TIMING_3D_FORMAT_NONE);
 	}
-
-	if (is_dp_128b_132b_signal(pipe_ctx)) {
-		pipe_ctx->stream_res.hpo_dp_stream_enc->funcs->set_stream_attribute(
-				pipe_ctx->stream_res.hpo_dp_stream_enc,
-				&stream->timing,
-				stream->output_color_space,
-				stream->use_vsc_sdp_for_colorimetry,
-				stream->timing.flags.DSC,
-				false);
-		otg_out_dest = OUT_MUX_HPO_DP;
-	} else if (dc_is_dp_signal(pipe_ctx->stream->signal)) {
-		pipe_ctx->stream_res.stream_enc->funcs->dp_set_stream_attribute(
-				pipe_ctx->stream_res.stream_enc,
-				&stream->timing,
-				stream->output_color_space,
-				stream->use_vsc_sdp_for_colorimetry,
-				stream->link->dpcd_caps.dprx_feature.bits.SST_SPLIT_SDP_CAP);
-	}
-
-	if (dc_is_dp_signal(pipe_ctx->stream->signal))
-		dp_source_sequence_trace(link, DPCD_SOURCE_SEQ_AFTER_DP_STREAM_ATTR);
-
-	if (dc_is_hdmi_tmds_signal(pipe_ctx->stream->signal))
-		pipe_ctx->stream_res.stream_enc->funcs->hdmi_set_stream_attribute(
-			pipe_ctx->stream_res.stream_enc,
-			&stream->timing,
-			stream->phy_pix_clk,
-			pipe_ctx->stream_res.audio != NULL);
 
 	pipe_ctx->stream->link->link_state_valid = true;
 
-	if (pipe_ctx->stream_res.tg->funcs->set_out_mux)
+	if (pipe_ctx->stream_res.tg->funcs->set_out_mux) {
+		if (is_dp_128b_132b_signal(pipe_ctx))
+			otg_out_dest = OUT_MUX_HPO_DP;
+		else
+			otg_out_dest = OUT_MUX_DIO;
 		pipe_ctx->stream_res.tg->funcs->set_out_mux(pipe_ctx->stream_res.tg, otg_out_dest);
+	}
 
-	if (dc_is_dvi_signal(pipe_ctx->stream->signal))
-		pipe_ctx->stream_res.stream_enc->funcs->dvi_set_stream_attribute(
-			pipe_ctx->stream_res.stream_enc,
-			&stream->timing,
-			(pipe_ctx->stream->signal == SIGNAL_TYPE_DVI_DUAL_LINK) ?
-			true : false);
-
-	if (dc_is_lvds_signal(pipe_ctx->stream->signal))
-		pipe_ctx->stream_res.stream_enc->funcs->lvds_set_stream_attribute(
-			pipe_ctx->stream_res.stream_enc,
-			&stream->timing);
+	link_hwss->setup_stream_attribute(pipe_ctx);
 
 	if (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment)) {
 		bool apply_edp_fast_boot_optimization =
@@ -4331,13 +4304,11 @@ void core_link_enable_stream(
 		dc->hwss.enable_audio_stream(pipe_ctx);
 
 	} else { // if (IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment))
-		if (is_dp_128b_132b_signal(pipe_ctx)) {
+		if (is_dp_128b_132b_signal(pipe_ctx))
 			fpga_dp_hpo_enable_link_and_stream(state, pipe_ctx);
-		}
 		if (dc_is_dp_signal(pipe_ctx->stream->signal) ||
 				dc_is_virtual_signal(pipe_ctx->stream->signal))
 			dp_set_dsc_enable(pipe_ctx, true);
-
 	}
 
 	if (pipe_ctx->stream->signal == SIGNAL_TYPE_HDMI_TYPE_A) {
@@ -4683,22 +4654,20 @@ bool dc_link_is_fec_supported(const struct dc_link *link)
 
 bool dc_link_should_enable_fec(const struct dc_link *link)
 {
-	bool is_fec_disable = false;
-	bool ret = false;
+	bool force_disable = false;
 
-	if ((link->connector_signal != SIGNAL_TYPE_DISPLAY_PORT_MST &&
+	if (link->fec_state == dc_link_fec_enabled)
+		force_disable = false;
+	else if (link->connector_signal != SIGNAL_TYPE_DISPLAY_PORT_MST &&
 			link->local_sink &&
-			link->local_sink->edid_caps.panel_patch.disable_fec) ||
-			(link->connector_signal == SIGNAL_TYPE_EDP
-				// enable FEC for EDP if DSC is supported
-				&& link->dpcd_caps.dsc_caps.dsc_basic_caps.fields.dsc_support.DSC_SUPPORT == false
-				))
-		is_fec_disable = true;
+			link->local_sink->edid_caps.panel_patch.disable_fec)
+		force_disable = true;
+	else if (link->connector_signal == SIGNAL_TYPE_EDP
+			&& link->dpcd_caps.dsc_caps.dsc_basic_caps.fields.
+			 dsc_support.DSC_SUPPORT == false)
+		force_disable = true;
 
-	if (dc_link_is_fec_supported(link) && !link->dc->debug.disable_fec && !is_fec_disable)
-		ret = true;
-
-	return ret;
+	return !force_disable && dc_link_is_fec_supported(link);
 }
 
 uint32_t dc_bandwidth_in_kbps_from_timing(
