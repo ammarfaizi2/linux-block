@@ -2521,6 +2521,11 @@ static int move_freepages(struct zone *zone,
 	int pages_moved = 0;
 
 	for (pfn = start_pfn; pfn <= end_pfn;) {
+		if (!pfn_valid(pfn)) {
+			pfn++;
+			continue;
+		}
+
 		page = pfn_to_page(pfn);
 		if (!PageBuddy(page)) {
 			/*
