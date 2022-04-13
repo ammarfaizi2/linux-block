@@ -670,8 +670,8 @@ struct mm_struct {
 #endif /* CONFIG_LRU_GEN */
 #ifdef CONFIG_KSM
 		/*
-		 * Represet how many pages of this process are
-		 * involved in KSM merging.
+		 * Represent how many pages of this process are involved in KSM
+		 * merging.
 		 */
 		unsigned long ksm_merging_pages;
 #endif
