@@ -17,6 +17,7 @@
 #include <linux/mtd/partitions.h>
 #include <linux/err.h>
 #include <linux/of.h>
+#include <linux/of_platform.h>
 
 #include "mtdcore.h"
 
@@ -593,6 +594,7 @@ static int mtd_part_of_parse(struct mtd_info *master,
 			continue;
 		ret = mtd_part_do_parse(parser, master, pparts, NULL);
 		if (ret > 0) {
+			of_platform_populate(np, NULL, NULL, &master->dev);
 			of_node_put(np);
 			return ret;
 		}
@@ -600,6 +602,7 @@ static int mtd_part_of_parse(struct mtd_info *master,
 		if (ret < 0 && !err)
 			err = ret;
 	}
+	of_platform_populate(np, NULL, NULL, &master->dev);
 	of_node_put(np);
 
 	/*
