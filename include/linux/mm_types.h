@@ -668,6 +668,13 @@ struct mm_struct {
 			nodemask_t nodes;
 		} lru_gen;
 #endif /* CONFIG_LRU_GEN */
+#ifdef CONFIG_KSM
+		/*
+		 * Represet how many pages of this process are
+		 * involved in KSM merging.
+		 */
+		unsigned long ksm_merging_pages;
+#endif
 	} __randomize_layout;
 
 	/*
