@@ -2015,7 +2015,6 @@ static unsigned long unmapped_area_topdown(struct vm_unmapped_area_info *info)
 	if (length < info->length)
 		return -ENOMEM;
 
-	length = info->length;
 	/*
 	 * Adjust search limits by the desired length.
 	 * See implementation comment at top of unmapped_area().
@@ -2027,6 +2026,8 @@ static unsigned long unmapped_area_topdown(struct vm_unmapped_area_info *info)
 
 	if (info->low_limit > high_limit)
 		return -ENOMEM;
+
+	length = info->length;
 	low_limit = info->low_limit + length;
 
 	/* Check highest gap, which does not precede any rbtree node */
