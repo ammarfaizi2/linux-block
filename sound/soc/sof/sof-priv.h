@@ -349,7 +349,6 @@ struct snd_sof_mailbox {
 /* IPC message descriptor for host <-> DSP IO */
 struct snd_sof_ipc_msg {
 	/* message data */
-	u32 header;
 	void *msg_data;
 	void *reply_data;
 	size_t msg_size;
@@ -378,11 +377,32 @@ struct sof_ipc_pcm_ops;
  * @tplg:	Pointer to IPC-specific topology ops
  * @pm:		Pointer to PM ops
  * @pcm:	Pointer to PCM ops
+ *
+ * @tx_msg:	Function pointer for sending a 'short' IPC message
+ * @set_get_data: Function pointer for set/get data ('large' IPC message). This
+ *		function may split up the 'large' message and use the @tx_msg
+ *		path to transfer individual chunks, or use other means to transfer
+ *		the message.
+ * @get_reply:	Function pointer for fetching the reply to
+ *		sdev->ipc->msg.reply_data
+ * @rx_msg:	Function pointer for handling a received message
+ *
+ * Note: both @tx_msg and @set_get_data considered as TX functions and they are
+ * serialized for the duration of the instructed transfer. A large message sent
+ * via @set_get_data is a single transfer even if at the hardware level it is
+ * handled with multiple chunks.
  */
 struct sof_ipc_ops {
 	const struct sof_ipc_tplg_ops *tplg;
 	const struct sof_ipc_pm_ops *pm;
 	const struct sof_ipc_pcm_ops *pcm;
+
+	int (*tx_msg)(struct snd_sof_dev *sdev, void *msg_data, size_t msg_bytes,
+		      void *reply_data, size_t reply_bytes, bool no_pm);
+	int (*set_get_data)(struct snd_sof_dev *sdev, void *data, size_t data_bytes,
+			    bool set);
+	int (*get_reply)(struct snd_sof_dev *sdev);
+	void (*rx_msg)(struct snd_sof_dev *sdev);
 };
 
 /* SOF generic IPC data */
@@ -394,10 +414,19 @@ struct snd_sof_ipc {
 	/* disables further sending of ipc's */
 	bool disable_ipc_tx;
 
+	/* Maximum allowed size of a single IPC message/reply */
+	size_t max_payload_size;
+
 	struct snd_sof_ipc_msg msg;
 
 	/* IPC ops based on version */
 	const struct sof_ipc_ops *ops;
+};
+
+enum sof_dtrace_state {
+	SOF_DTRACE_DISABLED,
+	SOF_DTRACE_STOPPED,
+	SOF_DTRACE_ENABLED,
 };
 
 /*
@@ -457,8 +486,6 @@ struct snd_sof_dev {
 	bool ipc_dump_printed;
 
 	/* firmware loader */
-	struct snd_dma_buffer dmab;
-	struct snd_dma_buffer dmab_bdl;
 	struct sof_ipc_fw_ready fw_ready;
 	struct sof_ipc_fw_version fw_version;
 	struct sof_ipc_cc_version *cc_version;
@@ -473,6 +500,7 @@ struct snd_sof_dev {
 	struct list_head route_list;
 	struct snd_soc_component *component;
 	u32 enabled_cores_mask; /* keep track of enabled cores */
+	bool led_present;
 
 	/* FW configuration */
 	struct sof_ipc_window *info_window;
@@ -488,9 +516,9 @@ struct snd_sof_dev {
 	wait_queue_head_t trace_sleep;
 	u32 host_offset;
 	bool dtrace_is_supported; /* set with Kconfig or module parameter */
-	bool dtrace_is_enabled;
 	bool dtrace_error;
 	bool dtrace_draining;
+	enum sof_dtrace_state dtrace_state;
 
 	bool msi_enabled;
 
@@ -575,14 +603,17 @@ struct snd_sof_ipc *snd_sof_ipc_init(struct snd_sof_dev *sdev);
 void snd_sof_ipc_free(struct snd_sof_dev *sdev);
 void snd_sof_ipc_get_reply(struct snd_sof_dev *sdev);
 void snd_sof_ipc_reply(struct snd_sof_dev *sdev, u32 msg_id);
-void snd_sof_ipc_msgs_rx(struct snd_sof_dev *sdev);
+static inline void snd_sof_ipc_msgs_rx(struct snd_sof_dev *sdev)
+{
+	sdev->ipc->ops->rx_msg(sdev);
+}
 int snd_sof_ipc_valid(struct snd_sof_dev *sdev);
-int sof_ipc_tx_message(struct snd_sof_ipc *ipc, u32 header,
-		       void *msg_data, size_t msg_bytes, void *reply_data,
-		       size_t reply_bytes);
-int sof_ipc_tx_message_no_pm(struct snd_sof_ipc *ipc, u32 header,
-			     void *msg_data, size_t msg_bytes,
+int sof_ipc_tx_message(struct snd_sof_ipc *ipc, void *msg_data, size_t msg_bytes,
+		       void *reply_data, size_t reply_bytes);
+int sof_ipc_tx_message_no_pm(struct snd_sof_ipc *ipc, void *msg_data, size_t msg_bytes,
 			     void *reply_data, size_t reply_bytes);
+int sof_ipc_send_msg(struct snd_sof_dev *sdev, void *msg_data, size_t msg_bytes,
+		     size_t reply_bytes);
 int sof_ipc_init_msg_memory(struct snd_sof_dev *sdev);
 static inline void snd_sof_ipc_process_reply(struct snd_sof_dev *sdev, u32 msg_id)
 {
@@ -594,7 +625,6 @@ static inline void snd_sof_ipc_process_reply(struct snd_sof_dev *sdev, u32 msg_i
  * Trace/debug
  */
 int snd_sof_init_trace(struct snd_sof_dev *sdev);
-void snd_sof_release_trace(struct snd_sof_dev *sdev);
 void snd_sof_free_trace(struct snd_sof_dev *sdev);
 int snd_sof_dbg_init(struct snd_sof_dev *sdev);
 void snd_sof_free_debug(struct snd_sof_dev *sdev);
@@ -608,7 +638,8 @@ void sof_print_oops_and_stack(struct snd_sof_dev *sdev, const char *level,
 			      u32 panic_code, u32 tracep_code, void *oops,
 			      struct sof_ipc_panic_info *panic_info,
 			      void *stack, size_t stack_words);
-int snd_sof_init_trace_ipc(struct snd_sof_dev *sdev);
+void snd_sof_trace_suspend(struct snd_sof_dev *sdev, pm_message_t pm_state);
+int snd_sof_trace_resume(struct snd_sof_dev *sdev);
 void snd_sof_handle_fw_exception(struct snd_sof_dev *sdev);
 int snd_sof_dbg_memory_info_init(struct snd_sof_dev *sdev);
 int snd_sof_debugfs_add_region_item_iomem(struct snd_sof_dev *sdev,
