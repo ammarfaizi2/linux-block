@@ -32,3 +32,4 @@ x86/timers
 x86/tdx
 x86/vdso
 x86/vmware
+x86/merge
