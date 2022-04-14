@@ -11,6 +11,7 @@
 #ifndef __PHY_H
 #define __PHY_H
 
+#include <linux/dev_printk.h>
 #include <linux/compiler.h>
 #include <linux/spinlock.h>
 #include <linux/ethtool.h>

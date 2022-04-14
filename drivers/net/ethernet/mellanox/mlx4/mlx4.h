@@ -37,6 +37,7 @@
 #ifndef MLX4_H
 #define MLX4_H
 
+#include <linux/dev_printk.h>
 #include <linux/mutex.h>
 #include <linux/radix-tree.h>
 #include <linux/rbtree.h>

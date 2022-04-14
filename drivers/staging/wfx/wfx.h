@@ -10,6 +10,7 @@
 #ifndef WFX_H
 #define WFX_H
 
+#include <linux/dev_printk.h>
 #include <linux/completion.h>
 #include <linux/workqueue.h>
 #include <linux/mutex.h>

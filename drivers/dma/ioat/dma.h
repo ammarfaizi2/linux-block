@@ -5,6 +5,7 @@
 #ifndef IOATDMA_H
 #define IOATDMA_H
 
+#include <linux/dev_printk.h>
 #include <linux/dmaengine.h>
 #include <linux/init.h>
 #include <linux/dmapool.h>

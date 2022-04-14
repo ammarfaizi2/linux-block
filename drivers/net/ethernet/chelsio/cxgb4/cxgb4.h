@@ -37,6 +37,7 @@
 
 #include "t4_hw.h"
 
+#include <linux/dev_printk.h>
 #include <linux/bitops.h>
 #include <linux/cache.h>
 #include <linux/ethtool.h>

@@ -55,6 +55,7 @@
 #ifndef _ISCI_TASK_H_
 #define _ISCI_TASK_H_
 
+#include <linux/dev_printk.h>
 #include <scsi/sas_ata.h>
 #include "host.h"
 

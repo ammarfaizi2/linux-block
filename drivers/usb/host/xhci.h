@@ -12,6 +12,7 @@
 #ifndef __LINUX_XHCI_HCD_H
 #define __LINUX_XHCI_HCD_H
 
+#include <linux/dev_printk.h>
 #include <linux/bitmap.h>
 #include <linux/usb.h>
 #include <linux/timer.h>

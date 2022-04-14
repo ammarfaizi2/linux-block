@@ -10,6 +10,7 @@
 #ifndef __ETHSW_H
 #define __ETHSW_H
 
+#include <linux/dev_printk.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/rtnetlink.h>

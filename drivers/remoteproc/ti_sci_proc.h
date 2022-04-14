@@ -9,6 +9,7 @@
 #ifndef REMOTEPROC_TI_SCI_PROC_H
 #define REMOTEPROC_TI_SCI_PROC_H
 
+#include <linux/dev_printk.h>
 #include <linux/soc/ti/ti_sci_protocol.h>
 
 /**

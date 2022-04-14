@@ -39,6 +39,7 @@
  * qib_user.h serves a similar purpose for user code.
  */
 
+#include <linux/dev_printk.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
 #include <linux/dma-mapping.h>

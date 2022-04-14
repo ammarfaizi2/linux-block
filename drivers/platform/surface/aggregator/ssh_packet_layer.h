@@ -8,6 +8,7 @@
 #ifndef _SURFACE_AGGREGATOR_SSH_PACKET_LAYER_H
 #define _SURFACE_AGGREGATOR_SSH_PACKET_LAYER_H
 
+#include <linux/dev_printk.h>
 #include <linux/atomic.h>
 #include <linux/kfifo.h>
 #include <linux/ktime.h>

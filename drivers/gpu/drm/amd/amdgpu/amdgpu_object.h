@@ -28,6 +28,7 @@
 #ifndef __AMDGPU_OBJECT_H__
 #define __AMDGPU_OBJECT_H__
 
+#include <linux/dev_printk.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 #include "amdgpu_res_cursor.h"

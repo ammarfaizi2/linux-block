@@ -25,6 +25,7 @@
 #ifndef QXL_OBJECT_H
 #define QXL_OBJECT_H
 
+#include <linux/dev_printk.h>
 #include <linux/device_api.h>
 
 #include "qxl_drv.h"

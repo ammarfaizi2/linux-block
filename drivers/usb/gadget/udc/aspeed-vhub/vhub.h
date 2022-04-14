@@ -2,6 +2,7 @@
 #ifndef __ASPEED_VHUB_H
 #define __ASPEED_VHUB_H
 
+#include <linux/dev_printk.h>
 #include <linux/usb.h>
 #include <linux/usb/ch11.h>
 

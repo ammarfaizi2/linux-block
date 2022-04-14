@@ -14,6 +14,7 @@
 #ifndef __FHCI_H
 #define __FHCI_H
 
+#include <linux/dev_printk.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/bug.h>

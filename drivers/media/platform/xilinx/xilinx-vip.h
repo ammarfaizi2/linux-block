@@ -12,6 +12,7 @@
 #ifndef __XILINX_VIP_H__
 #define __XILINX_VIP_H__
 
+#include <linux/dev_printk.h>
 #include <linux/bitops.h>
 #include <linux/io.h>
 #include <media/v4l2-subdev.h>

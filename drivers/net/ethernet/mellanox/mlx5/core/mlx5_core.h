@@ -33,6 +33,7 @@
 #ifndef __MLX5_CORE_H__
 #define __MLX5_CORE_H__
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

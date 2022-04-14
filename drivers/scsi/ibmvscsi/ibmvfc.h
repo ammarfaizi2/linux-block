@@ -10,6 +10,7 @@
 #ifndef _IBMVFC_H
 #define _IBMVFC_H
 
+#include <linux/dev_printk.h>
 #include <linux/list.h>
 #include <linux/types.h>
 #include <scsi/viosrp.h>

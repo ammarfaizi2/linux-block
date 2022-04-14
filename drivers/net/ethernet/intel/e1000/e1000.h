@@ -6,6 +6,7 @@
 #ifndef _E1000_H_
 #define _E1000_H_
 
+#include <linux/dev_printk.h>
 #include <linux/device_api.h>
 #include <linux/stddef.h>
 #include <linux/module.h>

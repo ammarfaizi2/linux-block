@@ -13,6 +13,7 @@
 #ifndef __JSM_DRIVER_H
 #define __JSM_DRIVER_H
 
+#include <linux/dev_printk.h>
 #include <linux/kernel.h>
 #include <linux/types.h>	/* To pick up the varions Linux types */
 #include <linux/tty.h>

@@ -9,6 +9,7 @@
 #ifndef TB_H_
 #define TB_H_
 
+#include <linux/dev_printk.h>
 #include <linux/device_api_lock.h>
 #include <linux/nvmem-provider.h>
 #include <linux/pci.h>

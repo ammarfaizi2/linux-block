@@ -16,6 +16,7 @@
 #ifndef BNX2X_H
 #define BNX2X_H
 
+#include <linux/dev_printk.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>

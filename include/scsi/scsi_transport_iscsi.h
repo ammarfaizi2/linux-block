@@ -10,6 +10,7 @@
 #ifndef SCSI_TRANSPORT_ISCSI_H
 #define SCSI_TRANSPORT_ISCSI_H
 
+#include <linux/dev_printk.h>
 #include <linux/device.h>
 #include <linux/list.h>
 #include <linux/mutex.h>

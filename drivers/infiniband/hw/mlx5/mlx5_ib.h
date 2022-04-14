@@ -7,6 +7,7 @@
 #ifndef MLX5_IB_H
 #define MLX5_IB_H
 
+#include <linux/dev_printk.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <rdma/ib_verbs.h>

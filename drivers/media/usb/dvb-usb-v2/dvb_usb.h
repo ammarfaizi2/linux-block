@@ -9,6 +9,7 @@
 #ifndef DVB_USB_H
 #define DVB_USB_H
 
+#include <linux/dev_printk.h>
 #include <linux/usb/input.h>
 #include <linux/firmware.h>
 #include <media/rc-core.h>

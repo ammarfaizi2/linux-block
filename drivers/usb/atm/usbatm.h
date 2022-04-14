@@ -10,6 +10,7 @@
 #ifndef	_USBATM_H_
 #define	_USBATM_H_
 
+#include <linux/dev_printk.h>
 #include <linux/atm.h>
 #include <linux/atmdev.h>
 #include <linux/completion.h>

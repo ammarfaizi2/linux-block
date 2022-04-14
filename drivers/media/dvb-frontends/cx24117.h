@@ -10,6 +10,7 @@
 #ifndef CX24117_H
 #define CX24117_H
 
+#include <linux/dev_printk.h>
 #include <linux/dvb/frontend.h>
 
 struct cx24117_config {

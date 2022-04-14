@@ -4,6 +4,7 @@
 #ifndef _MLXFW_H
 #define _MLXFW_H
 
+#include <linux/dev_printk.h>
 #include <linux/firmware.h>
 #include <linux/netlink.h>
 #include <linux/device.h>

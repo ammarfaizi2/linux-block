@@ -7,6 +7,7 @@
 #ifndef __EFC_COMMON_H__
 #define __EFC_COMMON_H__
 
+#include <linux/dev_printk.h>
 #include <linux/device_api.h>
 #include <linux/pci.h>
 

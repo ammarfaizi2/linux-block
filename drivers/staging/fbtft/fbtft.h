@@ -4,6 +4,7 @@
 #ifndef __LINUX_FBTFT_H
 #define __LINUX_FBTFT_H
 
+#include <linux/dev_printk.h>
 #include <linux/fb.h>
 #include <linux/spinlock.h>
 #include <linux/spi/spi.h>

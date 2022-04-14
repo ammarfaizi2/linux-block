@@ -2,6 +2,7 @@
 #ifndef _PSMOUSE_H
 #define _PSMOUSE_H
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 #define PSMOUSE_OOB_NONE	0x00

@@ -12,6 +12,7 @@
 #ifndef __ES58X_COMMON_H__
 #define __ES58X_COMMON_H__
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 #include <linux/usb.h>
 #include <linux/netdevice.h>

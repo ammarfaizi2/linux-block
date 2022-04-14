@@ -7,6 +7,7 @@
 #ifndef __PHY_TEGRA_XUSB_H
 #define __PHY_TEGRA_XUSB_H
 
+#include <linux/dev_printk.h>
 #include <linux/io.h>
 #include <linux/mutex.h>
 #include <linux/workqueue.h>

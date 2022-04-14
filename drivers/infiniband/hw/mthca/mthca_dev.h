@@ -37,6 +37,7 @@
 #ifndef MTHCA_DEV_H
 #define MTHCA_DEV_H
 
+#include <linux/dev_printk.h>
 #include <linux/spinlock.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

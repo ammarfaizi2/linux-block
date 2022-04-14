@@ -30,6 +30,7 @@
 #ifndef _LINUX_RICOH_H
 #define _LINUX_RICOH_H
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 #define RF5C_MODE_CTL		0x1f	/* Mode control */

@@ -8,6 +8,7 @@
 #ifndef RSND_H
 #define RSND_H
 
+#include <linux/dev_printk.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>

@@ -11,6 +11,7 @@
 #ifndef __SOUND_SOC_SOF_IO_H
 #define __SOUND_SOC_SOF_IO_H
 
+#include <linux/dev_printk.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

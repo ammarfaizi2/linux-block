@@ -8,6 +8,7 @@
 #ifndef _ZD_DEF_H
 #define _ZD_DEF_H
 
+#include <linux/dev_printk.h>
 #include <linux/kernel.h>
 #include <linux/stringify.h>
 #include <linux/device.h>

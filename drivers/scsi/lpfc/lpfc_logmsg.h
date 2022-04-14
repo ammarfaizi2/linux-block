@@ -20,6 +20,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 #define LOG_ELS		0x00000001	/* ELS events */

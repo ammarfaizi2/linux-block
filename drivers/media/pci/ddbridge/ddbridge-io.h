@@ -19,6 +19,7 @@
 #ifndef __DDBRIDGE_IO_H__
 #define __DDBRIDGE_IO_H__
 
+#include <linux/dev_printk.h>
 #include <linux/io.h>
 
 #include "ddbridge.h"

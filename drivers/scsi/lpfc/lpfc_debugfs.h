@@ -23,6 +23,7 @@
 #ifndef _H_LPFC_DEBUG_FS
 #define _H_LPFC_DEBUG_FS
 
+#include <linux/dev_printk.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_SCSI_LPFC_DEBUG_FS
