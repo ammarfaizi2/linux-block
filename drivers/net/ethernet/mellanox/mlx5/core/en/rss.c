@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 // Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES.
 
+#include <linux/ethtool.h>
+
 #include "rss.h"
 
 #define mlx5e_rss_warn(__dev, format, ...)			\

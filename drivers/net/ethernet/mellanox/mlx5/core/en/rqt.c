@@ -2,6 +2,7 @@
 /* Copyright (c) 2021, Mellanox Technologies inc. All rights reserved. */
 
 #include "rqt.h"
+#include <linux/ethtool.h>
 #include <linux/mlx5/transobj.h>
 
 void mlx5e_rss_params_indir_init_uniform(struct mlx5e_rss_params_indir *indir,
