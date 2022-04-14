@@ -27,6 +27,7 @@
  *	    Jeremy Kolb  <jkolb@brandeis.edu>
  */
 
+#include <drm/drm_vma_manager_api_vm_lock.h>
 #include <linux/dma-mapping.h>
 
 #include "nouveau_drv.h"

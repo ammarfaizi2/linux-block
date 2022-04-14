@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <drm/drm_vma_manager_api_vm_lock.h>
 #include <drm/drm_file.h>
 
 #include "i915_drv.h"

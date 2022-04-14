@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <drm/drm_vma_manager_api_vm_lock.h>
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
 #include <linux/pfn_t.h>
