@@ -5,6 +5,8 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/i2c.h>
+
 #include "fc2580_priv.h"
 
 /*

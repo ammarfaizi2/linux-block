@@ -7,6 +7,7 @@
 
 #include "cx23885.h"
 
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/module.h>

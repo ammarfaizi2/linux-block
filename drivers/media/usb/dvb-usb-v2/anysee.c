@@ -18,6 +18,7 @@
  * is highly welcome!
  */
 
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 

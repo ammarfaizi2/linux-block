@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
   */
 
+#include <linux/i2c.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

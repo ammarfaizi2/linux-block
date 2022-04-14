@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 
 #include "tda18271-priv.h"

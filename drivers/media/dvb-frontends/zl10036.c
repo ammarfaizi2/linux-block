@@ -15,6 +15,7 @@
  * A driver for zl10038 should be very similar.
  */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/dvb/frontend.h>

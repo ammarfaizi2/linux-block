@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/i2c.h>
 #include <linux/device_api.h>
 
 #include "cxd2820r_priv.h"

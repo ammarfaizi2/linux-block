@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Malcolm Priestley
  */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/dvb/frontend.h>

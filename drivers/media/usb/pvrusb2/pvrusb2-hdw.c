@@ -4,6 +4,7 @@
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/string.h>

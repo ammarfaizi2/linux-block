@@ -8,6 +8,7 @@
  * Inspired by gl861.c and au6610.c drivers
  */
 
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 

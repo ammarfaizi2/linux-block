@@ -8,6 +8,7 @@
  * Thanks to Afatech who kindly provided information.
  */
 
+#include <linux/i2c.h>
 #include <linux/device_api.h>
 
 #include "af9013_priv.h"

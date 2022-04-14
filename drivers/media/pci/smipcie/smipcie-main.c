@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Max nibble <nibble.max@gmail.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

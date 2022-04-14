@@ -12,6 +12,7 @@
  * the project's page is at https://linuxtv.org
  */
 
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/module.h>

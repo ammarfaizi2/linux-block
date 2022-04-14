@@ -5,6 +5,7 @@
  *  Copyright (C) 2010-2014 Michael Krufky <mkrufky@linuxtv.org>
  */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 
 #include "mxl111sf-gpio.h"

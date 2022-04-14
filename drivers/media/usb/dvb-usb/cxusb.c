@@ -20,6 +20,7 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <media/tuner.h>
 #include <linux/delay.h>

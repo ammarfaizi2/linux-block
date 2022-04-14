@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Thomas Mair <thomas.mair86@googlemail.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 

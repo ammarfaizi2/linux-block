@@ -10,6 +10,7 @@
 #include "saa7134.h"
 #include "saa7134-reg.h"
 
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/init.h>
 #include <linux/list.h>

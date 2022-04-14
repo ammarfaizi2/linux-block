@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

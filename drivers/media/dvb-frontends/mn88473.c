@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/i2c.h>
 #include <linux/device_api.h>
 
 #include "mn88473_priv.h"

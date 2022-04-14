@@ -24,6 +24,7 @@
 #include "cx18-ioctl.h"
 #include "cx18-controls.h"
 #include "xc2028.h"
+#include <linux/i2c.h>
 #include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <media/tveeprom.h>

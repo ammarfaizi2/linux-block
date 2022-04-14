@@ -9,6 +9,7 @@
  * Contact: Sakari Ailus <sakari.ailus@linux.intel.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 
 #include "ccs.h"

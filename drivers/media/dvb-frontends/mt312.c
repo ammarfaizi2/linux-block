@@ -11,6 +11,7 @@
     http://products.zarlink.com/product_profiles/SL1935.htm
 */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/init.h>

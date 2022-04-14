@@ -5,6 +5,8 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/i2c.h>
+
 #include "e4000_priv.h"
 
 static int e4000_init(struct e4000_dev *dev)

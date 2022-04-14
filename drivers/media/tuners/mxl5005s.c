@@ -57,6 +57,7 @@
       sections of the code and retained the copyright of the
       respective owners.
 */
+#include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

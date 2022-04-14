@@ -14,6 +14,7 @@
  */
 #define SP8870_DEFAULT_FIRMWARE "dvb-fe-sp8870.fw"
 
+#include <linux/i2c.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>

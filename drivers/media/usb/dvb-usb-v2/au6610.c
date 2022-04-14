@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/i2c.h>
 #include <linux/export.h>
 
 #include "au6610.h"

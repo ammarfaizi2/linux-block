@@ -3,6 +3,7 @@
  *
  *  Copyright (C) 2005-6 DiBcom, SA
  */
+#include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 

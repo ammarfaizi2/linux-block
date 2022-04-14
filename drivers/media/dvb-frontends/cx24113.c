@@ -7,6 +7,7 @@
  *  Developed for BBTI / Technisat
  */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

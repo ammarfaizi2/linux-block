@@ -8,6 +8,7 @@
  * Copyright (C) 2009 Igor M. Liplianin <liplianin@netup.ru>
  */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/module.h>

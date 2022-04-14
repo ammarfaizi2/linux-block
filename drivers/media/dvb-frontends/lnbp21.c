@@ -7,6 +7,7 @@
  *
  * the project's page is at https://linuxtv.org
  */
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/init.h>
