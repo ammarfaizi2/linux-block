@@ -5,6 +5,7 @@
  * Copyright (C) 2014 ARM Ltd.
  */
 
+#include <asm/spectre.h>
 #include <linux/arm-smccc.h>
 #include <linux/types.h>
 #include <linux/cpu.h>
