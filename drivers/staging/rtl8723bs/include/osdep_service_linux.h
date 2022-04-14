@@ -7,6 +7,7 @@
 #ifndef __OSDEP_LINUX_SERVICE_H_
 #define __OSDEP_LINUX_SERVICE_H_
 
+#include <linux/pid.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock.h>

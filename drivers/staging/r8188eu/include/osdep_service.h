@@ -4,6 +4,7 @@
 #ifndef __OSDEP_SERVICE_H_
 #define __OSDEP_SERVICE_H_
 
+#include <linux/pid.h>
 #include <linux/netdevice_api.h>
 #include <linux/sched/signal.h>
 #include "basic_types.h"
