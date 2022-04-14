@@ -2,6 +2,7 @@
 #ifndef _IPV6_H
 #define _IPV6_H
 
+#include <uapi/linux/icmpv6.h>
 #include <linux/skbuff_api.h>
 #include <uapi/linux/ipv6.h>
 
