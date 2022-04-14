@@ -3,6 +3,7 @@
  * Generic hugetlb support.
  * (C) Nadia Yvette Chambers, April 2004
  */
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

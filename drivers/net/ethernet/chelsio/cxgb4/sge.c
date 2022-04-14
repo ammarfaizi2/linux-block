@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 #include <linux/skbuff.h>

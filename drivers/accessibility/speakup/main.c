@@ -9,6 +9,7 @@
  *  Copyright (C) 2003  David Borowski.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/vt.h>
 #include <linux/tty.h>

@@ -26,6 +26,7 @@
  * <zaitcev> Sounds reasonable
  */
 
+#include <linux/gfp_api.h>
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

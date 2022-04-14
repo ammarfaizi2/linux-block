@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/gfp_api.h>
 #include <linux/dax.h>
 #include <crypto/hash.h>
 #include <linux/export.h>

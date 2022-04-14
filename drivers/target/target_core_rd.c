@@ -11,6 +11,7 @@
  *
  ******************************************************************************/
 
+#include <linux/gfp_api.h>
 #include <linux/string.h>
 #include <linux/parser.h>
 #include <linux/highmem.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2016 Intel, Ross Zwisler
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

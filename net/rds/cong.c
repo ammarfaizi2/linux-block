@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/types.h>

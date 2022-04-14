@@ -13,6 +13,7 @@
 #define pr_fmt(fmt)     "DMAR: " fmt
 #define dev_fmt(fmt)    pr_fmt(fmt)
 
+#include <linux/gfp_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/crash_dump.h>

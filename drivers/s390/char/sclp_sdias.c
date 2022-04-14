@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT "sclp_sdias"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/completion.h>
 #include <linux/sched.h>
 #include <asm/sclp.h>

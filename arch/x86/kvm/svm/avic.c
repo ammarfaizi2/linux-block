@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "SVM: " fmt
 
+#include <linux/gfp_api.h>
 #include <asm/msr.h>
 #include <linux/kvm_types.h>
 #include <linux/hashtable.h>

@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/device.h>

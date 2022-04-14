@@ -13,6 +13,7 @@
  * by Hollis Blanchard <hollisb@us.ibm.com>.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/slab.h>

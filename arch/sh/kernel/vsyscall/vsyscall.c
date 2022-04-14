@@ -7,6 +7,7 @@
  * vDSO randomization
  * Copyright(C) 2005-2006, Red Hat, Inc., Ingo Molnar
  */
+#include <linux/gfp_api.h>
 #include <linux/mm.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

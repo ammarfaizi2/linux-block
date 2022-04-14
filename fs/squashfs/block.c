@@ -13,6 +13,7 @@
  * datablocks and metadata blocks.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/bvec_api.h>
 #include <linux/blkdev.h>
 #include <linux/fs.h>

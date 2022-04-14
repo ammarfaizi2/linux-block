@@ -8,6 +8,7 @@
  *	      Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/kernel_stat.h>
 #include <linux/module.h>
 #include <linux/err.h>

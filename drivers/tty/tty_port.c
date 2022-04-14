@@ -3,6 +3,7 @@
  * Tty port functions
  */
 
+#include <linux/gfp_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/tty.h>

@@ -16,6 +16,7 @@
 
 #undef DEBUG
 
+#include <linux/gfp_api.h>
 #include <linux/signal.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

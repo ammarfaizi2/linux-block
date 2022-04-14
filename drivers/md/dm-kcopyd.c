@@ -9,6 +9,7 @@
  * completion notification.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/types.h>

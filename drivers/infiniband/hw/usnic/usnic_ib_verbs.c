@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/gfp_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/errno.h>

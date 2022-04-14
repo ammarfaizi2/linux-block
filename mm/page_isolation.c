@@ -3,6 +3,7 @@
  * linux/mm/page_isolation.c
  */
 
+#include <linux/gfp_api.h>
 #include <linux/mm.h>
 #include <linux/page-isolation.h>
 #include <linux/pageblock-flags.h>

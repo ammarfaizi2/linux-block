@@ -2,6 +2,7 @@
 /*
  * Functions related to mapping data to requests
  */
+#include <linux/gfp_api.h>
 #include <linux/bvec_api.h>
 #include <linux/kernel.h>
 #include <linux/sched/task_stack.h>

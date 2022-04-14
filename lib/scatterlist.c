@@ -4,6 +4,7 @@
  *
  * Scatterlist handling helpers.
  */
+#include <linux/gfp_api.h>
 #include <asm/cacheflush.h>
 #include <linux/export.h>
 #include <linux/slab.h>

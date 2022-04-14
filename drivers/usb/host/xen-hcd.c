@@ -8,6 +8,7 @@
  * Author: Noboru Iwamatsu <n_iwamatsu@jp.fujitsu.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/module.h>
 #include <linux/usb.h>
 #include <linux/list.h>

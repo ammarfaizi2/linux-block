@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/gfp_api.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

@@ -7,6 +7,7 @@
  * Tao Peng <bergwolf@primarydata.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/nfs_fs.h>

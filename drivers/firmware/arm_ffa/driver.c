@@ -22,6 +22,7 @@
 #define DRIVER_NAME "ARM FF-A"
 #define pr_fmt(fmt) DRIVER_NAME ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/arm_ffa.h>
 #include <linux/bitfield.h>
 #include <linux/device.h>

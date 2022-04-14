@@ -3,6 +3,7 @@
  * (c) 2017 Stefano Stabellini <stefano@aporeto.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/net.h>

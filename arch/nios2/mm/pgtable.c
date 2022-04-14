@@ -7,6 +7,7 @@
  * for more details.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/mm.h>
 #include <linux/sched.h>
 

@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob.clark@linaro.org>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/seq_file.h>
 #include <linux/shmem_fs.h>

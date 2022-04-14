@@ -4,6 +4,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 
 #include "mock_dmabuf.h"

@@ -6,6 +6,7 @@
  * Copyright 2016 Alexey Kardashevskiy, IBM Corporation <aik@au1.ibm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/kvm.h>

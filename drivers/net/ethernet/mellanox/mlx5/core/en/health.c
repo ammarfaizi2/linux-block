@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Mellanox Technologies.
 
+#include <linux/gfp_api.h>
+
 #include "health.h"
 #include "lib/eq.h"
 #include "lib/mlx5.h"

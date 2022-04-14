@@ -3,6 +3,7 @@
  *    Copyright IBM Corp. 2006
  */
 
+#include <linux/gfp_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/memblock.h>
 #include <linux/pfn.h>

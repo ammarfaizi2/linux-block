@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/list.h>
 #include <linux/sched/mm.h>
 #include <linux/module.h>

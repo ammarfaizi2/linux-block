@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/error-injection.h>
 #include <linux/debugfs.h>

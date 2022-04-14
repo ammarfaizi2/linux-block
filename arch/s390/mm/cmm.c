@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/gfp_api.h>
 #include <linux/errno.h>
 #include <linux/fs.h>
 #include <linux/init.h>

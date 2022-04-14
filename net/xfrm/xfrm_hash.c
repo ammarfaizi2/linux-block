@@ -4,6 +4,7 @@
  * Copyright (C) 2006 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/memblock.h>

@@ -6,6 +6,7 @@
  *  Copyright (C) 1997-1999 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
  
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

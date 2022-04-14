@@ -3,6 +3,7 @@
  * Copyright (C) 2007, 2008 Karsten Wiese <fzu@wemgehoertderstaat.de>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/delay.h>
 #include <linux/usb.h>
 #include <linux/gfp.h>

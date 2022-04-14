@@ -11,6 +11,7 @@
  *   - Adaptive compression.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/crypto.h>
 #include <linux/err.h>

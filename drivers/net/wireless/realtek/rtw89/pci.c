@@ -2,6 +2,7 @@
 /* Copyright(c) 2020  Realtek Corporation
  */
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/pci.h>

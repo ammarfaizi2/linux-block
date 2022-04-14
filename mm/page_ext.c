@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/gfp_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mm.h>
 #include <linux/mmzone.h>

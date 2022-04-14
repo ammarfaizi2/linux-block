@@ -9,6 +9,7 @@
  * io_apic.c.)
  */
 
+#include <linux/gfp_api.h>
 #include <asm/ptrace.h>
 #include <asm/processor_api.h>
 #include <linux/seq_file.h>

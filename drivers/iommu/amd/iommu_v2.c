@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)     "AMD-Vi: " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/refcount.h>
 #include <linux/mmu_notifier.h>

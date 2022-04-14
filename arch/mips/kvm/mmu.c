@@ -9,6 +9,7 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/highmem.h>
 #include <linux/kvm_host.h>
 #include <linux/uaccess.h>

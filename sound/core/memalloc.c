@@ -6,6 +6,7 @@
  *  Generic memory allocators
  */
 
+#include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/mm.h>

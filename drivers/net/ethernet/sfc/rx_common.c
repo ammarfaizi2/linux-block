@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

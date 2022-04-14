@@ -5,6 +5,7 @@
  * Support for reverse-direction RPCs on RPC/RDMA (server-side).
  */
 
+#include <linux/gfp_api.h>
 #include <linux/sunrpc/svc_rdma.h>
 
 #include "xprt_rdma.h"

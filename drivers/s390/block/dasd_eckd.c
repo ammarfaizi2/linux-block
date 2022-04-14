@@ -12,6 +12,7 @@
 
 #define KMSG_COMPONENT "dasd-eckd"
 
+#include <linux/gfp_api.h>
 #include <linux/device/driver.h>
 #include <linux/capability.h>
 #include <linux/bvec_api.h>

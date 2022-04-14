@@ -8,6 +8,7 @@
 
 #include "fsl_pamu.h"
 
+#include <linux/gfp_api.h>
 #include <linux/fsl/guts.h>
 #include <linux/interrupt.h>
 #include <linux/genalloc.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/clocksource.h>
 #include <linux/highmem.h>
 #include <linux/ptp_clock_kernel.h>

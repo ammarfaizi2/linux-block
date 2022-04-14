@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "hypfs"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/debugfs.h>
 #include <linux/types.h>
 #include <linux/errno.h>

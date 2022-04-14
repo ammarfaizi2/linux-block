@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1998-2000 Russell King, Dave Gilbert.
  */
+#include <linux/gfp_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/mm.h>

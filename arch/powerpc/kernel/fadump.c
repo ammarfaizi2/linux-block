@@ -14,6 +14,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "fadump: " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/string.h>

@@ -37,6 +37,7 @@
  * the PCI back-end driver in Hyper-V.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

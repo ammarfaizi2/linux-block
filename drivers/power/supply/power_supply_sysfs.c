@@ -10,6 +10,7 @@
  *  Modified: 2004, Oct     Szabolcs Gyurko
  */
 
+#include <linux/gfp_api.h>
 #include <linux/ctype.h>
 #include <linux/device.h>
 #include <linux/power_supply.h>

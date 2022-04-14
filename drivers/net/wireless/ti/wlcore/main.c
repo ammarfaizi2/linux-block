@@ -6,6 +6,7 @@
  * Copyright (C) 2011-2013 Texas Instruments Inc.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>

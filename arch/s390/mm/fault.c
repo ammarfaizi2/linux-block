@@ -9,6 +9,7 @@
  *    Copyright (C) 1995  Linus Torvalds
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/kernel_stat.h>
 #include <linux/perf_event.h>

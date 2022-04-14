@@ -3,6 +3,7 @@
  * FireDTV driver -- firewire I/O backend
  */
 
+#include <linux/gfp_api.h>
 #include <linux/export.h>
 #include <linux/device_api.h>
 #include <linux/device.h>

@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/string.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

@@ -4,6 +4,7 @@
  * Copyright 2008-2013 Solarflare Communications Inc.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>

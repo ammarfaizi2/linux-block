@@ -6,6 +6,7 @@
  * based on drivers/md/raid6test/test.c:
  * 	Copyright 2002-2007 H. Peter Anvin
  */
+#include <linux/gfp_api.h>
 #include <linux/async_tx.h>
 #include <linux/gfp.h>
 #include <linux/mm.h>

@@ -3,6 +3,7 @@
  * Copyright 2007-2008 Paul Mackerras, IBM Corp.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/gfp.h>

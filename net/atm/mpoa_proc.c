@@ -2,6 +2,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
 #ifdef CONFIG_PROC_FS
+#include <linux/gfp_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

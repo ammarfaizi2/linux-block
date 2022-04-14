@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/list.h>

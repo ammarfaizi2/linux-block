@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007 David S. Miller (davem@davemloft.net)
  */
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

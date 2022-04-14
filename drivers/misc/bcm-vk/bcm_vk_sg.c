@@ -2,6 +2,7 @@
 /*
  * Copyright 2018-2020 Broadcom.
  */
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/mm.h>
 #include <linux/pagemap.h>

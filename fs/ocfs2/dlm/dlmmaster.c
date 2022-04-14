@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/gfp_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

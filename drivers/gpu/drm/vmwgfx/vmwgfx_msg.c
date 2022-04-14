@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/objtool.h>
 #include <linux/kernel.h>

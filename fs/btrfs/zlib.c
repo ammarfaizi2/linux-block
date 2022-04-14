@@ -7,6 +7,7 @@
  * Created by David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/zlib.h>

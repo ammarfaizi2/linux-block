@@ -3,6 +3,7 @@
  * Copyright 2019 Advanced Micro Devices, Inc.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/slab.h>
 #include <linux/tee_drv.h>
 #include <linux/psp-sev.h>

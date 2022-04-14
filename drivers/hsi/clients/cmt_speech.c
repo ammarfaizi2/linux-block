@@ -8,6 +8,7 @@
  * Original author: Peter Ujfalusi <peter.ujfalusi@nokia.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/errno.h>
 #include <linux/module.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2004 - 2005 Alex Aizman
  * maintained by open-iscsi@googlegroups.com
  */
+#include <linux/gfp_api.h>
 #include <linux/types.h>
 #include <linux/kfifo.h>
 #include <linux/delay.h>

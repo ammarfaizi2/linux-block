@@ -43,6 +43,7 @@
  * WITH YOU.
  ***********************license end**************************************/
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/types.h>
 #include <linux/vmalloc.h>

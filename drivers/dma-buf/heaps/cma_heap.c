@@ -9,6 +9,7 @@
  * Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com/
  *	Andrew F. Davis <afd@ti.com>
  */
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/cma.h>
 #include <linux/dma-buf.h>

@@ -6,6 +6,7 @@
  *
  *  DMA uncached mapping support.
  */
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>

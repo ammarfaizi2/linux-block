@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/slab.h>

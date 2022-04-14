@@ -7,6 +7,7 @@
  *		 Volker Sameske <sameske@de.ibm.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/types.h>
 #include <linux/export.h>
 #include <linux/init.h>

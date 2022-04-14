@@ -3,6 +3,7 @@
  *
  *  Copyright 2007 Rusty Russell IBM Corporation
  */
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/virtio.h>
 #include <linux/virtio_ring.h>

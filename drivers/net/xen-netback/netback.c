@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/debugfs.h>
 #include <linux/cpumask_api.h>

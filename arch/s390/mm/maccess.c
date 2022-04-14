@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/uaccess.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  * Filesystem request handling methods
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>

@@ -6,6 +6,7 @@
  * Copyright 2012 Google, Inc.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bio.h>
 #include <linux/blkdev.h>

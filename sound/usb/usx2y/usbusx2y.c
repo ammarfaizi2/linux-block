@@ -116,6 +116,7 @@
  *   Copyright (c) 2002 - 2004 Karsten Wiese
  */
 
+#include <linux/gfp_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

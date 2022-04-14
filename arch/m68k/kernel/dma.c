@@ -6,6 +6,7 @@
 
 #undef DEBUG
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dma-map-ops.h>
 #include <linux/device.h>

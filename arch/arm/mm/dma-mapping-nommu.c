@@ -5,6 +5,7 @@
  *  Copyright (C) 2000-2004 Russell King
  */
 
+#include <linux/gfp_api.h>
 #include <linux/dma-map-ops.h>
 #include <asm/cachetype.h>
 #include <asm/cacheflush.h>

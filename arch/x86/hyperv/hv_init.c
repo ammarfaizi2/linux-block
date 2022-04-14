@@ -7,6 +7,7 @@
  * Author : K. Y. Srinivasan <kys@microsoft.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

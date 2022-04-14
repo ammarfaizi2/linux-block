@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 #define CREATE_TRACE_POINTS
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 
 #include "lib/eq.h"

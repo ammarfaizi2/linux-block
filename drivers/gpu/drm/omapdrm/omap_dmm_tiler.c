@@ -7,6 +7,7 @@
  *         Andy Gross <andy.gross@ti.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

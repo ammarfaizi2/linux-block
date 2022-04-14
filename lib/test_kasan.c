@@ -5,6 +5,7 @@
  * Author: Andrey Ryabinin <a.ryabinin@samsung.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/kasan.h>

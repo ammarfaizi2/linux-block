@@ -3,6 +3,7 @@
  * Copyright (C) 2011-2014 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

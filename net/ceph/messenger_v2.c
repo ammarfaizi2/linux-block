@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Ilya Dryomov <idryomov@gmail.com>
  */
 
+#include <linux/gfp_api.h>
 #include <asm/unaligned.h>
 #include <linux/ceph/ceph_debug.h>
 

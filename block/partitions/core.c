@@ -4,6 +4,7 @@
  * Re-organised Feb 1998 Russell King
  * Copyright (C) 2020 Christoph Hellwig
  */
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

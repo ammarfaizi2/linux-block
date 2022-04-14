@@ -9,6 +9,7 @@
  */
 
 #define BH_TRACE 0
+#include <linux/gfp_api.h>
 #include <linux/module.h>
 #include <linux/gfp.h>
 #include <linux/raid/xor.h>

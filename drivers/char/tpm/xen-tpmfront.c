@@ -4,6 +4,7 @@
  *
  * Author:  Daniel De Graaf <dgdegra@tycho.nsa.gov>
  */
+#include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/err.h>

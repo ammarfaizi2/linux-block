@@ -39,6 +39,7 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/atomic_api.h>

@@ -15,6 +15,7 @@
  *  into usbatm), and the userspace firmware loading utility.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  * Copyright IBM Corp. 2008
  * Author(s): Jan Glauber <jang@linux.vnet.ibm.com>
  */
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/export.h>

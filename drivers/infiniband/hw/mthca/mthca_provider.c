@@ -34,6 +34,7 @@
  * SOFTWARE.
  */
 
+#include <linux/gfp_api.h>
 #include <rdma/ib_smi.h>
 #include <rdma/ib_umem.h>
 #include <rdma/ib_user_verbs.h>

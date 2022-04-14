@@ -3,6 +3,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/spinlock.h>
 #include <linux/sched.h>
 #include <linux/sched/clock.h>

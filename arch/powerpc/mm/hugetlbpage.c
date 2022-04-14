@@ -8,6 +8,7 @@
  * Copyright (C) 2002, Rohit Seth <rohit.seth@intel.com>
  */
 
+#include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/io.h>

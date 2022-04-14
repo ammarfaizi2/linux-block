@@ -26,6 +26,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/memblock.h>
 #include <linux/dma-direct.h>

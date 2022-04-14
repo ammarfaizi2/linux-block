@@ -47,6 +47,7 @@
  * exchange is properly mapped during a transfer.
  */
 
+#include <linux/gfp_api.h>
 #include <linux/fs.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
