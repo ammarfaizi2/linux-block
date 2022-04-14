@@ -28,6 +28,7 @@
  *    Tina Zhang <tina.zhang@intel.com>
  */
 
+#include <linux/fs_api_f_count.h>
 #include <linux/dma-buf.h>
 #include <linux/vfio.h>
 

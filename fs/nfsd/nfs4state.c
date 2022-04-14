@@ -32,6 +32,7 @@
 *
 */
 
+#include <linux/fs_api_f_count.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>

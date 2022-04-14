@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/fs_api_f_count.h>
 #include <linux/slab.h>
 #include <linux/file.h>
 #include <linux/anon_inodes.h>
