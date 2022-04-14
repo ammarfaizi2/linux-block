@@ -9,6 +9,7 @@
 #ifndef _ASM_PGALLOC_H
 #define _ASM_PGALLOC_H
 
+#include <linux/mm_ptlock.h>
 #include <linux/highmem.h>
 #include <linux/mm.h>
 #include <linux/sched.h>
