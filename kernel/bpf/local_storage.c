@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/bpf-cgroup-api.h>
 #include <linux/atomic_api.h>
 #include <linux/bpf-cgroup.h>
 #include <linux/bpf.h>

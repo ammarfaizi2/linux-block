@@ -19,6 +19,7 @@
  *  Removed it and replaced it with older style, 03/23/00, Bill Wendling
  */
 
+#include <linux/bpf-cgroup-api.h>
 #include <linux/atomic_api.h>
 #include <asm/elf_api.h>
 #include <linux/module.h>
