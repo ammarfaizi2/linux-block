@@ -2,6 +2,7 @@
 #ifndef _LINUX_MEMREMAP_H_
 #define _LINUX_MEMREMAP_H_
 
+#include <linux/mm_types.h>
 #include <linux/mm.h>
 #include <linux/range.h>
 #include <linux/ioport.h>

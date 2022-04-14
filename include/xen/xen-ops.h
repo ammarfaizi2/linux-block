@@ -2,6 +2,7 @@
 #ifndef INCLUDE_XEN_OPS_H
 #define INCLUDE_XEN_OPS_H
 
+#include <linux/mm_types.h>
 #include <linux/percpu.h>
 #include <linux/notifier.h>
 #include <linux/efi.h>
