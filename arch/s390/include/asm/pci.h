@@ -2,6 +2,7 @@
 #ifndef __ASM_S390_PCI_H
 #define __ASM_S390_PCI_H
 
+#include <linux/topology.h>
 #include <linux/pci.h>
 #include <linux/mutex.h>
 #include <linux/iommu.h>
