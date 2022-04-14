@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/atomic.h>
 #include <linux/gpio/consumer.h>

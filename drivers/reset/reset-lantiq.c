@@ -7,6 +7,7 @@
  *  Copyright (C) 2017 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
+#include <linux/delay.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>
 #include <linux/regmap.h>

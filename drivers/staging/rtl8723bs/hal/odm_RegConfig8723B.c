@@ -5,6 +5,8 @@
  *
  ******************************************************************************/
 
+#include <linux/delay.h>
+
 #include "odm_precomp.h"
 
 void odm_ConfigRFReg_8723B(

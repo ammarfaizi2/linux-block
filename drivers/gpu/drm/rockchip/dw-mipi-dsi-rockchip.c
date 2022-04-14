@@ -6,6 +6,7 @@
  *      Nickey Yang <nickey.yang@rock-chips.com>
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/iopoll.h>
 #include <linux/math64.h>

@@ -31,6 +31,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
+
 #include "ath5k.h"
 #include "reg.h"
 #include "debug.h"

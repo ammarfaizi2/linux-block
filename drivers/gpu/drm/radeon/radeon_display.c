@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/delay.h>
 #include <linux/pci.h>
 #include <linux/pm_runtime.h>
 #include <linux/gcd.h>

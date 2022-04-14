@@ -6,6 +6,8 @@
  * This code was derived from the Intel e1000e Linux driver.
  */
 
+#include <linux/delay.h>
+
 #include "pch_gbe.h"
 #include "pch_gbe_phy.h"
 

@@ -15,6 +15,7 @@
  *  into usbatm), and the userspace firmware loading utility.
  */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

@@ -9,6 +9,7 @@
 #include "pch_gbe.h"
 #include "pch_gbe_phy.h"
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/gpio/consumer.h>

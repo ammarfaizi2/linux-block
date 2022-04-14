@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0+
  */
 
+#include <linux/delay.h>
 #include <linux/of_address.h>
 #include <linux/platform_device.h>
 #include <linux/pm_domain.h>

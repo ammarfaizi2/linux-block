@@ -25,6 +25,7 @@
 #include "priv.h"
 #include "pll.h"
 
+#include <linux/delay.h>
 #include <subdev/bios.h>
 #include <subdev/bios/pll.h>
 

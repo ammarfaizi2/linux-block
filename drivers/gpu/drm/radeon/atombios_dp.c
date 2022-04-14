@@ -25,6 +25,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/delay.h>
 #include <drm/radeon_drm.h>
 #include "radeon.h"
 

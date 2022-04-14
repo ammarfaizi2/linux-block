@@ -39,6 +39,7 @@
 #include "xfs_ag.h"
 #include "xfs_defer.h"
 
+#include <linux/delay.h>
 #include <linux/dcache.h>
 #include <linux/dax.h>
 #include <linux/cpumask_api.h>

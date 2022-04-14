@@ -7,6 +7,8 @@
  * Copyright (c) 2019 Vivien Didelot <vivien.didelot@gmail.com>
  */
 
+#include <linux/delay.h>
+
 #include "chip.h"
 #include "smi.h"
 

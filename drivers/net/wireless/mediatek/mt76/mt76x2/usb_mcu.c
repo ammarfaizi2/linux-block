@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 
 #include "mt76x2u.h"

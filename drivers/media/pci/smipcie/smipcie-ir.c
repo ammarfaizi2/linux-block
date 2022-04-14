@@ -5,6 +5,8 @@
  * Copyright (C) 2014 Max nibble <nibble.max@gmail.com>
  */
 
+#include <linux/delay.h>
+
 #include "smipcie.h"
 
 #define SMI_SAMPLE_PERIOD 83

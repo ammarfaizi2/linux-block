@@ -30,6 +30,7 @@
  * (the low to high transition will not occur).
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/init.h>

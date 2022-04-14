@@ -4,6 +4,7 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include "rtl_core.h"

@@ -4,6 +4,8 @@
  * Author: jitao.shi <jitao.shi@mediatek.com>
  */
 
+#include <linux/delay.h>
+
 #include "phy-mtk-mipi-dsi.h"
 
 #define MIPITX_LANE_CON		0x000c

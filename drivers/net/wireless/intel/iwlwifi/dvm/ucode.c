@@ -5,6 +5,7 @@
  * Copyright(c) 2015 Intel Deutschland GmbH
  *****************************************************************************/
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 
 #include "iwl-io.h"

@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
 #include <linux/hardirq.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

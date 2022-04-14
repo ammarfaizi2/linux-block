@@ -6,6 +6,7 @@
 //
 // Author: Lucas Tanure <tanureal@opensource.cirrus.com>
 
+#include <linux/delay.h>
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <sound/hda_codec.h>

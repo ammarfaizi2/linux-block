@@ -28,6 +28,8 @@
  * I note that the address for response can be changed by command. But this
  * module uses the default address.
  */
+#include <linux/delay.h>
+
 #include "./fireworks.h"
 
 #define MEMORY_SPACE_EFW_COMMAND	0xecc000000000ULL

@@ -9,6 +9,7 @@
  * This driver is developed for Axi CAN IP and for Zynq CANPS Controller.
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/errno.h>
 #include <linux/init.h>

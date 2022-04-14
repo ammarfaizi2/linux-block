@@ -5,6 +5,8 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
+#include <linux/delay.h>
+
 #include "reg.h"
 #include "ps.h"
 #include "cmd.h"

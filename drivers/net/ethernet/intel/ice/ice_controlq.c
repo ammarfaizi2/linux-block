@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018, Intel Corporation. */
 
+#include <linux/delay.h>
+
 #include "ice_common.h"
 
 #define ICE_CQ_INIT_REGS(qinfo, prefix)				\

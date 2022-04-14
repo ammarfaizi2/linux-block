@@ -4,6 +4,8 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/delay.h>
+
 #include "rtl_core.h"
 #include "r8192E_hw.h"
 #include "r8190P_rtl8256.h"

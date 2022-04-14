@@ -7,6 +7,8 @@
  *          Iyappan Subramanian <isubramanian@apm.com>
  */
 
+#include <linux/delay.h>
+
 #include "xgene_enet_main.h"
 
 /* interfaces to convert structures to HW recognized bit formats */

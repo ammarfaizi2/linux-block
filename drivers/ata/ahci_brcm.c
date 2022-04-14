@@ -5,6 +5,7 @@
  * Copyright © 2009-2015 Broadcom Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/ahci_platform.h>
 #include <linux/compiler.h>
 #include <linux/device.h>

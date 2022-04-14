@@ -24,6 +24,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <acpi/video.h>
 #include <linux/i2c.h>

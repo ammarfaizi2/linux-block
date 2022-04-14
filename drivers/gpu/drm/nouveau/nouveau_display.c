@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <acpi/video.h>
 
 #include <drm/drm_atomic.h>

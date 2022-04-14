@@ -6,6 +6,7 @@
  * Copyright (C) 2009-2012 Cavium, Inc
  */
 
+#include <linux/delay.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/etherdevice.h>

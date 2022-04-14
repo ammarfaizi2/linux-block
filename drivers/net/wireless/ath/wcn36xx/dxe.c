@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
 #include <asm/io.h>
 #include <linux/interrupt.h>
 #include <linux/soc/qcom/smem_state.h>

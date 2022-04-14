@@ -4,6 +4,7 @@
 #include "wifi.h"
 #include "base.h"
 #include "ps.h"
+#include <linux/delay.h>
 #include <linux/export.h>
 #include "btcoexist/rtl_btc.h"
 

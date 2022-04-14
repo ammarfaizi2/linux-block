@@ -14,6 +14,8 @@ Major Change History:
 	2008-05-14	amy                     create version 0 porting from windows code.
 
 --*/
+#include <linux/delay.h>
+
 #include "r8192U.h"
 #include "r8192U_dm.h"
 #include "r8192U_hw.h"

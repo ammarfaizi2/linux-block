@@ -5,6 +5,7 @@
  *  Copyright (c) 2012, Jeff Layton <jlayton@redhat.com>
  */
 
+#include <linux/delay.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

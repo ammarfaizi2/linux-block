@@ -19,6 +19,7 @@
  * calls to msleep.
  */
 
+#include <linux/delay.h>
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>

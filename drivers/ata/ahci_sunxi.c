@@ -9,6 +9,7 @@
  * Daniel Wang <danielwang@allwinnertech.com>
  */
 
+#include <linux/delay.h>
 #include <linux/ahci_platform.h>
 #include <linux/clk.h>
 #include <linux/errno.h>

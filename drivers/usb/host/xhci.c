@@ -8,6 +8,7 @@
  * Some code borrowed from the Linux EHCI driver.
  */
 
+#include <linux/delay.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/pci.h>

@@ -9,6 +9,7 @@
  *    Timothy Lee <timothy.lee@siriushk.com> (for initial work on LGS8GL5)
  */
 
+#include <linux/delay.h>
 #include <asm/div64.h>
 #include <linux/firmware.h>
 

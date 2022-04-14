@@ -3,6 +3,7 @@
  * Copyright (c) 2021 MediaTek Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/devm-helpers.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

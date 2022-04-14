@@ -5,6 +5,7 @@
  *  Copyright (C) 2008, 2009 Michael Krufky <mkrufky@linuxtv.org>
  */
 
+#include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/types.h>
 #include <linux/videodev2.h>

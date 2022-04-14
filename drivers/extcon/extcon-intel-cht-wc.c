@@ -7,6 +7,7 @@
  * Copyright (C) 2013-2015 Intel Corporation. All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/extcon-provider.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

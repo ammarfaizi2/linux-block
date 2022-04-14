@@ -10,6 +10,8 @@
 
 #define MODULE_NAME "sunplus"
 
+#include <linux/delay.h>
+
 #include "gspca.h"
 #include "jpeg.h"
 

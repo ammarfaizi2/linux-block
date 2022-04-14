@@ -5,6 +5,8 @@
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/delay.h>
+
 #include "ec168.h"
 #include "ec100.h"
 #include "mxl5005s.h"

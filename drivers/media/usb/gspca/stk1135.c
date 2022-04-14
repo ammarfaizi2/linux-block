@@ -12,6 +12,8 @@
 
 #define MODULE_NAME "stk1135"
 
+#include <linux/delay.h>
+
 #include "gspca.h"
 #include "stk1135.h"
 

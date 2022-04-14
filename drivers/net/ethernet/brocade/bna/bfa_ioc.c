@@ -9,6 +9,8 @@
  * www.qlogic.com
  */
 
+#include <linux/delay.h>
+
 #include "bfa_ioc.h"
 #include "bfi_reg.h"
 #include "bfa_defs.h"

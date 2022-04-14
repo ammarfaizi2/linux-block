@@ -5,6 +5,7 @@
  * All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 #include <linux/slab.h>
 #include "netxen_nic.h"

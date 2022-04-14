@@ -2,6 +2,7 @@
 /* Copyright (C) 2021 MediaTek Inc.
  *
  */
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/firmware.h>
 

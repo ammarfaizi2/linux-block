@@ -12,6 +12,7 @@
  * the project's page is at https://linuxtv.org
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

@@ -23,6 +23,7 @@
  * Author: Jani Nikula <jani.nikula@intel.com>
  */
 
+#include <linux/delay.h>
 #include <linux/slab.h>
 
 #include <drm/drm_atomic_helper.h>

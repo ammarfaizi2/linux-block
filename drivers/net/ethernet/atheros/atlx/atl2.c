@@ -7,6 +7,7 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/crc32.h>

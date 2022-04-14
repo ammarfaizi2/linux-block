@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/delay.h>
 #include <linux/netdevice.h>
 #include <net/bonding.h>
 #include <linux/mlx5/driver.h>

@@ -8,6 +8,7 @@
  * Copyright (c) 2006 Novell, Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/acpi.h>
 #include <linux/cpufreq.h>
 #include <linux/device.h>

@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/firmware.h>

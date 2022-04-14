@@ -26,6 +26,8 @@
  *          Jerome Glisse
  */
 
+#include <linux/delay.h>
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "r600.h"

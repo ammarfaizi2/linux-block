@@ -2,6 +2,7 @@
 /* Copyright(c) 2017 Oracle and/or its affiliates. All rights reserved. */
 
 #include "ixgbe.h"
+#include <linux/delay.h>
 #include <net/xfrm.h>
 #include <crypto/aead.h>
 #include <linux/if_bridge.h>

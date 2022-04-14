@@ -8,6 +8,7 @@
 * Based on various ohci-*.c drivers
 */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
 #include <linux/io.h>

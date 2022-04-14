@@ -3,6 +3,8 @@
 
 #define _OSDEP_SERVICE_C_
 
+#include <linux/delay.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/recv_osdep.h"

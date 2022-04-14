@@ -5,6 +5,8 @@
 
 /* Sensor : OV2640 */
 
+#include <linux/delay.h>
+
 #include "gl860.h"
 
 static u8 dat_init1[] = "\x00\x41\x07\x6a\x06\x61\x0d\x6a" "\x10\x10\xc1\x01";

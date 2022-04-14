@@ -16,6 +16,7 @@
 
 #define _HCI_INTF_C_
 
+#include <linux/delay.h>
 #include <linux/usb.h>
 #include <linux/module.h>
 #include <linux/firmware.h>

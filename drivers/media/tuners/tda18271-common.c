@@ -6,6 +6,8 @@
 
 */
 
+#include <linux/delay.h>
+
 #include "tda18271-priv.h"
 
 static int tda18271_i2c_gate_ctrl(struct dvb_frontend *fe, int enable)

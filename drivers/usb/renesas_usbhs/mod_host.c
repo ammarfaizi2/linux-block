@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Renesas Solutions Corp.
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
+#include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/list.h>
 #include <linux/module.h>

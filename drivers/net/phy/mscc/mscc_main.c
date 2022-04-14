@@ -7,6 +7,7 @@
  * Copyright (c) 2016 Microsemi Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

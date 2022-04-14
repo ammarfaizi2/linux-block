@@ -6,6 +6,8 @@
  * Copyright (c) 2014 Takashi Sakamoto
  */
 
+#include <linux/delay.h>
+
 #include "dice.h"
 
 static u64 get_subaddr(struct snd_dice *dice, enum snd_dice_addr_type type,

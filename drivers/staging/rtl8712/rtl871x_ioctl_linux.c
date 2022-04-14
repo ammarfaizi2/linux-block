@@ -27,6 +27,7 @@
 #include "rtl871x_ioctl_set.h"
 #include "rtl871x_mp_ioctl.h"
 #include "mlme_osdep.h"
+#include <linux/delay.h>
 #include <linux/wireless.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

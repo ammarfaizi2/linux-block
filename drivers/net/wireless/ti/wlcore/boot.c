@@ -7,6 +7,7 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
+#include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/export.h>
 

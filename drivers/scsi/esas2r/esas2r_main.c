@@ -41,6 +41,7 @@
  * USA.
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 
 #include "esas2r.h"

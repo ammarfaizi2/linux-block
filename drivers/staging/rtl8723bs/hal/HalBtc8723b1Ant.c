@@ -5,6 +5,8 @@
  *
  ******************************************************************************/
 
+#include <linux/delay.h>
+
 #include "Mp_Precomp.h"
 
 /*  Global variables, these are static variables */

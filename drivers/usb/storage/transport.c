@@ -28,6 +28,7 @@
  * status of a command.
  */
 
+#include <linux/delay.h>
 #include <linux/sched.h>
 #include <linux/gfp.h>
 #include <linux/errno.h>

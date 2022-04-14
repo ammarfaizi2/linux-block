@@ -8,6 +8,7 @@
  * Rockchip version from rockchip/dw-mipi-dsi.c with phy & bridge APIs.
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/debugfs.h>

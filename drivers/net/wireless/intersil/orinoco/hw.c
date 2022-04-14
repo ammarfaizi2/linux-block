@@ -2,6 +2,7 @@
  *
  * See copyright notice in main.c
  */
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/if_arp.h>

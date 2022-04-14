@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2021 Linaro Ltd.
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <asm/io.h>
 #include <linux/types.h>

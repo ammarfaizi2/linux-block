@@ -13,6 +13,7 @@
  * for their support!
  */
 
+#include <linux/delay.h>
 #include <linux/usb.h>
 #include <net/mac80211.h>
 

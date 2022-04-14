@@ -5,6 +5,7 @@
  */
 
 #include "wil6210.h"
+#include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/pm_runtime.h>
 

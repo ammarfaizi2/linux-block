@@ -3,6 +3,7 @@
  * Copyright (c) 2011 Broadcom Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

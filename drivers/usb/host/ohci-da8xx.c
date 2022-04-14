@@ -8,6 +8,7 @@
  * Copyright (C) 2008-2009 MontaVista Software, Inc. <source@mvista.com>
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/gpio/consumer.h>
 #include <linux/io.h>

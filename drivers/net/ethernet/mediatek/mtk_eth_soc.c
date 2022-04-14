@@ -6,6 +6,7 @@
  *   Copyright (C) 2013-2016 Michael Lee <igvtee@gmail.com>
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/of_device.h>
 #include <linux/of_mdio.h>

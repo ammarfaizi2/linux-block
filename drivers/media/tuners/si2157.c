@@ -5,6 +5,8 @@
  * Copyright (C) 2014 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/delay.h>
+
 #include "si2157_priv.h"
 
 static const struct dvb_tuner_ops si2157_ops;

@@ -8,6 +8,7 @@
 /*
  * Core code for the Via multifunction framebuffer device.
  */
+#include <linux/delay.h>
 #include <linux/via-core.h>
 #include <linux/via_i2c.h>
 #include <linux/via-gpio.h>

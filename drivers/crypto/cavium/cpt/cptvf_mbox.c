@@ -3,6 +3,8 @@
  * Copyright (C) 2016 Cavium, Inc.
  */
 
+#include <linux/delay.h>
+
 #include "cptvf.h"
 
 static void cptvf_send_msg_to_pf(struct cpt_vf *cptvf, struct cpt_mbox *mbx)

@@ -7,6 +7,7 @@
  *    LGDT3304 support by Jarod Wilson <jarod@redhat.com>
  */
 
+#include <linux/delay.h>
 #include <asm/div64.h>
 #include <linux/dvb/frontend.h>
 #include <linux/slab.h>

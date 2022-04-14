@@ -2,6 +2,7 @@
 /*
  * Copyright © 2021 Intel Corporation
  */
+#include <linux/delay.h>
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_device.h>
 #include <drm/ttm/ttm_range_manager.h>

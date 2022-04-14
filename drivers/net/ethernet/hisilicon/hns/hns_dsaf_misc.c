@@ -3,6 +3,8 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/delay.h>
+
 #include "hns_dsaf_mac.h"
 #include "hns_dsaf_misc.h"
 #include "hns_dsaf_ppe.h"

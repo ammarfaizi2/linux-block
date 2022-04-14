@@ -11,6 +11,7 @@
 #include "ax88796c_main.h"
 #include "ax88796c_ioctl.h"
 
+#include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

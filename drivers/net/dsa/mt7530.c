@@ -3,6 +3,7 @@
  * Mediatek MT7530 DSA Switch driver
  * Copyright (C) 2017 Sean Wang <sean.wang@mediatek.com>
  */
+#include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include <linux/if_bridge.h>
 #include <linux/iopoll.h>

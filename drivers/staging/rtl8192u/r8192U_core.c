@@ -44,6 +44,7 @@ double __extendsfdf2(float a)
 
 #define CONFIG_RTL8192_IO_MAP
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include "r8192U_hw.h"

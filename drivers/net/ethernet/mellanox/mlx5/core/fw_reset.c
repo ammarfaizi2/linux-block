@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020, Mellanox Technologies inc.  All rights reserved. */
 
+#include <linux/delay.h>
+
 #include "fw_reset.h"
 #include "diag/fw_tracer.h"
 #include "lib/tout.h"

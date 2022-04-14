@@ -4,6 +4,7 @@
  * datasheet: https://www.ti.com/lit/ds/symlink/sn65dsi86.pdf
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/auxiliary_bus.h>

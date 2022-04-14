@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Intel Corporation. All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/acpi.h>
 #include <linux/init.h>
 #include <linux/mfd/axp20x.h>

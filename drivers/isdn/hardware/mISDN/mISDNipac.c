@@ -7,6 +7,7 @@
  * Copyright 2009  by Karsten Keil <keil@isdn4linux.de>
  */
 
+#include <linux/delay.h>
 #include <linux/irqreturn.h>
 #include <linux/slab.h>
 #include <linux/module.h>

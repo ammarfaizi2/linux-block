@@ -4,6 +4,7 @@
  * Inspired by dwc3-of-simple.c
  */
 
+#include <linux/delay.h>
 #include <linux/acpi.h>
 #include <linux/io.h>
 #include <linux/of.h>

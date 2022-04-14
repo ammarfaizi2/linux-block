@@ -3,6 +3,7 @@
 
 #define _RTW_CMD_C_
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 
 #include "../include/osdep_service.h"

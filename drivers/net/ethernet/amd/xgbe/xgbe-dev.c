@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/phy.h>
 #include <linux/mdio.h>

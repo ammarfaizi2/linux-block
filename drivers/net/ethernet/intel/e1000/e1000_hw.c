@@ -5,6 +5,7 @@
  * Shared functions for accessing and configuring the MAC
  */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/sched/cond_resched.h>
 

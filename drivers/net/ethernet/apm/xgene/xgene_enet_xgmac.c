@@ -6,6 +6,7 @@
  *	    Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/delay.h>
 #include <linux/of_gpio.h>
 #include <linux/gpio.h>
 #include "xgene_enet_main.h"

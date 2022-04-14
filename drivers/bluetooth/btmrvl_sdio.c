@@ -18,6 +18,7 @@
  * this warranty disclaimer.
  **/
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/slab.h>
 #include <linux/suspend.h>

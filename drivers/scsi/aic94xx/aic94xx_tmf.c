@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
+#include <linux/delay.h>
 #include <linux/spinlock.h>
 #include <linux/gfp.h>
 #include "aic94xx.h"

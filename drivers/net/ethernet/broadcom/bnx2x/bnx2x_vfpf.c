@@ -21,6 +21,7 @@
 
 #include "bnx2x.h"
 #include "bnx2x_cmn.h"
+#include <linux/delay.h>
 #include <linux/crc32.h>
 
 static int bnx2x_vfpf_teardown_queue(struct bnx2x *bp, int qidx);

@@ -18,6 +18,7 @@
  * Author: Marc Zyngier <maz@kernel.org>
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/consumer.h>
 #include <linux/kernel.h>

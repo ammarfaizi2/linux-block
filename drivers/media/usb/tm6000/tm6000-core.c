@@ -6,6 +6,7 @@
 // Copyright (c) 2007 Michel Ludwig <michel.ludwig@gmail.com>
 //     - DVB-T support
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

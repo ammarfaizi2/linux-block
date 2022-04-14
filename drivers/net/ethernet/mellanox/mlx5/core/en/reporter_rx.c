@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Mellanox Technologies.
 
+#include <linux/delay.h>
+
 #include "health.h"
 #include "params.h"
 #include "txrx.h"

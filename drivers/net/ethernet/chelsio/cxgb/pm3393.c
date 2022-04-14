@@ -42,6 +42,7 @@
 #include "elmer0.h"
 #include "suni1x10gexp_regs.h"
 
+#include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/slab.h>
 

@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/delay.h>
+
 #include "qlcnic.h"
 
 static const struct qlcnic_mailbox_metadata qlcnic_mbx_tbl[] = {

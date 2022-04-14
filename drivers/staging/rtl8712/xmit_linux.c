@@ -16,6 +16,7 @@
 
 #define _XMIT_OSDEP_C_
 
+#include <linux/delay.h>
 #include <linux/usb.h>
 #include <linux/ip.h>
 #include <linux/if_ether.h>

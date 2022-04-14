@@ -19,6 +19,7 @@
 
 #define MODULE_NAME "konica"
 
+#include <linux/delay.h>
 #include <linux/input.h>
 #include "gspca.h"
 

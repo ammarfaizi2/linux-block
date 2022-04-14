@@ -25,6 +25,7 @@
  * Philippe Schenker <philippe.schenker@toradex.com>
  */
 
+#include <linux/delay.h>
 #include <linux/bits.h>
 #include <linux/clk.h>
 #include <linux/gpio/consumer.h>

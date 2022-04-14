@@ -5,6 +5,8 @@
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
 
+#include <linux/delay.h>
+
 #include "./bebob.h"
 
 #define READY_TIMEOUT_MS	4000

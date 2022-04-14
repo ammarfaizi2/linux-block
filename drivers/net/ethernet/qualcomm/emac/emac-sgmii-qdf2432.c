@@ -5,6 +5,7 @@
 /* Qualcomm Technologies, Inc. QDF2432 EMAC SGMII Controller driver.
  */
 
+#include <linux/delay.h>
 #include <linux/iopoll.h>
 #include "emac.h"
 

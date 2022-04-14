@@ -6,6 +6,7 @@
  *	Peter Wang <peter.wang@mediatek.com>
  */
 
+#include <linux/delay.h>
 #include <linux/arm-smccc.h>
 #include <linux/bitfield.h>
 #include <linux/of.h>

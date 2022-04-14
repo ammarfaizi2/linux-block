@@ -22,6 +22,8 @@
  * Authors: Xiangliang.Yu@amd.com
  */
 
+#include <linux/delay.h>
+
 #include "amdgpu.h"
 #include "vi.h"
 #include "bif/bif_5_0_d.h"

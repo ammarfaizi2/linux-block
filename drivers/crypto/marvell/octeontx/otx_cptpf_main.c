@@ -8,6 +8,8 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/delay.h>
+
 #include "otx_cpt_common.h"
 #include "otx_cptpf.h"
 

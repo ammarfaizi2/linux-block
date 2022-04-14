@@ -7,6 +7,7 @@
  * Copyright (C) 2016 HALE electronic
  */
 
+#include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

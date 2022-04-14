@@ -11,6 +11,7 @@
  * linux-drivers@broadcom.com
  */
 
+#include <linux/delay.h>
 #include <scsi/libiscsi.h>
 #include <scsi/scsi_transport_iscsi.h>
 #include <scsi/scsi_transport.h>

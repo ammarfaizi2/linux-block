@@ -5,6 +5,7 @@
  * Based on anx7808 driver obtained from chromeos with copyright:
  * Copyright(c) 2013, Google Inc.
  */
+#include <linux/delay.h>
 #include <linux/regmap.h>
 
 #include <drm/drm.h>

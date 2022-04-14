@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
+#include <linux/delay.h>
+
 #include "mt7921.h"
 #include "../dma.h"
 #include "mac.h"

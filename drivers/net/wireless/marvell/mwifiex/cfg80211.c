@@ -17,6 +17,8 @@
  * this warranty disclaimer.
  */
 
+#include <linux/delay.h>
+
 #include "cfg80211.h"
 #include "main.h"
 #include "11n.h"

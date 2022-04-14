@@ -16,6 +16,7 @@
  * Arnd Bergmann <arnd@arndb.de>
  * Bjorn Helgaas <bhelgaas@google.com>
  */
+#include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

@@ -5,6 +5,8 @@
  * Copyright (C) 2011 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/delay.h>
+
 #include "tda10071_priv.h"
 
 static const struct dvb_frontend_ops tda10071_ops;

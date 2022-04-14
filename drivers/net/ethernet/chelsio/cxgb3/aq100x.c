@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <linux/delay.h>
+
 #include "common.h"
 #include "regs.h"
 

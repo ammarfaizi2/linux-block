@@ -3,6 +3,7 @@
 *
 * Copyright (C) 2008 Igor M. Liplianin (liplianin@me.by)
 */
+#include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

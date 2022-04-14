@@ -10,6 +10,7 @@
 
 */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/cordic.h>
 #include <linux/slab.h>

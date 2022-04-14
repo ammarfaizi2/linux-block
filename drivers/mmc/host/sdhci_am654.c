@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com
  *
  */
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/iopoll.h>
 #include <linux/of.h>

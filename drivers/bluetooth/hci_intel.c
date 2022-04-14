@@ -6,6 +6,7 @@
  *  Copyright (C) 2015  Intel Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/skbuff.h>

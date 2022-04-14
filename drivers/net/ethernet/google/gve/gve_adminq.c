@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2021 Google, Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include <linux/pci.h>
 #include "gve.h"

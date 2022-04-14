@@ -21,6 +21,7 @@
  */
 #include "base.h"
 
+#include <linux/delay.h>
 #include <nvif/cl507c.h>
 #include <nvif/event.h>
 #include <nvif/push507c.h>

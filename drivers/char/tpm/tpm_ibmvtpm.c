@@ -10,6 +10,7 @@
  * Specifications at www.trustedcomputinggroup.org
  */
 
+#include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>
 #include <linux/slab.h>

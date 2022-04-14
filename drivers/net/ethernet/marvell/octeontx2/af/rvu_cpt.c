@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/bitfield.h>
 #include <linux/pci.h>
 #include "rvu_struct.h"

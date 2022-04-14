@@ -10,6 +10,7 @@
 	Abstract: rt2x00 generic mmio device routines.
  */
 
+#include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

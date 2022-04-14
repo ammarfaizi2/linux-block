@@ -21,6 +21,7 @@
  *
  * Authors: AMD
  */
+#include <linux/delay.h>
 #include <linux/backlight.h>
 
 #include "dm_services.h"

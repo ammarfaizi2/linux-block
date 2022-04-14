@@ -4,6 +4,7 @@
  * Author: Cosmin Tanislav <cosmin.tanislav@analog.com>
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <asm/unaligned.h>
 #include <linux/bitfield.h>

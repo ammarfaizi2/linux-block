@@ -16,6 +16,8 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/delay.h>
+
 #include "ddbridge.h"
 #include "ddbridge-regs.h"
 #include "ddbridge-ci.h"

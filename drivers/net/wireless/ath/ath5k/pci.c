@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
 #include <linux/nl80211.h>
 #include <linux/pci.h>
 #include <linux/etherdevice.h>

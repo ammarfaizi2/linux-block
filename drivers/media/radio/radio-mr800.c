@@ -41,6 +41,7 @@
  */
 
 /* kernel includes */
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

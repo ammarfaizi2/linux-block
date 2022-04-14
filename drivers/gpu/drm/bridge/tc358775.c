@@ -7,6 +7,7 @@
  *
  */
 /* #define DEBUG */
+#include <linux/delay.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/device.h>

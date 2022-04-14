@@ -13,6 +13,7 @@
  */
 
 #include "asix.h"
+#include <linux/delay.h>
 #include <linux/phy.h>
 
 struct ax88172a_private {

@@ -7,6 +7,7 @@
  * Copyright (c) 2002-2003 TiVo Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/crc32.h>
 
 #include "asix.h"

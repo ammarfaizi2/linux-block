@@ -6,6 +6,7 @@
  * Author:
  *   Roger Tseng <rogerable@realtek.com>
  */
+#include <linux/delay.h>
 #include <linux/align.h>
 #include <linux/module.h>
 #include <linux/slab.h>

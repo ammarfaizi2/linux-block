@@ -3,6 +3,7 @@
 
 /* The driver transmit and receive code */
 
+#include <linux/delay.h>
 #include <linux/mm.h>
 #include <linux/netdevice.h>
 #include <linux/prefetch.h>

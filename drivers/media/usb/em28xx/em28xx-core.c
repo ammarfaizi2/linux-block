@@ -20,6 +20,7 @@
 
 #include "em28xx.h"
 
+#include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/jiffies.h>
 #include <linux/list.h>

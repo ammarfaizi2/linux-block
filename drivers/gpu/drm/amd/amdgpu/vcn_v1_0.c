@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 
 #include "amdgpu.h"

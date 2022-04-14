@@ -3,6 +3,7 @@
  * Copyright (c) 2015 MediaTek Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/iopoll.h>

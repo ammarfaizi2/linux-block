@@ -4,6 +4,7 @@
  * Copyright (c) 2019, 2020, Linaro Ltd.
  */
 
+#include <linux/delay.h>
 #include <linux/debugfs.h>
 #include <linux/err.h>
 #include <linux/io.h>

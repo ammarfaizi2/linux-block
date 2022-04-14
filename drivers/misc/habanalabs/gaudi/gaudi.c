@@ -13,6 +13,7 @@
 #include "../include/gaudi/gaudi_reg_map.h"
 #include "../include/gaudi/gaudi_async_ids_map_extended.h"
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>

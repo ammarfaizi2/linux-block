@@ -7,6 +7,7 @@
  *	Sangmin Lee <lsmin.lee@samsung.com>
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/kernel.h>

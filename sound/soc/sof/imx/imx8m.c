@@ -6,6 +6,7 @@
 //
 // Hardware interface for audio DSP on i.MX8M
 
+#include <linux/delay.h>
 #include <linux/bits.h>
 #include <linux/firmware.h>
 #include <linux/mfd/syscon.h>

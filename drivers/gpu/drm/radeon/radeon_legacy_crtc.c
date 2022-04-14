@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/delay.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_fixed.h>

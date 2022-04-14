@@ -29,6 +29,7 @@
  * this driver.
  */
 
+#include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/slab.h>

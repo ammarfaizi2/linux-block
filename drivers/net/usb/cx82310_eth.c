@@ -5,6 +5,7 @@
  * some parts inspired by the cxacru driver
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>

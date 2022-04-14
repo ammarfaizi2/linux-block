@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/delay.h>
 #include <asm/byteorder.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>

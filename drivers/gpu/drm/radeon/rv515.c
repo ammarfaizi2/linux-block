@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/delay.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <linux/slab.h>

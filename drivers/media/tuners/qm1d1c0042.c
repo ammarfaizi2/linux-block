@@ -18,6 +18,7 @@
  * Thus some part of the code might be dependent on PT3 specific config.
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/math64.h>
 #include "qm1d1c0042.h"

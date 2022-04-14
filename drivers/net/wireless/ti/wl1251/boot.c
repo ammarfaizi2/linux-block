@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/slab.h>
 
 #include "reg.h"

@@ -6,6 +6,7 @@
  * Author: Jose Abreu <joabreu@synopsys.com>
  */
 
+#include <linux/delay.h>
 #include <linux/bitrev.h>
 #include <linux/completion.h>
 #include <linux/crc32.h>

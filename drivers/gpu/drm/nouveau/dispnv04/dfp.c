@@ -24,6 +24,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/delay.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_fourcc.h>
 

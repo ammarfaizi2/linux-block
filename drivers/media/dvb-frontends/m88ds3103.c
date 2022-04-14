@@ -5,6 +5,8 @@
  * Copyright (C) 2013 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/delay.h>
+
 #include "m88ds3103_priv.h"
 
 static const struct dvb_frontend_ops m88ds3103_ops;

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2013 Texas Instruments
  */
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/davinci_emac.h>
 #include <linux/gpio.h>

@@ -7,6 +7,7 @@
  * Author: Alexander Shishkin
  */
 
+#include <linux/delay.h>
 #include <linux/align.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

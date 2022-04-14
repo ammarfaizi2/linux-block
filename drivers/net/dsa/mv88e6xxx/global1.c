@@ -8,6 +8,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/delay.h>
 #include <linux/bitfield.h>
 
 #include "chip.h"

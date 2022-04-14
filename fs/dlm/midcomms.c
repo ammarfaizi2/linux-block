@@ -132,6 +132,7 @@
  */
 #define DLM_DEBUG_FENCE_TERMINATION	0
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <net/tcp.h>
 

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0 or Linux-OpenIB
 /* Copyright (c) 2015 - 2021 Intel Corporation */
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/etherdevice.h>
 

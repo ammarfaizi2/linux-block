@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

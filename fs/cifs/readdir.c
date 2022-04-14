@@ -8,6 +8,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/delay.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>

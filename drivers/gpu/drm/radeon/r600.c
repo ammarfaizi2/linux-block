@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/delay.h>
 #include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/firmware.h>

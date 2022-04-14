@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2006 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 

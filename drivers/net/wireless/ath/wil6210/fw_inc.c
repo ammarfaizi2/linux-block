@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/bitmap.h>
 #include <linux/types.h>

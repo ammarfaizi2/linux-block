@@ -2,6 +2,8 @@
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
+#include <linux/delay.h>
+
 #include "main.h"
 #include "mac.h"
 #include "reg.h"

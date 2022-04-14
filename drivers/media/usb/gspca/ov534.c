@@ -23,6 +23,7 @@
 
 #include "gspca.h"
 
+#include <linux/delay.h>
 #include <linux/fixp-arith.h>
 #include <media/v4l2-ctrls.h>
 

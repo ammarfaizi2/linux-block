@@ -6,6 +6,7 @@
  * Based on omap2430.c
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/clk.h>

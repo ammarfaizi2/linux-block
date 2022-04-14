@@ -6,6 +6,7 @@
  * Copyright (c) 2017 Microsemi Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>

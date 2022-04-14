@@ -7,6 +7,7 @@
  * Author: Annaliese McDermond <nh6z@nh6z.net>
  */
 
+#include <linux/delay.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>
 #include <linux/regmap.h>

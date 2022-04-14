@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
+#include <linux/delay.h>
+
 #include "iavf_status.h"
 #include "iavf_type.h"
 #include "iavf_register.h"

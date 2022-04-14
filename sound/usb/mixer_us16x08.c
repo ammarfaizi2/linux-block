@@ -5,6 +5,7 @@
  *   Copyright (c) 2016 by Detlef Urban (onkel@paraair.de)
  */
 
+#include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/usb.h>
 #include <linux/usb/audio-v2.h>

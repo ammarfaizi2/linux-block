@@ -7,6 +7,7 @@
  * Author: Zhiqiang Hou <Zhiqiang.Hou@nxp.com>
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

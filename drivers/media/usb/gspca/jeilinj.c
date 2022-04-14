@@ -15,6 +15,7 @@
 
 #define MODULE_NAME "jeilinj"
 
+#include <linux/delay.h>
 #include <linux/slab.h>
 #include "gspca.h"
 #include "jpeg.h"

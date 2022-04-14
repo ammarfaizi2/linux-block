@@ -5,6 +5,8 @@
  *  Copyright (c) 2008 Steven Toth <stoth@linuxtv.org>
  */
 
+#include <linux/delay.h>
+
 #include "au0828.h"
 #include "au0828-cards.h"
 #include "au8522.h"

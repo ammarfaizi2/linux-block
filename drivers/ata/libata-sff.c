@@ -12,6 +12,7 @@
  *  http://www.sata-io.org/
  */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <asm/cacheflush.h>
 #include <linux/kernel.h>

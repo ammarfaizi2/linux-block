@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/host1x.h>
 #include <linux/io.h>

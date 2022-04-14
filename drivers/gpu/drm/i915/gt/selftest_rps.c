@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/pm_qos.h>
 #include <linux/sort.h>
 

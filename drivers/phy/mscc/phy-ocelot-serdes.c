@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/err.h>
 #include <linux/mfd/syscon.h>

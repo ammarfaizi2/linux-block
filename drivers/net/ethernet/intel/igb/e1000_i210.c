@@ -5,6 +5,7 @@
  * e1000_i211
  */
 
+#include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/if_ether.h>
 

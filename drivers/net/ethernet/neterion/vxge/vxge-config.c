@@ -11,6 +11,7 @@
  *                Virtualized Server Adapter.
  * Copyright(c) 2002-2010 Exar Corp.
  ******************************************************************************/
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/vmalloc.h>
 #include <linux/etherdevice.h>

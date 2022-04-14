@@ -31,6 +31,7 @@
 #include "tda827x.h"
 #include "lnbp21.h"
 /* CA */
+#include <linux/delay.h>
 #include <media/dvb_ca_en50221.h>
 
 /* debug */

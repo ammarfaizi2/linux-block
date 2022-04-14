@@ -5,6 +5,7 @@
  * Copyright 2015-2017 Socionext Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/etherdevice.h>

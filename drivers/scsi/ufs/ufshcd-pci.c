@@ -11,6 +11,7 @@
  */
 
 #include "ufshcd.h"
+#include <linux/delay.h>
 #include <linux/pci.h>
 #include <linux/pm_runtime.h>
 #include <linux/pm_qos.h>

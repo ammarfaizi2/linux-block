@@ -2,6 +2,7 @@
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include "main.h"
 #include "coex.h"

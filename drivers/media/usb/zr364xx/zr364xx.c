@@ -15,6 +15,7 @@
  */
 
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/usb.h>

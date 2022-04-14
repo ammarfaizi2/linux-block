@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/delay.h>
 #include <linux/tifm.h>
 #include <linux/mmc/host.h>
 #include <linux/highmem.h>

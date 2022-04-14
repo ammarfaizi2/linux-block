@@ -13,6 +13,7 @@
  * Copyright 2007 Andrea Merello <andrea.merello@gmail.com>
  */
 
+#include <linux/delay.h>
 #include <net/mac80211.h>
 
 #include "rtl8180.h"

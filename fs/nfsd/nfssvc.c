@@ -7,6 +7,7 @@
  * Copyright (C) 1995, 1996, 1997 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/delay.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/signal.h>

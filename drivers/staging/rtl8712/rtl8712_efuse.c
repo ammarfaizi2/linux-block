@@ -16,6 +16,8 @@
 
 #define _RTL8712_EFUSE_C_
 
+#include <linux/delay.h>
+
 #include "osdep_service.h"
 #include "drv_types.h"
 #include "rtl8712_efuse.h"

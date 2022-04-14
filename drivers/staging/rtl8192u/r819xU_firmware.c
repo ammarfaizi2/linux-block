@@ -17,6 +17,7 @@
 #include "r8192U_hw.h"
 #include "r819xU_firmware_img.h"
 #include "r819xU_firmware.h"
+#include <linux/delay.h>
 #include <linux/firmware.h>
 
 static void firmware_init_param(struct net_device *dev)

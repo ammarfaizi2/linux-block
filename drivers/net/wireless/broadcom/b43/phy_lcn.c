@@ -30,6 +30,7 @@
       copyright notice and this permission notice appear in all copies.
 */
 
+#include <linux/delay.h>
 #include <linux/slab.h>
 
 #include "b43.h"

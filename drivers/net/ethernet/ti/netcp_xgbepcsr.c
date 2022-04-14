@@ -7,6 +7,8 @@
  *		WingMan Kwok <w-kwok2@ti.com>
  *
  */
+#include <linux/delay.h>
+
 #include "netcp.h"
 
 /* XGBE registers */

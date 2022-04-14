@@ -4,6 +4,8 @@
  *  Copyright (c) 2015 FUJITSU LIMITED
  */
 
+#include <linux/delay.h>
+
 #include "fjes_hw.h"
 #include "fjes.h"
 #include "fjes_trace.h"

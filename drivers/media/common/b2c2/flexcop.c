@@ -18,6 +18,8 @@
  *               filtering)
  */
 
+#include <linux/delay.h>
+
 #include "flexcop.h"
 
 #define DRIVER_NAME "B2C2 FlexcopII/II(b)/III digital TV receiver chip"

@@ -8,6 +8,7 @@
  * Marvell CP110 UTMI PHY driver
  */
 
+#include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/mfd/syscon.h>

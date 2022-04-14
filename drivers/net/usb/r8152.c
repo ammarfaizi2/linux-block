@@ -3,6 +3,7 @@
  *  Copyright (c) 2014 Realtek Semiconductor Corp. All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/signal.h>

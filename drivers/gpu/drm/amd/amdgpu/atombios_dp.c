@@ -25,6 +25,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/delay.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 

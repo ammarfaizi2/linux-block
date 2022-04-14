@@ -11,6 +11,8 @@
 
 #define MODULE_NAME "vc032x"
 
+#include <linux/delay.h>
+
 #include "gspca.h"
 
 MODULE_AUTHOR("Jean-François Moine <http://moinejf.free.fr>");

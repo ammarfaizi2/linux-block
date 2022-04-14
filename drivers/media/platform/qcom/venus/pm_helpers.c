@@ -4,6 +4,7 @@
  *
  * Author: Stanimir Varbanov <stanimir.varbanov@linaro.org>
  */
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/interconnect.h>
 #include <linux/iopoll.h>

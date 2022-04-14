@@ -15,6 +15,8 @@
 
 #define MODULE_NAME "ov534_9"
 
+#include <linux/delay.h>
+
 #include "gspca.h"
 
 #define OV534_REG_ADDRESS	0xf1	/* sensor address */

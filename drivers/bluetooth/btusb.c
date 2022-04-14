@@ -6,6 +6,7 @@
  *  Copyright (C) 2005-2008  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/delay.h>
 #include <linux/dmi.h>
 #include <linux/module.h>
 #include <linux/usb.h>

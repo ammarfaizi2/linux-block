@@ -13,6 +13,7 @@
 
 #define MODULE_NAME "pac207"
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/input.h>
 #include "gspca.h"

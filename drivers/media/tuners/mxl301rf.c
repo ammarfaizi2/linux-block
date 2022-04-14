@@ -19,6 +19,7 @@
  * Thus some part of the code might be dependent on PT3 specific config.
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include "mxl301rf.h"
 

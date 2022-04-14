@@ -13,6 +13,7 @@
  *  - master mode *NOT* supported
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/slab.h>

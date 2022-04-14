@@ -4,6 +4,8 @@
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
+#include <linux/delay.h>
+
 #include "mt7601u.h"
 
 int mt7601u_wait_asic_ready(struct mt7601u_dev *dev)

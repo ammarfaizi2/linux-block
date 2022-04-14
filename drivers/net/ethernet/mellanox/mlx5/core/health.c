@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/random.h>
 #include <linux/vmalloc.h>

@@ -7,6 +7,8 @@
 
  */
 
+#include <linux/delay.h>
+
 #include "ivtv-driver.h"
 #include "ivtv-mailbox.h"
 

@@ -7,6 +7,7 @@
  * Copyright (C) 2019-2020 Cogent Embedded, Inc.
  */
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/module.h>

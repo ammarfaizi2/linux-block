@@ -5,6 +5,8 @@
  * Copyright (C) 2011 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/delay.h>
+
 #include "a8293.h"
 
 struct a8293_dev {

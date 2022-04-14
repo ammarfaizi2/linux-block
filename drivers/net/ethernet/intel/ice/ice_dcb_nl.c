@@ -5,6 +5,7 @@
 #include "ice_dcb.h"
 #include "ice_dcb_lib.h"
 #include "ice_dcb_nl.h"
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <net/dcbnl.h>
 

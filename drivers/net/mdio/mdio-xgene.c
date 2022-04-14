@@ -5,6 +5,7 @@
  * Author: Iyappan Subramanian <isubramanian@apm.com>
  */
 
+#include <linux/delay.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>
 #include <linux/device.h>

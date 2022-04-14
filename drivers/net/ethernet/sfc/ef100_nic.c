@@ -9,6 +9,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 
 #include "ef100_nic.h"

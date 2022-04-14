@@ -14,6 +14,7 @@
  *	Abstract: rt2800 MMIO device routines.
  */
 
+#include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/export.h>

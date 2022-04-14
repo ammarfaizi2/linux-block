@@ -5,6 +5,7 @@
  *
  * Copyright 2021 Analog Devices Inc.
  */
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <asm/unaligned.h>
 #include <linux/device.h>

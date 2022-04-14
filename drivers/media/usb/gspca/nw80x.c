@@ -11,6 +11,8 @@
 
 #define MODULE_NAME "nw80x"
 
+#include <linux/delay.h>
+
 #include "gspca.h"
 
 MODULE_AUTHOR("Jean-Francois Moine <http://moinejf.free.fr>");

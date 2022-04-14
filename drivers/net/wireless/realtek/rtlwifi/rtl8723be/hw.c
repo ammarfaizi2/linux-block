@@ -21,6 +21,7 @@
 #include "../pwrseqcmd.h"
 #include "pwrseq.h"
 #include "../btcoexist/rtl_btc.h"
+#include <linux/delay.h>
 #include <linux/kernel.h>
 
 #define LLT_CONFIG	5

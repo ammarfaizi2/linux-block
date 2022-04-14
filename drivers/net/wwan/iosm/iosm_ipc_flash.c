@@ -3,6 +3,8 @@
  * Copyright (C) 2020-2021 Intel Corporation.
  */
 
+#include <linux/delay.h>
+
 #include "iosm_ipc_coredump.h"
 #include "iosm_ipc_devlink.h"
 #include "iosm_ipc_flash.h"

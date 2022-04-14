@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/delay.h>
 #include <linux/types.h>
 
 /*

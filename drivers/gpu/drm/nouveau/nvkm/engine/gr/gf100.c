@@ -25,6 +25,7 @@
 #include "ctxgf100.h"
 #include "fuc/os.h"
 
+#include <linux/delay.h>
 #include <core/client.h>
 #include <core/firmware.h>
 #include <core/option.h>

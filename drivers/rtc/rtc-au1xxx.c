@@ -14,6 +14,7 @@
  * made as this would take far too long.
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/rtc.h>

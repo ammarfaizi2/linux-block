@@ -24,6 +24,7 @@
  */
 #include "priv.h"
 
+#include <linux/delay.h>
 #include <subdev/fuse.h>
 
 int

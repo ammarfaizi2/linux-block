@@ -3,6 +3,7 @@
 
 #define _RTW_MLME_EXT_C_
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/ieee80211.h>

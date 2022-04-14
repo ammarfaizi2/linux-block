@@ -3,6 +3,7 @@
 //
 // Copyright (c) 2007 Mauro Carvalho Chehab <mchehab@kernel.org>
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include "tm6000.h"

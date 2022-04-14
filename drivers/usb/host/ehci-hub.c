@@ -3,6 +3,7 @@
  * Copyright (C) 2001-2004 by David Brownell
  */
 
+#include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/types.h>
 

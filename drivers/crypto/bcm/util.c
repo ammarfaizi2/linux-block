@@ -3,6 +3,7 @@
  * Copyright 2016 Broadcom
  */
 
+#include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 

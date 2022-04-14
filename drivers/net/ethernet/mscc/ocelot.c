@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2017 Microsemi Corporation
  */
+#include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/dsa/ocelot.h>
 #include <linux/if_bridge.h>

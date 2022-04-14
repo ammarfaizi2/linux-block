@@ -8,6 +8,7 @@
  * Appnote-84367: https://www.vishay.com/docs/84367/designingveml6030.pdf
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/err.h>

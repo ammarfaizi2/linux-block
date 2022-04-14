@@ -22,6 +22,8 @@
  * Authors: Ben Skeggs
  * 	    Martin Peres
  */
+#include <linux/delay.h>
+
 #include "priv.h"
 
 enum nv40_sensor_style { INVALID_STYLE = -1, OLD_STYLE = 0, NEW_STYLE = 1 };

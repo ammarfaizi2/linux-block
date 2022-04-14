@@ -13,6 +13,8 @@
  * the project's page is at https://linuxtv.org
  */
 
+#include <linux/delay.h>
+
 #include "av7110.h"
 #include "av7110_hw.h"
 #include "budget.h"

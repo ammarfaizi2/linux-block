@@ -12,6 +12,7 @@
  * Hardware interface for audio DSP on Broadwell
  */
 
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <sound/sof.h>
 #include <sound/sof/xtensa.h>

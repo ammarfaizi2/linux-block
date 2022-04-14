@@ -7,6 +7,7 @@
 
  */
 
+#include <linux/delay.h>
 #include <media/dvb_frontend.h>
 #include "ts2020.h"
 #include <linux/regmap.h>

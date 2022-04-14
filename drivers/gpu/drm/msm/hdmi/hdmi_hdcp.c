@@ -3,6 +3,7 @@
  */
 
 #include "hdmi.h"
+#include <linux/delay.h>
 #include <linux/qcom_scm.h>
 
 #define HDCP_REG_ENABLE 0x01

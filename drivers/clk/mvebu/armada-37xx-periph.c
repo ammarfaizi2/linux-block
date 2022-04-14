@@ -17,6 +17,7 @@
  * xtal clock as parent.
  */
 
+#include <linux/delay.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>
 #include <linux/mfd/syscon.h>

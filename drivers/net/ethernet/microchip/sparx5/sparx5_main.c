@@ -6,6 +6,7 @@
  * The Sparx5 Chip Register Model can be browsed at this location:
  * https://github.com/microchip-ung/sparx-5_reginfo
  */
+#include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/netdevice.h>

@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/delay.h>
 #include <linux/backlight.h>
 #include <linux/dmi.h>
 #include <linux/pci.h>

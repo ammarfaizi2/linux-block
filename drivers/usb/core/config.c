@@ -3,6 +3,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/usb.h>
 #include <linux/usb/ch9.h>

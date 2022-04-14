@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include "cx25821.h"

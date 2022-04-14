@@ -5,6 +5,8 @@
  * All rights reserved.
  */
 
+#include <linux/delay.h>
+
 #include "netxen_nic_hw.h"
 #include "netxen_nic.h"
 

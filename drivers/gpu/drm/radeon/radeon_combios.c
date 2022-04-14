@@ -25,6 +25,7 @@
  *          Alex Deucher
  */
 
+#include <linux/delay.h>
 #include <linux/pci.h>
 
 #include <drm/drm_device.h>

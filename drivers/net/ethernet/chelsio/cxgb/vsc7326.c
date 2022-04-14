@@ -3,6 +3,8 @@
 
 /* Driver for Vitesse VSC7326 (Schaumburg) MAC */
 
+#include <linux/delay.h>
+
 #include "gmac.h"
 #include "elmer0.h"
 #include "vsc7326_reg.h"

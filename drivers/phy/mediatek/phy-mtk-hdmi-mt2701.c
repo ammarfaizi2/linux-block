@@ -4,6 +4,8 @@
  * Author: Chunhui Dai <chunhui.dai@mediatek.com>
  */
 
+#include <linux/delay.h>
+
 #include "phy-mtk-hdmi.h"
 
 #define HDMI_CON0	0x00

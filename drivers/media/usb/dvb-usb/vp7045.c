@@ -9,6 +9,8 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/delay.h>
+
 #include "vp7045.h"
 
 /* debug */

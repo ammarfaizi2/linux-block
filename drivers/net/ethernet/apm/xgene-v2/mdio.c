@@ -7,6 +7,8 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/delay.h>
+
 #include "main.h"
 
 static int xge_mdio_write(struct mii_bus *bus, int phy_id, int reg, u16 data)

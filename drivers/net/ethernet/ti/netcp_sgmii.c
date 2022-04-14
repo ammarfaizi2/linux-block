@@ -9,6 +9,8 @@
  *
  */
 
+#include <linux/delay.h>
+
 #include "netcp.h"
 
 #define SGMII_SRESET_RESET		BIT(0)

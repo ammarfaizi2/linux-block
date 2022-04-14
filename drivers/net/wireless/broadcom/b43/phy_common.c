@@ -13,6 +13,8 @@
 
 */
 
+#include <linux/delay.h>
+
 #include "phy_common.h"
 #include "phy_g.h"
 #include "phy_a.h"

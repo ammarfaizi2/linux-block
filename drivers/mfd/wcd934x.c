@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019, Linaro Limited
 
+#include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/gpio/consumer.h>
 #include <linux/interrupt.h>

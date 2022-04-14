@@ -29,6 +29,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/delay.h>
+
 #include "common.h"
 
 /* VSC8211 PHY specific registers. */

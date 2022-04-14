@@ -14,6 +14,7 @@
  *	Antti Laakso <antti.laakso@intel.com>
  */
 
+#include <linux/delay.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>
 #include <linux/kernel.h>
