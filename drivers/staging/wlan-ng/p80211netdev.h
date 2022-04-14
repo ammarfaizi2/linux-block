@@ -54,6 +54,7 @@
 #ifndef _LINUX_P80211NETDEV_H
 #define _LINUX_P80211NETDEV_H
 
+#include <linux/skbuff_types_head.h>
 #include <linux/interrupt.h>
 #include <linux/wireless.h>
 #include <linux/netdevice.h>
