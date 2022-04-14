@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Google, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_data/cros_ec_commands.h>

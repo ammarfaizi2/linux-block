@@ -21,6 +21,7 @@
  * PMIC).
  *
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

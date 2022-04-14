@@ -19,6 +19,7 @@
  * - HW ECC: Only 24 and 32-bit error correction implemented.
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

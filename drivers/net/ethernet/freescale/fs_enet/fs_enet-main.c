@@ -15,6 +15,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2006-2007 Freescale Semiconductor, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/pm.h>
 #include <linux/types.h>

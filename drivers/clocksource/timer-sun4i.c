@@ -14,6 +14,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/clockchips.h>

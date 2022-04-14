@@ -11,6 +11,7 @@
  *	- 3-pin mode support may be added in future.
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

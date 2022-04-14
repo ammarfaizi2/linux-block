@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2019 Integrated Device Technology, Inc., a Renesas Company.
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

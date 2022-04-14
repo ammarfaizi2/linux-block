@@ -9,6 +9,7 @@
  * Copyright (c) 2006 MontaVista Software, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/fsl_devices.h>

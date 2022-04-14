@@ -6,6 +6,7 @@
  * Based on driver by Russell King <rmk@arm.linux.org.uk>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>

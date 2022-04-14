@@ -7,6 +7,7 @@
 //
 // S3C common power management (suspend to ram) support.
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/suspend.h>
 #include <linux/errno.h>

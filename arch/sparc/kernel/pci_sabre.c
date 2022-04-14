@@ -6,6 +6,7 @@
  * Copyright (C) 1999 Jakub Jelinek   (jakub@redhat.com)
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/pci.h>

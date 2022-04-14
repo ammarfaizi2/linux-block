@@ -8,6 +8,7 @@
  *	Sricharan <r.sricharan@ti.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

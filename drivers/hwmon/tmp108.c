@@ -4,6 +4,7 @@
  * Copyright (C) 2016 John Muir <john@jmuir.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>

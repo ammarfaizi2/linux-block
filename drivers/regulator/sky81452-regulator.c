@@ -5,6 +5,7 @@
 // Copyright 2014 Skyworks Solutions Inc.
 // Author : Gyungoh Yoo <jack.yoo@skyworksinc.com>
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

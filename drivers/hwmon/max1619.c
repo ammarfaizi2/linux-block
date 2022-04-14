@@ -12,6 +12,7 @@
  *   http://pdfserv.maxim-ic.com/en/ds/MAX1619.pdf
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

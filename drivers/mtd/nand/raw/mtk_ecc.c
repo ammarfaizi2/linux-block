@@ -6,6 +6,7 @@
  *		Jorge Ramirez-Ortiz	<jorge.ramirez-ortiz@linaro.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

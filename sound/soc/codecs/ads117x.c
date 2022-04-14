@@ -6,6 +6,7 @@
  * Author: Graeme Gregory <gg@slimlogic.co.uk>
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/init.h>

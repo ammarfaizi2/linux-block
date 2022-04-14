@@ -12,6 +12,7 @@
  * Copyright:   (C) 2012  ST Microelectronics
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>

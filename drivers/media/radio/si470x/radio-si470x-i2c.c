@@ -16,6 +16,7 @@
 #define DRIVER_VERSION "1.0.2"
 
 /* kernel includes */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>

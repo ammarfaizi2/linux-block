@@ -14,6 +14,7 @@
  *     argument : macaddr=0x00,0x10,0x20,0x30,0x40,0x50
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

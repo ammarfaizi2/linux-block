@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "generic pinconfig core: " fmt
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

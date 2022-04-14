@@ -4,6 +4,7 @@
  * Copyright 2018, Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/bitops.h>
 #include <linux/clk-provider.h>

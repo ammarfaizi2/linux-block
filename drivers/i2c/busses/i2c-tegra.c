@@ -6,6 +6,7 @@
  * Author: Colin Cross <ccross@android.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

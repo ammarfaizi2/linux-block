@@ -13,6 +13,7 @@
 // the Samsung pinctrl/gpiolib driver. It also includes the implementation of
 // external gpio and wakeup interrupt support.
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/of_address.h>

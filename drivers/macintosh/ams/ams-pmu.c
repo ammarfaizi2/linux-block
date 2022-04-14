@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Michael Hanselmann (linux-kernel@hansmi.ch)
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/errno.h>

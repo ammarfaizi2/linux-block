@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/of_api.h>
 #include <linux/mfd/syscon.h>
 #include <linux/of.h>
 #include <linux/regmap.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2020 Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/of_api.h>
 #include <asm/cpu-type.h>
 #include <linux/clk.h>
 #include <linux/of.h>

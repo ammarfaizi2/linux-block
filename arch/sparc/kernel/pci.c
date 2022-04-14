@@ -9,6 +9,7 @@
  * with minor modifications, see there for credits.
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/ioport.h>

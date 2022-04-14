@@ -5,6 +5,7 @@
  *  Copyright (C) 2014 Alexander Shiyan <shc_work@mail.ru>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>
 #include <linux/io.h>

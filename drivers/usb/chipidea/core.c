@@ -14,6 +14,7 @@
  * - Low power mode
  * - USB wakeup
  */
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

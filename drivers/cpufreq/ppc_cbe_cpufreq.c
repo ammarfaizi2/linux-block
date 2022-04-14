@@ -7,6 +7,7 @@
  * Author: Christian Krafft <krafft@de.ibm.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpufreq.h>
 #include <linux/module.h>

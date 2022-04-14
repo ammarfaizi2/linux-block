@@ -4,6 +4,7 @@
 //
 // ROHM BD71828/BD71815 PMIC driver
 
+#include <linux/of_api.h>
 #include <linux/gpio_keys.h>
 #include <linux/i2c.h>
 #include <linux/input.h>

@@ -8,6 +8,7 @@
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

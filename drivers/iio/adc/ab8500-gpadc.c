@@ -22,6 +22,7 @@
  * parts of the system are required to obtain handles to the ADC to do work
  * for them and the IIO driver provides arbitration among these consumers.
  */
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>

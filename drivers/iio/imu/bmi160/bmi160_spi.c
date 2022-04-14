@@ -5,6 +5,7 @@
  * Copyright (c) 2016, Intel Corporation.
  *
  */
+#include <linux/of_api.h>
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <linux/of.h>

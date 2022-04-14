@@ -8,6 +8,7 @@
  * Copyright (c) 2006-2007 MontaVista Software, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/idr_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

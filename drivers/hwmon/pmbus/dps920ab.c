@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Sartura Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/i2c.h>

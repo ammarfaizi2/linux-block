@@ -4,6 +4,7 @@
  * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/clocksource.h>
 #include <linux/clockchips.h>

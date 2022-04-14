@@ -7,6 +7,7 @@
  * This fabric module looks for sound codecs based on the
  * layout-id or device-id property in the device tree.
  */
+#include <linux/of_api.h>
 #include <linux/kmod.h>
 #include <asm/prom.h>
 #include <linux/list.h>

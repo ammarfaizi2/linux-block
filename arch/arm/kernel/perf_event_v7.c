@@ -19,6 +19,7 @@
 
 #ifdef CONFIG_CPU_V7
 
+#include <linux/of_api.h>
 #include <asm/cp15.h>
 #include <asm/cputype.h>
 #include <asm/irq_regs.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Avionic Design GmbH
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bcd.h>

@@ -7,6 +7,7 @@
  * modify it under the terms of the GNU General Public License.
  */
 
+#include <linux/of_api.h>
 #include <linux/of_address.h>
 #include <linux/kernel.h>
 #include <linux/suspend.h>

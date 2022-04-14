@@ -8,6 +8,7 @@
  * Copyright (c) 2001 Eric Brower (ebrower@usa.net)
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/fs.h>

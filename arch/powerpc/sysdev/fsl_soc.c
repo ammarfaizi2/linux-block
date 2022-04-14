@@ -8,6 +8,7 @@
  * Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

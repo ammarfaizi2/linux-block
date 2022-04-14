@@ -6,6 +6,7 @@
  * Copyright (C) 2013 John Crispin <john@phrozen.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/clk.h>

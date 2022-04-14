@@ -8,6 +8,7 @@
  * Copyright (C) 2009 Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/init.h>

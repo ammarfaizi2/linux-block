@@ -9,6 +9,7 @@
  *          Suman Anna <s-anna@ti.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/device/class.h>

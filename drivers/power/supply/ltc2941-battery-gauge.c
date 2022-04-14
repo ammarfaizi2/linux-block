@@ -8,6 +8,7 @@
  * Author: Auryn Verwegen
  * Author: Mike Looijmans
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/devm-helpers.h>
 #include <linux/kernel.h>

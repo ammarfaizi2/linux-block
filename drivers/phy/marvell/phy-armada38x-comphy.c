@@ -5,6 +5,7 @@
  * Partly derived from CP110 comphy driver by Antoine Tenart
  * <antoine.tenart@bootlin.com>
  */
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

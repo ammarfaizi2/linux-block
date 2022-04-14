@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/irq.h>

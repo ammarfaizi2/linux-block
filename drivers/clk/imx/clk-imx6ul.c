@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Freescale Semiconductor, Inc.
  */
 
+#include <linux/of_api.h>
 #include <dt-bindings/clock/imx6ul-clock.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>

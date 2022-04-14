@@ -5,6 +5,7 @@
  * Copyright (C) 2016-2017 Broadcom
  */
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>

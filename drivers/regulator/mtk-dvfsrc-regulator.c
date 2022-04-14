@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2020 MediaTek Inc.
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/module.h>

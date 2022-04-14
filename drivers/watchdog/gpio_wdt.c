@@ -5,6 +5,7 @@
  * Author: 2013, Alexander Shiyan <shc_work@mail.ru>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/delay.h>

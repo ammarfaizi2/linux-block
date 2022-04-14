@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0+
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

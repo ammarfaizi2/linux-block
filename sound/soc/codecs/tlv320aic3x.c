@@ -28,6 +28,7 @@
  *  snd_soc_dapm_disable_pin(codec, "MONO_LOUT"), etc.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2008 David S. Miller <davem@davemloft.net>
  */
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/reboot.h>
 #include <linux/export.h>

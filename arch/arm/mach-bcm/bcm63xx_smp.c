@@ -5,6 +5,7 @@
  * Copyright (C) 2015, Broadcom Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/delay.h>

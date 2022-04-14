@@ -7,6 +7,7 @@
  * Copyright (C) IBM Corporation, 2008
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

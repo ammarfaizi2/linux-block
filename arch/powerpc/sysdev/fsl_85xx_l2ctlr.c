@@ -7,6 +7,7 @@
  * Author: Vivek Mahajan <vivek.mahajan@freescale.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

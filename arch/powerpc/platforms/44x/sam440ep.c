@@ -13,6 +13,7 @@
  * Modified from bamboo.c for sam440ep:
  * Copyright 2008 Giuseppe Coviello <gicoviello@gmail.com>
  */
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/of_platform.h>
 

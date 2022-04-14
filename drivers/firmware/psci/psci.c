@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "psci: " fmt
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mm_api.h>
 #include <linux/capability.h>

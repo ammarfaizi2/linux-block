@@ -16,6 +16,7 @@
  * Copyright 2004-2005 MontaVista Software, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

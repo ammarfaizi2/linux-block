@@ -4,6 +4,7 @@
  * Author:Mark Yao <mark.yao@rock-chips.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/component.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>

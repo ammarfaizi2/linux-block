@@ -11,6 +11,7 @@
  * Contact: Samu Onkalo <samu.p.onkalo@nokia.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/err.h>

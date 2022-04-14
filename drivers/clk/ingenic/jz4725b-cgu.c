@@ -6,6 +6,7 @@
  * Author: Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/of.h>

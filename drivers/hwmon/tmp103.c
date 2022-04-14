@@ -9,6 +9,7 @@
  * Copyright (C) 2010 Steven King <sfking@fdwdc.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

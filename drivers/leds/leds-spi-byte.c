@@ -28,6 +28,7 @@
  *   NOTE: This driver currently only supports mode 00.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/leds.h>

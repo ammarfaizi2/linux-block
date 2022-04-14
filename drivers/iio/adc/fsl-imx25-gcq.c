@@ -6,6 +6,7 @@
  * connected to the imx25 ADC.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

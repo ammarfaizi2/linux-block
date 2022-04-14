@@ -3,6 +3,7 @@
 // Copyright (c) 2018 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/of_platform.h>

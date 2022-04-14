@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2019 MediaTek Inc.
 
+#include <linux/of_api.h>
 #include <linux/mfd/mt6358/registers.h>
 #include <linux/mfd/mt6397/core.h>
 #include <linux/module.h>

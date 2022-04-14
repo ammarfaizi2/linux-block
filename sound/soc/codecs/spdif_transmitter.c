@@ -11,6 +11,7 @@
  * Copyright:   (C) 2009  Texas Instruments, India
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>

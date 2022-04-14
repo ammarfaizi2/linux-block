@@ -5,6 +5,7 @@
 
 #define dev_fmt(fmt)	"tegra-soc: " fmt
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/export.h>

@@ -13,6 +13,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/highmem.h>

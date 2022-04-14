@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Google, Inc
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

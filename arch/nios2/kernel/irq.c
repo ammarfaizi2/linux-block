@@ -9,6 +9,7 @@
  * Copyright (C) 2007 Greg Ungerer <gerg@snapgear.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/init.h>

@@ -7,6 +7,7 @@
  *
  * Copyright (c) 2004 Freescale Semiconductor, Inc.
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/of.h>

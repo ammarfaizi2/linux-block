@@ -14,6 +14,7 @@
  *	linux-arm-kernel@lists.arm.linux.org.uk
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

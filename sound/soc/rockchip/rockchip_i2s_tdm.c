@@ -5,6 +5,7 @@
 // Author: Sugar Zhang <sugar.zhang@rock-chips.com>
 // Author: Nicolas Frattaroli <frattaroli.nicolas@gmail.com>
 
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

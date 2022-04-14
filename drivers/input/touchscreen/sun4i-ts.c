@@ -27,6 +27,7 @@
  * than the one in the A10 User Manual v.1.5)
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/err.h>

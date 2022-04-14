@@ -8,6 +8,7 @@
  * Based on rtc-ds1672.c by Alessandro Zummo <a.zummo@towertech.it>
  */
 
+#include <linux/of_api.h>
 #include <linux/i2c.h>
 #include <linux/rtc.h>
 #include <linux/bcd.h>

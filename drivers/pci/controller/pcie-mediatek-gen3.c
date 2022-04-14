@@ -6,6 +6,7 @@
  * Author: Jianjun Wang <jianjun.wang@mediatek.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

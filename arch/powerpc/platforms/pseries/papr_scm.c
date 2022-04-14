@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt)	"papr-scm: " fmt
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

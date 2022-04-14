@@ -9,6 +9,7 @@
  * version 2.  This program is licensed "as is" without any warranty of
  * any kind, whether express or implied.
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/workqueue.h>
 #include <linux/string.h>

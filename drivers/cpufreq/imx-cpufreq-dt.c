@@ -3,6 +3,7 @@
  * Copyright 2019 NXP
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>

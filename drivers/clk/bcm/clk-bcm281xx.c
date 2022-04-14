@@ -12,6 +12,8 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/of_api.h>
+
 #include "clk-kona.h"
 #include "dt-bindings/clock/bcm281xx.h"
 

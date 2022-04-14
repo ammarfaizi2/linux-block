@@ -10,6 +10,7 @@
  * License. See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

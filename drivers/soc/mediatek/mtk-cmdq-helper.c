@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2018 MediaTek Inc.
 
+#include <linux/of_api.h>
 #include <linux/completion.h>
 #include <linux/errno.h>
 #include <linux/dma-mapping.h>

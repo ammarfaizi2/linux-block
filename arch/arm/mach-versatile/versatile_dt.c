@@ -8,6 +8,7 @@
  *  Copyright (C) 2000 Deep Blue Solutions Ltd
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/of.h>

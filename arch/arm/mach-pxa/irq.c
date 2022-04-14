@@ -8,6 +8,7 @@
  *  Created:	Jun 15, 2001
  *  Copyright:	MontaVista Software Inc.
  */
+#include <linux/of_api.h>
 #include <linux/bitops.h>
 #include <linux/init.h>
 #include <linux/module.h>

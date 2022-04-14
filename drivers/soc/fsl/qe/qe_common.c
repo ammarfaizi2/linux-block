@@ -13,6 +13,7 @@
  * 2006 (c) MontaVista Software, Inc.
  * Vitaly Bordug <vbordug@ru.mvista.com>
  */
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/genalloc.h>

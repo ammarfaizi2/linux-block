@@ -5,6 +5,7 @@
  * Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/interrupt.h>

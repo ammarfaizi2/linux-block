@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/usb.h>
 #include <linux/io.h>

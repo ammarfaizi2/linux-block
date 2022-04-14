@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

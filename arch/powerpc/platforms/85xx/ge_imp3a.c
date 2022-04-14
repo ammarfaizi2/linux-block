@@ -10,6 +10,7 @@
  * Copyright 2007 Freescale Semiconductor Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
  */
 
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <asm/nvram.h>
 #include <linux/init.h>

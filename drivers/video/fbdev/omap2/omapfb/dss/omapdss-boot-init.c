@@ -13,6 +13,7 @@
  * When we get generic panel drivers to the kernel, this file will be removed.
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/of.h>
 #include <linux/of_graph.h>

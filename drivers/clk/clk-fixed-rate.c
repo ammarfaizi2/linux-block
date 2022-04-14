@@ -6,6 +6,7 @@
  * Fixed rate clock implementation
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>

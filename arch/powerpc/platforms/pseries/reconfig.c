@@ -7,6 +7,7 @@
  * Copyright (C) 2005 IBM Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/notifier.h>

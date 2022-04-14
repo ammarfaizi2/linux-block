@@ -12,6 +12,7 @@
  * Copyright (C) 2018 Jerome Brunet, Baylibre SAS <jbrunet@baylibre.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

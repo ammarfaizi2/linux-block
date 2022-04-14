@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2017, Linaro Ltd
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/align.h>

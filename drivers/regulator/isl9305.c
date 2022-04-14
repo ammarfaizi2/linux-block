@@ -7,6 +7,7 @@
  * Author: Mark Brown <broonie@kernel.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

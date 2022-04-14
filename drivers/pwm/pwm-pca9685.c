@@ -8,6 +8,7 @@
  * based on the pwm-twl-led.c driver
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

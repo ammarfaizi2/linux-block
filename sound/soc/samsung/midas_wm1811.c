@@ -5,6 +5,7 @@
 // Copyright (C) 2018 Simon Shields <simon@lineageos.org>
 // Copyright (C) 2020 Samsung Electronics Co., Ltd.
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/gpio/consumer.h>

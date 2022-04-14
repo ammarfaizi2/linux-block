@@ -5,6 +5,7 @@
 // Copyright (c) 2018 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <sound/soc.h>
 

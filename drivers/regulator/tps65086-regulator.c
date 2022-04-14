@@ -15,6 +15,7 @@
  * Based on the TPS65912 driver
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

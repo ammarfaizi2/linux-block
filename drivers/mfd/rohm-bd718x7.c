@@ -7,6 +7,7 @@
 // Datasheet for BD71837MWV available from
 // https://www.rohm.com/datasheet/BD71837MWV/bd71837mwv-e
 
+#include <linux/of_api.h>
 #include <linux/gpio_keys.h>
 #include <linux/i2c.h>
 #include <linux/input.h>

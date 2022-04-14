@@ -10,6 +10,7 @@
  *
  * Copyright 2001 - 2006 Tensilica Inc.
  */
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

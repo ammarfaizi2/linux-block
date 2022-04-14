@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Cristian Ciocaltea <cristian.ciocaltea@gmail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

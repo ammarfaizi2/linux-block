@@ -9,6 +9,7 @@
  * Based on the MT9V032 driver and Bastian Hecht's code.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

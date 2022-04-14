@@ -9,6 +9,7 @@
  */
 #undef DEBUG
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/edac.h>
 #include <linux/module.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_io.h>
 #include <linux/irq_api_gc_lock.h>

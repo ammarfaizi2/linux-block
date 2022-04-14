@@ -20,6 +20,7 @@
  */
 #undef DEBUG
 
+#include <linux/of_api.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

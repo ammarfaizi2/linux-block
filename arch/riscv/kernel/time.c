@@ -4,6 +4,7 @@
  * Copyright (C) 2017 SiFive
  */
 
+#include <linux/of_api.h>
 #include <linux/of_clk.h>
 #include <linux/clocksource.h>
 #include <linux/delay.h>

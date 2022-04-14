@@ -5,6 +5,7 @@
  *  Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com
  *  Author: Sricharan R <r.sricharan@ti.com>
  */
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/err.h>
 #include <linux/io.h>

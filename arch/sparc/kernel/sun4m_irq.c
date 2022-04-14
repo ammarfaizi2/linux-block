@@ -10,6 +10,7 @@
  *  Copyright (C) 1996 Dave Redman (djhr@tadpole.co.uk)
  */
 
+#include <linux/of_api.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

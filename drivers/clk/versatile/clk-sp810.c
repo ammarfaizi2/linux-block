@@ -4,6 +4,7 @@
  * Copyright (C) 2013 ARM Limited
  */
 
+#include <linux/of_api.h>
 #include <linux/amba/sp810.h>
 #include <linux/slab.h>
 #include <linux/clk.h>

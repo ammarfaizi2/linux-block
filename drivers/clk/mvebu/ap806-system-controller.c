@@ -11,6 +11,7 @@
 #define pr_fmt(fmt) "ap806-system-controller: " fmt
 
 #include "armada_ap_cp_helper.h"
+#include <linux/of_api.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/mfd/syscon.h>

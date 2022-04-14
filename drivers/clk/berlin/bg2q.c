@@ -6,6 +6,7 @@
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

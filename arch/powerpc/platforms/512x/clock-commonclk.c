@@ -7,6 +7,7 @@
  * common clock driver support for the MPC512x platform
  */
 
+#include <linux/of_api.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

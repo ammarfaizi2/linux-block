@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Sascha Hauer <kernel@pengutronix.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>

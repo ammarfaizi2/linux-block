@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/of_api.h>
 #include <linux/types.h>
 #include <linux/init.h>
 #include <linux/delay.h>

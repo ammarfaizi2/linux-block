@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Renesas Electronics Corp.
  */
 
+#include <linux/of_api.h>
 #include <linux/bits.h>
 #include <linux/clk/renesas.h>
 #include <linux/delay.h>

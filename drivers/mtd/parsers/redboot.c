@@ -7,6 +7,7 @@
  * Copyright © 2001-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/init.h>

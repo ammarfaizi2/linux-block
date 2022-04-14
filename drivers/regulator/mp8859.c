@@ -3,6 +3,7 @@
 // Copyright (c) 2019 five technologies GmbH
 // Author: Markus Reichl <m.reichl@fivetechno.de>
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/of.h>

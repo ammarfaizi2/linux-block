@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/acpi_iort.h>
 #include <linux/pci.h>
 #include <linux/msi.h>

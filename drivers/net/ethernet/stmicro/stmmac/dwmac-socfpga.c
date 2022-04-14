@@ -4,6 +4,7 @@
  * Adopted from dwmac-sti.c
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

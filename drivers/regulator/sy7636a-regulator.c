@@ -7,6 +7,7 @@
 // Authors: Lars Ivar Miljeteig <lars.ivar.miljeteig@remarkable.com>
 //          Alistair Francis <alistair@alistair23.me>
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>

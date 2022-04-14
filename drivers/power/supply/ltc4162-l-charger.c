@@ -4,6 +4,7 @@
  *  Copyright (C) 2020, Topic Embedded Products
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>

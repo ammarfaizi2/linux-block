@@ -7,6 +7,7 @@
  *         Tai Nguyen <ttnguyen@apm.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

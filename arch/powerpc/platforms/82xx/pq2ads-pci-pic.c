@@ -9,6 +9,7 @@
  * Copyright (c) 2006 MontaVista Software, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/init.h>

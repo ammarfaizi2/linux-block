@@ -10,6 +10,7 @@
  * Copyright (C) 2014, Topic Embedded Products
  * Licenced under GPL
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

@@ -4,6 +4,7 @@
  *
  * Armada 510 (aka Dove) variant support
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/io.h>

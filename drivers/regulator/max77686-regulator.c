@@ -8,6 +8,7 @@
 //
 // This driver is based on max8997.c
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/bug.h>

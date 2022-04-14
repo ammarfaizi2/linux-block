@@ -7,6 +7,7 @@
  * Common Clock Framework support for all Exynos4 SoCs.
 */
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <dt-bindings/clock/exynos4.h>
 #include <linux/slab.h>

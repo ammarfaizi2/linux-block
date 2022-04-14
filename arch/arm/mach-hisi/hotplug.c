@@ -4,6 +4,7 @@
  * Copyright (c) 2013 HiSilicon Limited.
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/cpu.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2011 Ericsson AB.
  */
 
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

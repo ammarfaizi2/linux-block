@@ -7,6 +7,7 @@
  * Adapted from gpio-tps65910.c
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/mfd/altera-a10sr.h>

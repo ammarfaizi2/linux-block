@@ -4,6 +4,7 @@
  *
  *    Copyright (C) 2006 Arnd Bergmann <arnd@arndb.de>, IBM Corp.
  */
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/console.h>
 #include <linux/module.h>

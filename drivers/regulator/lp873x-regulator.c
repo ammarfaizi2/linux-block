@@ -13,6 +13,7 @@
  * GNU General Public License version 2 for more details.
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/regmap.h>

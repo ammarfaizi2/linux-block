@@ -9,6 +9,7 @@
  * Author: Nate Case <ncase@xes-inc.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/stddef.h>

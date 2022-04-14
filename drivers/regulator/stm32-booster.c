@@ -2,6 +2,7 @@
 // Copyright (C) STMicroelectronics 2019
 // Author(s): Fabrice Gasnier <fabrice.gasnier@st.com>.
 
+#include <linux/of_api.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

@@ -8,6 +8,7 @@
  * License terms:
  */
 
+#include <linux/of_api.h>
 #include <asm/mach-types.h>
 
 #include <linux/module.h>

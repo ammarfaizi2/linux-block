@@ -4,6 +4,7 @@
  * Copyright (c) 2019, Linaro Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

@@ -11,6 +11,7 @@
 
 #define DSS_SUBSYS_NAME "DISPC"
 
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

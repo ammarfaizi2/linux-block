@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2019 Microchip Technology Inc. and its subsidiaries
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

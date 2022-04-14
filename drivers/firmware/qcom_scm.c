@@ -2,6 +2,7 @@
 /* Copyright (c) 2010,2015,2019 The Linux Foundation. All rights reserved.
  * Copyright (C) 2015 Linaro Ltd.
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>

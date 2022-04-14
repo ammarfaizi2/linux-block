@@ -8,6 +8,7 @@
  * MPC512x SoC setup
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/of_platform.h>
 

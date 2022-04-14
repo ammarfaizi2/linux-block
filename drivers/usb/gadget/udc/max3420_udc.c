@@ -13,6 +13,7 @@
  *		https://pdfserv.maximintegrated.com/en/an/AN3785.pdf
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kthread.h>

@@ -20,6 +20,7 @@
  * Matt Porter <mporter@kernel.crashing.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/types.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>

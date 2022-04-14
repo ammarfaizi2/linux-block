@@ -7,6 +7,7 @@
  * Author: Matus Ujhelyi <ujhelyi.m@gmail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

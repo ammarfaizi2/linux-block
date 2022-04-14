@@ -17,6 +17,7 @@
  * and waking up the secondary CPUs
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2005-2007 Atmel Corporation
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

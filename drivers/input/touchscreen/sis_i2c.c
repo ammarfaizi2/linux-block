@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Nextfour Group
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/crc-itu-t.h>
 #include <linux/delay.h>

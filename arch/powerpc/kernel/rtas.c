@@ -7,6 +7,7 @@
  * Copyright (C) 2001 IBM.
  */
 
+#include <linux/of_api.h>
 #include <linux/hardirq.h>
 #include <linux/stdarg.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
 // Author: Shane Chien <shane.chien@mediatek.com>
 //
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/regmap.h>

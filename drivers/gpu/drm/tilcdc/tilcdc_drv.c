@@ -6,6 +6,7 @@
 
 /* LCDC DRM driver, based on da8xx-fb */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

@@ -4,6 +4,7 @@
 // /DA9213/DA9223/DA9214/DA9224/DA9215/DA9225
 // Copyright (C) 2015  Dialog Semiconductor Ltd.
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

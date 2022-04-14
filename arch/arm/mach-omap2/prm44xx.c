@@ -9,6 +9,7 @@
  * Rajendra Nayak <rnayak@ti.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/cpu_pm.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

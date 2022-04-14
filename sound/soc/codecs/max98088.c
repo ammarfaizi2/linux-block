@@ -5,6 +5,7 @@
  * Copyright 2010 Maxim Integrated Products
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

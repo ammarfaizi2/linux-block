@@ -9,6 +9,7 @@
  * Major contributions and discoveries by Russell King.
  */
 
+#include <linux/of_api.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/mfd/syscon.h>

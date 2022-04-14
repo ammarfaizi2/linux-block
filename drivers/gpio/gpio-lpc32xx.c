@@ -7,6 +7,7 @@
  * Copyright (C) 2010 NXP Semiconductors
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/io.h>

@@ -13,6 +13,7 @@
  * Copyright (C) 2010,2013, NVIDIA Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/irq.h>

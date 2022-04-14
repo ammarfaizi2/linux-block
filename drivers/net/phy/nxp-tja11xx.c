@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2018 Marek Vasut <marex@denx.de>
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/ethtool.h>

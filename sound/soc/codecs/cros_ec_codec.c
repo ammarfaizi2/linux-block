@@ -8,6 +8,7 @@
  * EC for audio function.
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

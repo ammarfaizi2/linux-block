@@ -8,6 +8,7 @@
 // Chen Feng <puck.chen@hisilicon.com>
 // Fei  Wang <w.f@huawei.com>
 
+#include <linux/of_api.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/err.h>

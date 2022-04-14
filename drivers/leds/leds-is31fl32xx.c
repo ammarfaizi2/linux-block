@@ -9,6 +9,7 @@
  *   http://www.si-en.com/product.asp?parentid=890
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/i2c.h>

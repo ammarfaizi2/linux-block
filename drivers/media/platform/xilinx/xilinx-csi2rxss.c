@@ -7,6 +7,7 @@
  * Contacts: Vishal Sagar <vishal.sagar@xilinx.com>
  *
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

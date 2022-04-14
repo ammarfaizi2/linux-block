@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

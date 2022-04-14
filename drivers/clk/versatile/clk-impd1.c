@@ -3,6 +3,7 @@
  * Clock driver for the ARM Integrator/IM-PD1 board
  * Copyright (C) 2012-2013 Linus Walleij
  */
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>
 #include <linux/err.h>

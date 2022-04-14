@@ -11,6 +11,7 @@
  * Supported models: TMP421, TMP422, TMP423, TMP441, TMP442
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

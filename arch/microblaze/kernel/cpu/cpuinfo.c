@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/init.h>
 #include <asm/cpuinfo.h>

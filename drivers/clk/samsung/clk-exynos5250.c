@@ -7,6 +7,7 @@
  * Common Clock Framework support for Exynos5250 SoC.
 */
 
+#include <linux/of_api.h>
 #include <dt-bindings/clock/exynos5250.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

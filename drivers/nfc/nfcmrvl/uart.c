@@ -5,6 +5,7 @@
  * Copyright (C) 2015, Marvell International Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/device/driver.h>
 #include <linux/module.h>
 #include <linux/delay.h>

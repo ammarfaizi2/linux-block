@@ -5,6 +5,7 @@
  * Common Clock Framework support for S3C2410 and following SoCs.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/clk/samsung.h>
 #include <linux/of.h>

@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "GIC-ODMI: " fmt
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>

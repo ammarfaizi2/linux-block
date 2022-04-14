@@ -7,6 +7,7 @@
  *  Based on corgikbd.c
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/delay.h>

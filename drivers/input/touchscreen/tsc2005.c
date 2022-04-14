@@ -9,6 +9,7 @@
  * Based on original tsc2005.c by Lauri Leukkunen <lauri.leukkunen@nokia.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/of.h>

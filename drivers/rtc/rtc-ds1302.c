@@ -6,6 +6,7 @@
  *  Copyright (C) 2003 - 2007 Paul Mundt
  */
 
+#include <linux/of_api.h>
 #include <linux/bcd.h>
 #include <linux/init.h>
 #include <linux/io.h>

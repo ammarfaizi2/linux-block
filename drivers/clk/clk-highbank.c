@@ -3,6 +3,7 @@
  * Copyright 2011-2012 Calxeda, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/err.h>

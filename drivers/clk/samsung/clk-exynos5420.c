@@ -7,6 +7,7 @@
  * Common Clock Framework support for Exynos5420 SoC.
 */
 
+#include <linux/of_api.h>
 #include <dt-bindings/clock/exynos5420.h>
 #include <linux/slab.h>
 #include <linux/clk-provider.h>

@@ -3,6 +3,7 @@
  * Routines common to most mpc85xx-based boards.
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Broadcom Corporation
  * Author: Florian Fainelli <f.fainelli@gmail.com>
  */
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/spinlock.h>

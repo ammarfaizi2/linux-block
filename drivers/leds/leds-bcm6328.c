@@ -5,6 +5,7 @@
  * Copyright 2015 Álvaro Fernández Rojas <noltari@gmail.com>
  * Copyright 2015 Jonas Gorski <jogo@openwrt.org>
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/leds.h>

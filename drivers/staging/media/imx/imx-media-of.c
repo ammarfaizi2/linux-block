@@ -6,6 +6,7 @@
  *
  * Copyright (c) 2016 Mentor Graphics Inc.
  */
+#include <linux/of_api.h>
 #include <linux/of_platform.h>
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-device.h>

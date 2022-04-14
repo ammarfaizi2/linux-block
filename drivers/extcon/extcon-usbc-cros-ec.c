@@ -4,6 +4,7 @@
 // Copyright (C) 2017 Google, Inc.
 // Author: Benson Leung <bleung@chromium.org>
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

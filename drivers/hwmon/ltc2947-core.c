@@ -4,6 +4,7 @@
  *
  * Copyright 2019 Analog Devices Inc.
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/math64.h>

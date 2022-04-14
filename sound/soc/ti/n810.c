@@ -7,6 +7,7 @@
  * Contact: Jarkko Nikula <jarkko.nikula@bitmer.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/i2c.h>
 #include <linux/platform_device.h>

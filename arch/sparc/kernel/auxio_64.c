@@ -6,6 +6,7 @@
  * Refactoring for unified NCR/PCIO support 2002 Eric Brower (ebrower@usa.net)
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

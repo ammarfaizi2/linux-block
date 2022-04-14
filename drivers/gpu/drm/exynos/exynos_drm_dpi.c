@@ -7,6 +7,7 @@
  * Contacts: Andrzej Hajda <a.hajda@samsung.com>
 */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/of_graph.h>

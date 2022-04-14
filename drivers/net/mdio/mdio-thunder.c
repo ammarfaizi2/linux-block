@@ -3,6 +3,7 @@
  * Copyright (C) 2009-2016 Cavium, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>

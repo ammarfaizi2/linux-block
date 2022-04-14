@@ -27,6 +27,7 @@
  *       http://www.gmt.com.tw/product/datasheet/EDS-762_3.pdf
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

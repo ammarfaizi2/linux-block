@@ -6,6 +6,7 @@
  * Common Clock Framework support for Exynos5410 SoC.
 */
 
+#include <linux/of_api.h>
 #include <dt-bindings/clock/exynos5410.h>
 
 #include <linux/clk-provider.h>

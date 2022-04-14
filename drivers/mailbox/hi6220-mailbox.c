@@ -8,6 +8,7 @@
  * Author: Leo Yan <leo.yan@linaro.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2014 ARM Limited
  */
 
+#include <linux/of_api.h>
 #include <linux/clocksource.h>
 #include <linux/io.h>
 #include <linux/of.h>

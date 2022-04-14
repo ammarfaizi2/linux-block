@@ -4,6 +4,7 @@
  * Copyright 2006-2007, Michael Ellerman, IBM Corporation.
  */
 
+#include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/msi.h>

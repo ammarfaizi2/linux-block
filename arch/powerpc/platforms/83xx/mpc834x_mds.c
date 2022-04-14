@@ -7,6 +7,7 @@
  * Maintainer: Kumar Gala <galak@kernel.crashing.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/stddef.h>

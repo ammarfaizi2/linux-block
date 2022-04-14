@@ -6,6 +6,7 @@
  * Copyright (C) 2017 SiFive
  */
 
+#include <linux/of_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/ctype.h>

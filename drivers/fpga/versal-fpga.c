@@ -3,6 +3,7 @@
  * Copyright (C) 2019-2021 Xilinx, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/fpga/fpga-mgr.h>
 #include <linux/io.h>

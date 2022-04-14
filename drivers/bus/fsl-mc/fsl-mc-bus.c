@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "fsl-mc: " fmt
 
+#include <linux/of_api.h>
 #include <linux/notifier_types.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

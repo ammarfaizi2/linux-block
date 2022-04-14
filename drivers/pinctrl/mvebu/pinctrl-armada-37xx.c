@@ -10,6 +10,7 @@
  * without any warranty of any kind, whether express or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

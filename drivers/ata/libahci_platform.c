@@ -8,6 +8,7 @@
  *   Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

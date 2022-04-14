@@ -8,6 +8,7 @@
 
 #undef DEBUG
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/errno.h>

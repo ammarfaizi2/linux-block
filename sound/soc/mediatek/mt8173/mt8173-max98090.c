@@ -6,6 +6,7 @@
  * Author: Koro Chen <koro.chen@mediatek.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <sound/soc.h>
 #include <sound/jack.h>

@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/cpufreq.h>
 #include <linux/err.h>

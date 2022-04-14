@@ -11,6 +11,7 @@
  *   - Refcount some clocks (see darwin)
  *   - Split split split...
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/types.h>
 #include <linux/init.h>

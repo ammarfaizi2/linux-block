@@ -3,6 +3,7 @@
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>

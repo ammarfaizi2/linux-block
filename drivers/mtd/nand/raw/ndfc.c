@@ -16,6 +16,7 @@
  *  Copyright 2008 PIKA Technologies
  *    Sean MacLennan <smaclennan@pikatech.com>
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/mtd/rawnand.h>

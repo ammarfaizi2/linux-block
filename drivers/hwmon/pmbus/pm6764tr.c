@@ -3,6 +3,7 @@
  * Hardware monitoring driver for STMicroelectronics digital controller PM6764TR
  */
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

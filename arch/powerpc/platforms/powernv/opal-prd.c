@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "opal-prd: " fmt
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

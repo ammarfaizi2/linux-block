@@ -3,6 +3,7 @@
  * Copyright (C) 2014 NVIDIA Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

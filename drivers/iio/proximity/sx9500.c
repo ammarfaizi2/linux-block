@@ -7,6 +7,7 @@
  * <http://www.semtech.com/images/datasheet/sx9500.pdf>.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>

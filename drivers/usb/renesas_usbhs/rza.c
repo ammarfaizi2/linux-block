@@ -6,6 +6,7 @@
  * Copyright (C) 2018-2019 Renesas Electronics Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/of_device.h>

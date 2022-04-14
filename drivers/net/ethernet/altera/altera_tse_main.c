@@ -17,6 +17,7 @@
  * Major updates contributed by GlobalLogic
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/if_vlan_api.h>

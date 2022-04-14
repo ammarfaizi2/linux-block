@@ -3,6 +3,7 @@
  * Copyright 2008 Freescale Semiconductor, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

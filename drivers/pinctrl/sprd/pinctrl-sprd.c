@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Spreadtrum  - http://www.spreadtrum.com
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/err.h>

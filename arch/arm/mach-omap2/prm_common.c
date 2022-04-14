@@ -12,6 +12,7 @@
  * XXX This code should eventually be moved to a PRM driver.
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/bitmap.h>

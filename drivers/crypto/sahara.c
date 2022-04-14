@@ -11,6 +11,7 @@
  * Based on omap-aes.c and tegra-aes.c
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

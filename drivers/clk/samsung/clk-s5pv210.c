@@ -8,6 +8,7 @@
  * Common Clock Framework support for all S5PC110/S5PV210 SoCs.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

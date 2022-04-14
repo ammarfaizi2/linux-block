@@ -4,6 +4,7 @@
  *  Copyright (C) 2010 John Crispin <john@phrozen.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

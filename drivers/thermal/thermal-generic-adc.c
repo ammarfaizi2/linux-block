@@ -6,6 +6,7 @@
  *
  * Author: Laxman Dewangan <ldewangan@nvidia.com>
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/iio/consumer.h>
 #include <linux/kernel.h>

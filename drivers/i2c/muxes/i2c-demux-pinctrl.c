@@ -9,6 +9,7 @@
  * (look for filenames containing 'i2c-demux-pinctrl' in Documentation/)
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/i2c.h>

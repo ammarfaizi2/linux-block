@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/io.h>

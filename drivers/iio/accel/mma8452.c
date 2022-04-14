@@ -18,6 +18,7 @@
  * TODO: orientation events
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/interrupt.h>

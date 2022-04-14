@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

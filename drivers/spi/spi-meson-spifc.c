@@ -5,6 +5,7 @@
 // Copyright (C) 2014 Beniamino Galvani <b.galvani@gmail.com>
 //
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/clk.h>

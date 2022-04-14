@@ -6,6 +6,7 @@
  * Author: Boris Brezillon <boris.brezillon@free-electrons.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 

@@ -9,6 +9,7 @@
  * Datasheet: http://cds.linear.com/docs/en/datasheet/4306.pdf
  */
 
+#include <linux/of_api.h>
 #include <linux/gpio/consumer.h>
 #include <linux/gpio/driver.h>
 #include <linux/i2c-mux.h>

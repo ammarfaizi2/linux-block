@@ -3,6 +3,7 @@
 // Helper routines for R-Car sound ADG.
 //
 //  Copyright (C) 2013  Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>

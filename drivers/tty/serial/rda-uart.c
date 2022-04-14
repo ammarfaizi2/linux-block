@@ -7,6 +7,7 @@
  * Copyright (c) 2018 Manivannan Sadhasivam
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

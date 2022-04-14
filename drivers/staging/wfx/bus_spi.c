@@ -6,6 +6,7 @@
  * Copyright (c) 2011, Sagrad Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>

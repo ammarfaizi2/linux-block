@@ -5,6 +5,7 @@
  * Copyright (c) 2008-2009 PIKA Technologies
  *   Sean MacLennan <smaclennan@pikatech.com>
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/of_platform.h>

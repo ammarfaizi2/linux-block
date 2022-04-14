@@ -12,6 +12,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

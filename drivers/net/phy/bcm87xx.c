@@ -3,6 +3,7 @@
  * Copyright (C) 2011 - 2012 Cavium, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/phy.h>
 #include <linux/of.h>

@@ -10,6 +10,7 @@
  * SMBus 2.0 support by Mark Studebaker <mdsxyz123@yahoo.com> and
  * Jean Delvare <jdelvare@suse.de>
  */
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device.h>
 #include <linux/err.h>

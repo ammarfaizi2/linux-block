@@ -21,6 +21,7 @@
  * Tested on arch/arm/mach-spear13xx
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

@@ -9,6 +9,7 @@
  * Input by Jari Vanhala <ext-jari.vanhala@nokia.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>

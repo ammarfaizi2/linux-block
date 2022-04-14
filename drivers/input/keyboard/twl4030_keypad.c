@@ -12,6 +12,7 @@
  * Manjunatha G K <manjugk@ti.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

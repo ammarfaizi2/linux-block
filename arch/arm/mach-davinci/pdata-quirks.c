@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 BayLibre, Inc
  */
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/of_platform.h>
 

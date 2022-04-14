@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2016 Andreas Klinger <ak@it-klinger.de>
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqflags.h>
 #include <linux/err.h>

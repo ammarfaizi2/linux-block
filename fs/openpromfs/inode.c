@@ -5,6 +5,7 @@
  * Copyright (C) 1998      Eddie C. Dost  (ecd@skynet.be)
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>

@@ -7,6 +7,7 @@
  *  Sören Brinkmann <soren.brinkmann@xilinx.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk/zynq.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

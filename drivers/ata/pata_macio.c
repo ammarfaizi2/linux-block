@@ -12,6 +12,7 @@
 #undef DEBUG
 #undef DEBUG_DMA
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

@@ -8,6 +8,7 @@
  * Author: Romain Perier <romain.perier@free-electrons.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/clk.h>
 #include <linux/completion.h>

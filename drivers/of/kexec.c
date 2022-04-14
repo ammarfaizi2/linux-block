@@ -9,6 +9,7 @@
  *  Copyright (C) 2016  IBM Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/kernel.h>
 #include <linux/kexec.h>

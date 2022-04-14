@@ -5,6 +5,7 @@
  * Author: Gene Chen <gene_chen@richtek.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/crc8.h>

@@ -5,6 +5,7 @@
  * Author: Vinay Simha <vinaysimha@inforcecomputing.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 
 #include <drm/drm_crtc.h>

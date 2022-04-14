@@ -7,6 +7,7 @@
  * Copyright:	MontaVista Software Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/module.h>

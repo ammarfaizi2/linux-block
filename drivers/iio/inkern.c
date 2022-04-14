@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2011 Jonathan Cameron
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/device/bus.h>

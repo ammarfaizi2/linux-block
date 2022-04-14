@@ -7,6 +7,7 @@
  * Based on skeletonfb.c and pxafb.c
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

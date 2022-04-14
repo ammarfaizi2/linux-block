@@ -5,6 +5,7 @@
  * Copyright (c) 2020 Mellanox Technologies. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

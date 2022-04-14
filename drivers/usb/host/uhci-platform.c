@@ -8,6 +8,7 @@
  * (C) Copyright 2004-2007 Alan Stern, stern@rowland.harvard.edu
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

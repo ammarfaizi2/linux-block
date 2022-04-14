@@ -7,6 +7,7 @@
  * (c) 2006 Benjamin Herrenschmidt <benh@kernel.crashing.org>, IBM Corp.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/percpu.h>

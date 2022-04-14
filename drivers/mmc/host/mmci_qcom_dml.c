@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2011, The Linux Foundation. All rights reserved.
  */
+#include <linux/of_api.h>
 #include <linux/of.h>
 #include <linux/of_dma.h>
 #include <linux/bitops.h>

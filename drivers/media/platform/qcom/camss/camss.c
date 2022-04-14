@@ -7,6 +7,7 @@
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

@@ -3,6 +3,7 @@
  * Copyright © 2018-2020 Intel Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

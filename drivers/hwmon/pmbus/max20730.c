@@ -7,6 +7,7 @@
  * Copyright 2020 Maxim Integrated
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/fs_api.h>

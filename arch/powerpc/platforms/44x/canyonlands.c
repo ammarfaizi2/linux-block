@@ -6,6 +6,7 @@
  * Copyright (c) 2010, Applied Micro Circuits Corporation
  * Author: Rupjyoti Sarmah <rsarmah@apm.com>
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -10,6 +10,7 @@
  * like  open(), close() and ioctl().
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/idr_api.h>

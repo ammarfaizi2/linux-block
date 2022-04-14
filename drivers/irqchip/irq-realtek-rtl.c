@@ -5,6 +5,7 @@
  * Copyright (C) 2020 John Crispin <john@phrozen.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/of_irq.h>

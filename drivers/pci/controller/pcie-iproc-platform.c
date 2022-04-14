@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Broadcom Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

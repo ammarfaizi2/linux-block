@@ -7,6 +7,7 @@
  * Author: Ivan Khoronzhuk <ivan.khoronzhuk@ti.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/io.h>
 #include <linux/module.h>

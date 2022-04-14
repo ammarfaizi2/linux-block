@@ -15,6 +15,7 @@
  * operating-points-v2 table when it is parsed by the OPP framework.
  */
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/err.h>

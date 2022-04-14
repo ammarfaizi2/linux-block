@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "SPEAr13xx: " fmt
 
+#include <linux/of_api.h>
 #include <linux/amba/pl022.h>
 #include <linux/clk.h>
 #include <linux/clk/spear.h>

@@ -27,6 +27,7 @@
 #include "dispnv04/hw.h"
 #include "nouveau_encoder.h"
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/io-mapping.h>
 #include <linux/firmware.h>

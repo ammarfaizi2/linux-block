@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Neil Armstrong <narmstrong@baylibre.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

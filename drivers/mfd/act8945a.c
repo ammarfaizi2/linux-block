@@ -7,6 +7,7 @@
  * Author: Wenyou Yang <wenyou.yang@atmel.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/i2c.h>
 #include <linux/mfd/core.h>
 #include <linux/module.h>

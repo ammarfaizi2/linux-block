@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2017 Pengutronix, Juergen Borleis <kernel@pengutronix.de>
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

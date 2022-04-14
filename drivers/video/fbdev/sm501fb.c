@@ -8,6 +8,7 @@
  * Framebuffer driver for the Silicon Motion SM501
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2012 Benjamin Herrenschmidt, IBM Corp.
  */
+#include <linux/of_api.h>
 #include <linux/kmod.h>
 #include <linux/types.h>
 #include <linux/errno.h>

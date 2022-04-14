@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"OF: resolver: " fmt
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of.h>

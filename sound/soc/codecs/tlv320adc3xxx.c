@@ -12,6 +12,7 @@
 // Author: Ricard Wanderlof <ricardw@axis.com>
 //
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/sound/tlv320adc3xxx.h>
 #include <linux/clk.h>

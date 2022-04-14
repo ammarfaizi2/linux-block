@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0+
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/clk.h>

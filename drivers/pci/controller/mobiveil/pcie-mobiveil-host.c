@@ -9,6 +9,7 @@
  *	   Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

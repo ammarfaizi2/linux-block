@@ -3,6 +3,7 @@
  * Copyright 2019 Inspur Corp.
  */
 
+#include <linux/of_api.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>
 #include <linux/fs.h>

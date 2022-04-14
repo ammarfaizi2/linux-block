@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/of_api.h>
 #include <linux/bcm47xx_nvram.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/partitions.h>

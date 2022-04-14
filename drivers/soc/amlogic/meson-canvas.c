@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Endless Mobile
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/mfd/syscon.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 2009 Canonical Ltd. <jeremy.kerr@canonical.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/export.h>

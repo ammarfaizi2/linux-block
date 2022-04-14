@@ -5,6 +5,7 @@
  *
  * Based from clk-highbank.c
  */
+#include <linux/of_api.h>
 #include <linux/of.h>
 
 #include "clk.h"

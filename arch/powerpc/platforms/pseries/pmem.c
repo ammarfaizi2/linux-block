@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)     "pseries-pmem: " fmt
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>

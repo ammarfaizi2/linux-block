@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>

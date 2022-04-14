@@ -12,6 +12,7 @@
  *
  * Copyright 2010 Freescale Semiconductor, Inc.
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include <linux/fsl_devices.h>

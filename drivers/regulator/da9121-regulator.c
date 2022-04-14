@@ -13,6 +13,7 @@
 //
 // Copyright (C) 2020 Dialog Semiconductor
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/of_device.h>

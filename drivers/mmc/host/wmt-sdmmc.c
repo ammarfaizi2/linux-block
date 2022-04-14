@@ -6,6 +6,7 @@
  *  Copyright (C) 2008 WonderMedia Technologies, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

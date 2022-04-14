@@ -6,6 +6,7 @@
  * Author: Shunli Wang <shunli.wang@mediatek.com>
  *         Yingjoe Chen <yingjoe.chen@mediatek.com>
  */
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/cpumask_api.h>

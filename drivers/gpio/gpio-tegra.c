@@ -9,6 +9,7 @@
  *	Erik Gilling <konkers@google.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>

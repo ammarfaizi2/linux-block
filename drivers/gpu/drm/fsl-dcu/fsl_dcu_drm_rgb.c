@@ -5,6 +5,7 @@
  * Freescale DCU drm device driver
  */
 
+#include <linux/of_api.h>
 #include <linux/backlight.h>
 #include <linux/of_graph.h>
 

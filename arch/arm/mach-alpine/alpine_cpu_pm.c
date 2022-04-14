@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Annapurna Labs Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

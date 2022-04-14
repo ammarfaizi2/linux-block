@@ -6,6 +6,7 @@
 #include "clk-mtk.h"
 #include "clk-pll.h"
 
+#include <linux/of_api.h>
 #include <dt-bindings/clock/mt8195-clk.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>

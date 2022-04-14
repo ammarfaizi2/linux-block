@@ -9,6 +9,7 @@
  * Based on wm8727.c driver
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

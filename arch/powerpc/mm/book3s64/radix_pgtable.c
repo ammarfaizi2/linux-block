@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "radix-mmu: " fmt
 
+#include <linux/of_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

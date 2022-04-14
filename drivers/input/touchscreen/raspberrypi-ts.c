@@ -6,6 +6,7 @@
  * Copyright (C) 2018 Nicolas Saenz Julienne <nsaenzjulienne@suse.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

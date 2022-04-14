@@ -4,6 +4,7 @@
  * Copyright (C) 2010 EF Johnson Technologies
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

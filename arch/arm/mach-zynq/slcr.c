@@ -5,6 +5,7 @@
  * Copyright (c) 2011-2013 Xilinx Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/reboot.h>
 #include <linux/mfd/syscon.h>

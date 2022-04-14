@@ -7,6 +7,7 @@
  * based on arch/mips/kernel/time.c timer driver
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/clockchips.h>

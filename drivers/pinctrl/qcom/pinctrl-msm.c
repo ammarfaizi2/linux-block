@@ -4,6 +4,7 @@
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

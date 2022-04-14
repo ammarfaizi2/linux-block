@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 
 #include "../codecs/wm8994.h"
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>

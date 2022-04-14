@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Sean Wang <sean.wang@mediatek.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>

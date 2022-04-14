@@ -10,6 +10,7 @@
  *	Ben Dooks <ben@simtec.co.uk>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/errno.h>

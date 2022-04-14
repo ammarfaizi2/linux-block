@@ -9,6 +9,7 @@
  *	Kevin Hilman <khilman@linaro.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/pm_runtime.h>
 #include <linux/pm_clock.h>

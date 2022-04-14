@@ -4,6 +4,7 @@
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/slab.h>

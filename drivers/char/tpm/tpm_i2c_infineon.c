@@ -15,6 +15,7 @@
  * It is based on the original tpm_tis device driver from Leendert van
  * Dorn and Kyleen Hall.
  */
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

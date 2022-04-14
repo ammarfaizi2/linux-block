@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /* Copyright 2019 IBM Corp. */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

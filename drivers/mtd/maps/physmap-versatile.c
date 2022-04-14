@@ -5,6 +5,7 @@
  * Copyright (c) 2016, Linaro Limited
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
+#include <linux/of_api.h>
 #include <linux/export.h>
 #include <linux/io.h>
 #include <linux/of.h>

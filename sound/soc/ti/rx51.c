@@ -9,6 +9,7 @@
  *          Jarkko Nikula <jarkko.nikula@bitmer.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>

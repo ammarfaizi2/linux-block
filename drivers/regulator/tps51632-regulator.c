@@ -23,6 +23,7 @@
  * 02111-1307, USA
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

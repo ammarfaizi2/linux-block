@@ -15,6 +15,7 @@
  * Iliyan Malchev <malchev@google.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/dma-mapping.h>
 #include <sound/core.h>

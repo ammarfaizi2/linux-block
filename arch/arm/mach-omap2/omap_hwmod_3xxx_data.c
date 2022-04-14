@@ -12,6 +12,7 @@
  * XXX these should be marked initdata for multi-OMAP kernels
  */
 
+#include <linux/of_api.h>
 #include <linux/platform_data/i2c-omap.h>
 #include <linux/power/smartreflex.h>
 #include <linux/platform_data/hsmmc-omap.h>

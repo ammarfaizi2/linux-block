@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Nvidia Technologies Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/device_api_lock.h>

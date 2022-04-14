@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Tony Lindgren <tony@atomide.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/err.h>

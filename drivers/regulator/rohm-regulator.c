@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2020 ROHM Semiconductors
 
+#include <linux/of_api.h>
 #include <linux/errno.h>
 #include <linux/mfd/rohm-generic.h>
 #include <linux/module.h>

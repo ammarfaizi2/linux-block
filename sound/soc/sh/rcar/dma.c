@@ -5,6 +5,7 @@
 // Copyright (C) 2015 Renesas Electronics Corp.
 // Copyright (c) 2015 Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

@@ -8,6 +8,7 @@
  *      - 0x68 if SDO is pulled to GND
  *      - 0x69 if SDO is pulled to VDDIO
  */
+#include <linux/of_api.h>
 #include <linux/acpi.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

@@ -16,6 +16,7 @@
  * Inspired by sdhci-pci.c, by Pierre Ossman
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/err.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  *
  * Author: Linus Walleij <triad@df.lth.se>
  */
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/init.h>

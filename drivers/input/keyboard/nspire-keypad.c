@@ -3,6 +3,7 @@
  *  Copyright (C) 2013 Daniel Tang <tangrs@tangrs.id.au>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>

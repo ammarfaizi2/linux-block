@@ -10,6 +10,7 @@
  * For system shutdown, this is board specify. If a board designer
  * implements GPIO shutdown, use the gpio-poweroff.c driver.
  */
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Thomas Langer <thomas.langer@lantiq.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/io.h>

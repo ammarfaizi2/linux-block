@@ -7,6 +7,7 @@
  *	   Li Yang <leoli@freescale.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

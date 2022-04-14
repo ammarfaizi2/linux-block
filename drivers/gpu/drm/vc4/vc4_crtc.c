@@ -29,6 +29,7 @@
  * ones that set the clock.
  */
 
+#include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

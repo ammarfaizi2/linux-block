@@ -4,6 +4,7 @@
  *
  *  Todo: - add support for the OF persistent properties
  */
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/export.h>

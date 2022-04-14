@@ -4,6 +4,7 @@
  * George McCollister <george.mccollister@gmail.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device/driver.h>
 #include <linux/bits.h>
 #include <linux/i2c.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2013 NVIDIA Corporation
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

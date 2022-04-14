@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "vas: " fmt
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/cpumask_api.h>

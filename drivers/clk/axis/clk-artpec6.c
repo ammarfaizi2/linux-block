@@ -5,6 +5,7 @@
  * Copyright 2015-2016 Axis Communications AB.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/device.h>
 #include <linux/io.h>

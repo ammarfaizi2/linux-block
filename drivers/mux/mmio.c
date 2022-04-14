@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Pengutronix, Philipp Zabel <kernel@pengutronix.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/mfd/syscon.h>

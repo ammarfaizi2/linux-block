@@ -8,6 +8,7 @@
  * Based on sound/soc/codecs/wm8731.c by Richard Purdie
  */
 
+#include <linux/of_api.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 #include <linux/of.h>

@@ -7,6 +7,7 @@
  * Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/io.h>

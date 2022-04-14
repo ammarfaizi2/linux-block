@@ -17,6 +17,7 @@
  *	Copyright 2008 GE Intelligent Platforms Embedded Systems, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/of.h>

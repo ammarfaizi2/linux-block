@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2014 Linaro Ltd.
  * Copyright (c) 2013-2014 HiSilicon Limited.
  */
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>

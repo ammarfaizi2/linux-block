@@ -17,6 +17,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/param.h>
 #include <linux/string.h>

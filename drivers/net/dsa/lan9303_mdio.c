@@ -5,6 +5,7 @@
  * Partially based on a patch from
  * Copyright (c) 2014 Stefan Roese <sr@denx.de>
  */
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
 //
 // Exynos - CPU PMU(Power Management Unit) support
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

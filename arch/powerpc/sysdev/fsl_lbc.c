@@ -10,6 +10,7 @@
  * Author: Roy Zang <tie-fei.zang@freescale.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

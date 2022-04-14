@@ -3,6 +3,7 @@
  * Copyright (C) 2017-2021 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/iommu.h>
 #include <linux/module.h>

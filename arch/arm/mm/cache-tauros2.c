@@ -14,6 +14,7 @@
  *   Document ID MV-S105190-00, Rev 0.7, March 14 2008.
  */
 
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

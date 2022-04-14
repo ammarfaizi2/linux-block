@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/backlight.h>
 #include <linux/pci.h>

@@ -8,6 +8,7 @@
  * Power domain regulators on DB8500
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/err.h>

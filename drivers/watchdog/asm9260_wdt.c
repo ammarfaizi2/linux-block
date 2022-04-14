@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Oleksij Rempel <linux@rempel-privat.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

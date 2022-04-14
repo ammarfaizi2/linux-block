@@ -6,6 +6,7 @@
  *
  * based on of_videomode.c by Sascha Hauer <s.hauer@pengutronix.de>
  */
+#include <linux/of_api.h>
 #include <linux/export.h>
 #include <linux/of.h>
 #include <linux/slab.h>

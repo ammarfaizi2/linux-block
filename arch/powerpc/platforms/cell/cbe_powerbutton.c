@@ -7,6 +7,7 @@
  * Author: Christian Krafft <krafft@de.ibm.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

@@ -3,6 +3,7 @@
  * Copyright 2012 Freescale Semiconductor, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/clk/mxs.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

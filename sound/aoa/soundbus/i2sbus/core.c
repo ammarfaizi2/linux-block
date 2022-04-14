@@ -5,6 +5,7 @@
  * Copyright 2006-2008 Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

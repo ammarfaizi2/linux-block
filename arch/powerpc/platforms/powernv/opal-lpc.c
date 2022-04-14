@@ -5,6 +5,7 @@
  * Copyright 2013 IBM Corp.
  */
 
+#include <linux/of_api.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/of.h>

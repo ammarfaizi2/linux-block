@@ -7,6 +7,7 @@
  * Author: Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/bitmap.h>
 #include <linux/device.h>

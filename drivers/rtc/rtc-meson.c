@@ -11,6 +11,7 @@
  * Based on origin by Carlo Caione <carlo@endlessm.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>

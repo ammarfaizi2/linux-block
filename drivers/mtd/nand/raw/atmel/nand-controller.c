@@ -45,6 +45,7 @@
  * - <soc>_nand_: all SoC specific structures/functions
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

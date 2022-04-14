@@ -4,6 +4,7 @@
  * Copyright 2012 Linaro Ltd.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/clk.h>

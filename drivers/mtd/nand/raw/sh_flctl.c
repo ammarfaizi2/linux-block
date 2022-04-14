@@ -8,6 +8,7 @@
  * Based on fsl_elbc_nand.c, Copyright (c) 2006-2007 Freescale Semiconductor
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

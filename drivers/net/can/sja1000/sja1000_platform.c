@@ -4,6 +4,7 @@
  * Copyright (C) 2007 Wolfgang Grandegger <wg@grandegger.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>

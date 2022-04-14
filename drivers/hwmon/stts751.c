@@ -11,6 +11,7 @@
  * Based on  LM95241 driver and LM90 driver
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>

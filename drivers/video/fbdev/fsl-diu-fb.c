@@ -12,6 +12,7 @@
  *   Based on imxfb.c Copyright (C) 2004 S.Hauer, Pengutronix
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

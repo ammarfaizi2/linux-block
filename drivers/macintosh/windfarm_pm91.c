@@ -26,6 +26,7 @@
  * basic PCI slot control loop
  */
 
+#include <linux/of_api.h>
 #include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/errno.h>

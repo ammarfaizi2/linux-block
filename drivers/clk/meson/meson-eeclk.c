@@ -4,6 +4,7 @@
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>

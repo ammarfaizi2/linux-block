@@ -13,6 +13,7 @@
  * and Marek Behún <kabel@kernel.org>.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

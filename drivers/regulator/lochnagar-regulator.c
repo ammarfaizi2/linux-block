@@ -7,6 +7,7 @@
 //
 // Author: Charles Keepax <ckeepax@opensource.cirrus.com>
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/device.h>

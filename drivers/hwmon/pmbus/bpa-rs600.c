@@ -5,6 +5,7 @@
  * Copyright 2021 Allied Telesis Labs
  */
 
+#include <linux/of_api.h>
 #include <linux/i2c.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

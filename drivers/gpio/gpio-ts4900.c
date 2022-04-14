@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Savoir-Faire Linux
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/i2c.h>

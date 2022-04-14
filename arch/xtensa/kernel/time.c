@@ -12,6 +12,7 @@
  * Chris Zankel <chris@zankel.net>
  */
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/clk.h>
 #include <linux/of_clk.h>

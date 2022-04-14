@@ -22,6 +22,7 @@
  */
 #include "priv.h"
 
+#include <linux/of_api.h>
 #include <linux/io_extra.h>
 #include <core/pci.h>
 

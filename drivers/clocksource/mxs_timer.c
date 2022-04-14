@@ -6,6 +6,7 @@
 //  Copyright (C) 2008 Juergen Beisert (kernel@pengutronix.de)
 //  Copyright (C) 2010 Freescale Semiconductor, Inc. All Rights Reserved.
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>

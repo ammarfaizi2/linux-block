@@ -4,6 +4,7 @@
  * Author(s): Giulio Benetti <giulio.benetti@benettiengineering.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/of_device.h>

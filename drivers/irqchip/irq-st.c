@@ -7,6 +7,7 @@
  *  This is a re-write of Christophe Kerello's PMU driver.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/interrupt-controller/irq-st.h>
 #include <linux/err.h>

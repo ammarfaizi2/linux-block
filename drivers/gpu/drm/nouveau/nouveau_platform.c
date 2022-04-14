@@ -19,6 +19,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <linux/of_api.h>
+
 #include "nouveau_platform.h"
 
 static int nouveau_platform_probe(struct platform_device *pdev)

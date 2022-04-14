@@ -4,6 +4,7 @@
  * Copyright (c) 2014 Hisilicon Limited.
  */
 
+#include <linux/of_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>

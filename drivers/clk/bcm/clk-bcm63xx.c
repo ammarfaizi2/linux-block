@@ -10,6 +10,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+#include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/clk-provider.h>
 #include <linux/of.h>

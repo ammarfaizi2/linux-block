@@ -5,6 +5,7 @@
  * Copyright 2012 Stefan Roese <sr@denx.de>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math.h>
 #include <linux/module.h>

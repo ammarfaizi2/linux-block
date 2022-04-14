@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Regents of the University of California
  */
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/seq_file.h>

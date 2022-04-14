@@ -6,6 +6,7 @@
  * Raphael Assenat <raph@8d.com>
  * Copyright (C) 2008 Freescale Semiconductor, Inc.
  */
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/gpio.h>

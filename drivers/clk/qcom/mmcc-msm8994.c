@@ -3,6 +3,7 @@
  * Copyright (c) 2021, Konrad Dybcio <konrad.dybcio@somainline.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/bitops.h>
 #include <linux/err.h>

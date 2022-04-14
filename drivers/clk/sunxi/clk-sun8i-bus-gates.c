@@ -8,6 +8,7 @@
  * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

@@ -10,6 +10,7 @@
  * Author: Yixun Lan <yixun.lan@amlogic.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/reset-controller.h>

@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2012 Google, Inc
 
+#include <linux/of_api.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

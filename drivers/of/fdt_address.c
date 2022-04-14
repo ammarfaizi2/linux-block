@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt)	"OF: fdt: " fmt
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/libfdt.h>
 #include <linux/of.h>

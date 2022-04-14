@@ -4,6 +4,7 @@
  */
 
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

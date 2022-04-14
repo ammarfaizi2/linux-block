@@ -13,6 +13,7 @@
  *   Steven J. Hill <steven.hill@cavium.com>
  *   Jan Glauber <jglauber@cavium.com>
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>

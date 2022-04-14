@@ -8,6 +8,7 @@
  * Author: Navin Sankar Velliangiri <navin@linumiz.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>

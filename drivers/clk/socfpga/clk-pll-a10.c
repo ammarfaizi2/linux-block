@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2015 Altera Corporation. All rights reserved
  */
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/slab.h>
 #include <linux/clk-provider.h>

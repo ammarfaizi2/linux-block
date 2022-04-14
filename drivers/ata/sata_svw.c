@@ -20,6 +20,7 @@
  *  Hardware documentation available under NDA.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

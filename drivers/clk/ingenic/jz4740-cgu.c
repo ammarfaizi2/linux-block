@@ -6,6 +6,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/io.h>

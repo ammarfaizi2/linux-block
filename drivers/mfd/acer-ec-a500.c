@@ -5,6 +5,7 @@
  * Copyright 2020 GRATE-driver project
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

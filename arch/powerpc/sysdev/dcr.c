@@ -6,6 +6,7 @@
 
 #undef DEBUG
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

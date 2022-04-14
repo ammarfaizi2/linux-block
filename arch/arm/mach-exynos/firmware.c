@@ -4,6 +4,7 @@
 // Kyungmin Park <kyungmin.park@samsung.com>
 // Tomasz Figa <t.figa@samsung.com>
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

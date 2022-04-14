@@ -2,6 +2,7 @@
 //
 // Copyright 2017-2019 NXP
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/interrupt.h>

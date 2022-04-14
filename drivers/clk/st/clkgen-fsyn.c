@@ -9,6 +9,7 @@
  * Pankaj Dev <pankaj.dev@st.com>.
  */
 
+#include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>

@@ -10,6 +10,7 @@
 
 #define DSS_SUBSYS_NAME "VENC"
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>

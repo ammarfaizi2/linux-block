@@ -7,6 +7,7 @@
  *     Michael Trimarchi <michael@amarulasolutions.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/spi/spi.h>

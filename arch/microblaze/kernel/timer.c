@@ -9,6 +9,7 @@
  * for more details.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/interrupt.h>

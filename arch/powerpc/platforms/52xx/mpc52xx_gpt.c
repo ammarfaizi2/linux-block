@@ -48,6 +48,7 @@
  * the output mode.  This driver does not change the output mode setting.
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/fs_api.h>

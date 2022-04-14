@@ -3,6 +3,7 @@
  * Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>

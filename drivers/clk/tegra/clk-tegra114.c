@@ -3,6 +3,7 @@
  * Copyright (c) 2012, 2013, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/clk-provider.h>
 #include <linux/of.h>

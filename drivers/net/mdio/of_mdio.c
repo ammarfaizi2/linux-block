@@ -8,6 +8,7 @@
  * out of the OpenFirmware device tree and using it to populate an mii_bus.
  */
 
+#include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

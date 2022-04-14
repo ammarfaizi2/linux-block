@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/of.h>

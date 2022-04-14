@@ -2,6 +2,7 @@
 /*
  * Copyright Altera Corporation (C) 2016. All rights reserved.
  */
+#include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/genalloc.h>

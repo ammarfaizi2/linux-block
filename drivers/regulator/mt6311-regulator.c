@@ -3,6 +3,7 @@
 // Copyright (c) 2015 MediaTek Inc.
 // Author: Henry Chen <henryc.chen@mediatek.com>
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/gpio.h>
 #include <linux/i2c.h>

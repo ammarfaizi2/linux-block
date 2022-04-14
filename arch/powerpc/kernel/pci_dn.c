@@ -6,6 +6,7 @@
  *
  * PCI manipulation via device_nodes.
  */
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/string.h>

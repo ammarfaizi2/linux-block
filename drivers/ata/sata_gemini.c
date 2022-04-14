@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Linus Walleij <linus.walleij@linaro.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

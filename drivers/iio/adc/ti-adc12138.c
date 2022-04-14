@@ -7,6 +7,7 @@
  * Datasheet: http://www.ti.com/lit/ds/symlink/adc12138.pdf
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>

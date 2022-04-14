@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2018 Kirill Marinushkin <kmarinushkin@birdec.com>
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>

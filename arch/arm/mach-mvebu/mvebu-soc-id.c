@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "mvebu-soc-id: " fmt
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/io.h>

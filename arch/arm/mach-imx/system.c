@@ -7,6 +7,7 @@
  * Copyright 2009 Ilya Yanok, Emcraft Systems Ltd, yanok@emcraft.com
  */
 
+#include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/clk.h>
 #include <linux/io.h>

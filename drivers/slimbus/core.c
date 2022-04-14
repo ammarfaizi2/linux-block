@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2017, The Linux Foundation
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>

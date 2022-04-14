@@ -14,6 +14,7 @@
  *      Copyright 2004 Freescale Semiconductor Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

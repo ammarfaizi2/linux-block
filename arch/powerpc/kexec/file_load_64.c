@@ -14,6 +14,7 @@
  * Hari Bathini, IBM Corporation.
  */
 
+#include <linux/of_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/ioport.h>
 #include <linux/kexec.h>

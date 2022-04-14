@@ -6,6 +6,7 @@
 // based on previous work and know-how from:
 // Deepak Saxena <dsaxena@plexity.net>
 
+#include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

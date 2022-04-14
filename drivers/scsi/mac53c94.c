@@ -8,6 +8,7 @@
  * Paul Mackerras, August 1996.
  * Copyright (C) 1996 Paul Mackerras.
  */
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>

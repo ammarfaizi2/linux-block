@@ -6,6 +6,7 @@
  * Common Clock Framework support for Exynos5260 SoC.
  */
 
+#include <linux/of_api.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 

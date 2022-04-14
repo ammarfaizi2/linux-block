@@ -6,6 +6,7 @@
  * Copyright (C) 2011 Motorola, Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

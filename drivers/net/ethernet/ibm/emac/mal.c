@@ -20,6 +20,7 @@
  *      Copyright 2002 MontaVista Softare Inc.
  */
 
+#include <linux/of_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/interrupt.h>

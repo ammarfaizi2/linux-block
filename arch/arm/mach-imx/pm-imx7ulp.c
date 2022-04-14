@@ -5,6 +5,7 @@
  *   Author: Dong Aisheng <aisheng.dong@nxp.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

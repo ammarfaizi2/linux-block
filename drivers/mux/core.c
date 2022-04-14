@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "mux-core: " fmt
 
+#include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/idr_api.h>
 #include <linux/device/class.h>

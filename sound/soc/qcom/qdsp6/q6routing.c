@@ -2,6 +2,7 @@
 // Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
 // Copyright (c) 2018, Linaro Limited
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>

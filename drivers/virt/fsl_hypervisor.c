@@ -22,6 +22,7 @@
  *    shuts down.
  */
 
+#include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>

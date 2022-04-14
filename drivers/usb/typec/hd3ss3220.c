@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Renesas Electronics Corp.
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

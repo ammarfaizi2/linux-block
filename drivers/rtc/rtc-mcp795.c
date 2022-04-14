@@ -10,6 +10,7 @@
  * https://ww1.microchip.com/downloads/en/DeviceDoc/22280A.pdf
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

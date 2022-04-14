@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "clk-boston: " fmt
 
+#include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/kernel.h>
 #include <linux/of.h>

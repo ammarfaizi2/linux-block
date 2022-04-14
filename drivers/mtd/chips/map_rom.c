@@ -3,6 +3,7 @@
  * (C) 2000 Red Hat. GPL'd.
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

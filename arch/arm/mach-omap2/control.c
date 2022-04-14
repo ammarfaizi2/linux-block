@@ -9,6 +9,7 @@
  */
 #undef DEBUG
 
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>

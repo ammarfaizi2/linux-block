@@ -5,6 +5,7 @@
 //
 // Battery charger driver for MAXIM 77650/77651 charger/power-supply.
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

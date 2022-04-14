@@ -43,6 +43,7 @@
  *   https://www.analog.com/en/prod/0,2877,ADM1024,00.html
  */
 
+#include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

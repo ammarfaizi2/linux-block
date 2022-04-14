@@ -3,6 +3,7 @@
  * Copyright 2020 NXP
  */
 
+#include <linux/of_api.h>
 #include <linux/mfd/syscon.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

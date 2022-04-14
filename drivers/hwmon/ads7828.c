@@ -12,6 +12,7 @@
  * For further information, see the Documentation/hwmon/ads7828.rst file.
  */
 
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

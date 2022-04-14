@@ -9,6 +9,7 @@
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
+#include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

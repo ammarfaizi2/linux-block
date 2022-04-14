@@ -9,6 +9,7 @@
  * Maintainer: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
  * Maintainer: Daniel Lezcano <daniel.lezcano@linaro.org>
  */
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuidle.h>
 #include <linux/cpu_pm.h>

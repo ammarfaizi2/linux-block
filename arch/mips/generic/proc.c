@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/of.h>
 
 #include <asm/bootinfo.h>
