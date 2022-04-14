@@ -8,6 +8,7 @@
 #ifndef _KEYS_RXRPC_TYPE_H
 #define _KEYS_RXRPC_TYPE_H
 
+#include <vdso/limits.h>
 #include <linux/key.h>
 
 /*
