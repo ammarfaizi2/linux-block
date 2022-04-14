@@ -5,6 +5,7 @@
 #ifndef __ASM_FB_H_
 #define __ASM_FB_H_
 
+#include <linux/pgtable_api.h>
 #include <linux/fb.h>
 #include <linux/fs.h>
 #include <asm/page.h>
