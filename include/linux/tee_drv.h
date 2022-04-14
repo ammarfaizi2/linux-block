@@ -6,6 +6,7 @@
 #ifndef __TEE_DRV_H
 #define __TEE_DRV_H
 
+#include <linux/mm.h>
 #include <linux/device.h>
 #include <linux/idr.h>
 #include <linux/kref.h>
