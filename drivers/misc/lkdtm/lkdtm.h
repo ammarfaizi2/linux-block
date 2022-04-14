@@ -4,6 +4,7 @@
 
 #define pr_fmt(fmt) "lkdtm: " fmt
 
+#include <linux/printk.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 

@@ -5,6 +5,7 @@
  *	(c) 1999 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/printk.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/ioport.h>

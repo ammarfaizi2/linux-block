@@ -6,6 +6,7 @@
 #ifndef _LBS_DEFS_H_
 #define _LBS_DEFS_H_
 
+#include <linux/printk.h>
 #include <linux/spinlock.h>
 
 #ifdef CONFIG_LIBERTAS_DEBUG

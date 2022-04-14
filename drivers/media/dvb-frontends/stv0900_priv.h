@@ -12,6 +12,7 @@
 #ifndef STV0900_PRIV_H
 #define STV0900_PRIV_H
 
+#include <linux/printk.h>
 #include <linux/i2c.h>
 
 #define INRANGE(X, Y, Z) ((((X) <= (Y)) && ((Y) <= (Z))) \

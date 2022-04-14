@@ -2,6 +2,7 @@
 #ifndef __KSELFTEST_MODULE_H
 #define __KSELFTEST_MODULE_H
 
+#include <linux/printk.h>
 #include <linux/module.h>
 
 /*
