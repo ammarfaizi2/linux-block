@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * Copyright (C) 2016-2019 Christoph Hellwig.
  */
+#include <linux/sched/task_flags.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/compiler.h>

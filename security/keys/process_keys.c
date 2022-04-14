@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/sched/user.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2011 The Chromium OS Authors.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/lsm_hooks.h>
 #include <linux/sysctl.h>
 #include <linux/ptrace.h>

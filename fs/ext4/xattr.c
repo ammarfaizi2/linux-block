@@ -51,6 +51,7 @@
  * by the buffer lock.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/slab.h>

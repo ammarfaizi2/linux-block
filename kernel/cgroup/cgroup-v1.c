@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #include "cgroup-internal.h"
 
+#include <linux/sched/task_flags.h>
 #include <linux/ctype.h>
 #include <linux/kmod.h>
 #include <linux/sort.h>

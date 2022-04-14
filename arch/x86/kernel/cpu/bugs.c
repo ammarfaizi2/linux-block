@@ -8,6 +8,7 @@
  *	- Channing Corn (tests & fixes),
  *	- Andrew D. Balsa (code cleanup).
  */
+#include <linux/sched/task_flags.h>
 #include <linux/init.h>
 #include <linux/utsname.h>
 #include <linux/cpu.h>

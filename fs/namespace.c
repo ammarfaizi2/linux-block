@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/syscalls.h>
 #include <linux/export.h>
 #include <linux/capability.h>

@@ -8,6 +8,7 @@
  * Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched.h>
 #include <linux/uaccess.h>
 #include <linux/syscalls.h>

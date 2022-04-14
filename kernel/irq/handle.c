@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/irq.h>
 #include <linux/random.h>
 #include <linux/sched.h>

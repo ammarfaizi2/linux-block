@@ -19,6 +19,7 @@
  *  Assorted race fixes, rewrite of ext4_get_block() by Al Viro, 2000
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/mount.h>

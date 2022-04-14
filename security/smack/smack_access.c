@@ -6,6 +6,7 @@
  *      Casey Schaufler <casey@schaufler-ca.com>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/fs.h>

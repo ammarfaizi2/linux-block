@@ -24,6 +24,7 @@
 /*
  * RFCOMM sockets.
  */
+#include <linux/sched/task_flags.h>
 #include <linux/compat.h>
 #include <linux/export.h>
 #include <linux/debugfs.h>

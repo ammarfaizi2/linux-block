@@ -14,6 +14,7 @@
  *		Additions for address_space-based writeback
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

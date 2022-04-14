@@ -2,6 +2,7 @@
 /* Common capabilities, needed by capability.o.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/capability.h>
 #include <linux/audit.h>
 #include <linux/init.h>

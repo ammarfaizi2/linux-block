@@ -44,6 +44,7 @@
  * a struct file opened for write. Fixed. 2/6/2000, AV.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/acct.h>

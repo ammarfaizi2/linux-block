@@ -15,6 +15,7 @@
  *  Copyright (C) 2011 Intel Corporation.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/xattr.h>
 #include <linux/pagemap.h>
 #include <linux/mount.h>
