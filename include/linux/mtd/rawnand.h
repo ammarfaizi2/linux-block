@@ -13,6 +13,7 @@
 #ifndef __LINUX_MTD_RAWNAND_H
 #define __LINUX_MTD_RAWNAND_H
 
+#include <linux/mutex_api.h>
 #include <linux/math.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>

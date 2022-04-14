@@ -13,6 +13,7 @@
 #ifndef __U_ETHER_CONFIGFS_H
 #define __U_ETHER_CONFIGFS_H
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 
 #define USB_ETHERNET_CONFIGFS_ITEM(_f_)					\

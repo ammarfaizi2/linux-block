@@ -6,6 +6,7 @@
 #ifndef __SOUND_HDAUDIO_H
 #define __SOUND_HDAUDIO_H
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

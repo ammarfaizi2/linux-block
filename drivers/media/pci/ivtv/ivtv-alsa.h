@@ -6,6 +6,7 @@
  *  Copyright (C) 2009  Devin Heitmueller <dheitmueller@kernellabs.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 
 struct snd_card;

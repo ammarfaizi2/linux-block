@@ -19,6 +19,7 @@
 #ifndef __B53_PRIV_H
 #define __B53_PRIV_H
 
+#include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/kernel.h>

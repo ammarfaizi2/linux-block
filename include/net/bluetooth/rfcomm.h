@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/mutex_api.h>
 #include <linux/refcount.h>
 
 #ifndef __RFCOMM_H

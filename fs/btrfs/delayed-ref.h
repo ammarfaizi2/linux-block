@@ -6,6 +6,7 @@
 #ifndef BTRFS_DELAYED_REF_H
 #define BTRFS_DELAYED_REF_H
 
+#include <linux/mutex_api.h>
 #include <linux/refcount.h>
 
 /* these are the possible values of struct btrfs_delayed_ref_node->action */

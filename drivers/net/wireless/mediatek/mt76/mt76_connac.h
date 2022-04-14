@@ -4,6 +4,8 @@
 #ifndef __MT76_CONNAC_H
 #define __MT76_CONNAC_H
 
+#include <linux/mutex_api.h>
+
 #include "mt76.h"
 
 #define MT76_CONNAC_SCAN_IE_LEN			600

@@ -2,6 +2,7 @@
 #ifndef _LINUX_FB_H
 #define _LINUX_FB_H
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/refcount.h>
 #include <linux/kgdb.h>

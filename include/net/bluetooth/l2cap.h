@@ -27,6 +27,7 @@
 #ifndef __L2CAP_H
 #define __L2CAP_H
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <asm/unaligned.h>
 #include <linux/atomic.h>

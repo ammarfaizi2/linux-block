@@ -11,6 +11,7 @@
 #ifndef __UBIFS_H__
 #define __UBIFS_H__
 
+#include <linux/mutex_api.h>
 #include <linux/kobject_types.h>
 #include <linux/hrtimer.h>
 #include <asm/div64.h>

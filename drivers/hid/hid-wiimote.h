@@ -10,6 +10,7 @@
 /*
  */
 
+#include <linux/mutex_api.h>
 #include <linux/completion.h>
 #include <linux/device.h>
 #include <linux/hid.h>

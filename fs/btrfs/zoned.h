@@ -3,6 +3,7 @@
 #ifndef BTRFS_ZONED_H
 #define BTRFS_ZONED_H
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/blkdev.h>
 #include "volumes.h"

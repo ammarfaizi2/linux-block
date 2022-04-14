@@ -2,6 +2,7 @@
 #ifndef __SOUND_I2C_H
 #define __SOUND_I2C_H
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 
 /*

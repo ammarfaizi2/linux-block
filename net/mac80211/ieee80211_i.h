@@ -11,6 +11,7 @@
 #ifndef IEEE80211_I_H
 #define IEEE80211_I_H
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>

@@ -10,6 +10,7 @@
 #ifndef __LINUX_SND_SOC_H
 #define __LINUX_SND_SOC_H
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

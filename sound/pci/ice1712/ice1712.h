@@ -8,6 +8,7 @@
  *	Copyright (c) 2000 Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <sound/control.h>
 #include <sound/ac97_codec.h>

@@ -9,6 +9,7 @@
 #ifndef __IIO_ADIS_H__
 #define __IIO_ADIS_H__
 
+#include <linux/mutex_api.h>
 #include <linux/spi/spi.h>
 #include <linux/interrupt.h>
 #include <linux/iio/types.h>

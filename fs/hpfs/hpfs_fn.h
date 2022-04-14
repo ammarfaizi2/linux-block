@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/mutex.h>
 #include <linux/pagemap.h>
 #include <linux/buffer_head.h>

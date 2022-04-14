@@ -5,6 +5,7 @@
 #ifndef _GAMEPORT_H
 #define _GAMEPORT_H
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/device/driver.h>
 #include <asm/io.h>

@@ -6,6 +6,7 @@
 #ifndef _TTY_INTERNAL_H
 #define _TTY_INTERNAL_H
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 
 #define tty_msg(fn, tty, f, ...) \

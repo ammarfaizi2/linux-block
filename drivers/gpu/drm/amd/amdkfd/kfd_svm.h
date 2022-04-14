@@ -27,6 +27,7 @@
 
 #if IS_ENABLED(CONFIG_HSA_AMD_SVM)
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/rwsem.h>
 #include <linux/list.h>

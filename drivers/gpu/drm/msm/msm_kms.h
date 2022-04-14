@@ -8,6 +8,7 @@
 #ifndef __MSM_KMS_H__
 #define __MSM_KMS_H__
 
+#include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/regulator/consumer.h>
 

@@ -6,6 +6,8 @@
 #ifndef _MLX5_IB_FS_H
 #define _MLX5_IB_FS_H
 
+#include <linux/mutex_api.h>
+
 #include "mlx5_ib.h"
 
 #if IS_ENABLED(CONFIG_INFINIBAND_USER_ACCESS)

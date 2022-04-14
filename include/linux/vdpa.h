@@ -2,6 +2,7 @@
 #ifndef _LINUX_VDPA_H
 #define _LINUX_VDPA_H
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

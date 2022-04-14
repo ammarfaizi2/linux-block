@@ -13,6 +13,7 @@
 #ifndef _CYAPA_H
 #define _CYAPA_H
 
+#include <linux/mutex_api.h>
 #include <linux/firmware.h>
 
 /* APA trackpad firmware generation number. */
