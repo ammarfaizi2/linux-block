@@ -3,6 +3,7 @@
  * Debugging printout:
  */
 
+#include <linux/interrupt.h>
 #include <linux/types.h>
 
 #define ___P(f) if (desc->status_use_accessors & f) printk("%14s set\n", #f)

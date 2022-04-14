@@ -3,6 +3,7 @@
 
 #ifndef __HCLGE_MAIN_H
 #define __HCLGE_MAIN_H
+#include <linux/interrupt.h>
 #include <linux/fs.h>
 #include <linux/types.h>
 #include <linux/phy.h>

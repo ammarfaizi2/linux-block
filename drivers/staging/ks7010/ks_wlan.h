@@ -9,6 +9,7 @@
 #ifndef _KS_WLAN_H
 #define _KS_WLAN_H
 
+#include <linux/interrupt.h>
 #include <linux/atomic.h>
 #include <linux/circ_buf.h>
 #include <linux/completion.h>
