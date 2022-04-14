@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <asm/fpu/types.h>
 #include <crypto/internal/hash.h>
 #include <crypto/internal/simd.h>
 #include <linux/init.h>

@@ -6,6 +6,7 @@
  *     <Johannes.Goetzfried@informatik.stud.uni-erlangen.de>
  */
 
+#include <asm/fpu/types.h>
 #include <crypto/algapi.h>
 #include <crypto/cast5.h>
 #include <crypto/internal/simd.h>

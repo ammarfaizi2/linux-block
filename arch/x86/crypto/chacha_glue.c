@@ -6,6 +6,7 @@
  * Copyright (C) 2015 Martin Willi
  */
 
+#include <asm/fpu/types.h>
 #include <crypto/algapi.h>
 #include <crypto/internal/chacha.h>
 #include <crypto/internal/simd.h>
