@@ -8,6 +8,7 @@
 #ifndef _NET_INETPEER_H
 #define _NET_INETPEER_H
 
+#include <linux/socket.h>
 #include <linux/types.h>
 #include <linux/init.h>
 #include <linux/jiffies.h>
