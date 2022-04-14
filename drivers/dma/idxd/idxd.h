@@ -3,6 +3,7 @@
 #ifndef _IDXD_H_
 #define _IDXD_H_
 
+#include <linux/percpu-refcount-types.h>
 #include <linux/sbitmap.h>
 #include <linux/dmaengine.h>
 #include <linux/percpu_rwsem.h>
