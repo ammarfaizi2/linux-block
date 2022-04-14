@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob.clark@linaro.org>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -3,6 +3,7 @@
  * Copyright 2015-2016, Aneesh Kumar K.V, IBM Corporation.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

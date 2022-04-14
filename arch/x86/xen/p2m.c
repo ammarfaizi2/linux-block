@@ -61,6 +61,7 @@
  * IDENTITY_FRAME_BIT on all identity mapped PFNs.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

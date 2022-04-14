@@ -48,6 +48,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

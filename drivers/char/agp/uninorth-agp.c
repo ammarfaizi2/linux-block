@@ -2,6 +2,7 @@
 /*
  * UniNorth AGPGART routines.
  */
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/io.h>

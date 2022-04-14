@@ -6,6 +6,7 @@
  *  Support of BIGMEM added by Gerhard Wichert, Siemens AG, July 1999
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/signal.h>

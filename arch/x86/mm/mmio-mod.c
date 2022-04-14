@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "mmiotrace: " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) DRVNAME ": " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/percpu.h>
 #include <linux/of_api.h>

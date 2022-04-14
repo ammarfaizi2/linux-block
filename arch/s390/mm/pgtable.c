@@ -4,6 +4,7 @@
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

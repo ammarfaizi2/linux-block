@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/huge_mm.h>

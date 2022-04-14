@@ -10,6 +10,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

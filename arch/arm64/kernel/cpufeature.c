@@ -62,6 +62,7 @@
 
 #define pr_fmt(fmt) "CPU features: " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/device/bus.h>
 #include <linux/device_api_lock.h>

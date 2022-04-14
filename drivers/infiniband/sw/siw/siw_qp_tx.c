@@ -3,6 +3,7 @@
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/llist_api.h>
 #include <linux/kthread.h>

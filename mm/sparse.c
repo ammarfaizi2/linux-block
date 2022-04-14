@@ -2,6 +2,7 @@
 /*
  * sparse memory mappings.
  */
+#include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

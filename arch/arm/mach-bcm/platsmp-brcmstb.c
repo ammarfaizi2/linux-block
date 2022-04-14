@@ -13,6 +13,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/delay.h>

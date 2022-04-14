@@ -7,6 +7,7 @@
  * Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002 Ralf Baechle (ralf@gnu.org)
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  */
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu_pm.h>

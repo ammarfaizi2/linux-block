@@ -33,6 +33,7 @@
  * and first to wake-up when MPUSS low power states are excercised
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

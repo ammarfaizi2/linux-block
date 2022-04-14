@@ -9,6 +9,7 @@
  *    -- Initial Write (Borrowed heavily from ARM)
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

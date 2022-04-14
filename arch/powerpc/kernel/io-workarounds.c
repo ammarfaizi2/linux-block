@@ -8,6 +8,7 @@
  */
 #undef DEBUG
 
+#include <linux/pgtable_api.h>
 #include <linux/kernel.h>
 #include <linux/sched/mm.h>	/* for init_mm */
 #include <linux/pgtable.h>

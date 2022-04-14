@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2016-20 Intel Corporation. */
 
+#include <linux/pgtable_api.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mmu_notifier.h>

@@ -18,6 +18,7 @@
  * archive for more details.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/restart_block_api.h>
 #include <linux/sched.h>

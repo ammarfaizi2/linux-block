@@ -4,6 +4,7 @@
  * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/gfp_api.h>
 #include <linux/mm.h>
 #include <linux/sched/signal.h>

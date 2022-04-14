@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/gfp.h>

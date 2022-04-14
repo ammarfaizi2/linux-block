@@ -4,6 +4,7 @@
  * Author:Mark Yao <mark.yao@rock-chips.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/dma-mapping.h>

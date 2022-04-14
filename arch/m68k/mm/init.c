@@ -8,6 +8,7 @@
  *  to motorola.c and sun3mmu.c
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/module.h>
 #include <linux/signal.h>

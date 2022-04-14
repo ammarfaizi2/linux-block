@@ -2,6 +2,7 @@
 /* Copyright(c) 1999 - 2006 Intel Corporation. */
 
 #include "e1000.h"
+#include <linux/pgtable_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

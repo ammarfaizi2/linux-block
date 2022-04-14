@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Linaro Ltd.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

@@ -33,6 +33,7 @@
  * are rare we hope to get away with this. This avoids impacting the core 
  * VM.
  */
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_ptlock.h>

@@ -7,6 +7,7 @@
  *   Copyright (C) 2012 Analog Devices Inc.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/console.h>
 
 #include <drm/drm_fourcc.h>

@@ -26,6 +26,7 @@
 #include "cpuid.h"
 #include "spte.h"
 
+#include <linux/pgtable_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -23,6 +23,7 @@
  * 06/24/99 W.Drummond	added boot_cpu_data.
  * 05/28/05 Z. Menyhart	Dynamic stride size for "flush_icache_range()"
  */
+#include <linux/pgtable_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

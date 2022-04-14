@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "NUMA: " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

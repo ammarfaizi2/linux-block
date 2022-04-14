@@ -8,6 +8,7 @@
  *    Copyright (C) 1995  Linus Torvalds
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>

@@ -8,6 +8,7 @@
  * Shiraz Hashim <shiraz.linux.kernel@gmail.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/delay.h>

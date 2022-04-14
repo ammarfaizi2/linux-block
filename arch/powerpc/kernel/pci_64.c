@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2002 ARM Limited, All Rights Reserved.
  */
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/irqdesc.h>

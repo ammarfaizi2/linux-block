@@ -5,6 +5,7 @@
  * Authors: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
  *	    Mark Salter <msalter@redhat.com>
  */
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

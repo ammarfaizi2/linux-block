@@ -9,6 +9,7 @@
  *	Shuo Liu <shuo.a.liu@intel.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>

@@ -11,6 +11,7 @@
  * (c) 2007 Mauro Carvalho Chehab, <mchehab@kernel.org>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

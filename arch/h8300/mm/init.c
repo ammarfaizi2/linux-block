@@ -17,6 +17,7 @@
  *  DEC/2000 -- linux 2.4 support <davidm@snapgear.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/signal.h>
 #include <linux/sched.h>

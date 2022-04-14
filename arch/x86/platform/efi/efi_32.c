@@ -20,6 +20,7 @@
  *	Skip non-WB memory and ignore empty memory ranges.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/io.h>
 #include <asm/processor_api.h>
 #include <linux/kernel.h>

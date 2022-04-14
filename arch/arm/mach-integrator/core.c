@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2000-2003 Deep Blue Solutions Ltd
  */
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

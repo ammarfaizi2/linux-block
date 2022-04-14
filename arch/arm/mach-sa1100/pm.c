@@ -22,6 +22,7 @@
  * 2002-05-27:	Nicolas Pitre	Killed sleep.h and the kmalloced save array.
  * 				Storage is local on the stack now.
  */
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/io.h>

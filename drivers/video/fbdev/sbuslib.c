@@ -4,6 +4,7 @@
  * Copyright (C) 2003 David S. Miller (davem@redhat.com)
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/compat.h>

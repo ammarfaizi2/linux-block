@@ -7,6 +7,7 @@
  * Based on arch/x86/mm/hugetlbpage.c.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2013 Intel Corporation; author Matt Fleming
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/console.h>
 #include <linux/efi.h>
 #include <linux/font.h>

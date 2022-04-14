@@ -4,6 +4,7 @@
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

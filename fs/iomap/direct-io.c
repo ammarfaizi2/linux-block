@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * Copyright (c) 2016-2021 Christoph Hellwig.
  */
+#include <linux/pgtable_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

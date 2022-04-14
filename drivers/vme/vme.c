@@ -9,6 +9,7 @@
  * Copyright 2004 Motorola Inc.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/device_api_lock.h>

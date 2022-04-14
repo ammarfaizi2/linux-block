@@ -9,6 +9,7 @@
  * with minor modifications, see there for credits.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

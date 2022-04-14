@@ -6,6 +6,7 @@
  *  Copyright (C) 2009 Marvell Semiconductor
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>

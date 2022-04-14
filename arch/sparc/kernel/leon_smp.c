@@ -7,6 +7,7 @@
  * Copyright (C) 2009 Konrad Eisele (konrad@gaisler.com) Aeroflex Gaisler AB
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>

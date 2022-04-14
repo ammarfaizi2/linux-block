@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)	"kexec: " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

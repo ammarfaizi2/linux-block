@@ -31,6 +31,7 @@
  *   below for details. )
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/atomic_api.h>

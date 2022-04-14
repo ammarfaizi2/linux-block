@@ -17,6 +17,7 @@
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/init.h>

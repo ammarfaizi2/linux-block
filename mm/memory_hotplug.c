@@ -5,6 +5,7 @@
  *  Copyright (C)
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/percpu_rwsem_api.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>

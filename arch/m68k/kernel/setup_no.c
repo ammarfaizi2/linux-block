@@ -17,6 +17,7 @@
  * This file handles the architecture-dependent parts of system setup
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

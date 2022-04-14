@@ -2,6 +2,7 @@
 // Copyright (C) 2016-2018, Allwinner Technology CO., LTD.
 // Copyright (C) 2019-2020, Cerno
 
+#include <linux/pgtable_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

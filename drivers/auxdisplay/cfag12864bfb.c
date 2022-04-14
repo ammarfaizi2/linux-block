@@ -9,6 +9,7 @@
  *        Date: 2006-10-31
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

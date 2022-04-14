@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/pgtable_api.h>
 #include <linux/debugfs.h>
 #include <linux/efi.h>
 #include <linux/module.h>

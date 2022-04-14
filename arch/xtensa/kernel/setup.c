@@ -15,6 +15,7 @@
  * Marc Gauthier<marc@tensilica.com> <marc@alumni.uwaterloo.ca>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/errno.h>

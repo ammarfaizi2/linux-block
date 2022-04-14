@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

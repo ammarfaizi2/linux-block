@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>

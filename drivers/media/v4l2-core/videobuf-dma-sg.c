@@ -15,6 +15,7 @@
  * (c) 2006 Ted Walther and John Sokol
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

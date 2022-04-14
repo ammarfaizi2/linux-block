@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2019 Andes Technology Corporation
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/pfn.h>
 #include <linux/init_task.h>

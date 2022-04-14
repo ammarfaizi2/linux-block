@@ -6,6 +6,7 @@
  * Author: Shunli Wang <shunli.wang@mediatek.com>
  *         Yingjoe Chen <yingjoe.chen@mediatek.com>
  */
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>

@@ -6,6 +6,7 @@
  * Copyright 2012 Google, Inc.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

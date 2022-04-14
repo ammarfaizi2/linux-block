@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2014 Linaro Ltd.
  * Copyright (c) 2013-2014 HiSilicon Limited.
  */
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>

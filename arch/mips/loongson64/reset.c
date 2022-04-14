@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Lemote, Inc.
  * Author: Zhangjin Wu, wuzhangjin@gmail.com
  */
+#include <linux/pgtable_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/delay.h>

@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_ptlock.h>

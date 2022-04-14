@@ -24,6 +24,7 @@
  * processor from ever speculating a cache line from this page.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

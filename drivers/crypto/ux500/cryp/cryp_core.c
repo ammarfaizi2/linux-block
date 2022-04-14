@@ -9,6 +9,7 @@
  * Author: Andreas Westin <andreas.westin@stericsson.com> for ST-Ericsson.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>

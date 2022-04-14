@@ -3,6 +3,7 @@
  * Generic hugetlb support.
  * (C) Nadia Yvette Chambers, April 2004
  */
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_ptlock.h>

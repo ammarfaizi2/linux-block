@@ -12,6 +12,7 @@
  * Copyright (C) 2000, 2001, 2012 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2014, Imagination Technologies Ltd.
  */
+#include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mmap_lock.h>

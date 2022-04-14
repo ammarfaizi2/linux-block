@@ -6,6 +6,7 @@
  *  Copyright (C) 1997-1999 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
  
+#include <linux/pgtable_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/of_api.h>
 #include <linux/mmzone_api.h>

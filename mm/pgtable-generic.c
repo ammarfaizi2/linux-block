@@ -7,6 +7,7 @@
  *  Copyright (C) 2010  Linus Torvalds
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/pgtable_api_access.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api_tlb_flush.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Sven Schnelle <svens@stackframe.org>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

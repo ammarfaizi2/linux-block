@@ -9,6 +9,7 @@
  * for more details.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

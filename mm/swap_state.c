@@ -7,6 +7,7 @@
  *
  *  Rewritten to use page cache, (C) 1998 Stephen Tweedie
  */
+#include <linux/pgtable_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/memcontrol.h>

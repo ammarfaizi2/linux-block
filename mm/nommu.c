@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/pgtable_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>

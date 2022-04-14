@@ -10,6 +10,7 @@
  * Author : Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

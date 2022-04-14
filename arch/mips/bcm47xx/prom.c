@@ -24,6 +24,7 @@
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

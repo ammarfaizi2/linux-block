@@ -34,6 +34,7 @@
  * SOFTWARE.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/nsproxy.h>
 #include <linux/mutex_api.h>
 #include <linux/mmu_notifier.h>

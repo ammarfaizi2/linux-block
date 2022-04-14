@@ -9,6 +9,7 @@
  * Copyright (C) 2009  Matt Fleming
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/vmalloc.h>
 #include <linux/ioport.h>

@@ -6,6 +6,7 @@
  *
  * Intercept io operations by trapping.
  */
+#include <linux/pgtable_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

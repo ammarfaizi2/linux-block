@@ -9,6 +9,7 @@
  *    Copyright (C) 1995  Linus Torvalds
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>

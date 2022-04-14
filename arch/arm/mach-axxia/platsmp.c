@@ -5,6 +5,7 @@
  * Copyright (C) 2012 LSI Corporation
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>

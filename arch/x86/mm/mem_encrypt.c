@@ -7,6 +7,7 @@
  * Author: Tom Lendacky <thomas.lendacky@amd.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <asm/processor_api.h>
 #include <linux/dma-direct.h>

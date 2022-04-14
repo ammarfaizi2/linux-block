@@ -6,6 +6,7 @@
     2007 - x86_64 support added by Glauber de Oliveira Costa, Red Hat Inc
 */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <asm/paravirt_api_clock.h>

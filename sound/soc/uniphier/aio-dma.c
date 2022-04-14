@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2016-2018 Socionext Inc.
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

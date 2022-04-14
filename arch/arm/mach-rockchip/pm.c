@@ -4,6 +4,7 @@
  * Author: Tony Xie <tony.xie@rock-chips.com>
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/init.h>

@@ -8,6 +8,7 @@
  * Nitro is a hypervisor that has been developed by Amazon.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
