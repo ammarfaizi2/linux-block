@@ -9,6 +9,7 @@
 #ifndef __ASM_KVM_BOOK3S_64_H__
 #define __ASM_KVM_BOOK3S_64_H__
 
+#include <linux/llist_api.h>
 #include <linux/string.h>
 #include <asm/bitops.h>
 #include <asm/book3s/64/mmu-hash.h>
