@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <net/inet_ecn.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>

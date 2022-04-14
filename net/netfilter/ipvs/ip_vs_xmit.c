@@ -24,6 +24,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <net/inet_ecn.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_nf.h>
