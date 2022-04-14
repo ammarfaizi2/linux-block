@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/pagemap_api_readahead.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>

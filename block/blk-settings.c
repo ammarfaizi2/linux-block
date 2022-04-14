@@ -2,6 +2,7 @@
 /*
  * Functions related to setting various queue properties from drivers
  */
+#include <linux/pagemap_api_readahead.h>
 #include <linux/backing-dev-api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

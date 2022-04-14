@@ -12,6 +12,7 @@
  *	2004  Paul Serice - NFS Export Operations
  */
 
+#include <linux/pagemap_api_readahead.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/init.h>
