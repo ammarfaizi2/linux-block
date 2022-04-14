@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2016 Mentor Graphics
  */
 
+#include <linux/panic.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/watchdog.h>
