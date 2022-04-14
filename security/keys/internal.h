@@ -8,6 +8,7 @@
 #ifndef _INTERNAL_H
 #define _INTERNAL_H
 
+#include <linux/mutex.h>
 #include <linux/sched.h>
 #include <linux/wait_bit.h>
 #include <linux/cred.h>

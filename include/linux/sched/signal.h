@@ -2,6 +2,7 @@
 #ifndef _LINUX_SCHED_SIGNAL_H
 #define _LINUX_SCHED_SIGNAL_H
 
+#include <linux/mutex.h>
 #include <linux/kernel_stat.h>
 #include <linux/restart_block_types.h>
 #include <linux/resource.h>

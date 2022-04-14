@@ -9,6 +9,7 @@
 #ifndef _SELINUX_SECURITY_H_
 #define _SELINUX_SECURITY_H_
 
+#include <linux/mutex.h>
 #include <linux/compiler.h>
 #include <linux/dcache.h>
 #include <linux/magic.h>
