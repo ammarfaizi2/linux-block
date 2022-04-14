@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/cred.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

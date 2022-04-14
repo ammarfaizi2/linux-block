@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

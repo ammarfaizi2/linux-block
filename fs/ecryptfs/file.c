@@ -9,6 +9,7 @@
  *   		Michael C. Thompson <mcthomps@us.ibm.com>
  */
 
+#include <linux/cred.h>
 #include <linux/file.h>
 #include <linux/poll.h>
 #include <linux/slab.h>

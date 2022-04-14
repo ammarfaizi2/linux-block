@@ -7,6 +7,7 @@
  */
 
 #define pr_fmt(fmt) "big_key: "fmt
+#include <linux/cred.h>
 #include <linux/init.h>
 #include <linux/seq_file.h>
 #include <linux/file.h>

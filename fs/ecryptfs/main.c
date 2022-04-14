@@ -10,6 +10,7 @@
  *              Tyler Hicks <code@tyhicks.com>
  */
 
+#include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/dcache.h>
 #include <linux/file.h>

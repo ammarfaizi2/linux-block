@@ -9,6 +9,7 @@
  * Copyright (C) Frederic Rible F1OAT (frible@teaser.fr)
  */
 
+#include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/types.h>

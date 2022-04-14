@@ -18,6 +18,7 @@
  *  6 Jun 1999	Cache readdir lookups in the page cache. -DaveM
  */
 
+#include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/compat.h>
 #include <linux/module.h>

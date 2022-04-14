@@ -4,6 +4,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/cred.h>
 #include <linux/backing-dev-api.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>

@@ -6,6 +6,7 @@
  * Copyright © 2018-2020 ANSSI
  */
 
+#include <linux/cred.h>
 #include <asm/current.h>
 #include <linux/anon_inodes.h>
 #include <linux/build_bug.h>

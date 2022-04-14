@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/cred.h>
 #include <linux/backing-dev-api.h>
 #include <linux/stddef.h>
 #include <linux/init.h>

@@ -4,6 +4,7 @@
  *   Copyright (C) 2018 Namjae Jeon <linkinjeon@kernel.org>
  */
 
+#include <linux/cred.h>
 #include <linux/capability.h>
 
 #include "smb_common.h"

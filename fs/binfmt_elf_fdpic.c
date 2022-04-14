@@ -6,6 +6,7 @@
  * Derived from binfmt_elf.c
  */
 
+#include <linux/cred.h>
 #include <linux/module.h>
 
 #include <linux/fs.h>

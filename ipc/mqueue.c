@@ -13,6 +13,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/capability.h>
 #include <linux/init.h>

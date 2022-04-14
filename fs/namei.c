@@ -15,6 +15,7 @@
 /* [Feb-Apr 2000, AV] Rewrite to the new namespace architecture.
  */
 
+#include <linux/cred.h>
 #include <asm/unaligned.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/init.h>

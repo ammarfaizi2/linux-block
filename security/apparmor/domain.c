@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/cred.h>
 #include <linux/errno.h>
 #include <linux/fdtable.h>
 #include <linux/fs.h>

@@ -4,6 +4,7 @@
  * Copyright 2005-2006 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/cred.h>
 #include <linux/seq_file.h>
 #include <linux/pagemap.h>
 #include <linux/parser.h>

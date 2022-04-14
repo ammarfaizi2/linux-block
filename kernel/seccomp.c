@@ -15,6 +15,7 @@
  */
 #define pr_fmt(fmt) "seccomp: " fmt
 
+#include <linux/cred.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/switch_to.h>

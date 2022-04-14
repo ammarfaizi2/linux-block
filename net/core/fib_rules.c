@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <linux/cred.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

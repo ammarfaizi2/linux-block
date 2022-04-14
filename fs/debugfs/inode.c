@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt)	"debugfs: " fmt
 
+#include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>

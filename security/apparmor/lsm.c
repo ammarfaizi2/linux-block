@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/cred.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/lsm_hooks.h>

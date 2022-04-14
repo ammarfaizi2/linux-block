@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/cred.h>
 #include <linux/cpumask_api.h>
 #include <linux/bpf.h>
 #include <linux/atomic_api.h>

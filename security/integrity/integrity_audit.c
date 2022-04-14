@@ -7,6 +7,7 @@
  *	Audit calls for the integrity subsystem
  */
 
+#include <linux/cred.h>
 #include <linux/fs.h>
 #include <linux/gfp.h>
 #include <linux/audit.h>

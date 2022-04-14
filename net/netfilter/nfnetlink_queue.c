@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/cred.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/init.h>

@@ -6,6 +6,7 @@
  *  changes by Thomas Schoebel-Theuer
  */
 
+#include <linux/cred.h>
 #include <linux/export.h>
 #include <linux/time.h>
 #include <linux/mm.h>

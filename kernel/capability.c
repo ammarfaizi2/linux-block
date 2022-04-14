@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/cred.h>
 #include <linux/sched/task_flags.h>
 #include <linux/audit.h>
 #include <linux/capability.h>

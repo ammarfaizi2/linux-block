@@ -12,6 +12,8 @@
  * should return to the previous cred if it has not been modified.
  */
 
+#include <linux/cred.h>
+
 #include "include/cred.h"
 #include "include/task.h"
 

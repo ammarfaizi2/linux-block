@@ -7,6 +7,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/cred.h>
 #include <linux/cgroup_api.h>
 #include <linux/kernel.h>
 #include <linux/netlink.h>

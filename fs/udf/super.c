@@ -40,6 +40,7 @@
 
 #include "udfdecl.h"
 
+#include <linux/cred.h>
 #include <linux/blkdev.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
