@@ -10,6 +10,7 @@
  *	Jon Smirl <jonsmirl@gmail.com>
  */
 
+#include <linux/udp.h>
 #include <linux/skbuff_api_extra.h>
 
 #include "nhc.h"
