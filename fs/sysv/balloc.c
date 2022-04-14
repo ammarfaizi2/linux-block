@@ -20,6 +20,7 @@
  *  This file contains code for allocating/freeing blocks.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/buffer_head.h>
 #include <linux/string.h>
 #include "sysv.h"

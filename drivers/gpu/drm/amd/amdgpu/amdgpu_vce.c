@@ -25,6 +25,7 @@
  * Authors: Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>

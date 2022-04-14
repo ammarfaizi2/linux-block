@@ -3,6 +3,7 @@
  * Copyright(c) 2020 Intel Corporation.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/component.h>
 
 #include <drm/i915_pxp_tee_interface.h>

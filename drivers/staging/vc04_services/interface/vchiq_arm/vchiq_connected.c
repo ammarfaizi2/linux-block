@@ -3,6 +3,7 @@
 
 #include "vchiq_connected.h"
 #include "vchiq_core.h"
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
 

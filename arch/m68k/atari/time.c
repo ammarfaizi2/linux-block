@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/mc146818rtc.h>
 #include <linux/interrupt.h>

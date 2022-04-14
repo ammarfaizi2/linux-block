@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2017, Linaro Ltd
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2021, Linaro Ltd <loic.poulain@linaro.org> */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

@@ -5,6 +5,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/kref_api.h>
 #include <linux/kmod.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2016-2017 Brian Masney <masneyb@onstation.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/kernel.h>
 #include <linux/i2c.h>

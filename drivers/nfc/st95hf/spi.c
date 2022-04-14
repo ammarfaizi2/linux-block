@@ -6,6 +6,7 @@
  * Copyright (C) 2015 STMicroelectronics Pvt. Ltd. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 
 #include "spi.h"

@@ -5,6 +5,7 @@
  *  Copyright 2012-2013 Freescale Semiconductor, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/err.h>

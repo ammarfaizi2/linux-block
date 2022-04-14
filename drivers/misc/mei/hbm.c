@@ -3,6 +3,7 @@
  * Copyright (c) 2003-2020, Intel Corporation. All rights reserved.
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>

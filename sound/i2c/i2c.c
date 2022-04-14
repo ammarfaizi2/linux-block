@@ -6,6 +6,7 @@
  *   Modified for the ALSA driver by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

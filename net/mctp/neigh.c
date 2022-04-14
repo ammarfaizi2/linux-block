@@ -10,6 +10,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr.h>
 #include <linux/mctp.h>
 #include <linux/netdevice.h>

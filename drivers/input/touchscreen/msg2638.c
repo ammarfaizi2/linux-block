@@ -11,6 +11,7 @@
  * Driver structure based on zinitix.c by Michael Srba <Michael.Srba@seznam.cz>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

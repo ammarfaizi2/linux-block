@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <nvif/client.h>
 #include <nvif/driver.h>
 #include <nvif/fifo.h>

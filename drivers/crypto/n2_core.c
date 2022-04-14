@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/hashtable_api.h>

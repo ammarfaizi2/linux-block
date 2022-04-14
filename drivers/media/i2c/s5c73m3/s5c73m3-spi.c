@@ -7,6 +7,7 @@
  * Andrzej Hajda <a.hajda@samsung.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/sizes.h>
 #include <linux/delay.h>
 #include <linux/init.h>

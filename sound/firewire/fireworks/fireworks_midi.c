@@ -5,6 +5,8 @@
  * Copyright (c) 2009-2010 Clemens Ladisch
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
+#include <linux/mutex_api.h>
+
 #include "fireworks.h"
 
 static int midi_open(struct snd_rawmidi_substream *substream)

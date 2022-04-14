@@ -15,6 +15,7 @@
  *		Alan Cox <alan@lxorguk.ukuu.org.uk>
  ****************************************************************************/
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/usb.h>

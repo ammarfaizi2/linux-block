@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/mutex_api.h>
 #include <drm/drm.h>
 
 #include "qxl_drv.h"

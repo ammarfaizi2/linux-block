@@ -2,6 +2,7 @@
 // Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
 // Copyright (c) 2018, Linaro Limited
 
+#include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>

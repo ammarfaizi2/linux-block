@@ -9,6 +9,7 @@
  *	Yakui Zhao <yakui.zhao@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/eventpoll.h>
 #include <linux/eventfd.h>

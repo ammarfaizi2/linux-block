@@ -5,6 +5,7 @@
  * Based on drivers/misc/eeprom/sunxi_sid.c
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

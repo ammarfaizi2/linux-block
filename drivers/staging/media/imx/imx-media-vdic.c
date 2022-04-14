@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2017 Mentor Graphics Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-device.h>

@@ -11,6 +11,7 @@
 
 #define DSS_SUBSYS_NAME "DPI"
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

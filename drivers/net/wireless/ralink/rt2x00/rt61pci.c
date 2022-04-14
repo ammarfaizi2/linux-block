@@ -11,6 +11,7 @@
 	Supported chipsets: RT2561, RT2561s, RT2661.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/crc-itu-t.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>

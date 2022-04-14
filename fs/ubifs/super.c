@@ -14,6 +14,7 @@
  * corresponding subsystems, but most of it is here.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/hrtimer_api.h>
 #include <linux/fs_api_sb.h>

@@ -7,6 +7,7 @@
  * Author: Liam Girdwood, Mark Brown
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

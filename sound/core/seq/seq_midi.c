@@ -12,6 +12,7 @@ Possible options for midisynth module:
 */
 
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/errno.h>

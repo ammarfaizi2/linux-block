@@ -6,6 +6,7 @@
  * Author: Björn Töpel <bjorn.topel@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <net/xdp_sock.h>
 #include <linux/xdp_diag.h>

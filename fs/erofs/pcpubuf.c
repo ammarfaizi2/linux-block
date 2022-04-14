@@ -7,6 +7,7 @@
  * data if inplace decompression is failed (due to unmet inplace margin for
  * example).
  */
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 

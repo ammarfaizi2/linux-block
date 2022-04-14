@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

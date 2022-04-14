@@ -5,6 +5,7 @@
  * Allegro DVT video encoder driver
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

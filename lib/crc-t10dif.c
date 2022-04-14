@@ -6,6 +6,7 @@
  * Written by Martin K. Petersen <martin.petersen@oracle.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

@@ -7,6 +7,7 @@
  * Written by Koji Sato.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

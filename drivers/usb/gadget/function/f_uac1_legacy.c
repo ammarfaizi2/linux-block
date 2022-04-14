@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Analog Devices, Inc
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

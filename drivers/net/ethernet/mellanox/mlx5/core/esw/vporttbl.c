@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 // Copyright (c) 2021 Mellanox Technologies.
 
+#include <linux/mutex_api.h>
 #include <linux/hashtable_api.h>
 
 #include "eswitch.h"

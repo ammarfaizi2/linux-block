@@ -5,6 +5,7 @@
  * (C) 2003 - 2004		Dominik Brodowski
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

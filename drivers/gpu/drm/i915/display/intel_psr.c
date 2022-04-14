@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

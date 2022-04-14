@@ -40,6 +40,7 @@
  *      Copyright (c) 2004 Kouichi ONO <co2b@ceres.dti.ne.jp>
  */      
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

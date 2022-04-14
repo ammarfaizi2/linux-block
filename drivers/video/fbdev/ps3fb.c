@@ -17,6 +17,7 @@
  *  more details.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>

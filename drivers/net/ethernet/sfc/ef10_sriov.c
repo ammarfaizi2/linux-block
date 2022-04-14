@@ -3,6 +3,7 @@
  * Driver for Solarflare network controllers and boards
  * Copyright 2015 Solarflare Communications Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/if_link.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>

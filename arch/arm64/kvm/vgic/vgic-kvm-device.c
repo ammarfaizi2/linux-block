@@ -5,6 +5,7 @@
  * Copyright (C) 2015 ARM Ltd.
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kvm_host.h>
 #include <kvm/arm_vgic.h>

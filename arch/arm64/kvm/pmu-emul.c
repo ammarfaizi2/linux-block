@@ -4,6 +4,7 @@
  * Author: Shannon Zhao <shannon.zhao@linaro.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <asm/local64_api.h>

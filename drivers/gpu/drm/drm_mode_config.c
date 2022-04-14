@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/uaccess.h>
 

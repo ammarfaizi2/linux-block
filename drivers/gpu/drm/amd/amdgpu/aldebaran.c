@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/mutex_api.h>
+
 #include "aldebaran.h"
 #include "amdgpu_reset.h"
 #include "amdgpu_amdkfd.h"

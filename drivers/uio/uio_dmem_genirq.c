@@ -9,6 +9,7 @@
  * Based on uio_pdrv_genirq.c by Magnus Damm
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>

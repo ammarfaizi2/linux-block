@@ -12,6 +12,7 @@
  * https://www.ti.com/lit/ds/symlink/dac124s085.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/iio/iio.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

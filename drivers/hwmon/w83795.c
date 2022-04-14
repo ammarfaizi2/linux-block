@@ -12,6 +12,7 @@
  *  w83795adg   18     14     2     6     8    0x79   0x5ca3  yes   no
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

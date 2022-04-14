@@ -12,6 +12,7 @@
  * - Support power management
  */
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/i2c.h>

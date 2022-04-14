@@ -31,6 +31,7 @@
  * 1. Write wiper setting to EEPROM for EEPROM capable models.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/cache.h>
 #include <linux/err.h>

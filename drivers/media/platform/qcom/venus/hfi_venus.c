@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Linaro Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

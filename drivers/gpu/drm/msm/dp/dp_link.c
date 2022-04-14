@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <drm/drm_print.h>

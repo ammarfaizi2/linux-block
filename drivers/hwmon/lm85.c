@@ -11,6 +11,7 @@
  * Chip details at	      <http://www.national.com/ds/LM/LM85.pdf>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

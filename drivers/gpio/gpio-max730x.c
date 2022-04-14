@@ -27,6 +27,7 @@
  * The driver exports a standard gpiochip interface
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

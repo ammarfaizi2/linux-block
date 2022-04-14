@@ -10,6 +10,7 @@
  *              Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <net/tcp.h>
 #include <rdma/ib_verbs.h>

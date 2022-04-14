@@ -10,6 +10,7 @@
  *  - s/cfam/chip (cfam_id -> chip_id etc...)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

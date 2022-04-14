@@ -45,6 +45,7 @@
  *      Erez Zilber
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/list.h>

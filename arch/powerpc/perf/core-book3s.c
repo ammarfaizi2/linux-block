@@ -4,6 +4,7 @@
  *
  * Copyright 2008-2009 Paul Mackerras, IBM Corporation.
  */
+#include <linux/mutex_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <asm/local64_api.h>

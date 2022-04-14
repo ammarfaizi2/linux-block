@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2018 Cavium, Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/bcd.h>

@@ -6,6 +6,7 @@
  * Author: Matt Ranostay <matt.ranostay@konsulko.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/mod_devicetable.h>

@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 
 #include "cxgb4.h"

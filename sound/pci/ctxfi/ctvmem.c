@@ -14,6 +14,7 @@
 
 #include "ctvmem.h"
 #include "ctatc.h"
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/mm.h>
 #include <linux/io.h>

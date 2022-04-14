@@ -10,6 +10,7 @@
  * ad5274	1	256		20, 100			01011xx
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>

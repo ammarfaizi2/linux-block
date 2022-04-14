@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

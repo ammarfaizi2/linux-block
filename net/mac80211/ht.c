@@ -12,6 +12,7 @@
  * Copyright(c) 2020-2021 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ieee80211.h>
 #include <linux/export.h>
 #include <net/mac80211.h>

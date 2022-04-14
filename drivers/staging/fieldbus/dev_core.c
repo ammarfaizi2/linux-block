@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

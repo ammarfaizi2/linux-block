@@ -4,6 +4,7 @@
  * (c) 2015 - Jeff Layton <jeff.layton@primarydata.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/list_lru_api.h>
 #include <linux/fs_api.h>

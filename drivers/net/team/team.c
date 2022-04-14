@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

@@ -14,6 +14,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/cpumask_api.h>

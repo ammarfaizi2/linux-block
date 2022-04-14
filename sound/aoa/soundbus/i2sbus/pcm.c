@@ -5,6 +5,7 @@
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/io.h>
 #include <linux/delay.h>

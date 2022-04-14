@@ -9,6 +9,7 @@
  * Copyright (C) 2010 ROCKCHIP, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

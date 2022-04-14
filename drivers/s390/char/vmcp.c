@@ -12,6 +12,7 @@
  * The idea of this driver is based on cpint from Neale Ferguson and #CP in CMS
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

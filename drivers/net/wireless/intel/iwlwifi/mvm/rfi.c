@@ -3,6 +3,7 @@
  * Copyright (C) 2020 - 2021 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 
 #include "mvm.h"

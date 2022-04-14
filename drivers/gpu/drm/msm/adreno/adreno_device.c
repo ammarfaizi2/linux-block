@@ -6,6 +6,7 @@
  * Copyright (c) 2014,2017 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 
 #include "adreno_gpu.h"

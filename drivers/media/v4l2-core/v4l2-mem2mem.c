@@ -9,6 +9,7 @@
  * Pawel Osciak, <pawel@osciak.com>
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

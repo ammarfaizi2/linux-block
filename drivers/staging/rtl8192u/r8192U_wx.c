@@ -19,6 +19,7 @@
  *
  *****************************************************************************/
 
+#include <linux/mutex_api.h>
 #include <linux/string.h>
 #include "r8192U.h"
 #include "r8192U_hw.h"

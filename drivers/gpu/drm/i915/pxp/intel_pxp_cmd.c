@@ -3,6 +3,8 @@
  * Copyright(c) 2020, Intel Corporation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
+
 #include "intel_pxp.h"
 #include "intel_pxp_cmd.h"
 #include "intel_pxp_session.h"

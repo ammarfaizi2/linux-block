@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 
 #include "otx2_common.h"

@@ -5,6 +5,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 
 #include "dice.h"

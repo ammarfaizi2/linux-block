@@ -7,6 +7,7 @@
  * Copyright (C) 2010-2011 Analog Devices Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/module.h>

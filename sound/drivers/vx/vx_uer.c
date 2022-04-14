@@ -7,6 +7,7 @@
  * Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <sound/core.h>
 #include <sound/vx_core.h>

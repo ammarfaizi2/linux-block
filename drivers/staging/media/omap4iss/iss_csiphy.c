@@ -7,6 +7,7 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/regmap.h>

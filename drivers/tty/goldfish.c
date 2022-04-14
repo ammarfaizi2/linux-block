@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Imagination Technologies Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/console.h>

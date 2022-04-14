@@ -17,6 +17,7 @@
  * 82583V Gigabit Network Connection
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/delay.h>
 

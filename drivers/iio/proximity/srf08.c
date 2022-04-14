@@ -12,6 +12,7 @@
  * https://www.robot-electronics.co.uk/htm/srf02tech.htm
  */
 
+#include <linux/mutex_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>

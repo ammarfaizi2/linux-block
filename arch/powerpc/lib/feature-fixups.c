@@ -8,6 +8,7 @@
  *  Copyright 2008 Michael Ellerman, IBM Corporation.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/jump_label.h>
 #include <linux/kernel.h>

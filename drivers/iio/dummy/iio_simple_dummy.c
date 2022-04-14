@@ -11,6 +11,7 @@
  * understand all of this driver except those bits specifically marked
  * as being present to allow us to 'fake' the presence of hardware.
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/module.h>

@@ -10,6 +10,7 @@
  *			  - broken initialization?
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>

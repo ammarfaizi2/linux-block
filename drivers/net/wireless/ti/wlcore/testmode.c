@@ -8,6 +8,7 @@
  */
 #include "testmode.h"
 
+#include <linux/mutex_api.h>
 #include <linux/pm_runtime.h>
 #include <linux/slab.h>
 #include <net/genetlink.h>

@@ -18,6 +18,7 @@
  *		 2001-2004 Juergen Stuber <starblue@users.sourceforge.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

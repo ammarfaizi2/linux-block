@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015, Linaro Limited
  */
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/device.h>
 #include <linux/slab.h>

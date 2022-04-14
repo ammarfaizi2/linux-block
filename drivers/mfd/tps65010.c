@@ -6,6 +6,7 @@
  * Copyright (C) 2004-2005 David Brownell
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

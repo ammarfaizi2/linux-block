@@ -4,6 +4,7 @@
  * Author: Mike Leach <mike.leach@linaro.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpu.h>

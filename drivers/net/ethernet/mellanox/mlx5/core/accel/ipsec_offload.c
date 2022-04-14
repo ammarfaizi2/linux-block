@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020, Mellanox Technologies inc. All rights reserved. */
 
+#include <linux/mutex_api.h>
+
 #include "mlx5_core.h"
 #include "ipsec_offload.h"
 #include "lib/mlx5.h"

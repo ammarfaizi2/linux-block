@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

@@ -10,6 +10,7 @@
  * Copyright (C) 2006, OmniVision
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>

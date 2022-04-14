@@ -12,6 +12,7 @@
  * http://www.analog.com/UploadedFiles/Data_Sheets/ADM1029.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

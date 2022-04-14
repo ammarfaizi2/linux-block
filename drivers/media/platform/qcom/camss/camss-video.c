@@ -7,6 +7,7 @@
  * Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/atomic_api.h>

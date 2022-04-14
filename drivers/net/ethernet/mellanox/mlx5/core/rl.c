@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kernel.h>
 #include <linux/mlx5/driver.h>

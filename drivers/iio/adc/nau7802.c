@@ -5,6 +5,7 @@
  * Copyright 2013 Free Electrons
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

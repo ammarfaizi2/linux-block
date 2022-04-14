@@ -3,6 +3,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/export.h>
 #include <linux/mutex.h>
 #include <linux/etherdevice.h>

@@ -11,6 +11,7 @@
 
 #if IS_ENABLED(CONFIG_I2C)
 
+#include <linux/mutex_api.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/export.h>

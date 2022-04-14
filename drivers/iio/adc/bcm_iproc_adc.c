@@ -3,6 +3,7 @@
  * Copyright 2016 Broadcom
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
 #include <linux/io.h>

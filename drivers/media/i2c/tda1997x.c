@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2018 Gateworks Corporation
  */
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/hdmi.h>
 #include <linux/i2c.h>

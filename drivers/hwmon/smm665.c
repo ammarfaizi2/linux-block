@@ -12,6 +12,7 @@
  * http://www.summitmicro.com/prod_select/summary/SMM766B/SMM766B_2122.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

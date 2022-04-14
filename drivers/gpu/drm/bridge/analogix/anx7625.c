@@ -3,6 +3,7 @@
  * Copyright(c) 2020, Analogix Semiconductor. All rights reserved.
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/gcd.h>
 #include <linux/gpio/consumer.h>

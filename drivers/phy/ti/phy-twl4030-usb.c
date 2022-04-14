@@ -11,6 +11,7 @@
  *	- 3-pin mode support may be added in future.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

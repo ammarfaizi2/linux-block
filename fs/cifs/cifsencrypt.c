@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/fs.h>
 #include <linux/slab.h>

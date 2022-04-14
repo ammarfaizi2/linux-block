@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 

@@ -8,6 +8,7 @@
  *	Based on the patches by Rainer Zimmermann <mail@lightshed.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <sound/core.h>

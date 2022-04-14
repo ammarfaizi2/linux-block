@@ -6,6 +6,7 @@
  * Author: Paul Cercueil <paul.cercueil@analog.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

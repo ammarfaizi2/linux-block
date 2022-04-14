@@ -9,6 +9,7 @@
  * Copyright 2009 Wolfson Microelectronics plc
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/init.h>

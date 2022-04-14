@@ -4,6 +4,7 @@
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>

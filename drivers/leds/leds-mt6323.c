@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2017 Sean Wang <sean.wang@mediatek.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

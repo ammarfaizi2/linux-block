@@ -22,6 +22,7 @@
  * Authors: Dave Airlie
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <drm/radeon_drm.h>
 #include "radeon.h"

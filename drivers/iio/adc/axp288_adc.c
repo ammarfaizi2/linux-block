@@ -7,6 +7,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/dmi.h>
 #include <linux/module.h>

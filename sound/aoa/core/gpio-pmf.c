@@ -5,6 +5,7 @@
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <asm/pmac_feature.h>
 #include <asm/pmac_pfunc.h>

@@ -10,6 +10,7 @@
  * Copyright (C) 2013, Samsung Electronics Co., Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>

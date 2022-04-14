@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "pch-msi: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>
 #include <linux/irqchip.h>

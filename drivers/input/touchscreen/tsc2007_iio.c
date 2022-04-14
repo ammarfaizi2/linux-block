@@ -4,6 +4,7 @@
  *	Nikolaus Schaller <hns@goldelico.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/i2c.h>
 #include <linux/iio/iio.h>
 #include "tsc2007.h"

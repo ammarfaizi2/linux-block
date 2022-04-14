@@ -14,6 +14,7 @@
  * AB8505 supports the following regulators:
  *   VAUX1/2/3/4/5/6, VINTCORE, VADC, VUSB, VAUDIO, VAMIC1/2, VDMIC, VANA
  */
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

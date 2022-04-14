@@ -30,6 +30,7 @@
  *    Dave Airlie
  */
 
+#include <linux/mutex_api.h>
 #include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/io.h>

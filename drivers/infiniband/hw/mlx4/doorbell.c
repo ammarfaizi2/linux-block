@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <rdma/uverbs_ioctl.h>
 

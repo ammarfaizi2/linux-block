@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <rdma/rdma_cm.h>
 

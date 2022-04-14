@@ -2,6 +2,7 @@
 // BQ25980 Battery Charger Driver
 // Copyright (C) 2020 Texas Instruments Incorporated - http://www.ti.com/
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

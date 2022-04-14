@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "Power allocator: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/rculist.h>

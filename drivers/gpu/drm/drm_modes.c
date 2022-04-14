@@ -30,6 +30,7 @@
  * authorization from the copyright holder(s) and author(s).
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/math64.h>

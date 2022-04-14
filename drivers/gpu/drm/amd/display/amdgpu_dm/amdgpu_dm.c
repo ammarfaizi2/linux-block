@@ -48,6 +48,7 @@
 #include "amdgpu_dm.h"
 #ifdef CONFIG_DRM_AMD_DC_HDCP
 #include "amdgpu_dm_hdcp.h"
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>

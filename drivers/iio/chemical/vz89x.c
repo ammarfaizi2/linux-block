@@ -6,6 +6,7 @@
  * Author: Matt Ranostay <matt.ranostay@konsulko.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

@@ -15,6 +15,7 @@
  *  into usbatm), and the userspace firmware loading utility.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/delay.h>

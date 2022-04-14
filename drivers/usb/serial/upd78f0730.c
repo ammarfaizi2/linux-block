@@ -18,6 +18,7 @@
  * - signals: DTR, RTS and BREAK
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/tty.h>

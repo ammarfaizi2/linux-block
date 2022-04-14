@@ -2,6 +2,7 @@
 
 #include "netlink.h"
 #include "common.h"
+#include <linux/mutex_api.h>
 #include <linux/phy.h>
 
 struct linkstate_req_info {

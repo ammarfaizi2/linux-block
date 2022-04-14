@@ -7,6 +7,7 @@
  * discipline handling modules (like SLIP).
  */
 
+#include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/termios.h>

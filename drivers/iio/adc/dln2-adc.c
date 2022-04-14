@@ -5,6 +5,7 @@
  * Copyright (c) 2017 Jack Andersen
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

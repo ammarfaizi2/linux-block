@@ -8,6 +8,7 @@
  *  block allocation, deallocation, calculation of free space.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/slab.h>
 #include "affs.h"

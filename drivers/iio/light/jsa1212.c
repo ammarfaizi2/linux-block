@@ -9,6 +9,7 @@
  * TODO: Interrupt support, thresholds, range support.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/module.h>

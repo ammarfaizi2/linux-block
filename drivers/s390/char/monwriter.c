@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "monwriter"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

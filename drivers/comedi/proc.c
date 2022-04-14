@@ -13,6 +13,7 @@
  * was cool.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/comedi/comedidev.h>
 #include "comedi_internal.h"

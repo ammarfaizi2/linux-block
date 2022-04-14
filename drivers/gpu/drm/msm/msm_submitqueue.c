@@ -2,6 +2,7 @@
 /* Copyright (c) 2017 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/kref.h>

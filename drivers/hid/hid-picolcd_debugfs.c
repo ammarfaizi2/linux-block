@@ -7,6 +7,7 @@
  *                                                                         *
  ***************************************************************************/
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/hid.h>
 #include <linux/hid-debug.h>

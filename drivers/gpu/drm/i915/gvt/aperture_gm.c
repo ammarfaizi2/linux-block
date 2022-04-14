@@ -34,6 +34,8 @@
  *
  */
 
+#include <linux/mutex_api.h>
+
 #include "i915_drv.h"
 #include "i915_reg.h"
 #include "gt/intel_ggtt_fencing.h"

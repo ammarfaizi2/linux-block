@@ -3,6 +3,8 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/mutex_api.h>
+
 #include "mt76x2.h"
 #include "../mt76x02_mac.h"
 

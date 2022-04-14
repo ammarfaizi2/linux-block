@@ -31,6 +31,7 @@
  * Ave, Cambridge, MA 02139, USA.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/init.h>

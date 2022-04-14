@@ -14,6 +14,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/device.h>

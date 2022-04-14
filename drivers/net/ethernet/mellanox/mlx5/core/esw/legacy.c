@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021 Mellanox Technologies Ltd */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

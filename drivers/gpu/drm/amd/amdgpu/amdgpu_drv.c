@@ -22,6 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mem_encrypt.h>
 #include <linux/delay.h>
 #include <drm/amdgpu_drm.h>

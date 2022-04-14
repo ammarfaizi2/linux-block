@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "v4l2-ctrls: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/export.h>
 #include <linux/slab.h>
 #include <media/v4l2-ctrls.h>

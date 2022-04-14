@@ -6,6 +6,7 @@
  * Porting to 2.6 Copyright (c) Adrian McMenamin, 2007 - 2009
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/input.h>

@@ -21,6 +21,7 @@
  */
 #include "vmm.h"
 
+#include <linux/mutex_api.h>
 #include <subdev/timer.h>
 
 static void

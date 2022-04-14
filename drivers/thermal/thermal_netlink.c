@@ -6,6 +6,7 @@
  *
  * Generic netlink for thermal management framework
  */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <net/genetlink.h>

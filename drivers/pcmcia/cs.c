@@ -9,6 +9,7 @@
  * (C) 1999		David A. Hinds
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kmod.h>
 #include <linux/device/class.h>

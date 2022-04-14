@@ -54,6 +54,7 @@
 #include "ivtv-routing.h"
 #include "ivtv-controls.h"
 #include "ivtv-gpio.h"
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kthread.h>
 #include <linux/kmod.h>

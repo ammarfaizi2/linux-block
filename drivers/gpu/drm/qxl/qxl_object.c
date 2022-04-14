@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/mutex_api.h>
 #include <linux/iosys-map.h>
 #include <linux/io-mapping.h>
 

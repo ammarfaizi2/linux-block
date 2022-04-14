@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/mutex_api.h>
 #include <crypto/hash.h>
 #include <linux/scatterlist.h>
 

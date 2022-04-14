@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/mutex_api.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 #include "amdgpu_atombios.h"

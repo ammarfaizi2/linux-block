@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>
 #include <linux/pci.h>

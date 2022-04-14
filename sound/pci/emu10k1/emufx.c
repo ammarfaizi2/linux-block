@@ -14,6 +14,7 @@
  *    --
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/capability.h>

@@ -10,6 +10,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

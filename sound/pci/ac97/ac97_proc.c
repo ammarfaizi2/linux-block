@@ -7,6 +7,7 @@
  *  by Intel Corporation (http://developer.intel.com).
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mutex.h>
 
 #include <sound/core.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2007  Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>

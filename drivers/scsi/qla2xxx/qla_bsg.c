@@ -6,6 +6,7 @@
 #include "qla_def.h"
 #include "qla_gbl.h"
 
+#include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>

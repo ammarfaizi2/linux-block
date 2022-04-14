@@ -8,6 +8,7 @@
  * TODO: Triggered buffer support
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/err.h>

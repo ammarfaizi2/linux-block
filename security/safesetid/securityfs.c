@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "SafeSetID: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/fs.h>

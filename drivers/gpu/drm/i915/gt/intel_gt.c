@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/sched/cond_resched.h>
 #include <drm/drm_managed.h>
 #include <drm/intel-gtt.h>

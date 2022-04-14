@@ -4,6 +4,7 @@
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

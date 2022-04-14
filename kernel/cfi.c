@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Google LLC
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/hardirq.h>
 #include <linux/kallsyms.h>

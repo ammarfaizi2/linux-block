@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
+#include <linux/mutex_api.h>
 #include <linux/kthread.h>
 
 #include "msm_disp_snapshot.h"

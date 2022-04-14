@@ -2,6 +2,7 @@
 /* Copyright (c) 2015,2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/errno.h>

@@ -21,6 +21,7 @@
 
 #define UBD_SHIFT 4
 
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/bvec_api.h>
 #include <linux/module.h>

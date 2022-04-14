@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2021 Western Digital Corporation or its Affiliates.
  */
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kernel.h>
 #include <linux/blkdev.h>

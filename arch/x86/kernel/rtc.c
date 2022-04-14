@@ -2,6 +2,7 @@
 /*
  * RTC related functions
  */
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>

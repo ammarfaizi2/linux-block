@@ -12,6 +12,7 @@
  * The rest of the code was was rewritten from scratch.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

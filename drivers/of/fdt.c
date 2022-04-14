@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"OF: fdt: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/crash_dump.h>
 #include <linux/crc32.h>

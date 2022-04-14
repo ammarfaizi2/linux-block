@@ -7,6 +7,7 @@
  * Jiang Liu <jiang.liu@linux.intel.com>
  *	Convert to hierarchical irqdomain
  */
+#include <linux/mutex_api.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/cpumask_api.h>
 #include <asm/x86_irq.h>

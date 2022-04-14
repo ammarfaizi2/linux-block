@@ -6,6 +6,7 @@
  * Copyright (c) 2005-2006 Intel Corporation.  All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/capability.h>

@@ -37,6 +37,7 @@
  * the PCI back-end driver in Hyper-V.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

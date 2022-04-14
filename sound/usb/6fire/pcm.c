@@ -9,6 +9,8 @@
  * Copyright:	(C) Torsten Schenk
  */
 
+#include <linux/mutex_api.h>
+
 #include "pcm.h"
 #include "chip.h"
 #include "comm.h"

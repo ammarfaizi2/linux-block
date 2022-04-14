@@ -14,6 +14,7 @@
  *   Scott Murray <scottm@somanetworks.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/module.h>	/* try_module_get & module_put */
 #include <linux/moduleparam.h>

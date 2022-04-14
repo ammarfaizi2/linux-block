@@ -22,6 +22,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/export.h>

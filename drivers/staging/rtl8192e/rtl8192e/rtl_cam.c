@@ -7,6 +7,8 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/mutex_api.h>
+
 #include "rtl_core.h"
 #include "r8192E_phy.h"
 #include "r8192E_phyreg.h"

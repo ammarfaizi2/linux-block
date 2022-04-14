@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies. */
 
+#include <linux/mutex_api.h>
+
 #include "dr_types.h"
 
 static bool dr_mask_is_smac_set(struct mlx5dr_match_spec *spec)

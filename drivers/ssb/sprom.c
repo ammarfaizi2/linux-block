@@ -13,6 +13,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/mutex_api.h>
 #include <linux/ctype.h>
 #include <linux/slab.h>
 

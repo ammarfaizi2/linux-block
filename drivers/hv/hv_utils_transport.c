@@ -5,6 +5,7 @@
  * Copyright (C) 2015, Vitaly Kuznetsov <vkuznets@redhat.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/fs.h>
 #include <linux/poll.h>

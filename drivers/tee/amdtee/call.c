@@ -3,6 +3,7 @@
  * Copyright 2019 Advanced Micro Devices, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/tee.h>
 #include <linux/tee_drv.h>

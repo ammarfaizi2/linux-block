@@ -27,6 +27,7 @@
  *	    Jeremy Kolb  <jkolb@brandeis.edu>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/highmem.h>
 #include <linux/dma-fence-api.h>

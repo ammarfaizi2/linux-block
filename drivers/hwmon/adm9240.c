@@ -28,6 +28,7 @@
  * LM81 extended temp reading not implemented
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

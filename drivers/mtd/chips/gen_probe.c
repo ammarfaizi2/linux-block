@@ -4,6 +4,7 @@
  * GPL'd
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

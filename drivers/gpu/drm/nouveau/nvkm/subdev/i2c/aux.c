@@ -22,6 +22,7 @@
  * Authors: Ben Skeggs
  */
 
+#include <linux/mutex_api.h>
 #include <linux/string_helpers.h>
 
 #include "aux.h"

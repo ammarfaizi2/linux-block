@@ -5,6 +5,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mutex.h>
 #include <sound/ac97_codec.h>
 #include <sound/asoundef.h>

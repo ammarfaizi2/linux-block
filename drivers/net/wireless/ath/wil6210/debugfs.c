@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

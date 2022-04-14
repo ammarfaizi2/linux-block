@@ -7,6 +7,7 @@
  *	based on ipt_ROUTE.c from Cédric de Launois
  *	<delaunois@info.ucl.be>
  */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/route.h>

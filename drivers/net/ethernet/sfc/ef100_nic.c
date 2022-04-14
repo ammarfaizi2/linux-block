@@ -9,6 +9,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

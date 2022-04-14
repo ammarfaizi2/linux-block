@@ -11,6 +11,7 @@
  * Split to multiple files by Josef Gajdusek <atx@atx.name> - 2014
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/regmap.h>
 #include <linux/iio/iio.h>

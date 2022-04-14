@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2018 Mellanox Technologies. */
 
+#include <linux/mutex_api.h>
+
 #include "en.h"
 #include "monitor_stats.h"
 #include "lib/eq.h"

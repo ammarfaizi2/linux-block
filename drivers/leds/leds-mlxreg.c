@@ -3,6 +3,7 @@
 // Copyright (c) 2018 Mellanox Technologies. All rights reserved.
 // Copyright (c) 2018 Vadim Pasternak <vadimp@mellanox.com>
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>

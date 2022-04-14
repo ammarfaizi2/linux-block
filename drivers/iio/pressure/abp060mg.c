@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2016 - Marcin Malagowski <mrc@bourne.st>
  */
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/err.h>

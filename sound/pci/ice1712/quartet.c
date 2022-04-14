@@ -7,6 +7,7 @@
  *	Copyright (c) 2009 Pavel Hofman <pavel.hofman@ivitera.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

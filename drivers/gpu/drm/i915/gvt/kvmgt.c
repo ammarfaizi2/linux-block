@@ -28,6 +28,7 @@
  *    Xiaoguang Chen <xiaoguang.chen@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>

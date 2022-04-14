@@ -10,6 +10,7 @@
  * (c) 2006 Ted Walther and John Sokol
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/fs.h>

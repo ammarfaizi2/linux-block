@@ -7,6 +7,7 @@
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/firmware.h>

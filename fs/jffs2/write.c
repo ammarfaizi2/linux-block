@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/fs_entry_types.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>

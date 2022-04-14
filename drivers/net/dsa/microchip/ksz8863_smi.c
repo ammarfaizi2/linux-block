@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Pengutronix, Michael Grzeschik <kernel@pengutronix.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 
 #include "ksz8.h"

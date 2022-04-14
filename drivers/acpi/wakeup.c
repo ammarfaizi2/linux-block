@@ -4,6 +4,7 @@
  * Copyright (C) 2004 Li Shaohua <shaohua.li@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/acpi.h>

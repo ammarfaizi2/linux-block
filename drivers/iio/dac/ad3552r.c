@@ -5,6 +5,7 @@
  *
  * Copyright 2021 Analog Devices Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>

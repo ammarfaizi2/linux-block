@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mmu_notifier.h>
 #include <linux/mm_api.h>
 #include <linux/kthread.h>

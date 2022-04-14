@@ -11,6 +11,7 @@
  *  - http://www.intersil.com/content/dam/Intersil/documents/isl2/isl29030.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/err.h>

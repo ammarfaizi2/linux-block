@@ -23,6 +23,7 @@
  * formats.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api_tlb_flush.h>

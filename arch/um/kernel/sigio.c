@@ -3,6 +3,7 @@
  * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{linux.intel,addtoit}.com)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <irq_kern.h>
 #include <os.h>

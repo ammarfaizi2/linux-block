@@ -10,6 +10,7 @@
  *    Ruslan Bilovol (ruslan.bilovol@gmail.com)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/atomic_api.h>
 #include <linux/usb/audio.h>

@@ -17,6 +17,7 @@
  * that occur during interrupt scare me. The ISR should merely signal
  * thread context, ACK the interrupt, and move on. -- BenC */
 
+#include <linux/mutex_api.h>
 #include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>

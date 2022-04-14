@@ -16,6 +16,7 @@
  * Abstract: Contains all routines for control of the AFA comm layer
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

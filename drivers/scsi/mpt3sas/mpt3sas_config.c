@@ -42,6 +42,7 @@
  * USA.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

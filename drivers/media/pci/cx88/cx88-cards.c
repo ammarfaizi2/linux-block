@@ -10,6 +10,7 @@
 #include "tea5767.h"
 #include "xc4000.h"
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/i2c.h>

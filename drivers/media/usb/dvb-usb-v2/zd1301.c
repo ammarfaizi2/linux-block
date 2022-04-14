@@ -8,6 +8,7 @@
 #include "dvb_usb.h"
 #include "zd1301_demod.h"
 #include "mt2060.h"
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/export.h>

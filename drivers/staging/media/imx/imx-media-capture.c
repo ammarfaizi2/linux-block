@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012-2016 Mentor Graphics Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/fs.h>

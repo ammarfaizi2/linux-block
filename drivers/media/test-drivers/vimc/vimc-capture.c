@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2017 Helen Koike <helen.fornazier@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <media/v4l2-ioctl.h>

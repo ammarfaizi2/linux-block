@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Oracle.  All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>

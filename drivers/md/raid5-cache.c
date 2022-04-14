@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Shaohua Li <shli@fb.com>
  * Copyright (C) 2016 Song Liu <songliubraving@fb.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>

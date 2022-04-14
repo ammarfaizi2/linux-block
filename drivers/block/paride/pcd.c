@@ -129,6 +129,7 @@ enum {D_PRT, D_PRO, D_UNI, D_MOD, D_SLV, D_DLY};
 
 /* end of parameters */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/init.h>

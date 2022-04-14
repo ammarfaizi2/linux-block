@@ -6,6 +6,7 @@
  * Copyright (C) 2011-2013 NVIDIA Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/debugfs.h>
 #include <linux/pm_runtime.h>
 #include <linux/seq_file.h>

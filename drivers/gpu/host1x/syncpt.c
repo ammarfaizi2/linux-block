@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2015, NVIDIA Corporation.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

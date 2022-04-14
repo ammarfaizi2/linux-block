@@ -10,6 +10,7 @@
  * http://sensing.honeywell.com/index.php?ci_id=3106&la_id=1&defId=44872
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

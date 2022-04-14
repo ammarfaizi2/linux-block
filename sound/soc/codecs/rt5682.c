@@ -6,6 +6,7 @@
 // Author: Bard Liao <bardliao@realtek.com>
 //
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

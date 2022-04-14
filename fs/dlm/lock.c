@@ -53,6 +53,7 @@
                                    R: do_xxxx()
    L: receive_xxxx_reply()     <-  R: send_xxxx_reply()
 */
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

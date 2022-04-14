@@ -3,6 +3,7 @@
  * Licensed under the GPL
  */
 
+#include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/mm.h>
 #include <linux/sched.h>

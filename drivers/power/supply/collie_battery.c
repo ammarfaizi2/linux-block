@@ -6,6 +6,7 @@
  *
  * based on tosa_battery.c
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/power_supply.h>

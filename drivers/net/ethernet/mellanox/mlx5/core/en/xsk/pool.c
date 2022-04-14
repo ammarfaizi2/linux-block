@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019-2020, Mellanox Technologies inc. All rights reserved. */
 
+#include <linux/mutex_api.h>
 #include <net/xdp_sock_drv.h>
 #include "pool.h"
 #include "setup.h"

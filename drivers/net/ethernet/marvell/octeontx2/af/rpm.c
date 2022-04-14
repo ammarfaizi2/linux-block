@@ -5,6 +5,8 @@
  *
  */
 
+#include <linux/mutex_api.h>
+
 #include "cgx.h"
 #include "lmac_common.h"
 

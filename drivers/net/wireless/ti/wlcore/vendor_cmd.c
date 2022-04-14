@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Texas Instruments. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/pm_runtime.h>
 
 #include <net/mac80211.h>

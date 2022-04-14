@@ -12,6 +12,7 @@
 
 #define GSPCA_VERSION	"2.14.0"
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/mm_api.h>
 #include <linux/export.h>

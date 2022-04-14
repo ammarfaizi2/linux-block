@@ -7,6 +7,7 @@
  * Author: Yang, Bin <bin.yang@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

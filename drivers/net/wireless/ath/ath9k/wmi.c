@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
+
 #include "htc.h"
 
 static const char *wmi_cmd_to_name(enum wmi_cmd_id wmi_cmd)

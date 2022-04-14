@@ -6,6 +6,7 @@
  * Author: Alex Smith <alex.smith@imgtec.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/device.h>

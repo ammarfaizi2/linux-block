@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2016-2019 Mentor Graphics Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

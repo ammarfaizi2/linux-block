@@ -5,6 +5,7 @@
  * Copyright (C) 2007 Steven Rostedt <srostedt@redhat.com>
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kallsyms.h>
 #include <linux/uaccess.h>

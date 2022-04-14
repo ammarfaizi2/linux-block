@@ -38,6 +38,7 @@
  *  out_of_space hacks, D. Gilbert (dpg) 990608
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

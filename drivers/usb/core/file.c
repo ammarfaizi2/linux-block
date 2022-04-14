@@ -17,6 +17,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

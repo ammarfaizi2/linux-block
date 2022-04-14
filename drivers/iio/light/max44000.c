@@ -9,6 +9,7 @@
  * 7-bit I2C slave address 0x4a
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/i2c.h>

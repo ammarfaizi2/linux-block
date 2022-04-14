@@ -11,6 +11,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mutex.h>
 #include <linux/list.h>
 #include <linux/netdevice.h>

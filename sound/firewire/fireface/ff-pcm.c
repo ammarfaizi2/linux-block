@@ -5,6 +5,8 @@
  * Copyright (c) 2015-2017 Takashi Sakamoto
  */
 
+#include <linux/mutex_api.h>
+
 #include "ff.h"
 
 static int hw_rule_rate(struct snd_pcm_hw_params *params,

@@ -14,6 +14,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "fadump: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

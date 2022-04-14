@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

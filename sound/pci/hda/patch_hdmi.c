@@ -16,6 +16,7 @@
  *			Wu Fengguang <wfg@linux.intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/delay.h>

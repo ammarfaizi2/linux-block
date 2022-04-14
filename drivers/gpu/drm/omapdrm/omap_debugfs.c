@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob.clark@linaro.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/seq_file.h>
 
 #include <drm/drm_crtc.h>

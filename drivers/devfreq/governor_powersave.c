@@ -6,6 +6,7 @@
  *	MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/devfreq.h>
 #include <linux/module.h>
 #include "governor.h"

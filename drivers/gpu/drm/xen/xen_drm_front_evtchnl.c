@@ -8,6 +8,7 @@
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/errno.h>
 #include <linux/irq.h>

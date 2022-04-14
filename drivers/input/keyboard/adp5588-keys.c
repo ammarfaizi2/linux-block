@@ -8,6 +8,7 @@
  * Copyright (C) 2008-2010 Analog Devices Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

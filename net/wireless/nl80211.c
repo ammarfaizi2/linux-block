@@ -8,6 +8,7 @@
  * Copyright (C) 2018-2022 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_ether_api.h>

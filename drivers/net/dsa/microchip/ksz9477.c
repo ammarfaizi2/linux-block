@@ -5,6 +5,7 @@
  * Copyright (C) 2017-2019 Microchip Technology Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/capability.h>

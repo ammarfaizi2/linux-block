@@ -33,6 +33,7 @@
  *   0.7: rewrite code that urb->interval is always 1
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

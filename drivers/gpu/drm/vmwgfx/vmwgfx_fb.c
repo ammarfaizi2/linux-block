@@ -26,6 +26,7 @@
  *
  **************************************************************************/
 
+#include <linux/mutex_api.h>
 #include <linux/pci.h>
 
 #include <drm/drm_fourcc.h>

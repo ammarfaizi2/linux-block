@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Broadcom Corporation.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

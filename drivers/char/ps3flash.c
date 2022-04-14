@@ -6,6 +6,7 @@
  * Copyright 2007 Sony Corp.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/miscdevice.h>

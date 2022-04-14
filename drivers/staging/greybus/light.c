@@ -6,6 +6,7 @@
  * Copyright 2015 Linaro Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/leds.h>
 #include <linux/led-class-flash.h>

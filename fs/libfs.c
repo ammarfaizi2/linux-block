@@ -4,6 +4,7 @@
  *	Library for filesystems writers.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

@@ -12,6 +12,7 @@
  * Now that /dev/vcs exists, most of this can disappear again.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/tty.h>
 #include <linux/sched.h>

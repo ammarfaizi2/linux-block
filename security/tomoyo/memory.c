@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/hash.h>
 #include <linux/slab.h>

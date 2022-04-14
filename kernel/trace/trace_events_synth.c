@@ -5,6 +5,7 @@
  * Copyright (C) 2015, 2020 Tom Zanussi <tom.zanussi@linux.intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kallsyms.h>
 #include <linux/security.h>

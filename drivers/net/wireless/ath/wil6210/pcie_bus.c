@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>

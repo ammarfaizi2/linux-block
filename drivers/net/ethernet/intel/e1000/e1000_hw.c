@@ -5,6 +5,7 @@
  * Shared functions for accessing and configuring the MAC
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>

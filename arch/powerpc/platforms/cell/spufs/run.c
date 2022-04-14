@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 #define DEBUG
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/wait.h>

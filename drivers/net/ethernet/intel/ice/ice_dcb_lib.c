@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019, Intel Corporation. */
 
+#include <linux/mutex_api.h>
 #include <linux/capability.h>
 
 #include "ice_dcb_lib.h"

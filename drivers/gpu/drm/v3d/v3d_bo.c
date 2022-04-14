@@ -19,6 +19,7 @@
  * that's not a high priority since our systems tend to not have swap.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/dma-buf.h>
 #include <linux/pfn_t.h>

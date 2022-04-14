@@ -7,6 +7,7 @@
 #include "hard-interface.h"
 #include "main.h"
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>

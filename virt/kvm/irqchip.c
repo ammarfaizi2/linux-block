@@ -12,6 +12,7 @@
  *   Alexander Graf <agraf@suse.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kvm_host.h>
 #include <linux/slab.h>

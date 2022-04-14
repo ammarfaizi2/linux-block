@@ -12,6 +12,7 @@
  * of doing things so that the old sfxload utility can be used.
  * Everything may change when there is an alsa way of doing things.
  */
+#include <linux/mutex_api.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/export.h>

@@ -2,6 +2,7 @@
 
 /* Firmware attributes class helper module */
 
+#include <linux/mutex_api.h>
 #include <linux/mutex.h>
 #include <linux/device/class.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2007 Netfilter Core Team <coreteam@netfilter.org>
  * Copyright (C) 2007 USAGI/WIDE Project <http://www.linux-ipv6.org>
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/kmemleak.h>
 #include <linux/module.h>

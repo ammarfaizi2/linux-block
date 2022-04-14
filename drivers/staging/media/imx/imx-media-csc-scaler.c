@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Pengutronix, Sascha Hauer
  * Copyright (C) 2018 Pengutronix, Philipp Zabel
  */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/fs.h>

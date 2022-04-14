@@ -13,6 +13,7 @@
  * for their support!
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/usb.h>
 #include <net/mac80211.h>

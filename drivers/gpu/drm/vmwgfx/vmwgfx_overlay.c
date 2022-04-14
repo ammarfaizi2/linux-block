@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <linux/mutex_api.h>
 #include <drm/ttm/ttm_placement.h>
 
 #include "device_include/svga_overlay.h"

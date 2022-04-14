@@ -11,6 +11,7 @@
  * used by the kernel internally.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/gfp.h>
 #include <asm/unaligned.h>

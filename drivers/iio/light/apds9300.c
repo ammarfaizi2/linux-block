@@ -5,6 +5,7 @@
  * Copyright 2013 Oleksandr Kravchenko <o.v.kravchenko@globallogic.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math.h>
 #include <linux/module.h>
 #include <linux/slab.h>

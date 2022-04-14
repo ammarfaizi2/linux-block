@@ -14,6 +14,7 @@
  * KoneXTD has same capabilities but updated sensor.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device/class.h>
 #include <linux/device.h>
 #include <linux/input.h>

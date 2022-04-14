@@ -14,6 +14,7 @@
  * 1. Support stream at lower speed: lower frame rate or lower frame size.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

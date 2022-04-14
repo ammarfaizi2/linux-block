@@ -7,6 +7,7 @@
  *  TODO: SPI, use power-down mode for suspend?, interrupt handling?
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

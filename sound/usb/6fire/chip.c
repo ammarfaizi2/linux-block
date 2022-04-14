@@ -16,6 +16,7 @@
 #include "comm.h"
 #include "midi.h"
 
+#include <linux/mutex_api.h>
 #include <linux/moduleparam.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

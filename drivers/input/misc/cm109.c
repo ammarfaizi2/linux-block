@@ -25,6 +25,7 @@
  *   - Read/write EEPROM
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

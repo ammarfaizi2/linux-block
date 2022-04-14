@@ -6,6 +6,7 @@
 //                         Cirrus Logic International Semiconductor Ltd.
 //
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/gcd.h>
 #include <linux/module.h>

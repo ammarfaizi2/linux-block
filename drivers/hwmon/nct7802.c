@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

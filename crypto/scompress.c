@@ -6,6 +6,7 @@
  * Copyright (c) 2016, Intel Corporation
  * Author: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

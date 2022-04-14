@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/llist_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kobject_api.h>

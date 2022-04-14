@@ -7,6 +7,7 @@
 #include "glob.h"
 #include "oplock.h"
 #include "misc.h"
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device/class.h>
 #include <linux/crc32.h>

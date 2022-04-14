@@ -13,6 +13,7 @@
 #include "ivtv-yuv.h"
 #include "ivtv-ioctl.h"
 #include "ivtv-cards.h"
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/firmware.h>

@@ -2,6 +2,7 @@
 /*
  * Componentized device handling.
  */
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/component.h>

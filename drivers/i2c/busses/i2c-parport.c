@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "i2c-parport: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

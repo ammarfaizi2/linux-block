@@ -6,6 +6,7 @@
  * Partly based/Inspired by Stephen Tiedemann's nfcpy
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/usb.h>

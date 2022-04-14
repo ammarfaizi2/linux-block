@@ -6,6 +6,7 @@
 
 #undef DEBUG
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

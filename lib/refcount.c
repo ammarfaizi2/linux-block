@@ -3,6 +3,7 @@
  * Out-of-line refcount functions.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mutex.h>
 #include <linux/refcount.h>

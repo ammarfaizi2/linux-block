@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 
 #include "hns_roce_device.h"

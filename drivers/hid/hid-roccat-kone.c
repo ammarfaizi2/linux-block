@@ -22,6 +22,7 @@
  * TODO is it possible to overwrite group for sysfs attributes via udev?
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device/class.h>
 #include <linux/delay.h>
 #include <linux/device.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Oleksij Rempel <linux@rempel-privat.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

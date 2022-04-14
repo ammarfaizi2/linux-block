@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/mutex_api.h>
+
 #include "amdgpu.h"
 #include "amdgpu_vf_error.h"
 #include "mxgpu_ai.h"

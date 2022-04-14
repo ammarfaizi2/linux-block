@@ -5,6 +5,7 @@
  * Copyright 1997, Theodore Ts'o
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  *
  * You could find the datasheet in Documentation/arm/sunxi.rst
  */
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/device_api.h>

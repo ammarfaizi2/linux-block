@@ -7,6 +7,7 @@
  * Copyright (C) 2009 Eric Paris <Red Hat Inc>
  * dnotify was largly rewritten to use the new fsnotify infrastructure
  */
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/module.h>

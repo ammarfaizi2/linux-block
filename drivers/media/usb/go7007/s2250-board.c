@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Sensoray Company Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/usb.h>
 #include <linux/i2c.h>

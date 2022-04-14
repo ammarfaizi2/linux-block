@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "tegra-pmc: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

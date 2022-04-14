@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2017 Broadcom
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

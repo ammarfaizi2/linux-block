@@ -8,6 +8,7 @@
  * Please address comments and feedback to Linas Vepstas <linas@austin.ibm.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

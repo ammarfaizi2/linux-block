@@ -15,6 +15,7 @@
  */
 
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/delay.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2007 FUJITA Tomonori <tomof@acm.org>
  */
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

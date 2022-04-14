@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/mutex_api.h>
 #include <core/firmware.h>
 #include <subdev/timer.h>
 

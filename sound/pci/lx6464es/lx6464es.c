@@ -6,6 +6,7 @@
  * Copyright (c) 2008, 2009 Tim Blechmann <tim@klingt.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

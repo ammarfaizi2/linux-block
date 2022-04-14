@@ -13,6 +13,7 @@
  * Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/interrupt.h>

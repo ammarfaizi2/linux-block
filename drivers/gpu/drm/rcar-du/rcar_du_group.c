@@ -23,6 +23,7 @@
  * counterpart in the DU documentation, that models those semi-global resources.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 

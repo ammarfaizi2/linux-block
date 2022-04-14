@@ -21,6 +21,7 @@
  * Copyright 2004 Motorola Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/device.h>

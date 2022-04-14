@@ -5,6 +5,7 @@
  * 2020 by Marek Behún <kabel@kernel.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/led-class-multicolor.h>

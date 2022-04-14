@@ -11,6 +11,7 @@
  * Copyright (c) 2009 Mauro Carvalho Chehab <mchehab@kernel.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

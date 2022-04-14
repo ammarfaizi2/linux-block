@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
 #include <linux/vmalloc.h>

@@ -8,6 +8,7 @@
  * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/kvm_host.h>

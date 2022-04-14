@@ -9,6 +9,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

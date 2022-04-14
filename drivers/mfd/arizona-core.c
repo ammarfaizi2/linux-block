@@ -7,6 +7,7 @@
  * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

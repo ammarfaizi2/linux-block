@@ -8,6 +8,8 @@
  *  for specific codecs.
  */
 
+#include <linux/mutex_api.h>
+
 #include "ac97_local.h"
 #include "ac97_patch.h"
 

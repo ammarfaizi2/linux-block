@@ -10,6 +10,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kobject_api.h>

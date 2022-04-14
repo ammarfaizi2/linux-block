@@ -31,6 +31,7 @@
     System Programming Guide; Section 9.11. (1997 edition - PPro).
 */
 
+#include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <asm/cpumask.h>

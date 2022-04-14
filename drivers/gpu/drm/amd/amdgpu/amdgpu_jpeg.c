@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>

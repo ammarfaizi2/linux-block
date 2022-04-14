@@ -24,6 +24,7 @@
  *	Li Peng <peng.li@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/export.h>
 #include <linux/mutex.h>

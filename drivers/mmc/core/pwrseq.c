@@ -6,6 +6,7 @@
  *
  *  MMC power sequence management
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/module.h>

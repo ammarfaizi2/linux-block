@@ -27,6 +27,7 @@
 
 #define DEVICE_NAME "Z2RAM"
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/major.h>
 #include <linux/vmalloc.h>

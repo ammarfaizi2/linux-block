@@ -9,6 +9,8 @@
 
 */
 
+#include <linux/mutex_api.h>
+
 #include "radio.h"
 #include "b43legacy.h"
 

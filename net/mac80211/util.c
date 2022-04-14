@@ -11,6 +11,7 @@
  * utilities for mac80211
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

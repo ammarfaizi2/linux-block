@@ -27,6 +27,7 @@
  *             "A Kernel Model for Precision Timekeeping" by Dave Mills
  */
 
+#include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>

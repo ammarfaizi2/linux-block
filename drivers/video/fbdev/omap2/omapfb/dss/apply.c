@@ -6,6 +6,7 @@
 
 #define DSS_SUBSYS_NAME "APPLY"
 
+#include <linux/mutex_api.h>
 #include <linux/errno.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

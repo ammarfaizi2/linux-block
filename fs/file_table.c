@@ -6,6 +6,7 @@
  *  Copyright (C) 1997 David S. Miller (davem@caip.rutgers.edu)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm.h>
 #include <linux/mm_api.h>
 #include <linux/llist_api.h>

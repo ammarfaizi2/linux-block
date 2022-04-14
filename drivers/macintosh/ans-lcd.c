@@ -3,6 +3,7 @@
  * /dev/lcd driver for Apple Network Servers.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

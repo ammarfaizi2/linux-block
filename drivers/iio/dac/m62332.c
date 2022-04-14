@@ -8,6 +8,7 @@
  *  Copyright (C) 2010, 2011 Roland Stigge <stigge@antcom.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/i2c.h>

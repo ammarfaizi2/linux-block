@@ -8,6 +8,7 @@
  * This file contains the functions related to the extents B-tree.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/pagemap.h>
 

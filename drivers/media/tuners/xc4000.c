@@ -9,6 +9,7 @@
  *  Copyright (c) 2010 Istvan Varga <istvan_v@mailbox.hu>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/videodev2.h>

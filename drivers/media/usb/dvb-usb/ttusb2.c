@@ -31,6 +31,7 @@
 #include "tda827x.h"
 #include "lnbp21.h"
 /* CA */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>

@@ -22,6 +22,7 @@
  * Authors: Ben Skeggs
  */
 
+#include <linux/mutex_api.h>
 #include <drm/dp/drm_dp_helper.h>
 
 #include "nouveau_drv.h"

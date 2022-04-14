@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2015 Russell King
  */
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>

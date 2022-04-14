@@ -8,6 +8,7 @@
  * Copyright (C) 2017 Rockchip Electronics Co., Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/export.h>
 
 #include "rkisp1-common.h"

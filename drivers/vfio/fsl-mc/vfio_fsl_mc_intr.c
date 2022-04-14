@@ -4,6 +4,7 @@
  * Copyright 2019 NXP
  */
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/vfio.h>
 #include <linux/slab.h>

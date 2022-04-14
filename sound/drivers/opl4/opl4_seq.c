@@ -32,6 +32,7 @@
  */
 
 #include "opl4_local.h"
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/moduleparam.h>

@@ -21,6 +21,7 @@
  */
 #include "vmm.h"
 
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <subdev/fb.h>
 #include <subdev/timer.h>

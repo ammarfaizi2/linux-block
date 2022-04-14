@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)    "iommu: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/mem_encrypt.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>

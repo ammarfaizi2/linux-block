@@ -5,6 +5,7 @@
  *   Copyright (C) Linus Torvalds, 1991, 1992
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

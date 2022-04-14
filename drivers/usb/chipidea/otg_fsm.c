@@ -16,6 +16,7 @@
  * - OTG test device
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>

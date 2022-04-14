@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/security.h>
 #include <linux/list.h>
 #include <linux/slab.h>

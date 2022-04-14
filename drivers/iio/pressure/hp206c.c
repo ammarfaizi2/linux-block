@@ -10,6 +10,7 @@
  *  http://www.hoperf.com/upload/sensor/HP206C_DataSheet_EN_V2.0.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/iio/iio.h>

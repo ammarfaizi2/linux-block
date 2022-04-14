@@ -3,6 +3,7 @@
  * Optimized MPEG FS - inode and super operations.
  * Copyright (C) 2006 Bob Copeland <me@bobcopeland.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

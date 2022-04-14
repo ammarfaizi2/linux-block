@@ -8,6 +8,7 @@
  *  Modified to use omap shared clock framework by
  *  Tony Lindgren <tony@atomide.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/list.h>

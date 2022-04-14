@@ -16,6 +16,7 @@
  * 	Matt Porter <mporter@kernel.crashing.org>
  * 	Copyright 2004 MontaVista Software, Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/slab.h>

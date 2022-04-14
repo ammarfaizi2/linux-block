@@ -12,6 +12,7 @@
 
 #define KMSG_COMPONENT "dasd-eckd"
 
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/device/driver.h>

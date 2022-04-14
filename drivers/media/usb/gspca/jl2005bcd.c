@@ -7,6 +7,7 @@
 
 #define MODULE_NAME "jl2005bcd"
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/export.h>
 #include <linux/delay.h>

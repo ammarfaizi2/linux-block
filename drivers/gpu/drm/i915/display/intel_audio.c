@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

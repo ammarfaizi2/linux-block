@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_kasan.h>

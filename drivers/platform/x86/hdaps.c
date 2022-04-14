@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/platform_device.h>

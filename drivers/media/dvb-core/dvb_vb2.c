@@ -7,6 +7,7 @@
  * Author: jh1009.sung@samsung.com
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/err.h>
 #include <linux/kernel.h>

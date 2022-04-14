@@ -6,6 +6,7 @@
  * Copyright 2011 Analog Devices Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/module.h>

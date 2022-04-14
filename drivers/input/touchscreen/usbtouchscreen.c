@@ -34,6 +34,7 @@
 
 //#define DEBUG
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

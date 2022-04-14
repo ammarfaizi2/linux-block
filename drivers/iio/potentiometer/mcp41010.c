@@ -16,6 +16,7 @@
  * mcp42100	2	256		100
  */
 
+#include <linux/mutex_api.h>
 #include <linux/cache.h>
 #include <linux/err.h>
 #include <linux/iio/iio.h>

@@ -21,6 +21,7 @@
  *
  */
 #include "pp_debug.h"
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/gfp.h>

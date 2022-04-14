@@ -25,6 +25,7 @@
  * between all LAN ports by default.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

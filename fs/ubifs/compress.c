@@ -15,6 +15,7 @@
  * decompression.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/crypto.h>
 #include "ubifs.h"
 

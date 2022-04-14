@@ -12,6 +12,7 @@
 #include "persistent-data/dm-space-map-disk.h"
 #include "persistent-data/dm-transaction-manager.h"
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device-mapper.h>
 #include <linux/refcount.h>

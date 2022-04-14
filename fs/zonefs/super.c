@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2019 Western Digital Corporation or its affiliates.
  */
+#include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

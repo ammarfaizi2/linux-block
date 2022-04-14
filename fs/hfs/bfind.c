@@ -9,6 +9,7 @@
  * Search routines for btrees
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include "btree.h"
 

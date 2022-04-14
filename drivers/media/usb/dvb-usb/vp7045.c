@@ -9,6 +9,7 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/export.h>
 #include <linux/delay.h>

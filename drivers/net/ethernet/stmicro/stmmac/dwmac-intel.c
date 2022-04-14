@@ -2,6 +2,7 @@
 /* Copyright (c) 2020, Intel Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

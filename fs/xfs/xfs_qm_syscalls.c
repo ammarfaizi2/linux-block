@@ -5,6 +5,8 @@
  */
 
 
+#include <linux/mutex_api.h>
+
 #include "xfs.h"
 #include "xfs_fs.h"
 #include "xfs_shared.h"

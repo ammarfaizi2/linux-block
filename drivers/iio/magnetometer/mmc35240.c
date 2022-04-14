@@ -9,6 +9,7 @@
  * TODO: offset, ACPI, continuous measurement mode, PM
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/i2c.h>

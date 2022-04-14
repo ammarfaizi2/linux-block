@@ -5,6 +5,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device/driver.h>
 #include <asm/byteorder.h>
 #include <linux/delay.h>

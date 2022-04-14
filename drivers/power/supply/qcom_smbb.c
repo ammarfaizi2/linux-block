@@ -16,6 +16,7 @@
  *  - HF-Buck
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>

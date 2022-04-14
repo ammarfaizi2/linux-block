@@ -10,6 +10,7 @@
  * http://wizwiki.net/wiki/lib/exe/fetch.php?media=products:w5500:w5500_ds_v106e_141230.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/delay.h>

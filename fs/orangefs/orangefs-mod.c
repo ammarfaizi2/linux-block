@@ -8,6 +8,7 @@
  * See COPYING in top-level directory.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 
 #include "protocol.h"

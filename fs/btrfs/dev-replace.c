@@ -3,6 +3,7 @@
  * Copyright (C) STRATO AG 2012.  All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

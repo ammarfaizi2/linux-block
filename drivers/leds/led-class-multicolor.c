@@ -3,6 +3,7 @@
 // Copyright (C) 2019-20 Texas Instruments Incorporated - http://www.ti.com/
 // Author: Dan Murphy <dmurphy@ti.com>
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/init.h>

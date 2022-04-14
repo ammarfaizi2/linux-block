@@ -3,6 +3,7 @@
  * Copyright (c) 2020, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <rdma/uverbs_std_types.h>

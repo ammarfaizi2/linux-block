@@ -7,6 +7,7 @@
  * Copyright (C) 2020 Linaro Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 
 #include "camss.h"

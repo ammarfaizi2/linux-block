@@ -19,6 +19,7 @@
  * 	Johnnie Peters <jpeters@mvista.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>

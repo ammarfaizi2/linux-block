@@ -6,6 +6,7 @@
  * Copyright 2014 Linaro Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

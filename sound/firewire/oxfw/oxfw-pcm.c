@@ -5,6 +5,8 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/mutex_api.h>
+
 #include "oxfw.h"
 
 static int hw_rule_rate(struct snd_pcm_hw_params *params,

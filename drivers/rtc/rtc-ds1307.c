@@ -8,6 +8,7 @@
  *  Copyright (C) 2012 Bertrand Achard (nvram access fixes)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

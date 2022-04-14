@@ -10,6 +10,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/timer.h>
 #include <linux/platform_device.h>

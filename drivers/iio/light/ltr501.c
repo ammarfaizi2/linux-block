@@ -9,6 +9,7 @@
  * TODO: IR LED characteristics
  */
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

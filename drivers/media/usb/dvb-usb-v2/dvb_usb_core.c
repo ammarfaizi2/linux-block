@@ -7,6 +7,7 @@
  */
 
 #include "dvb_usb_common.h"
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <media/media-device.h>

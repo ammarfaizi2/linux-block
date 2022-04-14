@@ -25,6 +25,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>

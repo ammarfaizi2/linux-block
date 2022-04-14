@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 
 #include "mt76.h"

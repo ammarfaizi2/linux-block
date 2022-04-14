@@ -9,6 +9,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/if_vlan_api.h>
 #include <linux/gfp_api.h>

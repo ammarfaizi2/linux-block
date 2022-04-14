@@ -9,6 +9,7 @@
  *   alsa-tools/sb16_csp/ 
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/slab.h>

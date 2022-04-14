@@ -8,6 +8,7 @@
  * Copyright (C) 2018 IBM Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/idr_api.h>

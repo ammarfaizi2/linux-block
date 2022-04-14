@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
+#include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <media/v4l2-ctrls.h>
 

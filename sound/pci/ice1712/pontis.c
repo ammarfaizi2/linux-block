@@ -7,6 +7,7 @@
  *	Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

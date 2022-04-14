@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/mutex_api.h>
 #include <asm/dma.h>
 #include <linux/slab.h>
 #include <sound/core.h>

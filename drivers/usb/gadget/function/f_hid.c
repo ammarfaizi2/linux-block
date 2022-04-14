@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Fabien Chouteau <fabien.chouteau@barco.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

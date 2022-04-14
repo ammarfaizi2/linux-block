@@ -14,6 +14,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kmod.h>
 #include <linux/capability.h>

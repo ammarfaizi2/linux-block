@@ -9,6 +9,7 @@
 #include "tda18271-priv.h"
 #include "tda8290.h"
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>

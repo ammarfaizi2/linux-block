@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2007 Daniel Drake <dsd@gentoo.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/errno.h>
 #include <linux/string.h>
 

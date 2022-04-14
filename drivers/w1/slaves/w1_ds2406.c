@@ -6,6 +6,7 @@
  * Copyright (c) 2014 Scott Alfter <scott@alfter.us>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

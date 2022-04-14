@@ -25,6 +25,7 @@
  *	Theodore Ts'o, 2002
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>

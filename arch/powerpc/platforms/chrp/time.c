@@ -7,6 +7,7 @@
  * Copied and modified from arch/i386/kernel/time.c
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

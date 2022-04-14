@@ -11,6 +11,7 @@
  * Derived from ca91c042.c by Michael Wyrick
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/hardirq.h>

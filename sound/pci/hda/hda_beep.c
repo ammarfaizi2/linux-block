@@ -6,6 +6,7 @@
  * Copyright (c) 2008 Embedded Alley Solutions Inc
  */
 
+#include <linux/mutex_api.h>
 #include <linux/input.h>
 #include <linux/slab.h>
 #include <linux/workqueue.h>

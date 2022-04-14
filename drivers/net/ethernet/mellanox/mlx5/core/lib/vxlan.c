@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/kernel.h>
 #include <linux/refcount.h>

@@ -9,6 +9,7 @@
  *  Copyright (C) 2012 Durgadoss R <durgadoss.r@intel.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/thermal.h>
 
 #include "thermal_core.h"

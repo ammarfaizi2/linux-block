@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/configfs.h>
 #include <rdma/ib_verbs.h>
 #include <rdma/rdma_cm.h>

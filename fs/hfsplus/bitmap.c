@@ -9,6 +9,7 @@
  * Handling of allocation file
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/pagemap.h>

@@ -20,6 +20,7 @@
  *   Copyright (C) 1991, 1992 Linux Torvalds
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

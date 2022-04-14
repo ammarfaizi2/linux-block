@@ -11,6 +11,7 @@
  * This document is available from Microsoft at:
  *    http://www.microsoft.com/whdc/archive/amp_12.mspx
  */
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 
 #include "ddbridge.h"

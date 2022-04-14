@@ -22,6 +22,7 @@
  * Authors: Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>
 #include <linux/delay.h>

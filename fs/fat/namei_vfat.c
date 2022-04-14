@@ -16,6 +16,7 @@
  *				OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

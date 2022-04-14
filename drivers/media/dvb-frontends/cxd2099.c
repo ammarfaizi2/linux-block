@@ -5,6 +5,7 @@
  * Copyright (C) 2010-2013 Digital Devices GmbH
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

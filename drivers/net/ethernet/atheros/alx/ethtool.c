@@ -32,6 +32,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/pci.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>

@@ -3,6 +3,7 @@
  * polling/bitbanging SPI master controller driver utilities
  */
 
+#include <linux/mutex_api.h>
 #include <linux/spinlock.h>
 #include <linux/workqueue.h>
 #include <linux/interrupt.h>

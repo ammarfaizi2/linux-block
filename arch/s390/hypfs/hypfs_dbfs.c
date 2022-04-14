@@ -6,6 +6,7 @@
  * Author(s): Michael Holzheu <holzheu@linux.vnet.ibm.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/slab.h>

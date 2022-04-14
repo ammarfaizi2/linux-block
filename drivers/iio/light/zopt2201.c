@@ -10,6 +10,7 @@
  * TODO: interrupt support, ALS/UVB raw mode
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/math64.h>
 #include <linux/module.h>

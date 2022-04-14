@@ -7,6 +7,7 @@
  *    based on multiple host controller drivers inside the linux kernel.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <asm/byteorder.h>
 #include <linux/delay.h>

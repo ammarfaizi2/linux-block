@@ -3,6 +3,7 @@
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

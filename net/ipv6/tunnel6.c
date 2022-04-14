@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/icmpv6.h>
 #include <linux/init.h>

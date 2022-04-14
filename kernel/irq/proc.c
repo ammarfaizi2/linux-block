@@ -5,6 +5,7 @@
  * This file contains the /proc/irq/ handling code.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>

@@ -10,6 +10,7 @@
  * and in January 2020 by Daniel Campello <campello@chromium.org>.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2016 Parav Pandit <pandit.parav@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/cgroup_api.h>
 #include <linux/bitmap.h>

@@ -14,6 +14,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/device.h>
 #include <linux/genalloc.h>

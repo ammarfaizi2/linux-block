@@ -4,6 +4,7 @@
  * Copyright (c) 2007, 2010 George Joseph  <george.joseph@fairview5.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

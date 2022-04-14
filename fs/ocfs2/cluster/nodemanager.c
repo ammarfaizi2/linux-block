@@ -3,6 +3,7 @@
  * Copyright (C) 2004, 2005 Oracle.  All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

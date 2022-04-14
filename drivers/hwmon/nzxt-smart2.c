@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Aleksandr Mezin
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/hid.h>

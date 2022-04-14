@@ -9,6 +9,7 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/bitfield.h>
 #include <linux/dma-mapping.h>

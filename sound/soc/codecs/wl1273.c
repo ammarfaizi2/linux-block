@@ -7,6 +7,7 @@
  * Copyright:   (C) 2010, 2011 Nokia Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mfd/wl1273-core.h>
 #include <linux/slab.h>
 #include <linux/module.h>

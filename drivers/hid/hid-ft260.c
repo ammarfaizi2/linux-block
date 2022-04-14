@@ -9,6 +9,7 @@
  */
 
 #include "hid-ids.h"
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

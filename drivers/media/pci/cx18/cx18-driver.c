@@ -24,6 +24,7 @@
 #include "cx18-ioctl.h"
 #include "cx18-controls.h"
 #include "xc2028.h"
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

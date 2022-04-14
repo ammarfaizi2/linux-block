@@ -11,6 +11,7 @@
  *  Copyright (c) 2008-2014 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mmu_notifier.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>

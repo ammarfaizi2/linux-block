@@ -3,6 +3,7 @@
 
 #define _OS_INTFS_C_
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 
 #include "../include/osdep_service.h"

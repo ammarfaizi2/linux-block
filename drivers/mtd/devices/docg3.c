@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Robert Jarzmik
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

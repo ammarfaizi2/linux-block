@@ -14,6 +14,7 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kthread.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>

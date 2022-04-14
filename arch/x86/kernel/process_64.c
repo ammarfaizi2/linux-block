@@ -15,6 +15,7 @@
  * This file handles the architecture-dependent parts of process handling..
  */
 
+#include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <asm/segment_api.h>
 #include <asm/ptrace.h>

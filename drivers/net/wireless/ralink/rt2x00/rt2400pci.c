@@ -11,6 +11,7 @@
 	Supported chipsets: RT2460.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include <linux/kernel.h>

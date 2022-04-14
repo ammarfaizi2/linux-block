@@ -6,6 +6,7 @@
  * Copyright (C) 2011 Steffen Klassert <steffen.klassert@secunet.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/crypto.h>

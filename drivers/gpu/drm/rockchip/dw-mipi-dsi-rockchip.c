@@ -6,6 +6,7 @@
  *      Nickey Yang <nickey.yang@rock-chips.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

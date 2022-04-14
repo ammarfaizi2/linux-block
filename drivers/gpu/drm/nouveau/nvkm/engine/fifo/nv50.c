@@ -24,6 +24,7 @@
 #include "nv50.h"
 #include "channv50.h"
 
+#include <linux/mutex_api.h>
 #include <core/gpuobj.h>
 
 static void

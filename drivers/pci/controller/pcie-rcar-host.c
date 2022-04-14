@@ -11,6 +11,7 @@
  * Author: Phil Edworthy <phil.edworthy@renesas.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

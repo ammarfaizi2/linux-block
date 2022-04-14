@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Paul Parsons <lost.distance@yahoo.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

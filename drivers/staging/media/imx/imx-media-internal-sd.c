@@ -6,6 +6,7 @@
  *
  * Copyright (c) 2016 Mentor Graphics Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/platform_device.h>
 #include "imx-media.h"
 

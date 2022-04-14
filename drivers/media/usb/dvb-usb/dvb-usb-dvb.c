@@ -8,6 +8,7 @@
  * linux-dvb API.
  */
 #include "dvb-usb-common.h"
+#include <linux/mutex_api.h>
 #include <media/media-device.h>
 
 /* does the complete input transfer handling */

@@ -130,6 +130,7 @@
 #define PI_PG	4
 #endif
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

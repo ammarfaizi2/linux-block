@@ -6,6 +6,7 @@
  * Copyright 2014-2015 Linaro Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/mmc/core.h>
 #include <linux/mmc/host.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Etnaviv Project
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>

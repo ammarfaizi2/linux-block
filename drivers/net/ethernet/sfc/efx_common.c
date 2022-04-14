@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/io.h>

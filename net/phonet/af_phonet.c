@@ -10,6 +10,7 @@
  *          Rémi Denis-Courmont
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

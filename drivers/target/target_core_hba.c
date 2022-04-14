@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/net.h>
 #include <linux/string.h>

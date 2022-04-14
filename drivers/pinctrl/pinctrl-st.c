@@ -5,6 +5,7 @@
  *	Srinivas Kandagatla <srinivas.kandagatla@st.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

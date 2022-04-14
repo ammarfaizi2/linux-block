@@ -10,6 +10,7 @@
  * <https://www.onsemi.com/PowerSolutions/product.do?id=ADM1026>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

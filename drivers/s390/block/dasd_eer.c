@@ -9,6 +9,7 @@
 
 #define KMSG_COMPONENT "dasd-eckd"
 
+#include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/init.h>

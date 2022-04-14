@@ -13,6 +13,7 @@
  * any later version.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/acpi.h>
 #include <linux/hid.h>
 #include <linux/input/vivaldi-fmap.h>

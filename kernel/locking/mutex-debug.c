@@ -10,6 +10,7 @@
  *  Copyright (C) 2004, LynuxWorks, Inc., Igor Manyilov, Bill Huey
  *  Released under the General Public License (GPL).
  */
+#include <linux/mutex_api.h>
 #include <linux/lockdep.h>
 #include <linux/lockdep_api.h>
 #include <linux/bug.h>

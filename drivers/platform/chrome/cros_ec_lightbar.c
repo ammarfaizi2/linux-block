@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2014 Google, Inc.
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/ctype.h>

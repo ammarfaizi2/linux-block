@@ -5,6 +5,7 @@
  *         Ryder Lee <ryder.lee@mediatek.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

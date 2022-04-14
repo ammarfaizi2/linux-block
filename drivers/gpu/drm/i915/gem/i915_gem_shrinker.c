@@ -4,6 +4,7 @@
  * Copyright © 2008-2015 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>

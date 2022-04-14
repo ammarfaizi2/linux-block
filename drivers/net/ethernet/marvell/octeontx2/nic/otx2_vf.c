@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>

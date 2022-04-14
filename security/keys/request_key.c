@@ -7,6 +7,7 @@
  * See Documentation/security/keys/request-key.rst
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/cred.h>
 #include <linux/export.h>

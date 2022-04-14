@@ -5,6 +5,8 @@
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
+#include <linux/mutex_api.h>
+
 #include "tascam.h"
 
 static int pcm_init_hw_params(struct snd_tscm *tscm,

@@ -17,6 +17,7 @@
 #define KMSG_COMPONENT "aes_s390"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <crypto/aes.h>
 #include <crypto/algapi.h>

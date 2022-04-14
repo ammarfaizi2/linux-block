@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2016 Google, Inc
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/mutex.h>

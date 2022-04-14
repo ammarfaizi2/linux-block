@@ -7,6 +7,7 @@
  * Author: Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/iio/iio.h>
 #include <linux/iio/driver.h>

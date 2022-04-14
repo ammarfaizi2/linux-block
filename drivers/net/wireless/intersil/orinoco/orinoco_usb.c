@@ -46,6 +46,7 @@
 #define DRIVER_NAME "orinoco_usb"
 #define PFX DRIVER_NAME ": "
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>

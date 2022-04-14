@@ -8,6 +8,7 @@
  * by Vladimir Fonov.
  * Copyright (c) 2010, Vladimir Fonov
  */
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

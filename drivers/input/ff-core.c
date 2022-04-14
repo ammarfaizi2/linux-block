@@ -11,6 +11,7 @@
 
 /* #define DEBUG */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>

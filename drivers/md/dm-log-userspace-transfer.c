@@ -4,6 +4,7 @@
  * This file is released under the LGPL.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

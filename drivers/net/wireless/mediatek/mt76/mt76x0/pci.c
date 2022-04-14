@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

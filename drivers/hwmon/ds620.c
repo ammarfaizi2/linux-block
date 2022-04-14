@@ -7,6 +7,7 @@
  *  based on ds1621.c by Christian W. Zuckschwerdt  <zany@triq.net>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

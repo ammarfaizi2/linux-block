@@ -5,6 +5,7 @@
  *   Copyright (C) 2014 Mario Kicherer (dev@kicherer.org)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/init.h>

@@ -17,6 +17,7 @@
  *    communication.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>

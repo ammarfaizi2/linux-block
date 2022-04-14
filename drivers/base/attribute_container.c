@@ -10,6 +10,7 @@
  * to via a matching function.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/attribute_container.h>
 #include <linux/device.h>

@@ -5,6 +5,7 @@
  * Copyright 2002 Adam Belay <ambx1@neo.rr.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/string.h>
 #include <linux/list.h>
 #include <linux/module.h>

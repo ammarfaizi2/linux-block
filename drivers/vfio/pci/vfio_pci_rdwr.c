@@ -10,6 +10,7 @@
  * Author: Tom Lyon, pugs@cisco.com
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/pci.h>

@@ -11,6 +11,7 @@
  * Copyright (c) 2009  MontaVista Software, Inc.
  * Author: Anton Vorontsov <avorontsov@ru.mvista.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <asm/cpm.h>
 #include <soc/fsl/qe/qe.h>

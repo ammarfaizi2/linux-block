@@ -7,6 +7,7 @@
  * It reads bitstream buffers and feeds them to the VIFIFO
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

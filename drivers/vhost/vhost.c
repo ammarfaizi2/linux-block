@@ -10,6 +10,7 @@
  * Generic code for virtio server in host kernel.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/llist_api.h>

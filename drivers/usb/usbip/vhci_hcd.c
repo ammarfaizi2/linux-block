@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2016 Nobuo Iwata
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

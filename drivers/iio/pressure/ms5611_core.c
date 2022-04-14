@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/iio/iio.h>
 #include <linux/delay.h>

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 or Linux-OpenIB
 /* Copyright (c) 2017 - 2021 Intel Corporation */
+#include <linux/mutex_api.h>
+
 #include "osdep.h"
 #include "hmc.h"
 #include "defs.h"

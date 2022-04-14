@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Intel Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kmod.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Linaro Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

@@ -9,6 +9,7 @@
  *	      Jan Glauber (jan.glauber@de.ibm.com)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

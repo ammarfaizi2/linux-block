@@ -6,6 +6,7 @@
  *          Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/list.h>

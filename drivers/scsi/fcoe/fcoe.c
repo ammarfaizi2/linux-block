@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>

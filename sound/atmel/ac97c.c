@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2005-2009 Atmel Corporation
  */
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

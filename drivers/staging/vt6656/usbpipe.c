@@ -22,6 +22,8 @@
  *
  */
 
+#include <linux/mutex_api.h>
+
 #include "rxtx.h"
 #include "desc.h"
 #include "device.h"

@@ -8,6 +8,7 @@
  *   Wu Hao <hao.wu@intel.com>
  *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 

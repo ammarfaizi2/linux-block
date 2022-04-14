@@ -6,6 +6,7 @@
  *   Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

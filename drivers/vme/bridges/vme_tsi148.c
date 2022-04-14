@@ -9,6 +9,7 @@
  * Copyright 2004 Motorola Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/hardirq.h>
 #include <linux/device_api.h>

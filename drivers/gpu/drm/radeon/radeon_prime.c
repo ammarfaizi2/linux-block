@@ -24,6 +24,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/dma-buf.h>
 

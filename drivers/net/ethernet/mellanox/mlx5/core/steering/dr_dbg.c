@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 // Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
+#include <linux/mutex_api.h>
 #include <linux/debugfs.h>
 #include <linux/kernel.h>
 #include <linux/seq_file.h>

@@ -6,6 +6,7 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/socket.h>

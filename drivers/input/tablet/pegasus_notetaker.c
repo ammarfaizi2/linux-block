@@ -36,6 +36,7 @@
  * T	Tip
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpumask.h>

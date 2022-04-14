@@ -8,6 +8,7 @@
  *	    Ankur Srivastava <sankurece@gmail.com> : DS1343 Nvram Support
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>

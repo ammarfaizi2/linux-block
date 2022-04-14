@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Rafael J. Wysocki <rjw@sisk.pl>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/mutex.h>

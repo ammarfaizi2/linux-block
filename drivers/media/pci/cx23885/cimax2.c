@@ -11,6 +11,7 @@
 
 #include "cx23885.h"
 #include "cimax2.h"
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>

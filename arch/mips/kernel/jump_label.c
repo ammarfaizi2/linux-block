@@ -6,6 +6,7 @@
  * Copyright (c) 2010 Cavium Networks, Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jump_label.h>
 #include <linux/kernel.h>
 #include <linux/memory.h>

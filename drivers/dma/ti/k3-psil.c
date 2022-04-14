@@ -4,6 +4,7 @@
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/init.h>

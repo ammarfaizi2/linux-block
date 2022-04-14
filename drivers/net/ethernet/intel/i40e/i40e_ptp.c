@@ -2,6 +2,7 @@
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
 #include "i40e.h"
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

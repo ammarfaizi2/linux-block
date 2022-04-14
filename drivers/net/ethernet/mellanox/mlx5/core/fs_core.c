@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/idr_api.h>
 #include <linux/atomic_api.h>

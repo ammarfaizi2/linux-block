@@ -19,6 +19,7 @@
  * Copyright (C) 2006	   Nicolas Boichat (nicolas@boichat.ch)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

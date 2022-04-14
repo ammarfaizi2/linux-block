@@ -25,6 +25,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"

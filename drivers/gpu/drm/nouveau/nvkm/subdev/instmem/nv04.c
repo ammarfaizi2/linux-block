@@ -24,6 +24,7 @@
 #define nv04_instmem(p) container_of((p), struct nv04_instmem, base)
 #include "priv.h"
 
+#include <linux/mutex_api.h>
 #include <core/ramht.h>
 
 struct nv04_instmem {

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/mlx5/fs.h>
 #include <net/switchdev.h>

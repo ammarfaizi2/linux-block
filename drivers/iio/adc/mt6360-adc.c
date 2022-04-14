@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ktime_api.h>
 #include <linux/bitmap.h>

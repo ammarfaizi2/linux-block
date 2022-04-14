@@ -10,6 +10,7 @@
 
 #define MODULE_NAME "sonixj"
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/export.h>
 #include <linux/delay.h>

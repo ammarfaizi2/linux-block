@@ -10,6 +10,7 @@
  *      registered, the devfreq cooling won't react to it.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/devfreq.h>
 #include <linux/devfreq_cooling.h>
 #include <linux/energy_model.h>

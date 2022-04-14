@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "v4l2-ctrls: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs.h>

@@ -6,6 +6,7 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/mISDNif.h>
 #include <linux/kthread.h>

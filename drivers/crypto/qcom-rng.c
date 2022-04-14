@@ -3,6 +3,7 @@
 //
 // Based on msm-rng.c and downstream driver
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <crypto/internal/rng.h>

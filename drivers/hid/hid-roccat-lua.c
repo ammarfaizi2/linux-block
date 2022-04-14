@@ -13,6 +13,7 @@
  * configured.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/input.h>
 #include <linux/hid.h>

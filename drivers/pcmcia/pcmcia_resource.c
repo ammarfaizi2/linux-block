@@ -10,6 +10,7 @@
  * Copyright (C) 2004-2010   Dominik Brodowski
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/capability.h>

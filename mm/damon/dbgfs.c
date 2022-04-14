@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "damon-dbgfs: " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/damon.h>
 #include <linux/debugfs.h>

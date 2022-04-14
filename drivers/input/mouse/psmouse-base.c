@@ -10,6 +10,7 @@
 #define pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
 #define psmouse_fmt(fmt)	fmt
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

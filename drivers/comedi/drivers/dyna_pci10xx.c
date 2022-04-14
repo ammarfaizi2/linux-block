@@ -23,6 +23,7 @@
  *   for their cards in their manuals.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>

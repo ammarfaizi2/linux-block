@@ -8,6 +8,7 @@
  * Copyright (C) 2015 IBM Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>

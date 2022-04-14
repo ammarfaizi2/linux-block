@@ -5,6 +5,7 @@
  * Author: Mark A. Greer <mgreer@animalcreek.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

@@ -18,6 +18,7 @@
  * and thus has 16 bits registers for its value and limit instead of 8 bits.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

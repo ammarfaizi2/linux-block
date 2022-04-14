@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_vblank.h>
 

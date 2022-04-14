@@ -24,6 +24,7 @@
  * semaphore.  If it's zero, there may be tasks waiting on the wait_list.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/compiler.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  *
  * Copyright 2017 Analog Devices Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

@@ -12,6 +12,7 @@
  * processors.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/anon_inodes.h>
 
 #include <linux/uaccess.h>

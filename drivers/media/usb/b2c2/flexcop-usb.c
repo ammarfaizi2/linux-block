@@ -5,6 +5,7 @@
  * see flexcop.c for copyright information
  */
 #define FC_LOG_PREFIX "flexcop_usb"
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/export.h>
 

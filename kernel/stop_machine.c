@@ -7,6 +7,7 @@
  * Copyright (C) 2010		SUSE Linux Products GmbH
  * Copyright (C) 2010		Tejun Heo <tj@kernel.org>
  */
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

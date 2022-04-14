@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "qeth"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/list.h>
 #include <linux/rwsem.h>
 #include <asm/ebcdic.h>

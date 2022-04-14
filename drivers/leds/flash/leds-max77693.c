@@ -8,6 +8,7 @@
  *		 Andrzej Hajda <a.hajda@samsung.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/led-class-flash.h>
 #include <linux/mfd/max77693.h>

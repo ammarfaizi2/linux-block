@@ -6,6 +6,7 @@
  * Copyright 2016 Linaro Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/firmware.h>

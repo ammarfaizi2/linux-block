@@ -8,6 +8,7 @@
  * based on eth1394 by Ben Collins et al
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/bug.h>
 #include <linux/compiler.h>

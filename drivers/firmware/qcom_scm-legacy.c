@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Linaro Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/slab.h>
 #include <linux/io.h>

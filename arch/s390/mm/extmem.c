@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "extmem"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/spinlock.h>

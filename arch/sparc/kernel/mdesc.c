@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/fs_api.h>

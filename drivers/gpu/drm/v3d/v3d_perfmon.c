@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Raspberry Pi
  */
 
+#include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 
 #include "v3d_drv.h"

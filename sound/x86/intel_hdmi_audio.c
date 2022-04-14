@@ -13,6 +13,7 @@
  * ALSA driver for Intel HDMI audio
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>

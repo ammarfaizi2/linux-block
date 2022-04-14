@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

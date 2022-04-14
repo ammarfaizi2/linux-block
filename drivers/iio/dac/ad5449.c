@@ -7,6 +7,7 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/module.h>

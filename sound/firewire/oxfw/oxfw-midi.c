@@ -5,6 +5,8 @@
  * Copyright (c) 2014 Takashi Sakamoto
  */
 
+#include <linux/mutex_api.h>
+
 #include "oxfw.h"
 
 static int midi_capture_open(struct snd_rawmidi_substream *substream)

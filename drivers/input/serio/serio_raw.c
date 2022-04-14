@@ -6,6 +6,7 @@
  * Copyright (c) 2004 Dmitry Torokhov
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

@@ -21,6 +21,7 @@
 	Abstract: rt2800 generic device routines.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>

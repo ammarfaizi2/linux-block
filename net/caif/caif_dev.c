@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

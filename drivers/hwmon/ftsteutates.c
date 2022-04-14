@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Fujitsu Technology Solutions GmbH,
  *		  Thilo Cestonaro <thilo.cestonaro@ts.fujitsu.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/fs.h>

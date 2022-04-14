@@ -6,6 +6,7 @@
  * FIXME: LOCKING !!!
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

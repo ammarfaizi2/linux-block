@@ -4,6 +4,7 @@
  * Copyright (C) 1997  Eddie C. Dost  (ecd@skynet.be)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/ioport.h>

@@ -75,6 +75,7 @@
  * (i.e. _enter_* function).
  */
 
+#include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

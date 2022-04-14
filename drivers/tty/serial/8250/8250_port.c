@@ -11,6 +11,7 @@
  *  membase is an 'ioremapped' cookie.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/irq.h>
 #include <linux/io.h>

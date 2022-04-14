@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/if_vlan_api.h>
 #include <rdma/rdma_netlink.h>
 #include <net/addrconf.h>

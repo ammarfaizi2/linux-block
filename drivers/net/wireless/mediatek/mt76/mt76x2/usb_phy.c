@@ -3,6 +3,8 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/mutex_api.h>
+
 #include "mt76x2u.h"
 #include "eeprom.h"
 #include "../mt76x02_phy.h"

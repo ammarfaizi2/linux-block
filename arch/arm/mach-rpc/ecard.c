@@ -24,6 +24,7 @@
  */
 #define ECARD_C
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/irqdesc.h>

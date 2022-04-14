@@ -7,6 +7,7 @@
  * NFSv4 callback handling
  */
 
+#include <linux/mutex_api.h>
 #include <linux/cred.h>
 #include <linux/completion.h>
 #include <linux/ip.h>

@@ -9,6 +9,7 @@
  * NPIV VN_Port helper functions for libfc
  */
 
+#include <linux/mutex_api.h>
 #include <scsi/libfc.h>
 #include <linux/export.h>
 

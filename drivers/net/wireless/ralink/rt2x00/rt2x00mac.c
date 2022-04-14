@@ -10,6 +10,7 @@
 	Abstract: rt2x00 generic mac80211 routines.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 

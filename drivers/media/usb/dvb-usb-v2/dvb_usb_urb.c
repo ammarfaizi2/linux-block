@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 
 #include "dvb_usb_common.h"

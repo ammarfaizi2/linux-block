@@ -13,6 +13,7 @@
  * TODO: wait time
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_types.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>

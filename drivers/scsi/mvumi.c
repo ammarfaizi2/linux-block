@@ -5,6 +5,7 @@
  * Copyright 2011 Marvell. <jyli@marvell.com>
 */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>

@@ -10,6 +10,7 @@
  *	Copyright 2008 Frank Edelhaeuser, Spansion Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/err.h>

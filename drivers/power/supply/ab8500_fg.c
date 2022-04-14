@@ -15,6 +15,7 @@
  *	Arun R Murthy <arun.murthy@stericsson.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/device/class.h>

@@ -6,6 +6,7 @@
  */
 
 #include "bcma_private.h"
+#include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

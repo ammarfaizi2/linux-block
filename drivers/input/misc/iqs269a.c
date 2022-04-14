@@ -9,6 +9,7 @@
  * axial sliders presented by the device.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>

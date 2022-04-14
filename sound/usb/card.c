@@ -20,6 +20,7 @@
  */
 
 
+#include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/init.h>

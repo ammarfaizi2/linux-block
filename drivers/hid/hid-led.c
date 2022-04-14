@@ -7,6 +7,7 @@
  * drivers/usb/misc/usbled.c
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/hid.h>
 #include <linux/hidraw.h>

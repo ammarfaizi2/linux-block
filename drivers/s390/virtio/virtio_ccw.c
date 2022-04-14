@@ -7,6 +7,7 @@
  *    Author(s): Cornelia Huck <cornelia.huck@de.ibm.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/kernel_stat.h>

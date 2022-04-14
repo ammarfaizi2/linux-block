@@ -7,6 +7,7 @@
  * Datasheet: https://www.analog.com/media/en/technical-documentation/data-sheets/AD5110_5112_5114.pdf
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/device.h>

@@ -8,6 +8,7 @@
 
 #define VERSION "0.25"
 
+#include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

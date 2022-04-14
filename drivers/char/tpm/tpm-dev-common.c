@@ -12,6 +12,7 @@
  *
  * Device file system interface to the TPM
  */
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/poll.h>
 #include <linux/slab.h>

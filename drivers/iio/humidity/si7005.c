@@ -9,6 +9,7 @@
  * TODO: heater, fast mode, processed mode (temp. / linearity compensation)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>

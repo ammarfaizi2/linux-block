@@ -10,6 +10,7 @@
  * You could find a link for the datasheet in Documentation/arm/sunxi.rst
  */
 #include "sun8i-ce.h"
+#include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <asm/byteorder.h>
 #include <linux/dma-mapping.h>

@@ -15,6 +15,7 @@
  * 1997-09-10	Updated NTP code according to technical memorandum Jan '96
  *		"A Kernel Model for Precision Timekeeping" by Dave Mills
  */
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/errno.h>

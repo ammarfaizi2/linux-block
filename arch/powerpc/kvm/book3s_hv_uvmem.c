@@ -86,6 +86,7 @@
  * page-sizes, we need to break this assumption.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

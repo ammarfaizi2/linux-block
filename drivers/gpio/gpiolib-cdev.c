@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

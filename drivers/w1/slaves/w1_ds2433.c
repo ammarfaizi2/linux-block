@@ -5,6 +5,7 @@
  * Copyright (c) 2005 Ben Gardner <bgardner@wabtec.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

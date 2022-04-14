@@ -7,6 +7,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

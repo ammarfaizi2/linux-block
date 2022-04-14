@@ -18,6 +18,7 @@
 #define MODULE_NAME "vicam"
 #define HEADER_SIZE 64
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/export.h>
 #include <linux/workqueue.h>

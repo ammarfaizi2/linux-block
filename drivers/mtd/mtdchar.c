@@ -3,6 +3,7 @@
  * Copyright © 1999-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api.h>

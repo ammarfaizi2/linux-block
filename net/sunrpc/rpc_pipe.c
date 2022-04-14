@@ -9,6 +9,7 @@
  * Copyright (c) 2002, Trond Myklebust <trond.myklebust@fys.uio.no>
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/module.h>

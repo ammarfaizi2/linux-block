@@ -12,6 +12,7 @@
  * support references the code of MIPS stacktrace.c.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/local64_api.h>

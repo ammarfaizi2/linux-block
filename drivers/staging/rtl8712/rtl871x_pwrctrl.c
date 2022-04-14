@@ -16,6 +16,8 @@
 
 #define _RTL871X_PWRCTRL_C_
 
+#include <linux/mutex_api.h>
+
 #include "osdep_service.h"
 #include "drv_types.h"
 #include "osdep_intf.h"

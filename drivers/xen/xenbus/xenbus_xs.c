@@ -33,6 +33,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/unistd.h>
 #include <linux/errno.h>
 #include <linux/types.h>

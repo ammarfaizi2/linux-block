@@ -8,6 +8,7 @@
  *	- Channing Corn (tests & fixes),
  *	- Andrew D. Balsa (code cleanup).
  */
+#include <linux/mutex_api.h>
 #include <asm/processor_api.h>
 #include <asm/pgtable.h>
 #include <linux/sched/task_flags.h>

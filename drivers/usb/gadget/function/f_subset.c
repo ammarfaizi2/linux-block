@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/slab.h>

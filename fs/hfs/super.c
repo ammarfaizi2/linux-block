@@ -12,6 +12,7 @@
  * Based on the minix file system code, (C) 1991, 1992 by Linus Torvalds
  */
 
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

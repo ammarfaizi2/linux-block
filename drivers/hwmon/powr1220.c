@@ -8,6 +8,7 @@
  * Scott Kanowitz <skanowitz@echo360.com> <scott.kanowitz@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

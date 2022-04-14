@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Nokia Corporation
  * Author: Imre Deak <imre.deak@nokia.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device.h>
 #include <linux/delay.h>

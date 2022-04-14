@@ -51,6 +51,7 @@
 #include "ivtv-cards.h"
 #include "ivtv-gpio.h"
 #include "ivtv-i2c.h"
+#include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

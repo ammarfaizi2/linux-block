@@ -46,6 +46,7 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

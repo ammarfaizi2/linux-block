@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018-2019, Vladimir Oltean <olteanv@gmail.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 
 #include "sja1105.h"
