@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <asm/dma.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/errno.h>
