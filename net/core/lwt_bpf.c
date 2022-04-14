@@ -2,6 +2,7 @@
 /* Copyright (c) 2016 Thomas Graf <tgraf@tgraf.ch>
  */
 
+#include <net/l3mdev.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <net/checksum.h>

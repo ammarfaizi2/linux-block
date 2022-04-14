@@ -15,6 +15,7 @@
  * none of the bugs are Pavel's now.
  */
 
+#include <net/l3mdev.h>
 #include <net/ipv6_api.h>
 #include <net/inet_sock_api.h>
 #include <net/dst_api.h>

@@ -5,6 +5,7 @@
  * based on fib_frontend.c; Author: Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <net/l3mdev.h>
 #include <net/ip_fib_api.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

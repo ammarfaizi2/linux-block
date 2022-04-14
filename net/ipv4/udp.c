@@ -74,6 +74,7 @@
 
 #define pr_fmt(fmt) "UDP: " fmt
 
+#include <net/l3mdev.h>
 #include <net/ip_extra.h>
 #include <net/dst_api.h>
 #include <linux/udp_api.h>
