@@ -8,6 +8,7 @@
  * Copyright (C) 2006,2007 Pete Zaitcev (zaitcev@redhat.com)
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

@@ -12,6 +12,7 @@
  * Roccat KonePure is a smaller version of KoneXTD with less buttons and lights.
  */
 
+#include <linux/device/class.h>
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/input.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2010-2012 Broadcom. All rights reserved.
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/cdev.h>
 #include <linux/fs.h>

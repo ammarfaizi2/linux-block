@@ -6,6 +6,7 @@
  * Copyright 2016 Linaro Ltd.
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/cdev.h>
 #include <linux/completion.h>

@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

@@ -10,6 +10,7 @@
  * (C) 2003 - 2010	Dominik Brodowski
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>

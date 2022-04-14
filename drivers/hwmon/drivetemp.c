@@ -95,6 +95,7 @@
  *   the temperature.
  */
 
+#include <linux/device/class.h>
 #include <linux/ata.h>
 #include <linux/bits.h>
 #include <linux/device.h>

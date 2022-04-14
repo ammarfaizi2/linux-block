@@ -3,6 +3,7 @@
  * Copyright(c) 2007 - 2009 Intel Corporation. All rights reserved.
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>

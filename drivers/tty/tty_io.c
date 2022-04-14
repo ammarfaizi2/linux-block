@@ -65,6 +65,7 @@
  *			 -- Andrew Morton <andrewm@uow.edu.eu> 17Mar01
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>

@@ -17,6 +17,7 @@
 #define KMSG_COMPONENT "hmcdrv"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

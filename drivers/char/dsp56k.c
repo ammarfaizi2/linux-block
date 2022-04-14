@@ -23,6 +23,7 @@
  * for more details.
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/major.h>

@@ -26,6 +26,7 @@
  *	 - making it shorter - scr_readw are macros which expand in PRETTY long code
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/major.h>

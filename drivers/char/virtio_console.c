@@ -4,6 +4,7 @@
  * Copyright (C) 2009, 2010, 2011 Red Hat, Inc.
  * Copyright (C) 2009, 2010, 2011 Amit Shah <amit.shah@redhat.com>
  */
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/compat.h>
 #include <linux/cdev.h>

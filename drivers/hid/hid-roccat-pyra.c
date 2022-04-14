@@ -14,6 +14,7 @@
  * Userland tools can be found at http://sourceforge.net/projects/roccat
  */
 
+#include <linux/device/class.h>
 #include <linux/device.h>
 #include <linux/input.h>
 #include <linux/hid.h>

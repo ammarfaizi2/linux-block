@@ -9,6 +9,7 @@
  * preserved in its entirety in all copies and derived works.
  */
 
+#include <linux/device/class.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/power_supply.h>

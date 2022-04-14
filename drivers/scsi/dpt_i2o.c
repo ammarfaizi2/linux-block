@@ -26,6 +26,7 @@
 /*#define DEBUG 1 */
 /*#define UARTDELAY 1 */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/module.h>

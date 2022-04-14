@@ -8,6 +8,7 @@
 /*
  */
 
+#include <linux/device/class.h>
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/input.h>

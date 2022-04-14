@@ -7,6 +7,7 @@
  * Based on previous work by Lars Poeschel <poeschel@lemonage.de>
  */
 
+#include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
