@@ -9,6 +9,7 @@
 #ifndef _SECURITY_SMACK_H
 #define _SECURITY_SMACK_H
 
+#include <linux/sched.h>
 #include <linux/fs_types_sb.h>
 #include <linux/fs.h>
 #include <linux/cred.h>
