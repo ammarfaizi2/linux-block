@@ -1775,12 +1775,20 @@ static void rcu_strict_gp_boundary(void *unused)
 	invoke_rcu_core();
 }
 
+// Has rcu_init() been invoked?  This is used (for example) to determine
+// whether spinlocks may be acquired safely.
+static bool rcu_init_invoked(void)
+{
+	return !!rcu_state.n_online_cpus;
+}
+
 // Make the polled API aware of the beginning of a grace period.
 static void rcu_poll_gp_seq_start(unsigned long *snap)
 {
 	struct rcu_node *rnp = rcu_get_root();
 
-	raw_lockdep_assert_held_rcu_node(rnp);
+	if (rcu_init_invoked())
+		raw_lockdep_assert_held_rcu_node(rnp);
 
 	// If RCU was idle, note beginning of GP.
 	if (!rcu_seq_state(rcu_state.gp_seq_polled))
@@ -1795,7 +1803,8 @@ static void rcu_poll_gp_seq_end(unsigned long *snap)
 {
 	struct rcu_node *rnp = rcu_get_root();
 
-	raw_lockdep_assert_held_rcu_node(rnp);
+	if (rcu_init_invoked())
+		raw_lockdep_assert_held_rcu_node(rnp);
 
 	// If the the previously noted GP is still in effect, record the
 	// end of that GP.  Either way, zero counter to avoid counter-wrap
@@ -1806,13 +1815,6 @@ static void rcu_poll_gp_seq_end(unsigned long *snap)
 	} else {
 		*snap = 0;
 	}
-}
-
-// Has rcu_init() been invoked?  This is used (for example) to determine
-// whether spinlocks may be acquired safely.
-static bool rcu_init_invoked(void)
-{
-	return !!rcu_state.n_online_cpus;
 }
 
 // Make the polled API aware of the beginning of a grace period, but
@@ -3913,6 +3915,7 @@ void synchronize_rcu(void)
 			 lock_is_held(&rcu_sched_lock_map),
 			 "Illegal synchronize_rcu() in RCU read-side critical section");
 	if (rcu_blocking_is_gp()) {
+		// Unsafe for SMP, but we get here only if !PREEMPT && !SMP.
 		rcu_poll_gp_seq_start_unlocked(&rcu_state.gp_seq_polled_snap);
 		rcu_poll_gp_seq_end_unlocked(&rcu_state.gp_seq_polled_snap);
 		if (rcu_init_invoked())
