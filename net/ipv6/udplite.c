@@ -8,6 +8,7 @@
  *  Changes:
  *  Fixes:
  */
+#include <net/udp_api_sock.h>
 #include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>
 #include <linux/export.h>
