@@ -12,6 +12,7 @@
  * Copyright (C) 2000,2001	Andi Kleen, SuSE Labs
  */
 
+#include <linux/sched/task_stack.h>
 #include <linux/ptrace_api.h>
 #include <linux/kernel.h>
 #include <linux/gfp.h>

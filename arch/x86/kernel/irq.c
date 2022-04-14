@@ -2,6 +2,7 @@
 /*
  * Common interrupt code for 32 and 64 bit
  */
+#include <linux/sched/task_stack.h>
 #include <linux/ratelimit.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>

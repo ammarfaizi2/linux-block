@@ -52,6 +52,7 @@
  *	Based upon Swansea University Computer Society NET3.039
  */
 
+#include <linux/sched/task_stack.h>
 #include <linux/sched/signal.h>
 #include <linux/poll_time.h>
 #include <linux/netdevice_api.h>

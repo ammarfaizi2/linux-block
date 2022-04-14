@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Red Hat, Inc., Peter Zijlstra
  */
 
+#include <linux/sched/task_stack.h>
 #include <linux/kernel.h>
 #include <linux/irq_work.h>
 #include <linux/hardirq.h>
