@@ -552,14 +552,14 @@ void acct_collect(long exitcode, int group_dead)
 		pacct->ac_mem = vsize / 1024;
 	if (thread_group_leader(current)) {
 		pacct->ac_exitcode = exitcode;
-		if (current->flags & PF_FORKNOEXEC)
+		if (task_flags(current) & PF_FORKNOEXEC)
 			pacct->ac_flag |= AFORK;
 	}
-	if (current->flags & PF_SUPERPRIV)
+	if (task_flags(current) & PF_SUPERPRIV)
 		pacct->ac_flag |= ASU;
-	if (current->flags & PF_DUMPCORE)
+	if (task_flags(current) & PF_DUMPCORE)
 		pacct->ac_flag |= ACORE;
-	if (current->flags & PF_SIGNALED)
+	if (task_flags(current) & PF_SIGNALED)
 		pacct->ac_flag |= AXSIG;
 
 	task_cputime(current, &utime, &stime);

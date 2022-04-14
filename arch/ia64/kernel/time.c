@@ -139,7 +139,7 @@ void vtime_account_kernel(struct task_struct *tsk)
 	struct thread_info *ti = task_thread_info(tsk);
 	__u64 stime = vtime_delta(tsk);
 
-	if (tsk->flags & PF_VCPU)
+	if (task_flags(tsk) & PF_VCPU)
 		ti->gtime += stime;
 	else
 		ti->stime += stime;

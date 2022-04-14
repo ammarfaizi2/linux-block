@@ -189,7 +189,7 @@ void account_system_time(struct task_struct *p, int hardirq_offset, u64 cputime)
 {
 	int index;
 
-	if ((p->flags & PF_VCPU) && (irq_count() - hardirq_offset == 0)) {
+	if ((task_flags(p) & PF_VCPU) && (irq_count() - hardirq_offset == 0)) {
 		account_guest_time(p, cputime);
 		return;
 	}
@@ -387,7 +387,7 @@ static void irqtime_account_process_tick(struct task_struct *p, int user_tick,
 		account_user_time(p, cputime);
 	} else if (p == this_rq()->idle) {
 		account_idle_time(cputime);
-	} else if (p->flags & PF_VCPU) { /* System time or guest time */
+	} else if (task_flags(p) & PF_VCPU) { /* System time or guest time */
 		account_guest_time(p, cputime);
 	} else {
 		account_system_index_time(p, cputime, CPUTIME_SYSTEM);
@@ -742,7 +742,7 @@ void vtime_guest_enter(struct task_struct *tsk)
 	 */
 	write_seqcount_begin(&vtime->seqcount);
 	vtime_account_system(tsk, vtime);
-	tsk->flags |= PF_VCPU;
+	task_flags(tsk) |= PF_VCPU;
 	vtime->state = VTIME_GUEST;
 	write_seqcount_end(&vtime->seqcount);
 }
@@ -754,7 +754,7 @@ void vtime_guest_exit(struct task_struct *tsk)
 
 	write_seqcount_begin(&vtime->seqcount);
 	vtime_account_guest(tsk, vtime);
-	tsk->flags &= ~PF_VCPU;
+	task_flags(tsk) &= ~PF_VCPU;
 	vtime->state = VTIME_SYS;
 	write_seqcount_end(&vtime->seqcount);
 }
@@ -783,7 +783,7 @@ void vtime_task_switch_generic(struct task_struct *prev)
 	write_seqcount_begin(&vtime->seqcount);
 	if (is_idle_task(current))
 		vtime->state = VTIME_IDLE;
-	else if (current->flags & PF_VCPU)
+	else if (task_flags(current) & PF_VCPU)
 		vtime->state = VTIME_GUEST;
 	else
 		vtime->state = VTIME_SYS;

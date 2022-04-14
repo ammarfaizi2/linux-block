@@ -365,14 +365,14 @@ void play_idle_precise(u64 duration_ns, u64 latency_ns)
 	 */
 	WARN_ON_ONCE(current->policy != SCHED_FIFO);
 	WARN_ON_ONCE(current->nr_cpus_allowed != 1);
-	WARN_ON_ONCE(!(current->flags & PF_KTHREAD));
-	WARN_ON_ONCE(!(current->flags & PF_NO_SETAFFINITY));
+	WARN_ON_ONCE(!(task_flags(current) & PF_KTHREAD));
+	WARN_ON_ONCE(!(task_flags(current) & PF_NO_SETAFFINITY));
 	WARN_ON_ONCE(!duration_ns);
 	WARN_ON_ONCE(current->mm);
 
 	rcu_sleep_check();
 	preempt_disable();
-	current->flags |= PF_IDLE;
+	task_flags(current) |= PF_IDLE;
 	cpuidle_use_deepest_state(latency_ns);
 
 	it.done = 0;
@@ -385,7 +385,7 @@ void play_idle_precise(u64 duration_ns, u64 latency_ns)
 		do_idle();
 
 	cpuidle_use_deepest_state(0);
-	current->flags &= ~PF_IDLE;
+	task_flags(current) &= ~PF_IDLE;
 
 	preempt_fold_need_resched();
 	preempt_enable();

@@ -92,7 +92,7 @@ static unsigned long mmap_upper_limit(struct rlimit *rlim_stack)
 	stack_base = calc_max_stack_size(stack_base);
 
 	/* Add space for stack randomization. */
-	if (current->flags & PF_RANDOMIZE)
+	if (task_flags(current) & PF_RANDOMIZE)
 		stack_base += (STACK_RND_MASK << PAGE_SHIFT);
 
 	return PAGE_ALIGN(STACK_TOP - stack_base);
@@ -238,7 +238,7 @@ static unsigned long mmap_rnd(void)
 {
 	unsigned long rnd = 0;
 
-	if (current->flags & PF_RANDOMIZE)
+	if (task_flags(current) & PF_RANDOMIZE)
 		rnd = get_random_int() & MMAP_RND_MASK;
 
 	return rnd << PAGE_SHIFT;

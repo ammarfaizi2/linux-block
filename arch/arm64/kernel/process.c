@@ -335,7 +335,7 @@ int copy_thread(unsigned long clone_flags, unsigned long stack_start,
 
 	ptrauth_thread_init_kernel(p);
 
-	if (likely(!(p->flags & (PF_KTHREAD | PF_IO_WORKER)))) {
+	if (likely(!(task_flags(p) & (PF_KTHREAD | PF_IO_WORKER)))) {
 		*childregs = *current_pt_regs();
 		childregs->regs[0] = 0;
 
@@ -412,7 +412,7 @@ static void ssbs_thread_switch(struct task_struct *next)
 	 * Nothing to do for kernel threads, but 'regs' may be junk
 	 * (e.g. idle task) so check the flags and bail early.
 	 */
-	if (unlikely(next->flags & PF_KTHREAD))
+	if (unlikely(task_flags(next) & PF_KTHREAD))
 		return;
 
 	/*

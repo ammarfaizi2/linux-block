@@ -923,7 +923,7 @@ static void css_set_move_task(struct task_struct *task,
 		 * against PF_EXITING setting such that we can't race
 		 * against cgroup_exit()/cgroup_free() dropping the css_set.
 		 */
-		WARN_ON_ONCE(task->flags & PF_EXITING);
+		WARN_ON_ONCE(task_flags(task) & PF_EXITING);
 
 		cgroup_move_task(task, to_cset);
 		list_add_tail(&task->cg_list, use_mg_tasks ? &to_cset->mg_tasks :
@@ -2361,7 +2361,7 @@ static void cgroup_migrate_add_task(struct task_struct *task,
 	lockdep_assert_held(&css_set_lock);
 
 	/* @task either already exited or can't exit until the end */
-	if (task->flags & PF_EXITING)
+	if (task_flags(task) & PF_EXITING)
 		return;
 
 	/* cgroup_threadgroup_rwsem protects racing against forks */
@@ -2858,7 +2858,7 @@ struct task_struct *cgroup_procs_write_start(char *buf, bool threadgroup,
 	 * become trapped in a cpuset, or RT kthread may be born in a
 	 * cgroup with no rt_runtime allocated.  Just say no.
 	 */
-	if (tsk->no_cgroup_migration || (tsk->flags & PF_NO_SETAFFINITY)) {
+	if (tsk->no_cgroup_migration || (task_flags(tsk) & PF_NO_SETAFFINITY)) {
 		tsk = ERR_PTR(-EINVAL);
 		goto out_unlock_threadgroup;
 	}
@@ -6039,7 +6039,7 @@ int proc_cgroup_show(struct seq_file *m, struct pid_namespace *ns,
 		 * the cgroup is removed before the zombie is reaped,
 		 * " (deleted)" is appended to the cgroup path.
 		 */
-		if (cgroup_on_dfl(cgrp) || !(tsk->flags & PF_EXITING)) {
+		if (cgroup_on_dfl(cgrp) || !(task_flags(tsk) & PF_EXITING)) {
 			retval = cgroup_path_ns_locked(cgrp, buf, PATH_MAX,
 						current->nsproxy->cgroup_ns);
 			if (retval >= PATH_MAX)

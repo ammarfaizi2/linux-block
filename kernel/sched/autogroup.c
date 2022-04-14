@@ -137,7 +137,7 @@ bool task_wants_autogroup(struct task_struct *p, struct task_group *tg)
 	 * However, there is no way sched_autogroup_exit_task() could tell us
 	 * to avoid autogroup->tg, so we abuse PF_EXITING flag for this case.
 	 */
-	if (p->flags & PF_EXITING)
+	if (task_flags(p) & PF_EXITING)
 		return false;
 
 	return true;

@@ -36,7 +36,7 @@ struct pagevec;
 
 static inline int current_is_kswapd(void)
 {
-	return current->flags & PF_KSWAPD;
+	return task_flags(current) & PF_KSWAPD;
 }
 
 /*

@@ -1573,7 +1573,7 @@ static int kvm_mips_csr_die_notify(struct notifier_block *self,
 		return NOTIFY_DONE;
 
 	/* Return immediately if guest context isn't active */
-	if (!(current->flags & PF_VCPU))
+	if (!(task_flags(current) & PF_VCPU))
 		return NOTIFY_DONE;
 
 	/* Should never get here from user mode */

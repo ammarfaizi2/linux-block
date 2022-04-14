@@ -96,7 +96,7 @@ static void check_hung_task(struct task_struct *t, unsigned long timeout)
 	 * Ensure the task is not frozen.
 	 * Also, skip vfork and any other user process that freezer should skip.
 	 */
-	if (unlikely(t->flags & (PF_FROZEN | PF_FREEZER_SKIP)))
+	if (unlikely(task_flags(t) & (PF_FROZEN | PF_FREEZER_SKIP)))
 	    return;
 
 	/*

@@ -1434,7 +1434,7 @@ int cap_mmap_addr(unsigned long addr)
 				  CAP_OPT_NONE);
 		/* set PF_SUPERPRIV if it turns out we allow the low mmap */
 		if (ret == 0)
-			current->flags |= PF_SUPERPRIV;
+			task_flags(current) |= PF_SUPERPRIV;
 	}
 	return ret;
 }

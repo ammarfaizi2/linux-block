@@ -372,7 +372,7 @@ static int map_vdso(const struct vdso_image *image,
 	 * First, get an unmapped region: then randomize it, and make sure that
 	 * region is free.
 	 */
-	if (current->flags & PF_RANDOMIZE) {
+	if (task_flags(current) & PF_RANDOMIZE) {
 		addr = get_unmapped_area(NULL, 0,
 					 image->size - image->sym_vvar_start,
 					 0, 0);

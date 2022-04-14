@@ -1662,7 +1662,7 @@ free_running:
 		if (!strictlimit) {
 			wb_dirty_limits(gdtc);
 
-			if ((current->flags & PF_LOCAL_THROTTLE) &&
+			if ((task_flags(current) & PF_LOCAL_THROTTLE) &&
 			    gdtc->wb_dirty <
 			    dirty_freerun_ceiling(gdtc->wb_thresh,
 						  gdtc->wb_bg_thresh))
@@ -1689,7 +1689,7 @@ free_running:
 			if (!strictlimit) {
 				wb_dirty_limits(mdtc);
 
-				if ((current->flags & PF_LOCAL_THROTTLE) &&
+				if ((task_flags(current) & PF_LOCAL_THROTTLE) &&
 				    mdtc->wb_dirty <
 				    dirty_freerun_ceiling(mdtc->wb_thresh,
 							  mdtc->wb_bg_thresh))

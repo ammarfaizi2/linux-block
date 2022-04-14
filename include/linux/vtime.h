@@ -57,13 +57,13 @@ extern void vtime_task_switch(struct task_struct *prev);
 static __always_inline void vtime_account_guest_enter(void)
 {
 	vtime_account_kernel(current);
-	current->flags |= PF_VCPU;
+	task_flags(current) |= PF_VCPU;
 }
 
 static __always_inline void vtime_account_guest_exit(void)
 {
 	vtime_account_kernel(current);
-	current->flags &= ~PF_VCPU;
+	task_flags(current) &= ~PF_VCPU;
 }
 
 #elif defined(CONFIG_VIRT_CPU_ACCOUNTING_GEN)
@@ -102,7 +102,7 @@ static __always_inline void vtime_account_guest_enter(void)
 	if (vtime_accounting_enabled_this_cpu())
 		vtime_guest_enter(current);
 	else
-		current->flags |= PF_VCPU;
+		task_flags(current) |= PF_VCPU;
 }
 
 static __always_inline void vtime_account_guest_exit(void)
@@ -110,7 +110,7 @@ static __always_inline void vtime_account_guest_exit(void)
 	if (vtime_accounting_enabled_this_cpu())
 		vtime_guest_exit(current);
 	else
-		current->flags &= ~PF_VCPU;
+		task_flags(current) &= ~PF_VCPU;
 }
 
 #else /* !CONFIG_VIRT_CPU_ACCOUNTING */
@@ -120,12 +120,12 @@ static inline void vtime_task_switch(struct task_struct *prev) { }
 
 static __always_inline void vtime_account_guest_enter(void)
 {
-	current->flags |= PF_VCPU;
+	task_flags(current) |= PF_VCPU;
 }
 
 static __always_inline void vtime_account_guest_exit(void)
 {
-	current->flags &= ~PF_VCPU;
+	task_flags(current) &= ~PF_VCPU;
 }
 
 #endif

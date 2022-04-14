@@ -80,7 +80,7 @@ static void report_access(const char *access, struct task_struct *target,
 
 	assert_spin_locked(&per_task(target, alloc_lock)); /* for target->comm */
 
-	if (current->flags & PF_KTHREAD) {
+	if (task_flags(current) & PF_KTHREAD) {
 		/* I don't think kthreads call task_work_run() before exiting.
 		 * Imagine angry ranting about procfs here.
 		 */

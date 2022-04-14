@@ -1217,7 +1217,7 @@ static void irq_thread_dtor(struct callback_head *unused)
 	struct irq_desc *desc;
 	struct irqaction *action;
 
-	if (WARN_ON_ONCE(!(current->flags & PF_EXITING)))
+	if (WARN_ON_ONCE(!(task_flags(current) & PF_EXITING)))
 		return;
 
 	action = kthread_data(tsk);

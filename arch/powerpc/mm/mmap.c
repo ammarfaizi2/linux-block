@@ -52,7 +52,7 @@ unsigned long arch_mmap_rnd(void)
 
 static inline unsigned long stack_maxrandom_size(void)
 {
-	if (!(current->flags & PF_RANDOMIZE))
+	if (!(task_flags(current) & PF_RANDOMIZE))
 		return 0;
 
 	/* 8MB for 32bit, 1GB for 64bit */
@@ -236,7 +236,7 @@ void arch_pick_mmap_layout(struct mm_struct *mm, struct rlimit *rlim_stack)
 {
 	unsigned long random_factor = 0UL;
 
-	if (current->flags & PF_RANDOMIZE)
+	if (task_flags(current) & PF_RANDOMIZE)
 		random_factor = arch_mmap_rnd();
 
 	if (radix_enabled())

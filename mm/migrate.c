@@ -940,7 +940,7 @@ static int __unmap_and_move(struct page *page, struct page *newpage,
 		 * avoid the use of lock_page for direct compaction
 		 * altogether.
 		 */
-		if (current->flags & PF_MEMALLOC)
+		if (task_flags(current) & PF_MEMALLOC)
 			goto out;
 
 		lock_page(page);

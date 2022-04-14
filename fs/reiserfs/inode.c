@@ -1781,7 +1781,7 @@ int reiserfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 	 * inode needs to reach disk for safety, and they can safely be
 	 * ignored because the altered inode has already been logged.
 	 */
-	if (wbc->sync_mode == WB_SYNC_ALL && !(current->flags & PF_MEMALLOC)) {
+	if (wbc->sync_mode == WB_SYNC_ALL && !(task_flags(current) & PF_MEMALLOC)) {
 		reiserfs_write_lock(inode->i_sb);
 		if (!journal_begin(&th, inode->i_sb, jbegin_count)) {
 			reiserfs_update_sd(&th, inode);
@@ -2538,7 +2538,7 @@ static int reiserfs_write_full_page(struct page *page,
 	th.t_trans_id = 0;
 
 	/* no logging allowed when nonblocking or from PF_MEMALLOC */
-	if (checked && (current->flags & PF_MEMALLOC)) {
+	if (checked && (task_flags(current) & PF_MEMALLOC)) {
 		redirty_page_for_writepage(wbc, page);
 		unlock_page(page);
 		return 0;

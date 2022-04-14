@@ -693,7 +693,7 @@ bool smack_privileged(int cap)
 	/*
 	 * All kernel tasks are privileged
 	 */
-	if (unlikely(current->flags & PF_KTHREAD))
+	if (unlikely(task_flags(current) & PF_KTHREAD))
 		return true;
 
 	return smack_privileged_cred(cap, current_cred());

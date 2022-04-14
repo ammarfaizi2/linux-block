@@ -817,7 +817,7 @@ void psi_task_change(struct task_struct *task, int clear, int set)
 	 * itself going to sleep, or we'll ping-pong forever.
 	 */
 	if (unlikely((clear & TSK_RUNNING) &&
-		     (task->flags & PF_WQ_WORKER) &&
+		     (task_flags(task) & PF_WQ_WORKER) &&
 		     wq_worker_last_func(task) == psi_avgs_work))
 		wake_clock = false;
 

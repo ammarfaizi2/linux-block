@@ -230,7 +230,7 @@ void migrate_to_reboot_cpu(void)
 		cpu = cpumask_first(cpu_online_mask);
 
 	/* Prevent races with other tasks migrating this task */
-	current->flags |= PF_NO_SETAFFINITY;
+	task_flags(current) |= PF_NO_SETAFFINITY;
 
 	/* Make certain I only run on the appropriate processor */
 	set_cpus_allowed_ptr(current, cpumask_of(cpu));

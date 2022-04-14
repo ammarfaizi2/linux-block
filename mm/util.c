@@ -332,7 +332,7 @@ unsigned long randomize_stack_top(unsigned long stack_top)
 {
 	unsigned long random_variable = 0;
 
-	if (current->flags & PF_RANDOMIZE) {
+	if (task_flags(current) & PF_RANDOMIZE) {
 		random_variable = get_random_long();
 		random_variable &= STACK_RND_MASK;
 		random_variable <<= PAGE_SHIFT;
@@ -392,7 +392,7 @@ static unsigned long mmap_base(unsigned long rnd, struct rlimit *rlim_stack)
 	unsigned long pad = stack_guard_gap;
 
 	/* Account for stack randomization if necessary */
-	if (current->flags & PF_RANDOMIZE)
+	if (task_flags(current) & PF_RANDOMIZE)
 		pad += (STACK_RND_MASK << PAGE_SHIFT);
 
 	/* Values close to RLIM_INFINITY can overflow. */
@@ -411,7 +411,7 @@ void arch_pick_mmap_layout(struct mm_struct *mm, struct rlimit *rlim_stack)
 {
 	unsigned long random_factor = 0UL;
 
-	if (current->flags & PF_RANDOMIZE)
+	if (task_flags(current) & PF_RANDOMIZE)
 		random_factor = arch_mmap_rnd();
 
 	if (mmap_is_legacy(rlim_stack)) {

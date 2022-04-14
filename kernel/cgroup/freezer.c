@@ -200,7 +200,7 @@ static void cgroup_do_freeze(struct cgroup *cgrp, bool freeze)
 		 * Ignore kernel threads here. Freezing cgroups containing
 		 * kthreads isn't supported.
 		 */
-		if (task->flags & PF_KTHREAD)
+		if (task_flags(task) & PF_KTHREAD)
 			continue;
 		cgroup_freeze_task(task, freeze);
 	}
@@ -228,7 +228,7 @@ void cgroup_freezer_migrate_task(struct task_struct *task,
 	/*
 	 * Kernel threads are not supposed to be frozen at all.
 	 */
-	if (task->flags & PF_KTHREAD)
+	if (task_flags(task) & PF_KTHREAD)
 		return;
 
 	/*

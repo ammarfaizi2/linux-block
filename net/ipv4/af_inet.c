@@ -423,7 +423,7 @@ int inet_release(struct socket *sock)
 		 */
 		timeout = 0;
 		if (sock_flag(sk, SOCK_LINGER) &&
-		    !(current->flags & PF_EXITING))
+		    !(task_flags(current) & PF_EXITING))
 			timeout = sk->sk_lingertime;
 		sk->sk_prot->close(sk, timeout);
 		sock->sk = NULL;

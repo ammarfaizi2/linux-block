@@ -1353,7 +1353,7 @@ static int fill_psinfo(struct elf_prpsinfo *psinfo, struct task_struct *p,
 	psinfo->pr_sname = (i > 5) ? '.' : "RSDTZW"[i];
 	psinfo->pr_zomb = psinfo->pr_sname == 'Z';
 	psinfo->pr_nice = task_nice(p);
-	psinfo->pr_flag = p->flags;
+	psinfo->pr_flag = task_flags(p);
 	rcu_read_lock();
 	cred = __task_cred(p);
 	SET_UID(psinfo->pr_uid, from_kuid_munged(cred->user_ns, cred->uid));

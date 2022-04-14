@@ -36,7 +36,7 @@ static DEFINE_SPINLOCK(freezer_lock);
  */
 bool freezing_slow_path(struct task_struct *p)
 {
-	if (p->flags & (PF_NOFREEZE | PF_SUSPEND_TASK))
+	if (task_flags(p) & (PF_NOFREEZE | PF_SUSPEND_TASK))
 		return false;
 
 	if (test_tsk_thread_flag(p, TIF_MEMDIE))
@@ -45,7 +45,7 @@ bool freezing_slow_path(struct task_struct *p)
 	if (pm_nosig_freezing || cgroup_freezing(p))
 		return true;
 
-	if (pm_freezing && !(p->flags & PF_KTHREAD))
+	if (pm_freezing && !(task_flags(p) & PF_KTHREAD))
 		return true;
 
 	return false;
@@ -66,13 +66,13 @@ bool __refrigerator(bool check_kthr_stop)
 		set_current_state(TASK_UNINTERRUPTIBLE);
 
 		spin_lock_irq(&freezer_lock);
-		current->flags |= PF_FROZEN;
+		task_flags(current) |= PF_FROZEN;
 		if (!freezing(current) ||
 		    (check_kthr_stop && kthread_should_stop()))
-			current->flags &= ~PF_FROZEN;
+			task_flags(current) &= ~PF_FROZEN;
 		spin_unlock_irq(&freezer_lock);
 
-		if (!(current->flags & PF_FROZEN))
+		if (!(task_flags(current) & PF_FROZEN))
 			break;
 		was_frozen = true;
 		schedule();
@@ -134,7 +134,7 @@ bool freeze_task(struct task_struct *p)
 		return false;
 	}
 
-	if (!(p->flags & PF_KTHREAD))
+	if (!(task_flags(p) & PF_KTHREAD))
 		fake_signal_wake_up(p);
 	else
 		wake_up_state(p, TASK_INTERRUPTIBLE);
@@ -168,7 +168,7 @@ bool set_freezable(void)
 	 * condition is visible to try_to_freeze() below.
 	 */
 	spin_lock_irq(&freezer_lock);
-	current->flags &= ~PF_NOFREEZE;
+	task_flags(current) &= ~PF_NOFREEZE;
 	spin_unlock_irq(&freezer_lock);
 
 	return try_to_freeze();

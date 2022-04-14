@@ -1468,7 +1468,7 @@ ext4_xattr_inode_cache_find(struct inode *inode, const void *value,
 		return NULL;
 
 	WARN_ON_ONCE(ext4_handle_valid(journal_current_handle()) &&
-		     !(current->flags & PF_MEMALLOC_NOFS));
+		     !(task_flags(current) & PF_MEMALLOC_NOFS));
 
 	ea_data = kvmalloc(value_len, GFP_KERNEL);
 	if (!ea_data) {
@@ -2314,7 +2314,7 @@ ext4_xattr_set_handle(handle_t *handle, struct inode *inode, int name_index,
 			error = -ENOSPC;
 			goto cleanup;
 		}
-		WARN_ON_ONCE(!(current->flags & PF_MEMALLOC_NOFS));
+		WARN_ON_ONCE(!(task_flags(current) & PF_MEMALLOC_NOFS));
 	}
 
 	error = ext4_reserve_inode_write(handle, inode, &is.iloc);

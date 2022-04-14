@@ -423,7 +423,7 @@ EXPORT_SYMBOL(autoremove_wake_function);
 
 static inline bool is_kthread_should_stop(void)
 {
-	return (current->flags & PF_KTHREAD) && kthread_should_stop();
+	return (task_flags(current) & PF_KTHREAD) && kthread_should_stop();
 }
 
 /*
