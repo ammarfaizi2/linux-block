@@ -10,6 +10,7 @@
  * most "normal" filesystems (but you don't /have/ to use this:
  * the NFS filesystem used to do this differently, for example)
  */
+#include <linux/vmstat.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

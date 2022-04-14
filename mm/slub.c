@@ -10,6 +10,7 @@
  * (C) 2011 Linux Foundation, Christoph Lameter
  */
 
+#include <linux/vmstat.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/timex.h>

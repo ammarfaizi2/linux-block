@@ -70,6 +70,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/vmstat.h>
 #include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>

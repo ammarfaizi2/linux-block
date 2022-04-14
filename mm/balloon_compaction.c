@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2012, Red Hat, Inc.  Rafael Aquini <aquini@redhat.com>
  */
+#include <linux/vmstat.h>
 #include <linux/spinlock_api.h>
 #include <linux/pagemap.h>
 #include <linux/gfp_api.h>

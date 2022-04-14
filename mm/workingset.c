@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Red Hat, Inc., Johannes Weiner
  */
 
+#include <linux/vmstat.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

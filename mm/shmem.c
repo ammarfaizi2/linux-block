@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/vmstat.h>
 #include <linux/uuid_api.h>
 #include <linux/uio_api.h>
 #include <linux/topology.h>

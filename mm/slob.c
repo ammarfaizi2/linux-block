@@ -57,6 +57,7 @@
  * in order to prevent random node placement.
  */
 
+#include <linux/vmstat.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/mm.h>

@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/vmstat.h>
 #include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
