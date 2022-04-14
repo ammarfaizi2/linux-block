@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <asm/processor_api.h>
 #include <linux/dmi.h>
 #include <linux/slab.h>
 #include <linux/acpi.h>

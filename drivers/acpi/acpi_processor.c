@@ -10,6 +10,7 @@
  *                     Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <asm/processor_api.h>
 #include <linux/acpi.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

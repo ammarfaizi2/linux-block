@@ -7,6 +7,7 @@
  * Inspired from the w83785 and amd756 drivers.
  */
 
+#include <asm/processor_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

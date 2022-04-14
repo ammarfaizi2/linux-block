@@ -11,6 +11,7 @@
  * Authors: Austin Zhang <austin_zhang@linux.intel.com>
  *          Kent Liu <kent.liu@intel.com>
  */
+#include <asm/processor_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/string.h>

@@ -2,6 +2,7 @@
  *	Routines to identify additional cpu features that are scattered in
  *	cpuid space.
  */
+#include <asm/processor_api.h>
 #include <linux/cpu.h>
 
 #include <asm/memtype.h>

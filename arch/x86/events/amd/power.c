@@ -7,6 +7,7 @@
  * Author: Huang Rui <ray.huang@amd.com>
  */
 
+#include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <asm/local64_api.h>
 #include <linux/module.h>

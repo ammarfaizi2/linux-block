@@ -9,6 +9,7 @@
  * io_apic.c.)
  */
 
+#include <asm/processor_api.h>
 #include <linux/kernel_stat.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

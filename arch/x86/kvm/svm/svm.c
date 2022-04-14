@@ -1,5 +1,6 @@
 #define pr_fmt(fmt) "SVM: " fmt
 
+#include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <linux/kvm_host.h>
 

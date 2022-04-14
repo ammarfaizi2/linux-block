@@ -5,6 +5,7 @@
  * Copyright (c) 2009, Intel Corporation.
  */
 
+#include <asm/processor_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/kernel.h>
 #include <linux/cpumask.h>

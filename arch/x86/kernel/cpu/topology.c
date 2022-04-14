@@ -5,6 +5,7 @@
  * detection.
  */
 
+#include <asm/processor_api.h>
 #include <linux/cpu.h>
 #include <asm/apic.h>
 #include <asm/memtype.h>

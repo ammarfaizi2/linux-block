@@ -6,6 +6,7 @@
  *
  * Author: Pu Wen <puwen@hygon.cn>
  */
+#include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <linux/io.h>
 

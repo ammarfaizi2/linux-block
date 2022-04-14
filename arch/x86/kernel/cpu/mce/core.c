@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <asm/processor_api.h>
 #include <asm/cpumask_arch.h>
 #include <linux/thread_info.h>
 #include <linux/capability.h>

@@ -2,6 +2,7 @@
 /*
  * Interrupt descriptor table related code
  */
+#include <asm/processor_api.h>
 #include <linux/interrupt.h>
 
 #include <asm/cpu_entry_area.h>

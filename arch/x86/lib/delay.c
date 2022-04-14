@@ -12,6 +12,7 @@
  *	we have to worry about.
  */
 
+#include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <linux/export.h>
 #include <linux/sched.h>

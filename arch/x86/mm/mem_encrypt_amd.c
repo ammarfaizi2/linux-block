@@ -9,6 +9,7 @@
 
 #define DISABLE_BRANCH_PROFILING
 
+#include <asm/processor_api.h>
 #include <linux/linkage.h>
 #include <linux/init.h>
 #include <linux/mm.h>

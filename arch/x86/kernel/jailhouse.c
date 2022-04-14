@@ -8,6 +8,7 @@
  *  Jan Kiszka <jan.kiszka@siemens.com>
  */
 
+#include <asm/processor_api.h>
 #include <linux/acpi_pmtmr.h>
 #include <linux/kernel.h>
 #include <linux/reboot.h>

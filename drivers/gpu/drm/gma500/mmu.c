@@ -4,6 +4,7 @@
  *
  **************************************************************************/
 
+#include <asm/processor_api.h>
 #include <linux/highmem.h>
 
 #include "mmu.h"

@@ -9,6 +9,7 @@
  * This file handles the architecture-dependent parts of process handling..
  */
 
+#include <asm/processor_api.h>
 #include <asm/pgtable.h>
 #include <linux/cpu.h>
 #include <linux/errno.h>

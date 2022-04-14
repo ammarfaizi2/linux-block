@@ -20,6 +20,7 @@
  *	Skip non-WB memory and ignore empty memory ranges.
  */
 
+#include <asm/processor_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/ioport.h>

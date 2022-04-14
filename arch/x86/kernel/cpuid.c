@@ -20,6 +20,7 @@
  * an SMP box will direct the access to CPU %d.
  */
 
+#include <asm/processor_api.h>
 #include <linux/module.h>
 
 #include <linux/types.h>

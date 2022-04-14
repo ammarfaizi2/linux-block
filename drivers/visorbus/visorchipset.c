@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <asm/processor_api.h>
 #include <linux/acpi.h>
 #include <linux/crash_dump.h>
 #include <linux/visorbus.h>

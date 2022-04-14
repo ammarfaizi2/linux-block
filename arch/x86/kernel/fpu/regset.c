@@ -2,6 +2,7 @@
 /*
  * FPU register's regset abstraction, for ptrace, core dumps, etc.
  */
+#include <asm/processor_api.h>
 #include <linux/sched/task_stack.h>
 #include <linux/vmalloc.h>
 

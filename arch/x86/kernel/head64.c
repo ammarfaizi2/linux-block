@@ -10,6 +10,7 @@
 /* cpu_feature_enabled() cannot be used this early */
 #define USE_EARLY_PGTABLE_L5
 
+#include <asm/processor_api.h>
 #include <linux/init.h>
 #include <linux/linkage.h>
 #include <linux/types.h>

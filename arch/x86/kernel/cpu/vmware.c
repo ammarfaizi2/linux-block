@@ -21,6 +21,7 @@
  *
  */
 
+#include <asm/processor_api.h>
 #include <asm/paravirt_api_clock.h>
 #include <asm/msr.h>
 #include <linux/dmi.h>

@@ -7,6 +7,7 @@
  * (C) Copyright 1995 1996 Linus Torvalds
  */
 
+#include <asm/processor_api.h>
 #include <linux/memblock.h>
 #include <linux/init.h>
 #include <linux/io.h>

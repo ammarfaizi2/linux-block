@@ -48,6 +48,7 @@
  *  Overall revision about smaps.
  */
 
+#include <asm/processor_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/uaccess.h>
 

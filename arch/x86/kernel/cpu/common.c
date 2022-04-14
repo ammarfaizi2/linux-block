@@ -2,6 +2,7 @@
 /* cpu_feature_enabled() cannot be used this early */
 #define USE_EARLY_PGTABLE_L5
 
+#include <asm/processor_api.h>
 #include <asm/pkru.h>
 #include <asm/cpumask_arch.h>
 #include <linux/memblock.h>

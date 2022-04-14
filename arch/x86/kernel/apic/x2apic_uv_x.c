@@ -8,6 +8,7 @@
  * (C) Copyright 2020 Hewlett Packard Enterprise Development LP
  * Copyright (C) 2007-2014 Silicon Graphics, Inc. All rights reserved.
  */
+#include <asm/processor_api.h>
 #include <linux/crash_dump.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpumask.h>
