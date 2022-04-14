@@ -400,7 +400,7 @@ void __init arch_call_rest_init(void)
 		panic("Couldn't allocate kernel stack");
 	per_task(current, stack) = (void *) stack;
 #ifdef CONFIG_VMAP_STACK
-	current->stack_vm_area = (void *) stack;
+	per_task(current, stack_vm_area) = (void *) stack;
 #endif
 	set_task_stack_end_magic(current);
 	stack += STACK_INIT_OFFSET;

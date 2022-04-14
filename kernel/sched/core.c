@@ -109,6 +109,10 @@ DEFINE_PER_TASK(refcount_t,				usage);
 DEFINE_PER_TASK(refcount_t,				stack_refcount);
 #endif
 
+#ifdef CONFIG_VMAP_STACK
+DEFINE_PER_TASK(struct vm_struct *,			stack_vm_area);
+#endif
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.

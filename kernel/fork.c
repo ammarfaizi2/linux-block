@@ -233,7 +233,7 @@ static void thread_stack_delayed_free(struct task_struct *tsk)
 {
 	struct vm_stack *vm_stack = per_task(tsk, stack);
 
-	vm_stack->stack_vm_area = tsk->stack_vm_area;
+	vm_stack->stack_vm_area = per_task(tsk, stack_vm_area);
 	call_rcu(&vm_stack->rcu, thread_stack_free_rcu);
 }
 
@@ -307,7 +307,7 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 			return -ENOMEM;
 		}
 
-		tsk->stack_vm_area = s;
+		per_task(tsk, stack_vm_area) = s;
 		per_task(tsk, stack) = stack;
 		return 0;
 	}
@@ -335,7 +335,7 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 	 * free_thread_stack() can be called in interrupt context,
 	 * so cache the vm_struct.
 	 */
-	tsk->stack_vm_area = vm;
+	per_task(tsk, stack_vm_area) = vm;
 	stack = kasan_reset_tag(stack);
 	per_task(tsk, stack) = stack;
 	return 0;
@@ -343,11 +343,11 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 
 static void free_thread_stack(struct task_struct *tsk)
 {
-	if (!try_release_thread_stack_to_cache(tsk->stack_vm_area))
+	if (!try_release_thread_stack_to_cache(per_task(tsk, stack_vm_area)))
 		thread_stack_delayed_free(tsk);
 
 	per_task(tsk, stack) = NULL;
-	tsk->stack_vm_area = NULL;
+	per_task(tsk, stack_vm_area) = NULL;
 }
 
 #  else /* !CONFIG_VMAP_STACK */
