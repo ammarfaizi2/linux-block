@@ -6,6 +6,7 @@
 #ifndef INTEL_RPS_H
 #define INTEL_RPS_H
 
+#include <linux/bitops.h>
 #include <linux/types.h>
 
 #include "intel_rps_types.h"

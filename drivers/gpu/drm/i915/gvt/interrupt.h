@@ -32,6 +32,7 @@
 #ifndef _GVT_INTERRUPT_H_
 #define _GVT_INTERRUPT_H_
 
+#include <linux/bitops.h>
 #include <linux/hrtimer.h>
 #include <linux/kernel.h>
 

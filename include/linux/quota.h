@@ -32,6 +32,7 @@
 #ifndef _LINUX_QUOTA_
 #define _LINUX_QUOTA_
 
+#include <linux/bitops.h>
 #include <linux/list.h>
 #include <linux/mutex.h>
 #include <linux/rwsem.h>

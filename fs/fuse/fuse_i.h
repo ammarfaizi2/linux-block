@@ -13,6 +13,7 @@
 # define pr_fmt(fmt) "fuse: " fmt
 #endif
 
+#include <linux/bitops.h>
 #include <linux/fuse.h>
 #include <linux/fs.h>
 #include <linux/mount.h>

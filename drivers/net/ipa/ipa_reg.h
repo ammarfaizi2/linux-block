@@ -6,6 +6,7 @@
 #ifndef _IPA_REG_H_
 #define _IPA_REG_H_
 
+#include <linux/bitops.h>
 #include <linux/bitfield.h>
 
 #include "ipa_version.h"
