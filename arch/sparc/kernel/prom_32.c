@@ -11,6 +11,7 @@
  *  Adapted for sparc32 by David S. Miller davem@davemloft.net
  */
 
+#include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/string.h>

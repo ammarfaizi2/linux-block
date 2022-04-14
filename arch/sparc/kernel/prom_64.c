@@ -11,6 +11,7 @@
  *  Adapted for sparc64 by David S. Miller davem@davemloft.net
  */
 
+#include <linux/init.h>
 #include <linux/cpumask_api.h>
 #include <asm/cpudata.h>
 #include <linux/memblock.h>

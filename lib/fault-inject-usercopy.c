@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/init.h>
 #include <linux/err.h>
 #include <linux/fault-inject.h>
 #include <linux/fault-inject-usercopy.h>

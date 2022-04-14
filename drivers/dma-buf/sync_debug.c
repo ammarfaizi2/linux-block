@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Google, Inc.
  */
 
+#include <linux/init.h>
 #include <linux/dma-fence-api.h>
 #include <linux/debugfs.h>
 #include "sync_debug.h"

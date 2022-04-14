@@ -10,6 +10,7 @@
  *  Adapted for sparc by David S. Miller davem@davemloft.net
  */
 
+#include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/errno.h>

@@ -10,6 +10,7 @@
  * Maxim Osipov <maxim.osipov@siemens.com>
  */
 
+#include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/gfp.h>
 #include <net/genetlink.h>

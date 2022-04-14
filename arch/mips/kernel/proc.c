@@ -4,6 +4,7 @@
  *  Copyright (C) 2001, 2004  MIPS Technologies, Inc.
  *  Copyright (C) 2004	Maciej W. Rozycki
  */
+#include <linux/init.h>
 #include <linux/cpumask_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

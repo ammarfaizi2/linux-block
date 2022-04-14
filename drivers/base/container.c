@@ -6,6 +6,7 @@
  * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/init.h>
 #include <linux/device_api.h>
 #include <linux/container.h>
 

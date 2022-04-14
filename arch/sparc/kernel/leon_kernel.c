@@ -4,6 +4,7 @@
  * Copyright (C) 2009 Konrad Eisele (konrad@gaisler.com) Aeroflex Gaisler AB
  */
 
+#include <linux/init.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

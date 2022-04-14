@@ -4,6 +4,7 @@
  * Copyright (C) 2006, 2008 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/preempt.h>
 #include <linux/slab.h>
