@@ -8,6 +8,7 @@
 
 #undef DEBUG
 
+#include <asm/fixmap.h>
 #include <linux/extable.h>
 #include <linux/moduleloader.h>
 #include <linux/elf.h>

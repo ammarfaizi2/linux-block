@@ -9,6 +9,7 @@
 /* #define DEBUG */
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <asm/fixmap.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/smp.h>
