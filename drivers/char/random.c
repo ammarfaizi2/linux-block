@@ -27,6 +27,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/uuid_api.h>
 #include <linux/topology.h>
 #include <linux/timex.h>
 #include <linux/timekeeping.h>

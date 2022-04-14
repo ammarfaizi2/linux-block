@@ -14,6 +14,7 @@
  * handler for the PlatformRtMechanism subtype.
  *
  */
+#include <linux/uuid_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/efi.h>

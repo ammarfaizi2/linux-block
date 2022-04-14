@@ -16,6 +16,7 @@
  *   Author: Huang Ying <ying.huang@intel.com>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/msr.h>
 #include <linux/export.h>

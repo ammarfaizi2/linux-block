@@ -13,6 +13,7 @@
  *	Greg Kroah-Hartman	<greg@kroah.com>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

@@ -8,6 +8,7 @@
  *   K. Y. Srinivasan <kys@microsoft.com>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

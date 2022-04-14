@@ -3,6 +3,7 @@
  * Copyright (C) 2018-2019 Linaro Ltd.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/of.h>

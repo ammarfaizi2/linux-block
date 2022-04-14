@@ -8,6 +8,7 @@
  * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/property.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

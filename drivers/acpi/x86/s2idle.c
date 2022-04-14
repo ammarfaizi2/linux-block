@@ -15,6 +15,7 @@
  * mode accordingly.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/slab.h>
 #include <linux/capability.h>
 #include <linux/acpi.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2021, Intel Corporation.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/slab.h>
 #include <linux/acpi.h>
 #include <linux/kobject.h>

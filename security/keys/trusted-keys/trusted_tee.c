@@ -6,6 +6,7 @@
  * Sumit Garg <sumit.garg@linaro.org>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/device/driver.h>
 #include <linux/err.h>
 #include <linux/key-type.h>

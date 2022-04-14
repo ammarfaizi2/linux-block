@@ -20,6 +20,7 @@
 #include "xfs_log_priv.h"
 #include "xfs_error.h"
 
+#include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/fs_api_sb.h>

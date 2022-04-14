@@ -6,6 +6,7 @@
  *	Huang Ying <ying.huang@intel.com>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/kernel.h>
 #include <linux/ctype.h>
 #include <linux/errno.h>

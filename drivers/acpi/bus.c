@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/uuid_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

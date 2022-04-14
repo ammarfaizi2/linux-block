@@ -12,6 +12,7 @@
  * Specification version 2.4.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sizes.h>
 #include <linux/ktime_api.h>

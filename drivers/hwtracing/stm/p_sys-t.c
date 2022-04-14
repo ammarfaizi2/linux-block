@@ -4,6 +4,7 @@
  * Copyright (c) 2018, Intel Corporation.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/timekeeping.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

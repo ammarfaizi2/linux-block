@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2002,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/uuid_api.h>
 #include <linux/slab.h>
 #include <linux/sched/task_flags.h>
 

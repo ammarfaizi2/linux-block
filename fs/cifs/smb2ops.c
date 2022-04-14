@@ -5,6 +5,7 @@
  *  Copyright (c) 2012, Jeff Layton <jlayton@redhat.com>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

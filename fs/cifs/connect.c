@@ -5,6 +5,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/uuid_api.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

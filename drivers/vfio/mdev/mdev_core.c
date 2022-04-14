@@ -7,6 +7,7 @@
  *             Kirti Wankhede <kwankhede@nvidia.com>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/rwsem.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>

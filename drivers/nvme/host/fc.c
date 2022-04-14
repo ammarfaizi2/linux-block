@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Avago Technologies.  All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/uuid_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

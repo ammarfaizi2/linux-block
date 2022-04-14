@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/user.h>
 #include <linux/sched.h>

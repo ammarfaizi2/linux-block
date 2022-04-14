@@ -14,6 +14,7 @@
  * corresponding subsystems, but most of it is here.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

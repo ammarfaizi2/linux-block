@@ -5,6 +5,7 @@
  * All rights reserved.
  */
 
+#include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/atomic_api.h>

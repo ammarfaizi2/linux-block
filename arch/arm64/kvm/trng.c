@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2020 Arm Ltd.
 
+#include <linux/uuid_api.h>
 #include <linux/random.h>
 #include <linux/bitmap.h>
 #include <linux/arm-smccc.h>

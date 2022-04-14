@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018, Advanced Micro Devices, Inc.
 
+#include <linux/uuid_api.h>
 #include <linux/prefetch.h>
 #include <linux/cper.h>
 #include <linux/acpi.h>

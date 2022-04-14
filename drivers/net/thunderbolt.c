@@ -8,6 +8,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/uuid_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
