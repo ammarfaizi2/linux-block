@@ -7,6 +7,7 @@
 #ifndef __iwl_fw_file_h__
 #define __iwl_fw_file_h__
 
+#include <linux/bug.h>
 #include <linux/netdevice.h>
 #include <linux/nl80211.h>
 

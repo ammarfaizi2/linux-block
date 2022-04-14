@@ -12,6 +12,7 @@
 #ifndef _LINUX_PM_QOS_H
 #define _LINUX_PM_QOS_H
 
+#include <linux/bug.h>
 #include <linux/plist.h>
 #include <linux/notifier.h>
 #include <linux/device.h>

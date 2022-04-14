@@ -24,6 +24,7 @@
 #ifndef DRM_MODESET_LOCK_H_
 #define DRM_MODESET_LOCK_H_
 
+#include <linux/bug.h>
 #include <linux/types.h> /* stackdepot.h is not self-contained */
 #include <linux/stackdepot.h>
 #include <linux/ww_mutex.h>

@@ -16,6 +16,7 @@
  * abuse. The only function which is relevant for drivers is msi_get_virq().
  */
 
+#include <linux/bug.h>
 #include <linux/cpumask.h>
 #include <linux/xarray.h>
 #include <linux/mutex.h>

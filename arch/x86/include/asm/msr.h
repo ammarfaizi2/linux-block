@@ -6,6 +6,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/bug.h>
 #include <asm/asm.h>
 #include <asm/errno.h>
 #include <uapi/asm/msr.h>

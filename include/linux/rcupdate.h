@@ -20,6 +20,7 @@
 #ifndef __LINUX_RCUPDATE_H
 #define __LINUX_RCUPDATE_H
 
+#include <linux/bug.h>
 #include <linux/types.h>
 #include <linux/compiler.h>
 #include <linux/atomic.h>
