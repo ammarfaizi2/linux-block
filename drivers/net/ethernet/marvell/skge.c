@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/pm_wakeup.h>
 #include <linux/notifier_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>

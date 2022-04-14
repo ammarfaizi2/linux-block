@@ -17,6 +17,7 @@
  * Based on "ehci-fsl.c" and "ehci-au1xxx.c" ehci glue layers
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

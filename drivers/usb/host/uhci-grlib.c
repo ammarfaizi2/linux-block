@@ -18,6 +18,7 @@
  * (C) Copyright 2004-2007 Alan Stern, stern@rowland.harvard.edu
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

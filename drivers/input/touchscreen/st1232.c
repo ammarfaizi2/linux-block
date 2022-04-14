@@ -10,6 +10,7 @@
  *	Copyright (C) 2007 Google, Inc.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

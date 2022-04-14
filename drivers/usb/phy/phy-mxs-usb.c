@@ -5,6 +5,7 @@
  * on behalf of DENX Software Engineering GmbH
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

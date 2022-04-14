@@ -8,6 +8,7 @@
  * Based on sh_keysc.c, copyright 2008 Magnus Damm
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

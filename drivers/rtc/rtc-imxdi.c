@@ -19,6 +19,7 @@
  * not supported by the hardware.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ktime_api.h>

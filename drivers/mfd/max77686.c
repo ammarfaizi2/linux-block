@@ -8,6 +8,7 @@
 //
 //This driver is based on max8997.c
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/slab.h>

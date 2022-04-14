@@ -12,6 +12,7 @@
 /*
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

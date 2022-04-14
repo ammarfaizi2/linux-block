@@ -8,6 +8,7 @@
  * based on arch/arm/common/rtctime.c
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

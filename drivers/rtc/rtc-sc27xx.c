@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/interrupt.h>

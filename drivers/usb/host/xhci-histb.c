@@ -7,6 +7,7 @@
  * Authors: Jianguo Sun <sunjianguo1@huawei.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

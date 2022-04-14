@@ -2,6 +2,7 @@
 // Copyright (C) STMicroelectronics 2018
 // Author: Pascal Paillet <p.paillet@st.com> for STMicroelectronics.
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/input.h>

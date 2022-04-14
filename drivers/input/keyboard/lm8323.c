@@ -10,6 +10,7 @@
  * Updated by Felipe Balbi <felipe.balbi@nokia.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

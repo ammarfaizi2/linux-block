@@ -5,6 +5,7 @@
  * Copyright (c) 2017 Beckhoff Automation GmbH & Co. KG
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

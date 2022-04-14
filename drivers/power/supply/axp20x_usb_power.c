@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Bruno Prémont <bonbons@linux-vserver.org>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

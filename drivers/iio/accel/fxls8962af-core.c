@@ -12,6 +12,7 @@
  * https://www.nxp.com/docs/en/errata/ES_FXLS8962AF.pdf
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

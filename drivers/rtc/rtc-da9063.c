@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2015  Dialog Semiconductor Ltd.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

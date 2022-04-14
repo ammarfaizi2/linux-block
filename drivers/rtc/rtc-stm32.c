@@ -4,6 +4,7 @@
  * Author:  Amelie Delaunay <amelie.delaunay@st.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>

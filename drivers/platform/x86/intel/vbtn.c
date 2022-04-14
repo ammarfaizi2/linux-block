@@ -6,6 +6,7 @@
  *  Copyright (C) 2016 Alex Hung <alex.hung@canonical.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>

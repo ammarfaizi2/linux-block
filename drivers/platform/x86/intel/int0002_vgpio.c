@@ -27,6 +27,7 @@
  * for a real GPIO controller.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/bitmap.h>

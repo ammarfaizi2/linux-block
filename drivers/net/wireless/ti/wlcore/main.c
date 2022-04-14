@@ -6,6 +6,7 @@
  * Copyright (C) 2011-2013 Texas Instruments Inc.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

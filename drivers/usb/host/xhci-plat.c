@@ -8,6 +8,7 @@
  * A lot of code borrowed from the Linux xHCI driver.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api.h>

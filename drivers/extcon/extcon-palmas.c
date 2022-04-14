@@ -9,6 +9,7 @@
  * Author: Hema HK <hemahk@ti.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

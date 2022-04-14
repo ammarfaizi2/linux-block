@@ -12,6 +12,7 @@
  * and "ohci-ppc-of.c" by Sylvain Munaut <tnt@246tNt.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

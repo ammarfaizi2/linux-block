@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2015 Microchip Technology
  */
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>

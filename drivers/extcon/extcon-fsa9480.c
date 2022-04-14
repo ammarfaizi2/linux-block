@@ -7,6 +7,7 @@
  * Loosely based on old fsa9480 misc-device driver.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

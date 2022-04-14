@@ -8,6 +8,7 @@
  * Based on the SuperH Ethernet driver
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>

@@ -32,6 +32,7 @@
 #define FORCEDETH_VERSION		"0.64"
 #define DRV_NAME			"forcedeth"
 
+#include <linux/pm_wakeup.h>
 #include <linux/percpu.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api_lock.h>

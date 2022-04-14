@@ -12,6 +12,7 @@
  *
  * Author: John Stultz <john.stultz@linaro.org>
  */
+#include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device/class.h>

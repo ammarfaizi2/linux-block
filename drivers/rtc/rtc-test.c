@@ -5,6 +5,7 @@
  * Author: Alessandro Zummo <a.zummo@towertech.it>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

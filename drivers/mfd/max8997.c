@@ -7,6 +7,7 @@
 //
 // This driver is based on max8998.c
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

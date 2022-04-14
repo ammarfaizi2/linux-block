@@ -11,6 +11,7 @@
 // it cannot be easily upgraded and EC flash/IRAM space is relatively
 // expensive.
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/minmax.h>

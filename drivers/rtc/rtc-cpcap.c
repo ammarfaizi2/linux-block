@@ -14,6 +14,7 @@
  *
  * Copyright (C) 2017 Sebastian Reichel <sre@kernel.org>
  */
+#include <linux/pm_wakeup.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

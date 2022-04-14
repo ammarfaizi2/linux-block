@@ -9,6 +9,7 @@
 
 #define dev_fmt(fmt) "PME: " fmt
 
+#include <linux/pm_wakeup.h>
 #include <linux/hardirq.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

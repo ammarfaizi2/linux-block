@@ -9,6 +9,7 @@
  * Copyright (C) 2018 Lubomir Rintel <lkundrak@v3.sk>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>

@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "ACPI: PM: " fmt
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>

@@ -7,6 +7,7 @@
  * Author: Pradeep Goudagunta <pgoudagunta@nvidia.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

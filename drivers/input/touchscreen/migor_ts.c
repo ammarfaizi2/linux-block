@@ -6,6 +6,7 @@
  * Copyright (c) 2007 Ujjwal Pande <ujjwal@kenati.com>,
  *  Kenati Technologies Pvt Ltd.
  */
+#include <linux/pm_wakeup.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/input.h>

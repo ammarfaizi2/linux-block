@@ -7,6 +7,7 @@
  * Based on rtc-at91rm9200.c by Rick Bronson
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

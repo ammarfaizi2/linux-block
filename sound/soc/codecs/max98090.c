@@ -5,6 +5,7 @@
  * Copyright 2011-2012 Maxim Integrated Products
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

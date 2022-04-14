@@ -7,6 +7,7 @@
  * Author: Laxman Dewangan <ldewangan@nvidia.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

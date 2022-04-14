@@ -4,6 +4,7 @@
 // Copyright (C) 2017 Google, Inc.
 // Author: Stephen Barber <smbarber@chromium.org>
 
+#include <linux/pm_wakeup.h>
 #include <linux/notifier_api.h>
 #include <linux/interrupt.h>
 #include <linux/fs_api.h>

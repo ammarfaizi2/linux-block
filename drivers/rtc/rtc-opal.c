@@ -8,6 +8,7 @@
 
 #define DRVNAME		"rtc-opal"
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/err.h>

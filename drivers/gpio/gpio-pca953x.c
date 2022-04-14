@@ -8,6 +8,7 @@
  *  Derived from drivers/i2c/chips/pca9539.c
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>

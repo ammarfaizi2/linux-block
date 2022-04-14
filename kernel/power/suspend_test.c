@@ -5,6 +5,7 @@
  * Copyright (c) 2009 Pavel Machek <pavel@ucw.cz>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

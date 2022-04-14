@@ -5,6 +5,7 @@
  * Author:     Linux qlge network device driver by
  *                      Ron Mercer <ron.mercer@qlogic.com>
  */
+#include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

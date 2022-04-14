@@ -6,6 +6,7 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

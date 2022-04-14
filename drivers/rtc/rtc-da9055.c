@@ -7,6 +7,7 @@
  * Author: Dajun Dajun Chen <dajun.chen@diasemi.com>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

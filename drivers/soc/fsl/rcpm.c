@@ -6,6 +6,7 @@
 //
 // Author: Ran Wang <ran.wang_1@nxp.com>
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

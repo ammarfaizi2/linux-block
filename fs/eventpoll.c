@@ -6,6 +6,7 @@
  *  Davide Libenzi <davidel@xmailserver.org>
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>

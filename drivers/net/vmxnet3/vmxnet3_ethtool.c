@@ -26,6 +26,7 @@
 
 
 #include "vmxnet3_int.h"
+#include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>

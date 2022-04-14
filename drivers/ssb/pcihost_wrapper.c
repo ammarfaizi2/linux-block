@@ -11,6 +11,7 @@
  * Licensed under the GNU/GPL. See COPYING for details.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api.h>
 #include <linux/pm.h>
 #include <linux/pci.h>

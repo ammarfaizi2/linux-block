@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2016, Intel Corporation.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/acpi.h>
 #include <linux/module.h>

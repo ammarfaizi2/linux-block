@@ -16,6 +16,7 @@
  * same.
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>
