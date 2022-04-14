@@ -14,6 +14,7 @@
  * Copyright (C) 2009 Igor M. Liplianin <liplianin@me.by>
  */
 
+#include <media/dvbdev.h>
 #include <linux/delay.h>
 
 #include "cx23885.h"

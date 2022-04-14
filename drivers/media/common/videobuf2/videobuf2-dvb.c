@@ -9,6 +9,7 @@
  * (c) 2004 Gerd Knorr <kraxel@bytesex.org> [SUSE Labs]
  */
 
+#include <media/dvbdev.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

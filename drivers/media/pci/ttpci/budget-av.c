@@ -29,6 +29,7 @@
 #include "tda1004x.h"
 #include "tua6100.h"
 #include "dvb-pll.h"
+#include <media/dvbdev.h>
 #include <linux/i2c.h>
 #include <linux/fs.h>
 #include <linux/export.h>

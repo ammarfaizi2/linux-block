@@ -8,6 +8,7 @@
  * Based on the example driver written by Emard <emard@softhome.net>
  */
 
+#include <media/dvbdev.h>
 #include <linux/errno.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

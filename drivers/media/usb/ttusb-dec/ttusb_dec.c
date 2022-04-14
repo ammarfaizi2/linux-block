@@ -6,6 +6,7 @@
  * IR support by Peter Beutner <p.beutner@gmx.net>
  */
 
+#include <media/dvbdev.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

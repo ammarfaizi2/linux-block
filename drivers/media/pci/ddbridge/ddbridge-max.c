@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <media/dvbdev.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/module.h>

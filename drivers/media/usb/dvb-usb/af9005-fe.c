@@ -12,6 +12,7 @@
 #include "af9005-script.h"
 #include "mt2060.h"
 #include "qt1010.h"
+#include <media/dvbdev.h>
 #include <linux/slab.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

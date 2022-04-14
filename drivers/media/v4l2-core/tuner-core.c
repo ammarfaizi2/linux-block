@@ -15,6 +15,7 @@
  * handle both radio and analog TV tuning.
  */
 
+#include <media/dvbdev.h>
 #include <linux/kmod.h>
 #include <linux/capability.h>
 #include <linux/module.h>

@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <media/dvbdev.h>
 #include <linux/slab.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>

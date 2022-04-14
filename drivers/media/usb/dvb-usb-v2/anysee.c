@@ -18,6 +18,7 @@
  * is highly welcome!
  */
 
+#include <media/dvbdev.h>
 #include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

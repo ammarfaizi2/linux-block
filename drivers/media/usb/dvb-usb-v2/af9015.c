@@ -7,6 +7,7 @@
  * Thanks to Afatech who kindly provided information.
  */
 
+#include <media/dvbdev.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>

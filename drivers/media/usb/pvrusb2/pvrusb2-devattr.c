@@ -13,6 +13,7 @@ pvr2_device_desc structures.
 */
 
 #include "pvrusb2-devattr.h"
+#include <media/dvbdev.h>
 #include <linux/kmod.h>
 #include <linux/usb.h>
 #include <linux/module.h>

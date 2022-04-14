@@ -10,6 +10,7 @@
  * Copyright (C) 2020 Daniel W. S. Almeida
  */
 
+#include <media/dvbdev.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/i2c.h>

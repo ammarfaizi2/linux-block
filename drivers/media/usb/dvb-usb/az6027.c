@@ -14,6 +14,7 @@
 
 #include "stb6100.h"
 #include "stb6100_cfg.h"
+#include <media/dvbdev.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

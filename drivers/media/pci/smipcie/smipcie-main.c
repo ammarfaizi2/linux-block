@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Max nibble <nibble.max@gmail.com>
  */
 
+#include <media/dvbdev.h>
 #include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>
 #include <linux/slab.h>

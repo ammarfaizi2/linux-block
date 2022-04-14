@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <media/dvbdev.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>

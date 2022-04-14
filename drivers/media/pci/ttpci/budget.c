@@ -17,6 +17,7 @@
  * the project's page is at https://linuxtv.org
  */
 
+#include <media/dvbdev.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Thomas Mair <thomas.mair86@googlemail.com>
  */
 
+#include <media/dvbdev.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>

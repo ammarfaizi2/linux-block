@@ -4,6 +4,7 @@
  * flexcop-fe-tuner.c - methods for frontend attachment and DiSEqC controlling
  * see flexcop.c for copyright information
  */
+#include <media/dvbdev.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>

@@ -8,6 +8,7 @@
 #include "cx23885.h"
 #include "cx23885-video.h"
 
+#include <media/dvbdev.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

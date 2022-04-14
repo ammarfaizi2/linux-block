@@ -5,6 +5,7 @@
  *  Copyright (C) 2007 Michel Ludwig <michel.ludwig@gmail.com>
  */
 
+#include <media/dvbdev.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>

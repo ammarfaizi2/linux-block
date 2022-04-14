@@ -7,6 +7,7 @@
 
 #include "cx23885.h"
 
+#include <media/dvbdev.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

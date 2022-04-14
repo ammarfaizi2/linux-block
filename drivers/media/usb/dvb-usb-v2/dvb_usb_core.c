@@ -7,6 +7,7 @@
  */
 
 #include "dvb_usb_common.h"
+#include <media/dvbdev.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/slab.h>

@@ -8,6 +8,7 @@
  * linux-dvb API.
  */
 #include "dvb-usb-common.h"
+#include <media/dvbdev.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <media/media-device.h>
