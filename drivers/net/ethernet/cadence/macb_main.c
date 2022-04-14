@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <uapi/linux/in.h>
 #include <net/rtnetlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>

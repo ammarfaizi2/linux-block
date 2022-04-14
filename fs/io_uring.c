@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <uapi/linux/in.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

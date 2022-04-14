@@ -7,6 +7,7 @@
  * Copyright (c) 2020 Microsemi Corporation
  */
 
+#include <uapi/linux/in.h>
 #include <linux/uaccess.h>
 #include <linux/time64_api.h>
 #include <linux/netdevice_api.h>

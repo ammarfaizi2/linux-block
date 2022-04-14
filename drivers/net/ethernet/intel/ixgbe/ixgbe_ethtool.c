@@ -3,6 +3,7 @@
 
 /* ethtool support for ixgbe */
 
+#include <uapi/linux/in.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>

@@ -16,6 +16,7 @@
  *
  */
 
+#include <uapi/linux/in.h>
 #include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>

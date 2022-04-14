@@ -5,6 +5,7 @@
  * Copyright (c) 2003-2010 Cavium Networks
  */
 
+#include <uapi/linux/in.h>
 #include <net/ipv6_types.h>
 #include <net/dst_api.h>
 #include <linux/tcp.h>

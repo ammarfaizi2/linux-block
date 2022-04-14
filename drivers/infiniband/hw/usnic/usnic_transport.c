@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <uapi/linux/in.h>
 #include <linux/spinlock_api.h>
 #include <linux/net.h>
 #include <linux/fs_api.h>
