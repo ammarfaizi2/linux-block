@@ -12,6 +12,7 @@
 /* debug control */
 /* #define UDC_VERBOSE */
 
+#include <linux/notifier.h>
 #include <linux/io.h>
 #include <linux/dev_printk.h>
 #include <linux/extcon.h>

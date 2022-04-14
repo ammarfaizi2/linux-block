@@ -7,6 +7,7 @@
 #ifndef VFIO_FSL_MC_PRIVATE_H
 #define VFIO_FSL_MC_PRIVATE_H
 
+#include <linux/notifier.h>
 #include <linux/types.h>
 
 #define VFIO_FSL_MC_OFFSET_SHIFT    40

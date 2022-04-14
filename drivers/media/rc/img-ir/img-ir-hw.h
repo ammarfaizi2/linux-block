@@ -8,6 +8,7 @@
 #ifndef _IMG_IR_HW_H_
 #define _IMG_IR_HW_H_
 
+#include <linux/notifier.h>
 #include <linux/kernel.h>
 #include <media/rc-core.h>
 

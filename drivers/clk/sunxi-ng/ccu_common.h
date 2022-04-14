@@ -6,6 +6,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
+#include <linux/notifier.h>
 #include <linux/compiler.h>
 #include <linux/clk-provider.h>
 

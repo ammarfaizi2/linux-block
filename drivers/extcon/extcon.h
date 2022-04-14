@@ -2,6 +2,7 @@
 #ifndef __LINUX_EXTCON_INTERNAL_H__
 #define __LINUX_EXTCON_INTERNAL_H__
 
+#include <linux/notifier.h>
 #include <linux/notifier_api.h>
 #include <linux/extcon-provider.h>
 

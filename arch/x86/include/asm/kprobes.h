@@ -9,6 +9,7 @@
  * See arch/x86/kernel/kprobes.c for x86 kprobes history.
  */
 
+#include <linux/notifier.h>
 #include <asm-generic/kprobes.h>
 
 #ifdef CONFIG_KPROBES
