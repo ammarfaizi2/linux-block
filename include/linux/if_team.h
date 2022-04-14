@@ -6,6 +6,7 @@
 #ifndef _LINUX_IF_TEAM_H_
 #define _LINUX_IF_TEAM_H_
 
+#include <net/sch_generic_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

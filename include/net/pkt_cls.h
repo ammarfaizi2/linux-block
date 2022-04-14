@@ -2,6 +2,7 @@
 #ifndef __NET_PKT_CLS_H
 #define __NET_PKT_CLS_H
 
+#include <net/sch_generic_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/pkt_cls.h>
 #include <linux/workqueue.h>
