@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/hrtimer_api.h>
 #include <asm/unaligned.h>
 
 #include "mt76x02_usb.h"

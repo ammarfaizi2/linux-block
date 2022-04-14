@@ -14,6 +14,7 @@
 	https://bugzilla.stlinux.com/
 *******************************************************************************/
 
+#include <linux/hrtimer_api.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

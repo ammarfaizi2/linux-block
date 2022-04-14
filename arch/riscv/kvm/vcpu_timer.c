@@ -6,6 +6,7 @@
  *     Atish Patra <atish.patra@wdc.com>
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <linux/kvm_host.h>

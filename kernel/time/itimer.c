@@ -5,6 +5,7 @@
 
 /* These are all the functions necessary to implement itimers */
 
+#include <linux/hrtimer_api.h>
 #include <asm/unistd.h>
 #include <linux/mm.h>
 #include <linux/interrupt.h>

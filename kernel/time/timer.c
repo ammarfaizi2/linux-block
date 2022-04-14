@@ -18,6 +18,7 @@
  *              Designed by David S. Miller, Alexey Kuznetsov and Ingo Molnar
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/debugobjects.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

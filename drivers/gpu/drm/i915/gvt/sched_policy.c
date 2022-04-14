@@ -31,6 +31,8 @@
  *
  */
 
+#include <linux/hrtimer_api.h>
+
 #include "i915_drv.h"
 #include "gvt.h"
 

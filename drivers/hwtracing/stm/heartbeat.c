@@ -7,6 +7,7 @@
  * trace host.
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/hrtimer.h>

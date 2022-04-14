@@ -2,6 +2,7 @@
 /*
  * Emulate a local clock event device via a pseudo clock device.
  */
+#include <linux/hrtimer_api.h>
 #include <linux/cpu.h>
 #include <linux/err.h>
 #include <linux/hrtimer.h>

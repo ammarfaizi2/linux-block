@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/hrtimer_api.h>
 #include <linux/compat.h>
 #include <linux/syscalls.h>
 #include <linux/time_namespace.h>

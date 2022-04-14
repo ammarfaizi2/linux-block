@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/types.h>

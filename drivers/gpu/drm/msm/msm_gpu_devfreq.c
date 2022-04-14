@@ -7,6 +7,7 @@
 #include "msm_gpu.h"
 #include "msm_gpu_trace.h"
 
+#include <linux/hrtimer_api.h>
 #include <linux/devfreq.h>
 #include <linux/devfreq_cooling.h>
 #include <linux/units.h>

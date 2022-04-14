@@ -3,6 +3,7 @@
  * Copyright(c) 2016 - 2020 Intel Corporation.
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/hash.h>

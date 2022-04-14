@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pm_runtime.h>

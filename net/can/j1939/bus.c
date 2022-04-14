@@ -10,6 +10,7 @@
  * Since rtnetlink, no real bus is used.
  */
 
+#include <linux/hrtimer_api.h>
 #include <net/sock.h>
 
 #include "j1939-priv.h"

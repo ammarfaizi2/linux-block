@@ -11,6 +11,7 @@
  *		to allow signals to be sent reliably.
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/cred.h>
 #include <linux/restart_block_api.h>
 #include <linux/slab.h>

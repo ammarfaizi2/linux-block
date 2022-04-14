@@ -13,6 +13,7 @@
  *		https://pdfserv.maximintegrated.com/en/an/AN3785.pdf
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/delay.h>

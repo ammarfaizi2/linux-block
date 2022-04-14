@@ -6,6 +6,7 @@
  * Author: Jassi Brar <jassisinghbrar@gmail.com>
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
