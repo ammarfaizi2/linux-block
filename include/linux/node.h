@@ -15,6 +15,7 @@
 #ifndef _LINUX_NODE_H_
 #define _LINUX_NODE_H_
 
+#include <linux/mmzone.h>
 #include <linux/device.h>
 #include <linux/cpumask.h>
 #include <linux/list.h>
