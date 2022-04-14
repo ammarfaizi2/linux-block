@@ -28,6 +28,7 @@
 
  */
 
+#include <linux/bvec_api.h>
 #include <linux/atomic_api.h>
 #include <linux/ceph/libceph.h>
 #include <linux/ceph/osd_client.h>

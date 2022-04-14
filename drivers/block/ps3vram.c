@@ -9,6 +9,7 @@
  * Added support RSX DMA Vivien Chappelier <vivien.chappelier@free.fr>
  */
 
+#include <linux/bvec_api.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>
 #include <linux/module.h>

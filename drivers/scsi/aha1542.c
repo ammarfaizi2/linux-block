@@ -7,6 +7,7 @@
  *  Copyright (C) 2015 Ondrej Zary
  */
 
+#include <linux/bvec_api.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

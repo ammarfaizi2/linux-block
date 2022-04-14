@@ -8,6 +8,7 @@
 #define KMSG_COMPONENT "dcssblk"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/bvec_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

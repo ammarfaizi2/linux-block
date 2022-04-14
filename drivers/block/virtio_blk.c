@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //#define DEBUG
+#include <linux/bvec_api.h>
 #include <linux/spinlock.h>
 #include <linux/slab.h>
 #include <linux/blkdev.h>
