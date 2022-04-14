@@ -10,6 +10,7 @@
  * Transmit and frame generation functions.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <linux/net.h>

@@ -23,6 +23,7 @@
 */
 
 /* Bluetooth HCI sockets. */
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched/task_stack.h>
 #include <linux/ptrace_api.h>
 #include <linux/mutex_api.h>

@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/prefetch.h>
 #include <linux/pm_wakeup.h>

@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

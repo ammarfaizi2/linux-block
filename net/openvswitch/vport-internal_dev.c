@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2012 Nicira, Inc.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>

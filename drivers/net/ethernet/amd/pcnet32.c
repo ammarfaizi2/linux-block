@@ -27,6 +27,7 @@
 #define DRV_RELDATE	"21.Apr.2008"
 #define PFX		DRV_NAME ": "
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

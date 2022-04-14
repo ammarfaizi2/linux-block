@@ -6,6 +6,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

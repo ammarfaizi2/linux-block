@@ -5,6 +5,7 @@
  * Author:     Linux qlge network device driver by
  *                      Ron Mercer <ron.mercer@qlogic.com>
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>

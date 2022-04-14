@@ -10,6 +10,7 @@
  *
  * Author:      Steven Whitehouse <steve@chygwyn.com>
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

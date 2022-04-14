@@ -70,6 +70,7 @@ static int vortex_debug = VORTEX_DEBUG;
 static int vortex_debug = 1;
 #endif
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api_lock.h>

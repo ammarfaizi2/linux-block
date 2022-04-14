@@ -10,6 +10,7 @@
  *		Derek Atkins <derek@ihtfp.com>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/seq_file_net.h>
 #include <linux/seq_file.h>
 #include <linux/refcount_api.h>

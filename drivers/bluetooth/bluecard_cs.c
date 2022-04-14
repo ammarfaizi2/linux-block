@@ -20,6 +20,7 @@
  *
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

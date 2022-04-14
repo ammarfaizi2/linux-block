@@ -4,6 +4,7 @@
  * Copyright 2007 Rusty Russell <rusty@rustcorp.com.au> IBM Corporation
  */
 //#define DEBUG
+#include <linux/skbuff_api_extra.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/net.h>

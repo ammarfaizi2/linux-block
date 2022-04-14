@@ -7,6 +7,7 @@
  *            Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/netfilter/nf_conntrack_common_api.h>

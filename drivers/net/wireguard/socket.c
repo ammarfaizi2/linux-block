@@ -9,6 +9,7 @@
 #include "queueing.h"
 #include "messages.h"
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ipv6.h>

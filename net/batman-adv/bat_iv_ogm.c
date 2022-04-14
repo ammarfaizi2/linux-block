@@ -7,6 +7,7 @@
 #include "bat_iv_ogm.h"
 #include "main.h"
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

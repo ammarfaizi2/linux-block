@@ -15,6 +15,7 @@
 #define DEBUG
 #define VERBOSE_DEBUG
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

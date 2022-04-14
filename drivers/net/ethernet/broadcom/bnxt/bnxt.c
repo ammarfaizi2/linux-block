@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

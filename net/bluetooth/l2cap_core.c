@@ -28,6 +28,7 @@
 
 /* Bluetooth L2CAP core. */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

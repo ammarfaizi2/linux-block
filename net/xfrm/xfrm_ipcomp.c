@@ -11,6 +11,7 @@
  *   - Adaptive compression.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

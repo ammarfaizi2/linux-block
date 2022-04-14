@@ -7,6 +7,7 @@
  * Copyright (C) Tomi Manninen OH2BNS (oh2bns@sral.fi)
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/netdevice_api.h>

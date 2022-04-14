@@ -16,6 +16,7 @@
  *   Copyright (C) 2007 David Sterba
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

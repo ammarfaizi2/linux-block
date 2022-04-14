@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Stephan Gerhold <stephan@gerhold.net>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/atomic_api.h>
 
 #include "decl.h"

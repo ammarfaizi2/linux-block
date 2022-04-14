@@ -75,6 +75,7 @@ static char *media[MAX_UNITS];
 #define PKT_BUF_SZ		1536	/* Size of each temporary Rx buffer.*/
 
 /* Include files, designed to support most kernel versions 2.0.0 and later. */
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>

@@ -24,6 +24,8 @@
  *					windows driver.
  *
  ******************************************************************************/
+#include <linux/skbuff_api_extra.h>
+
 #include "r8192U.h"
 #include "r819xU_cmdpkt.h"
 

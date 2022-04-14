@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netlink.h>

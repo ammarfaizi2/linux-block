@@ -4,6 +4,7 @@
  *  Copyright (c) 2015 FUJITSU LIMITED
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/prefetch.h>
 #include <linux/netdevice_api_lock.h>

@@ -37,6 +37,7 @@
 
 *******************************************************************************/
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/signal_types.h>
 #include <linux/filter_api.h>
 #include <linux/atomic_api.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2001-2003 Ilya Volynets
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api.h>

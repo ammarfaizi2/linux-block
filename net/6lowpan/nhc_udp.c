@@ -10,6 +10,8 @@
  *	Jon Smirl <jonsmirl@gmail.com>
  */
 
+#include <linux/skbuff_api_extra.h>
+
 #include "nhc.h"
 
 #define LOWPAN_NHC_UDP_MASK		0xF8

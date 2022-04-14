@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

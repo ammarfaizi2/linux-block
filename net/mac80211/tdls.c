@@ -9,6 +9,7 @@
  * Copyright (C) 2019, 2021 Intel Corporation
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

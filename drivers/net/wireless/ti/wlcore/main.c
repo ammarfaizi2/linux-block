@@ -6,6 +6,7 @@
  * Copyright (C) 2011-2013 Texas Instruments Inc.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/pm_wakeup.h>

@@ -5,6 +5,7 @@
  * Author:     Luis Carlos Cobo <luisca@cozybit.com>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>

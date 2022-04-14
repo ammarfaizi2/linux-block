@@ -5,6 +5,7 @@
  * -------------------------------------------------------------------------
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

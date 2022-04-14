@@ -8,6 +8,7 @@
  */
 
 #define pr_fmt(fmt) "(stk) :" fmt
+#include <linux/skbuff_api_extra.h>
 #include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/jiffies.h>

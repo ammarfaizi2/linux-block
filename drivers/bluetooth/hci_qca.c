@@ -15,6 +15,7 @@
  *  by Maxim Krasnyansky and Marcel Holtmann.
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>

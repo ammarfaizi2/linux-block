@@ -6,6 +6,7 @@
  * Author: Asias He <asias@redhat.com>
  *         Stefan Hajnoczi <stefanha@redhat.com>
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>

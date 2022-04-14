@@ -66,6 +66,7 @@
  *					Vinay Kulkarni
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/seq_file_net.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2011 Eric Dumazet <eric.dumazet@gmail.com>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/module.h>
 #include <linux/types.h>

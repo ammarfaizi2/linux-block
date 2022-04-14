@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2017 Pengutronix, Juergen Borleis <jbe@pengutronix.de>
  */
+#include <linux/skbuff_api_extra.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dsa/lan9303.h>

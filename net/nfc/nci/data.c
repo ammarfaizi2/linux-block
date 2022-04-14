@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>
 #include <linux/wait.h>

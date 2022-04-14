@@ -26,6 +26,7 @@
 
 #undef DEBUG
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api_lock.h>
