@@ -2,6 +2,7 @@
 #ifndef _LINUX_VIRTIO_CONFIG_H
 #define _LINUX_VIRTIO_CONFIG_H
 
+#include <linux/bits.h>
 #include <linux/err.h>
 #include <linux/bug.h>
 #include <linux/virtio.h>

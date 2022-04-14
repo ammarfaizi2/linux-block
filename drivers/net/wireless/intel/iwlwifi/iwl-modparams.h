@@ -5,6 +5,7 @@
 #ifndef __iwl_modparams_h__
 #define __iwl_modparams_h__
 
+#include <linux/bits.h>
 #include <linux/types.h>
 #include <linux/spinlock.h>
 #include <linux/gfp.h>
