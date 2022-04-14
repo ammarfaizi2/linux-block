@@ -5,6 +5,7 @@
 #if !defined(_TRACE_XDP_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_XDP_H
 
+#include <linux/filter_api.h>
 #include <linux/netdevice.h>
 #include <linux/filter.h>
 #include <linux/tracepoint.h>
