@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/hashtable_types.h>
 #include <linux/atomic.h>
 #include <linux/seqlock.h>
 #include <linux/win_minmax.h>
