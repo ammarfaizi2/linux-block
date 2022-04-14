@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/bug.h>
 #include <asm/cpu_device_id.h>
 #include <asm/imr.h>
 #include <asm/io.h>

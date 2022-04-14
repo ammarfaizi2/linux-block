@@ -7,6 +7,7 @@
  * Author: MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
+#include <linux/bug.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/devfreq.h>
