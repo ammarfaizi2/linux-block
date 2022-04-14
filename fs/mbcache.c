@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/shrinker.h>
 #include <linux/list_bl_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
