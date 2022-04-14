@@ -2,6 +2,7 @@
 #ifndef _RAID1_H
 #define _RAID1_H
 
+#include <linux/hashtable_api.h>
 #include <linux/types.h>
 
 /*
