@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "dvbdev: " fmt
 
+#include <linux/kmod.h>
 #include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/device/class.h>

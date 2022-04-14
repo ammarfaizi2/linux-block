@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Paul Mackerras, IBM Corp. <paulus@samba.org>
  * Copyright (C) 2006 Benjamin Herrenschmidt, IBM Corp.
  */
+#include <linux/kmod.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

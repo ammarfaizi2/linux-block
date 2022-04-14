@@ -14,6 +14,7 @@
  * Copyright (c) 2015 by Kamil Debski
  */
 
+#include <linux/kmod.h>
 #include <media/rc-map.h>
 #include <linux/module.h>
 

@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/kmod.h>
 #include <linux/module.h>
 
 #include <drm/drm_encoder_slave.h>

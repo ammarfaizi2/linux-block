@@ -11,6 +11,7 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/kmod.h>
 #include <linux/export.h>
 
 #include "gp8psk.h"

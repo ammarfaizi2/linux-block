@@ -7,6 +7,7 @@
 
 #include "dm-exception-store.h"
 
+#include <linux/kmod.h>
 #include <linux/ctype.h>
 #include <linux/mm.h>
 #include <linux/pagemap.h>

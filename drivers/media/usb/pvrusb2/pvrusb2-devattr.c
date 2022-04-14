@@ -13,6 +13,7 @@ pvr2_device_desc structures.
 */
 
 #include "pvrusb2-devattr.h"
+#include <linux/kmod.h>
 #include <linux/usb.h>
 #include <linux/module.h>
 /* This is needed in order to pull in tuner type ids... */

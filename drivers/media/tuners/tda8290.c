@@ -8,6 +8,7 @@
    This "tda8290" module was split apart from the original "tuner" module.
 */
 
+#include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

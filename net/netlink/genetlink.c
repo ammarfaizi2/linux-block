@@ -7,6 +7,7 @@
  *				Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/kmod.h>
 #include <linux/idr_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

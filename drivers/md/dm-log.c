@@ -5,6 +5,7 @@
  * This file is released under the LGPL.
  */
 
+#include <linux/kmod.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>

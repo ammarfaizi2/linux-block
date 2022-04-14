@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/kmod.h>
 #include <linux/module.h>
 
 #include <drm/drm_print.h>

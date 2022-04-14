@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
+#include <linux/kmod.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice.h>
 #include <linux/if.h>

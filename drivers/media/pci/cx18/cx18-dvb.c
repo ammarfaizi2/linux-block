@@ -19,6 +19,7 @@
 #include "tda18271.h"
 #include "zl10353.h"
 
+#include <linux/kmod.h>
 #include <linux/export.h>
 #include <linux/firmware.h>
 #include "mt352.h"

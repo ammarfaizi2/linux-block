@@ -18,6 +18,7 @@
  * See Documentation/fault-injection/provoke-crashes.rst for instructions
  */
 #include "lkdtm.h"
+#include <linux/kmod.h>
 #include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

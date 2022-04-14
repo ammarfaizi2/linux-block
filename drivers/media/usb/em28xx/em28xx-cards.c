@@ -21,6 +21,7 @@
 
 #include "em28xx.h"
 
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>

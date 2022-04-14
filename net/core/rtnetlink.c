@@ -12,6 +12,7 @@
  *	Vitaly E. Lavrov		RTA_OK arithmetic was wrong.
  */
 
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/if_link.h>
 #include <linux/etherdevice_api.h>

@@ -10,6 +10,7 @@
  *          Rémi Denis-Courmont
  */
 
+#include <linux/kmod.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/kmod.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/ulpi/interface.h>

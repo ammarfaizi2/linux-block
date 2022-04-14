@@ -4,6 +4,7 @@
  * Copyright (c) Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/kmod.h>
 #include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>

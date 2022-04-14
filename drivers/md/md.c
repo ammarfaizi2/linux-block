@@ -37,6 +37,7 @@
 
 */
 
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

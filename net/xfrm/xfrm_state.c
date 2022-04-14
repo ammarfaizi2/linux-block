@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/hrtimer_api.h>

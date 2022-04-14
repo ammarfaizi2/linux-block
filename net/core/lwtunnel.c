@@ -5,6 +5,7 @@
  * Authors:	Roopa Prabhu, <roopa@cumulusnetworks.com>
  */
 
+#include <linux/kmod.h>
 #include <linux/atomic_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

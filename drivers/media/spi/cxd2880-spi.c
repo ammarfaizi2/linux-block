@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
+#include <linux/kmod.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/spi/spi.h>

@@ -5,6 +5,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/delay.h>

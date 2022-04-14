@@ -5,6 +5,7 @@
  *  Copyright (C) 2007 Michel Ludwig <michel.ludwig@gmail.com>
  */
 
+#include <linux/kmod.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

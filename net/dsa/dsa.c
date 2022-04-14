@@ -5,6 +5,7 @@
  * Copyright (c) 2013 Florian Fainelli <florian@openwrt.org>
  */
 
+#include <linux/kmod.h>
 #include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device/class.h>

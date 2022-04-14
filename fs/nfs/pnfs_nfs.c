@@ -8,6 +8,7 @@
  * Tom Haynes <loghyr@primarydata.com>
  */
 
+#include <linux/kmod.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/nfs_fs.h>

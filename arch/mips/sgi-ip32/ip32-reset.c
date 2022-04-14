@@ -8,6 +8,7 @@
  * Copyright (C) 2003 Guido Guenther <agx@sigxcpu.org>
  */
 
+#include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/compiler.h>
 #include <linux/init.h>

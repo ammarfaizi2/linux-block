@@ -9,6 +9,7 @@
  * Path selector registration.
  */
 
+#include <linux/kmod.h>
 #include <linux/device-mapper.h>
 #include <linux/module.h>
 

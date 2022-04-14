@@ -24,6 +24,7 @@
 
 /* Bluetooth address family and sockets. */
 
+#include <linux/kmod.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/debugfs.h>

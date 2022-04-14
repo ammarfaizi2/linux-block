@@ -30,6 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/kmod.h>
 #include <linux/kdev_t.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

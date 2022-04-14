@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/kmod.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/in.h>

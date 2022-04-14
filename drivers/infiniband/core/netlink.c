@@ -33,6 +33,7 @@
 
 #define pr_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
 
+#include <linux/kmod.h>
 #include <linux/capability.h>
 #include <linux/export.h>
 #include <net/netlink.h>
