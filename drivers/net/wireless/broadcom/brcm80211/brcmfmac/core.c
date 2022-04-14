@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Broadcom Corporation
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_ether_api.h>

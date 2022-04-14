@@ -32,6 +32,7 @@
 
 #include "core_priv.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/in.h>
 #include <linux/in6.h>

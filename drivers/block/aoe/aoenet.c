@@ -4,6 +4,7 @@
  * Ethernet portion of AoE driver
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/gfp.h>
 #include <linux/hdreg.h>
 #include <linux/blkdev.h>

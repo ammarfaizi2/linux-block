@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/hash.h>
 #include "ipoib.h"

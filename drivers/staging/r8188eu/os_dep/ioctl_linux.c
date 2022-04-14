@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2007 - 2012 Realtek Corporation. */
 
+#include <linux/netdevice_api.h>
 #include <linux/delay.h>
 
 #include "../include/osdep_service.h"

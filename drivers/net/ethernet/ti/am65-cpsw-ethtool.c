@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/net_tstamp.h>
 #include <linux/phylink.h>
 #include <linux/platform_device.h>

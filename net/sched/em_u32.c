@@ -8,6 +8,7 @@
  * Based on net/sched/cls_u32.c
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

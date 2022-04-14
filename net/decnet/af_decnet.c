@@ -91,6 +91,7 @@ Version 0.0.6    2.1.110   07-aug-98   Eduardo Marcelo Serrat
 				       dn_bind fixes
 *******************************************************************************/
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
 #define KMSG_COMPONENT "qeth"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/netdevice_api.h>
 #include <linux/ethtool.h>
 #include "qeth_core.h"
 

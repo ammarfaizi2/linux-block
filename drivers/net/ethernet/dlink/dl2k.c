@@ -8,6 +8,7 @@
 */
 
 #include "dl2k.h"
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

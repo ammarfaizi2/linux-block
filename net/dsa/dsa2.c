@@ -6,6 +6,7 @@
  * Copyright (c) 2016 Andrew Lunn <andrew@lunn.ch>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/bitmap.h>

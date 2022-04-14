@@ -54,6 +54,7 @@
  * 	      only available if that subsystem is enabled in the kernel.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>

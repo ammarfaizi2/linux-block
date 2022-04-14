@@ -25,6 +25,7 @@
 
 /*****************************************************************************/
 
+#include <linux/netdevice_api.h>
 #include <linux/capability.h>
 #include <asm/cpufeature.h>
 #include <linux/crc-ccitt.h>

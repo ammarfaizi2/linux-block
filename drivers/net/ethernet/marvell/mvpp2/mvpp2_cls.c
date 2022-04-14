@@ -7,6 +7,7 @@
  * Marcin Wojtas <mw@semihalf.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 

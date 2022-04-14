@@ -10,6 +10,7 @@
  *  distribution for more details.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>

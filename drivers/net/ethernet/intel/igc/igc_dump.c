@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c)  2018 Intel Corporation */
 
+#include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/dma-mapping.h>
 

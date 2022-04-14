@@ -15,6 +15,7 @@
  * none of the bugs are Pavel's now.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>

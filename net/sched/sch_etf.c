@@ -6,6 +6,7 @@
  *		Vinicius Costa Gomes <vinicius.gomes@intel.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/module.h>
 #include <linux/types.h>

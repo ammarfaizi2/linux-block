@@ -9,6 +9,7 @@
 #include "pwrseqcmd.h"
 
 #include "btcoexist/rtl_btc.h"
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

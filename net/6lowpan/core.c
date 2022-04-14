@@ -5,6 +5,7 @@
  * (C) 2015 Pengutronix, Alexander Aring <aar@pengutronix.de>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kmod.h>
 #include <linux/if_arp.h>
 #include <linux/module.h>

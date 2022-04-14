@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

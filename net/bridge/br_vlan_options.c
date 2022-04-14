@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2020, Nikolay Aleksandrov <nikolay@cumulusnetworks.com>
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>

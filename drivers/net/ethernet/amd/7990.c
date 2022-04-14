@@ -13,6 +13,7 @@
  * most of a2025 and sunlance with the aim of merging them, so the
  * common code was pretty obvious.
  */
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/crc32.h>
 #include <linux/delay.h>

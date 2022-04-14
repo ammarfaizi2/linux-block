@@ -3,6 +3,7 @@
 
 /* ethtool support for i40e */
 
+#include <linux/netdevice_api.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 

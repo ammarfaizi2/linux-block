@@ -16,6 +16,7 @@
  *		Jes Sorensen, <Jes.Sorensen@cern.ch>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

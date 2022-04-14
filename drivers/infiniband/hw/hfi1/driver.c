@@ -4,6 +4,7 @@
  * Copyright(c) 2021 Cornelis Networks.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/netdevice_api.h>
 #include <linux/delay.h>
 #include <drv_types.h>
 #include <rtw_debug.h>

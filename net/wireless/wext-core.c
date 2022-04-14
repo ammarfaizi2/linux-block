@@ -7,6 +7,7 @@
  *
  * (As all part of the Linux kernel, this file is GPL)
  */
+#include <linux/netdevice_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>

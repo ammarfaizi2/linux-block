@@ -4,6 +4,7 @@
  * Copyright (c) 2013 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/module.h>

@@ -37,6 +37,7 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>

@@ -3,6 +3,7 @@
  *
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>

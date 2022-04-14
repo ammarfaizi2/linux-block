@@ -14,6 +14,7 @@
 #include "aq_filters.h"
 #include "aq_macsec.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/ptp_clock_kernel.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2009 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

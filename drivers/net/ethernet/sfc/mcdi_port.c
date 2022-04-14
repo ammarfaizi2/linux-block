@@ -8,6 +8,7 @@
  * Driver for PHY related operations via MCDI.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/slab.h>
 #include "efx.h"
 #include "mcdi_port.h"

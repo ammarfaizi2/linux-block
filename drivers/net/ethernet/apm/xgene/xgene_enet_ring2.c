@@ -5,6 +5,7 @@
  * Author: Iyappan Subramanian <isubramanian@apm.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 
 #include "xgene_enet_main.h"

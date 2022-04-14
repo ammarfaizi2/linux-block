@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2017-2018 Mellanox Technologies. All rights reserved */
 
+#include <linux/netdevice_api.h>
 #include <net/ip_tunnels.h>
 #include <net/ip6_tunnel.h>
 #include <net/inet_ecn.h>

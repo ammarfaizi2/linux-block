@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Linux Foundation
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

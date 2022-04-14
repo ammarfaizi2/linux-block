@@ -7,6 +7,7 @@
  * Based on: net/wireless/nl80211.c
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/rtnetlink.h>
 
 #include <net/cfg802154.h>

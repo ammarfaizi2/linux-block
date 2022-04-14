@@ -7,6 +7,7 @@
  * Author: Michael S. Tsirkin <mst@redhat.com>
 */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 

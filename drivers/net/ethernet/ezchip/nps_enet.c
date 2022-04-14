@@ -3,6 +3,7 @@
  * Copyright(c) 2015 EZchip Technologies.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

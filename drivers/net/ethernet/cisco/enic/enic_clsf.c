@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/if.h>
 #include <linux/if_ether.h>

@@ -25,6 +25,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 #include <linux/etherdevice.h>

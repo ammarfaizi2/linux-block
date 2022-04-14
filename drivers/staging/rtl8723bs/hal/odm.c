@@ -5,6 +5,8 @@
  *
  ******************************************************************************/
 
+#include <linux/netdevice_api.h>
+
 #include "odm_precomp.h"
 
 /*  Global var */

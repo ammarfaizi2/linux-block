@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/netdevice_api.h>
+
 #include "htc.h"
 
 #define FUDGE 2

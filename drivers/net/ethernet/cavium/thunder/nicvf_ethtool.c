@@ -5,6 +5,7 @@
 
 /* ETHTOOL Support for VNIC_VF Device*/
 
+#include <linux/netdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/ethtool.h>
 #include <linux/pci.h>

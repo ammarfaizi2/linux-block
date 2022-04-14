@@ -15,6 +15,7 @@
 #include "main.h"
 #include "xmit.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 

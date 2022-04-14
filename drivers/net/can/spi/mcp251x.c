@@ -19,6 +19,7 @@
  * Copyright 2007
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

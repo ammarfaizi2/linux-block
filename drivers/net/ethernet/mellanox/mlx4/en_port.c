@@ -32,6 +32,7 @@
  */
 
 
+#include <linux/netdevice_api.h>
 #include <linux/if_vlan.h>
 
 #include <linux/mlx4/device.h>

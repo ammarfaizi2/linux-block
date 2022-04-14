@@ -7,6 +7,7 @@
  * This file contains HFI1 support for VNIC functionality
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>

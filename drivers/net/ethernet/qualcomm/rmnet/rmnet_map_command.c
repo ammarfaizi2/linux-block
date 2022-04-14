@@ -2,6 +2,7 @@
 /* Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include "rmnet_config.h"
 #include "rmnet_map.h"

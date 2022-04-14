@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2005-2011, 2021 Intel Corporation
  */
+#include <linux/netdevice_api.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/export.h>

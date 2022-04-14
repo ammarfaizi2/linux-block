@@ -4,6 +4,7 @@
  * Copyright 2008-2013 Solarflare Communications Inc.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>

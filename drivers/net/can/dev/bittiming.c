@@ -4,6 +4,7 @@
  * Copyright (C) 2008-2009 Wolfgang Grandegger <wg@grandegger.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/units.h>
 #include <linux/can/dev.h>
 

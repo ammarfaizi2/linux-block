@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (c) 2018 Quantenna Communications, Inc. All rights reserved. */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io_extra.h>
 #include <linux/dma-mapping.h>

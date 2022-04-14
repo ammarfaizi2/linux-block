@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 

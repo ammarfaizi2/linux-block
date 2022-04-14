@@ -5,6 +5,7 @@
  */
 
 #include "wil6210.h"
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>

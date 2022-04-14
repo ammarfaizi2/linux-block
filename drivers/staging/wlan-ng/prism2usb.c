@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/netdevice_api.h>
 #include <linux/delay.h>
 
 #include "hfa384x_usb.c"

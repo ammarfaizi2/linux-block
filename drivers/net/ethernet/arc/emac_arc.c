@@ -7,6 +7,7 @@
  * Romain Perier  <romain.perier@gmail.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/module.h>

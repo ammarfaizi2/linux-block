@@ -3,6 +3,7 @@
 
 #define  _RTW_SECURITY_C_
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/crc32.h>

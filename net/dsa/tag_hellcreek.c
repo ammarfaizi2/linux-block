@@ -8,6 +8,7 @@
  * Based on tag_ksz.c.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/skbuff.h>
 #include <net/dsa.h>
 

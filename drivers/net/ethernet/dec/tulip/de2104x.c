@@ -32,6 +32,7 @@
 #define DRV_NAME		"de2104x"
 #define DRV_RELDATE		"Mar 17, 2004"
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>

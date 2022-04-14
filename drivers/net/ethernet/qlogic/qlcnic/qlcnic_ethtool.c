@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/types.h>
 #include <linux/delay.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/init.h>
 #include <linux/netdevice.h>
 #include <net_kern.h>

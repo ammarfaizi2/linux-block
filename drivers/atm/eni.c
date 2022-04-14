@@ -4,6 +4,7 @@
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
  
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

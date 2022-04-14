@@ -3,6 +3,7 @@
 
 /* File aq_filters.c: RX filters related functions. */
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 

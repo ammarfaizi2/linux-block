@@ -10,6 +10,7 @@
  *		Wingman Kwok <w-kwok2@ti.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

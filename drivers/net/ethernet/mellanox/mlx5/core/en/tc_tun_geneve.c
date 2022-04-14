@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2018 Mellanox Technologies. */
 
+#include <linux/netdevice_api.h>
 #include <net/geneve.h>
 #include "lib/geneve.h"
 #include "en/tc_tun.h"

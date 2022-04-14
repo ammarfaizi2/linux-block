@@ -3,6 +3,7 @@
  *
  * Copyright Tomi Manninen OH2BNS (oh2bns@sral.fi)
  */
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/slab.h>

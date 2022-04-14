@@ -2,6 +2,7 @@
 /*
  * This file contains the handling of TX in wlan driver.
  */
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/hardirq.h>
 #include <linux/netdevice.h>

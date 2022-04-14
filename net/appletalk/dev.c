@@ -4,6 +4,7 @@
  *	Written 1993,1994,1995 by Donald Becker.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

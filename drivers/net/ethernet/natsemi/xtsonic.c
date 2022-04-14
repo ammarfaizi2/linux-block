@@ -17,6 +17,7 @@
  * A driver for the onboard Sonic ethernet controller on the XT2000.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

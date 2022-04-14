@@ -8,6 +8,7 @@
  * Copyright (C) 2001-2006  PEAK System-Technik GmbH
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/device/driver.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

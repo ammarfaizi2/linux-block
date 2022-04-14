@@ -2,6 +2,7 @@
 // Copyright (c) 2017 Synopsys, Inc. and/or its affiliates.
 // stmmac Support for 5.xx Ethernet QoS cores
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

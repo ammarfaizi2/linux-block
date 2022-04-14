@@ -49,6 +49,7 @@
    Rev 1.05 Aug. 7 1999 Jim Huang (cmhuang@sis.com.tw) Initial release
 */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

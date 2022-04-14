@@ -6,6 +6,7 @@
  * Copyright (C) 2001 by various other people who didn't put their name here.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/init.h>
 #include <linux/netdevice.h>
 #include <net_kern.h>

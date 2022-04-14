@@ -8,6 +8,7 @@
  *
  * Many thanks to Klaus Hitschler <klaus.hitschler@gmx.de>
  */
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <asm/unaligned.h>
 #include <linux/netdevice.h>

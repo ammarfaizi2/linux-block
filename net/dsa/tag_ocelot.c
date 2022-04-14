@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2019 NXP
  */
+#include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/dsa/ocelot.h>

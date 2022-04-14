@@ -4,6 +4,8 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/netdevice_api.h>
+
 #include "rtllib.h"
 #include "rtl819x_HT.h"
 u8 MCS_FILTER_ALL[16] = {

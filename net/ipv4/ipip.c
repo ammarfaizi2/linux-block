@@ -86,6 +86,7 @@
  */
 
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/module.h>

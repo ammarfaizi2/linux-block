@@ -11,6 +11,7 @@
 
 #include "cna.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/netdevice.h>

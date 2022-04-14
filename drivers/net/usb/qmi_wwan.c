@@ -7,6 +7,7 @@
  * Copyright (C) 2006 by Ole Andre Vadla Ravnas (ActiveSync)
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>

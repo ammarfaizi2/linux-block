@@ -4,6 +4,7 @@
  * Copyright 2011-2013 Solarflare Communications Inc.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitops.h>

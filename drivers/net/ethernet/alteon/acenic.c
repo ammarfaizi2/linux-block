@@ -46,6 +46,7 @@
  *   Grant Grundler <grundler@cup.hp.com>: PCI write posting fixes.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

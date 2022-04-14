@@ -5,6 +5,7 @@
  * Copyright 2005-2015 Solarflare Communications Inc.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/pci.h>
 #include <linux/tcp.h>

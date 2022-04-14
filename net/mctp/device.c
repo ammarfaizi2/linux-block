@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/if_arp.h>
 #include <linux/if_link.h>
 #include <linux/mctp.h>

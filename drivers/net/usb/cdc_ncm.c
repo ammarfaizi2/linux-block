@@ -38,6 +38,7 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/etherdevice_api.h>

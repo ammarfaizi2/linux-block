@@ -6,6 +6,7 @@
  * 		 2001-2003 by Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/if_arp.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>

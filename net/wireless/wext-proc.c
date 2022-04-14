@@ -16,6 +16,7 @@
  * The content of the file is basically the content of "struct iw_statistics".
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/module.h>
 #include <linux/proc_fs.h>

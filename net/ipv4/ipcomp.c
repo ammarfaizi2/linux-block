@@ -9,6 +9,7 @@
  *   - Compression stats.
  *   - Adaptive compression.
  */
+#include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/err.h>

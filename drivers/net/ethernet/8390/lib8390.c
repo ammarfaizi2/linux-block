@@ -50,6 +50,7 @@
 
   */
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/build_bug.h>
 #include <linux/module.h>

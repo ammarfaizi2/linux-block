@@ -11,6 +11,7 @@
  *	http://www.embeddedarm.com/documentation/ts-can1-manual.pdf
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/ioport.h>

@@ -36,6 +36,7 @@
  * Description: Main component of the bnxt_re driver
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

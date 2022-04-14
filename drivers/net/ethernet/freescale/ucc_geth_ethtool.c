@@ -11,6 +11,7 @@
  * Need to re-open the interface manually after changing some parameters.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/stddef.h>

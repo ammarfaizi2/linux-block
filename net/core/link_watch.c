@@ -6,6 +6,7 @@
  *     Stefan Rompf <sux@loplof.de>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/if.h>

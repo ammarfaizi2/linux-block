@@ -1,3 +1,4 @@
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/init.h>

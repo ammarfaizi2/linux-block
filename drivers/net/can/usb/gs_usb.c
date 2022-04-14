@@ -9,6 +9,7 @@
  * Many thanks to all socketcan devs!
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bitfield.h>
 #include <linux/ethtool.h>

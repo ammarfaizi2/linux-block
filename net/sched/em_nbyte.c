@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/gfp.h>
 #include <linux/module.h>
 #include <linux/types.h>

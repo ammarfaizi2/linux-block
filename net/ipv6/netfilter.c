@@ -4,6 +4,7 @@
  * Rusty Russell (C) 2000 -- This code is GPL.
  * Patrick McHardy (C) 2006-2012
  */
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/ipv6.h>

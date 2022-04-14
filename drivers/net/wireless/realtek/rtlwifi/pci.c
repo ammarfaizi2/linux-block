@@ -7,6 +7,7 @@
 #include "base.h"
 #include "ps.h"
 #include "efuse.h"
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>

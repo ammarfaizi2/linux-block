@@ -10,6 +10,7 @@
  *		IPv6 support
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/string.h>

@@ -29,6 +29,7 @@
 
 ******************************************************************************/
 
+#include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/types.h>

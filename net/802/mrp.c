@@ -7,6 +7,7 @@
  *	Adapted from code in net/802/garp.c
  *	Copyright (c) 2008 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/timer.h>

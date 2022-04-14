@@ -12,6 +12,7 @@
  *	X.25 001	Jonathan Naylor	Started coding.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/if_arp.h>
 #include <linux/init.h>
 #include <linux/slab.h>

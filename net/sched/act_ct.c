@@ -7,6 +7,7 @@
  *            Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_vlan_api.h>

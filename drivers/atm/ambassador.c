@@ -7,6 +7,7 @@
 
 /* * dedicated to the memory of Graham Gordon 1971-1998 * */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

@@ -17,6 +17,7 @@
  * r8187 driver sources.  Thanks to Realtek for their support!
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>

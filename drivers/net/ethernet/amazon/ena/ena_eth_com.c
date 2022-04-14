@@ -3,6 +3,8 @@
  * Copyright 2015-2020 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/netdevice_api.h>
+
 #include "ena_eth_com.h"
 
 static struct ena_eth_io_rx_cdesc_base *ena_com_get_next_rx_cdesc(

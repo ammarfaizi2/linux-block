@@ -21,6 +21,7 @@
  * wherever it is modified to a readable name.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

@@ -34,6 +34,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/module.h>
 #include <linux/net_tstamp.h>

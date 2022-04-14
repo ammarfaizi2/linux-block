@@ -15,6 +15,7 @@
  * in the SOFTWARE may be the trademarks of their respective owners.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ethtool.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>

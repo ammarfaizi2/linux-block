@@ -5,6 +5,8 @@
  * Contact Information:
  * wlanfae <wlanfae@realtek.com>
  ******************************************************************************/
+#include <linux/netdevice_api.h>
+
 #include "dot11d.h"
 
 struct channel_list {

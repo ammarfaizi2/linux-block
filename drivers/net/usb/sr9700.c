@@ -10,6 +10,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>

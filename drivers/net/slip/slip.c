@@ -62,6 +62,7 @@
  */
 
 #define SL_CHECK_TRANSMIT
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

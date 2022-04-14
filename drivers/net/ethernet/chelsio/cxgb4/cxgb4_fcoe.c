@@ -34,6 +34,7 @@
 
 #ifdef CONFIG_CHELSIO_T4_FCOE
 
+#include <linux/netdevice_api.h>
 #include <scsi/fc/fc_fs.h>
 #include <scsi/libfcoe.h>
 #include "cxgb4.h"

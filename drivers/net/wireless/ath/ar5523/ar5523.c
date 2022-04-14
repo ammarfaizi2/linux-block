@@ -24,6 +24,7 @@
  * out how the hardware works.  It contains a lot magic numbers because of
  * that and only has minimal functionality.
  */
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

@@ -22,6 +22,7 @@
  * Contributors: Andreas Larsson <andreas@gaisler.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

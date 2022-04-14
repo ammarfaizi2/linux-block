@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 

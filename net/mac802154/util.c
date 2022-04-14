@@ -7,6 +7,7 @@
  * Based on: net/mac80211/util.c
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/hrtimer_api.h>
 
 #include "ieee802154_i.h"

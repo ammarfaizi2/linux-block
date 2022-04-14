@@ -3,6 +3,7 @@
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
+#include <linux/netdevice_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

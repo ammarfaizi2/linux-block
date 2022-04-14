@@ -4,6 +4,7 @@
  * Copyright 2007-2012 Solarflare Communications Inc.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/rtnetlink.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2016-2017 Oracle. All rights reserved.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/if_ether_api.h>

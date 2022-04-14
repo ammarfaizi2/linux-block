@@ -4,6 +4,8 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/netdevice_api.h>
+
 #include "rtl_core.h"
 #include "r8192E_phyreg.h"
 #include "r8192E_phy.h"

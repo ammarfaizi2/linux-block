@@ -4,6 +4,7 @@
  * Author:	Sjur Brendeland
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/capability.h>
 #include <linux/hardirq.h>
 #include <linux/init.h>

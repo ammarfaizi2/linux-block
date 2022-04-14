@@ -3,6 +3,7 @@
 
 /* ethtool support for e1000 */
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/netdevice.h>

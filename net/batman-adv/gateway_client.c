@@ -7,6 +7,7 @@
 #include "gateway_client.h"
 #include "main.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/if_vlan_api.h>

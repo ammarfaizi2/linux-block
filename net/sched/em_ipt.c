@@ -5,6 +5,7 @@
  * (c) 2018 Eyal Birger <eyal.birger@gmail.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/gfp.h>
 #include <linux/module.h>

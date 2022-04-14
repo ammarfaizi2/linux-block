@@ -35,6 +35,7 @@
 
 #define MAX_DEVICE_COUNT 4
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>

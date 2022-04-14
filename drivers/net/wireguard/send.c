@@ -11,6 +11,7 @@
 #include "messages.h"
 #include "cookie.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/uio.h>

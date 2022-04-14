@@ -3,6 +3,7 @@
 
 #define _RTW_RECV_C_
 
+#include <linux/netdevice_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/ieee80211.h>

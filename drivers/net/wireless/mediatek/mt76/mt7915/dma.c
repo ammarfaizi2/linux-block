@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
+#include <linux/netdevice_api.h>
+
 #include "mt7915.h"
 #include "../dma.h"
 #include "mac.h"

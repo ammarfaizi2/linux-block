@@ -3,6 +3,7 @@
  *  Copyright (c) 2002 Petko Manolov (petkan@users.sourceforge.net)
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>

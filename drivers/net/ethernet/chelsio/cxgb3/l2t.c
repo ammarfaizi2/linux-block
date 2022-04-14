@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/netdevice_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

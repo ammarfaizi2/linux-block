@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2021 Gerhard Engleder <gerhard@engleder-embedded.com> */
 
+#include <linux/netdevice_api.h>
 #include <linux/math64.h>
 #include <linux/io.h>
 

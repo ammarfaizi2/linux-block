@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/if_vlan_api.h>

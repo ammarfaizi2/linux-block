@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 
 #include "ipa_gsi.h"

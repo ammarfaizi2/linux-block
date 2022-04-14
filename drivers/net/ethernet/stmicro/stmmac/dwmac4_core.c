@@ -10,6 +10,7 @@
  * Author: Alexandre Torgue <alexandre.torgue@st.com>
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/crc32.h>
 #include <linux/slab.h>
 #include <linux/ethtool.h>

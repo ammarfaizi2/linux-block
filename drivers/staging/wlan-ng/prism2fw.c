@@ -48,6 +48,7 @@
 
 /*================================================================*/
 /* System Includes */
+#include <linux/netdevice_api.h>
 #include <linux/ihex.h>
 #include <linux/slab.h>
 

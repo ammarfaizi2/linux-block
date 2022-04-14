@@ -8,6 +8,7 @@
  *
  * Many thanks to Klaus Hitschler <klaus.hitschler@gmx.de>
  */
+#include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

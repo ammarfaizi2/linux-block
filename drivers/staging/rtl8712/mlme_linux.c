@@ -16,6 +16,7 @@
 
 #define _MLME_OSDEP_C_
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 
 #include "osdep_service.h"

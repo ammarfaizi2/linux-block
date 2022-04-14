@@ -18,6 +18,7 @@
  *
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

@@ -36,6 +36,7 @@
  * Description: IB Verbs interpreter
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

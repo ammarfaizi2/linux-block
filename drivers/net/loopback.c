@@ -24,6 +24,7 @@
  *		Alexey Kuznetsov:	Potential hang under some extreme
  *					cases removed.
  */
+#include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>
