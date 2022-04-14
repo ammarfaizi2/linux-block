@@ -185,6 +185,13 @@ enum qed_ptp_hwtstamp_tx_type {
 	QED_PTP_HWTSTAMP_TX_ON,
 };
 
+struct ieee_pfc;
+struct ieee_ets;
+struct dcb_app;
+struct dcb_peer_app_info;
+struct cee_pfc;
+struct cee_pg;
+
 #ifdef CONFIG_DCB
 /* Prototype declaration of qed_eth_dcbnl_ops should match with the declaration
  * of dcbnl_rtnl_ops structure.

@@ -21,42 +21,24 @@
 #ifndef _LINUX_NETDEVICE_H
 #define _LINUX_NETDEVICE_H
 
-#include <linux/timer.h>
-#include <linux/bug.h>
-#include <linux/delay.h>
-#include <linux/atomic.h>
-#include <linux/prefetch.h>
-#include <asm/cache.h>
-#include <asm/byteorder.h>
-#include <asm/local.h>
+#include <linux/skbuff_types.h>
 
-#include <linux/percpu.h>
-#include <linux/rculist.h>
-#include <linux/workqueue.h>
 #include <linux/dynamic_queue_limits.h>
+#include <linux/hashtable.h>
+#include <linux/delay.h>
+#include <linux/capability.h>
+#include <linux/hrtimer.h>
+#include <linux/kobject_types.h>
+#include <linux/netdev_features.h>
+#include <linux/device.h>
+#include <linux/rbtree.h>
 
 #include <net/net_namespace.h>
-#ifdef CONFIG_DCB
-#include <net/dcbnl.h>
-#endif
 #include <net/xdp.h>
 
-#include <linux/netdev_features.h>
-#include <linux/neighbour.h>
 #include <uapi/linux/netdevice.h>
 #include <uapi/linux/if_bonding.h>
-#include <uapi/linux/pkt_cls.h>
-#include <linux/hashtable.h>
-#include <linux/rbtree.h>
 #include <net/net_trackers.h>
-
-#include <linux/cache.h>
-#include <linux/skbuff.h>
-#ifdef CONFIG_RPS
-# include <linux/static_key.h>
-#endif
-
-#include <linux/notifier.h>
 
 struct netpoll_info;
 struct device;
@@ -3389,6 +3371,8 @@ static inline void netdev_reset_queue(struct net_device *dev_queue)
 	netdev_tx_reset_queue(netdev_get_tx_queue(dev_queue, 0));
 }
 
+extern int net_ratelimit(void);
+
 /**
  * 	netdev_cap_txqueue - check if selected tx queue exceeds device queues
  * 	@dev: network device
@@ -3400,7 +3384,9 @@ static inline void netdev_reset_queue(struct net_device *dev_queue)
 static inline u16 netdev_cap_txqueue(struct net_device *dev, u16 queue_index)
 {
 	if (unlikely(queue_index >= dev->real_num_tx_queues)) {
-		net_warn_ratelimited("%s selects TX queue %d, but real number of TX queues is %d\n",
+
+		if (net_ratelimit())
+			pr_warn("%s selects TX queue %d, but real number of TX queues is %d\n",
 				     dev->name, queue_index,
 				     dev->real_num_tx_queues);
 		return 0;
