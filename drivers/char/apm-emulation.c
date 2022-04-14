@@ -11,6 +11,7 @@
  * This document is available from Microsoft at:
  *    http://www.microsoft.com/whdc/archive/amp_12.mspx
  */
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>

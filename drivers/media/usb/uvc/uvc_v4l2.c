@@ -6,6 +6,7 @@
  *          Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs.h>

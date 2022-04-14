@@ -27,6 +27,7 @@
 #include "xfs_trans.h"
 #include "xfs_acl.h"
 #include "xfs_btree.h"
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

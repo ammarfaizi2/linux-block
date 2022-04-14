@@ -6,6 +6,7 @@
  * Copyright (C) 2000 - 2006 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

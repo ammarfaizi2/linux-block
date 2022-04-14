@@ -28,6 +28,7 @@
  *  Ben Skeggs <bskeggs@redhat.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/dcache.h>

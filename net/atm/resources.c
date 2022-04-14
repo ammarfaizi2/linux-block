@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/uaccess.h>
 #include <linux/seq_file.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

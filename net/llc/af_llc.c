@@ -20,6 +20,7 @@
  *
  * See the GNU General Public License for more details.
  */
+#include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

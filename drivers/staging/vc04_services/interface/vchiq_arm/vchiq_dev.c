@@ -4,6 +4,7 @@
  * Copyright (c) 2010-2012 Broadcom. All rights reserved.
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/prefetch.h>

@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

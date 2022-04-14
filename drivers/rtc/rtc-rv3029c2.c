@@ -8,6 +8,7 @@
  * based on previously existing rtc class drivers
  */
 
+#include <linux/uaccess.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>

@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/timex.h>
 #include <linux/timekeeping.h>

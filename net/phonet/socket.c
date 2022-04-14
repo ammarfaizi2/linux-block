@@ -10,6 +10,7 @@
  *          Rémi Denis-Courmont
  */
 
+#include <linux/uaccess.h>
 #include <linux/seq_file_net.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

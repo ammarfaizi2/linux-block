@@ -31,6 +31,7 @@
  *  "The futexes are also cursed."
  *  "But they come in a choice of three flavours!"
  */
+#include <linux/uaccess.h>
 #include <linux/syscalls_api.h>
 #include <linux/stat.h>
 #include <linux/spinlock_api.h>

@@ -2,6 +2,7 @@
 /*
  * FPU register's regset abstraction, for ptrace, core dumps, etc.
  */
+#include <linux/uaccess.h>
 #include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <asm/segment_api.h>

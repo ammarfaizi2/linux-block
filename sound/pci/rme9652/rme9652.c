@@ -6,6 +6,7 @@
  *      Copyright (c) 1999-2001  Paul Davis
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/atomic_api.h>

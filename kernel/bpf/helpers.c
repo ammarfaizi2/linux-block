@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  */
+#include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

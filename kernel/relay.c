@@ -12,6 +12,7 @@
  *
  * This file is released under the GPL.
  */
+#include <linux/uaccess.h>
 #include <linux/smp_api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>

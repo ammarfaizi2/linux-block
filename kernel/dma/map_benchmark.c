@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>

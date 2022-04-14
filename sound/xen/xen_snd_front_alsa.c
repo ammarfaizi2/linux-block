@@ -8,6 +8,7 @@
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/gfp_api.h>

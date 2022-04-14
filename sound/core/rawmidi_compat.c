@@ -6,6 +6,7 @@
 
 /* This file included from rawmidi.c */
 
+#include <linux/uaccess.h>
 #include <linux/fs.h>
 #include <linux/compat.h>
 

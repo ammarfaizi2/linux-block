@@ -4,6 +4,7 @@
  * Copyright 2008 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pid.h>

@@ -15,6 +15,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+#include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

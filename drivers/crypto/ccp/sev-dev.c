@@ -7,6 +7,7 @@
  * Author: Brijesh Singh <brijesh.singh@amd.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

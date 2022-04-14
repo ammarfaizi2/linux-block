@@ -11,6 +11,7 @@
  *		"A Kernel Model for Precision Timekeeping" by Dave Mills
  */
 
+#include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/capability.h>
 #include <linux/errno.h>

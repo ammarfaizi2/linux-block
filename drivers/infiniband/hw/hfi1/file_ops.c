@@ -4,6 +4,7 @@
  * Copyright(c) 2015-2020 Intel Corporation.
  */
 
+#include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>

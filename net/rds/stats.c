@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/uaccess.h>
 #include <linux/cpumask_api.h>
 #include <linux/percpu.h>
 #include <linux/seq_file.h>

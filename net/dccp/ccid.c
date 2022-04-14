@@ -8,6 +8,7 @@
  *  CCID infrastructure
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 
 #include "ccid.h"

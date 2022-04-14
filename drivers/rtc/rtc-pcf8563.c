@@ -11,6 +11,7 @@
  * https://www.nxp.com/docs/en/data-sheet/PCF8563.pdf
  */
 
+#include <linux/uaccess.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

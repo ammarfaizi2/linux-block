@@ -4,6 +4,7 @@
  * Copyright (c) 2010-2012 Broadcom. All rights reserved.
  */
 
+#include <linux/uaccess.h>
 #include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include "vchiq_core.h"

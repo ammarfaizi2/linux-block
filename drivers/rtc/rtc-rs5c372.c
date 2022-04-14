@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Paul Mundt
  */
 
+#include <linux/uaccess.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>

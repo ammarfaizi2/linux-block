@@ -18,6 +18,7 @@
  *	0.1	20/06/2002
  *		- first public version
  */
+#include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

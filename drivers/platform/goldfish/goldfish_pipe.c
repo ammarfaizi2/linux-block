@@ -47,6 +47,7 @@
  * exchange is properly mapped during a transfer.
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

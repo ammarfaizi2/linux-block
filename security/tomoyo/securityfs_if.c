@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

@@ -3,6 +3,7 @@
  * Intel Memory Protection Keys management
  * Copyright (c) 2015, Intel Corporation.
  */
+#include <linux/uaccess.h>
 #include <linux/init.h>
 #include <linux/fs_api.h>
 #include <asm/pkru.h>

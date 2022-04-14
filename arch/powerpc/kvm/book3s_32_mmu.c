@@ -6,6 +6,7 @@
  * Authors: Alexander Graf <agraf@suse.de>
  */
 
+#include <linux/uaccess.h>
 #include <linux/mm_api.h>
 #include <linux/types.h>
 #include <linux/string.h>

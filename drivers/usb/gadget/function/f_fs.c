@@ -14,6 +14,7 @@
 /* #define DEBUG */
 /* #define VERBOSE_DEBUG */
 
+#include <linux/uaccess.h>
 #include <linux/swait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

@@ -8,6 +8,7 @@
  *            Eric Farman <farman@linux.ibm.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/vfio.h>

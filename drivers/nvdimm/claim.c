@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/lockdep_api.h>
 #include <linux/ioport.h>

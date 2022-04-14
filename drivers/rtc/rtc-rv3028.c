@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

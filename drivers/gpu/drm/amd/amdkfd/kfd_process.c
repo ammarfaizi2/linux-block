@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/srcu.h>
 #include <linux/seq_file.h>

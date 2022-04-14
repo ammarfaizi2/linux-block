@@ -6,6 +6,7 @@
 
 /* This file included from pcm_native.c */
 
+#include <linux/uaccess.h>
 #include <linux/compat.h>
 #include <linux/slab.h>
 

@@ -3,6 +3,7 @@
  */
 
 
+#include <linux/uaccess.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/usb.h>

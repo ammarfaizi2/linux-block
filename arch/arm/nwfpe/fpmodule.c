@@ -11,6 +11,7 @@
 
 #include "fpa11.h"
 
+#include <linux/uaccess.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 

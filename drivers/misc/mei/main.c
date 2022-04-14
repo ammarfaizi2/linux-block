@@ -4,6 +4,7 @@
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
+#include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

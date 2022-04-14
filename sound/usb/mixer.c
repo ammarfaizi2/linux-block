@@ -27,6 +27,7 @@
  *  	- parse available sample rates again when clock sources changed
  */
 
+#include <linux/uaccess.h>
 #include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <linux/bitops.h>

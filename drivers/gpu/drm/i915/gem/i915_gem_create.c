@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/math64.h>
 #include <drm/drm_fourcc.h>

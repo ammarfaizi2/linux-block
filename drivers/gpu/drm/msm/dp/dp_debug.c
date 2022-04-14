@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt)"[drm-dp] %s: " fmt, __func__
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/fs_api.h>

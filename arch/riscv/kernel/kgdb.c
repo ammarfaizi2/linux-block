@@ -3,6 +3,7 @@
  * Copyright (C) 2020 SiFive
  */
 
+#include <linux/uaccess.h>
 #include <linux/sched/thread.h>
 #include <linux/atomic_api.h>
 #include <linux/ptrace.h>

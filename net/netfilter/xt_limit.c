@@ -5,6 +5,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/ratelimit.h>
 #include <linux/ktime_api.h>

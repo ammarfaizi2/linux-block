@@ -13,6 +13,7 @@
  * Datasheet: https://www.nxp.com/docs/en/data-sheet/PCF2127.pdf
  */
 
+#include <linux/uaccess.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

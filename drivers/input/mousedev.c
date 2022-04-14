@@ -12,6 +12,7 @@
 #define MOUSEDEV_MINORS		31
 #define MOUSEDEV_MIX		63
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/rculist.h>

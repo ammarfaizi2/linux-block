@@ -8,6 +8,7 @@
 
 #define VERSION "0.25"
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

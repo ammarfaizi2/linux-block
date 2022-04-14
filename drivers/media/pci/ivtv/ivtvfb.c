@@ -33,6 +33,7 @@
 #include "ivtv-mailbox.h"
 #include "ivtv-firmware.h"
 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

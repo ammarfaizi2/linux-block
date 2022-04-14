@@ -6,6 +6,7 @@
  * Bongsu Jeon <bongsu.jeon@samsung.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>

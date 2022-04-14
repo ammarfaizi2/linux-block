@@ -14,6 +14,7 @@
  * Marking a frame doesn't really change anything in the frame anyway.
  */
 
+#include <linux/uaccess.h>
 #include <linux/module.h>
 #include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_bridge/ebtables.h>

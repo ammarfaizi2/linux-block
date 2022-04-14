@@ -3,6 +3,7 @@
  * Copyright (C) 2020 ARM Ltd.
  */
 
+#include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>

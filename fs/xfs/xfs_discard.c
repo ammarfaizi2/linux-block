@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * All Rights Reserved.
  */
+#include <linux/uaccess.h>
 #include <linux/sched/signal.h>
 #include <linux/capability.h>
 

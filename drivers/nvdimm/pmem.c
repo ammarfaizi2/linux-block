@@ -7,6 +7,7 @@
  * Copyright (c) 2015, Boaz Harrosh <boaz@plexistor.com>.
  */
 
+#include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

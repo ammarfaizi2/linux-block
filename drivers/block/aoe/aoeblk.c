@@ -4,6 +4,7 @@
  * block device routines
  */
 
+#include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

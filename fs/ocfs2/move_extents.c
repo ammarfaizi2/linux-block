@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2011 Oracle.  All rights reserved.
  */
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_api.h>

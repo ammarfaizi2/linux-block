@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/uaccess.h>
 #include <linux/sched/signal.h>
 #include <linux/percpu.h>
 #include <linux/percpu_counter_api.h>

@@ -6,6 +6,7 @@
  * Copyright (c)  2015 Nordic Semiconductor. All Rights Reserved.
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/rtnetlink.h>

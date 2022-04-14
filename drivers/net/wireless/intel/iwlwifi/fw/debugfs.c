@@ -7,6 +7,7 @@
 #include "api/commands.h"
 #include "debugfs.h"
 #include "dbg.h"
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

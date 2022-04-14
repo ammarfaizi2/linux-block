@@ -12,6 +12,7 @@
 #define EVDEV_MIN_BUFFER_SIZE	64U
 #define EVDEV_BUF_PACKETS	8
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/rculist.h>

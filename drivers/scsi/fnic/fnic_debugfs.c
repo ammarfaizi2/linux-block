@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>

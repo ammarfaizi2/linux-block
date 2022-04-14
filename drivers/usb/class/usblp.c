@@ -32,6 +32,7 @@
  *      none  - Maintained in Linux kernel after v0.13
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

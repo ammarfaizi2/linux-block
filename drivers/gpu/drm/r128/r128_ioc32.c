@@ -30,6 +30,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/uaccess.h>
 #include <linux/compat.h>
 
 #include <drm/r128_drm.h>

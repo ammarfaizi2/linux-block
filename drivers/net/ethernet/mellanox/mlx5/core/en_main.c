@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>

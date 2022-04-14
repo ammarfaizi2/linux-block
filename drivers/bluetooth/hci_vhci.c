@@ -8,6 +8,7 @@
  *  Copyright (C) 2004-2006  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>

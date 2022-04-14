@@ -6,6 +6,7 @@
  *  Copyright (C) 2011   Red Hat, Inc.  All rights reserved.
  *  Copyright (C) 2011   Mike Christie
  */
+#include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/scatterlist_api.h>
 #include <linux/kref_api.h>

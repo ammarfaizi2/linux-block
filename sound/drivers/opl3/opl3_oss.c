@@ -5,6 +5,7 @@
  *  Copyright (C) 2000 Uros Bizjak <uros@kss-loka.si>
  */
 
+#include <linux/uaccess.h>
 #include <linux/export.h>
 #include "opl3_voice.h"
 

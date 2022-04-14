@@ -10,6 +10,7 @@
 
 */
 
+#include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

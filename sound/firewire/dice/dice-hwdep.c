@@ -6,6 +6,7 @@
  * Copyright (c) 2014 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

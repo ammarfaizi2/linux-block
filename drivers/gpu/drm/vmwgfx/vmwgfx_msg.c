@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

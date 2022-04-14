@@ -6,6 +6,7 @@
  * Copyright (C) 1999 - 2006 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
+#include <linux/uaccess.h>
 #include <linux/netdevice_api.h>
 #include <linux/capability.h>
 #include <linux/errno.h>

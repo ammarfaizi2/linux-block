@@ -4,6 +4,7 @@
  * Copyright 2010 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
