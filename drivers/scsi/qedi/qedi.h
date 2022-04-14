@@ -9,6 +9,7 @@
 
 #define __PREVENT_QED_HSI__
 
+#include <linux/cpumask_api.h>
 #include <scsi/scsi_transport_iscsi.h>
 #include <scsi/libiscsi.h>
 #include <scsi/scsi_host.h>

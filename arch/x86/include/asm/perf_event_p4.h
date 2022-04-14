@@ -6,6 +6,7 @@
 #ifndef PERF_EVENT_P4_H
 #define PERF_EVENT_P4_H
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/bitops.h>
 

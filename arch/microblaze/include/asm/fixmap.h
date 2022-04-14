@@ -16,6 +16,7 @@
 #define _ASM_FIXMAP_H
 
 #ifndef __ASSEMBLY__
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <asm/page.h>
 #ifdef CONFIG_HIGHMEM

@@ -8,6 +8,7 @@
  * Copyright (C) 1996, Linus Torvalds
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/mm_types.h>
 #include <linux/sched.h>
 

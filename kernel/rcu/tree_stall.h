@@ -7,6 +7,7 @@
  * Author: Paul E. McKenney <paulmck@linux.ibm.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kvm_para.h>
 
 #include "../sched/sched.h"

@@ -3,6 +3,7 @@
 #error "do not include this file"
 #endif
 
+#include <linux/cpumask_api.h>
 #include <linux/hash.h>
 #include <linux/memblock.h>
 #include <linux/debug_locks.h>

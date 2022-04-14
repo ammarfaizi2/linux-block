@@ -13,6 +13,7 @@
  * Copyright (C) 2009 Jason Wessel <jason.wessel@windriver.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/list.h>
 
 /* Shifted versions of the command enable bits are be used if the command

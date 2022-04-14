@@ -10,6 +10,7 @@
 #ifndef __ASM_ARM_MMU_CONTEXT_H
 #define __ASM_ARM_MMU_CONTEXT_H
 
+#include <linux/cpumask_api.h>
 #include <linux/compiler.h>
 #include <linux/sched.h>
 #include <linux/mm_types.h>

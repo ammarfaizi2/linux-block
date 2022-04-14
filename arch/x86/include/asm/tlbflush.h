@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_TLBFLUSH_H
 #define _ASM_X86_TLBFLUSH_H
 
+#include <linux/cpumask_api.h>
 #include <linux/mm.h>
 #include <linux/sched.h>
 

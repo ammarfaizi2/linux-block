@@ -3,6 +3,7 @@
 #define _ASM_POWERPC_CPUTHREADS_H
 
 #ifndef __ASSEMBLY__
+#include <linux/cpumask_api.h>
 #include <linux/cpumask.h>
 #include <asm/cpu_has_feature.h>
 

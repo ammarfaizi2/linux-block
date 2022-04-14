@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Paul E. McKenney
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/sched/cond_resched.h>
 
 #ifdef CONFIG_TASKS_RCU

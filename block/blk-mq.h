@@ -2,6 +2,8 @@
 #ifndef INT_BLK_MQ_H
 #define INT_BLK_MQ_H
 
+#include <linux/cpumask_api.h>
+
 #include "blk-stat.h"
 #include "blk-mq-tag.h"
 

@@ -8,6 +8,8 @@
 
 #if IS_ENABLED(CONFIG_HYPERV)
 
+#include <linux/cpumask_api.h>
+
 #include "kvm_onhyperv.h"
 #include "svm/hyperv.h"
 

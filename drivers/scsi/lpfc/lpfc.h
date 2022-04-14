@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/cpumask_api.h>
 #include <scsi/scsi_host.h>
 #include <linux/hashtable.h>
 #include <linux/ktime.h>

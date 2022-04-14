@@ -11,6 +11,7 @@
 
 #ifdef __KERNEL__
 
+#include <linux/cpumask_api.h>
 #include <acpi/pdc_intel.h>
 
 #include <linux/init.h>

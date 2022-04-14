@@ -58,6 +58,7 @@
  * All trace headers should include tracepoint.h, until we finally
  * make it into a standard header.
  */
+#include <linux/cpumask_api.h>
 #include <linux/tracepoint.h>
 
 /*

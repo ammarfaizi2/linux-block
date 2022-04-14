@@ -5,6 +5,7 @@
 #if !defined(_TRACE_THERMAL_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_THERMAL_H
 
+#include <linux/cpumask_api.h>
 #include <linux/devfreq.h>
 #include <linux/thermal.h>
 #include <linux/tracepoint.h>

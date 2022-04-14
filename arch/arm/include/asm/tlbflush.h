@@ -13,6 +13,7 @@
 
 #ifdef CONFIG_MMU
 
+#include <linux/cpumask_api.h>
 #include <asm/glue.h>
 
 #define TLB_V4_U_PAGE	(1 << 1)

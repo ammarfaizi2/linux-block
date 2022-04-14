@@ -8,6 +8,7 @@
 #ifndef __ASM_SMP_PLAT_H
 #define __ASM_SMP_PLAT_H
 
+#include <linux/cpumask_api.h>
 #include <linux/cpumask.h>
 
 #include <asm/smp.h>

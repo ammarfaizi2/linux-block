@@ -15,6 +15,7 @@
 #ifndef _ASM_ARC_MMU_CONTEXT_H
 #define _ASM_ARC_MMU_CONTEXT_H
 
+#include <linux/cpumask_api.h>
 #include <linux/sched/mm.h>
 
 #include <asm/tlb.h>

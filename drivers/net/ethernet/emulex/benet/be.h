@@ -14,6 +14,7 @@
 #ifndef BE_H
 #define BE_H
 
+#include <linux/cpumask_api.h>
 #include <linux/pci.h>
 #include <linux/etherdevice.h>
 #include <linux/delay.h>
