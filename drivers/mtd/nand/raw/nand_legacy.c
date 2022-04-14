@@ -13,6 +13,7 @@
  * at some point.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/nmi.h>

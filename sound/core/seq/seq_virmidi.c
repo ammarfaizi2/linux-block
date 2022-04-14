@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/init.h>
 #include <linux/wait.h>
 #include <linux/module.h>

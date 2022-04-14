@@ -3,6 +3,7 @@
  * Copyright © 2017-2018 Intel Corporation
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/prime_numbers.h>
 
 #include "intel_context.h"

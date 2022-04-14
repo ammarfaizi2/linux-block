@@ -13,6 +13,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

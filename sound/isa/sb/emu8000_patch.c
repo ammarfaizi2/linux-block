@@ -8,6 +8,7 @@
 
 #include "emu8000_local.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/signal.h>
 #include <linux/uaccess.h>
 #include <linux/moduleparam.h>

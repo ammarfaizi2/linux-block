@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kthread.h>
 #include <linux/if_vlan.h>
 #include <linux/udp.h>

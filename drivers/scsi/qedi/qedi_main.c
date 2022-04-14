@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Cavium Inc.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

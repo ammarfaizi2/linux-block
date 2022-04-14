@@ -4,6 +4,7 @@
  * Copyright(c) 2021 Cornelis Networks.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/spinlock.h>
 #include <linux/pci.h>
 #include <linux/io.h>

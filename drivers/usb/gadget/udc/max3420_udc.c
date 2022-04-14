@@ -13,6 +13,7 @@
  *		https://pdfserv.maximintegrated.com/en/an/AN3785.pdf
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

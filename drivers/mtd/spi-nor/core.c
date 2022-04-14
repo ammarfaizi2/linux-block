@@ -7,6 +7,7 @@
  * Copyright (C) 2014, Freescale Semiconductor, Inc.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/err.h>
 #include <linux/errno.h>
 #include <linux/module.h>

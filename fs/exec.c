@@ -23,6 +23,7 @@
  * formats.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel_read_file.h>
 #include <linux/slab.h>
 #include <linux/file.h>

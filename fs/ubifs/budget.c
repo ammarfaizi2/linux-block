@@ -19,6 +19,7 @@
  */
 
 #include "ubifs.h"
+#include <linux/sched/cond_resched.h>
 #include <linux/writeback.h>
 #include <linux/math64.h>
 

@@ -3,6 +3,7 @@
  * Copyright (C) 2013 Fusion IO.  All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/pagemap.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

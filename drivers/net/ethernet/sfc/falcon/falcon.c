@@ -5,6 +5,7 @@
  * Copyright 2006-2013 Solarflare Communications Inc.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/pci.h>

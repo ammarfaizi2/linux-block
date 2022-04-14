@@ -5,6 +5,7 @@
 
 /* Toplevel file. Relies on dhd_linux.c to send commands to the dongle. */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/etherdevice.h>
 #include <linux/module.h>

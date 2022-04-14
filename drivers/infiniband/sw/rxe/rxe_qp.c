@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/skbuff.h>
 #include <linux/delay.h>
 #include <linux/sched.h>

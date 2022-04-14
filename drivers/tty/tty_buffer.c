@@ -3,6 +3,7 @@
  * Tty buffer allocation management
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/tty.h>

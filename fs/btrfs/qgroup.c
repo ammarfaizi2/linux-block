@@ -3,6 +3,7 @@
  * Copyright (C) 2011 STRATO.  All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched.h>
 #include <linux/pagemap.h>
 #include <linux/writeback.h>

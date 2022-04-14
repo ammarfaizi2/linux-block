@@ -22,6 +22,7 @@
  * devices.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/stat.h>
 #include <linux/slab.h>

@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/backing-dev.h>
 #include <linux/highmem.h>
 #include <linux/sched/signal.h>

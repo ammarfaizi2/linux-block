@@ -8,6 +8,7 @@
  * Copyright (C) 2008  Renesas Solutions Corp.
  * Copyright (C) 2008  Atom Create Engineering Co., Ltd.
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/i2c.h>

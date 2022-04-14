@@ -35,6 +35,7 @@
  *		Paul E. McKenney <paulmck@us.ibm.com>
  *		Patrick McHardy <kaber@trash.net>
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/cache.h>
 #include <linux/uaccess.h>
 #include <linux/bitops.h>

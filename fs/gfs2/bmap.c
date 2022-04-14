@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/spinlock.h>
 #include <linux/completion.h>
 #include <linux/buffer_head.h>

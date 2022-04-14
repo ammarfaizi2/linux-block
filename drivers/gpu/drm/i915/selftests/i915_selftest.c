@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/random.h>
 
 #include "gt/intel_gt_pm.h"

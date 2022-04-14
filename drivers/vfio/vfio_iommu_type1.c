@@ -21,6 +21,7 @@
  * device/bus interface rather than a group interface.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/compat.h>
 #include <linux/device.h>
 #include <linux/fs.h>

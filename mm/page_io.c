@@ -11,6 +11,7 @@
  *  Always use brw_page, life becomes simpler. 12 May 1998 Eric Biederman
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/mm.h>
 #include <linux/kernel_stat.h>
 #include <linux/gfp.h>

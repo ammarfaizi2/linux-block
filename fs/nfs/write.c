@@ -7,6 +7,7 @@
  * Copyright (C) 1996, 1997, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/mm.h>

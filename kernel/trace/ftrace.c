@@ -14,6 +14,7 @@
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/stop_machine.h>
 #include <linux/clocksource.h>
 #include <linux/sched/task.h>

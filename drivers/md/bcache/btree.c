@@ -26,6 +26,7 @@
 #include "debug.h"
 #include "extents.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/slab.h>
 #include <linux/bitops.h>
 #include <linux/hash.h>

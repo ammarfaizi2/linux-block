@@ -3,6 +3,7 @@
  *  Copyright (C) 2008 Red Hat, Inc., Eric Paris <eparis@redhat.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/gfp.h>

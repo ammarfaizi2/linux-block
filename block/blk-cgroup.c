@@ -15,6 +15,7 @@
  * Copyright (C) 2015 Paolo Valente <paolo.valente@unimore.it>
  *                    Arianna Avanzini <avanzini.arianna@gmail.com>
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/ioprio.h>
 #include <linux/kdev_t.h>
 #include <linux/module.h>

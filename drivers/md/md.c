@@ -37,6 +37,7 @@
 
 */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/mm.h>
 #include <linux/sched/signal.h>
 #include <linux/kthread.h>

@@ -44,6 +44,7 @@
 #include "node.h"
 #include "crypto.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 
 /* configurable TIPC parameters */

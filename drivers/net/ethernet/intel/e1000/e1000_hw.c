@@ -5,6 +5,8 @@
  * Shared functions for accessing and configuring the MAC
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "e1000.h"
 
 static s32 e1000_check_downshift(struct e1000_hw *hw);

@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/buffer_head.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

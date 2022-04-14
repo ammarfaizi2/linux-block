@@ -10,6 +10,7 @@
  * most "normal" filesystems (but you don't /have/ to use this:
  * the NFS filesystem used to do this differently, for example)
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/export.h>
 #include <linux/compiler.h>
 #include <linux/dax.h>

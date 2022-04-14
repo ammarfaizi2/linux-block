@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/uaccess.h>
 #include <linux/bitops.h>
 #include <linux/capability.h>

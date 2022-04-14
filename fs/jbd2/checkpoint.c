@@ -14,6 +14,7 @@
  * reused.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/time.h>
 #include <linux/fs.h>
 #include <linux/jbd2.h>

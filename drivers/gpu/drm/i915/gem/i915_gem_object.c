@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/mm.h>
 
 #include <drm/drm_cache.h>

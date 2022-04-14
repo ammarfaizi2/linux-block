@@ -6,6 +6,7 @@
  * Author: Paolo Abeni <pabeni@redhat.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/net.h>
 #include <linux/inet_diag.h>

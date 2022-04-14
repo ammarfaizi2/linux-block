@@ -14,6 +14,7 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/bitmap.h>
 #include <linux/in6.h>
 #include <linux/kernel.h>

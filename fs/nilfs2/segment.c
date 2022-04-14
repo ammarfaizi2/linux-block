@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/pagemap.h>
 #include <linux/buffer_head.h>
 #include <linux/writeback.h>

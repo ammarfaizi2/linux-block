@@ -10,6 +10,7 @@
 
 /* This file implements TNC functions for committing */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/random.h>
 #include "ubifs.h"
 

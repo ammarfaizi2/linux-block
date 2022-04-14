@@ -35,6 +35,7 @@
  * refuses to mount.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/crc32.h>
 #include <linux/slab.h>
 #include "ubifs.h"

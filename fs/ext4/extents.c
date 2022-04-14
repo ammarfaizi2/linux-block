@@ -17,6 +17,7 @@
  *   - smart tree reduction
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/time.h>
 #include <linux/jbd2.h>

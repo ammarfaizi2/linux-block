@@ -7,6 +7,7 @@
 #include "tdp_mmu.h"
 #include "spte.h"
 
+#include <linux/sched/cond_resched.h>
 #include <asm/cmpxchg.h>
 #include <trace/events/kvm.h>
 

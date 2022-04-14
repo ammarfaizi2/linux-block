@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "qlcnic_sriov.h"
 #include "qlcnic.h"
 #include "qlcnic_hw.h"

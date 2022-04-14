@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Red Hat, Inc., Johannes Weiner
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/page_counter.h>
 #include <linux/atomic.h>
 #include <linux/kernel.h>

@@ -17,6 +17,7 @@
  * 	- auto unlock sectors on resume for auto locking flash on power up
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

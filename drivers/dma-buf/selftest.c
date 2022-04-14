@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/compiler.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

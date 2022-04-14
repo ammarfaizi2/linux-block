@@ -16,6 +16,7 @@
  */
 
 #include <linux/sched/affinity.h>
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

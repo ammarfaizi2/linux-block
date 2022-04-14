@@ -10,6 +10,7 @@
  *			  - broken initialization?
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/delay.h>
 #include <linux/pm.h>
 #include <linux/init.h>

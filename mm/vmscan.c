@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/affinity.h>
 #include <linux/mm.h>
 #include <linux/sched/mm.h>

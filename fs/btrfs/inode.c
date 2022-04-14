@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <crypto/hash.h>
 #include <linux/kernel.h>
 #include <linux/bio.h>

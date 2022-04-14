@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/prime_numbers.h>
 
 #include "gem/i915_gem_context.h"

@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2007 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>

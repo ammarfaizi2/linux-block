@@ -12,6 +12,7 @@
  * The firmware interface is realised using the SMCCC specification.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/bits.h>
 #include <linux/device.h>
 #include <linux/hw_random.h>

@@ -4,6 +4,7 @@
  */
 
 #include "ratelimiter.h"
+#include <linux/sched/cond_resched.h>
 #include <linux/siphash.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

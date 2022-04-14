@@ -10,6 +10,7 @@
  *		Christoph Lameter <christoph@lameter.com>
  *  Copyright (C) 2008-2014 Christoph Lameter
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/err.h>

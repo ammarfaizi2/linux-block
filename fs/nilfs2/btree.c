@@ -7,6 +7,7 @@
  * Written by Koji Sato.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/errno.h>

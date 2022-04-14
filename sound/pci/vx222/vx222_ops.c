@@ -7,6 +7,7 @@
  * Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/firmware.h>

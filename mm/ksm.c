@@ -13,6 +13,7 @@
  *	Hugh Dickins
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/errno.h>
 #include <linux/mm.h>
 #include <linux/mm_inline.h>

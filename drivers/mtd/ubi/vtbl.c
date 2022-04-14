@@ -45,6 +45,7 @@
  * damaged.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/crc32.h>
 #include <linux/err.h>
 #include <linux/slab.h>

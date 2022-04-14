@@ -12,6 +12,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

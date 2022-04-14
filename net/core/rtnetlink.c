@@ -12,6 +12,7 @@
  *	Vitaly E. Lavrov		RTA_OK arithmetic was wrong.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>
 #include <linux/module.h>

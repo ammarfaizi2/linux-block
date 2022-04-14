@@ -4,6 +4,7 @@
  * Copyright © 2008,2010 Intel Corporation
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/intel-iommu.h>
 #include <linux/dma-resv.h>
 #include <linux/sync_file.h>

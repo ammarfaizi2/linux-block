@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/dma-buf.h>
 #include <linux/file.h>
 #include <linux/fs.h>

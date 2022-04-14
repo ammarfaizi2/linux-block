@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/backing-dev.h>
 #include <linux/slab.h>
 #include <linux/fs.h>

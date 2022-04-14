@@ -26,6 +26,7 @@
  * linux-scsi@vger.kernel.org .
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/mm.h>
 #include <linux/fs.h>
 #include <linux/blkdev.h>

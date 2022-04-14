@@ -17,6 +17,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/fs.h>

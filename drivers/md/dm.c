@@ -10,6 +10,7 @@
 #include "dm-uevent.h"
 #include "dm-ima.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

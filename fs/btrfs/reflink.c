@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>
 #include <linux/iversion.h>
 #include "compression.h"

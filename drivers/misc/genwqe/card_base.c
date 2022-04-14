@@ -16,6 +16,7 @@
  * controlled from here.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/err.h>

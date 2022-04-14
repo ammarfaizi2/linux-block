@@ -57,6 +57,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/list.h>

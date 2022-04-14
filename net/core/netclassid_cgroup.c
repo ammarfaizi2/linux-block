@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/slab.h>
 #include <linux/cgroup.h>
 #include <linux/fdtable.h>

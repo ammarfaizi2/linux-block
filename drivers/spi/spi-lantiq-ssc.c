@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

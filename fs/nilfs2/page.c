@@ -7,6 +7,7 @@
  * Written by Ryusuke Konishi and Seiji Kihara.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/pagemap.h>
 #include <linux/writeback.h>
 #include <linux/swap.h>

@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/prime_numbers.h>
 #include <linux/sort.h>
 

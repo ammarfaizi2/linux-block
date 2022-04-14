@@ -34,6 +34,8 @@
 
 /* Adapted for the Sun 3 by Sam Creasey. */
 
+#include <linux/sched/cond_resched.h>
+
 /*
  * Design
  *

@@ -29,6 +29,7 @@
 			Alan Cox, 30th May 1994
 */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>

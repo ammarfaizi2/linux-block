@@ -35,6 +35,7 @@
  * miss any bits.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>
 #include <linux/kthread.h>
 #include <linux/raid/pq.h>

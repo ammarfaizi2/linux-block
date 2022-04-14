@@ -5,6 +5,7 @@
  */
 #include "qla_def.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>

@@ -5,6 +5,7 @@
  * All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/netdevice.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

@@ -15,6 +15,7 @@
  * user-space applications to communicate with the card.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/module.h>

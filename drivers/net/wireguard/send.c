@@ -11,6 +11,7 @@
 #include "messages.h"
 #include "cookie.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/uio.h>
 #include <linux/inetdevice.h>
 #include <linux/socket.h>

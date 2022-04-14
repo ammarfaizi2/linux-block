@@ -10,6 +10,7 @@
  * Development of this code was funded by Astaro AG, http://www.astaro.com/
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>
 #include <linux/random.h>

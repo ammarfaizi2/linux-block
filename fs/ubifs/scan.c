@@ -15,6 +15,8 @@
  * debugging functions.
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "ubifs.h"
 
 /**

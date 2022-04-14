@@ -7,6 +7,7 @@
 #include "tp_meter.h"
 #include "main.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/atomic.h>
 #include <linux/build_bug.h>
 #include <linux/byteorder/generic.h>

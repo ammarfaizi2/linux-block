@@ -7,6 +7,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/vfs.h>
 #include <linux/pagemap.h>

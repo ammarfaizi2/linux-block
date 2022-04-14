@@ -7,6 +7,7 @@
  * Copyright (C) 2010		SUSE Linux Products GmbH
  * Copyright (C) 2010		Tejun Heo <tj@kernel.org>
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/compiler.h>
 #include <linux/completion.h>
 #include <linux/cpu.h>

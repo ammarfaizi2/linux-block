@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "extents.h"
 
+#include <linux/sched/cond_resched.h>
 #include <trace/events/bcache.h>
 
 /*

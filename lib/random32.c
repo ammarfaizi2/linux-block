@@ -32,6 +32,7 @@
  * s1 > 1, s2 > 7, s3 > 15, s4 > 127.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/percpu.h>
 #include <linux/export.h>

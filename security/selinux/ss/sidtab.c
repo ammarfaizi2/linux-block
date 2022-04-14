@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2018 Red Hat, Inc.
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/list.h>

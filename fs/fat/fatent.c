@@ -3,6 +3,7 @@
  * Copyright (C) 2004, OGAWA Hirofumi
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>
 #include <linux/sched/signal.h>
 #include <linux/backing-dev-defs.h>

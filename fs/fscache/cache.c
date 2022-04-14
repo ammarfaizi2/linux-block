@@ -6,6 +6,7 @@
  */
 
 #define FSCACHE_DEBUG_LEVEL CACHE
+#include <linux/sched/cond_resched.h>
 #include <linux/export.h>
 #include <linux/slab.h>
 #include "internal.h"

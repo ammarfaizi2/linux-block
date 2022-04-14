@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2018 Intel Corporation.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/spinlock.h>
 
 #include "hfi.h"

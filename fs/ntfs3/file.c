@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/backing-dev.h>
 #include <linux/blkdev.h>
 #include <linux/buffer_head.h>

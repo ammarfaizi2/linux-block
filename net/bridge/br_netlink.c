@@ -6,6 +6,7 @@
  *	Stephen Hemminger		<shemminger@osdl.org>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/etherdevice.h>

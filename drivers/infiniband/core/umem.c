@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/mm.h>
 #include <linux/dma-mapping.h>
 #include <linux/sched/signal.h>

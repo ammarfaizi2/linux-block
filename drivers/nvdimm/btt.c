@@ -3,6 +3,7 @@
  * Block Translation Table
  * Copyright (c) 2014-2015, Intel Corporation.
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/highmem.h>
 #include <linux/debugfs.h>
 #include <linux/blkdev.h>

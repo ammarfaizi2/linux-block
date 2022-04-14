@@ -8,6 +8,8 @@
  *  All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "cobalt-driver.h"
 #include "cobalt-i2c.h"
 

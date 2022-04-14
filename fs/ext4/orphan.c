@@ -1,6 +1,7 @@
 /*
  * Ext4 orphan inode handling
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/quotaops.h>
 #include <linux/buffer_head.h>

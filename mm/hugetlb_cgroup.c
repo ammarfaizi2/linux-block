@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/cgroup.h>
 #include <linux/page_counter.h>
 #include <linux/slab.h>

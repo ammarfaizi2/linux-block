@@ -18,6 +18,7 @@
  * 				   mandatory if CONFIG_NET=y these days
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 
 #include <linux/bpf.h>

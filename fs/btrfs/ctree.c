@@ -3,6 +3,7 @@
  * Copyright (C) 2007,2008 Oracle.  All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/rbtree.h>

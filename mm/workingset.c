@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Red Hat, Inc., Johannes Weiner
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/memcontrol.h>
 #include <linux/mm_inline.h>
 #include <linux/writeback.h>

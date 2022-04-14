@@ -6,6 +6,7 @@
  * Author: Ross Zwisler <ross.zwisler@linux.intel.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/atomic.h>
 #include <linux/blkdev.h>
 #include <linux/buffer_head.h>

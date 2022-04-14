@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/sched/cond_resched.h>
 #include <linux/list_sort.h>
+
 #include "misc.h"
 #include "ctree.h"
 #include "block-group.h"

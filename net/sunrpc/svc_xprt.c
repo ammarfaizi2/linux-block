@@ -5,6 +5,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched.h>
 #include <linux/sched/mm.h>
 #include <linux/errno.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #include "cgroup-internal.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sched/cputime.h>
 
 static DEFINE_SPINLOCK(cgroup_rstat_lock);

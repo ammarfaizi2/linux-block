@@ -70,6 +70,7 @@
  *   The worst-case behavior is nevertheless O(N^2) for N wakeups.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/compat.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>

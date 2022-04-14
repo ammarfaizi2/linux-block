@@ -3,6 +3,7 @@
  * Copyright (C) STRATO AG 2013.  All rights reserved.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/uuid.h>
 #include <asm/unaligned.h>
 #include "ctree.h"

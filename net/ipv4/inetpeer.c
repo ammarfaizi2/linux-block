@@ -6,6 +6,7 @@
  *  Authors:	Andrey V. Savochkin <saw@msu.ru>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/cache.h>
 #include <linux/module.h>
 #include <linux/types.h>

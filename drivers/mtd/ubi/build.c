@@ -16,6 +16,7 @@
  * later using the "UBI control device".
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

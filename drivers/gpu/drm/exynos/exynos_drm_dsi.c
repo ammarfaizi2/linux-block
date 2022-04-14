@@ -7,6 +7,7 @@
  * Contacts: Tomasz Figa <t.figa@samsung.com>
 */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/component.h>

@@ -8,6 +8,7 @@
  *		Initial version.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/backing-dev.h>
 #include <linux/dax.h>

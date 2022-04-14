@@ -27,6 +27,8 @@
  * un-mounts, which is done by the 'ubifs_infos_lock' and 'c->umount_mutex'.
  */
 
+#include <linux/sched/cond_resched.h>
+
 #include "ubifs.h"
 
 /* List of all UBIFS file-system instances */

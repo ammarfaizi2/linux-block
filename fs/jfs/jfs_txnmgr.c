@@ -29,6 +29,7 @@
  * hold on to mp+lock thru update of maps
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/vmalloc.h>
 #include <linux/completion.h>

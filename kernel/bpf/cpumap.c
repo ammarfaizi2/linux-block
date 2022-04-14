@@ -16,6 +16,7 @@
  * netstack, and assigning dedicated CPUs for this stage.  This
  * basically allows for 10G wirespeed pre-filtering via bpf.
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/bitops.h>
 #include <linux/bpf.h>
 #include <linux/filter.h>

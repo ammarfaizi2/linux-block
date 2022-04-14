@@ -18,6 +18,7 @@
  * functional code.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/wait.h>

@@ -26,6 +26,7 @@
 #include "cpuid.h"
 #include "spte.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kvm_host.h>
 #include <linux/types.h>
 #include <linux/string.h>

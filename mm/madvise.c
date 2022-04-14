@@ -6,6 +6,7 @@
  * Copyright (C) 2002  Christoph Hellwig
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/mman.h>
 #include <linux/pagemap.h>
 #include <linux/syscalls.h>

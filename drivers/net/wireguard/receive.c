@@ -11,6 +11,7 @@
 #include "cookie.h"
 #include "socket.h"
 
+#include <linux/sched/cond_resched.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/udp.h>

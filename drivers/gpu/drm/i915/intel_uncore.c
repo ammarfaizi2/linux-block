@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/pm_runtime.h>
 
 #include "gt/intel_engine_regs.h"

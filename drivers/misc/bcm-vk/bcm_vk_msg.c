@@ -3,6 +3,7 @@
  * Copyright 2018-2020 Broadcom.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/delay.h>
 #include <linux/fs.h>
 #include <linux/hash.h>

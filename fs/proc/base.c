@@ -48,6 +48,7 @@
  *  Overall revision about smaps.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/uaccess.h>
 
 #include <linux/errno.h>

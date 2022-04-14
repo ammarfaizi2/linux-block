@@ -27,6 +27,7 @@
  *
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/ascii85.h>
 #include <linux/nmi.h>
 #include <linux/pagevec.h>

@@ -4,6 +4,7 @@
 // Copyright (C) 2005 David Brownell
 // Copyright (C) 2008 Secret Lab Technologies Ltd.
 
+#include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/init.h>
