@@ -7,6 +7,7 @@
 #ifndef __QLCNIC_DCBX_H
 #define __QLCNIC_DCBX_H
 
+#include <linux/slab.h>
 #include <linux/types.h>
 
 #define QLCNIC_DCB_STATE	0
