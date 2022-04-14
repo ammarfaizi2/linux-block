@@ -3,6 +3,7 @@
  *  Copyright © 2017 Broadcom
  */
 
+#include <asm/io.h>
 #include <linux/seq_file.h>
 
 #include <drm/drm_debugfs.h>

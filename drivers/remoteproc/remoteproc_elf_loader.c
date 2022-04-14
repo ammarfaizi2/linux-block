@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt)    "%s: " fmt, __func__
 
+#include <asm/io.h>
 #include <linux/module.h>
 #include <linux/firmware.h>
 #include <linux/remoteproc.h>

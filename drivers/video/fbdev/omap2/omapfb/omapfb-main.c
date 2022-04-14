@@ -9,6 +9,7 @@
  * by Imre Deak.
  */
 
+#include <asm/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

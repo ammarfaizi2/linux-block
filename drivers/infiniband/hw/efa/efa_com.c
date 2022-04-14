@@ -3,6 +3,8 @@
  * Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <asm/io.h>
+
 #include "efa_com.h"
 #include "efa_regs_defs.h"
 

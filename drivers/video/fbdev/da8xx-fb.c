@@ -6,6 +6,7 @@
  * Based on the LCD driver for TI Avalanche processors written by
  * Ajay Singh and Shalom Hai.
  */
+#include <asm/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/fb.h>

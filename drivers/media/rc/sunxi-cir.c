@@ -10,6 +10,7 @@
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
  */
 
+#include <asm/io.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

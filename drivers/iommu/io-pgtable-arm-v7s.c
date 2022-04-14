@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt)	"arm-v7s io-pgtable: " fmt
 
+#include <asm/io.h>
 #include <linux/atomic.h>
 #include <linux/dma-mapping.h>
 #include <linux/gfp.h>

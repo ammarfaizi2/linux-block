@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2021 Linaro Ltd.
  */
 
+#include <asm/io.h>
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/slab.h>

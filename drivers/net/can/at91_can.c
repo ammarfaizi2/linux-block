@@ -6,6 +6,7 @@
  * (C) 2008, 2009, 2010, 2011 by Marc Kleine-Budde <kernel@pengutronix.de>
  */
 
+#include <asm/io.h>
 #include <linux/clk.h>
 #include <linux/errno.h>
 #include <linux/if_arp.h>
