@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/netdevice_api_dev_stats.h>
 #include <linux/lockdep_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_ether_api.h>

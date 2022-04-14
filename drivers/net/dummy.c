@@ -29,6 +29,7 @@
 			Alan Cox, 30th May 1994
 */
 
+#include <linux/netdevice_api_dev_stats.h>
 #include <linux/etherdevice_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>

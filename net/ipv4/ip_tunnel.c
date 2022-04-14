@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/netdevice_api_dev_stats.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/if_ether_api.h>
