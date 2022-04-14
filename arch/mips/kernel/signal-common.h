@@ -11,6 +11,7 @@
 #ifndef __SIGNAL_COMMON_H
 #define __SIGNAL_COMMON_H
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/types.h>
 
 /* #define DEBUG_SIG */

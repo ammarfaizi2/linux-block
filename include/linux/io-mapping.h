@@ -6,6 +6,7 @@
 #ifndef _LINUX_IO_MAPPING_H
 #define _LINUX_IO_MAPPING_H
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/bug.h>
