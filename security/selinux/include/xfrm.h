@@ -8,6 +8,7 @@
 #ifndef _SELINUX_XFRM_H_
 #define _SELINUX_XFRM_H_
 
+#include <net/net_namespace_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rtnetlink.h>
 #include <net/flow.h>
