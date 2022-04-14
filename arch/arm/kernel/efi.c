@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/efi.h>
 #include <asm/efi.h>
 #include <asm/mach/map.h>

@@ -38,6 +38,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>

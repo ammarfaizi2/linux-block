@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Shaohua Li <shli@fb.com>
  * Copyright (C) 2016 Song Liu <songliubraving@fb.com>
  */
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

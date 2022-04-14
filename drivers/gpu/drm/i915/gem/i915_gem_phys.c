@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/highmem.h>
 #include <linux/shmem_fs.h>

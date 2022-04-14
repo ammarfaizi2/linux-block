@@ -8,6 +8,7 @@
 **	Rewritten 15/9/2000 by Geert to use resource management
 */
 
+#include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

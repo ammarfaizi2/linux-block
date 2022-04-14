@@ -5,6 +5,7 @@
  * All Rights Reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/hashtable_api.h>

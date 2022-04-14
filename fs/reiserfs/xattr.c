@@ -35,6 +35,7 @@
  */
 
 #include "reiserfs.h"
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>

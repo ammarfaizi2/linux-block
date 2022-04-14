@@ -11,6 +11,7 @@
  * to emulate SunOS).
  */
 
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>

@@ -3,6 +3,7 @@
  * Copyright 2002 Andi Kleen, SuSE Labs.
  * Thanks to Ben LaHaise for precious feedback.
  */
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

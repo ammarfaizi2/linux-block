@@ -4,6 +4,7 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/compiler.h>
 #include <linux/module.h>

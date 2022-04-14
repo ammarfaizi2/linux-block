@@ -12,6 +12,7 @@
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
 
+#include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/segment_api.h>
 #include <asm/ptrace.h>

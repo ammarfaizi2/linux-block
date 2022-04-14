@@ -3,6 +3,7 @@
  *  Copyright (c) 2013, Microsoft Corporation.
  */
 
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>

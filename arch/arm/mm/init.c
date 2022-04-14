@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2005 Russell King
  */
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/swap.h>

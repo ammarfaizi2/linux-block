@@ -3,6 +3,7 @@
  * Copyright 2017 IBM Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/device_api_lock.h>

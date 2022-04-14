@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <asm/cacheflush.h>
 #include <linux/mm.h>

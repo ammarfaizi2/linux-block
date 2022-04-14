@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/irq_api_eff_affinity.h>

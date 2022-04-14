@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs.h>
 #include <linux/bitmap.h>
 #include <rdma/rdma_user_ioctl.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 1996, 1997, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

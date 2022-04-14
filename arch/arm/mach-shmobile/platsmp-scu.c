@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2013  Magnus Damm
  */
+#include <linux/mm_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpu.h>
 #include <linux/delay.h>

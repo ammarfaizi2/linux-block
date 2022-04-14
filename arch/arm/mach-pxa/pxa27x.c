@@ -8,6 +8,7 @@
  *
  * Code specific to PXA27x aka Bulverde.
  */
+#include <linux/mm_api.h>
 #include <linux/dmaengine.h>
 #include <linux/dma/pxa-dma.h>
 #include <linux/gpio.h>

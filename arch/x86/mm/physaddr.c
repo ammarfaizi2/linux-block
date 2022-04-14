@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/mm_api.h>
 #include <asm/fixmap.h>
 #include <linux/memblock.h>
 #include <linux/mmdebug.h>

@@ -1,3 +1,4 @@
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/ktime_api.h>
 #include <linux/gfp_api.h>

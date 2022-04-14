@@ -6,6 +6,7 @@
  * Copyright (C) 2001-2008  Stas Sergeev
  */
 
+#include <linux/mm_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

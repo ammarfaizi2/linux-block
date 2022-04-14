@@ -1,6 +1,7 @@
 /*
  * kmod - the kernel module loader
  */
+#include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

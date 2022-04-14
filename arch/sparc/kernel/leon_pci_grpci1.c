@@ -13,6 +13,7 @@
  * Contributors: Daniel Hellstrom <daniel@gaisler.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

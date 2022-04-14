@@ -2,6 +2,7 @@
  * ATi AGPGART routines.
  */
 
+#include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

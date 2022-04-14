@@ -6,6 +6,7 @@
  * Author(s): Brian King (brking@linux.vnet.ibm.com),
  */
 
+#include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

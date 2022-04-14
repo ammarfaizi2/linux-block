@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api.h>
 #include <asm/segment_api.h>
 #include <asm/ptrace.h>
 #include <asm/elf_api.h>

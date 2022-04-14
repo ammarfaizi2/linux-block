@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/slab.h>
 
 #include "mlx4.h"

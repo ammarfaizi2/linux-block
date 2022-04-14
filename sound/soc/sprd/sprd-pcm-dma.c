@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2019 Spreadtrum Communications Inc.
 
+#include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmaengine.h>

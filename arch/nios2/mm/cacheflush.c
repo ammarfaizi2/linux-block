@@ -7,6 +7,7 @@
  * Implemented by fredrik.markstrom@gmail.com and ivarholmqvist@gmail.com
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/sched.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 1998  Jakub Jelinek    (jj@ultra.linux.cz)
  */
 
+#include <linux/mm_api.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>

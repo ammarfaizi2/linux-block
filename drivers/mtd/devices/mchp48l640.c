@@ -11,6 +11,7 @@
  * are wrong ... no idea why.
  *
  */
+#include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>

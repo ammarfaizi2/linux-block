@@ -6,6 +6,7 @@
  *  AV, Sep--Dec 2000
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/buffer_head.h>

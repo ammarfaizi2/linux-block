@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"kexec-bzImage64: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/string.h>
 #include <linux/printk.h>
 #include <linux/errno.h>

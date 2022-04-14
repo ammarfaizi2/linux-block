@@ -28,6 +28,7 @@
 **        the coherency design originally worked out. Only PCX-W does.
 */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

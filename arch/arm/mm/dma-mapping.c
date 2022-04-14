@@ -6,6 +6,7 @@
  *
  *  DMA uncached mapping support.
  */
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

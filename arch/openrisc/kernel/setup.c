@@ -13,6 +13,7 @@
  * This file handles the architecture-dependent parts of initialization
  */
 
+#include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

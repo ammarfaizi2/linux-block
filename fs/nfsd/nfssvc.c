@@ -7,6 +7,7 @@
  * Copyright (C) 1995, 1996, 1997 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/mm_api.h>
 #include <linux/kthread.h>
 #include <linux/kref_api.h>
 #include <linux/delay.h>

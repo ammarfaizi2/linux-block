@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/module.h>

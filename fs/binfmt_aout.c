@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992, 1996  Linus Torvalds
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 

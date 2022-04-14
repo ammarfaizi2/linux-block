@@ -29,6 +29,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <xen/interface/xen.h>
 #include <xen/page.h>
 #include <xen/grant_table.h>

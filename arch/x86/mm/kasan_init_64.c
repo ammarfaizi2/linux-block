@@ -5,6 +5,7 @@
 /* cpu_feature_enabled() cannot be used this early */
 #define USE_EARLY_PGTABLE_L5
 
+#include <linux/mm_api.h>
 #include <asm/processor_api.h>
 #include <linux/memblock.h>
 #include <linux/kasan.h>

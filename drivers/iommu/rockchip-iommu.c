@@ -6,6 +6,7 @@
  *			Daniel Kurtz <djkurtz@chromium.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/atomic_api.h>

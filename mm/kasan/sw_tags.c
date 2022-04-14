@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "kasan: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/cpumask_api.h>
 #include <linux/export.h>

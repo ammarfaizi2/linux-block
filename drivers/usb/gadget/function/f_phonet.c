@@ -7,6 +7,7 @@
  * Author: Rémi Denis-Courmont
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

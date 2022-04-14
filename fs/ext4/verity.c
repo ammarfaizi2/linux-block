@@ -23,6 +23,7 @@
  * since there can be a hole between i_size and the start of the Merkle tree.
  */
 
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api.h>

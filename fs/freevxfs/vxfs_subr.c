@@ -30,6 +30,7 @@
 /*
  * Veritas filesystem driver - shared subroutines.
  */
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>

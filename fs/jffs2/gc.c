@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/sched/cond_resched.h>

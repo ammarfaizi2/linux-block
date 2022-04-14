@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  * Copyright (C) 2022, Alibaba Cloud
  */
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>

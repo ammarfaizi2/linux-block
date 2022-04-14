@@ -10,6 +10,7 @@
  *  Copyright (C) 2002 ARM Ltd.
  *  All Rights Reserved
  */
+#include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>

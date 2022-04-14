@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/ioprio.h>
 #include <linux/io.h>

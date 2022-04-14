@@ -8,6 +8,7 @@
  * that made this driver possible.
  */
 
+#include <linux/mm_api.h>
 #include <linux/idr_api.h>
 #include <linux/blk-mq.h>
 #include <linux/idr.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_entry_types.h>

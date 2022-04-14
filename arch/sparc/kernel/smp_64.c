@@ -4,6 +4,7 @@
  * Copyright (C) 1997, 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/mm_api.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

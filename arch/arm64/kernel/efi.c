@@ -7,6 +7,7 @@
  * Copyright (C) 2013, 2014 Linaro Ltd.
  */
 
+#include <linux/mm_api.h>
 #include <linux/efi.h>
 #include <linux/init.h>
 

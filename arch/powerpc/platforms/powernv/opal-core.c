@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "opal core: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/kobject_api.h>
 #include <linux/gfp_api.h>
 #include <linux/memblock.h>

@@ -18,6 +18,7 @@
  *  6 Jun 1999	Cache readdir lookups in the page cache. -DaveM
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

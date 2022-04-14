@@ -8,6 +8,7 @@
  * Copyright (c) 2008 Freescale Semiconductor, Inc.
  */
 
+#include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

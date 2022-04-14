@@ -6,6 +6,7 @@
  * Copyright (C) 2002  Christoph Hellwig
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>

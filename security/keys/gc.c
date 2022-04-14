@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/backing-dev-api.h>

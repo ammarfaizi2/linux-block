@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2016 Mentor Graphics Inc.
  */
+#include <linux/mm_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include "imx-media.h"

@@ -4,6 +4,7 @@
  * eventually.
  */
 
+#include <linux/mm_api.h>
 #include <linux/migrate.h>
 #include <linux/pagemap.h>
 #include <linux/swap.h>

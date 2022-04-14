@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2015 Linus Walleij
  */
+#include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/smp.h>
 #include <linux/io.h>

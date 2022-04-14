@@ -8,6 +8,7 @@
  *  Copyright (C) 2004 Fujitsu Siemens Computers GmbH
  *  Author: Bodo Stroesser (bodo.stroesser@fujitsu-siemens.com)
  */
+#include <linux/mm_api.h>
 #include <elf.h>
 #include <stddef.h>
 #include <init.h>

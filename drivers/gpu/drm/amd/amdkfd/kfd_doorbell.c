@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "kfd_priv.h"
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/idr_api.h>
 #include <linux/bitmap.h>

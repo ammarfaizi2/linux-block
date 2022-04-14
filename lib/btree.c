@@ -37,6 +37,7 @@
  * simply loop once over all slots and terminate on the first NUL.
  */
 
+#include <linux/mm_api.h>
 #include <linux/btree.h>
 #include <linux/cache.h>
 #include <linux/kernel.h>

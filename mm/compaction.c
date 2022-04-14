@@ -8,6 +8,7 @@
  *
  * Copyright IBM Corp. 2007-2010 Mel Gorman <mel@csn.ul.ie>
  */
+#include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/memcontrol.h>
 #include <linux/math64.h>

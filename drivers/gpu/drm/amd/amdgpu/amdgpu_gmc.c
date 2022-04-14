@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/hashtable_api.h>
 #include <linux/atomic_api.h>

@@ -32,6 +32,7 @@
 /*                                                                        */
 /**************************************************************************/
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>
 #include <linux/gfp_api.h>

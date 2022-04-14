@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api.h>

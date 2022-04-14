@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2018, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/mlx5/driver.h>
 #include "mlx5_ib.h"

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) Paul Mackerras 1997.
  */
+#include <linux/mm_api.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include "types.h"

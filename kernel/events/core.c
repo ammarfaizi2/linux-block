@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>

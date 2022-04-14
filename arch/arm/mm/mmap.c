@@ -2,6 +2,7 @@
 /*
  *  linux/arch/arm/mm/mmap.c
  */
+#include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/fs.h>
 #include <linux/mm.h>

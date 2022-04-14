@@ -5,6 +5,7 @@
 //
 // S3C2416 - PM support (Based on Ben Dooks' S3C2412 PM support)
 
+#include <linux/mm_api.h>
 #include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/syscore_ops.h>

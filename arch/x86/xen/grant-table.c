@@ -11,6 +11,7 @@
  *                    VA Linux Systems Japan. Split out x86 specific part.
  */
 
+#include <linux/mm_api.h>
 #include <linux/sched.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

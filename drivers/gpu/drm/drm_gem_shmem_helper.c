@@ -3,6 +3,7 @@
  * Copyright 2018 Noralf Trønnes
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dma-buf.h>

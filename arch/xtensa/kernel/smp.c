@@ -12,6 +12,7 @@
  * Pete Delaney <piet@tensilica.com
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

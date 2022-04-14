@@ -16,6 +16,7 @@
  *	Fenghua Yu <fenghua.yu@intel.com>
  *	Add multiple ptc.g/ptc.ga instruction support in global tlb purge.
  */
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

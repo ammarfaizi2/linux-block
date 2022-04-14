@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/mm_api.h>
 #include <linux/memcontrol.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>

@@ -43,6 +43,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 

@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

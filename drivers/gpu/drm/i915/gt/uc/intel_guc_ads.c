@@ -3,6 +3,7 @@
  * Copyright © 2014-2019 Intel Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/bsearch.h>
 
 #include "gt/intel_engine_regs.h"

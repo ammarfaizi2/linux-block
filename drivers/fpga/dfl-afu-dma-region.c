@@ -9,6 +9,7 @@
  *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/sched/signal.h>

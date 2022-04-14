@@ -6,6 +6,7 @@
  *  Nick Kossifidis <mick@ics.forth.gr>
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/init.h>

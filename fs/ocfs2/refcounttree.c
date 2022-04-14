@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Oracle.  All rights reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

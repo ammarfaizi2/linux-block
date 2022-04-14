@@ -5,6 +5,7 @@
  * Copyright(c) 2021 Intel Corporation.
  */
 
+#include <linux/mm_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/miscdevice.h>
 #include <linux/mm.h>

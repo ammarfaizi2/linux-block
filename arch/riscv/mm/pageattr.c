@@ -3,6 +3,7 @@
  * Copyright (C) 2019 SiFive
  */
 
+#include <linux/mm_api.h>
 #include <linux/pagewalk.h>
 #include <linux/pgtable.h>
 #include <asm/tlbflush.h>

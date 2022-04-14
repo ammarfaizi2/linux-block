@@ -9,6 +9,7 @@
  * with minor modifications, see there for credits.
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

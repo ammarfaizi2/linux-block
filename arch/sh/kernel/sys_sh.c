@@ -8,6 +8,7 @@
  *
  * Taken from i386 version.
  */
+#include <linux/mm_api.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/mm.h>

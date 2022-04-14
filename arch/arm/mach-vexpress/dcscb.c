@@ -6,6 +6,7 @@
  * Copyright:	(C) 2012-2013  Linaro Limited
  */
 
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

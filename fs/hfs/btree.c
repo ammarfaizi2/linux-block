@@ -9,6 +9,7 @@
  * Handle opening/closing btree
  */
 
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
+#include <linux/mm_api.h>
 #include <linux/kallsyms.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

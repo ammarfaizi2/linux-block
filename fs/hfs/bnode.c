@@ -9,6 +9,7 @@
  * Handle basic btree node operations
  */
 
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/pagemap.h>

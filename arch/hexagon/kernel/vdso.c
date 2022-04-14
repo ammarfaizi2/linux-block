@@ -5,6 +5,7 @@
  * Copyright (c) 2011, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/err.h>
 #include <linux/mm.h>

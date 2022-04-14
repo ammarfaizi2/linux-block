@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>

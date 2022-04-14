@@ -39,6 +39,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>

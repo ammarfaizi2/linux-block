@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/mm_api.h>
 #include <linux/mm_api_gate_area.h>
 #include <linux/mm_api_exe_file.h>
 #include <linux/fs_api_sb.h>

@@ -22,6 +22,7 @@
  *				for datagram xmit
  */
 
+#include <linux/mm_api.h>
 #include <linux/ipv6.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

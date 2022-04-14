@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>

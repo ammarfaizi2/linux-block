@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2019 Lubomir Rintel <lkundrak@v3.sk>
  */
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <asm/smp_scu.h>
 #include <asm/smp.h>

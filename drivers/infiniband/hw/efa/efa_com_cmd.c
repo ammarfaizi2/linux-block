@@ -3,6 +3,8 @@
  * Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/mm_api.h>
+
 #include "efa_com.h"
 #include "efa_com_cmd.h"
 

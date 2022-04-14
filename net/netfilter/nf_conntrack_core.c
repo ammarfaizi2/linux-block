@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/cpumask_api.h>

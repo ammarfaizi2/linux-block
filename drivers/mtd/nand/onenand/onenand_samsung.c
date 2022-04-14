@@ -11,6 +11,7 @@
  *	S5PC110: use DMA
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

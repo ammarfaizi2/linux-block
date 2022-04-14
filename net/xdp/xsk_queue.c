@@ -3,6 +3,7 @@
  * Copyright(c) 2018 Intel Corporation.
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/log2.h>
 #include <linux/slab.h>

@@ -7,6 +7,7 @@
  * Author: Vidya Sagar <vidyas@nvidia.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

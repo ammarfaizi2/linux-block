@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

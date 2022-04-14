@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/mlx4/qp.h>
 #include <linux/mlx4/srq.h>
 #include <linux/slab.h>

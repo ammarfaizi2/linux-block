@@ -36,6 +36,7 @@
  */
 #define USE_EARLY_PGTABLE_L5
 
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <asm/processor_api.h>
 #include <asm/pgtable.h>

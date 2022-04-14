@@ -12,6 +12,7 @@
  * for more details.
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <asm/cacheflush.h>
 #include <linux/signal.h>

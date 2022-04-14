@@ -4,6 +4,7 @@
  * Author: Heiko Stuebner <heiko@sntech.de>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/init.h>

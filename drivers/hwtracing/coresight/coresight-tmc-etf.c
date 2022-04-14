@@ -4,6 +4,7 @@
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <asm/local_api.h>
 #include <linux/atomic.h>

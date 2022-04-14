@@ -7,6 +7,7 @@
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  * Author: Jeremy Kerr <jk@ozlabs.org>
  */
+#include <linux/mm_api.h>
 #include <linux/sched.h>
 #include <linux/mm.h>
 #include <linux/export.h>

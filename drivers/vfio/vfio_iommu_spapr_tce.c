@@ -10,6 +10,7 @@
  *     Author: Alex Williamson <alex.williamson@redhat.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

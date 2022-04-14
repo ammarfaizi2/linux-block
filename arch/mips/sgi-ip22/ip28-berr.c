@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Peter Fuerst (pf@net.alphadv.de) - IP28
  */
 
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

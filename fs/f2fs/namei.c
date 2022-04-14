@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/delayed_call.h>
 #include <linux/fs.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <asm/cacheflush.h>
 #include <linux/percpu.h>

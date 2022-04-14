@@ -11,6 +11,7 @@
  * Copyright (C) 2008, 2009 Cavium Networks, Inc.
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/fs.h>
 #include <linux/mm.h>

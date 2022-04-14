@@ -30,6 +30,7 @@
 #error "contiguous percpu allocation is incompatible with paged first chunk"
 #endif
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/log2.h>
 

@@ -5,6 +5,7 @@
  *  Copyright (c) 2012, Jeff Layton <jlayton@redhat.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

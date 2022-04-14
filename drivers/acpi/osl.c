@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "ACPI: OSL: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

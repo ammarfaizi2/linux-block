@@ -10,6 +10,7 @@
  * Copyright (C) 2014 Texas Instruments Incorporated
  *    Aurelien Jacquiot <a-jacquiot@ti.com>
  */
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

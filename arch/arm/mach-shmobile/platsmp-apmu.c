@@ -5,6 +5,7 @@
  * Copyright (C) 2014  Renesas Electronics Corporation
  * Copyright (C) 2013  Magnus Damm
  */
+#include <linux/mm_api.h>
 #include <linux/cpu_pm.h>
 #include <linux/delay.h>
 #include <linux/init.h>

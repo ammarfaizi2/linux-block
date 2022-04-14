@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Red Hat, Inc.
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

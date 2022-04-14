@@ -4,6 +4,7 @@
  *  Copyright (c) 2015 FUJITSU LIMITED
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

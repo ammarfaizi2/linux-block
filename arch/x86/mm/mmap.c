@@ -11,6 +11,7 @@
  * Copyright 2007 Jiri Kosina, SUSE Labs.
  */
 
+#include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/capability.h>
 #include <asm/processor_api.h>

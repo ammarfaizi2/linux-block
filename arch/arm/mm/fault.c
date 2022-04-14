@@ -5,6 +5,7 @@
  *  Copyright (C) 1995  Linus Torvalds
  *  Modifications for ARM processor (c) 1995-2004 Russell King
  */
+#include <linux/mm_api.h>
 #include <linux/extable.h>
 #include <linux/signal.h>
 #include <linux/mm.h>

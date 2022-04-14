@@ -5,6 +5,7 @@
  *			 <benh@kernel.crashing.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

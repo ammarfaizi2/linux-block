@@ -9,6 +9,7 @@
  * I like traps on v9, :))))
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cpudata.h>

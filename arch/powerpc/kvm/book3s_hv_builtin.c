@@ -3,6 +3,7 @@
  * Copyright 2011 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

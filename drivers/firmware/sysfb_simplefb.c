@@ -11,6 +11,7 @@
  * legacy nodes instead.
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/err.h>
 #include <linux/init.h>

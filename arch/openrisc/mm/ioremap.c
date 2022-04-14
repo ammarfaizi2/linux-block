@@ -11,6 +11,7 @@
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/vmalloc.h>
 #include <linux/io.h>

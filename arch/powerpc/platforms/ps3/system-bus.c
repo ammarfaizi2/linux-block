@@ -6,6 +6,7 @@
  *  Copyright 2006 Sony Corp.
  */
 
+#include <linux/mm_api.h>
 #include <linux/kobject_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

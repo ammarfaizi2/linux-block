@@ -18,6 +18,7 @@
 #define KMSG_COMPONENT "cpu"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

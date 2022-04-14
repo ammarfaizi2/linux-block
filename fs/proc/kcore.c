@@ -10,6 +10,7 @@
  *	Safe accesses to vmalloc/direct-mapped discontiguous areas, Kanoj Sarcar <kanoj@sgi.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

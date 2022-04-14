@@ -32,6 +32,7 @@
  */
 
 
+#include <linux/mm_api.h>
 #include <linux/mlx4/cmd.h>
 #include <linux/mlx4/srq.h>
 #include <linux/export.h>

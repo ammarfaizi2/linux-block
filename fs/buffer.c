@@ -19,6 +19,7 @@
  * async buffer flushing, 1999 Andrea Arcangeli <andrea@suse.de>
  */
 
+#include <linux/mm_api.h>
 #include <linux/memcontrol.h>
 #include <linux/io.h>
 #include <linux/highmem_extra.h>

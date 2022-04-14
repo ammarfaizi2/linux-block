@@ -7,6 +7,7 @@
  * Information: https://tools.ietf.org/html/rfc8439
  */
 
+#include <linux/mm_api.h>
 #include <crypto/algapi.h>
 #include <crypto/chacha20poly1305.h>
 #include <crypto/chacha.h>

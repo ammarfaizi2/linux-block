@@ -12,6 +12,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>

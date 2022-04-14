@@ -7,6 +7,7 @@
  * Page recycling code is mostly taken from gianfar driver.
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/if_vlan_api.h>

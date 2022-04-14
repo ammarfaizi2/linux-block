@@ -10,6 +10,7 @@
  *
  * Derived from the x86 and Alpha versions.
  */
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/sched/task.h>

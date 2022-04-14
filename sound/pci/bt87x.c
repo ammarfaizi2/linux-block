@@ -7,6 +7,7 @@
  * based on btaudio.c by Gerd Knorr <kraxel@bytesex.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>

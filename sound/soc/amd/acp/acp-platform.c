@@ -11,6 +11,7 @@
  * Generic interface for ACP audio blck PCM component
  */
 
+#include <linux/mm_api.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>

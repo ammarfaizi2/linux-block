@@ -11,6 +11,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/mm_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/dma-mapping.h>

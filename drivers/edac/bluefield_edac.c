@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Mellanox Technologies.
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

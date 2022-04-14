@@ -3,6 +3,7 @@
  *
  *  Copyright 2007 Rusty Russell IBM Corporation
  */
+#include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

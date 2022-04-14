@@ -6,6 +6,7 @@
  *	      Michael Holzheu <holzheu@linux.vnet.ibm.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

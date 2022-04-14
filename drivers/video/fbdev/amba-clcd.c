@@ -10,6 +10,7 @@
  *
  *  ARM PrimeCell PL110 Color LCD Controller
  */
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/amba/bus.h>

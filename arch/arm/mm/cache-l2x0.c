@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2007 ARM Limited
  */
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpu.h>

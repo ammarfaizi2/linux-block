@@ -20,6 +20,7 @@
  * physical memory mapping is the available physical memory.
  */
 
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/random.h>

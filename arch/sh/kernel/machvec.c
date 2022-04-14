@@ -7,6 +7,7 @@
  *  Copyright (C) 1999  Niibe Yutaka
  *  Copyright (C) 2002 - 2007 Paul Mundt
  */
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/string.h>
 #include <asm/machvec.h>

@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/mm_api.h>
 #include <linux/ipv6.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

@@ -6,6 +6,7 @@
  *  Authors:	Andrey V. Savochkin <saw@msu.ru>
  */
 
+#include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

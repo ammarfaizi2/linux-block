@@ -16,6 +16,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/cpumask_api.h>

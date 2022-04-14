@@ -27,6 +27,7 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/firmware.h>
 #include <linux/ihex.h>
 #include <linux/module.h>

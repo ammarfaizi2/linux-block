@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <asm/local_api.h>

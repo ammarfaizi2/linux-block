@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "psci: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/capability.h>
 #include <linux/acpi.h>
 #include <linux/arm-smccc.h>

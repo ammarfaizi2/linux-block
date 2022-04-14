@@ -12,6 +12,7 @@
  * Base Functions
  */
 
+#include <linux/mm_api.h>
 #include <linux/kobject_api.h>
 #include <linux/interrupt.h>
 #include <linux/idr_api.h>

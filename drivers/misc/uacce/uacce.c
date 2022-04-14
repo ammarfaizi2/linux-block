@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <linux/mm_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

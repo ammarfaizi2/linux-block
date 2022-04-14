@@ -15,6 +15,7 @@
  *	   Rn  = address
  */
 
+#include <linux/mm_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>

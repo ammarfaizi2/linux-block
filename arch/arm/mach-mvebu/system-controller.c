@@ -22,6 +22,7 @@
  * soft-reset, but it might be extended in the future.
  */
 
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/of_address.h>

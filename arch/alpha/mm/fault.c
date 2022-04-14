@@ -5,6 +5,7 @@
  *  Copyright (C) 1995  Linus Torvalds
  */
 
+#include <linux/mm_api.h>
 #include <linux/sched/signal.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

@@ -26,6 +26,7 @@
  * fault to a vsyscall address.
  */
 
+#include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/timer.h>
 #include <linux/sched/signal.h>

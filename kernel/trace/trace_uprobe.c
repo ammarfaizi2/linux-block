@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt)	"trace_uprobe: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

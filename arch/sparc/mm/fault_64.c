@@ -6,6 +6,7 @@
  * Copyright (C) 1997, 1999 Jakub Jelinek (jj@ultra.linux.cz)
  */
 
+#include <linux/mm_api.h>
 #include <asm/head.h>
 
 #include <linux/string.h>

@@ -8,6 +8,7 @@
  * All rights reserved
  * www.qlogic.com
  */
+#include <linux/mm_api.h>
 #include <linux/etherdevice_api.h>
 
 #include "bna.h"

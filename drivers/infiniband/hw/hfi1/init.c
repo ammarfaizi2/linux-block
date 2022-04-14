@@ -4,6 +4,7 @@
  * Copyright(c) 2021 Cornelis Networks.
  */
 
+#include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/hrtimer_api.h>

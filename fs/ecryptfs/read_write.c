@@ -6,6 +6,7 @@
  *   Author(s): Michael A. Halcrow <mahalcro@us.ibm.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <asm/cacheflush.h>

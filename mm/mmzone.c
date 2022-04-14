@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <linux/stddef.h>
 #include <linux/mm.h>

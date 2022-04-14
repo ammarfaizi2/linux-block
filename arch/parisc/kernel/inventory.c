@@ -14,6 +14,7 @@
  * problems, but...
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/capability.h>
 #include <linux/types.h>

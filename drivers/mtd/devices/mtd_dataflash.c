@@ -5,6 +5,7 @@
  * Largely derived from at91_dataflash.c:
  *  Copyright (C) 2003-2005 SAN People (Pty) Ltd
 */
+#include <linux/mm_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

@@ -5,6 +5,7 @@
  *  by Bernhard Walle <bernhard.walle@gmx.de>
  */
 
+#include <linux/mm_api.h>
 #include <linux/kobject_api.h>
 #include <linux/string.h>
 #include <linux/firmware-map.h>

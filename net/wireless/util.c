@@ -7,6 +7,7 @@
  * Copyright 2017	Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/lockdep_api.h>
 #include <linux/ipv6.h>

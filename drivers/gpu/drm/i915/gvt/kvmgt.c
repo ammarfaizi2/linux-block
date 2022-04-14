@@ -28,6 +28,7 @@
  *    Xiaoguang Chen <xiaoguang.chen@intel.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

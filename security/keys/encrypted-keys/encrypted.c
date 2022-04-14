@@ -11,6 +11,7 @@
  * See Documentation/security/keys/trusted-encrypted.rst
  */
 
+#include <linux/mm_api.h>
 #include <linux/uaccess.h>
 #include <linux/module.h>
 #include <linux/init.h>

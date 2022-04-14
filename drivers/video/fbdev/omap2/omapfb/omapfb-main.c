@@ -9,6 +9,7 @@
  * by Imre Deak.
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

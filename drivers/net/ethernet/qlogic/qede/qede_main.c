@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>

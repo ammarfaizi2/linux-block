@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2019 Andes Technology Corporation
 
+#include <linux/mm_api.h>
 #include <linux/pfn.h>
 #include <linux/init_task.h>
 #include <linux/kasan.h>

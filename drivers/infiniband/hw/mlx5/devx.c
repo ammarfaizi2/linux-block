@@ -3,6 +3,7 @@
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/eventfd.h>

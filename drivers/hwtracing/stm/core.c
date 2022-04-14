@@ -7,6 +7,7 @@
  * as defined in MIPI STPv2 specification.
  */
 
+#include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kmod.h>

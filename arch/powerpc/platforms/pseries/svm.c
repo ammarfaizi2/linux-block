@@ -6,6 +6,7 @@
  * Author: Anshuman Khandual <khandual@linux.vnet.ibm.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/memblock.h>
 #include <linux/cc_platform.h>

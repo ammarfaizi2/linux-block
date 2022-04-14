@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/mm_api.h>
 #include <linux/phy.h>
 #include <linux/ethtool_netlink.h>
 #include "netlink.h"

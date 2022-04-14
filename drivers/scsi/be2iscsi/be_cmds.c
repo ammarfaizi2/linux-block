@@ -7,6 +7,7 @@
  * linux-drivers@broadcom.com
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

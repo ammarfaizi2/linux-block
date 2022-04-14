@@ -9,6 +9,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "mce_power: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/types.h>
 #include <linux/ptrace.h>
 #include <linux/extable.h>

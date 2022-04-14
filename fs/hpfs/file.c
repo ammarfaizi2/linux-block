@@ -8,6 +8,7 @@
  */
 
 #include "hpfs_fn.h"
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/mpage.h>

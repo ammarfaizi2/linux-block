@@ -12,6 +12,7 @@
  *   Author: Huang Ying <ying.huang@intel.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>

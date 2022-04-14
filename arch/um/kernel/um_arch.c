@@ -3,6 +3,7 @@
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/mm_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/mm.h>

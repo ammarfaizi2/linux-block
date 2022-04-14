@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/gfp_api.h>

@@ -77,6 +77,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api.h>
 #include <linux/kmod.h>
 #include <linux/fs_api.h>
 #include <linux/filter_api.h>

@@ -30,6 +30,7 @@
  * software renderer and the X server for efficient buffer sharing.
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

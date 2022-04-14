@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/mm_api.h>
 #include <linux/compiler.h>
 #include <linux/export.h>
 #include <linux/fault-inject-usercopy.h>

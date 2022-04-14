@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
+#include <linux/mm_api.h>
 #include <linux/huge_mm.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-fence-api.h>

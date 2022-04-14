@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/idr_api.h>
 #include <linux/vmalloc.h>
 #include <rdma/ib_umem.h>

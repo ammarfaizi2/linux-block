@@ -5,6 +5,7 @@
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
 
+#include <linux/mm_api.h>
 #include <linux/capability.h>
 #include <asm/sections.h>
 #include <asm/processor_api.h>

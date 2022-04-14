@@ -8,6 +8,7 @@
  * Started by Ingo Molnar <mingo@elte.hu>
  */
 
+#include <linux/mm_api.h>
 #include <linux/personality.h>
 #include <linux/mm.h>
 #include <linux/random.h>

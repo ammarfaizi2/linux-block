@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Cadence Design Systems Inc.
  */
 
+#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/vmalloc.h>
 #include <linux/pgtable.h>

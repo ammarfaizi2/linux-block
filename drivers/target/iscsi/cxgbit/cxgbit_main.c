@@ -9,6 +9,7 @@
 
 #include "cxgbit.h"
 
+#include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <asm/unaligned.h>
 #include <linux/types.h>

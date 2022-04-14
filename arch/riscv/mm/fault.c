@@ -7,6 +7,7 @@
  */
 
 
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>

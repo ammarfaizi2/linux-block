@@ -8,6 +8,7 @@
  * to continually duplicate across every architecture.
  */
 
+#include <linux/mm_api.h>
 #include <linux/cred.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/sched/rseq_api.h>

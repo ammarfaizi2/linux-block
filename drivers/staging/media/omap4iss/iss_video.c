@@ -7,6 +7,7 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/mm.h>

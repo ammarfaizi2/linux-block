@@ -3,6 +3,7 @@
  * Copyright (C) 2015, 2016 ARM Ltd.
  */
 
+#include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/irqchip/arm-gic.h>

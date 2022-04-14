@@ -5,6 +5,7 @@
  *  Copyright (C) 2004 Anton Blanchard, IBM Corp. <anton@samba.org>
  */
 
+#include <linux/mm_api.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>

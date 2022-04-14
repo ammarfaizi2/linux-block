@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "PM: hibernation: " fmt
 
+#include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/math64.h>
 #include <linux/highmem_extra.h>

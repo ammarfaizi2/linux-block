@@ -14,6 +14,7 @@
  * (find more info at www.hackndev.com)
  */
 
+#include <linux/mm_api.h>
 #include <linux/platform_device.h>
 #include <linux/syscore_ops.h>
 #include <linux/delay.h>

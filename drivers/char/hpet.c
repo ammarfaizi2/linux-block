@@ -8,6 +8,7 @@
  *	Bob Picco <robert.picco@hp.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/math64.h>
 #include <linux/irq.h>
 #include <linux/fs_api.h>

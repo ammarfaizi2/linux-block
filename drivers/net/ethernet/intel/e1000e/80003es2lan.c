@@ -5,6 +5,7 @@
  * 80003ES2LAN Gigabit Ethernet Controller (Serdes)
  */
 
+#include <linux/mm_api.h>
 #include <linux/delay.h>
 
 #include "e1000.h"

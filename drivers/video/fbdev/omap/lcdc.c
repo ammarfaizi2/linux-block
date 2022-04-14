@@ -5,6 +5,7 @@
  * Copyright (C) 2004 Nokia Corporation
  * Author: Imre Deak <imre.deak@nokia.com>
  */
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/device.h>

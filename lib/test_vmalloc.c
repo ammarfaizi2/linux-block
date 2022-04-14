@@ -4,6 +4,7 @@
  * Test module for stress and analyze performance of vmalloc allocator.
  * (C) 2018 Uladzislau Rezki (Sony) <urezki@gmail.com>
  */
+#include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

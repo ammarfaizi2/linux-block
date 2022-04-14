@@ -14,6 +14,7 @@
  * Zerocpy NFS support (C) 2002 Hirokazu Takahashi <taka@valinux.co.jp>
  */
 
+#include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>

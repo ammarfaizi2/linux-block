@@ -8,6 +8,7 @@
  * Derived from actions,s500-smp
  */
 
+#include <linux/mm_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/io.h>
 #include <linux/of.h>

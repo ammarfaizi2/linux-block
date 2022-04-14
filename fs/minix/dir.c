@@ -10,6 +10,7 @@
  */
 
 #include "minix.h"
+#include <linux/mm_api.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>

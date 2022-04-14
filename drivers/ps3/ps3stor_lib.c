@@ -6,6 +6,7 @@
  * Copyright 2007 Sony Corp.
  */
 
+#include <linux/mm_api.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

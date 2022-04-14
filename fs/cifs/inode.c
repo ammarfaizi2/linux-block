@@ -5,6 +5,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

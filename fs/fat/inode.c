@@ -11,6 +11,7 @@
  *	Max Cohan: Fixed invalid FSINFO offset when info_sector is 0
  */
 
+#include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/dcache.h>

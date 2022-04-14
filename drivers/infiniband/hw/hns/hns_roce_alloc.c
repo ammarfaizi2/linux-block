@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api.h>
 #include <linux/idr_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/vmalloc.h>

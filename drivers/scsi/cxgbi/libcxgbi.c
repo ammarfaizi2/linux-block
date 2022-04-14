@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

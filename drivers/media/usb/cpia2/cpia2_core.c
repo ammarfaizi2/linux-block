@@ -18,6 +18,7 @@
 
 #include "cpia2.h"
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/module.h>
