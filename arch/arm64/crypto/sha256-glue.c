@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Linaro Ltd. <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/preempt.h>
 #include <asm/hwcap.h>
 #include <asm/neon.h>
 #include <asm/simd.h>

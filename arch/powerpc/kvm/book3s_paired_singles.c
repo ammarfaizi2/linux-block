@@ -6,6 +6,7 @@
  * Authors: Alexander Graf <agraf@suse.de>
  */
 
+#include <linux/preempt.h>
 #include <asm/kvm.h>
 #include <asm/kvm_ppc.h>
 #include <asm/disassemble.h>

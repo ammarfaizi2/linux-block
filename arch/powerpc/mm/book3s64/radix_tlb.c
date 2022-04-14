@@ -5,6 +5,7 @@
  * Copyright 2015-2016, Aneesh Kumar K.V, IBM Corporation.
  */
 
+#include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/kthread.h>

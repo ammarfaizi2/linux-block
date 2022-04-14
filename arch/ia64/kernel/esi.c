@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Hewlett-Packard Co
  * 	Alex Williamson <alex.williamson@hp.com>
  */
+#include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

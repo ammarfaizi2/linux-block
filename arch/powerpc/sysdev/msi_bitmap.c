@@ -3,6 +3,7 @@
  * Copyright 2006-2008, Michael Ellerman, IBM Corporation.
  */
 
+#include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

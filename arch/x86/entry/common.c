@@ -7,6 +7,7 @@
  * in ptrace.c and signal.c.
  */
 
+#include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 2001 MIPS Technologies, Inc.
  */
+#include <linux/preempt.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/errno.h>

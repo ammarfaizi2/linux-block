@@ -6,6 +6,7 @@
  * Author: Antonios Motakis <a.motakis@virtualopensystems.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/eventfd.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>

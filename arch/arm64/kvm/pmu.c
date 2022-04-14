@@ -3,6 +3,7 @@
  * Copyright 2019 Arm Limited
  * Author: Andrew Murray <Andrew.Murray@arm.com>
  */
+#include <linux/preempt.h>
 #include <linux/bitmap.h>
 #include <linux/kvm_host.h>
 #include <linux/perf_event.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 1996-2000 Russell King - Converted to ARM.
  * Copyright (C) 2012 ARM Ltd.
  */
+#include <linux/preempt.h>
 #include <linux/mm_api.h>
 #include <linux/capability.h>
 #include <clocksource/arm_arch_timer.h>

@@ -7,6 +7,7 @@
  *   Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/ftrace_pause.h>
 #include <linux/atomic_api.h>
 #include <linux/moduleloader.h>

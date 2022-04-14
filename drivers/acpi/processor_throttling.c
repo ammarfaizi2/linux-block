@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/preempt.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

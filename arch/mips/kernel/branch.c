@@ -6,6 +6,7 @@
  * Copyright (C) 1996, 97, 2000, 2001 by Ralf Baechle
  * Copyright (C) 2001 MIPS Technologies, Inc.
  */
+#include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>
 #include <linux/signal.h>

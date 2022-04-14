@@ -8,6 +8,7 @@
  */
 
 #include "asm/ptrace.h"
+#include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>

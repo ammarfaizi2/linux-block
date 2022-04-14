@@ -4,6 +4,7 @@
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/syscalls.h>
 #include <linux/signal.h>

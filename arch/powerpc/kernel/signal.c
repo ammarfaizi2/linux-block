@@ -9,6 +9,7 @@
  * this archive for more details.
  */
 
+#include <linux/preempt.h>
 #include <linux/resume_user_mode.h>
 #include <linux/signal.h>
 #include <linux/uprobes.h>

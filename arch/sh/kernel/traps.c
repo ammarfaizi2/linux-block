@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/preempt.h>
 #include <linux/bug.h>
 #include <linux/io.h>
 #include <linux/types.h>

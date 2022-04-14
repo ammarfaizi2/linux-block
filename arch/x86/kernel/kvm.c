@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "kvm-guest: " fmt
 
+#include <linux/preempt.h>
 #include <linux/notifier_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2004 Paul Mackerras <paulus@au.ibm.com>, IBM
  */
+#include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/kprobes.h>
 #include <linux/ptrace.h>

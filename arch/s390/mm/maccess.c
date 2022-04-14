@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/preempt.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/uaccess.h>

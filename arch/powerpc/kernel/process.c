@@ -10,6 +10,7 @@
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  */
 
+#include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>

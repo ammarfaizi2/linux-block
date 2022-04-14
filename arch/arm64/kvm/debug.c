@@ -6,6 +6,7 @@
  * Author: Alex Bennée <alex.bennee@linaro.org>
  */
 
+#include <linux/preempt.h>
 #include <linux/kvm_host.h>
 #include <linux/hw_breakpoint.h>
 

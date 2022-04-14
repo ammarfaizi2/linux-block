@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <linux/preempt.h>
 #include <linux/net.h>
 #include <linux/interrupt.h>
 #include <linux/sched/cond_resched.h>

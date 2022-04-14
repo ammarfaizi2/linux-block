@@ -8,6 +8,7 @@
  * Copyright 2018 Nick Piggin, Michael Ellerman, IBM Corp.
  */
 
+#include <linux/preempt.h>
 #include <linux/cpumask_api.h>
 #include <linux/delay.h>
 #include <linux/export.h>

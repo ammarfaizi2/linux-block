@@ -6,6 +6,7 @@
  * Copyright 2003 PathScale, Inc.
  */
 
+#include <linux/preempt.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>

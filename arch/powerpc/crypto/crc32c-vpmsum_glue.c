@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/preempt.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/crc32.h>
 #include <crypto/internal/hash.h>

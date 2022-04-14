@@ -6,6 +6,7 @@
  * Copyright (C) 2011 Peter Zijlstra
  *
  */
+#include <linux/preempt.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>

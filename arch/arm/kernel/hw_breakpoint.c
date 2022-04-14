@@ -12,6 +12,7 @@
  */
 #define pr_fmt(fmt) "hw-breakpoint: " fmt
 
+#include <linux/preempt.h>
 #include <linux/perf_event_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

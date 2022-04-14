@@ -7,6 +7,7 @@
  *
  * Copyright Alistair Popple, IBM Corporation 2014.
  */
+#include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

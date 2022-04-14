@@ -7,6 +7,7 @@
  * Jiang Liu <jiang.liu@linux.intel.com>
  *	Enable support of hierarchical irqdomains
  */
+#include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/irqdesc.h>

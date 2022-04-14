@@ -8,6 +8,7 @@
  *   Copylight (C) 2006 kogiidena
  *   Copylight (C) 2002 Atom Create Engineering Co., Ltd. *
  */
+#include <linux/preempt.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

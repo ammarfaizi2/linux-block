@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "Hyper-V: " fmt
 
+#include <linux/preempt.h>
 #include <asm/msr.h>
 #include <linux/spinlock.h>
 

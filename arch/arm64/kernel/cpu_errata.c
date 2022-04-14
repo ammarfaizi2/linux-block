@@ -5,6 +5,7 @@
  * Copyright (C) 2014 ARM Ltd.
  */
 
+#include <linux/preempt.h>
 #include <linux/mm_api.h>
 #include <linux/irqflags.h>
 #include <linux/cpumask_api.h>

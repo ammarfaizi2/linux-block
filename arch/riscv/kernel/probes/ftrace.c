@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/preempt.h>
 #include <linux/kprobes.h>
 
 /* Ftrace callback handler for kprobes -- called under preepmt disabled */

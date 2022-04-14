@@ -8,6 +8,7 @@
  * Copyright (c) 2022 Helge Deller <deller@gmx.de>
  */
 
+#include <linux/preempt.h>
 #include <linux/types.h>
 #include <linux/kprobes.h>
 #include <linux/slab.h>

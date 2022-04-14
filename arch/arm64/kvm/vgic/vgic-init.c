@@ -3,6 +3,7 @@
  * Copyright (C) 2015, 2016 ARM Ltd.
  */
 
+#include <linux/preempt.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/cpuhotplug.h>

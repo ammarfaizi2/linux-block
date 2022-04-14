@@ -6,6 +6,7 @@
  * Copyright (C) 2004-2012 Cavium Networks
  */
 
+#include <linux/preempt.h>
 #include <asm/cop2.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>
