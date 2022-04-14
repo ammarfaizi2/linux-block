@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>

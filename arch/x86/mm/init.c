@@ -1,3 +1,4 @@
+#include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/highmem.h>

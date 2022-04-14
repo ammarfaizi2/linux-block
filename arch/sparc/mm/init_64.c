@@ -6,6 +6,7 @@
  *  Copyright (C) 1997-1999 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
  
+#include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

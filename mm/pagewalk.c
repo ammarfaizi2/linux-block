@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/mm_ptlock.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
