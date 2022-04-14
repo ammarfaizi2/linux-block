@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s, %d: " fmt, __func__, __LINE__
 
+#include <asm/byteorder.h>
 #include <linux/types.h>
 #include <linux/printk.h>
 #include <linux/ratelimit.h>

@@ -9,6 +9,7 @@
  * Andreas Larsson <andreas@gaisler.com>
  */
 
+#include <asm/byteorder.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

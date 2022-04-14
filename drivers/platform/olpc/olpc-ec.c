@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2011-2012 One Laptop per Child Foundation.
  */
+#include <asm/byteorder.h>
 #include <linux/completion.h>
 #include <linux/debugfs.h>
 #include <linux/spinlock.h>

@@ -8,6 +8,7 @@
  *          Francois H. Theron <francois.theron@netronome.com>
  */
 
+#include <asm/byteorder.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 

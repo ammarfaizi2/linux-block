@@ -8,6 +8,7 @@
  * See MAINTAINERS file for support contact information.
  */
 
+#include <asm/byteorder.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 
