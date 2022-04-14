@@ -10,6 +10,7 @@
  * Author: Ingo Molnar <mingo@elte.hu>
  *	   Paul E. McKenney <paulmck@linux.ibm.com>
  */
+#include <linux/softirq.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
