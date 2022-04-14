@@ -10,6 +10,7 @@
 #ifndef _LINUX_I2C_H
 #define _LINUX_I2C_H
 
+#include <linux/device/driver.h>
 #include <linux/acpi.h>		/* for acpi_handle */
 #include <linux/bits.h>
 #include <linux/mod_devicetable.h>

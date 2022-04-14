@@ -6,6 +6,7 @@
 #ifndef __MTD_TRANS_H__
 #define __MTD_TRANS_H__
 
+#include <linux/device/driver.h>
 #include <linux/mutex.h>
 #include <linux/kref.h>
 #include <linux/sysfs.h>

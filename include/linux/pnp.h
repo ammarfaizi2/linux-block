@@ -9,6 +9,7 @@
 #ifndef _LINUX_PNP_H
 #define _LINUX_PNP_H
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 #include <linux/list.h>
 #include <linux/errno.h>

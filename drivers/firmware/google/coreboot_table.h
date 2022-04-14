@@ -12,6 +12,7 @@
 #ifndef __COREBOOT_TABLE_H
 #define __COREBOOT_TABLE_H
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 
 /* Coreboot table header structure */

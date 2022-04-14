@@ -4,6 +4,7 @@
  */
 #ifndef __LINUX_ND_H__
 #define __LINUX_ND_H__
+#include <linux/device/driver.h>
 #include <linux/fs.h>
 #include <linux/ndctl.h>
 #include <linux/device.h>

@@ -6,6 +6,7 @@
 #define _SERIO_H
 
 
+#include <linux/device/driver.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>
 #include <linux/list.h>

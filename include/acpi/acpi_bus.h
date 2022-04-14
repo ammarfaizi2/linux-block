@@ -9,6 +9,7 @@
 #ifndef __ACPI_BUS_H__
 #define __ACPI_BUS_H__
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 #include <linux/property.h>
 

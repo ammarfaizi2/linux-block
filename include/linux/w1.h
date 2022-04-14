@@ -6,6 +6,7 @@
 #ifndef __LINUX_W1_H
 #define __LINUX_W1_H
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 
 /**

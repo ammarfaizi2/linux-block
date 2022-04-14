@@ -11,6 +11,7 @@
 
 #ifdef __KERNEL__
 
+#include <linux/device/driver.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/list.h>

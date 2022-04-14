@@ -9,6 +9,7 @@
 #ifndef MTD_PARTITIONS_H
 #define MTD_PARTITIONS_H
 
+#include <linux/device/driver.h>
 #include <linux/types.h>
 
 

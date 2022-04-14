@@ -8,6 +8,7 @@
 #ifndef __IIO_SW_DEVICE
 #define __IIO_SW_DEVICE
 
+#include <linux/device/driver.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/iio/iio.h>

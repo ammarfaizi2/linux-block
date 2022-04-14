@@ -2,6 +2,7 @@
 #ifndef __SOUND_SEQ_DEVICE_H
 #define __SOUND_SEQ_DEVICE_H
 
+#include <linux/device/driver.h>
 #include <linux/types.h>
 
 /*

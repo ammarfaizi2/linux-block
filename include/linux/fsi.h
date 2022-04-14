@@ -7,6 +7,7 @@
 #ifndef LINUX_FSI_H
 #define LINUX_FSI_H
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 
 struct fsi_device {

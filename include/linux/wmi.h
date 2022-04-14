@@ -8,6 +8,7 @@
 #ifndef _LINUX_WMI_H
 #define _LINUX_WMI_H
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 #include <linux/acpi.h>
 #include <linux/mod_devicetable.h>

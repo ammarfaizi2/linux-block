@@ -10,6 +10,7 @@
 #ifndef _LINUX_RPMSG_H
 #define _LINUX_RPMSG_H
 
+#include <linux/device/driver.h>
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/err.h>
