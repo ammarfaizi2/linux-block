@@ -2,6 +2,7 @@
 #ifndef __KVM_X86_LAPIC_H
 #define __KVM_X86_LAPIC_H
 
+#include <linux/jump_label_ratelimit.h>
 #include <kvm/iodev.h>
 
 #include <linux/kvm_host.h>
