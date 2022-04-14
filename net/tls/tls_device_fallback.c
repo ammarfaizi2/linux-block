@@ -29,6 +29,7 @@
  * SOFTWARE.
  */
 
+#include <linux/ipv6.h>
 #include <net/tls.h>
 #include <crypto/aead.h>
 #include <crypto/scatterwalk.h>

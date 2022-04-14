@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/ipv6.h>
 #include <linux/errno.h>
 #include <linux/ip.h>
 #include <linux/kernel.h>

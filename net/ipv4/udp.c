@@ -74,6 +74,7 @@
 
 #define pr_fmt(fmt) "UDP: " fmt
 
+#include <linux/ipv6.h>
 #include <linux/hash.h>
 #include <linux/fs_api.h>
 #include <linux/filter_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2004 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/ipv6.h>
 #include <linux/if_ether.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

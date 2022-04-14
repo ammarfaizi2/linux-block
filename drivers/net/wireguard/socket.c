@@ -9,6 +9,7 @@
 #include "queueing.h"
 #include "messages.h"
 
+#include <linux/ipv6.h>
 #include <linux/ctype.h>
 #include <linux/net.h>
 #include <linux/if_vlan.h>

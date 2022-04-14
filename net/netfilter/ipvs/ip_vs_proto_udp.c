@@ -12,6 +12,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/ipv6.h>
 #include <linux/atomic_api.h>
 #include <linux/in.h>
 #include <linux/ip.h>

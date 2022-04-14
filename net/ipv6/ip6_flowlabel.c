@@ -5,6 +5,7 @@
  *	Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/ipv6.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>

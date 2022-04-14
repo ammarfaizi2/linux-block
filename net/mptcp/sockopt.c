@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "MPTCP: " fmt
 
+#include <linux/ipv6.h>
 #include <linux/capability.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

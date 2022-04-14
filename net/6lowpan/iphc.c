@@ -46,6 +46,7 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/ipv6.h>
 #include <linux/bitops.h>
 #include <linux/if_arp.h>
 #include <linux/netdevice.h>

@@ -11,6 +11,7 @@
 #include "peer.h"
 #include "messages.h"
 
+#include <linux/ipv6.h>
 #include <linux/icmpv6.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

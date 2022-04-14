@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/ipv6.h>
 #include <linux/atomic_api.h>
 #include <linux/netdevice.h>
 #include <net/ipv6.h>

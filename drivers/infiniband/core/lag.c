@@ -3,6 +3,7 @@
  * Copyright (c) 2020 Mellanox Technologies. All rights reserved.
  */
 
+#include <linux/ipv6.h>
 #include <linux/if_ether_api.h>
 #include <rdma/ib_verbs.h>
 #include <rdma/ib_cache.h>

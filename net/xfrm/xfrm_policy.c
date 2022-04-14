@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/ipv6.h>
 #include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/slab.h>

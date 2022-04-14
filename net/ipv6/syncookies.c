@@ -9,6 +9,7 @@
  *  linux/net/ipv4/syncookies.c
  */
 
+#include <linux/ipv6.h>
 #include <linux/tcp.h>
 #include <linux/random.h>
 #include <linux/siphash.h>

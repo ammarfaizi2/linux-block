@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>

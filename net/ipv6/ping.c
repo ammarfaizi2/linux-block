@@ -13,6 +13,7 @@
  *		Pavel Kankovsky (IPv4 implementation, for Linux 2.4.32)
  */
 
+#include <linux/ipv6.h>
 #include <linux/icmpv6.h>
 #include <net/addrconf.h>
 #include <net/ipv6.h>

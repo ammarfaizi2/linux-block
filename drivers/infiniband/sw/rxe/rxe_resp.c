@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/skbuff.h>
 

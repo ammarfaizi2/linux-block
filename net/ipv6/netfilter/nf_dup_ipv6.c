@@ -5,6 +5,7 @@
  *
  * Extracted from xt_TEE.c
  */
+#include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/percpu.h>
 #include <linux/skbuff.h>

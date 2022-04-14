@@ -9,6 +9,7 @@
  * Authors:	Lotsa people, from code originally in tcp
  */
 
+#include <linux/ipv6.h>
 #include <linux/hash.h>
 #include <linux/filter_api.h>
 #include <linux/cpumask_api.h>

@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) "ch_ipsec: " fmt
 
+#include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

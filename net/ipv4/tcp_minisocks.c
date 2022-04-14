@@ -19,6 +19,7 @@
  *		Jorge Cwik, <jorge@laser.satlink.net>
  */
 
+#include <linux/ipv6.h>
 #include <net/tcp.h>
 #include <net/xfrm.h>
 #include <net/busy_poll.h>

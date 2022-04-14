@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/ipv6.h>
 #include <crypto/algapi.h>
 #include <crypto/hash.h>
 #include <linux/module.h>

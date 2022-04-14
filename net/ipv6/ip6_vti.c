@@ -11,6 +11,7 @@
  *	net/ipv6/ip6_tunnel.c
  */
 
+#include <linux/ipv6.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/capability.h>

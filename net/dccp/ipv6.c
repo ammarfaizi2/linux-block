@@ -8,6 +8,7 @@
  *	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
  */
 
+#include <linux/ipv6.h>
 #include <linux/fs_api.h>
 #include <linux/filter_api.h>
 #include <linux/atomic_api.h>

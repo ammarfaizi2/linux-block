@@ -5,6 +5,7 @@
  * Copyright (C) 2000-2001 by Harald Welte <laforge@gnumonks.org>
  * Copyright (C) 2000-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
+#include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/netfilter_ipv6/ip6_tables.h>
 #include <linux/slab.h>

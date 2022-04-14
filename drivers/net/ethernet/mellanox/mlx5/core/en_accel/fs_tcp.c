@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020, Mellanox Technologies inc. All rights reserved. */
 
+#include <linux/ipv6.h>
 #include <linux/netdevice.h>
 #include "en_accel/fs_tcp.h"
 #include "fs_core.h"

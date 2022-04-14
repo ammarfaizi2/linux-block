@@ -4,6 +4,7 @@
  * (C) 2020 Alexander Aring <alex.aring@gmail.com>
  */
 
+#include <linux/ipv6.h>
 #include <linux/rpl_iptunnel.h>
 
 #include <net/dst_cache.h>

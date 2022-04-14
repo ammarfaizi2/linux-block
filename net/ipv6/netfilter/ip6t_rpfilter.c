@@ -3,6 +3,7 @@
  * Copyright (c) 2011 Florian Westphal <fw@strlen.de>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>

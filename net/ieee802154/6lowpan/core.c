@@ -44,6 +44,7 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/ieee802154.h>

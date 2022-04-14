@@ -21,6 +21,7 @@
  *  Copyright (C) 2016 Mellanox Technologies
  */
 
+#include <linux/ipv6.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>

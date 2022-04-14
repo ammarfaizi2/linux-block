@@ -6,6 +6,7 @@
  * Florian Westphal <fw@strlen.de>.
  */
 
+#include <linux/ipv6.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>
