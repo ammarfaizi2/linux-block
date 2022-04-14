@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sysctl.h>
 #include <linux/init.h>
 #include <linux/list.h>
 #include <linux/module.h>

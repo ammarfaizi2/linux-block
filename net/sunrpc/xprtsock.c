@@ -19,6 +19,7 @@
  *   <gilles.quillard@bull.net>
  */
 
+#include <linux/sysctl.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
