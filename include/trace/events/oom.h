@@ -4,6 +4,7 @@
 
 #if !defined(_TRACE_OOM_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_OOM_H
+#include <linux/mmzone_api.h>
 #include <linux/tracepoint.h>
 #include <trace/events/mmflags.h>
 

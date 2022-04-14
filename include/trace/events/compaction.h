@@ -5,6 +5,7 @@
 #if !defined(_TRACE_COMPACTION_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_COMPACTION_H
 
+#include <linux/mmzone_api.h>
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/tracepoint.h>
