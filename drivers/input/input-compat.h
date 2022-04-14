@@ -8,6 +8,7 @@
  * Very heavily based on evdev.c - Copyright (c) 1999-2002 Vojtech Pavlik
  */
 
+#include <linux/sched/task_stack.h>
 #include <linux/ptrace_api.h>
 #include <linux/compiler.h>
 #include <linux/compat.h>
