@@ -36,6 +36,7 @@
  */
 #define USE_EARLY_PGTABLE_L5
 
+#include <asm/desc_defs.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/mem_encrypt.h>
