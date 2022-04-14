@@ -112,6 +112,7 @@
  * Copyright (C) 2000 by Tim Waugh (added LPSETTIMEOUT ioctl)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <asm/processor_api.h>

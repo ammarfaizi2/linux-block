@@ -5,6 +5,8 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/device_api_lock.h>
+
 #include "oxfw.h"
 
 struct fw_spkr {

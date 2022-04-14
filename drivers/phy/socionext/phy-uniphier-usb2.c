@@ -6,6 +6,7 @@
  *      Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>
 #include <linux/of.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2017-2018, Intel Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/genalloc.h>

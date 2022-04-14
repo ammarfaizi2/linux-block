@@ -11,6 +11,7 @@
  * Copyright (c) 2009 Secret Lab Technologies Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/pci.h>
 #include <linux/export.h>
 #include <asm/pci-bridge.h>

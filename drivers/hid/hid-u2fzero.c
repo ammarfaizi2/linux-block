@@ -11,6 +11,7 @@
  * published by the Free Software Foundation, version 2.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/hid.h>
 #include <linux/hidraw.h>
 #include <linux/hw_random.h>

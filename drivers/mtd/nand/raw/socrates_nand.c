@@ -3,6 +3,7 @@
  *  Copyright © 2008 Ilya Yanok, Emcraft Systems
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/mtd/mtd.h>

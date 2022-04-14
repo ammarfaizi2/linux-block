@@ -4,6 +4,7 @@
  * Copyright (c) 2015, Intel Corporation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ctype.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

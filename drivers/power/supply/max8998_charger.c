@@ -5,6 +5,7 @@
 //  Copyright (C) 2009-2010 Samsung Electronics
 //  MyungJoo Ham <myungjoo.ham@samsung.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

@@ -18,6 +18,7 @@
  *	archive for more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/compiler.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

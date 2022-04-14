@@ -8,6 +8,7 @@
  * Copyright (c) 2018 Analog Devices Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

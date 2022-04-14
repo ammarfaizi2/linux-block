@@ -10,6 +10,7 @@
  * Author: Matt Ranostay <matt.ranostay@konsulko.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

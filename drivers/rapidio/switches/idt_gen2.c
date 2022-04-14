@@ -6,6 +6,7 @@
  * Alexandre Bounine <alexandre.bounine@idt.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/stat.h>
 #include <linux/module.h>
 #include <linux/rio.h>

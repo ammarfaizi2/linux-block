@@ -5,6 +5,7 @@
  * Copyright (c) 2017-2018 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

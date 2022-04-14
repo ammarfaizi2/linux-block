@@ -6,6 +6,7 @@
 //
 // Based on draft driver from Arnaud Patard <arnaud.patard@rtp-net.org>
 
+#include <linux/device_api_lock.h>
 #include <linux/mfd/mc13892.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/driver.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2019, Linaro Limited
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/debugfs.h>

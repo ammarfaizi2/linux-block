@@ -3,6 +3,7 @@
 // Regulator device driver for DA9061 and DA9062.
 // Copyright (C) 2015-2017  Dialog Semiconductor
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -8,6 +8,7 @@
  * manipulated in a form independent of the underlying raid.  Ultimately this
  * should work for both hardware and software raids.
  */
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/list.h>

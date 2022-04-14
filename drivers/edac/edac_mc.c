@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <linux/kernel.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2017, NVIDIA CORPORATION. All rights reserved
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
 #include <linux/pm_domain.h>

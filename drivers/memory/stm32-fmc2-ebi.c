@@ -3,6 +3,7 @@
  * Copyright (C) STMicroelectronics 2020
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/mfd/syscon.h>

@@ -11,6 +11,7 @@
  *	by Eric Miao <eric.miao@marvell.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

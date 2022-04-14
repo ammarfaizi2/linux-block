@@ -5,6 +5,7 @@
 // based on WM8804/Hifiberry Digi+
 
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>
 #include <linux/gpio/consumer.h>

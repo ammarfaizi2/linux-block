@@ -3,6 +3,7 @@
  * Copyright (C) 2007 by Alan Stern
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 
 /* this file is part of ehci-hcd.c */

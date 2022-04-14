@@ -7,6 +7,7 @@
  * Author: Matt Porter <mporter@konsulko.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/init.h>
 #include <linux/module.h>

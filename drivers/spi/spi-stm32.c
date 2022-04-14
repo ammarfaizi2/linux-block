@@ -5,6 +5,7 @@
 // Copyright (C) 2017, STMicroelectronics - All Rights Reserved
 // Author(s): Amelie Delaunay <amelie.delaunay@st.com> for STMicroelectronics.
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/debugfs.h>
 #include <linux/clk.h>

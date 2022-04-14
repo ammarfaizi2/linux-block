@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2015-2017 Russell King.
  */
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/module.h>

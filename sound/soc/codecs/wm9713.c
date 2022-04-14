@@ -11,6 +11,7 @@
  *   o Support for DAPM
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/mfd/wm97xx.h>

@@ -11,6 +11,7 @@
  * SPARSEMEM should be contained here, or in mm/memory_hotplug.c.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

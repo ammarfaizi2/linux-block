@@ -5,6 +5,7 @@
  * Partly derived from CP110 comphy driver by Antoine Tenart
  * <antoine.tenart@bootlin.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/iopoll.h>
 #include <linux/module.h>

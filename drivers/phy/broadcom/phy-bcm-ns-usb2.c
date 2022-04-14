@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Rafał Miłecki <zajec5@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bcma/bcma.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

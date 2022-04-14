@@ -5,6 +5,7 @@
  *  Copyright 2012-2014 Freescale Semiconductor, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/console.h>
 #include <linux/delay.h>

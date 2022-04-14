@@ -9,6 +9,7 @@
  *  linux/arch/arm/mach-ep93xx/core.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>

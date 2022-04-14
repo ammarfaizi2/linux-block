@@ -4,6 +4,7 @@
  * Copyright 2008 Sascha Hauer, kernel@pengutronix.de
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/init.h>

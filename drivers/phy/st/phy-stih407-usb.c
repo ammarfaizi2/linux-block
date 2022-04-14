@@ -6,6 +6,7 @@
  *
  * Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

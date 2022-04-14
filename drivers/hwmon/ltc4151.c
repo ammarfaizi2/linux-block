@@ -14,6 +14,7 @@
  * Datasheet: http://www.linear.com/docs/Datasheet/4151fc.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of.h>

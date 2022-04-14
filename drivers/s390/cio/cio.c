@@ -12,6 +12,7 @@
 #define KMSG_COMPONENT "cio"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/ftrace.h>
 #include <linux/module.h>
 #include <linux/init.h>

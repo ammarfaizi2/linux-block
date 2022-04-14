@@ -3,6 +3,8 @@
  * Copyright 2019 Google LLC
  */
 
+#include <linux/device_api_lock.h>
+
 #include "ufshcd.h"
 #include "ufshcd-crypto.h"
 

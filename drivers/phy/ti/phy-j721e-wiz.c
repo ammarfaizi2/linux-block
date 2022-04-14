@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <dt-bindings/phy/phy.h>
 #include <dt-bindings/phy/phy-ti.h>

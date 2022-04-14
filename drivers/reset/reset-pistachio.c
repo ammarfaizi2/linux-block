@@ -7,6 +7,7 @@
  * Author: Damien Horsley <Damien.Horsley@imgtec.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/of.h>

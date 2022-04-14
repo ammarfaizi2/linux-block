@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Broadcom
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/soc/bcm2835-pm.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

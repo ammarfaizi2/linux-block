@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
 
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

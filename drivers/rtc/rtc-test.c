@@ -5,6 +5,7 @@
  * Author: Alessandro Zummo <a.zummo@towertech.it>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/rtc.h>

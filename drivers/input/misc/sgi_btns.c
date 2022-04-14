@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2008  Thomas Bogendoerfer <tsbogend@alpha.franken.de>
  */
+#include <linux/device_api_lock.h>
 #include <linux/input.h>
 #include <linux/ioport.h>
 #include <linux/module.h>

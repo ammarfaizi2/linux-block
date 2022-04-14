@@ -7,6 +7,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/kallsyms.h>
 #include <linux/kernel.h>

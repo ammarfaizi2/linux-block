@@ -7,6 +7,7 @@
  * Copyright (C) 2021 Emil Renner Berthing <kernel@esmil.dk>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/clk-provider.h>
 #include <linux/debugfs.h>

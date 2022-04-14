@@ -5,6 +5,7 @@
  * Copyright (C) 2016 David Lechner <david@lechnology.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/of.h>

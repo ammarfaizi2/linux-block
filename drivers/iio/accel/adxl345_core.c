@@ -7,6 +7,7 @@
  * Datasheet: https://www.analog.com/media/en/technical-documentation/data-sheets/ADXL345.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/property.h>
 #include <linux/regmap.h>

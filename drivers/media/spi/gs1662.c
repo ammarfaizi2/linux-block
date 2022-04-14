@@ -6,6 +6,7 @@
  * Author: Charles-Antoine Couret <charles-antoine.couret@nexvision.fr>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/spi/spi.h>

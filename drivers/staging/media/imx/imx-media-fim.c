@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2016 Mentor Graphics Inc.
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/irq.h>
 #include <linux/module.h>

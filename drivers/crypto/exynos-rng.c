@@ -9,6 +9,7 @@
  * Jonghwa Lee <jonghwa3.lee@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/crypto.h>
 #include <linux/err.h>

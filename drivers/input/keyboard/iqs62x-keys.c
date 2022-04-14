@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Jeff LaBundy <jeff@labundy.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/input.h>
 #include <linux/kernel.h>

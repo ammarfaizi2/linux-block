@@ -5,6 +5,7 @@
  * Copyright (C) 2003-2013 STMicroelectronics (R&D) Limited
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/serial.h>
 #include <linux/console.h>

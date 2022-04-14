@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/cpuhotplug.h>
 #include <asm/cpufeature.h>
 #include <linux/module.h>

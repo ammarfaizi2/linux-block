@@ -12,6 +12,7 @@
  * as RZ/A1H (r7s721000), RZ/A1M (r7s721010) and RZ/A1L (r7s721020).
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/gpio/driver.h>

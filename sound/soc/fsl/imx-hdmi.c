@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright 2017-2020 NXP
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>
 #include <sound/jack.h>

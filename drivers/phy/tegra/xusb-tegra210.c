@@ -4,6 +4,7 @@
  * Copyright (C) 2015 Google, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/clk/tegra.h>
 #include <linux/delay.h>

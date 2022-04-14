@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2016 MediaTek Inc.
  * Author: Yong Wu <yong.wu@mediatek.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/bug.h>

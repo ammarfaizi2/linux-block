@@ -7,6 +7,7 @@
  *  Sören Brinkmann <soren.brinkmann@xilinx.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

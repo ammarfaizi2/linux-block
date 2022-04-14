@@ -10,6 +10,7 @@
  * As the data registers represent a mailbox, they must be accessed
  * as a single I2C transaction.  See the TDA9950 data sheet for details.
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

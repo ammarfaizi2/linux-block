@@ -8,6 +8,7 @@
  * based on previously existing rtc class drivers
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/spi/spi.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <drm/drm_print.h>
 #include "d71_dev.h"
 #include "malidp_io.h"

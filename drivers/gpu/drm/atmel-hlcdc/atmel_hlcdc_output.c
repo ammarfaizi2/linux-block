@@ -8,6 +8,7 @@
  * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/media-bus-format.h>
 #include <linux/of_graph.h>
 

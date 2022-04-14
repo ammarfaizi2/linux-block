@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/soc/bcm-pmb.h>
 #include <linux/io.h>
 #include <linux/module.h>

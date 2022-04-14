@@ -4,6 +4,8 @@
  *
  * Copyright (C) 2018 Western Digital Corporation
  */
+#include <linux/device_api_lock.h>
+
 #include "ufs_bsg.h"
 
 static int ufs_bsg_get_query_desc_size(struct ufs_hba *hba, int *desc_len,

@@ -10,6 +10,7 @@
  *  Ksenija Stanojevic <ksenija.stanojevic@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/mfd/core.h>

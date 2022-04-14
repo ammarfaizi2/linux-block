@@ -7,6 +7,7 @@
  * Author: Lars Povlsen <lars.povlsen@microchip.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/io.h>
 #include <linux/module.h>

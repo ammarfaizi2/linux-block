@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/kdev_t.h>

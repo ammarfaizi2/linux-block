@@ -6,6 +6,7 @@
  *	Suman Anna <s-anna@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/mailbox_client.h>
 #include <linux/module.h>

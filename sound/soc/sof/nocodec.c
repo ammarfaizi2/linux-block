@@ -8,6 +8,7 @@
 // Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <sound/sof.h>
 #include "sof-audio.h"

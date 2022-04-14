@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2021-2021 Hisilicon Limited.
+#include <linux/device_api_lock.h>
 #include <linux/skbuff.h>
 
 #include "hnae3.h"

@@ -11,6 +11,7 @@
  *  Amit Daniel Kachhap <amit.kachhap@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

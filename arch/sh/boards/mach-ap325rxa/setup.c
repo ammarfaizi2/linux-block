@@ -7,6 +7,7 @@
  * Author : Yusuke Goda <goda.yuske@renesas.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/clock.h>
 #include <asm/io.h>
 #include <asm/suspend.h>

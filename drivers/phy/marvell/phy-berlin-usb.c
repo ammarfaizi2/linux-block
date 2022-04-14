@@ -6,6 +6,7 @@
  * Jisheng Zhang <jszhang@marvell.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

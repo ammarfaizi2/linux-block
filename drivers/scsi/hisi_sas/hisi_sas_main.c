@@ -4,6 +4,7 @@
  * Copyright (c) 2015 Hisilicon Limited.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/debugfs.h>
 #include <linux/cpumask_api.h>

@@ -7,6 +7,7 @@
  * This driver is partially based on octeon_edac-pc.c
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/edac.h>
 #include <linux/platform_device.h>
 #include "edac_module.h"

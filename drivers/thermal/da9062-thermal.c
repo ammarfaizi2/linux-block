@@ -18,6 +18,7 @@
  * be detected without constant software monitoring.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2020-2021 Huawei Technologies Co., Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/interrupt.h>

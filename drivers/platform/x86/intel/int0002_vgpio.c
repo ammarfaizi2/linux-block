@@ -27,6 +27,7 @@
  * for a real GPIO controller.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/driver.h>

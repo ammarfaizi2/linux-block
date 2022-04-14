@@ -7,6 +7,7 @@
  * Author: Cyrille Pitchen <cyrille.pitchen@atmel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

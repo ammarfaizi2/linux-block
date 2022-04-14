@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Steven King <sfking@fdwdc.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/init.h>

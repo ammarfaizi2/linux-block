@@ -7,6 +7,7 @@
  *  Parts of this file are based on Ralink's 2.6.21 BSP
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/io.h>

@@ -11,6 +11,7 @@
  * Adapted from DA9052
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mfd/altera-a10sr.h>
 #include <linux/mfd/core.h>
 #include <linux/init.h>

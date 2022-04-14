@@ -5,6 +5,7 @@
  *  Copyright (c) 2019 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/hid.h>
 #include <linux/module.h>

@@ -10,6 +10,7 @@
  * like  open(), close() and ioctl().
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/miscdevice.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

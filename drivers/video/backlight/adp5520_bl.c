@@ -5,6 +5,7 @@
  * Copyright 2009 Analog Devices Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

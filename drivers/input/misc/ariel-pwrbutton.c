@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Lubomir Rintel
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/gfp.h>
 #include <linux/input.h>

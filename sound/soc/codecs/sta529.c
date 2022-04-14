@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/i2c.h>

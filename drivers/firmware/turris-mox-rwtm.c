@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Marek Behún <kabel@kernel.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/armada-37xx-rwtm-mailbox.h>
 #include <linux/completion.h>
 #include <linux/debugfs.h>

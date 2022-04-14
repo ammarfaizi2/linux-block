@@ -22,6 +22,7 @@
  * or by adding the 'nxp,hw-blink' property to the DTS.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/string.h>

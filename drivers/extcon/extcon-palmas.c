@@ -9,6 +9,7 @@
  * Author: Hema HK <hemahk@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/devm-helpers.h>
 #include <linux/module.h>

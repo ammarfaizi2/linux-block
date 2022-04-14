@@ -9,6 +9,7 @@
  *	   Xin Li <li.xin@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/clkdev.h>
 #include <linux/clk-provider.h>

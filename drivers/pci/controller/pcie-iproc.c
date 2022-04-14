@@ -4,6 +4,7 @@
  * Copyright (C) 2015 Broadcom Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/pci-ecam.h>

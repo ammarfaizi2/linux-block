@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008, Robert Jarzmik <robert.jarzmik@free.fr>
  */
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/videodev2.h>
 #include <linux/slab.h>

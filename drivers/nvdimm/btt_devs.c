@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
+#include <linux/device_api_lock.h>
 #include <linux/blkdev.h>
 #include <linux/device.h>
 #include <linux/sizes.h>

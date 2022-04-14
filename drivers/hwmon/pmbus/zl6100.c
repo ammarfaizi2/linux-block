@@ -6,6 +6,7 @@
  * Copyright (c) 2012 Guenter Roeck
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -2,6 +2,7 @@
 //
 // General Purpose SPI multiplexer
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

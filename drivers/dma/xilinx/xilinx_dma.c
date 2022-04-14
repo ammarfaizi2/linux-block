@@ -33,6 +33,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/dmapool.h>
 #include <linux/dma/xilinx_dma.h>

@@ -3,6 +3,7 @@
  *  Copyright (C) 2011 Paul Parsons <lost.distance@yahoo.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
 #include <linux/leds.h>

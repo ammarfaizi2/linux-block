@@ -5,6 +5,7 @@
  * Copyright 2018 Google LLC.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ktime.h>
 #include <linux/math64.h>
 #include <linux/module.h>

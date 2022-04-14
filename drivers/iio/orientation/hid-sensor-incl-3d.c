@@ -4,6 +4,7 @@
  * Copyright (c) 2013, Intel Corporation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>

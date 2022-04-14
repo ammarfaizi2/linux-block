@@ -9,6 +9,7 @@
  * Copyright 2011 Linaro Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/genalloc.h>
 #include <linux/init.h>

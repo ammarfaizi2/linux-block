@@ -56,6 +56,7 @@
  *  more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/types.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Spreadtrum Communications Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

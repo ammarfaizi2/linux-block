@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/interrupt.h>

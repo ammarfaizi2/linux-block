@@ -8,6 +8,7 @@
  * Based on the SuperH Ethernet driver
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/cache.h>
 #include <linux/clk.h>

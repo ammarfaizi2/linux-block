@@ -22,6 +22,7 @@
  *   serial converter;
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/etherdevice.h>

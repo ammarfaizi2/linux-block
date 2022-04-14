@@ -2,6 +2,7 @@
 // Copyright (C) STMicroelectronics 2018
 // Author: Pascal Paillet <p.paillet@st.com> for STMicroelectronics.
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/mfd/stpmic1.h>
 #include <linux/module.h>

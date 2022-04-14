@@ -9,6 +9,7 @@
  * axial sliders presented by the device.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/err.h>

@@ -5,6 +5,7 @@
  *	Ben Dooks <ben@simtec.co.uk>
 */
 
+#include <linux/device_api_lock.h>
 #include <linux/spinlock.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>

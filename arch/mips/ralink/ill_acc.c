@@ -4,6 +4,7 @@
  * Copyright (C) 2013 John Crispin <john@phrozen.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/of_platform.h>
 #include <linux/of_irq.h>

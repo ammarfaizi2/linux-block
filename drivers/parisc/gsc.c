@@ -9,6 +9,7 @@
  * (c) Copyright 2001 Matthew Wilcox for Hewlett-Packard
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>
 #include <linux/init.h>

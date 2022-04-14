@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bvec_api.h>
 #include <linux/atomic_api.h>

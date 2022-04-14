@@ -7,6 +7,7 @@
  * Authors: Artur Świgoń <a.swigon@samsung.com>
  *          Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/interconnect-provider.h>
 #include <linux/module.h>

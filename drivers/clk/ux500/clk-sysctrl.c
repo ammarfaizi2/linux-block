@@ -6,6 +6,7 @@
  * Author: Ulf Hansson <ulf.hansson@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/mfd/abx500/ab8500-sysctrl.h>
 #include <linux/device.h>

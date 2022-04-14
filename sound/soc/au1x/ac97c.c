@@ -8,6 +8,7 @@
  *			Charles Eidsness <charles@cooper-street.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/slab.h>

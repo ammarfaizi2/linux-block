@@ -6,6 +6,7 @@
 // Chanwoo Choi <cw00.choi@samsung.com>
 // Krzysztof Kozlowski <krzk@kernel.org>
 
+#include <linux/device_api_lock.h>
 #include <linux/devm-helpers.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

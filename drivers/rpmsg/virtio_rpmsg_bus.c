@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/idr.h>

@@ -52,6 +52,7 @@
  */
 
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>	/* For task queue support */

@@ -4,6 +4,7 @@
  * AoE character device driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/hdreg.h>
 #include <linux/blkdev.h>

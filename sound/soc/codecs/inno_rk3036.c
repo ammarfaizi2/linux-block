@@ -6,6 +6,7 @@
  * Author: Zheng ShunQian<zhengsq@rock-chips.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <sound/soc.h>
 #include <sound/tlv.h>
 #include <sound/soc-dapm.h>

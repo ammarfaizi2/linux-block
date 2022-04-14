@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2017 Sean Wang <sean.wang@mediatek.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/leds.h>

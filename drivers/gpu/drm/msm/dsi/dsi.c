@@ -3,6 +3,8 @@
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
+
 #include "dsi.h"
 #include "dsi_cfg.h"
 

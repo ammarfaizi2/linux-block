@@ -20,6 +20,7 @@
  * function, and therefore be controlled by the Cygnus ASIU GPIO controller
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/of.h>

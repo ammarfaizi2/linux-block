@@ -3,6 +3,7 @@
  * Watchdog timer driver for the WinSystems EBC-C384
  * Copyright (C) 2016 William Breathitt Gray
  */
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/dmi.h>
 #include <linux/errno.h>

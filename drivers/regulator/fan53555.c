@@ -8,6 +8,7 @@
 // Copyright (c) 2012 Marvell Technology Ltd.
 // Yunfan Zhang <yfzhang@marvell.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/param.h>
 #include <linux/err.h>

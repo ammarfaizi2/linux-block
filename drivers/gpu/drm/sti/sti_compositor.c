@@ -6,6 +6,7 @@
  *          for STMicroelectronics.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/component.h>
 #include <linux/io.h>
 #include <linux/module.h>

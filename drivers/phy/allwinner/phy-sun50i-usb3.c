@@ -13,6 +13,7 @@
  * Copyright (c) 2010-2015 Allwinner Technology Co., Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/io.h>

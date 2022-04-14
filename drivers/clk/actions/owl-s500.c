@@ -12,6 +12,7 @@
  * Author: Edgar Bernardi Righi <edgar.righi@lsitec.org.br>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>
 

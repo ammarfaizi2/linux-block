@@ -36,6 +36,7 @@
  *   clock parents.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/amba/bus.h>
 #include <linux/dma-buf.h>
 #include <linux/module.h>

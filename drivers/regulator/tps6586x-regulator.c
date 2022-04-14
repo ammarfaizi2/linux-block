@@ -10,6 +10,7 @@
  * Copyright (C) 2008 Compulab Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

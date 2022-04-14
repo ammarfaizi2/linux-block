@@ -8,6 +8,7 @@
  * Copyright (C) 2009 Bernie Thompson <bernie@plugable.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <drm/drm.h>
 #include <drm/drm_print.h>

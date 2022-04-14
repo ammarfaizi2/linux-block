@@ -9,6 +9,7 @@
  *      Masami Hiramatsu <masami.hiramatsu@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

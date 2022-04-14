@@ -12,6 +12,7 @@
  *  more details.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitrev.h>
 #include <linux/compiler.h>
 #include <linux/delay.h>

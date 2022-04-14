@@ -7,6 +7,7 @@
  * Based on vim2m driver.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

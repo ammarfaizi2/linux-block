@@ -5,6 +5,7 @@
  * Copyright (c) 2010, NVIDIA Corporation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/delay.h>
 #include <linux/devm-helpers.h>

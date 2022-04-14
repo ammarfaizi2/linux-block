@@ -5,6 +5,7 @@
  * Copyright (c) 2015 ROCKCHIP, Co. Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/err.h>

@@ -9,6 +9,7 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/pci.h>
 #include <linux/dmi.h>

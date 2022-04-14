@@ -4,6 +4,7 @@
 //
 // Copyright 2011 Wolfson Microelectronics
 
+#include <linux/device_api_lock.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <sound/jack.h>

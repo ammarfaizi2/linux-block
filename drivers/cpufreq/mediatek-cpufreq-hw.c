@@ -3,6 +3,7 @@
  * Copyright (c) 2020 MediaTek Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/cpufreq.h>
 #include <linux/energy_model.h>

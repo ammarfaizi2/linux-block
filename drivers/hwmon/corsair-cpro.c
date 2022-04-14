@@ -8,6 +8,7 @@
  * simultaniously, reports could be switched.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/completion.h>
 #include <linux/hid.h>

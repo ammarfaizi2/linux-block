@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bitfield.h>
 #include <linux/pci.h>

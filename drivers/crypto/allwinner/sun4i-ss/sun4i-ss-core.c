@@ -8,6 +8,7 @@
  *
  * You could find a link for the datasheet in Documentation/arm/sunxi.rst
  */
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/crypto.h>
 #include <linux/debugfs.h>

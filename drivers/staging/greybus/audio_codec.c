@@ -4,6 +4,7 @@
  * Copyright 2016 Google Inc.
  * Copyright 2016 Linaro Ltd.
  */
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pm_runtime.h>

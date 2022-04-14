@@ -12,6 +12,7 @@
  * REF_02 - Toshiba, TC358743XBG_HDMI-CSI_Tv11p_nm.xls
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

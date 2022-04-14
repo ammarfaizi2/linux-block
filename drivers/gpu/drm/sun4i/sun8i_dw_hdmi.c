@@ -3,6 +3,7 @@
  * Copyright (c) 2018 Jernej Skrabec <jernej.skrabec@siol.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/component.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

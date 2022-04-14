@@ -28,6 +28,7 @@
  * LM81 extended temp reading not implemented
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/init.h>
 #include <linux/module.h>

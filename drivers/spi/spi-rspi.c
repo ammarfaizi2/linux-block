@@ -9,6 +9,7 @@
  * Copyright (C) 2011 Renesas Solutions Corp.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

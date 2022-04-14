@@ -5,6 +5,7 @@
  * Copyright 2018 DEVIALET
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>

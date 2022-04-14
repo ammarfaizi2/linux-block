@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright 2019 NXP
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bitrev.h>
 #include <linux/clk.h>

@@ -13,6 +13,7 @@
  * creates the device files accordingly.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/list.h>
 #include <linux/device.h>
 #include <linux/module.h>

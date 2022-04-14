@@ -5,6 +5,7 @@
  * Copyright (c) 2013 Tony Prisk <linux@prisktech.co.nz>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/pinctrl/pinctrl.h>

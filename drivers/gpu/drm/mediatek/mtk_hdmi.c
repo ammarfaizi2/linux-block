@@ -4,6 +4,7 @@
  * Author: Jie Qiu <jie.qiu@mediatek.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/arm-smccc.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

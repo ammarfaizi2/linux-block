@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/err.h>
 #include <linux/init.h>

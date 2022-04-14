@@ -4,6 +4,7 @@
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (c) 2018 Quantenna Communications */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/firmware.h>
 #include <linux/pci.h>

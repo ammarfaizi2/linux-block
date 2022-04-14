@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/timer.h>

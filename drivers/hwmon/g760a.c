@@ -9,6 +9,7 @@
  * http://www.gmt.com.tw/product/datasheet/EDS-760A.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

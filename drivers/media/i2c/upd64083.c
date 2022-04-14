@@ -7,6 +7,7 @@
  * 2006 by Hans Verkuil <hverkuil@xs4all.nl>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/i2c.h>

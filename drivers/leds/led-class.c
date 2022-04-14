@@ -6,6 +6,7 @@
  * Copyright (C) 2005-2007 Richard Purdie <rpurdie@openedhand.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ctype.h>
 #include <linux/device.h>
 #include <linux/err.h>

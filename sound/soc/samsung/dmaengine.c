@@ -5,6 +5,7 @@
 // Author: Mark Brown <broonie@linaro.org>
 // Copyright 2013 Linaro
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <sound/core.h>
 #include <sound/pcm.h>

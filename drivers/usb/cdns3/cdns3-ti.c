@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments Incorporated - https://www.ti.com
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/clk.h>
 #include <linux/module.h>

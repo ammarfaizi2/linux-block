@@ -7,6 +7,7 @@
  * Copyright (c) 2007,2008 Dmitry Baryshkov
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

@@ -6,6 +6,7 @@
  * Author: YD Tseng <yd_tseng@asmedia.com.tw>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/gpio/driver.h>

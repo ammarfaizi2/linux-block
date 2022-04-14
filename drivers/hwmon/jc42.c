@@ -9,6 +9,7 @@
  * JC42.4 compliant temperature sensors are typically used on memory modules.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bitops.h>
 #include <linux/module.h>

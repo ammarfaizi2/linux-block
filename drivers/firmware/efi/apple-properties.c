@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "apple-properties: " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/memblock.h>
 #include <linux/efi.h>
 #include <linux/io.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2018 HiSilicon Technologies Co., Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/mfd/syscon.h>
 #include <linux/mmc/host.h>

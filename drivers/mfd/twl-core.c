@@ -15,6 +15,7 @@
  * by syed khasim <x0khasim@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/mutex.h>
 #include <linux/platform_device.h>

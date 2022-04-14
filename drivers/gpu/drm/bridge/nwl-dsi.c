@@ -6,6 +6,7 @@
  * Copyright (C) 2020 Purism SPC
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>
 #include <linux/clk.h>

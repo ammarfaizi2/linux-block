@@ -6,6 +6,7 @@
  *  MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/math64.h>

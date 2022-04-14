@@ -5,6 +5,7 @@
  *  Copyright (C) 2012,2013 Alexander Shiyan <shc_work@mail.ru>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/gpio/driver.h>

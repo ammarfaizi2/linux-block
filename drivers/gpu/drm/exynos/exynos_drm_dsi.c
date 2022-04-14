@@ -7,6 +7,7 @@
  * Contacts: Tomasz Figa <t.figa@samsung.com>
 */
 
+#include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

@@ -19,6 +19,7 @@
  *	    September 2004
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/param.h>
 #include <linux/jiffies.h>

@@ -10,6 +10,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>

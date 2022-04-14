@@ -9,6 +9,7 @@
  * pinctrl-tegra.c, please see original file for copyright information
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bug.h>
 #include <linux/delay.h>

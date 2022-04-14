@@ -9,6 +9,7 @@
  * Based on the MT9V032 driver and Bastian Hecht's code.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Jonathan Cameron
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/module.h>

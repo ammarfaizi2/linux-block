@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Nicolae Rosia <nicolae.rosia@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/slab.h>

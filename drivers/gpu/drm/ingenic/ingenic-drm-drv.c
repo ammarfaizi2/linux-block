@@ -6,6 +6,7 @@
 
 #include "ingenic-drm.h"
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/component.h>
 #include <linux/clk.h>

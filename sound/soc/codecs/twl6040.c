@@ -5,6 +5,7 @@
  * Author:	 Misael Lopez Cruz <x0052729@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Florian Eckert <fe@dev.tdt.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/hwmon.h>

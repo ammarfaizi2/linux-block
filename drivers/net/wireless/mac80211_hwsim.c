@@ -14,6 +14,7 @@
  * - RX filtering based on filter configuration (data->rx_filter)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/list.h>

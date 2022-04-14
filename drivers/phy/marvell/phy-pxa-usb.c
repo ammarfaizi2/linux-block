@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Lubomir Rintel <lkundrak@v3.sk>
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/phy/phy.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

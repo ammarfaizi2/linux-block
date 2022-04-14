@@ -4,6 +4,7 @@
  * Author: Jyri Sarha <jsarha@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/component.h>
 #include <linux/of_graph.h>
 

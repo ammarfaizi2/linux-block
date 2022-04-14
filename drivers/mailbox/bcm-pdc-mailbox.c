@@ -25,6 +25,7 @@
  * descriptors from the tx and rx ring, thus processing one response at a time.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/init.h>

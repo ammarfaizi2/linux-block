@@ -43,6 +43,7 @@
  *   https://www.analog.com/en/prod/0,2877,ADM1024,00.html
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

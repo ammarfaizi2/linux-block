@@ -5,6 +5,7 @@
 // Copyright(c) 2021 Realtek Semiconductor Corp.
 //
 //
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/device.h>

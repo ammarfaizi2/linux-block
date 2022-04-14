@@ -7,6 +7,7 @@
  * Based on drivers/pwm/pwm-tegra.c, Copyright (c) 2010, NVIDIA Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/io.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2016 Gateworks Corporation, Inc. All Rights Reserved.
  */
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

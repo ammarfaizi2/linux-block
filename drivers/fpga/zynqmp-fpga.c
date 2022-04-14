@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Xilinx, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/fpga/fpga-mgr.h>

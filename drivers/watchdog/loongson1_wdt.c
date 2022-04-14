@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Yang Ling <gnaygnil@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

@@ -3,6 +3,8 @@
  * Copyright (C) 2016 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
+
 #include "mt76x02.h"
 
 #define RADAR_SPEC(m, len, el, eh, wl, wh,		\

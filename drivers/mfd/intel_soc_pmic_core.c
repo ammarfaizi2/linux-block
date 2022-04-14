@@ -8,6 +8,7 @@
  * Author: Zhu, Lejun <lejun.zhu@linux.intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/i2c.h>

@@ -11,6 +11,7 @@
  */
 
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/dio.h>
 #include <linux/stat.h>

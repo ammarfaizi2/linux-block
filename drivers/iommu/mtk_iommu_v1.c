@@ -7,6 +7,7 @@
  *
  * Based on driver/iommu/mtk_iommu.c
  */
+#include <linux/device_api_lock.h>
 #include <linux/memblock.h>
 #include <linux/bug.h>
 #include <linux/clk.h>

@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

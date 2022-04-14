@@ -35,6 +35,7 @@
 #include "fman_dtsec.h"
 #include "fman.h"
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/bitrev.h>
 #include <linux/io.h>

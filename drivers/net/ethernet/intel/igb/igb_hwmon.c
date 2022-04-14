@@ -5,6 +5,7 @@
 #include "e1000_82575.h"
 #include "e1000_hw.h"
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/sysfs.h>

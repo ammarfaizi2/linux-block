@@ -22,6 +22,7 @@
  *  September 04, 2002 Mike Anderson (andmike@us.ibm.com)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>

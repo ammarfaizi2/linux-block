@@ -8,6 +8,7 @@
  *          Mengdong Lin <mengdong.lin@intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/input.h>
 #include <linux/module.h>

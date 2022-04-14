@@ -6,6 +6,7 @@
 //
 // Author: Jisheng Zhang <jszhang@kernel.org>
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/of_device.h>

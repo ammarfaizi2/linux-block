@@ -4,6 +4,7 @@
  *  JZ4740 Watchdog driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mfd/ingenic-tcu.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>

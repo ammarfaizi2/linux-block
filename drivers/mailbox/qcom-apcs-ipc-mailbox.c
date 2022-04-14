@@ -3,6 +3,7 @@
  * Copyright (c) 2017, Linaro Ltd
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/io.h>

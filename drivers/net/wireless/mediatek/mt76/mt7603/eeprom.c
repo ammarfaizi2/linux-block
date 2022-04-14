@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/of.h>
 #include "mt7603.h"

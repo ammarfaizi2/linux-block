@@ -5,6 +5,7 @@
  * Based on drivers/misc/eeprom/sunxi_sid.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/clk.h>
 #include <linux/completion.h>

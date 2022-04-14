@@ -16,6 +16,7 @@
  * - OTG test device
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/usb/otg.h>
 #include <linux/usb/gadget.h>

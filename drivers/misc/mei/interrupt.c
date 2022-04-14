@@ -4,6 +4,7 @@
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/kthread.h>
 #include <linux/interrupt.h>

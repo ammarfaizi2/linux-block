@@ -8,6 +8,7 @@
  *  Copyright (C) 2008 Simtec Electronics <ben-linux@fluff.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>

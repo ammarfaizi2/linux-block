@@ -10,6 +10,7 @@
 
 #define DRIVER_NAME "smo8800"
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/interrupt.h>

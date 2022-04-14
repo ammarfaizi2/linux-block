@@ -56,6 +56,7 @@
  * single thread (max3421_spi_thread).
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/jiffies.h>

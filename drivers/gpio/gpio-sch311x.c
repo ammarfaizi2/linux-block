@@ -8,6 +8,7 @@
  * (c) Copyright 2008 Wim Van Sebroeck <wim@iguana.be>.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

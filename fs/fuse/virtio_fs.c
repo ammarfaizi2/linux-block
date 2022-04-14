@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Red Hat, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/dax.h>

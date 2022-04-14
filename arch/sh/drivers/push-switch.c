@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2006  Paul Mundt
  */
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

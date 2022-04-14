@@ -6,6 +6,7 @@
  *   Tang Yuantian <Yuantian.Tang@freescale.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * Author: Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/irqdomain.h>
 #include <linux/mfd/lp8788.h>

@@ -9,6 +9,7 @@
  *  Rajan Vaja <rajan.vaja@xilinx.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mailbox_client.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

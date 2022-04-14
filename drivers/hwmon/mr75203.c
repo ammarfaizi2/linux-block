@@ -7,6 +7,7 @@
  * analog IP to enable multiple embedded temperature sensor(TS),
  * voltage monitor(VM) & process detector(PD) modules.
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bits.h>
 #include <linux/clk.h>

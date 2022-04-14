@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2019, The Linaro Limited. All rights reserved.
  */
+#include <linux/device_api_lock.h>
 #include <linux/coresight.h>
 #include <linux/device.h>
 #include <linux/err.h>

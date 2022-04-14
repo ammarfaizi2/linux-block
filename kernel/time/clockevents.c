@@ -7,6 +7,7 @@
  * Copyright(C) 2006-2007, Timesys Corp., Thomas Gleixner
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/clockchips.h>

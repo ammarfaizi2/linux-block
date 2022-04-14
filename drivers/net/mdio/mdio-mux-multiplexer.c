@@ -4,6 +4,7 @@
  * Copyright 2019 NXP
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mdio-mux.h>
 #include <linux/module.h>
 #include <linux/mux/consumer.h>

@@ -48,6 +48,7 @@
 #include "amdgpu_dm.h"
 #ifdef CONFIG_DRM_AMD_DC_HDCP
 #include "amdgpu_dm_hdcp.h"
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/backlight.h>

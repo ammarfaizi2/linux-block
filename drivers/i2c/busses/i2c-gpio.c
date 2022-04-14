@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2007 Atmel Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/completion.h>
 #include <linux/debugfs.h>

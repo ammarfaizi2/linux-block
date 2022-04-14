@@ -3,6 +3,7 @@
  * Copyright Altera Corporation (C) 2013-2014. All rights reserved
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

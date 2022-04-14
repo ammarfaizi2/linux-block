@@ -36,6 +36,7 @@
  * CSR address and value can be any of hexadecimal, decimal or octal format.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/align.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * ROHM BD9576MUF and BD9573MUF Watchdog driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/gpio/consumer.h>
 #include <linux/mfd/rohm-bd957x.h>

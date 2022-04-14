@@ -16,6 +16,7 @@
  *   Mitchel, Henry <henry.mitchel@intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <asm/local64_api.h>

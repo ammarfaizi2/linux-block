@@ -9,6 +9,7 @@
  * Based on sunxi_wdt.c
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/reset/mt2712-resets.h>
 #include <dt-bindings/reset/mt8183-resets.h>
 #include <dt-bindings/reset/mt8192-resets.h>

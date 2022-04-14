@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2007-2008  Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <linux/device_api_lock.h>
 #include <linux/input.h>
 #include <linux/io.h>
 #include <linux/ioport.h>

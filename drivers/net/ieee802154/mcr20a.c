@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2018 Xue Liu <liuxuenetmail@gmail.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

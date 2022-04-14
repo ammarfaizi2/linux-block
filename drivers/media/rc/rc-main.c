@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <media/rc-core.h>
 #include <linux/bsearch.h>
 #include <linux/spinlock.h>

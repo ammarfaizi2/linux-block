@@ -67,6 +67,7 @@
  * detected (with a slight delay).
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/completion.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2017 Vadim Pasternak <vadimp@mellanox.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

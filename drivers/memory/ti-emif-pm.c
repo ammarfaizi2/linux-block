@@ -6,6 +6,7 @@
  *	Dave Gerlach
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/genalloc.h>
 #include <linux/io.h>

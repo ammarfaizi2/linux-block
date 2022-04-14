@@ -3,6 +3,7 @@
  * Copyright (C) 2019-2020 Icenowy Zheng <icenowy@aosc.io>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/delay.h>
 #include <linux/mod_devicetable.h>

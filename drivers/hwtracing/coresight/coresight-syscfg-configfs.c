@@ -4,6 +4,7 @@
  * Author: Mike Leach <mike.leach@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/configfs.h>
 
 #include "coresight-config.h"

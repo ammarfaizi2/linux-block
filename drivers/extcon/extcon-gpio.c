@@ -9,6 +9,7 @@
  * (originally switch class is supported)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/devm-helpers.h>
 #include <linux/extcon-provider.h>
 #include <linux/gpio/consumer.h>

@@ -8,6 +8,7 @@
  * Copyright (c) 2021 Intel Corporation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/completion.h>
 #include <linux/err.h>

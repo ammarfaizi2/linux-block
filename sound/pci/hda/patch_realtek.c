@@ -10,6 +10,7 @@
  *                    Jonathan Woithe <jwoithe@just42.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

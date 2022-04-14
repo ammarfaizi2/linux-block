@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "i2c-core: " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <dt-bindings/i2c/i2c.h>
 #include <linux/acpi.h>

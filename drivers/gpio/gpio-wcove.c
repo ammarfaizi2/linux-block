@@ -7,6 +7,7 @@
  * Copyright (C) 2016 Intel Corporation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>

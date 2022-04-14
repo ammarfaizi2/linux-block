@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2009-2010, Lars-Peter Clausen <lars@metafoo.de>
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

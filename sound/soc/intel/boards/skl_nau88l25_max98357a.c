@@ -6,6 +6,7 @@
  * Copyright (C) 2015, Intel Corporation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <sound/core.h>

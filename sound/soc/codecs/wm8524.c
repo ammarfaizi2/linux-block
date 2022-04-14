@@ -8,6 +8,7 @@
  * Based on WM8523 ALSA SoC Audio driver written by Mark Brown
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

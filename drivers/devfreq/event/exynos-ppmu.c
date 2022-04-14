@@ -8,6 +8,7 @@
  * This driver is based on drivers/devfreq/exynos/exynos_ppmu.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

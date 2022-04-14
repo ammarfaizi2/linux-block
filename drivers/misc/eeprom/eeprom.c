@@ -7,6 +7,7 @@
  * Copyright (C) 2004 Jean Delvare <jdelvare@suse.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/device.h>

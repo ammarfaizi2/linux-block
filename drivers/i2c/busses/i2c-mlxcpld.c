@@ -5,6 +5,7 @@
  * Copyright (C) 2016-2020 Mellanox Technologies
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

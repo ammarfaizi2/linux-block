@@ -5,6 +5,7 @@
  * Copyright 2009 Wolfson Microelectronics PLC.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>

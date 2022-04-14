@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/pinctrl/mt65xx.h>
 #include <linux/device.h>
 #include <linux/err.h>

@@ -17,6 +17,7 @@
  * TODO: add support for reading sizes other than 32bits and masking
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

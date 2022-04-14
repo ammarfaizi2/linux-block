@@ -5,6 +5,7 @@
  * Copyright (c) 2007 Byron Bradley
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/rtc.h>
 #include <linux/i2c.h>

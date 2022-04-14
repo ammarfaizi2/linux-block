@@ -5,6 +5,7 @@
  *			Copyright (C) 2011 Texas Instruments
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <linux/slab.h>

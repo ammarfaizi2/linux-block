@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Paul Mundt
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/rtc.h>
 #include <linux/bcd.h>

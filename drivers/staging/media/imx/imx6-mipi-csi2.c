@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2012-2017 Mentor Graphics Inc.
  */
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

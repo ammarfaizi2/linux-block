@@ -5,6 +5,7 @@
  * Copyright (c) 2009 Daniel Mack <daniel@caiaq.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/spi/spi.h>

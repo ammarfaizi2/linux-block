@@ -6,6 +6,7 @@
  * Author: Feng Kan <fkan@apm.com>.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

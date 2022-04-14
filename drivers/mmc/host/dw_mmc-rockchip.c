@@ -3,6 +3,7 @@
  * Copyright (c) 2014, Fuzhou Rockchip Electronics Co., Ltd
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/clk.h>

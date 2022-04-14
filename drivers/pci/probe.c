@@ -3,6 +3,7 @@
  * PCI detection and setup code
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (C) 2016 National Instruments Corp. */
+#include <linux/device_api_lock.h>
 #include <linux/leds.h>
 #include <linux/phy.h>
 #include <linux/phy_led_triggers.h>

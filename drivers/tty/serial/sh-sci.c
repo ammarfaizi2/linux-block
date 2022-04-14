@@ -17,6 +17,7 @@
  */
 #undef DEBUG
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/console.h>
 #include <linux/ctype.h>

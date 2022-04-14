@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Dennis Menschel
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

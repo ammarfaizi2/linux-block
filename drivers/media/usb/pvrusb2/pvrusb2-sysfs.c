@@ -4,6 +4,7 @@
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include "pvrusb2-sysfs.h"

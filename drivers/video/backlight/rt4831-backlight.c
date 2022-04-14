@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/leds/rt4831-backlight.h>
 #include <linux/backlight.h>
 #include <linux/bitops.h>

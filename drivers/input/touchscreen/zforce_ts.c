@@ -9,6 +9,7 @@
  * Author: Pieter Truter<ptruter@intrinsyc.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/hrtimer.h>
 #include <linux/slab.h>

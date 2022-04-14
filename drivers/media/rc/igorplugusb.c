@@ -11,6 +11,7 @@
  *	Copyright (C) 2004 Jan M. Hochstein
  *	<hochstein@algo.informatik.tu-darmstadt.de>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -11,6 +11,7 @@
  *
  * Copyright (C) 2019 Pengutronix, Marco Felsch <kernel@pengutronix.de>
  */
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

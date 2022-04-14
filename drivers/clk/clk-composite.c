@@ -3,6 +3,7 @@
  * Copyright (c) 2013 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/device.h>
 #include <linux/err.h>

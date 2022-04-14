@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2020-2021 NVIDIA CORPORATION.  All rights reserved.
 
+#include <linux/device_api_lock.h>
 #include <linux/math64.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

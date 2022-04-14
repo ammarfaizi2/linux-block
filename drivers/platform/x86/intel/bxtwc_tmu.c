@@ -9,6 +9,7 @@
  * PMIC.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
 #include <linux/interrupt.h>

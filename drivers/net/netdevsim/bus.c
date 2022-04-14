@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Mellanox Technologies. All rights reserved
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/idr.h>

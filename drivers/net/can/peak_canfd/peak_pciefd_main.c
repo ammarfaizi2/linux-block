@@ -7,6 +7,7 @@
  * Copyright (C) 2001-2006  PEAK System-Technik GmbH
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

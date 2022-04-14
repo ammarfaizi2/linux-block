@@ -13,6 +13,7 @@
  * endpoints that exist primarily to expose them.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/auxiliary_bus.h>
 #include <linux/bits.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * Copyright 2005,2006 Hebert Valerio Riedel <hvr@gnu.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bcd.h>
 #include <linux/i2c.h>

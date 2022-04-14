@@ -13,6 +13,7 @@
 //
 // Copyright (C) 2020 Dialog Semiconductor
 
+#include <linux/device_api_lock.h>
 #include <linux/of_device.h>
 #include <linux/of_gpio.h>
 #include <linux/gpio/consumer.h>

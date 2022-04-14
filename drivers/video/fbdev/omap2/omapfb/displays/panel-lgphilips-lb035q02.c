@@ -7,6 +7,7 @@
  * Based on a driver by: Steve Sakoman <steve@sakoman.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/spi/spi.h>

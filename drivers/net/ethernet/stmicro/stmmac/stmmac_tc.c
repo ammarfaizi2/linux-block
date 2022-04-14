@@ -4,6 +4,7 @@
  * stmmac TC Handling (HW only)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <net/pkt_cls.h>
 #include <net/tc_act/tc_gact.h>

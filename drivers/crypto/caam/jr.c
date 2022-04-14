@@ -7,6 +7,7 @@
  * Copyright 2019 NXP
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/of_irq.h>
 #include <linux/of_address.h>

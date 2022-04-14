@@ -6,6 +6,7 @@
  * Copyright (c) 2003 Eric Wong <eric@yhbt.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/input.h>
 #include <linux/serio.h>

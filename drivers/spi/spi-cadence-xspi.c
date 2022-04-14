@@ -2,6 +2,7 @@
 // Cadence XSPI flash controller driver
 // Copyright (C) 2020-21 Cadence
 
+#include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/err.h>

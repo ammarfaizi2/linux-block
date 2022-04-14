@@ -6,6 +6,7 @@
  * Copyright IBM Corp. 2018
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/if_vlan.h>
 #include <linux/spinlock.h>

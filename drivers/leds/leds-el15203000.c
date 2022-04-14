@@ -2,6 +2,7 @@
 // Copyright (c) 2019 Crane Merchandising Systems. All rights reserved.
 // Copyright (C) 2019 Oleh Kravchenko <oleg@kaa.org.ua>
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/leds.h>
 #include <linux/mod_devicetable.h>

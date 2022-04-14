@@ -12,6 +12,7 @@
  * SOF Machine Driver Support for ACP HW block
  */
 
+#include <linux/device_api_lock.h>
 #include <sound/core.h>
 #include <sound/pcm_params.h>
 #include <sound/soc-acpi.h>

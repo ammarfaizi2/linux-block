@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/phy/phy.h>
 #include <dt-bindings/phy/phy-cadence.h>
 #include <linux/clk.h>

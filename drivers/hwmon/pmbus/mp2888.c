@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Nvidia Technologies Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

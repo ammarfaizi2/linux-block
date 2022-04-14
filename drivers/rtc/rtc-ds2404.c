@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2012 Sven Schnelle <svens@stackframe.org>
 
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>
 #include <linux/init.h>

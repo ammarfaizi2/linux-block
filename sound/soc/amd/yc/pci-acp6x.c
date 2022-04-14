@@ -5,6 +5,7 @@
  * Copyright 2021 Advanced Micro Devices, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/pci.h>
 #include <linux/module.h>
 #include <linux/io.h>

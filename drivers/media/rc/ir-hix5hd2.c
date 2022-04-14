@@ -4,6 +4,7 @@
  * Copyright (c) 2014 HiSilicon Limited.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

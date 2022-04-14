@@ -6,6 +6,8 @@
  * Copyright (c) 2015 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/device_api_lock.h>
+
 #include "oxfw.h"
 
 #define HSS1394_ADDRESS			0xc007dedadadaULL

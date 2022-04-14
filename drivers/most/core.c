@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2020 Microchip Technology Germany II GmbH & Co. KG
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

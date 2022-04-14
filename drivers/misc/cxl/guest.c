@@ -3,6 +3,7 @@
  * Copyright 2015 IBM Corp.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cred.h>
 #include <linux/bitmap.h>
 #include <linux/spinlock.h>

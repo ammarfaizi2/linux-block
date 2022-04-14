@@ -201,6 +201,7 @@
  */
 
 /* Include files */
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/compiler.h>
 #include <linux/delay.h>

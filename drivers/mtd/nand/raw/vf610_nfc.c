@@ -19,6 +19,7 @@
  * - HW ECC: Only 24 and 32-bit error correction implemented.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

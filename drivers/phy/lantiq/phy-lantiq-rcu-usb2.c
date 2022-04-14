@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/mfd/syscon.h>

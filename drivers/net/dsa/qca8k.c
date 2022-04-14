@@ -6,6 +6,7 @@
  * Copyright (c) 2016 John Crispin <john@phrozen.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/module.h>

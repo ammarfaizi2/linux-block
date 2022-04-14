@@ -8,6 +8,7 @@
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

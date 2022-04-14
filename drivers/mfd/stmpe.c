@@ -7,6 +7,7 @@
  * Author: Rabin Vincent <rabin.vincent@stericsson.com> for ST-Ericsson
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/gpio.h>
 #include <linux/export.h>

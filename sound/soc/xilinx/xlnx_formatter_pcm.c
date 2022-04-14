@@ -6,6 +6,7 @@
 //
 // Author: Maruthi Srinivas Bayyavarapu <maruthis@xilinx.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/io.h>

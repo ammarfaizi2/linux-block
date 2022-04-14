@@ -11,6 +11,7 @@
  * devices for IP blocks like DMAC, I2S, UART.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/io.h>

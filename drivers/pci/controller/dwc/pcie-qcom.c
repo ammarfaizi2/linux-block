@@ -8,6 +8,7 @@
  * Author: Stanimir Varbanov <svarbanov@mm-sol.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/crc8.h>
 #include <linux/delay.h>

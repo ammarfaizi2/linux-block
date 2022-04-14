@@ -69,6 +69,7 @@
  *	-	RAID configuration ioctls
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

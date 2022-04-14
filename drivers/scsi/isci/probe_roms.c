@@ -24,6 +24,7 @@
 
 /* probe_roms - scan for oem parameters */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/firmware.h>
 #include <linux/uaccess.h>

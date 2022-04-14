@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Bruno Prémont <bonbons@linux-vserver.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/devm-helpers.h>

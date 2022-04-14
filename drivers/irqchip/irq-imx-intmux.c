@@ -44,6 +44,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>

@@ -11,6 +11,7 @@
 // it cannot be easily upgraded and EC flash/IRAM space is relatively
 // expensive.
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/bitops.h>
 #include <linux/i2c.h>

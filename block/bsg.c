@@ -2,6 +2,7 @@
 /*
  * bsg.c - block layer implementation of the sg v4 interface
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/file.h>

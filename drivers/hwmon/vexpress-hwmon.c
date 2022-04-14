@@ -7,6 +7,7 @@
 #define DRVNAME "vexpress-hwmon"
 #define pr_fmt(fmt) DRVNAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/hwmon.h>

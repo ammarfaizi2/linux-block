@@ -7,6 +7,7 @@
  * Author: Roland Stigge <stigge@antcom.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/i2c.h>

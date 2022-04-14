@@ -5,6 +5,7 @@
  *  Copyright (c) 2003 Silicon Graphics, Inc.  All rights reserved.
  *  Copyright (c) 2004, 2005 James Bottomley <James.Bottomley@SteelEye.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/ctype.h>
 #include <linux/init.h>
 #include <linux/module.h>

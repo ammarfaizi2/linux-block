@@ -4,6 +4,7 @@
 //
 //Copyright 2016 Advanced Micro Devices, Inc.
 
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>
 #include <linux/err.h>

@@ -5,6 +5,7 @@
 // Copyright (C) 2009-2010 Guennadi Liakhovetski <g.liakhovetski@gmx.de>
 // Copyright (C) 2006 Carlos Munoz <carlos@kenati.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/pm_runtime.h>

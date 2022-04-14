@@ -8,6 +8,7 @@
  *                         Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/hid.h>
 #include <linux/kernel.h>

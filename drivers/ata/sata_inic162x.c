@@ -50,6 +50,7 @@
  * happy to assist.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gfp.h>
 #include <linux/kernel.h>

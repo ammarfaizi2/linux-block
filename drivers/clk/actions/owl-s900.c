@@ -8,6 +8,7 @@
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>
 

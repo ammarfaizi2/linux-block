@@ -12,6 +12,7 @@
  */
 #define pr_fmt(fmt) "pinmux core: " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/ctype.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

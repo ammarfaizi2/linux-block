@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2018 MediaTek Inc.
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

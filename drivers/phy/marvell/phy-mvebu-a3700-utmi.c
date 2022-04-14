@@ -9,6 +9,7 @@
  * Marvell A3700 UTMI PHY driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/mfd/syscon.h>

@@ -2,6 +2,7 @@
 /* Copyright (c) 2015, Sony Mobile Communications, AB.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/ktime.h>

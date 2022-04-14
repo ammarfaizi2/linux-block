@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Xilinx, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/arm-smccc.h>
 #include <linux/delay.h>
 #include <linux/device.h>

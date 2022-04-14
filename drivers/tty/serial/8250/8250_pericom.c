@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Driver for Pericom UART */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/module.h>
 #include <linux/overflow.h>

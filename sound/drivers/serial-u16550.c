@@ -17,6 +17,7 @@
  *      More documentation can be found in serial-u16550.txt.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/err.h>

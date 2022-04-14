@@ -8,6 +8,7 @@
  *     Jasper St. Pierre <jstpierre@mecheye.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/component.h>
 #include <linux/module.h>
 #include <linux/of_graph.h>

@@ -6,6 +6,7 @@
  * expanded by Silvan Murer <silvan.murer@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/spi/spi.h>
 #include <linux/module.h>

@@ -23,6 +23,7 @@
  * Copyright 2019, 2020 Google LLC.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

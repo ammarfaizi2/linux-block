@@ -6,6 +6,7 @@
  *          Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/io.h>

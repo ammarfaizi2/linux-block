@@ -3,6 +3,7 @@
 
 #include "ice_common.h"
 #include "ice_flow.h"
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <net/gre.h>
 

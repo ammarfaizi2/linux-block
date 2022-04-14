@@ -6,6 +6,7 @@
 // Copyright (C) 2008 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
 // Copyright 2009 Alberto Panizzo <maramaopercheseimorto@gmail.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/mfd/mc13783.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/driver.h>

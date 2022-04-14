@@ -5,6 +5,7 @@
  * Copyright 2020 Google LLC
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>

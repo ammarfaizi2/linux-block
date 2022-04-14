@@ -5,6 +5,7 @@
  *	Copyright (C) 2013 Andrew Lunn <andrew@lunn.ch>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/clk.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>

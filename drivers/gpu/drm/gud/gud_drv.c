@@ -3,6 +3,7 @@
  * Copyright 2020 Noralf Trønnes
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/dma-buf.h>
 #include <linux/dma-mapping.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2005	Maarten Deprez <maartendeprez@users.sourceforge.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

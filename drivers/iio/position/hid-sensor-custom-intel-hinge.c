@@ -3,6 +3,7 @@
  * HID Sensors Driver
  * Copyright (c) 2020, Intel Corporation.
  */
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/hid-sensor-hub.h>
 #include <linux/iio/buffer.h>

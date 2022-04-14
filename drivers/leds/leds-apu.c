@@ -33,6 +33,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/dmi.h>
 #include <linux/err.h>
 #include <linux/init.h>

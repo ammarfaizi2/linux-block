@@ -7,6 +7,7 @@
  * Copyright (c) 2015, Intel Corporation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/badblocks.h>
 #include <linux/seqlock.h>
 #include <linux/device.h>

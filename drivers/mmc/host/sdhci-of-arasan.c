@@ -15,6 +15,7 @@
  *	    Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/clk-provider.h>
 #include <linux/mfd/syscon.h>

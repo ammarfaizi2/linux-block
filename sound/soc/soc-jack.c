@@ -6,6 +6,7 @@
 //
 // Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
 
+#include <linux/device_api_lock.h>
 #include <sound/jack.h>
 #include <sound/soc.h>
 #include <linux/gpio.h>

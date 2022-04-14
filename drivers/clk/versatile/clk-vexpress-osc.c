@@ -4,6 +4,7 @@
  * Copyright (C) 2012 ARM Limited
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clkdev.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>

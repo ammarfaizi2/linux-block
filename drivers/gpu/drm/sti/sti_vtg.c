@@ -7,6 +7,7 @@
  *          for STMicroelectronics.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/io.h>
 #include <linux/notifier.h>

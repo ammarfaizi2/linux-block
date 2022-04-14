@@ -5,6 +5,7 @@
  * Copyright (c) 2016 HiSilicon Technologies Co., Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/circ_buf.h>
 #include <linux/clk.h>

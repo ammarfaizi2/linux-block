@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/types.h>
 #include <linux/io.h>

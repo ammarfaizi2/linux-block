@@ -8,6 +8,7 @@
  * Author: Leo Yan <leo.yan@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/kernel.h>

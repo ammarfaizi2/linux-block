@@ -2,6 +2,7 @@
 /* Copyright (c) 2020, Loongson Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/pci.h>
 #include <linux/dmi.h>

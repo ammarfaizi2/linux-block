@@ -6,6 +6,7 @@
  * some credit to Christoph Scheurer, but largely a rewrite
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

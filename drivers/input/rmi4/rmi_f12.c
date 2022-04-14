@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012-2016 Synaptics Incorporated
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/input.h>
 #include <linux/input/mt.h>

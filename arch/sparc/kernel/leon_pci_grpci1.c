@@ -13,6 +13,7 @@
  * Contributors: Daniel Hellstrom <daniel@gaisler.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/of_device.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

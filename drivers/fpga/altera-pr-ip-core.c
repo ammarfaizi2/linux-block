@@ -7,6 +7,7 @@
  * Based on socfpga-a10.c Copyright (C) 2015-2016 Altera Corporation
  *  by Alan Tull <atull@opensource.altera.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/fpga/altera-pr-ip-core.h>

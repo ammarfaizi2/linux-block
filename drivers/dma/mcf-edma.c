@@ -3,6 +3,7 @@
 // Copyright (c) 2013-2014 Freescale Semiconductor, Inc
 // Copyright (c) 2017 Sysam, Angelo Dureghello  <angelo@sysam.it>
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/dmaengine.h>

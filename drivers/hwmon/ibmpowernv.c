@@ -7,6 +7,7 @@
 #define DRVNAME		"ibmpowernv"
 #define pr_fmt(fmt)	DRVNAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

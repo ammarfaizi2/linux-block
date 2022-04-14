@@ -13,6 +13,7 @@
  *  derived from pxamci.c by Russell King
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/ioport.h>

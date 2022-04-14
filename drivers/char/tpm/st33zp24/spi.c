@@ -4,6 +4,7 @@
  * Copyright (C) 2009 - 2016 STMicroelectronics
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/spi/spi.h>
 #include <linux/gpio.h>

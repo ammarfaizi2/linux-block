@@ -3,6 +3,7 @@
  * Copyright (C) 2011, 2012 Cavium, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/gpio/consumer.h>
 #include <linux/mdio-mux.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2019 Glider bvba
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>
 #include <linux/dma-buf.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2012  Pali Rohár <pali@kernel.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/param.h>
 #include <linux/platform_device.h>

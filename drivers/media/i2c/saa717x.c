@@ -17,6 +17,7 @@
  * though. Unfortunately, this driver is currently only working for NTSC.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

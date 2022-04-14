@@ -10,6 +10,7 @@
  * Author: David Cohen <david.a.cohen@linux.intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/devm-helpers.h>
 #include <linux/extcon-provider.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Mentor Graphics Inc.
  * Copyright 2005-2012 Freescale Semiconductor, Inc. All Rights Reserved.
  */
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/bitrev.h>
 #include <linux/io.h>

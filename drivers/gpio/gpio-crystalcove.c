@@ -7,6 +7,7 @@
  * Author: Yang, Bin <bin.yang@intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>

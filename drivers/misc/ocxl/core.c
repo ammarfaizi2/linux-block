@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright 2019 IBM Corp.
+#include <linux/device_api_lock.h>
 #include <linux/idr.h>
 #include "ocxl_internal.h"
 

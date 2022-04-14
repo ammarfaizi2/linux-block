@@ -15,6 +15,7 @@
  * TGC status/locality/etc functions seen in the LPC implementation do not
  * seem to be present.
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

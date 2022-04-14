@@ -10,6 +10,7 @@
  * Moxa Technology Co., Ltd. <www.moxa.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

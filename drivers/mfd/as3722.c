@@ -9,6 +9,7 @@
  * Author: Laxman Dewangan <ldewangan@nvidia.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

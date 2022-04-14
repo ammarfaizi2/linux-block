@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/ethtool.h>
 #include <linux/if_arp.h>

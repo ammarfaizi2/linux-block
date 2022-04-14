@@ -3,6 +3,7 @@
  * Copyright (C) 2007, 2008, 2009 Siemens AG
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2010, Octasic semiconductor.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/err.h>

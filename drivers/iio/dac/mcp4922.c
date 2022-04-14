@@ -8,6 +8,7 @@
  * Copyright (c) 2014 EMAC Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/spi/spi.h>

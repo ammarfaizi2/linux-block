@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2014 Philipp Zabel <p.zabel@pengutronix.de>, Pengutronix
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

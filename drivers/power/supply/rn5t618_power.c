@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Andreas Kemnade
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/bitops.h>

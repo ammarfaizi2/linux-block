@@ -5,6 +5,7 @@
 //
 // Samsung S3C2443 Mobile CPU support
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

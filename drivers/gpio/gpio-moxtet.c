@@ -5,6 +5,7 @@
  *  Copyright (C) 2018 Marek Behún <kabel@kernel.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>
 #include <linux/moxtet.h>

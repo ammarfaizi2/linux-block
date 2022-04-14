@@ -10,6 +10,7 @@
  * Mike Rapoport <mike@compulab.co.il>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/gpio/driver.h>
 #include <linux/kernel.h>

@@ -12,6 +12,7 @@
 // helping backtrack its historical background
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>

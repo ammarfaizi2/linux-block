@@ -5,6 +5,7 @@
  * Written by Timo Kokkonen <timo.t.kokkonen at nokia.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/slab.h>

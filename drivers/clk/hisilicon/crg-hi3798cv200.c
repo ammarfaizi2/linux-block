@@ -5,6 +5,7 @@
  * Copyright (c) 2016 HiSilicon Technologies Co., Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/clock/histb-clock.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  * Common Clock Framework support for Exynos4412 ISP module.
 */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <dt-bindings/clock/exynos4.h>
 #include <linux/slab.h>

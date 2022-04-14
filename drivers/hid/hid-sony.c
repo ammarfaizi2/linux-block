@@ -27,6 +27,7 @@
  * There will be no PIN request from the device.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/hid.h>
 #include <linux/module.h>

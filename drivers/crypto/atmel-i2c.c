@@ -6,6 +6,7 @@
  * Author: Tudor Ambarus <tudor.ambarus@microchip.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/bitrev.h>
 #include <linux/crc16.h>

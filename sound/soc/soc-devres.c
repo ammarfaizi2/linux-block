@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2013 Linaro Ltd
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <sound/soc.h>

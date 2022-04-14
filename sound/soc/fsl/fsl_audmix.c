@@ -5,6 +5,7 @@
  * Copyright 2017 NXP
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>

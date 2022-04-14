@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Broadcom
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/init.h>

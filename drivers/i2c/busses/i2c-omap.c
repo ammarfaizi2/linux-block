@@ -15,6 +15,7 @@
  *	Nishant Menon <nm@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

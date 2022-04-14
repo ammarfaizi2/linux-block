@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Wolfram Sang, Pengutronix
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/bitops.h>
 #include <linux/capability.h>

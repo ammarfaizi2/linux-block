@@ -5,6 +5,7 @@
  * Intel SOF Machine Driver with Realtek rt5682 Codec
  * and speaker codec MAX98357A or RT1015.
  */
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/input.h>
 #include <linux/module.h>

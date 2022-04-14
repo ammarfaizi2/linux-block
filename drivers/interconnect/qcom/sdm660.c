@@ -4,6 +4,7 @@
  * Copyright (C) 2020, AngeloGioacchino Del Regno <kholk11@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/interconnect/qcom,sdm660.h>
 #include <linux/clk.h>
 #include <linux/device.h>

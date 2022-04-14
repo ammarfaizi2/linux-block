@@ -25,6 +25,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/align.h>
 #include <linux/sched/cond_resched.h>

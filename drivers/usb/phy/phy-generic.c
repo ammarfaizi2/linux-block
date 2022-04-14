@@ -11,6 +11,7 @@
  *	autonomous such as isp1504, isp1707, etc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>

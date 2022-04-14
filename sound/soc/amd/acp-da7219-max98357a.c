@@ -4,6 +4,7 @@
 //
 //Copyright 2017-2021 Advanced Micro Devices, Inc.
 
+#include <linux/device_api_lock.h>
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/pcm.h>

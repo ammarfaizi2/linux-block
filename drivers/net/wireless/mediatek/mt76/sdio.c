@@ -8,6 +8,7 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/iopoll.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

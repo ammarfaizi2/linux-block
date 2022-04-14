@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Broadcom
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_bridge.h>

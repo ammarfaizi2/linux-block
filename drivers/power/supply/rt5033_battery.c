@@ -6,6 +6,7 @@
  * Author: Beomho Seo <beomho.seo@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/power_supply.h>

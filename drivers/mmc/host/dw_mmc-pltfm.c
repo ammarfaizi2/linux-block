@@ -6,6 +6,7 @@
  * Copyright (C) 2009, 2010 Imagination Technologies Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

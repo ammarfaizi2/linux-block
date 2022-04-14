@@ -4,6 +4,7 @@
  *
  * Copyright 2017 Analog Devices Inc.
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

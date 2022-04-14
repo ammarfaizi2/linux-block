@@ -8,6 +8,7 @@
 //
 // Inspired from tps65086-regulator.c
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/gpio.h>
 #include <linux/i2c.h>

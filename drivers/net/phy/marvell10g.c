@@ -22,6 +22,7 @@
  * If both the fiber and copper ports are connected, the first to gain
  * link takes priority and the other port is completely locked out.
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>

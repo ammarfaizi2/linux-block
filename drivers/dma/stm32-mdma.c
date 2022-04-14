@@ -10,6 +10,7 @@
  * Inspired by stm32-dma.c and dma-jz4780.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

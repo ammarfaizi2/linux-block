@@ -10,6 +10,7 @@
  * Description:
  * This driver is developed for Xilinx GMII2RGMII Converter
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/mii.h>

@@ -5,6 +5,7 @@
  *  Copyright (c) 2020 Sony Interactive Entertainment
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/bits.h>
 #include <linux/crc32.h>

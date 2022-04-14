@@ -5,6 +5,7 @@
  * Copyright 2020 Google LLC
  */
 
+#include <linux/device_api_lock.h>
 #include <drm/drm_bridge.h>
 #include <drm/drm_print.h>
 #include <linux/i2c.h>

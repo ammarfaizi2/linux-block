@@ -9,6 +9,7 @@
  * with minor modifications, see there for credits.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

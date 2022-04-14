@@ -4,6 +4,7 @@
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>

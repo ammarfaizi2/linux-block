@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Texas Instruments Incorporated - http://www.ti.com/
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/io.h>

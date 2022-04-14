@@ -6,6 +6,7 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

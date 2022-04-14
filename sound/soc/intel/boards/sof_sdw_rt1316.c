@@ -5,6 +5,7 @@
  *  sof_sdw_rt1316 - Helpers to handle RT1316 from generic machine driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <sound/control.h>

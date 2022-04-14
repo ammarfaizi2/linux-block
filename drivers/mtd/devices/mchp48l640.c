@@ -11,6 +11,7 @@
  * are wrong ... no idea why.
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/jiffies.h>

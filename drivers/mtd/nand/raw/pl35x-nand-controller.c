@@ -10,6 +10,7 @@
  *   Naga Sureshkumar Relli <nagasure@xilinx.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/amba/bus.h>
 #include <linux/err.h>
 #include <linux/delay.h>

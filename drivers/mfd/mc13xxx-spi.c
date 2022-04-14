@@ -7,6 +7,7 @@
  * Copyright 2009 Pengutronix, Sascha Hauer <s.hauer@pengutronix.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

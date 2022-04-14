@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/device_api_lock.h>
 #include <sound/core.h>
 #include <linux/major.h>
 #include <linux/init.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2016-17 Renesas Electronics Corporation
  * Copyright (C) 2016-17 Jacopo Mondi
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/mod_devicetable.h>

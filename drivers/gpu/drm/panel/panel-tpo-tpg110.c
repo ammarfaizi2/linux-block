@@ -10,6 +10,7 @@
  * Author:
  * Linus Walleij <linus.walleij@linaro.org>
  */
+#include <linux/device_api_lock.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_panel.h>
 

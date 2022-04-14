@@ -13,6 +13,7 @@
  * Copyright (C) 2006 Texas Instruments.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/clk.h>
 #include <linux/clk/davinci.h>

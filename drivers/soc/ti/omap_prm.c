@@ -6,6 +6,7 @@
  *	Tero Kristo <t-kristo@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/clk.h>
 #include <linux/device.h>

@@ -11,6 +11,7 @@
  *		Shiping Ji <shji@microsoft.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/edac.h>
 #include <linux/interrupt.h>

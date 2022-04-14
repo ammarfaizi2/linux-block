@@ -6,6 +6,7 @@
  *
  * Helper for the clk API to assist looking up a struct clk.
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

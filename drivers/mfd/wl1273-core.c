@@ -6,6 +6,7 @@
  * Author: Matti Aaltonen <matti.j.aaltonen@nokia.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/mfd/wl1273-core.h>
 #include <linux/slab.h>

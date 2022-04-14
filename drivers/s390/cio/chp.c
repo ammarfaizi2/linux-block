@@ -6,6 +6,7 @@
  *		 Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bug.h>
 #include <linux/workqueue.h>
 #include <linux/spinlock.h>

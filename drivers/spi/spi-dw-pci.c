@@ -5,6 +5,7 @@
  * Copyright (c) 2009, 2014 Intel Corporation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/pci.h>
 #include <linux/pm_runtime.h>
 #include <linux/slab.h>

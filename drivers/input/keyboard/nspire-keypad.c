@@ -3,6 +3,7 @@
  *  Copyright (C) 2013 Daniel Tang <tangrs@tangrs.id.au>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/input/matrix_keypad.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>

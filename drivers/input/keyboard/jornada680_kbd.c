@@ -13,6 +13,7 @@
  *  Copyright (C) 2000 Niibe Yutaka (HP620 Keyb translation table)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>

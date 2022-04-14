@@ -7,6 +7,7 @@
  *	    Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/module.h>

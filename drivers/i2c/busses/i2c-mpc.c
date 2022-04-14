@@ -8,6 +8,7 @@
  * Copyright (C) 2021 Allied Telesis Labs
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/sched/signal.h>

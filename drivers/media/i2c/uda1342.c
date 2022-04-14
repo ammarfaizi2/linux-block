@@ -3,6 +3,7 @@
  * Copyright (C) 2005-2006 Micronas USA Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/i2c.h>

@@ -8,6 +8,7 @@
  * Hoegeun Kwon <hoegeun.kwon@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

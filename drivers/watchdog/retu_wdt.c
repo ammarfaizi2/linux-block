@@ -8,6 +8,7 @@
  * Rewritten by Aaro Koskinen.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/devm-helpers.h>
 #include <linux/slab.h>
 #include <linux/errno.h>

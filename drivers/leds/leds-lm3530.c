@@ -9,6 +9,7 @@
  * based on leds-lm3530.c by Dan Murphy <D.Murphy@motorola.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/leds.h>
 #include <linux/slab.h>

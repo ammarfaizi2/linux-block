@@ -7,6 +7,7 @@
  *		Haojian Zhuang <haojian.zhuang@marvell.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

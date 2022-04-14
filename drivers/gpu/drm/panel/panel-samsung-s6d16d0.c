@@ -4,6 +4,7 @@
  * AMOLED panel with a command-only DSI interface.
  */
 
+#include <linux/device_api_lock.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_panel.h>

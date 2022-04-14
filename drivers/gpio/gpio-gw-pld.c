@@ -8,6 +8,7 @@
 // Copyright (C) 2009 Gateworks Corporation
 // Authors: Chris Lang, Imre Kaloz
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

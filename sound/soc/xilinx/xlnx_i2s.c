@@ -7,6 +7,7 @@
 // Author: Praveen Vuppala <praveenv@xilinx.com>
 // Author: Maruthi Srinivas Bayyavarapu <maruthis@xilinx.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of.h>

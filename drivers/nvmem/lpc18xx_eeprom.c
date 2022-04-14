@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Ariel D'Alessandro <ariel@vanguardiasur.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/delay.h>

@@ -25,6 +25,7 @@
  *	Copyright (c) 2007 Hans J. Koch, Linutronix GmbH
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

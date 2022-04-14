@@ -8,6 +8,7 @@
  * by Alessandro Zummo <a.zummo@towertech.it>.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/bcd.h>
 #include <linux/rtc.h>

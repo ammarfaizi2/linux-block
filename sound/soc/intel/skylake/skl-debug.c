@@ -5,6 +5,7 @@
  *  Copyright (C) 2016-17 Intel Corp
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/pci.h>
 #include <linux/debugfs.h>
 #include <uapi/sound/skl-tplg-interface.h>

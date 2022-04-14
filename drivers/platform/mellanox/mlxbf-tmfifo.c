@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Mellanox Technologies
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/bitfield.h>
 #include <linux/circ_buf.h>

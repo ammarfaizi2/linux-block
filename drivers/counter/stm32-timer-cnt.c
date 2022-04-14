@@ -7,6 +7,7 @@
  * Author: Benjamin Gaignard <benjamin.gaignard@st.com>
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/counter.h>
 #include <linux/mfd/stm32-timers.h>
 #include <linux/mod_devicetable.h>

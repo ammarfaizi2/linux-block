@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2018 Cirrus Logic
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/module.h>

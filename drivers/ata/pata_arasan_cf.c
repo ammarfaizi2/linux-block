@@ -21,6 +21,7 @@
  * Tested on arch/arm/mach-spear13xx
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ata.h>
 #include <linux/clk.h>
 #include <linux/completion.h>

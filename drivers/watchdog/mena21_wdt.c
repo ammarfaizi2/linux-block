@@ -5,6 +5,7 @@
  * Copyright (C) 2013 MEN Mikro Elektronik Nuernberg GmbH
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/types.h>

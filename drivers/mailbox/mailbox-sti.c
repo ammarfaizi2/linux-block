@@ -10,6 +10,7 @@
  *   Alexandre Torgue, Olivier Lebreton and Loic Pallardy
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

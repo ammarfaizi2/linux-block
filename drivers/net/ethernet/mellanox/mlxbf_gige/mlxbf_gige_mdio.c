@@ -5,6 +5,7 @@
  * Copyright (C) 2020-2021 NVIDIA CORPORATION & AFFILIATES
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>

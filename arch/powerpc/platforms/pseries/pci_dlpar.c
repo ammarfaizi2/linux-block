@@ -9,6 +9,7 @@
  * Updates, 2005, Linas Vepstas <linas@austin.ibm.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/pci.h>
 #include <linux/export.h>
 #include <asm/pci-bridge.h>

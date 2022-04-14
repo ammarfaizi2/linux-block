@@ -8,6 +8,7 @@
  * Datasheet: http://www.nxp.com/documents/data_sheet/PCA9532.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>

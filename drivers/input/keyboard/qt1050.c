@@ -9,6 +9,7 @@
  *  Copyright (C) 2011 Atmel
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

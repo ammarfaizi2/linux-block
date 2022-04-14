@@ -11,6 +11,7 @@
  * Author: Samu Onkalo <samu.p.onkalo@nokia.com>
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
 #include <linux/kernel.h>

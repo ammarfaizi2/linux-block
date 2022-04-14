@@ -13,6 +13,7 @@
  * - Tested Page Sizes: 2048, 4096
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

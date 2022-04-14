@@ -8,6 +8,7 @@
  * memory is cyclically updated over the RGB interface.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/fb.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

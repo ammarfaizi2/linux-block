@@ -2,6 +2,7 @@
 // TI LM3697 LED chip family driver
 // Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com/
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>

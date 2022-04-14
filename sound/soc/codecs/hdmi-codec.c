@@ -4,6 +4,7 @@
  * Copyright (C) 2015 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Jyri Sarha <jsarha@ti.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <sound/core.h>

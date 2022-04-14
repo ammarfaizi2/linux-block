@@ -5,6 +5,7 @@
  * Copyright (C) 2009 - 2014 Xilinx, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

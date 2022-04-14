@@ -7,6 +7,7 @@
  * Datasheet: https://www.analog.com/media/en/technical-documentation/data-sheets/adxl354_adxl355.pdf
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/bitfield.h>
 #include <linux/iio/buffer.h>

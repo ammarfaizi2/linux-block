@@ -4,6 +4,7 @@
  * Author: Beomho Seo <beomho.seo@samsung.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/i2c.h>

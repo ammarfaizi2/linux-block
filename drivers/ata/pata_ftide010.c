@@ -10,6 +10,7 @@
  * Copyright (C) 2011 Tobias Waldvogel <tobias.waldvogel@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>

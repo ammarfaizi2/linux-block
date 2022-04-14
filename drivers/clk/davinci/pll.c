@@ -9,6 +9,7 @@
  * Copyright (C) 2008-2009 Deep Root Systems, LLC
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/clk.h>
 #include <linux/clk/davinci.h>

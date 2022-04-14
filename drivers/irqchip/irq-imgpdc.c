@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/interrupt.h>
 #include <linux/irqdomain.h>

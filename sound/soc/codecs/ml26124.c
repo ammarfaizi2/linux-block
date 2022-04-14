@@ -3,6 +3,7 @@
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

@@ -39,6 +39,7 @@
    devices as needed.
 */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/string.h>

@@ -9,6 +9,7 @@
  * Timberdale FPGA GPIO
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/gpio/driver.h>

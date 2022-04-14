@@ -7,6 +7,7 @@
  *             Kirti Wankhede <kwankhede@nvidia.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/sysfs.h>
 #include <linux/ctype.h>
 #include <linux/device.h>

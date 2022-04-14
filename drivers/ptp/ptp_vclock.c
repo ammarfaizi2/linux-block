@@ -4,6 +4,7 @@
  *
  * Copyright 2021 NXP
  */
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include "ptp_private.h"
 

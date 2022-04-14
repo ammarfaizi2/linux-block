@@ -6,6 +6,7 @@
  * Sudeep Holla <sudeep.holla@arm.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/hwmon.h>
 #include <linux/module.h>
 #include <linux/scmi_protocol.h>

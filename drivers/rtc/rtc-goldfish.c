@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Imagination Technologies Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of.h>

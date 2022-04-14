@@ -7,6 +7,7 @@
  * Copyright (C) 2020 Krzysztof Kozlowski <krzk@kernel.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/of.h>
 #include <linux/gfp.h>

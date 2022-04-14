@@ -3,6 +3,7 @@
  * Copyright 2019 NXP
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/devfreq.h>
 #include <linux/device.h>

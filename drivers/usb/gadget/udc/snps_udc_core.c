@@ -16,6 +16,7 @@
 #define UDC_MOD_DESCRIPTION		"Synopsys USB Device Controller"
 #define UDC_DRIVER_VERSION_STRING	"01.00.0206"
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

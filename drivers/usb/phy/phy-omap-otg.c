@@ -9,6 +9,7 @@
  * Copyright (C) 2004 David Brownell
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/err.h>
 #include <linux/extcon.h>

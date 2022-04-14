@@ -12,6 +12,7 @@
  *
  * Author: John Stultz <john.stultz@linaro.org>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/restart_block_api.h>

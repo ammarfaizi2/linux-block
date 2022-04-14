@@ -5,6 +5,7 @@
  *  Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>
 #include <linux/console.h>

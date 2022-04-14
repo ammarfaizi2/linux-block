@@ -5,6 +5,7 @@
  * Author: Fabian Vogt <fabian@ritter-vogt.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/spinlock.h>
 #include <linux/errno.h>
 #include <linux/init.h>

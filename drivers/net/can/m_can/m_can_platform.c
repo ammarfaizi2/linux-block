@@ -5,6 +5,7 @@
 //
 // Copyright (C) 2018-19 Texas Instruments Incorporated - http://www.ti.com/
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/phy/phy.h>

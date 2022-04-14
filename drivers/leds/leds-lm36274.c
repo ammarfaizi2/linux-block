@@ -2,6 +2,7 @@
 // TI LM36274 LED chip family driver
 // Copyright (C) 2019 Texas Instruments Incorporated - https://www.ti.com/
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/err.h>

@@ -7,6 +7,7 @@
  * Authors: Felipe Balbi <balbi@ti.com>,
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/acpi.h>
 #include <linux/irq.h>

@@ -4,6 +4,7 @@
  *  Copyright (C) 2017, Topic Embedded Products
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/gpio/consumer.h>
 #include <linux/init.h>

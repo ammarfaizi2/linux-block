@@ -11,6 +11,7 @@
  * Copyright (C) 2006 Craig W. Nadler
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

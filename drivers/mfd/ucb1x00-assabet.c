@@ -6,6 +6,7 @@
  *
  *  We handle the machine-specific bits of the UCB1x00 driver here.
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/device.h>

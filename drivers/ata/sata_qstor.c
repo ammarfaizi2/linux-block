@@ -11,6 +11,7 @@
  *  as Documentation/driver-api/libata.rst
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/gfp.h>

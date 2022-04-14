@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Linaro Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/io.h>

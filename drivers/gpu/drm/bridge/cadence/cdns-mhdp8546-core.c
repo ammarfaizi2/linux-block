@@ -19,6 +19,7 @@
  *     - Add DRM helper function for cdns_mhdp_lower_link_rate
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

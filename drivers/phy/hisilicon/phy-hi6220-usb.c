@@ -4,6 +4,7 @@
  * Copyright (c) 2015 HiSilicon Limited.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

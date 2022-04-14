@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2017 Linaro Ltd.
  * Copyright (c) 2016-2017 HiSilicon Technologies Co., Ltd.
  */
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>

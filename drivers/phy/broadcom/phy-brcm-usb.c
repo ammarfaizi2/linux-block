@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2017 Broadcom
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

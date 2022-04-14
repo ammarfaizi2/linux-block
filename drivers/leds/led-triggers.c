@@ -7,6 +7,7 @@
  * Author: Richard Purdie <rpurdie@openedhand.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/list.h>

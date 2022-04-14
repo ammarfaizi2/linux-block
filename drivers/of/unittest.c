@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "### dt-test ### " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/memblock.h>
 #include <linux/clk.h>
 #include <linux/dma-direct.h> /* to test phys_to_dma/dma_to_phys */

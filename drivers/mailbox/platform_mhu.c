@@ -8,6 +8,7 @@
  * Author: Jassi Brar <jaswinder.singh@linaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
 #include <linux/mutex.h>

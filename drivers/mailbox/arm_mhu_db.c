@@ -6,6 +6,7 @@
  * Copyright (C) 2020 ARM Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/amba/bus.h>
 #include <linux/device.h>
 #include <linux/err.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2014, Linaro Limited
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/of_device.h>

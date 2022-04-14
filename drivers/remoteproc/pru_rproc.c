@@ -10,6 +10,7 @@
  *	Grzegorz Jaszczyk <grzegorz.jaszczyk@linaro.org> for Texas Instruments
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/debugfs.h>
 #include <linux/irqdomain.h>

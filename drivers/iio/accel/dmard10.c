@@ -6,6 +6,7 @@
  * Copyright (c) 2012 Domintech Technology Co., Ltd
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/iio/iio.h>

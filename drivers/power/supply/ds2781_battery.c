@@ -7,6 +7,7 @@
  * Based on ds2780_battery drivers
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/param.h>

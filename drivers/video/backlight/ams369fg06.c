@@ -8,6 +8,7 @@
  * Derived from drivers/video/s6e63m0.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>
 #include <linux/fb.h>

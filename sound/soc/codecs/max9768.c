@@ -5,6 +5,7 @@
  * Copyright (C) 2011, 2012 by Wolfram Sang, Pengutronix e.K.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

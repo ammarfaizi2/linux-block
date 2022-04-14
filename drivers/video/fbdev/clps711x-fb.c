@@ -6,6 +6,7 @@
  * Based on driver by Russell King <rmk@arm.linux.org.uk>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/fb.h>
 #include <linux/io.h>

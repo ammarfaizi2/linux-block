@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2014-2016 Ricardo Ribalda, Qtechnology A/S
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/pnp.h>

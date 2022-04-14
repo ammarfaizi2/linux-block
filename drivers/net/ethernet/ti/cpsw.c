@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/clk.h>

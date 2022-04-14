@@ -5,6 +5,7 @@
  *  sof_sdw_rt5682 - Helpers to handle RT5682 from generic machine driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/input.h>

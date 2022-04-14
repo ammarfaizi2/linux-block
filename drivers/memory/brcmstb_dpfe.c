@@ -28,6 +28,7 @@
  * always in little endian.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/io.h>

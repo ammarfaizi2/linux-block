@@ -6,6 +6,7 @@
  * Copyright 2021 Jonathan Cameron <Jonathan.Cameron@huawei.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

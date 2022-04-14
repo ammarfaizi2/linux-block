@@ -9,6 +9,7 @@
  *
  *  Converted to the generic RTC susbsystem by G. Liakhovetski (2006)
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>

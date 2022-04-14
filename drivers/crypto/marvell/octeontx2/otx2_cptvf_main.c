@@ -6,6 +6,7 @@
 #include "otx2_cptlf.h"
 #include "otx2_cptvf_algs.h"
 #include "cn10k_cpt.h"
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <rvu_reg.h>

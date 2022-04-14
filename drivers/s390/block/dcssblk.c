@@ -8,6 +8,7 @@
 #define KMSG_COMPONENT "dcssblk"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bvec_api.h>
 #include <linux/atomic_api.h>

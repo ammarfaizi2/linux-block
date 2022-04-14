@@ -8,6 +8,7 @@
  * Based on sh_keysc.c, copyright 2008 Magnus Damm
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

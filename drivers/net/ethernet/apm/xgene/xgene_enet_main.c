@@ -7,6 +7,7 @@
  *	    Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio.h>
 #include "xgene_enet_main.h"
 #include "xgene_enet_hw.h"

@@ -5,6 +5,7 @@
  * Copyright 2015-2019 Analog Devices Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/device.h>
 #include <linux/hwmon.h>

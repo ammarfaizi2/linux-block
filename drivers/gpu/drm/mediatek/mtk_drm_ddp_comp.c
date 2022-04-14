@@ -6,6 +6,7 @@
  *	CK Hu <ck.hu@mediatek.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/clk.h>
 #include <linux/of.h>

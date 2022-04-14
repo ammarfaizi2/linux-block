@@ -6,6 +6,7 @@
  * Author: Misael Lopez Cruz <misael.lopez@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/platform_device.h>
 #include <linux/mfd/twl6040.h>

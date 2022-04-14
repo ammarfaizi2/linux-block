@@ -9,6 +9,7 @@
  *      (c) Copyright 2010 Novell, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

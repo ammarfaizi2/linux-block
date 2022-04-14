@@ -8,6 +8,7 @@
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <xen/xenbus.h>
 
 #include <xen/interface/io/sndif.h>

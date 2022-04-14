@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "nci_spi: %s: " fmt, __func__
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 
 #include <linux/export.h>

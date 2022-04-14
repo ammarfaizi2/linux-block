@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 Felix Fietkau <nbd@nbd.name> */
 
+#include <linux/device_api_lock.h>
+
 #include "mt7615.h"
 #include "eeprom.h"
 #include "mcu.h"

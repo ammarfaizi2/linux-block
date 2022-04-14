@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/kernel.h>

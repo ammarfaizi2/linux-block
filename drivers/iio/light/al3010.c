@@ -14,6 +14,7 @@
  * potential races with the interrupt handling.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

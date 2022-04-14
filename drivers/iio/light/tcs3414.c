@@ -11,6 +11,7 @@
  * TODO: sync, interrupt support, thresholds, prescaler
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

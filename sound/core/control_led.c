@@ -4,6 +4,7 @@
  *  Copyright (c) 2021 by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/leds.h>

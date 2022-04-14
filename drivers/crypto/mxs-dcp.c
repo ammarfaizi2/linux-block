@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Marek Vasut <marex@denx.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>

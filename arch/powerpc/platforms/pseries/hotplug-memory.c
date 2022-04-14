@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"pseries-hotplug-mem: " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/memblock.h>

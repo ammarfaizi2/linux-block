@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Cogent Embedded, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/extcon-provider.h>
 #include <linux/interrupt.h>

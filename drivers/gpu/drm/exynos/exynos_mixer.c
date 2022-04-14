@@ -9,6 +9,7 @@
  * Based on drivers/media/video/s5p-tv/mixer_reg.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/delay.h>

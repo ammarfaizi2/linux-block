@@ -3,6 +3,7 @@
  * max98926.c -- ALSA SoC MAX98926 driver
  * Copyright 2013-15 Maxim Integrated Products
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

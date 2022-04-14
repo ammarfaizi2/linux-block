@@ -3,6 +3,7 @@
  * Copyright 2014 Bart Tanghe <bart.tanghe@thomasmore.be>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/err.h>

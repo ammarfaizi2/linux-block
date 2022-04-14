@@ -9,6 +9,7 @@
  * Author: Saravanan Sekar <sravanhome@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>
 

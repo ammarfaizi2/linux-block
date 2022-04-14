@@ -22,6 +22,7 @@
  * this panel driver should be refactored to also support that use
  * case.
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/backlight.h>
 #include <linux/bitops.h>

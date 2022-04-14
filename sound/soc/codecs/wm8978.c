@@ -8,6 +8,7 @@
  * Based on wm8974 and wm8990 by Liam Girdwood <lrg@slimlogic.co.uk>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>

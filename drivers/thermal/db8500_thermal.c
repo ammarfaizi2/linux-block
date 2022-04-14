@@ -8,6 +8,7 @@
  * Authors: Hongbo Zhang, Linus Walleij
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpu_cooling.h>
 #include <linux/interrupt.h>
 #include <linux/mfd/dbx500-prcmu.h>

@@ -6,6 +6,7 @@
  *  Copyright (C) 2015 Linaro Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/io.h>
 #include <linux/init.h>

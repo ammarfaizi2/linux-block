@@ -10,6 +10,7 @@
 //
 // Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/iopoll.h>
 #include <linux/module.h>

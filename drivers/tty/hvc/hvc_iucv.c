@@ -12,6 +12,7 @@
 #define KMSG_COMPONENT		"hvc_iucv"
 #define pr_fmt(fmt)		KMSG_COMPONENT ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <asm/ebcdic.h>

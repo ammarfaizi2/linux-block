@@ -12,6 +12,7 @@
  *	16 ports : UPort 1610-16, UPort 1650-16
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

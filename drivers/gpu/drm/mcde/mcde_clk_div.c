@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/regulator/consumer.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Álvaro Fernández Rojas <noltari@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>

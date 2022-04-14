@@ -12,6 +12,7 @@
  * simultaneously to rs485.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/clk.h>
 #include <linux/io.h>

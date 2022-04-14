@@ -6,6 +6,7 @@
 // Copyright (C) 2019 Chris Brandt.
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/dmaengine.h>
 #include <linux/io.h>

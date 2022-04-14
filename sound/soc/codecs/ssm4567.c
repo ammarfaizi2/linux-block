@@ -9,6 +9,7 @@
  *   Copyright 2013 Analog Devices Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <linux/init.h>

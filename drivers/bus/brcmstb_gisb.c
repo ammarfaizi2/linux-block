@@ -3,6 +3,7 @@
  * Copyright (C) 2014-2021 Broadcom
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
 // Author: Shane Chien <shane.chien@mediatek.com>
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/pm_runtime.h>
 
 #include "mt8192-afe-common.h"

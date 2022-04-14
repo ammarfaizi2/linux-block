@@ -6,6 +6,7 @@
  * Copyright (C) 2009 - 2012 Paul Mundt
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/gpio/driver.h>
 #include <linux/init.h>

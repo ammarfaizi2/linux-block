@@ -7,6 +7,7 @@
  * Copyright (C) Purism SPC 2019
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

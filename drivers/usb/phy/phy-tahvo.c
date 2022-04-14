@@ -12,6 +12,7 @@
  * Modified for Retu/Tahvo MFD by Aaro Koskinen.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/usb.h>

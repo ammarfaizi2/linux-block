@@ -4,6 +4,7 @@
  * Author: Moritz Fischer <mdf@kernel.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/etherdevice.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2016 NVIDIA CORPORATION, All Rights Reserved.
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/clk.h>
 #include <linux/of_device.h>

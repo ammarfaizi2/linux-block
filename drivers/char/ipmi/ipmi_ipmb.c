@@ -4,6 +4,7 @@
  * Driver to talk to a remote management controller on IPMB.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/errno.h>
 #include <linux/i2c.h>

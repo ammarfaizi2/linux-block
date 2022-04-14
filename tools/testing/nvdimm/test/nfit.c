@@ -3,6 +3,7 @@
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/workqueue.h>

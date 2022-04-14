@@ -19,6 +19,7 @@
  * Copyright 2007
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/can/core.h>
 #include <linux/can/dev.h>

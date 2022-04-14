@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"spi-nand: " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

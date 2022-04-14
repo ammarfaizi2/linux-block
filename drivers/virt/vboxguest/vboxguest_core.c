@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2016 Oracle Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/io.h>
 #include <linux/mm.h>

@@ -5,6 +5,7 @@
 // Copyright (C) 2014 Axentia Technologies AB
 // Author: Peter Rosin <peda@axentia.se>
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/i2c.h>

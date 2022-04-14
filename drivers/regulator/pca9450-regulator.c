@@ -4,6 +4,7 @@
  * NXP PCA9450 pmic driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>

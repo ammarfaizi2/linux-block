@@ -7,6 +7,7 @@
  * Author: Piotr Sroka <piotrs@cadence.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

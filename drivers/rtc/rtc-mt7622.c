@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Sean Wang <sean.wang@mediatek.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

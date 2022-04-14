@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2021, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>
 #include <linux/io.h>

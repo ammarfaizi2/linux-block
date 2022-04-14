@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of_address.h>
 #include <linux/platform_device.h>

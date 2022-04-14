@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Toradex AG
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

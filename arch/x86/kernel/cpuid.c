@@ -20,6 +20,7 @@
  * an SMP box will direct the access to CPU %d.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <asm/processor_api.h>

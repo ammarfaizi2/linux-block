@@ -11,6 +11,7 @@
  * Author:	Cliff Cai <cliff.cai@analog.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

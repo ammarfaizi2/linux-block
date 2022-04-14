@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2011 Marvell International Ltd.
  */
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

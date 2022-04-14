@@ -6,6 +6,7 @@
  * Author: Ryder Lee <ryder.lee@mediatek.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ahci_platform.h>
 #include <linux/kernel.h>
 #include <linux/libata.h>

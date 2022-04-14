@@ -5,6 +5,7 @@
 // Copyright (C) 2012 Samsung Electrnoics
 // Chanwoo Choi <cw00.choi@samsung.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/devm-helpers.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

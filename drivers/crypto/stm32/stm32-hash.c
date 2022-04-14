@@ -6,6 +6,7 @@
  * Author(s): Lionel DEBIEVE <lionel.debieve@st.com> for STMicroelectronics.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/crypto.h>
 #include <linux/delay.h>

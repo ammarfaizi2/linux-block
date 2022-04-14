@@ -5,6 +5,7 @@
  *  sof_sdw_hdmi - Helpers to handle HDMI from generic machine driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

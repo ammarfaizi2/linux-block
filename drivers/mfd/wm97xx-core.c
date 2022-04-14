@@ -10,6 +10,7 @@
  *  - a GPIO block
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/mfd/core.h>
 #include <linux/mfd/wm97xx.h>

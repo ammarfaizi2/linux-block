@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Microchip Technology Inc.  All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>
 #include <linux/err.h>

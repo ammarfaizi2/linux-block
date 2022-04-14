@@ -4,6 +4,8 @@
 //
 // Copyright (c) 2015 Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 
+#include <linux/device_api_lock.h>
+
 #include "rsnd.h"
 
 #define SSIU_NAME "ssiu"

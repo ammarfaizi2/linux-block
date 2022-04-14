@@ -8,6 +8,7 @@
  *          Dacai Zhu <zhudacai@hisilicon.com>
  *          Gabriele Paoloni <gabriele.paoloni@huawei.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

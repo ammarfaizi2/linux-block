@@ -5,6 +5,7 @@
 // Copyright (C) 2015 Renesas Electronics Corp.
 // Copyright (c) 2015 Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/of_dma.h>
 #include "rsnd.h"

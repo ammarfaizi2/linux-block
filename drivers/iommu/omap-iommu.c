@@ -9,6 +9,7 @@
  *		Paul Mundt and Toshihiro Kobayashi
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
 #include <linux/slab.h>

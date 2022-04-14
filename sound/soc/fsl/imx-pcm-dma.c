@@ -7,6 +7,7 @@
  * This code is based on code copyrighted by Freescale,
  * Liam Girdwood, Javier Martin and probably others.
  */
+#include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/dmaengine.h>
 #include <linux/types.h>

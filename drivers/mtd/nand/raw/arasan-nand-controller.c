@@ -10,6 +10,7 @@
  *   Naga Sureshkumar Relli <nagasure@xilinx.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bch.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

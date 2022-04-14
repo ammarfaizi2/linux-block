@@ -8,6 +8,7 @@
  *               Copyright (C) 2014 Joshua Kinard <kumba@gentoo.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/io.h>

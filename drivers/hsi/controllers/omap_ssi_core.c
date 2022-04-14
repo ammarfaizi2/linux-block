@@ -7,6 +7,7 @@
  * Contact: Carlos Chinea <carlos.chinea@nokia.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/compiler.h>
 #include <linux/err.h>
 #include <linux/ioport.h>

@@ -12,6 +12,7 @@
  *    - moved over to linux>=2.4.x i2c protocol (1/1/2003)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/types.h>

@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2000-2001 Deep Blue Solutions Ltd.
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/rtc.h>
 #include <linux/init.h>

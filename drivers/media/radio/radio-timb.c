@@ -4,6 +4,7 @@
  * Copyright (c) 2009 Intel Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <media/v4l2-ioctl.h>
 #include <media/v4l2-device.h>

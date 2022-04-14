@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Atmel Corporation
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/clk.h>
 #include <linux/module.h>

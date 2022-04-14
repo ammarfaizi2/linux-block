@@ -4,6 +4,7 @@
  *
  * Kuninori Morimoto <morimoto.kuninori@renesas.com>
  */
+#include <linux/device_api_lock.h>
 #include <asm/clock.h>
 #include <asm/heartbeat.h>
 #include <asm/suspend.h>

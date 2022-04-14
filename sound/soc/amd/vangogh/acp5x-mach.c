@@ -6,6 +6,7 @@
  * Copyright 2021 Advanced Micro Devices, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <linux/module.h>

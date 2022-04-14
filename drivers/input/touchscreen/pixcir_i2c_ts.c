@@ -5,6 +5,7 @@
  * Copyright (C) 2010-2011 Pixcir, Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

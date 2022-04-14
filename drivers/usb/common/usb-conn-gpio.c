@@ -9,6 +9,7 @@
  * Some code borrowed from drivers/extcon/extcon-usb-gpio.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/gpio/consumer.h>
 #include <linux/interrupt.h>

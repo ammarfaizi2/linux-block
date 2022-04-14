@@ -19,6 +19,7 @@
  * to poke at /dev/i2c-N devices.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

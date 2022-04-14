@@ -8,6 +8,7 @@
  *	Laxman Dewangan <ldewangan@nvidia.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/mfd/max77620.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  *	Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/interrupt.h>

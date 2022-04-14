@@ -6,6 +6,7 @@
  *  Based on EP93xx wdt driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/bitops.h>
 #include <linux/watchdog.h>

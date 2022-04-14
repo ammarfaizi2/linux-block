@@ -5,6 +5,7 @@
  * Author: Hongzhou.Yang <hongzhou.yang@mediatek.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/gpio/driver.h>
 #include <linux/of.h>

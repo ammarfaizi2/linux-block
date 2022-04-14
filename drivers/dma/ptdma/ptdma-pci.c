@@ -10,6 +10,7 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

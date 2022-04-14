@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Chen-Yu Tsai. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

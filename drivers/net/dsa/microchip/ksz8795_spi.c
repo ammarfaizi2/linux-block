@@ -6,6 +6,7 @@
  *	Tristram Ha <Tristram.Ha@microchip.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 
 #include <linux/delay.h>

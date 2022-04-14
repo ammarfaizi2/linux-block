@@ -9,6 +9,7 @@
  * and an early endavour into mobile light and proximity sensors.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
 #include <linux/iio/iio.h>

@@ -3,6 +3,7 @@
 // Copyright (C) 2010-2011 ST Microelectronics
 // Copyright (C) 2013,2018 Intel Corporation
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/dmaengine.h>
 #include <linux/errno.h>

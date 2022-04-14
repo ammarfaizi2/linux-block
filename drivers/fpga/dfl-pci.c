@@ -14,6 +14,7 @@
  *   Henry Mitchel <henry.mitchel@intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/pci.h>
 #include <linux/dma-mapping.h>
 #include <linux/types.h>

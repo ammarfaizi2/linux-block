@@ -8,6 +8,7 @@
  *  Copyright (C) 1993 Hamish Macdonald
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  *
  * Author: Miguel Aguilar <miguel.aguilar@ridgerun.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

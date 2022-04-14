@@ -9,6 +9,7 @@
 **
 **-----------------------------------------------------------------------------
 */
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/enclosure.h>
 #include <linux/err.h>

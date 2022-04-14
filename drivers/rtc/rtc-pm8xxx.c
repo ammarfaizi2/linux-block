@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
  */
+#include <linux/device_api_lock.h>
 #include <linux/of.h>
 #include <linux/module.h>
 #include <linux/init.h>

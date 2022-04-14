@@ -14,6 +14,7 @@
  *	Copyright (C) 2004 Texas Instruments
  *	Copyright (C) 2005 Dirk Behme
  */
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/hwmon.h>
 #include <linux/err.h>

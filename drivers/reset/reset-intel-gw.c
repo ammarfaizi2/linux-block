@@ -4,6 +4,7 @@
  * Lei Chuanhua <Chuanhua.lei@intel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/init.h>
 #include <linux/of_device.h>

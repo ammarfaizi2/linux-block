@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Jan Kandziora <jjj@gmx.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/crc16.h>
 #include <linux/delay.h>
 #include <linux/device.h>

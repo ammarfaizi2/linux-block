@@ -7,6 +7,7 @@
  * Lots of inspiration and code was copied from drivers/mfd/sm501.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

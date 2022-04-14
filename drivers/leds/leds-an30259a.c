@@ -7,6 +7,7 @@
 // Datasheet:
 // https://www.alliedelec.com/m/d/a9d2b3ee87c2d1a535a41dd747b1c247.pdf
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/leds.h>
 #include <linux/module.h>

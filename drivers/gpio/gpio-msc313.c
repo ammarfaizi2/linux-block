@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2020 Daniel Palmer<daniel@thingy.jp> */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

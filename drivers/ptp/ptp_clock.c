@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/idr.h>
 #include <linux/device.h>

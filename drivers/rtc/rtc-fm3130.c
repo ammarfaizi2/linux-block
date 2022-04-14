@@ -6,6 +6,7 @@
  *  Based on ds1307 driver by James Chapman and David Brownell
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/rtc.h>

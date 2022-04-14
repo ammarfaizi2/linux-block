@@ -5,6 +5,7 @@
  *
  * Author: Boris Brezillon <boris.brezillon@bootlin.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/dmaengine.h>
 #include <linux/iopoll.h>

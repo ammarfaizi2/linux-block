@@ -14,6 +14,7 @@
  * Author: Mike Lockwood <lockwood@android.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/types.h>

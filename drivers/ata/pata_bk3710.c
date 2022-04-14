@@ -12,6 +12,7 @@
  * Copyright (C) 2007 MontaVista Software, Inc., <source@mvista.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ata.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

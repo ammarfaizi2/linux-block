@@ -6,6 +6,7 @@
  * Copyright (C) 2020, Christophe Branchereau <cbranchereau@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/gpio/consumer.h>

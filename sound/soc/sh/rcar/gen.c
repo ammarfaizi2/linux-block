@@ -15,6 +15,8 @@
  * #define LOG_DEVICE "xxxx.rcar_sound"
  */
 
+#include <linux/device_api_lock.h>
+
 #include "rsnd.h"
 
 struct rsnd_gen {

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2020 Remi Pommarel <repk@triplefau.lt>
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/phy/phy.h>
 #include <linux/regmap.h>

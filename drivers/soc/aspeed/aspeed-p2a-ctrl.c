@@ -11,6 +11,7 @@
  * the host to read and write to various regions of the BMC's memory.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/fs.h>
 #include <linux/io.h>
 #include <linux/mfd/syscon.h>

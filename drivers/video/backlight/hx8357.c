@@ -5,6 +5,7 @@
  * Copyright 2012 Free Electrons
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/lcd.h>
 #include <linux/module.h>

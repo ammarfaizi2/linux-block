@@ -6,6 +6,7 @@
  * Copyright(C) SEIKO EPSON CORPORATION 2013. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -25,6 +25,7 @@
 // contains the same value) these status bits are not set. We work
 // around this by not polling these bits but only wait a fixed delay.
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/module.h>

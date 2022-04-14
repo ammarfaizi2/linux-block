@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2018, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Microchip Technology Inc.  All rights reserved.
  *
  */
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/of.h>

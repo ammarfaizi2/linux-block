@@ -7,6 +7,7 @@
  *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/ioport.h>
 #include <linux/init.h>

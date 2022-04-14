@@ -12,6 +12,7 @@
  * on DA850 implement HW FIFOs instead of DMA into DXR and DRR registers
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>

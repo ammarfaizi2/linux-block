@@ -4,6 +4,7 @@
  * Found in the Samsung Galaxy Ace 2 GT-I8160 mobile phone.
  */
 
+#include <linux/device_api_lock.h>
 #include <drm/drm_mipi_dbi.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_panel.h>

@@ -7,6 +7,7 @@
  * STK8BA50 7-bit I2C address: 0x18.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/i2c.h>

@@ -4,6 +4,7 @@
  * Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

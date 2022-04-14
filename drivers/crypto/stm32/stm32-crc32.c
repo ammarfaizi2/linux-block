@@ -4,6 +4,7 @@
  * Author: Fabien Dessenne <fabien.dessenne@st.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitrev.h>
 #include <linux/clk.h>
 #include <linux/crc32.h>

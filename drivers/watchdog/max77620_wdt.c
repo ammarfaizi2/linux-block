@@ -9,6 +9,7 @@
  * Author: Luca Ceresoli <luca@lucaceresoli.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2014, Sony Mobile Communications Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/input.h>

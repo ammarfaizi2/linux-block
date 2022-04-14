@@ -2,6 +2,7 @@
 /* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/input.h>
 #include <linux/kernel.h>

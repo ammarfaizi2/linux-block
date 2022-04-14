@@ -5,6 +5,7 @@
  * Machine Driver for SKL+ platforms with DSP and iDisp, HDA Codecs
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <sound/core.h>

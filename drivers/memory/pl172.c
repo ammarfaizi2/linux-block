@@ -9,6 +9,7 @@
  * TI AEMIF driver, Copyright (C) 2010 - 2013 Texas Instruments Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/amba/bus.h>
 #include <linux/clk.h>
 #include <linux/device.h>

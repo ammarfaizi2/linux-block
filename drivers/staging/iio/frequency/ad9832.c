@@ -5,6 +5,7 @@
  * Copyright 2011 Analog Devices Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <asm/div64.h>
 
 #include <linux/clk.h>

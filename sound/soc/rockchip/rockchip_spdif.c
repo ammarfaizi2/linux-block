@@ -9,6 +9,7 @@
  * Author: Sjoerd Simons <sjoerd.simons@collabora.co.uk>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/of_gpio.h>

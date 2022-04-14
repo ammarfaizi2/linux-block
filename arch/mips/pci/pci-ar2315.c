@@ -26,6 +26,7 @@
  * and IDSEL pin of AR2315 is connected to AD[16] line.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/platform_device.h>

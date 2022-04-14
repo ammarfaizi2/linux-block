@@ -8,6 +8,7 @@
  *  Copyright (C) 2002 Frank Mori Hess <fmhess@users.sourceforge.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/errno.h>

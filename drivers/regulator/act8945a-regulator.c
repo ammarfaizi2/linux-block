@@ -7,6 +7,7 @@
  * Author: Wenyou Yang <wenyou.yang@atmel.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>

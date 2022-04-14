@@ -6,6 +6,7 @@
  * Copyright (C) 2018 Vadim Pasternak <vadimp@mellanox.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/hwmon.h>

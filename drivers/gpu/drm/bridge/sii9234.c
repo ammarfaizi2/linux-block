@@ -12,6 +12,7 @@
  *    Shankar Bandal <shankar.b@samsung.com>
  *    Dharam Kumar <dharam.kr@samsung.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <drm/bridge/mhl.h>
 #include <drm/drm_bridge.h>

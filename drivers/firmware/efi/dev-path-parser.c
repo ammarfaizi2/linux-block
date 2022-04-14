@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/efi.h>
 #include <linux/pci.h>

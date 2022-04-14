@@ -3,6 +3,7 @@
  * Copyright (c) 2013 - 2015 Linaro Ltd.
  * Copyright (c) 2013 HiSilicon Limited.
  */
+#include <linux/device_api_lock.h>
 #include <linux/sched.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>

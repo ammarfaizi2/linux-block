@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2018 Stefan Wahren <stefan.wahren@i2se.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/devm-helpers.h>
 #include <linux/err.h>

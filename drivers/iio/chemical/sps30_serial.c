@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2021 Tomasz Duszynski <tomasz.duszynski@octakon.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/completion.h>
 #include <linux/device.h>

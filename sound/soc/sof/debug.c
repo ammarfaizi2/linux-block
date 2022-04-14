@@ -11,6 +11,7 @@
 // for firmware debugging.
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/io.h>
 #include <linux/pm_runtime.h>

@@ -6,6 +6,7 @@
  * (c) 2010 Arnaud Patard <arnaud.patard@rtp-net.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

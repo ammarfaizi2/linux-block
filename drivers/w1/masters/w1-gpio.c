@@ -5,6 +5,7 @@
  * Copyright (C) 2007 Ville Syrjala <syrjala@sci.fi>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

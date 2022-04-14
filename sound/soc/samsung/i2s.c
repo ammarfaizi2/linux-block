@@ -5,6 +5,7 @@
 // Copyright (c) 2010 Samsung Electronics Co. Ltd.
 //	Jaswinder Singh <jassisinghbrar@gmail.com>
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <dt-bindings/sound/samsung-i2s.h>
 #include <linux/delay.h>

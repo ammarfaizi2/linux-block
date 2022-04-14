@@ -10,6 +10,7 @@
  *
  *  And tested with help of WB Electronics
  */
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

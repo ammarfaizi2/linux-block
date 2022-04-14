@@ -6,6 +6,7 @@
  *	Suman Anna <s-anna@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>

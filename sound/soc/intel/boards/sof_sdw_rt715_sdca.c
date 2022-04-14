@@ -5,6 +5,7 @@
  *  sof_sdw_rt715_sdca - Helpers to handle RT715-SDCA from generic machine driver
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <sound/soc.h>

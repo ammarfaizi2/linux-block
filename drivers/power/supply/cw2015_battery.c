@@ -9,6 +9,7 @@
  * Authors: Tobias Schramm <t.schramm@manjaro.org>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

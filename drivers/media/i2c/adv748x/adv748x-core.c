@@ -10,6 +10,7 @@
  *	Kieran Bingham <kieran.bingham@ideasonboard.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/i2c.h>

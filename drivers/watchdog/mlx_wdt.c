@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Michael Shych <mshych@mellanox.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/errno.h>

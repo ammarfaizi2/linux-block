@@ -10,6 +10,7 @@
  *		Vineet Gupta
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/crc32.h>
 #include <linux/etherdevice.h>
 #include <linux/interrupt.h>

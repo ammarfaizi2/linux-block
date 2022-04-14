@@ -30,6 +30,8 @@
  *	amixer set "MIX",1 100%  // DAI1 Volume Up
  */
 
+#include <linux/device_api_lock.h>
+
 #include "rsnd.h"
 
 #define MIX_NAME_SIZE	16

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2015-2016 Altera Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/delay.h>

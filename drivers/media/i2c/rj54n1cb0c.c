@@ -7,6 +7,7 @@
  * Copyright (C) 2009, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

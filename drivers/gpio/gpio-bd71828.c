@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (C) 2018 ROHM Semiconductors
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/mfd/rohm-bd71828.h>
 #include <linux/module.h>

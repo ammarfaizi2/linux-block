@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/io-64-nonatomic-hi-lo.h>
 #include <linux/of_mdio.h>

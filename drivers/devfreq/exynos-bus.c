@@ -9,6 +9,7 @@
  * DEVFREQ framework and is based on drivers/devfreq/exynos/exynos4_bus.c.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/devfreq.h>
 #include <linux/devfreq-event.h>

@@ -5,6 +5,7 @@
 //
 // GPIO driver for MAXIM 77650/77651 charger/power-supply.
 
+#include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/i2c.h>
 #include <linux/mfd/max77650.h>

@@ -9,6 +9,7 @@
  * Hardware interface for audio DSP on mt8195
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/io.h>

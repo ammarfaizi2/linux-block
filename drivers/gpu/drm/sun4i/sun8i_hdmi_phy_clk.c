@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Jernej Skrabec <jernej.skrabec@siol.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 
 #include "sun8i_dw_hdmi.h"

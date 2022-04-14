@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/align.h>
 #include <linux/crc32.h>
 #include <linux/delay.h>

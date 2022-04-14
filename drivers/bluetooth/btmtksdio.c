@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/atomic.h>

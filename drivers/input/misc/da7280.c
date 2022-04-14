@@ -6,6 +6,7 @@
  * Author: Roy Im <Roy.Im.Opensource@diasemi.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
 #include <linux/err.h>

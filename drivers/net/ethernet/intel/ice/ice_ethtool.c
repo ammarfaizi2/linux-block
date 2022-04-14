@@ -8,6 +8,7 @@
 #include "ice_fltr.h"
 #include "ice_lib.h"
 #include "ice_dcb_lib.h"
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

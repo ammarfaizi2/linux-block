@@ -6,6 +6,7 @@
  * Author: Long Cheng <long.cheng@mediatek.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>

@@ -6,6 +6,7 @@
  *   Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/list.h>
 #include <linux/pci.h>
 #include <linux/mutex.h>

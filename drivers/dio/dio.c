@@ -25,6 +25,7 @@
  * This file is based on the way the Amiga port handles Zorro II cards,
  * although we aren't so complicated...
  */
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/types.h>

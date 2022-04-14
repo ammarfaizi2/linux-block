@@ -9,6 +9,7 @@
 
 #define DSS_SUBSYS_NAME "DISPC"
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/dma-mapping.h>
 #include <linux/vmalloc.h>

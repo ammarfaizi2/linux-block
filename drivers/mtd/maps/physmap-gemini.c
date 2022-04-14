@@ -6,6 +6,7 @@
  * This SoC has an elaborate flash control register, so we need to
  * detect and set it up when booting on this platform.
  */
+#include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/of.h>
 #include <linux/of_device.h>

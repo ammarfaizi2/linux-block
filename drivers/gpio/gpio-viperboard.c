@@ -7,6 +7,7 @@
  *  All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/module.h>

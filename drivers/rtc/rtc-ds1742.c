@@ -9,6 +9,7 @@
  *  - this ds1742 driver now supports ds1743.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/kernel.h>
 #include <linux/gfp.h>

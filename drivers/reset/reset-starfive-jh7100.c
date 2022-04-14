@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Emil Renner Berthing <kernel@esmil.dk>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/io.h>
 #include <linux/io-64-nonatomic-lo-hi.h>

@@ -16,6 +16,7 @@
  *     Prabhakar Lad <prabhakar.lad@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

@@ -8,6 +8,7 @@
  *  Based on various ehci-*.c drivers
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
 #include <linux/io.h>

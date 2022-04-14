@@ -4,6 +4,7 @@
  * All Rights Reserved
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/platform_device.h>

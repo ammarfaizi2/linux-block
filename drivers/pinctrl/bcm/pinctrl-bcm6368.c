@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Jonas Gorski <jonas.gorski@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/gpio/driver.h>
 #include <linux/kernel.h>

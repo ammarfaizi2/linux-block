@@ -11,6 +11,7 @@
  *  This file is based on cht_bsw_rt5672.c and cht-bsw-max98090.c
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>

@@ -5,6 +5,7 @@
 
 #include "dp_panel.h"
 
+#include <linux/device_api_lock.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_print.h>

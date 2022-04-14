@@ -13,6 +13,7 @@
  *  o Add OUT3/OUT4 mixer controls.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

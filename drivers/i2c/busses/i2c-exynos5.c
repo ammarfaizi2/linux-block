@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
 */
 
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 

@@ -4,6 +4,7 @@
  * Copyright 2019, Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/err.h>

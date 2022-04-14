@@ -3,6 +3,7 @@
  * Copyright (c) 2014, The Linux foundation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/io.h>

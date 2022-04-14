@@ -3,6 +3,7 @@
  * Copyright (c) 2016 MediaTek Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/gpio/consumer.h>

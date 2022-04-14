@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Microchip Technology Inc. and its subsidiaries.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/ethtool.h>
 
 #include "sparx5_main_regs.h"
