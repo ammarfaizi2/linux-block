@@ -9,6 +9,7 @@
 #ifndef _LINUX_LIVEPATCH_H_
 #define _LINUX_LIVEPATCH_H_
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/module.h>
 #include <linux/ftrace.h>
 #include <linux/completion.h>
