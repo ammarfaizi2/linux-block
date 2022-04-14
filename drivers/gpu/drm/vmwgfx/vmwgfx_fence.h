@@ -27,6 +27,7 @@
 
 #ifndef _VMWGFX_FENCE_H_
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-fence.h>
 #include <linux/dma-fence-array.h>
 
