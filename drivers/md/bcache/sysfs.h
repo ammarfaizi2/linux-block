@@ -2,6 +2,7 @@
 #ifndef _BCACHE_SYSFS_H_
 #define _BCACHE_SYSFS_H_
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/types.h>
 
