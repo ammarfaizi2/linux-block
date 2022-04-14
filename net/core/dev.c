@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <net/netprio_cgroup.h>
 #include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>
