@@ -6,6 +6,8 @@
 #ifndef _BLK_CGROUP_RWSTAT_H
 #define _BLK_CGROUP_RWSTAT_H
 
+#include <linux/percpu_counter_api.h>
+
 #include "blk-cgroup.h"
 
 enum blkg_rwstat_type {

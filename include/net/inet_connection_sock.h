@@ -11,6 +11,7 @@
 #ifndef _INET_CONNECTION_SOCK_H
 #define _INET_CONNECTION_SOCK_H
 
+#include <linux/percpu_counter_api.h>
 #include <linux/compiler.h>
 #include <linux/string.h>
 #include <linux/timer.h>

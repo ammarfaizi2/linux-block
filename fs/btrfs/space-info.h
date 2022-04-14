@@ -3,6 +3,7 @@
 #ifndef BTRFS_SPACE_INFO_H
 #define BTRFS_SPACE_INFO_H
 
+#include <linux/percpu_counter_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/types.h>
 
