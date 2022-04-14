@@ -7,6 +7,7 @@
 #define KMSG_COMPONENT "prot_virt"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

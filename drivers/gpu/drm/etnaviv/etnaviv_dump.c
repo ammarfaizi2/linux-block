@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/io_extra.h>
 #include <linux/devcoredump.h>
 #include <linux/moduleparam.h>
 

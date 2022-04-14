@@ -9,6 +9,7 @@
  *	Yakui Zhao <yakui.zhao@intel.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/fs.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>

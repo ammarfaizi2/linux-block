@@ -9,6 +9,7 @@
  *      code.
  */      
 
+#include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

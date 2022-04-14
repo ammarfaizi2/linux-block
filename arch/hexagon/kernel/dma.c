@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/io_extra.h>
 #include <linux/dma-map-ops.h>
 #include <linux/memblock.h>
 #include <asm/page.h>

@@ -21,6 +21,7 @@
  * more details.
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

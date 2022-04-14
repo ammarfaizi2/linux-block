@@ -7,6 +7,7 @@
  * Copyright 2017 Google Inc.
  */
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/dmi.h>

@@ -28,6 +28,7 @@
 **        the coherency design originally worked out. Only PCX-W does.
 */
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/types.h>

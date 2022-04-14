@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "cpufreq: " fmt
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

@@ -10,6 +10,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/mm.h>

@@ -12,6 +12,7 @@
  */
 
 
+#include <linux/io_extra.h>
 #include <linux/bitmap.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>

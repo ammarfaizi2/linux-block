@@ -3,6 +3,7 @@
  * Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/io_extra.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

@@ -16,6 +16,7 @@
  * 	Matt Porter <mporter@kernel.crashing.org>
  * 	Copyright 2004 MontaVista Software, Inc.
  */
+#include <linux/io_extra.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/ethtool.h>

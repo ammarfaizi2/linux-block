@@ -8,6 +8,7 @@
 //
 // S3C Power Mangament - suspend/resume memory corruption check.
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/suspend.h>
 #include <linux/init.h>

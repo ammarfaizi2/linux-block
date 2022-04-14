@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/arm-smccc.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2001 Jens Axboe <axboe@kernel.dk>
  */
+#include <linux/io_extra.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

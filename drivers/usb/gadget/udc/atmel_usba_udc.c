@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2005-2007 Atmel Corporation
  */
+#include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

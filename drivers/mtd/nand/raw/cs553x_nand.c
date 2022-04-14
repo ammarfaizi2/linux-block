@@ -12,6 +12,7 @@
  *   where 0-3 reflects the chip select for NAND.
  */
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/init.h>

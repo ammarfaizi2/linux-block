@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt)	"papr-scm: " fmt
 
+#include <linux/io_extra.h>
 #include <linux/of.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

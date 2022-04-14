@@ -6,6 +6,7 @@
  * GameCube/ppc32 port Copyright (C) 2004 Albert Herranz
  * LANDISK/sh4 supported by kogiidena
  */
+#include <linux/io_extra.h>
 #include <linux/mm.h>
 #include <linux/kexec.h>
 #include <linux/delay.h>

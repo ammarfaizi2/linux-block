@@ -5,6 +5,7 @@
  * Copyright (C) 2019 ARM Ltd.
  */
 
+#include <linux/io_extra.h>
 #include <linux/io.h>
 #include <linux/processor.h>
 #include <linux/types.h>

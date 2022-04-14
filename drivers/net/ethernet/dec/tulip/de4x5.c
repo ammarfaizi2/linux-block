@@ -443,6 +443,7 @@
     =========================================================================
 */
 
+#include <linux/io_extra.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>

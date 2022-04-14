@@ -9,6 +9,7 @@
  * for more details.
  */
 
+#include <linux/io_extra.h>
 #include <linux/export.h>
 #include <linux/sched.h>
 #include <linux/mm.h>

@@ -3,6 +3,7 @@
  * Copyright 2015 IBM Corp.
  */
 
+#include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>

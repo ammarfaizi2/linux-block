@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Philipp Zabel, Pengutronix
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

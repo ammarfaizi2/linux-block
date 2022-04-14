@@ -7,6 +7,7 @@
  * (C) Copyright 2005 Kyle McMartin <kyle@parisc-linux.org>
  */
 
+#include <linux/io_extra.h>
 #include <linux/vmalloc.h>
 #include <linux/errno.h>
 #include <linux/module.h>

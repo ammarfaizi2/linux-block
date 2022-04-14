@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/io_extra.h>
 #include <linux/interrupt.h>
 
 #include "qman_priv.h"

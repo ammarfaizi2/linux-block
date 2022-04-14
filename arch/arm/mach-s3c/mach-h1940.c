@@ -5,6 +5,7 @@
 //
 // https://www.handhelds.org/projects/h1940.html
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

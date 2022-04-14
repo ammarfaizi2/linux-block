@@ -15,6 +15,7 @@
  * into the region of the HVS that it has allocated for us.
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <drm/drm_atomic.h>

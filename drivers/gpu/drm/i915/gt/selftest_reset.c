@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/io_extra.h>
 #include <linux/crc32.h>
 
 #include "gem/i915_gem_stolen.h"

@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/io_extra.h>
 #include <subdev/bar.h>
 
 /******************************************************************************

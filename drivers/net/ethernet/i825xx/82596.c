@@ -40,6 +40,7 @@
 
  */
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>

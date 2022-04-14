@@ -7,6 +7,7 @@
  * Copyright 2016-2017, 2019-2020 NXP
  */
 
+#include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

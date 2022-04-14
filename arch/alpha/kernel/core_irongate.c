@@ -11,6 +11,7 @@
  */
 
 #define __EXTERN_INLINE inline
+#include <linux/io_extra.h>
 #include <asm/io.h>
 #include <asm/core_irongate.h>
 #undef __EXTERN_INLINE

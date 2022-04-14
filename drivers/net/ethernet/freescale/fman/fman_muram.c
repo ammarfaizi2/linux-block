@@ -32,6 +32,7 @@
 
 #include "fman_muram.h"
 
+#include <linux/io_extra.h>
 #include <linux/io.h>
 #include <linux/slab.h>
 #include <linux/genalloc.h>

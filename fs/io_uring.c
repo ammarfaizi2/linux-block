@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/io_extra.h>
 #include <linux/iocontext.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hashtable_api.h>

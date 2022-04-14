@@ -5,6 +5,7 @@
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/io_extra.h>
 #include <linux/completion.h>
 #include <linux/devcoredump.h>
 #include <linux/device.h>

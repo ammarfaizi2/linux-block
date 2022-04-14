@@ -4,6 +4,7 @@
  *
  * DMA operations that map physical memory directly without using an IOMMU.
  */
+#include <linux/io_extra.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

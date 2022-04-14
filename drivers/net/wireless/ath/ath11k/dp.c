@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/io_extra.h>
 #include <linux/idr_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>

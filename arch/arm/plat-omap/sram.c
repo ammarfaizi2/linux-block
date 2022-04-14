@@ -12,6 +12,7 @@
  */
 #undef DEBUG
 
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

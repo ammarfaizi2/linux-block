@@ -4,6 +4,7 @@
  * Author: Quentin Perret <qperret@google.com>
  */
 
+#include <linux/io_extra.h>
 #include <asm/kvm_pgtable.h>
 
 #include <nvhe/early_alloc.h>

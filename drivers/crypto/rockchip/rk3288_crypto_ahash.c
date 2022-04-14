@@ -8,6 +8,7 @@
  *
  * Some ideas are from marvell/cesa.c and s5p-sss.c driver.
  */
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/device.h>
 #include "rk3288_crypto.h"

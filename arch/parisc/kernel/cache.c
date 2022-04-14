@@ -11,6 +11,7 @@
  *
  */
  
+#include <linux/io_extra.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api.h>

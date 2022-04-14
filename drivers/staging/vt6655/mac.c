@@ -36,6 +36,8 @@
  *
  */
 
+#include <linux/io_extra.h>
+
 #include "tmacro.h"
 #include "mac.h"
 

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2004-2008 Atmel Corporation
  */
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/blkdev.h>
 #include <linux/clk.h>

@@ -13,6 +13,7 @@
  * In the future leds-net5501.c should be migrated over to platform
  */
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/io.h>

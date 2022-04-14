@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright 2017 IBM Corp.
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/sysfs.h>
 #include "ocxl_internal.h"

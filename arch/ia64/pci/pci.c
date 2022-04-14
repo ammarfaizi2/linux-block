@@ -12,6 +12,7 @@
  * Note: Above list of copyright holders is incomplete...
  */
 
+#include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/types.h>

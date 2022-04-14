@@ -14,6 +14,7 @@
  *	Abstract: rt2800 WiSoC specific routines.
  */
 
+#include <linux/io_extra.h>
 #include <linux/etherdevice.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

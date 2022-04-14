@@ -8,6 +8,7 @@
  * Author: Jan Nikitenko <jan.nikitenko@gmail.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>

@@ -14,6 +14,7 @@
  * Access to the event log extended by the TCG BIOS of PC platform
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/seq_file.h>
 #include <linux/fs.h>

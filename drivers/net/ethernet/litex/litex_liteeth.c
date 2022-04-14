@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/interrupt.h>

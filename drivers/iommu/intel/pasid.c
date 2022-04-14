@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"DMAR: " fmt
 
+#include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

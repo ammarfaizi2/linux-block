@@ -7,6 +7,7 @@
  * Licensed under the GNU/GPL. See COPYING for details.
  */
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/io.h>

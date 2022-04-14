@@ -31,6 +31,7 @@
  *   below for details. )
  */
 
+#include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/seq_file.h>
 #include <linux/memblock.h>

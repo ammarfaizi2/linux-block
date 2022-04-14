@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "ep93xx " KBUILD_MODNAME ": " fmt
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

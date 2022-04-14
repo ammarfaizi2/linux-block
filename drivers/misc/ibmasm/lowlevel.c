@@ -7,6 +7,8 @@
  * Author: Max Asböck <amax@us.ibm.com>
  */
 
+#include <linux/io_extra.h>
+
 #include "ibmasm.h"
 #include "lowlevel.h"
 #include "i2o.h"

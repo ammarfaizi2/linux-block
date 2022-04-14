@@ -4,6 +4,7 @@
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
  
 
+#include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

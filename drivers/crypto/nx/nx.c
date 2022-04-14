@@ -7,6 +7,7 @@
  * Author: Kent Yoder <yoder1@us.ibm.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <crypto/internal/aead.h>
 #include <crypto/internal/hash.h>

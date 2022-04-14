@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2019-2020 Linaro Ltd.
  */
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

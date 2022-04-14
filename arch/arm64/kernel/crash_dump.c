@@ -6,6 +6,7 @@
  * Author: AKASHI Takahiro <takahiro.akashi@linaro.org>
  */
 
+#include <linux/io_extra.h>
 #include <linux/crash_dump.h>
 #include <linux/errno.h>
 #include <linux/io.h>

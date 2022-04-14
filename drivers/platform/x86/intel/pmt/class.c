@@ -8,6 +8,7 @@
  * Author: "Alexander Duyck" <alexander.h.duyck@linux.intel.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

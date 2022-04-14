@@ -29,6 +29,7 @@
  *	doublescan modes are broken
  */
 
+#include <linux/io_extra.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

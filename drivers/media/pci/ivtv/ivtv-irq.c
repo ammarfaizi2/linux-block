@@ -13,6 +13,7 @@
 #include "ivtv-mailbox.h"
 #include "ivtv-vbi.h"
 #include "ivtv-yuv.h"
+#include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <media/v4l2-event.h>
 

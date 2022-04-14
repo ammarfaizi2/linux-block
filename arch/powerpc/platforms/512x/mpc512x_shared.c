@@ -8,6 +8,7 @@
  * MPC512x Shared code
  */
 
+#include <linux/io_extra.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

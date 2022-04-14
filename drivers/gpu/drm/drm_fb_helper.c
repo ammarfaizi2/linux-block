@@ -29,6 +29,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/console.h>
 #include <linux/dma-buf.h>

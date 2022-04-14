@@ -40,6 +40,7 @@
 
 *******************************************************************************/
 
+#include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
 #include <linux/crc32.h>
 #include <linux/capability.h>

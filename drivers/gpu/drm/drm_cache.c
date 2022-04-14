@@ -27,6 +27,7 @@
 /*
  * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
+#include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
 #include <linux/cc_platform.h>
 #include <linux/export.h>

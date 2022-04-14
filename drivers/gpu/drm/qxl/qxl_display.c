@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/io_extra.h>
 #include <linux/crc32.h>
 #include <linux/delay.h>
 #include <linux/iosys-map.h>

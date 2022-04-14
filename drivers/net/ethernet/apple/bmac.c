@@ -8,6 +8,7 @@
  * May 1999, Al Viro: proper release of /proc/net/bmac entry, switched to
  * dynamic procfs inode.
  */
+#include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/interrupt.h>

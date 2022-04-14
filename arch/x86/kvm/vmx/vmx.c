@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

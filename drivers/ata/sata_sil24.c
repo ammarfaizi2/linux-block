@@ -7,6 +7,7 @@
  * Based on preview driver from Silicon Image.
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

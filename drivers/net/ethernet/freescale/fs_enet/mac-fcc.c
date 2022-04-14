@@ -12,6 +12,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

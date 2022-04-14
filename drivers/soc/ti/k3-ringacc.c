@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/dma-mapping.h>

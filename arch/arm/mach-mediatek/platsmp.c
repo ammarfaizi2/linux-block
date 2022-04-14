@@ -6,6 +6,7 @@
  * Author: Shunli Wang <shunli.wang@mediatek.com>
  *         Yingjoe Chen <yingjoe.chen@mediatek.com>
  */
+#include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/io.h>
 #include <linux/memblock.h>

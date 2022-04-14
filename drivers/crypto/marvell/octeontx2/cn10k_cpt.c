@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2021 Marvell. */
 
+#include <linux/io_extra.h>
 #include <linux/soc/marvell/octeontx2/asm.h>
 #include "otx2_cptpf.h"
 #include "otx2_cptvf.h"

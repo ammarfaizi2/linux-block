@@ -12,6 +12,7 @@
  *  Copyright (C) 1995-2006 Dell Inc.
  */
 
+#include <linux/io_extra.h>
 #include <linux/platform_device.h>
 #include <linux/acpi.h>
 #include <linux/dma-mapping.h>

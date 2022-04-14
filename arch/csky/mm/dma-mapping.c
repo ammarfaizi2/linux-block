@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
+#include <linux/io_extra.h>
 #include <linux/cache.h>
 #include <linux/dma-map-ops.h>
 #include <linux/genalloc.h>

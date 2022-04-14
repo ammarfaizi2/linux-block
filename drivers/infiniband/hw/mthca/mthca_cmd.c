@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/io_extra.h>
 #include <linux/completion.h>
 #include <linux/pci.h>
 #include <linux/errno.h>

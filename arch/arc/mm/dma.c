@@ -3,6 +3,7 @@
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/io_extra.h>
 #include <linux/dma-map-ops.h>
 #include <asm/cache.h>
 #include <asm/cacheflush.h>

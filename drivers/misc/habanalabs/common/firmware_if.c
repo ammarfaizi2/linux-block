@@ -8,6 +8,7 @@
 #include "habanalabs.h"
 #include "../include/common/hl_boot_if.h"
 
+#include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/crc32.h>

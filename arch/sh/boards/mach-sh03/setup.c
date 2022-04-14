@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/io_extra.h>
 #include <linux/init.h>
 #include <linux/irq.h>
 #include <linux/pci.h>

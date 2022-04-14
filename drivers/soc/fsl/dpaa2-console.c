@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "dpaa2-console: " fmt
 
+#include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/of_device.h>
 #include <linux/of_address.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 1998-2001 Russell King
  *  Copyright (C) 1998-2000 Phil Blundell
  */
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>

@@ -8,6 +8,7 @@
  *  Copyright (C) 2014 Codethink Limited
  */
 
+#include <linux/io_extra.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

@@ -13,6 +13,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/align.h>
 #include <linux/sched/cond_resched.h>

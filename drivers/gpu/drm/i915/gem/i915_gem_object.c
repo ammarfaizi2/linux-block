@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/io_extra.h>
 #include <linux/highmem.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

@@ -18,6 +18,7 @@
  *               Marko Isomaki
  */
 
+#include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/dma-mapping.h>

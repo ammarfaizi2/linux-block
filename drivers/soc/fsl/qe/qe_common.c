@@ -13,6 +13,7 @@
  * 2006 (c) MontaVista Software, Inc.
  * Vitaly Bordug <vbordug@ru.mvista.com>
  */
+#include <linux/io_extra.h>
 #include <linux/genalloc.h>
 #include <linux/init.h>
 #include <linux/list.h>

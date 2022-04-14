@@ -56,6 +56,8 @@
  * Used by permission.
  */
 
+#include <linux/io_extra.h>
+
 #include "init.h"
 
 #ifdef CONFIG_FB_SIS_300

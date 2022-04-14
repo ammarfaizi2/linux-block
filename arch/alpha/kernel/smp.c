@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

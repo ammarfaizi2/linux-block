@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/io_extra.h>
 #include <drm/dp/drm_dp_helper.h>
 
 #include "display/intel_display.h"

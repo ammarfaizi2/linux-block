@@ -13,6 +13,7 @@
  * by Hollis Blanchard <hollisb@us.ibm.com>.
  */
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/slab.h>

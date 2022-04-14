@@ -26,6 +26,7 @@
  * Derived from Xorg ddx, xf86-video-intel, src/i830_video.c
  */
 
+#include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_fourcc.h>
 

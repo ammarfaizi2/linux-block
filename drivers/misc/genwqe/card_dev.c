@@ -15,6 +15,7 @@
  * user-space applications to communicate with the card.
  */
 
+#include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

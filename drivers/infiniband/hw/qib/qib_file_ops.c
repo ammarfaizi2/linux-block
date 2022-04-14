@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device/class.h>

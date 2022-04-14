@@ -4,6 +4,7 @@
  * Author: Quentin Perret <qperret@google.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/kvm_host.h>
 #include <asm/kvm_emulate.h>
 #include <asm/kvm_hyp.h>

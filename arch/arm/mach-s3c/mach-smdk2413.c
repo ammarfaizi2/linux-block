@@ -6,6 +6,7 @@
 // Thanks to Dimity Andric (TomTom) and Steven Ryu (Samsung) for the
 // loans of SMDK2413 to work with.
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

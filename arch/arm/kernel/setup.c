@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2001 Russell King
  */
+#include <linux/io_extra.h>
 #include <linux/crc32.h>
 #include <linux/cpumask_api.h>
 #include <linux/efi.h>

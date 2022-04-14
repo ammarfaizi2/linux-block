@@ -58,6 +58,7 @@
  */
 
 
+#include <linux/io_extra.h>
 #include <linux/blkdev.h>
 #include <linux/capability.h>
 #include <linux/ctype.h>

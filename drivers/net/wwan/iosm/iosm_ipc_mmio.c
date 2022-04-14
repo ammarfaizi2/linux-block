@@ -3,6 +3,7 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/io.h>

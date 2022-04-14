@@ -8,6 +8,7 @@
  * Author: Max Asböck <amax@us.ibm.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/notifier.h>
 #include <linux/panic_notifier.h>
 #include "ibmasm.h"

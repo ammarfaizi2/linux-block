@@ -20,6 +20,7 @@
  * <mardy@users.sourceforge.net>
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/fb.h>
