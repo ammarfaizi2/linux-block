@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/ptrace.h>

@@ -6,6 +6,7 @@
  *  (C) Copyright 2002 Christoph Hellwig
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_gate_area.h>
 #include <linux/dax.h>

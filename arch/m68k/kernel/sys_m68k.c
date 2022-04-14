@@ -7,6 +7,7 @@
  * platform.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/capability.h>
 #include <linux/errno.h>

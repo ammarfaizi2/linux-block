@@ -3,6 +3,7 @@
  * Copyright 2017 IBM Corp.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

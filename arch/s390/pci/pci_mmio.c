@@ -5,6 +5,7 @@
  * Copyright IBM Corp. 2014
  * Author(s): Alexey Ishchuk <aishchuk@linux.vnet.ibm.com>
  */
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/debugfs.h>
 #include <linux/iosys-map.h>

@@ -39,6 +39,7 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api_tlb_flush.h>
 #include <linux/mm_api.h>

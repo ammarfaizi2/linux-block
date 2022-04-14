@@ -11,6 +11,7 @@
  * for more details.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/signal.h>
 #include <linux/sched.h>

@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/export.h>
 #include <linux/file.h>

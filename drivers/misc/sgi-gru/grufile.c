@@ -11,6 +11,7 @@
  *  Copyright (c) 2008-2014 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

@@ -8,6 +8,7 @@
  *      Gleb Natapov <gleb@redhat.com>
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/kvm_host.h>
 #include <linux/slab.h>

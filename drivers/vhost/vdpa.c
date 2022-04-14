@@ -11,6 +11,7 @@
  * their supports.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/idr_api.h>

@@ -19,6 +19,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

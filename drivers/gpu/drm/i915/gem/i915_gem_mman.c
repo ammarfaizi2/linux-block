@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

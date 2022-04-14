@@ -9,6 +9,7 @@
  * This file initializes the trap entry points
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/mm.h>

@@ -10,6 +10,7 @@
  *  mm/ksm.c (mm hashing).
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs_api.h>

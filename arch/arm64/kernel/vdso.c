@@ -7,6 +7,7 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cache.h>

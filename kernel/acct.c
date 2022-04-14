@@ -44,6 +44,7 @@
  * a struct file opened for write. Fixed. 2/6/2000, AV.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>

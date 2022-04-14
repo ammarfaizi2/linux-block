@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/mmap_lock.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

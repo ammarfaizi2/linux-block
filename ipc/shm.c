@@ -25,6 +25,7 @@
  * Davidlohr Bueso <davidlohr.bueso@hp.com>, June 2013.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/idr_api.h>

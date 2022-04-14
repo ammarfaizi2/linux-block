@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/list_lru_api.h>
 #include <linux/gfp_api.h>

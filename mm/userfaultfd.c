@@ -5,6 +5,7 @@
  *  Copyright (C) 2015  Red Hat, Inc.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/memcontrol.h>

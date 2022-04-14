@@ -7,6 +7,7 @@
  *             Christoph Lameter <cl@linux.com>
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>

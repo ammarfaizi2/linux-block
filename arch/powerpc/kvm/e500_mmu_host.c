@@ -13,6 +13,7 @@
  * by Hollis Blanchard <hollisb@us.ibm.com>.
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

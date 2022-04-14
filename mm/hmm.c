@@ -8,6 +8,7 @@
  * Refer to include/linux/hmm.h for information about heterogeneous memory
  * management or HMM for short.
  */
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/pagewalk.h>
 #include <linux/hmm.h>

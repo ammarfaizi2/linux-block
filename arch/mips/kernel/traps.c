@@ -12,6 +12,7 @@
  * Copyright (C) 2000, 2001, 2012 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2014, Imagination Technologies Ltd.
  */
+#include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>
 #include <linux/hardirq.h>
