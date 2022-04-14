@@ -19,6 +19,7 @@
 /* cpu_feature_enabled() cannot be used this early */
 #define USE_EARLY_PGTABLE_L5
 
+#include <asm/pgtable.h>
 #include <linux/linkage.h>
 #include <linux/screen_info.h>
 #include <linux/elf.h>
