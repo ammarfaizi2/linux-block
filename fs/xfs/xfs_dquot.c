@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2003 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 
 #include "xfs.h"

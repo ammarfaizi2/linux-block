@@ -27,6 +27,7 @@
 #include "xfs_trans.h"
 #include "xfs_acl.h"
 #include "xfs_btree.h"
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/file.h>

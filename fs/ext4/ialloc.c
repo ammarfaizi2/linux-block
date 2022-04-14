@@ -13,6 +13,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>

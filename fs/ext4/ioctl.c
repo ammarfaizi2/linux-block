@@ -8,6 +8,7 @@
  * Universite Pierre et Marie Curie (Paris VI)
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/dcache.h>

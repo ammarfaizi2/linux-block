@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/eventpoll.h>
 #include <linux/cred.h>

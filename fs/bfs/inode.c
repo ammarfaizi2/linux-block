@@ -7,6 +7,7 @@
  *	Made endianness-clean by Andrew Stribblehill <ads@wompom.org>, 2005.
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/module.h>

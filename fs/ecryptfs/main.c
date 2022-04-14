@@ -10,6 +10,7 @@
  *              Tyler Hicks <code@tyhicks.com>
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>

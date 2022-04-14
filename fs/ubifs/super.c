@@ -14,6 +14,7 @@
  * corresponding subsystems, but most of it is here.
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/backing-dev-api.h>

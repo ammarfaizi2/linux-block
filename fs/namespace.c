@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cpumask_api.h>

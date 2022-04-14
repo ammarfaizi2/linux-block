@@ -12,6 +12,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch, <okir@monad.swb.de>
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/slab.h>

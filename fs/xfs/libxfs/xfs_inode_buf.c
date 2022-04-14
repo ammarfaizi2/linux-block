@@ -18,6 +18,7 @@
 #include "xfs_ialloc.h"
 #include "xfs_dir2.h"
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/iversion.h>
 

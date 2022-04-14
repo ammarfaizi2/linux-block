@@ -19,6 +19,7 @@
  *  Assorted race fixes, rewrite of ext4_get_block() by Al Viro, 2000
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
