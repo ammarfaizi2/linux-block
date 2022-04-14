@@ -5,6 +5,7 @@
  * Copyright (c) 2010 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/lockdep.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>
