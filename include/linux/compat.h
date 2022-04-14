@@ -6,6 +6,7 @@
  * syscall compatibility layer.
  */
 
+#include <linux/time32.h>
 #include <linux/types.h>
 #include <linux/time.h>
 
