@@ -8,6 +8,7 @@
  * Datasheet:
  * https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BME680-DS001-00.pdf
  */
+#include <linux/stat.h>
 #include <linux/math64.h>
 #include <linux/acpi.h>
 #include <linux/bitfield.h>

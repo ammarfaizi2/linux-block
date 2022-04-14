@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/stat.h>
 #include <linux/fs.h>
 #include <linux/xattr.h>
 

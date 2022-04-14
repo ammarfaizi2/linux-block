@@ -10,6 +10,7 @@
  *   http://www.maxim-ic.com/quick_view2.cfm/qv_pk/4382
  */
 
+#include <linux/stat.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

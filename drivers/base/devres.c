@@ -6,6 +6,7 @@
  * Copyright (c) 2006  Tejun Heo <teheo@suse.de>
  */
 
+#include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>

@@ -12,6 +12,7 @@
  *  bfa_attr.c Linux driver configuration interface module.
  */
 
+#include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 

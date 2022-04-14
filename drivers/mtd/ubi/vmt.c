@@ -10,6 +10,7 @@
  * resizing.
  */
 
+#include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/kdev_t.h>
 #include <linux/device_api_lock.h>

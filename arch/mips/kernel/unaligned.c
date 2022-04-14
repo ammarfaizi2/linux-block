@@ -10,6 +10,7 @@
  * Copyright (C) 2014 Imagination Technologies Ltd.
  */
 
+#include <linux/stat.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/signal.h>

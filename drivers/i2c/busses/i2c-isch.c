@@ -15,6 +15,7 @@
    Note: we assume there can only be one device, with one SMBus interface.
 */
 
+#include <linux/stat.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

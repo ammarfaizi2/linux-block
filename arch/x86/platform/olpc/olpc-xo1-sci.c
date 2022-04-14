@@ -7,6 +7,7 @@
  * Copyright (C) 2006 Advanced Micro Devices, Inc.
  */
 
+#include <linux/stat.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

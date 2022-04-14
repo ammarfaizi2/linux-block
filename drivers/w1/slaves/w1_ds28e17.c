@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Jan Kandziora <jjj@gmx.de>
  */
 
+#include <linux/stat.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/crc16.h>

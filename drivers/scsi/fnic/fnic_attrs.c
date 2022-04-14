@@ -15,6 +15,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/stat.h>
 #include <linux/string.h>
 #include <linux/device.h>
 #include <scsi/scsi_host.h>

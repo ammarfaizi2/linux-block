@@ -9,6 +9,7 @@
  * Based on ds2760_battery and ds2782_battery drivers
  */
 
+#include <linux/stat.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/slab.h>

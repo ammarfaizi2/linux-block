@@ -20,6 +20,7 @@
 /*   This file contains debugging routines for use in the QCA7K driver.
  */
 
+#include <linux/stat.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/debugfs.h>

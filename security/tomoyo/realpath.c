@@ -6,6 +6,7 @@
  */
 
 #include "common.h"
+#include <linux/stat.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/kdev_t.h>

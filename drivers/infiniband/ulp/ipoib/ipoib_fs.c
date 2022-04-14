@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/stat.h>
 #include <linux/err.h>
 #include <linux/seq_file.h>
 #include <linux/slab.h>

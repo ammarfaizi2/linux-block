@@ -90,6 +90,7 @@
    Mark, Pawel, and Pavel.
 */
 
+#include <linux/stat.h>
 #include <linux/math.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>

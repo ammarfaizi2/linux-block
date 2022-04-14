@@ -12,6 +12,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <linux/stat.h>
 #include <linux/sched.h>
 #include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>

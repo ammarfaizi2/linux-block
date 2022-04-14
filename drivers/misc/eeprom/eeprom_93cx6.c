@@ -8,6 +8,7 @@
  * Supported chipsets: 93c46 & 93c66.
  */
 
+#include <linux/stat.h>
 #include <linux/printk.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2011-2013 NVIDIA Corporation
  */
 
+#include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/debugfs.h>

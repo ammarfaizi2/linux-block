@@ -16,6 +16,7 @@
  * http://www.fintek.com.tw/files/productfiles/F75387_V027P.pdf
  */
 
+#include <linux/stat.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

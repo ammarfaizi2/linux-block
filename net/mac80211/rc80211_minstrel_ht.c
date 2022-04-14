@@ -3,6 +3,7 @@
  * Copyright (C) 2010-2013 Felix Fietkau <nbd@openwrt.org>
  * Copyright (C) 2019-2021 Intel Corporation
  */
+#include <linux/stat.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/netdevice.h>

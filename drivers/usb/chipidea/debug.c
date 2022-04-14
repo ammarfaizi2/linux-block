@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
