@@ -11,6 +11,7 @@
 #define _INET_HASHTABLES_H
 
 
+#include <net/ipv6_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/interrupt.h>
 #include <linux/ip.h>

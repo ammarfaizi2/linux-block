@@ -2,6 +2,7 @@
 #ifndef __NET_DST_METADATA_H
 #define __NET_DST_METADATA_H 1
 
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff.h>

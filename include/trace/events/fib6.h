@@ -5,6 +5,7 @@
 #if !defined(_TRACE_FIB6_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_FIB6_H
 
+#include <net/ipv6_api.h>
 #include <linux/in6.h>
 #include <net/flow.h>
 #include <net/ip6_fib.h>

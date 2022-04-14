@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _IPV6_FRAG_H
 #define _IPV6_FRAG_H
+#include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/icmpv6.h>

@@ -5,6 +5,7 @@
 #if !defined(_TRACE_TCP_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_TCP_H
 
+#include <net/ipv6_api.h>
 #include <linux/ipv6.h>
 #include <linux/tcp.h>
 #include <linux/tracepoint.h>

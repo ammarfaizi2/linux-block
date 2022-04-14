@@ -6,6 +6,7 @@
 #ifndef _NET_IP_VS_H
 #define _NET_IP_VS_H
 
+#include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/netfilter/nf_conntrack_common_api.h>
