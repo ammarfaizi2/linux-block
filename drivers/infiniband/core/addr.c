@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <net/neighbour_api_seqlock.h>
 #include <net/neighbour_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>

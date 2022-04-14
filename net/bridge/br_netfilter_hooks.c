@@ -10,6 +10,7 @@
  *	Lennert dedicates this file to Kerstin Wurdinger.
  */
 
+#include <net/neighbour_api_seqlock.h>
 #include <net/neighbour_api.h>
 #include <net/ip_extra.h>
 #include <net/dst_api.h>

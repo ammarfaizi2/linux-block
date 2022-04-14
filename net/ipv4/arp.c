@@ -71,6 +71,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/neighbour_api_seqlock.h>
 #include <net/neighbour_api.h>
 #include <net/l3mdev.h>
 #include <net/ip_extra.h>
