@@ -11,6 +11,7 @@
 #ifndef _PPP_IOCTL_H
 #define _PPP_IOCTL_H
 
+#include <linux/ioctl.h>
 #include <linux/types.h>
 #include <linux/compiler.h>
 #include <linux/ppp_defs.h>

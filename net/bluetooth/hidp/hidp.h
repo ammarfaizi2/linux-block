@@ -23,6 +23,7 @@
 #ifndef __HIDP_H
 #define __HIDP_H
 
+#include <linux/ioctl.h>
 #include <linux/types.h>
 #include <linux/hid.h>
 #include <linux/kref.h>
