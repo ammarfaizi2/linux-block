@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/ratelimit.h>
 #include <linux/net.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>

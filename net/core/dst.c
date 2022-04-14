@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/ratelimit.h>
 #include <linux/percpu.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

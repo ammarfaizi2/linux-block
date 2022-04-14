@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ratelimit.h>
 #include <linux/filter_api.h>
 #include <linux/module.h>
 #include <linux/syscalls.h>

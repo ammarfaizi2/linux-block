@@ -37,6 +37,7 @@
  * DAMAGE.
  */
 
+#include <linux/ratelimit.h>
 #include <linux/random.h>
 #include <linux/ktime_api.h>
 #include <linux/kernel.h>

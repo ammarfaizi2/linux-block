@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/ratelimit.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

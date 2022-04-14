@@ -7,6 +7,7 @@
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/ratelimit.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>

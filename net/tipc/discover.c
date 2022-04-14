@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/ratelimit.h>
 #include <linux/jiffies.h>
 
 #include "core.h"

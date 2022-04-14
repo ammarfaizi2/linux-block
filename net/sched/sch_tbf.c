@@ -7,6 +7,7 @@
  *						 original idea by Martin Devera
  */
 
+#include <linux/ratelimit.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/types.h>

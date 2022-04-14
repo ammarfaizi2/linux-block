@@ -8,6 +8,7 @@
  *	Copyright © CC Computer Consultants GmbH, 2007 - 2008
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/ratelimit.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <net/ipv6.h>

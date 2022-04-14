@@ -35,6 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/ratelimit.h>
+
 #include "core.h"
 #include "link.h"
 #include "name_distr.h"

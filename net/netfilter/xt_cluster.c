@@ -3,6 +3,7 @@
  * (C) 2008-2009 Pablo Neira Ayuso <pablo@netfilter.org>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/ratelimit.h>
 #include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

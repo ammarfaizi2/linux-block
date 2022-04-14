@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/ratelimit.h>
 #include <linux/kref_api.h>
 #include <linux/ceph/ceph_debug.h>
 

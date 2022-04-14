@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/ratelimit.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

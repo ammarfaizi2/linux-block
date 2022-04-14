@@ -5,6 +5,7 @@
  * (C) 2002-2005 Netfilter Core Team <coreteam@netfilter.org>
  */
 
+#include <linux/ratelimit.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <net/netfilter/nf_conntrack.h>

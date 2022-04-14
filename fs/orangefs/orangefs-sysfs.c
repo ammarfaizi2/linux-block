@@ -136,6 +136,7 @@
  *
  */
 
+#include <linux/ratelimit.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>

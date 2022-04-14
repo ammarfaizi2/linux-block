@@ -7,6 +7,7 @@
  * Jon Oberheide <jon@oberheide.org>
  */
 
+#include <linux/ratelimit.h>
 #include <crypto/algapi.h>
 #include <crypto/arc4.h>
 #include <crypto/internal/skcipher.h>

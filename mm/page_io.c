@@ -11,6 +11,7 @@
  *  Always use brw_page, life becomes simpler. 12 May 1998 Eric Biederman
  */
 
+#include <linux/ratelimit.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/memcontrol.h>
