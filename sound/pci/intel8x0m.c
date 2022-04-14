@@ -8,6 +8,7 @@
  *   of ALSA ICH sound driver intel8x0.c .
  */      
 
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

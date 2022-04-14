@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Cavium Inc.
  */
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>

@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <drm/drm_privacy_screen_consumer.h>

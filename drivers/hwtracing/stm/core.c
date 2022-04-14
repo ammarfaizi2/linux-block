@@ -7,6 +7,7 @@
  * as defined in MIPI STPv2 specification.
  */
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

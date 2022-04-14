@@ -6,6 +6,7 @@
  * Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <asm/ptrace.h>
 #include <linux/uaccess.h>

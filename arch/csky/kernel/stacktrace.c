@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/sched.h>
 #include <linux/kallsyms.h>
 #include <linux/sched/debug.h>
 #include <linux/sched/task_stack.h>

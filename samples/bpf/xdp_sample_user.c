@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define _GNU_SOURCE
 
+#include <linux/sched.h>
 #include <linux/hashtable_api.h>
 #include <arpa/inet.h>
 #include <bpf/bpf.h>

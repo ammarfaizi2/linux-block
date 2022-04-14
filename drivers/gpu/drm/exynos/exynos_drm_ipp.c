@@ -16,6 +16,7 @@
  * all copies or substantial portions of the Software.
  */
 
+#include <linux/sched.h>
 #include <linux/ktime_api.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>

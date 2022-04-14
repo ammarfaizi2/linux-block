@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2020 Microchip Technology Germany II GmbH & Co. KG
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/device/bus.h>

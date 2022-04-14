@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "%s " fmt, KBUILD_MODNAME
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>

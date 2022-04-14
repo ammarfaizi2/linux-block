@@ -24,6 +24,7 @@
  */
 
 #ifdef CONFIG_DRM_AMD_DC_DCN
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 
 #include "dc.h"

@@ -4,6 +4,7 @@
  *
  *  Based on lirc_serial.c
  */
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

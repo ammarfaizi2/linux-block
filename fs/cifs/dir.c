@@ -7,6 +7,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

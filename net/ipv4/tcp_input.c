@@ -64,6 +64,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/net.h>

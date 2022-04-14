@@ -16,6 +16,7 @@
 #define CARD_NAME "ESS Maestro3/Allegro/Canyon3D-2"
 #define DRIVER_NAME "Maestro3"
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>

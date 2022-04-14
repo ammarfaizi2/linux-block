@@ -5,6 +5,7 @@
  * Copyright (C) 2004-2010 Markus Grabner (grabner@icg.tugraz.at)
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

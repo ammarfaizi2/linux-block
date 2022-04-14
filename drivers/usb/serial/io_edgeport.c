@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/jiffies.h>

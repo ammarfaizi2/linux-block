@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/init.h>
 #include <linux/freezer.h>
 #include <linux/kthread.h>

@@ -6,6 +6,7 @@
  * Copyright:	(C) 2012-2013  Linaro Limited
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/preempt.h>
 #include <linux/notifier_api.h>

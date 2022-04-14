@@ -7,6 +7,7 @@
  * Copyright (C) 2017 by Stefano Stabellini <stefano@aporeto.com>
  */
 
+#include <linux/sched.h>
 #include <linux/gfp_api.h>
 #include <xen/events.h>
 #include <xen/grant_table.h>

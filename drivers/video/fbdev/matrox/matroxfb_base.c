@@ -100,6 +100,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

@@ -27,6 +27,7 @@
 #undef DEBUG_HARD
 #undef USE_CTRL_O_SYSRQ
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

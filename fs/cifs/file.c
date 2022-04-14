@@ -8,6 +8,7 @@
  *              Jeremy Allison (jra@samba.org)
  *
  */
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mutex_api.h>

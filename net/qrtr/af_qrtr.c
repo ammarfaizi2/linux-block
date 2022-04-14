@@ -3,6 +3,7 @@
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
+#include <linux/sched.h>
 #include <linux/radix-tree-api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

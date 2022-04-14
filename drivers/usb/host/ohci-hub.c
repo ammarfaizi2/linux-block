@@ -8,6 +8,7 @@
  * This file is licenced under GPL
  */
 
+#include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/device_api.h>

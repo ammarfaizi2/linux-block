@@ -6,6 +6,7 @@
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>,
  */
 
+#include <linux/sched.h>
 #include <linux/processor.h>
 #include <linux/delay.h>
 #include <asm/div64.h>

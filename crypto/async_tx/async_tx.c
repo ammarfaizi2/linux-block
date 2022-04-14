@@ -10,6 +10,7 @@
  *	Neil Brown <neilb@suse.de>
  *	Jeff Garzik <jeff@garzik.org>
  */
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

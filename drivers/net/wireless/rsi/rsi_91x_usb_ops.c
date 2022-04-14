@@ -15,6 +15,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/kthread.h>
 #include <linux/atomic_api.h>
 #include <linux/firmware.h>

@@ -8,6 +8,7 @@
  *   Avi Kivity   <avi@redhat.com>
  *   Gleb Natapov <gleb@redhat.com>
  */
+#include <linux/sched.h>
 #include <linux/perf_event_api.h>
 #include <linux/bitmap.h>
 #include <asm/msr.h>

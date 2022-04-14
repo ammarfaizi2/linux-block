@@ -5,6 +5,7 @@
  *  Copyright (C) 2004 Aurelien Alleaume <slts@free.fr>
  */
 
+#include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/io.h>
 #include <linux/fs.h>

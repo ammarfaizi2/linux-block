@@ -42,6 +42,7 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/sched.h>
 #include <asm/byteorder.h>
 #include <linux/bitops.h>
 #include <linux/init.h>

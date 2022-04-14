@@ -14,6 +14,7 @@
 /* for debugging ARM communication: */
 //#define COM_DEBUG
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/types.h>

@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

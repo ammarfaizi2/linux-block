@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

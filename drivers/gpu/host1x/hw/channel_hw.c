@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/host1x.h>
 #include <linux/iommu.h>

@@ -19,6 +19,7 @@
  *  Author: Manjunatha Halli <manjunatha_halli@ti.com>
  */
 
+#include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/fs.h>
 #include <linux/atomic_api.h>

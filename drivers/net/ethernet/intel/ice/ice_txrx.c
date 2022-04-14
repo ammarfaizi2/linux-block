@@ -3,6 +3,7 @@
 
 /* The driver transmit and receive code */
 
+#include <linux/sched.h>
 #include <linux/netdevice_api_prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

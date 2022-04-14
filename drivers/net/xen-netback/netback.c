@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/pgtable_api.h>
 #include <linux/net.h>

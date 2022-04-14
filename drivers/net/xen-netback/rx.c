@@ -28,6 +28,7 @@
  */
 #include "common.h"
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

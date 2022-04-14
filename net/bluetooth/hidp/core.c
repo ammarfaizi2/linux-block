@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>

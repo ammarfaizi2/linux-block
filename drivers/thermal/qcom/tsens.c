@@ -4,6 +4,7 @@
  * Copyright (c) 2019, 2020, Linaro Ltd.
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2017-2019 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/sched.h>
 #include <linux/bitops.h>
 #include <crypto/aes.h>
 #include <linux/crypto.h>

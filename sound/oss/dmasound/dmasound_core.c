@@ -175,6 +175,7 @@
  * see the fault until after the damage is done.
 */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

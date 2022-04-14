@@ -7,6 +7,7 @@
  * Author(s): David Hildenbrand <david@redhat.com>
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rculist.h>
 #include <linux/pgtable_api.h>

@@ -15,6 +15,7 @@
  *	Oracle, 2004
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/notifier_api.h>

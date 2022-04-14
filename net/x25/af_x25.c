@@ -32,6 +32,7 @@
 
 #define pr_fmt(fmt) "X25: " fmt
 
+#include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

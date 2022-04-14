@@ -7,6 +7,7 @@
  *    Significantly tweaked by LaMont Jones <lamont@debian.org>
  */
 
+#include <linux/sched.h>
 #include <linux/sched/signal.h>
 #include <linux/signal.h>
 #include <linux/ratelimit.h>

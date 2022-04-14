@@ -20,6 +20,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

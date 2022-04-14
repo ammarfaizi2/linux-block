@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/sched.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/moduleparam.h>

@@ -16,6 +16,7 @@
 
 #include "bnx2fc.h"
 
+#include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

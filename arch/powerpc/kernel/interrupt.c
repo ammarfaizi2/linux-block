@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/sched.h>
 #include <linux/preempt.h>
 #include <linux/hardirq.h>
 #include <linux/context_tracking.h>

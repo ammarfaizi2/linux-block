@@ -27,6 +27,7 @@
 
 /* Bluetooth L2CAP sockets. */
 
+#include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

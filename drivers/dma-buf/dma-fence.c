@@ -10,6 +10,7 @@
  * Maarten Lankhorst <maarten.lankhorst@canonical.com>
  */
 
+#include <linux/sched.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>

@@ -6,6 +6,7 @@
  *                      Karsten Wiese <fzu@wemgehoertderstaat.de>
 */
 
+#include <linux/sched.h>
 #include <linux/moduleparam.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

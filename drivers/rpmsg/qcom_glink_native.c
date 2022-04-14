@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2017, Linaro Ltd
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

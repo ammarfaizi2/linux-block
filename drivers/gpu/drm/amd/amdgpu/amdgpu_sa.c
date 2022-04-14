@@ -42,6 +42,7 @@
  * rings. We just wait for any of those fence to complete.
  */
 
+#include <linux/sched.h>
 #include <linux/dma-fence-api.h>
 
 #include "amdgpu.h"

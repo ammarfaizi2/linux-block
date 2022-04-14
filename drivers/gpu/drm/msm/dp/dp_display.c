@@ -3,6 +3,7 @@
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

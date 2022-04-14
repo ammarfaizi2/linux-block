@@ -7,6 +7,7 @@
  * Copyright (C) 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

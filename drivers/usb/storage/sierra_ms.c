@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/sched.h>
 #include <linux/device_api_lock.h>
 #include <scsi/scsi.h>
 #include <scsi/scsi_host.h>

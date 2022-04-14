@@ -3,6 +3,7 @@
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>

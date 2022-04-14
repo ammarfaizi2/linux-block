@@ -9,6 +9,7 @@
  * Authors:	See the TCP sources
  */
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/memcontrol.h>

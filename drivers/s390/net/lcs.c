@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT		"lcs"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

@@ -7,6 +7,7 @@
 #include "dm_common.h"
 #include "fw_common.h"
 #include "phy_common.h"
+#include <linux/sched.h>
 #include <linux/delay.h>
 #include <linux/export.h>
 

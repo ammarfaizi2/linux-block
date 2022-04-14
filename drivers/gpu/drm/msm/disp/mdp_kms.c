@@ -5,6 +5,7 @@
  */
 
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 
 #include "msm_drv.h"

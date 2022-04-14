@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Broadcom Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api.h>

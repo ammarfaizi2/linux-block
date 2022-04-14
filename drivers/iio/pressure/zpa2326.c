@@ -51,6 +51,7 @@
  *   hardware samples averaging.
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

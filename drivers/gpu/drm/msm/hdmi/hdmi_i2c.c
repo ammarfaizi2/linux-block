@@ -4,6 +4,8 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/sched.h>
+
 #include "hdmi.h"
 
 struct hdmi_i2c_adapter {

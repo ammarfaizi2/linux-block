@@ -6,6 +6,7 @@
  * Copyright (C) 2010-2019 Jean Delvare <jdelvare@suse.de>
  */
 
+#include <linux/sched.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>

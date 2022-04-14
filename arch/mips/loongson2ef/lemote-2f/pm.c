@@ -6,6 +6,7 @@
  *  Author: Wu Zhangjin <wuzhangjin@gmail.com>
  */
 
+#include <linux/sched.h>
 #include <linux/io.h>
 #include <linux/suspend.h>
 #include <linux/interrupt.h>

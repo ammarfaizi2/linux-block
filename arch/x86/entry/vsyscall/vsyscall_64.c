@@ -26,6 +26,7 @@
  * fault to a vsyscall address.
  */
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>

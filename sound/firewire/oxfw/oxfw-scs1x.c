@@ -6,6 +6,7 @@
  * Copyright (c) 2015 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/sched.h>
 #include <linux/device_api_lock.h>
 
 #include "oxfw.h"

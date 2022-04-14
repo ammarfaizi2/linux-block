@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/sched.h>
 #include <linux/entry-kvm.h>
 #include <linux/kvm_host.h>
 

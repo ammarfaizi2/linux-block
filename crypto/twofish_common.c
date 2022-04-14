@@ -25,6 +25,7 @@
  * Third Edition.
  */
 
+#include <linux/sched.h>
 #include <crypto/twofish.h>
 #include <linux/bitops.h>
 #include <linux/crypto.h>

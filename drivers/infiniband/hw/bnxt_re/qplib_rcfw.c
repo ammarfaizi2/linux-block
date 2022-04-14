@@ -38,6 +38,7 @@
 
 #define dev_fmt(fmt) "QPLIB: " fmt
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>

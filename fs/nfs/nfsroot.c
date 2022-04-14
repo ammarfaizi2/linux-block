@@ -71,6 +71,7 @@
  *	Chuck Lever	:	Add "nfsrootdebug".
  */
 
+#include <linux/sched.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/init.h>

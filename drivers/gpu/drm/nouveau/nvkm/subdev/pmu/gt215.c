@@ -24,6 +24,7 @@
 #include "priv.h"
 #include "fuc/gt215.fuc3.h"
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <subdev/timer.h>
 

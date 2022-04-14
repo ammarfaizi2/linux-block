@@ -5,6 +5,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/dm-dirty-log.h>
 #include <linux/dm-region-hash.h>

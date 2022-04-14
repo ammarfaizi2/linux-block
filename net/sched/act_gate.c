@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /* Copyright 2020 NXP */
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/math64.h>

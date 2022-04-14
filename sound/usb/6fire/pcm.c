@@ -9,6 +9,7 @@
  * Copyright:	(C) Torsten Schenk
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 
 #include "pcm.h"

@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/fs.h>

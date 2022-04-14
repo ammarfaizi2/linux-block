@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/ratelimit.h>
 #include <linux/ptrace_api.h>

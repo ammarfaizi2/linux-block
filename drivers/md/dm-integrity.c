@@ -8,6 +8,7 @@
 
 #include "dm-bio-record.h"
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/notifier_api.h>

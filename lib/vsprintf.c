@@ -17,6 +17,7 @@
  * - scnprintf and vscnprintf
  */
 
+#include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

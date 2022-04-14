@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #include "cgroup-internal.h"
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/lockdep_api.h>

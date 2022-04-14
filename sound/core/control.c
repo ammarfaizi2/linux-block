@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pid.h>
 #include <linux/mm_api_kvmalloc.h>

@@ -12,6 +12,7 @@
  *
  ****************************************************************************/
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/fs_api.h>

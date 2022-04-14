@@ -19,6 +19,7 @@
 
 #define SUBMOD_NAME	"smb_direct"
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

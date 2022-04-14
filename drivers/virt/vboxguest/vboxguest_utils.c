@@ -6,6 +6,7 @@
  * Copyright (C) 2006-2016 Oracle Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

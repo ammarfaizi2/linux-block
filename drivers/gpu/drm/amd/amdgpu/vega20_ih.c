@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
 

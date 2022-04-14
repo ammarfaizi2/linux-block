@@ -10,6 +10,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

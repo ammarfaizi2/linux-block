@@ -4,6 +4,7 @@
 /* Written 1997-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

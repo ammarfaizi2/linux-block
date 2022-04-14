@@ -13,6 +13,7 @@
  *   produced with old duty cycle but new period settings.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/math64.h>

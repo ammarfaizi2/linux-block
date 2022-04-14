@@ -8,6 +8,7 @@
  * This file is licensed under GPLv2.
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

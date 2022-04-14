@@ -2,6 +2,7 @@
 /*
  * Functions related to generic helpers functions
  */
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/device_api.h>
 #include <linux/sched/cond_resched.h>

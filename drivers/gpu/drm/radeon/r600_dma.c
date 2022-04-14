@@ -22,6 +22,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 
 #include "radeon.h"

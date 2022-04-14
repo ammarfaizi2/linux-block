@@ -35,6 +35,7 @@
  * \author Gareth Hughes <gareth@valinux.com>
  */
 
+#include <linux/sched.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/delay.h>

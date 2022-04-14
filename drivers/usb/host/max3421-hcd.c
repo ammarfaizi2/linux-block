@@ -56,6 +56,7 @@
  * single thread (max3421_spi_thread).
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/kthread.h>
 #include <linux/interrupt.h>

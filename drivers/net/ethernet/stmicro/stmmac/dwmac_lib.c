@@ -6,6 +6,7 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/sched.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include "common.h"

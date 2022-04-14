@@ -10,6 +10,7 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 

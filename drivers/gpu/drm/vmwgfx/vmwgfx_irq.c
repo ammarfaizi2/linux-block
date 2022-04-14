@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

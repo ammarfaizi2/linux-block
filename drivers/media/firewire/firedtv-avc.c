@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Henrik Kurelid <henrik@kurelid.se>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/bug.h>

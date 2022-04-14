@@ -54,6 +54,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

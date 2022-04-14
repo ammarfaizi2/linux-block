@@ -15,6 +15,7 @@
  *  Copyright (c) Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>

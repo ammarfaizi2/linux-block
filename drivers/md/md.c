@@ -37,6 +37,7 @@
 
 */
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/notifier_api.h>

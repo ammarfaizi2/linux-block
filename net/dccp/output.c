@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/dccp.h>
 #include <linux/kernel.h>

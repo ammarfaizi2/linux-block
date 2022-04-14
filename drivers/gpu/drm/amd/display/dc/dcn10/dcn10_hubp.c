@@ -22,6 +22,7 @@
  * Authors: AMD
  *
  */
+#include <linux/sched.h>
 #include <linux/minmax.h>
 
 #include "dm_services.h"

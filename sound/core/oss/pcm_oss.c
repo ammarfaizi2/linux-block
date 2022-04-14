@@ -11,6 +11,7 @@
 #define OSS_DEBUG
 #endif
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_api.h>

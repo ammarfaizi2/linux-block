@@ -15,6 +15,7 @@
  * Hardware interface for audio DSP on Cannonlake.
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 
 #include "../ops.h"

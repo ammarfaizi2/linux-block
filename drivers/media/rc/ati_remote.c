@@ -72,6 +72,7 @@
  * parameter are unused.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>

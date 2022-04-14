@@ -20,6 +20,7 @@
 // #define	DEBUG			// error path messages, extra info
 // #define	VERBOSE			// more; success messages
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>

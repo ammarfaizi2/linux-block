@@ -3,6 +3,7 @@
  * Copyright (c) 2001-2002 by David Brownell
  */
 
+#include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

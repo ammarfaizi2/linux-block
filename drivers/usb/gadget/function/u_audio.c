@@ -12,6 +12,7 @@
  *    Jaswinder Singh (jaswinder.singh@linaro.org)
  */
 
+#include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <sound/core.h>

@@ -8,6 +8,7 @@
  * Based on previous work from: Felipe Balbi <balbi@ti.com>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitops.h>

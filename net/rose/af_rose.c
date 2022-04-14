@@ -7,6 +7,7 @@
  * Copyright (C) Tomi Manninen OH2BNS (oh2bns@sral.fi)
  */
 
+#include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

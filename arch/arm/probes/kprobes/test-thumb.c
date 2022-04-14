@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Jon Medhurst <tixy@yxit.co.uk>.
  */
 
+#include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <asm/opcodes.h>

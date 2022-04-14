@@ -13,6 +13,8 @@
  * 3.lock/unlock stream
  */
 
+#include <linux/sched.h>
+
 #include "bebob.h"
 
 static long

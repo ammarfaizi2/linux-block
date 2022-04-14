@@ -7,6 +7,7 @@
  * Copyright (C) 2007 Jean Delvare <jdelvare@suse.de>
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/module.h>

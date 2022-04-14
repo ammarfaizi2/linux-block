@@ -20,6 +20,7 @@
  *		added IO completion notifier.
  */
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/highmem_extra.h>

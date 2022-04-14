@@ -4,6 +4,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/dma-fence-api.h>

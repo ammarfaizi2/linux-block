@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Intel Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

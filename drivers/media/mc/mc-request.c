@@ -10,6 +10,7 @@
  * Author: Sakari Ailus <sakari.ailus@linux.intel.com>
  */
 
+#include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

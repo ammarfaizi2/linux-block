@@ -18,6 +18,7 @@
  * For more detailed information, please refer to QMU Programming Guide
  */
 
+#include <linux/sched.h>
 #include <linux/dmapool.h>
 #include <linux/iopoll.h>
 

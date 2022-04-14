@@ -54,6 +54,7 @@
 #include "ivtv-routing.h"
 #include "ivtv-controls.h"
 #include "ivtv-gpio.h"
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>

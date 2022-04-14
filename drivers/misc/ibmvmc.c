@@ -9,6 +9,7 @@
  *   Bryant G. Ly <bryantly@linux.vnet.ibm.com>
  */
 
+#include <linux/sched.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>

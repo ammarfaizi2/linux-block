@@ -3,6 +3,7 @@
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>

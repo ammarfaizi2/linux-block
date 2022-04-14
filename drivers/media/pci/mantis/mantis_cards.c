@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

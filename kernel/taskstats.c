@@ -6,6 +6,7 @@
  *           (C) Balbir Singh,   IBM Corp. 2006
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/math64.h>
 #include <linux/cred.h>

@@ -79,6 +79,7 @@
 #	endif
 #endif
 
+#include <linux/sched.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>

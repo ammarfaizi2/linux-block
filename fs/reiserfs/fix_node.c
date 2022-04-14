@@ -2,6 +2,7 @@
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
+#include <linux/sched.h>
 #include <linux/minmax.h>
 #include <linux/atomic_api.h>
 #include <linux/time.h>

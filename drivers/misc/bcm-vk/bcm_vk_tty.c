@@ -3,6 +3,7 @@
  * Copyright 2018-2020 Broadcom.
  */
 
+#include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/jiffies.h>
 #include <linux/tty.h>

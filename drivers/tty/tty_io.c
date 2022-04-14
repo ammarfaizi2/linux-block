@@ -65,6 +65,7 @@
  *			 -- Andrew Morton <andrewm@uow.edu.eu> 17Mar01
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>

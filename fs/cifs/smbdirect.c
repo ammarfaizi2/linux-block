@@ -4,6 +4,7 @@
  *
  *   Author(s): Long Li <longli@microsoft.com>
  */
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

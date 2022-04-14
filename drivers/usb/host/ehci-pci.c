@@ -5,6 +5,7 @@
  * Copyright (c) 2000-2004 by David Brownell
  */
 
+#include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>

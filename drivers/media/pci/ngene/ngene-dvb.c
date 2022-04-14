@@ -10,6 +10,7 @@
  *                         support for new dual DVB-S2 card prototype
  */
 
+#include <linux/sched.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019, Vladimir Oltean <olteanv@gmail.com>
  */
 #include "sja1105_static_config.h"
+#include <linux/sched.h>
 #include <linux/minmax.h>
 #include <linux/crc32.h>
 #include <linux/slab.h>

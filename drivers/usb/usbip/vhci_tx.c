@@ -3,6 +3,7 @@
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/net.h>
 #include <linux/kthread.h>

@@ -38,6 +38,7 @@
  * Third Edition.
  */
 
+#include <linux/sched.h>
 #include <crypto/twofish.h>
 #include <linux/crypto.h>
 #include <linux/init.h>

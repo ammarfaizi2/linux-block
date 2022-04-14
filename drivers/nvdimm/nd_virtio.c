@@ -6,6 +6,7 @@
  * from host and provides a virtio based flushing
  * interface.
  */
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 
 #include "virtio_pmem.h"

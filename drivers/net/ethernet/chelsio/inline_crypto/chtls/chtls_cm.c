@@ -5,6 +5,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/netdevice_api.h>

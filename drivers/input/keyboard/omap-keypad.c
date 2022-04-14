@@ -11,6 +11,7 @@
  * Copyright (C) 2004 Texas Instruments
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

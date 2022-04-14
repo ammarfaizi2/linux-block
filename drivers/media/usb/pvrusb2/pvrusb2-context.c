@@ -9,6 +9,7 @@
 #include "pvrusb2-ioread.h"
 #include "pvrusb2-hdw.h"
 #include "pvrusb2-debug.h"
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/wait.h>

@@ -26,6 +26,7 @@
  *		<arjan@infradead.org> and Jim Keniston <jkenisto@us.ibm.com>
  *		unified x86 kprobes code.
  */
+#include <linux/sched.h>
 #include <linux/perf_event_api.h>
 #include <asm/ptrace.h>
 #include <linux/kprobes.h>

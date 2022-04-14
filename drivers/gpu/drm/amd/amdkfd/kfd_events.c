@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>

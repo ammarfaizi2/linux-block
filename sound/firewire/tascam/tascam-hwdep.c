@@ -13,6 +13,8 @@
  * 3.lock/unlock stream
  */
 
+#include <linux/sched.h>
+
 #include "tascam.h"
 
 static long tscm_hwdep_read_locked(struct snd_tscm *tscm, char __user *buf,

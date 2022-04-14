@@ -5,6 +5,7 @@
  *  Copyright (C) 2016 - 2020 Christoph Hellwig
  */
 
+#include <linux/sched.h>
 #include <linux/percpu.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>

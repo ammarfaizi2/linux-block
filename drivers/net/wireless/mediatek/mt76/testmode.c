@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 Felix Fietkau <nbd@nbd.name> */
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 
 #include "mt76.h"

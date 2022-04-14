@@ -7,6 +7,7 @@
  *  Copyright 2006 Tejun Heo <htejun@gmail.com>
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

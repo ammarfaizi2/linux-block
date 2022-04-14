@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/ratelimit.h>
 #include <linux/mmzone_api.h>

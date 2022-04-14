@@ -10,6 +10,7 @@
  * 2 of the Licence, or (at your option) any later version.
  */
 
+#include <linux/sched.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/security.h>

@@ -34,6 +34,7 @@
  *  - allow setting custom baud rates
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

@@ -24,6 +24,7 @@
  * Third Edition.
  */
 
+#include <linux/sched.h>
 #include <asm/unaligned.h>
 #include <crypto/twofish.h>
 #include <linux/module.h>

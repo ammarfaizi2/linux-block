@@ -34,6 +34,7 @@
 
 /* Adapted for the Sun 3 by Sam Creasey. */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

@@ -6,6 +6,7 @@
  *  Copyright 2008 Rusty Russell IBM Corporation
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

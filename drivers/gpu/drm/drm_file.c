@@ -31,6 +31,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2016-2017 Linaro Ltd., Rob Herring <robh@kernel.org>
  */
+#include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/serdev.h>
 #include <linux/tty.h>

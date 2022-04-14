@@ -74,6 +74,7 @@
 
 #define pr_fmt(fmt) "UDP: " fmt
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/random.h>

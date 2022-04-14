@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pagemap.h>
 #include <linux/mm_page_address.h>

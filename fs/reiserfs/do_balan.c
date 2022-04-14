@@ -10,6 +10,7 @@
  * and using buffers obtained after all above.
  */
 
+#include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/time.h>

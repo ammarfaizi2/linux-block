@@ -4,6 +4,7 @@
  * details
  */
 
+#include <linux/sched.h>
 #include <linux/highmem.h>
 #include <linux/time.h>
 #include <linux/pagemap.h>

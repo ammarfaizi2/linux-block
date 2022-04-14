@@ -10,6 +10,7 @@
  * I hate traps on the sparc, grrr...
  */
 
+#include <linux/sched.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/sched/mm.h>

@@ -16,6 +16,7 @@
  *   David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

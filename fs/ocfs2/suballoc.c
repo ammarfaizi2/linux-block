@@ -8,6 +8,7 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/sched.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>

@@ -12,6 +12,7 @@
  *		Initial version
  */
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/radix-tree-api.h>
 #include <linux/percpu_counter_api.h>

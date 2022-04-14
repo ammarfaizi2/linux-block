@@ -5,6 +5,7 @@
  *   Author(s): Steve French <stfrench@microsoft.com>
  *              David Howells <dhowells@redhat.com>
  */
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/cred.h>
 #include <linux/ctype.h>

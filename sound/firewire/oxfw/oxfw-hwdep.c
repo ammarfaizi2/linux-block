@@ -13,6 +13,8 @@
  * 3.lock/unlock stream
  */
 
+#include <linux/sched.h>
+
 #include "oxfw.h"
 
 static long hwdep_read(struct snd_hwdep *hwdep, char __user *buf,  long count,

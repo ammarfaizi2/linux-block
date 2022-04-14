@@ -3,6 +3,7 @@
  * (C) 1997 Linus Torvalds
  * (C) 1999 Andrea Arcangeli <andrea@suse.de> (dynamic inode allocation)
  */
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/pagemap.h>

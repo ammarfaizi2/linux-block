@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/sched.h>
+
 #include "dm_services_types.h"
 #include "dc.h"
 

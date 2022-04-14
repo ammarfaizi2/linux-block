@@ -28,6 +28,7 @@
  * I note that the address for response can be changed by command. But this
  * module uses the default address.
  */
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 

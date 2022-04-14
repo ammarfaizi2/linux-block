@@ -206,6 +206,7 @@ static int io;
 static int irq;
 static int dma;
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

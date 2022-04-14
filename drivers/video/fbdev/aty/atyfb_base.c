@@ -48,6 +48,7 @@
 
 ******************************************************************************/
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

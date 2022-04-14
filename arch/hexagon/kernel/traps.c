@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/sched.h>
 #include <linux/preempt.h>
 #include <linux/init.h>
 #include <linux/sched/signal.h>

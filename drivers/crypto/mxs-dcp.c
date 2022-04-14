@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Marek Vasut <marex@denx.de>
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>

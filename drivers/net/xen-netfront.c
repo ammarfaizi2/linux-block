@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu.h>

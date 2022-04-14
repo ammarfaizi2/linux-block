@@ -14,6 +14,8 @@
  * 4.get asynchronous messaging
  */
 
+#include <linux/sched.h>
+
 #include "digi00x.h"
 
 static long hwdep_read(struct snd_hwdep *hwdep, char __user *buf,  long count,

@@ -40,6 +40,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/net.h>

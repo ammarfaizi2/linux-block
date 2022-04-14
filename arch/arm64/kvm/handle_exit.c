@@ -8,6 +8,7 @@
  * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
+#include <linux/sched.h>
 #include <linux/kvm.h>
 #include <linux/kvm_host.h>
 

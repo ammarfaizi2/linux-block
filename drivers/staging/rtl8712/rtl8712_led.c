@@ -14,6 +14,7 @@
  *
  ******************************************************************************/
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 
 #include "drv_types.h"

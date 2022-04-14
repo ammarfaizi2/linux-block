@@ -8,6 +8,7 @@
  *     Copyright IBM Corp. 2003, 2009
  */
 
+#include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

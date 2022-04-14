@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/io.h>
 

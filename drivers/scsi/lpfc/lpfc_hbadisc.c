@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/percpu.h>
 #include <linux/lockdep_api.h>

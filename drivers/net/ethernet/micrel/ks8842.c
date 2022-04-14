@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>

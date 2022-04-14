@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2006 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/mm_api.h>

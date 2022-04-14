@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

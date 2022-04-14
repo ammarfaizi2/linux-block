@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/sched.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

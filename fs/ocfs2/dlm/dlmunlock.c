@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/sched.h>
 #include <linux/kref_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>

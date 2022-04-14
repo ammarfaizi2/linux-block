@@ -8,6 +8,7 @@
  *
  * Copyright IBM Corp. 2007-2010 Mel Gorman <mel@csn.ul.ie>
  */
+#include <linux/sched.h>
 #include <linux/pagemap.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>

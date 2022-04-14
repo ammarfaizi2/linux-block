@@ -6,6 +6,7 @@
  * Added /proc/sys/net/ipv4 directory entry (empty =) ). [MS]
  */
 
+#include <linux/sched.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/sysctl.h>

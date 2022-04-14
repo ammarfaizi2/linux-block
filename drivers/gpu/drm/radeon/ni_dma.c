@@ -22,6 +22,8 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/sched.h>
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "radeon_trace.h"

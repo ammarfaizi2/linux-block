@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/cred.h>
 #include <linux/list.h>
 #include <linux/slab.h>

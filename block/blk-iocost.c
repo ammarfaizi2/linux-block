@@ -172,6 +172,7 @@
  * - usages	: Usage history
  */
 
+#include <linux/sched.h>
 #include <linux/percpu.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>

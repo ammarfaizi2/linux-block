@@ -23,6 +23,7 @@
  * for more details.
  */
 
+#include <linux/sched.h>
 #include <linux/preempt.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

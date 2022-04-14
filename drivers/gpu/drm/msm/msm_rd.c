@@ -29,6 +29,7 @@
  * or shader programs (if not emitted inline in cmdstream).
  */
 
+#include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

@@ -37,6 +37,7 @@
  * QLogic_IB 7220 chip (except that specific to the SerDes)
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

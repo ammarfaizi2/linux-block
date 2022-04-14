@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/sched.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/usb.h>

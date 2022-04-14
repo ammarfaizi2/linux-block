@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/notifier_api.h>

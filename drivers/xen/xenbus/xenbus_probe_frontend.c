@@ -5,6 +5,7 @@
 	pr_debug("(%s:%d) " fmt "\n",			\
 		 __func__, __LINE__, ##__VA_ARGS__)
 
+#include <linux/sched.h>
 #include <linux/notifier_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

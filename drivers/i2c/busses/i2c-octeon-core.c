@@ -12,6 +12,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

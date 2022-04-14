@@ -3,6 +3,7 @@
  * Copyright (c) 2015 MediaTek Inc.
  */
 
+#include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

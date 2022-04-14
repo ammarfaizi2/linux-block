@@ -5,6 +5,7 @@
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
 
  */
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

@@ -4,6 +4,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018, Linaro Ltd */
 
+#include <linux/sched.h>
 #include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/miscdevice.h>

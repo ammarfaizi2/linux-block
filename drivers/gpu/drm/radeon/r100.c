@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/delay.h>

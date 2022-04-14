@@ -7,6 +7,7 @@
  *         Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>

@@ -56,6 +56,7 @@
  * otherwise TCP stack falls back to an internal pacing using one high
  * resolution timer per TCP socket and may use more resources.
  */
+#include <linux/sched.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

@@ -3,6 +3,7 @@
  * (c) 2017 Stefano Stabellini <stefano@aporeto.com>
  */
 
+#include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>

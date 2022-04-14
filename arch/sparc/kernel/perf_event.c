@@ -13,6 +13,7 @@
  *  Copyright (C) 2008-2009 Red Hat, Inc., Peter Zijlstra
  */
 
+#include <linux/sched.h>
 #include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mutex_api.h>

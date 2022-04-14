@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "llcp: %s: " fmt, __func__
 
+#include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

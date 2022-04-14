@@ -9,6 +9,7 @@
  * tracefs is the file system that is used by the tracing infrastructure.
  */
 
+#include <linux/sched.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

@@ -7,6 +7,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>

@@ -9,6 +9,7 @@
  *     - JMicron (hardware and technical support)
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>

@@ -4,6 +4,7 @@
  *   Copyright (c) 1998-1999 by Frank van de Pol <fvdpol@coil.demon.nl>
  */
 
+#include <linux/sched.h>
 #include <linux/fs_api.h>
 #include <linux/time.h>
 #include <linux/slab.h>

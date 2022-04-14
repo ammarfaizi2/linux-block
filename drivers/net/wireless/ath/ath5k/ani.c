@@ -16,6 +16,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched.h>
+
 #include "ath5k.h"
 #include "reg.h"
 #include "debug.h"

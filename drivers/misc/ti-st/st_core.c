@@ -7,6 +7,7 @@
  */
 
 #define pr_fmt(fmt)	"(stc): " fmt
+#include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/tty.h>

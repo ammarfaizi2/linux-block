@@ -10,6 +10,7 @@
  * part of the ext2fs journaling system.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

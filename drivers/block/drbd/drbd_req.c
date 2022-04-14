@@ -11,6 +11,7 @@
 
  */
 
+#include <linux/sched.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/backing-dev-api.h>

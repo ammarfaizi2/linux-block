@@ -73,6 +73,7 @@
  * back and writes the whole sub-page.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/crc32.h>

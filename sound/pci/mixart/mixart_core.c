@@ -7,6 +7,7 @@
  * Copyright (c) 2003 by Digigram <alsa@digigram.com>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/io_extra.h>
 #include <linux/atomic_api.h>

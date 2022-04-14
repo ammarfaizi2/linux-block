@@ -8,6 +8,7 @@
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/sched.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2008      John Poet
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 2007, 2008 Michael Krufky <mkrufky@linuxtv.org>
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/export.h>
 #include <linux/kthread.h>

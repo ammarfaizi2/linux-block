@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/blkdev.h>

@@ -10,6 +10,7 @@
  * http://johannes.sipsolutions.net/PowerBook/Apple_Motion_Sensor_Specification
  */
 
+#include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/errno.h>

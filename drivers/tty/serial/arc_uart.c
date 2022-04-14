@@ -21,6 +21,7 @@
  *  -check if sysreq works
  */
 
+#include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api.h>

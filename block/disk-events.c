@@ -2,6 +2,7 @@
 /*
  * Disk events - monitor disk events like media change and eject request.
  */
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

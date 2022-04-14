@@ -10,6 +10,7 @@
  *	Copyright (C) 2006 TOPTICA Photonics AG., Dragos Carp
  */
 
+#include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

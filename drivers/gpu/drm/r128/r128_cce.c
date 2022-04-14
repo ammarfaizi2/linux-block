@@ -29,6 +29,7 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
+#include <linux/sched.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>

@@ -11,6 +11,7 @@
  * Send feedback to <scottm@somanetworks.com>
  */
 
+#include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

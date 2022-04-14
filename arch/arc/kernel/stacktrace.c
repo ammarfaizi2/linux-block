@@ -21,6 +21,7 @@
  *  -Initial implementation
  */
 
+#include <linux/sched.h>
 #include <linux/ptrace.h>
 #include <linux/export.h>
 #include <linux/stacktrace.h>

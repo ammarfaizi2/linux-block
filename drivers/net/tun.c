@@ -32,6 +32,7 @@
 #define DRV_DESCRIPTION	"Universal TUN/TAP device driver"
 #define DRV_COPYRIGHT	"(C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>"
 
+#include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>

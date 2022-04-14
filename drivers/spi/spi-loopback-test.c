@@ -9,6 +9,7 @@
  *  this can also get used for regression testing
  */
 
+#include <linux/sched.h>
 #include <linux/mm.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/math64.h>

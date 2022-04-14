@@ -3,6 +3,7 @@
  * Generic Counter interface
  * Copyright (C) 2020 William Breathitt Gray
  */
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

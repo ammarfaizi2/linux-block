@@ -7,6 +7,7 @@
  *  Manage the dynamic fd arrays in the process files_struct.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/ioprio.h>

@@ -11,6 +11,7 @@
 #include "ivtv-cards.h"
 #include "ivtv-gpio.h"
 #include "xc2028.h"
+#include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <media/tuner.h>

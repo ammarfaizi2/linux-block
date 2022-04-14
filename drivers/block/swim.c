@@ -12,6 +12,7 @@
  * 2008-10-30 (lv) - Port to 2.6
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/capability.h>

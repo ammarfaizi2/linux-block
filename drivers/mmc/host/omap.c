@@ -8,6 +8,7 @@
  *  Other hacks (DMA, SD, etc) by David Brownell
  */
 
+#include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

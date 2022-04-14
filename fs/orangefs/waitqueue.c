@@ -13,6 +13,7 @@
  *  In-kernel waitqueue operations.
  */
 
+#include <linux/sched.h>
 #include <linux/mutex_api.h>
 
 #include "protocol.h"

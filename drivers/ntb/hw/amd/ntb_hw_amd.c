@@ -48,6 +48,7 @@
  * Xiangliang Yu <Xiangliang.Yu@amd.com>
  */
 
+#include <linux/sched.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

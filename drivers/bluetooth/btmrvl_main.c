@@ -18,6 +18,7 @@
  * this warranty disclaimer.
  **/
 
+#include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/kthread.h>

@@ -5,6 +5,7 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/sched.h>
 #include <linux/dma-mapping.h>
 
 #include "amdgpu.h"
