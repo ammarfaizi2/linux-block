@@ -2,6 +2,8 @@
 #ifndef __ASM_GENERIC_PGALLOC_H
 #define __ASM_GENERIC_PGALLOC_H
 
+#include <linux/types.h>
+
 #ifdef CONFIG_MMU
 
 #define GFP_PGTABLE_KERNEL	(GFP_KERNEL | __GFP_ZERO)

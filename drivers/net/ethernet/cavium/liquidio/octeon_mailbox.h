@@ -18,6 +18,8 @@
 #ifndef __MAILBOX_H__
 #define __MAILBOX_H__
 
+#include <linux/types.h>
+
 /* Macros for Mail Box Communication */
 
 #define OCTEON_MBOX_DATA_MAX		32

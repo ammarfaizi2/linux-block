@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Generic part */
 
+#include <linux/types.h>
+
 typedef struct {
 	block_t	*p;
 	block_t	key;

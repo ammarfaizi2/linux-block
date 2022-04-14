@@ -9,6 +9,8 @@
 #ifndef IVTV_UDMA_H
 #define IVTV_UDMA_H
 
+#include <linux/types.h>
+
 /* User DMA functions */
 void ivtv_udma_get_page_info(struct ivtv_dma_page_info *dma_page, unsigned long first, unsigned long size);
 int ivtv_udma_fill_sg_list(struct ivtv_user_dma *dma, struct ivtv_dma_page_info *dma_page, int map_offset);

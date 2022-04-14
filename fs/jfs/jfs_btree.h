@@ -5,6 +5,8 @@
 #ifndef	_H_JFS_BTREE
 #define _H_JFS_BTREE
 
+#include <linux/types.h>
+
 /*
  *	jfs_btree.h: B+-tree
  *

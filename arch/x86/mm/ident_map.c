@@ -4,6 +4,8 @@
  * included by both the compressed kernel and the regular kernel.
  */
 
+#include <linux/types.h>
+
 static void ident_pmd_init(struct x86_mapping_info *info, pmd_t *pmd_page,
 			   unsigned long addr, unsigned long end)
 {

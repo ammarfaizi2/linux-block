@@ -6,6 +6,8 @@
 #ifndef __ARCH_X86_KVM_KVM_ONHYPERV_H__
 #define __ARCH_X86_KVM_KVM_ONHYPERV_H__
 
+#include <linux/types.h>
+
 #if IS_ENABLED(CONFIG_HYPERV)
 int hv_remote_flush_tlb_with_range(struct kvm *kvm,
 		struct kvm_tlb_range *range);

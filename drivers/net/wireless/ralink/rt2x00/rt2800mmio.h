@@ -17,6 +17,8 @@
 #ifndef RT2800MMIO_H
 #define RT2800MMIO_H
 
+#include <linux/types.h>
+
 /*
  * Queue register offset macros
  */

@@ -7,6 +7,8 @@
  * Copyright (C) 2001 Cypress Semiconductor Inc. 
  */
 
+#include <linux/types.h>
+
 /*
  * SL811HS has transfer registers, and control registers.  In host/master
  * mode one set of registers is used; in peripheral/slave mode, another.

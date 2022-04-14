@@ -3,6 +3,8 @@
 #ifndef __LINUX_INITRD_H
 #define __LINUX_INITRD_H
 
+#include <linux/types.h>
+
 #define INITRD_MINOR 250 /* shouldn't collide with /dev/ram* too soon ... */
 
 /* starting block # of image */

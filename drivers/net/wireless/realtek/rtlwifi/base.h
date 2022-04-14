@@ -4,6 +4,8 @@
 #ifndef __RTL_BASE_H__
 #define __RTL_BASE_H__
 
+#include <linux/types.h>
+
 enum ap_peer {
 	PEER_UNKNOWN = 0,
 	PEER_RTL = 1,

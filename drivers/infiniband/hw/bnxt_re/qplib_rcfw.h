@@ -39,6 +39,8 @@
 #ifndef __BNXT_QPLIB_RCFW_H__
 #define __BNXT_QPLIB_RCFW_H__
 
+#include <linux/types.h>
+
 #define RCFW_CMDQ_TRIG_VAL		1
 #define RCFW_COMM_PCI_BAR_REGION	0
 #define RCFW_COMM_CONS_PCI_BAR_REGION	2

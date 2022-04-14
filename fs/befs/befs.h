@@ -11,6 +11,8 @@
 
 #include "befs_fs_types.h"
 
+#include <linux/types.h>
+
 /* used in debug.c */
 #define BEFS_VERSION "0.9.3"
 

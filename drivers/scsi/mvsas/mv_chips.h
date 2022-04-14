@@ -7,6 +7,7 @@
  * Copyright 2009-2011 Marvell. <yuxiangl@marvell.com>
 */
 
+#include <linux/types.h>
 
 #ifndef _MV_CHIPS_H_
 #define _MV_CHIPS_H_

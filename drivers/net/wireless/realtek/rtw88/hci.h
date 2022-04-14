@@ -5,6 +5,8 @@
 #ifndef	__RTW_HCI_H__
 #define __RTW_HCI_H__
 
+#include <linux/types.h>
+
 /* ops for PCI, USB and SDIO */
 struct rtw_hci_ops {
 	int (*tx_write)(struct rtw_dev *rtwdev,

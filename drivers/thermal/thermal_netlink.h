@@ -4,6 +4,8 @@
  *  Author: Daniel Lezcano <daniel.lezcano@linaro.org>
  */
 
+#include <linux/types.h>
+
 struct thermal_genl_cpu_caps {
 	int cpu;
 	int performance;

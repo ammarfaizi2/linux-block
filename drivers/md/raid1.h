@@ -2,6 +2,8 @@
 #ifndef _RAID1_H
 #define _RAID1_H
 
+#include <linux/types.h>
+
 /*
  * each barrier unit size is 64MB fow now
  * note: it must be larger than RESYNC_DEPTH

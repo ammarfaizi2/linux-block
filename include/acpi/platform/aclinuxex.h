@@ -10,6 +10,8 @@
 #ifndef __ACLINUXEX_H__
 #define __ACLINUXEX_H__
 
+#include <linux/types.h>
+
 #ifdef __KERNEL__
 
 #ifndef ACPI_USE_NATIVE_DIVIDE

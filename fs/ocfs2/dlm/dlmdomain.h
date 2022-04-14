@@ -8,6 +8,8 @@
 #ifndef DLMDOMAIN_H
 #define DLMDOMAIN_H
 
+#include <linux/types.h>
+
 extern spinlock_t dlm_domain_lock;
 extern struct list_head dlm_domains;
 

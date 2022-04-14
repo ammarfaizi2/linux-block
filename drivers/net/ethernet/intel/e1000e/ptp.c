@@ -8,6 +8,8 @@
 
 #include "e1000.h"
 
+#include <linux/types.h>
+
 #ifdef CONFIG_E1000E_HWTS
 #include <linux/clocksource.h>
 #include <linux/ktime.h>

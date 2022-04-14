@@ -7,6 +7,7 @@
  *  Copyright (C) 2007  Hans Verkuil <hverkuil@xs4all.nl>
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
+#include <linux/types.h>
 
 u32 cx18_find_handle(struct cx18 *cx);
 struct cx18_stream *cx18_handle_to_stream(struct cx18 *cx, u32 handle);

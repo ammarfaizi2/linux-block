@@ -21,6 +21,8 @@
 #ifndef _BUSLOGIC_H
 #define _BUSLOGIC_H
 
+#include <linux/types.h>
+
 
 #ifndef PACKED
 #define PACKED __attribute__((packed))

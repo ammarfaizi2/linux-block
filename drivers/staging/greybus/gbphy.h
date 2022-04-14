@@ -8,6 +8,8 @@
 #ifndef __GBPHY_H
 #define __GBPHY_H
 
+#include <linux/types.h>
+
 struct gbphy_device {
 	u32 id;
 	struct greybus_descriptor_cport *cport_desc;

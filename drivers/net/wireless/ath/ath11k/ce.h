@@ -6,6 +6,8 @@
 #ifndef ATH11K_CE_H
 #define ATH11K_CE_H
 
+#include <linux/types.h>
+
 #define CE_COUNT_MAX 12
 
 /* Byte swap data words */

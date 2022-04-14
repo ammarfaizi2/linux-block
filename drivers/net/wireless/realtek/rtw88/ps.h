@@ -5,6 +5,8 @@
 #ifndef __RTW_PS_H_
 #define __RTW_PS_H_
 
+#include <linux/types.h>
+
 #define RTW_LPS_THRESHOLD	50
 
 #define POWER_MODE_ACK		BIT(6)

@@ -7,6 +7,8 @@
 #ifndef AT_HDMAC_REGS_H
 #define	AT_HDMAC_REGS_H
 
+#include <linux/types.h>
+
 #define	AT_DMA_MAX_NR_CHANNELS	8
 
 

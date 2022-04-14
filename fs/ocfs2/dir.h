@@ -10,6 +10,8 @@
 #ifndef OCFS2_DIR_H
 #define OCFS2_DIR_H
 
+#include <linux/types.h>
+
 struct ocfs2_dx_hinfo {
 	u32	major_hash;
 	u32	minor_hash;

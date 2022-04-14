@@ -11,6 +11,8 @@
 #ifndef __UBIFS_DEBUG_H__
 #define __UBIFS_DEBUG_H__
 
+#include <linux/types.h>
+
 /* Checking helper functions */
 typedef int (*dbg_leaf_callback)(struct ubifs_info *c,
 				 struct ubifs_zbranch *zbr, void *priv);

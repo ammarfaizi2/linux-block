@@ -4,6 +4,8 @@
 #ifndef _IONIC_IF_H_
 #define _IONIC_IF_H_
 
+#include <linux/types.h>
+
 #define IONIC_DEV_INFO_SIGNATURE		0x44455649      /* 'DEVI' */
 #define IONIC_DEV_INFO_VERSION			1
 #define IONIC_IFNAMSIZ				16

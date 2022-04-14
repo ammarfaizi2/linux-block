@@ -9,6 +9,8 @@
 
 #include "cxgbit.h"
 
+#include <linux/types.h>
+
 #ifdef CONFIG_CHELSIO_T4_DCB
 #include <net/dcbevent.h>
 #include "cxgb4_dcb.h"

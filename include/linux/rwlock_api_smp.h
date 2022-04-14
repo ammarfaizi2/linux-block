@@ -5,6 +5,8 @@
 # error "please don't include this file directly"
 #endif
 
+#include <linux/types.h>
+
 /*
  * include/linux/rwlock_api_smp.h
  *

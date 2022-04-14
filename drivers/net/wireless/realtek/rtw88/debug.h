@@ -5,6 +5,8 @@
 #ifndef __RTW_DEBUG_H
 #define __RTW_DEBUG_H
 
+#include <linux/types.h>
+
 enum rtw_debug_mask {
 	RTW_DBG_PCI		= 0x00000001,
 	RTW_DBG_TX		= 0x00000002,

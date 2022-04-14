@@ -12,6 +12,8 @@
 
 #include "aq_common.h"
 
+#include <linux/types.h>
+
 struct page;
 struct aq_nic_cfg_s;
 

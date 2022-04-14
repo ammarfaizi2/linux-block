@@ -6,6 +6,8 @@
 #ifndef	__XFS_LOG_PRIV_H__
 #define __XFS_LOG_PRIV_H__
 
+#include <linux/types.h>
+
 struct xfs_buf;
 struct xlog;
 struct xlog_ticket;

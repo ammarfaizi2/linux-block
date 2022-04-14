@@ -15,6 +15,8 @@
 #ifndef KCM_KERNEL_H
 #define KCM_KERNEL_H
 
+#include <linux/types.h>
+
 struct kcm_attach {
 	int fd;
 	int bpf_fd;

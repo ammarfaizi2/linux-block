@@ -10,6 +10,8 @@
 #ifndef _PLATFORM_DATA_SERIAL_SCCNXP_H_
 #define _PLATFORM_DATA_SERIAL_SCCNXP_H_
 
+#include <linux/types.h>
+
 #define SCCNXP_MAX_UARTS	2
 
 /* Output lines */

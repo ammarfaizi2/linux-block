@@ -28,6 +28,8 @@
 
 #include "include/fixed31_32.h"
 
+#include <linux/types.h>
+
 uint16_t fixed_point_to_int_frac(
 	struct fixed31_32 arg,
 	uint8_t integer_bits,

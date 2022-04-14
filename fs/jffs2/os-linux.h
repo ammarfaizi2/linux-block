@@ -12,6 +12,8 @@
 #ifndef __JFFS2_OS_LINUX_H__
 #define __JFFS2_OS_LINUX_H__
 
+#include <linux/types.h>
+
 /* JFFS2 uses Linux mode bits natively -- no need for conversion */
 #define os_to_jffs2_mode(x) (x)
 #define jffs2_to_os_mode(x) (x)

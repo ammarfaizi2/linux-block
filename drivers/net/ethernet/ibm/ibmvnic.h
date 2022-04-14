@@ -15,6 +15,8 @@
 /*                                                                        */
 /**************************************************************************/
 
+#include <linux/types.h>
+
 #define IBMVNIC_NAME		"ibmvnic"
 #define IBMVNIC_DRIVER_VERSION	"1.0.1"
 #define IBMVNIC_INVALID_MAP	-1

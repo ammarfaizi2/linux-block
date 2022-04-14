@@ -34,6 +34,8 @@
 #ifndef _HNS_ROCE_HEM_H
 #define _HNS_ROCE_HEM_H
 
+#include <linux/types.h>
+
 #define HEM_HOP_STEP_DIRECT 0xff
 
 enum {

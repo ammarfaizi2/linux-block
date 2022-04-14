@@ -3,6 +3,8 @@
  * Copyright (C) 2012 by Alan Stern
  */
 
+#include <linux/types.h>
+
 /* This file is part of ehci-hcd.c */
 
 /*-------------------------------------------------------------------------*/

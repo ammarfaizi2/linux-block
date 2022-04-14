@@ -7,6 +7,8 @@
 #ifndef __QLCNIC_HW_H
 #define __QLCNIC_HW_H
 
+#include <linux/types.h>
+
 /* Common registers in 83xx and 82xx */
 enum qlcnic_regs {
 	QLCNIC_PEG_HALT_STATUS1 = 0,

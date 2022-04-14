@@ -6,6 +6,8 @@
 #ifndef _SIW_MEM_H
 #define _SIW_MEM_H
 
+#include <linux/types.h>
+
 struct siw_umem *siw_umem_get(u64 start, u64 len, bool writable);
 void siw_umem_release(struct siw_umem *umem, bool dirty);
 struct siw_pbl *siw_pbl_alloc(u32 num_buf);

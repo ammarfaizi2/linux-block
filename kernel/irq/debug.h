@@ -3,6 +3,8 @@
  * Debugging printout:
  */
 
+#include <linux/types.h>
+
 #define ___P(f) if (desc->status_use_accessors & f) printk("%14s set\n", #f)
 #define ___PS(f) if (desc->istate & f) printk("%14s set\n", #f)
 /* FIXME */

@@ -16,6 +16,8 @@
 #include "rtsx_chip.h"
 #include "rtsx_card.h"
 
+#include <linux/types.h>
+
 static inline void rtsx_exclusive_enter_ss(struct rtsx_chip *chip)
 {
 	struct rtsx_dev *dev = chip->rtsx;

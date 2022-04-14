@@ -16,6 +16,8 @@
 #ifndef _SS_CONTEXT_H_
 #define _SS_CONTEXT_H_
 
+#include <linux/types.h>
+
 #include "ebitmap.h"
 #include "mls_types.h"
 #include "security.h"

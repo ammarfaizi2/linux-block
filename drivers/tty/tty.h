@@ -6,6 +6,8 @@
 #ifndef _TTY_INTERNAL_H
 #define _TTY_INTERNAL_H
 
+#include <linux/types.h>
+
 #define tty_msg(fn, tty, f, ...) \
 	fn("%s %s: " f, tty_driver_name(tty), tty_name(tty), ##__VA_ARGS__)
 

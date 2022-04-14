@@ -21,6 +21,8 @@
 #ifndef	__HMM_BO_COMMON_H__
 #define	__HMM_BO_COMMON_H__
 
+#include <linux/types.h>
+
 #define	HMM_BO_NAME	"HMM"
 
 /*

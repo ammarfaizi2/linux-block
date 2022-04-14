@@ -12,6 +12,8 @@
 #undef pr_fmt
 #endif
 
+#include <linux/types.h>
+
 #define pr_fmt(fmt) "CIFS: " fmt
 
 void cifs_dump_mem(char *label, void *data, int length);

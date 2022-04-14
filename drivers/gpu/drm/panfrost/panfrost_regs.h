@@ -8,6 +8,8 @@
 #ifndef __PANFROST_REGS_H__
 #define __PANFROST_REGS_H__
 
+#include <linux/types.h>
+
 #define GPU_ID				0x00
 #define GPU_L2_FEATURES			0x004	/* (RO) Level 2 cache features */
 #define GPU_CORE_FEATURES		0x008	/* (RO) Shader Core Features */

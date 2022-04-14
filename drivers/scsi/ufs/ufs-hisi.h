@@ -6,6 +6,8 @@
 #ifndef UFS_HISI_H_
 #define UFS_HISI_H_
 
+#include <linux/types.h>
+
 #define HBRN8_POLL_TOUT_MS	1000
 
 /*

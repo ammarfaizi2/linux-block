@@ -7,6 +7,8 @@
  * Copyright 1999  by Werner Cornelius (werner@isdn4linux.de)
  */
 
+#include <linux/types.h>
+
 /*
  * thresholds for transparent B-channel mode
  * change mask and threshold simultaneously

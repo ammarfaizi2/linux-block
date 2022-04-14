@@ -14,6 +14,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  *   Avi Kivity   <avi@qumranet.com>
  */
+#include <linux/types.h>
 
 /*
  * We need the mmu code to access both 32-bit and 64-bit guest ptes,

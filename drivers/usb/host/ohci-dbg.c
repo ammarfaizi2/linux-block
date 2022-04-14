@@ -8,6 +8,8 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/types.h>
+
 /*-------------------------------------------------------------------------*/
 
 #define edstring(ed_type) ({ char *temp; \

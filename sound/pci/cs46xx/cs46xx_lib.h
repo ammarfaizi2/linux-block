@@ -7,6 +7,8 @@
 #ifndef __CS46XX_LIB_H__
 #define __CS46XX_LIB_H__
 
+#include <linux/types.h>
+
 /*
  *  constants
  */

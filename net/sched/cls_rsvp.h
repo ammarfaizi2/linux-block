@@ -4,6 +4,7 @@
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
+#include <linux/types.h>
 
 /*
    Comparing to general packet classification problem,

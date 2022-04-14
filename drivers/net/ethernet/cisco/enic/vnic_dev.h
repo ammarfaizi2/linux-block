@@ -23,6 +23,8 @@
 #include "vnic_resource.h"
 #include "vnic_devcmd.h"
 
+#include <linux/types.h>
+
 #ifndef VNIC_PADDR_TARGET
 #define VNIC_PADDR_TARGET	0x0000000000000000ULL
 #endif

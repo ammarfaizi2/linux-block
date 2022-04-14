@@ -7,6 +7,8 @@
 #ifndef __QLCNIC_DCBX_H
 #define __QLCNIC_DCBX_H
 
+#include <linux/types.h>
+
 #define QLCNIC_DCB_STATE	0
 #define QLCNIC_DCB_AEN_MODE	1
 

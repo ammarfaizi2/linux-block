@@ -14,6 +14,8 @@
 #ifndef BNX2_H
 #define BNX2_H
 
+#include <linux/types.h>
+
 /* Hardware data structures and register definitions automatically
  * generated from RTL code. Do not modify.
  */

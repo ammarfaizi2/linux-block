@@ -9,6 +9,8 @@
 #ifndef __NAU8825_H__
 #define __NAU8825_H__
 
+#include <linux/types.h>
+
 #define NAU8825_REG_RESET		0x00
 #define NAU8825_REG_ENA_CTRL		0x01
 #define NAU8825_REG_IIC_ADDR_SET		0x02

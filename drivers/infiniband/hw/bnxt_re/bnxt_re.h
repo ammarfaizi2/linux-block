@@ -39,7 +39,11 @@
 
 #ifndef __BNXT_RE_H__
 #define __BNXT_RE_H__
+
+#include <linux/types.h>
+
 #include "hw_counters.h"
+
 #define ROCE_DRV_MODULE_NAME		"bnxt_re"
 
 #define BNXT_RE_DESC	"Broadcom NetXtreme-C/E RoCE Driver"

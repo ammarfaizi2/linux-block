@@ -13,6 +13,8 @@
  *  more details.
  */
 
+#include <linux/types.h>
+
 #define FB_ACCEL_SMI_LYNX 88
 
 #define SCREEN_X_RES          1024

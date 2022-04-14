@@ -3,6 +3,8 @@
 #ifndef __QLOGICFAS408_H
 #define __QLOGICFAS408_H
 
+#include <linux/types.h>
+
 /*----------------------------------------------------------------*/
 /* Configuration */
 

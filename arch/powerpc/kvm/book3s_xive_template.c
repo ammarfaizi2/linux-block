@@ -3,6 +3,8 @@
  * Copyright 2017 Benjamin Herrenschmidt, IBM Corporation
  */
 
+#include <linux/types.h>
+
 /* File to be included by other .c files */
 
 #define XGLUE(a,b) a##b

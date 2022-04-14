@@ -2,6 +2,8 @@
 #ifndef __PMAC_ZILOG_H__
 #define __PMAC_ZILOG_H__
 
+#include <linux/types.h>
+
 /*
  * At most 2 ESCCs with 2 ports each
  */

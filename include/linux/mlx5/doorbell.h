@@ -33,6 +33,8 @@
 #ifndef MLX5_DOORBELL_H
 #define MLX5_DOORBELL_H
 
+#include <linux/types.h>
+
 #define MLX5_BF_OFFSET	      0x800
 #define MLX5_CQ_DOORBELL      0x20
 

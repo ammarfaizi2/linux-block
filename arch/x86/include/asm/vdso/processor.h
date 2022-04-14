@@ -7,6 +7,8 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/types.h>
+
 /* REP NOP (PAUSE) is a good thing to insert into busy-wait loops. */
 static __always_inline void rep_nop(void)
 {

@@ -54,6 +54,8 @@
 #ifndef _LINUX_P80211CONV_H
 #define _LINUX_P80211CONV_H
 
+#include <linux/types.h>
+
 #define WLAN_IEEE_OUI_LEN	3
 
 #define WLAN_ETHCONV_ENCAP	1

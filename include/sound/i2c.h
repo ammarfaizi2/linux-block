@@ -2,6 +2,8 @@
 #ifndef __SOUND_I2C_H
 #define __SOUND_I2C_H
 
+#include <linux/types.h>
+
 /*
  */
 

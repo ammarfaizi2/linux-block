@@ -4,6 +4,8 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
+#include <linux/types.h>
+
 extern struct mutex pnp_lock;
 extern const struct attribute_group *pnp_dev_groups[];
 

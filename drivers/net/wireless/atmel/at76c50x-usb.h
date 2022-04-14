@@ -18,6 +18,8 @@
 #ifndef _AT76_USB_H
 #define _AT76_USB_H
 
+#include <linux/types.h>
+
 /* Board types */
 enum board_type {
 	BOARD_503_ISL3861 = 1,

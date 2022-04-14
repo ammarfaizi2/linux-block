@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /* internal file - do not include directly */
 
+#include <linux/types.h>
+
 #ifdef CONFIG_NET
 BPF_PROG_TYPE(BPF_PROG_TYPE_SOCKET_FILTER, sk_filter,
 	      struct __sk_buff, struct sk_buff)

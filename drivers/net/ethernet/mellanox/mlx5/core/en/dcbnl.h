@@ -4,6 +4,8 @@
 #ifndef __MLX5E_DCBNL_H__
 #define __MLX5E_DCBNL_H__
 
+#include <linux/types.h>
+
 #ifdef CONFIG_MLX5_CORE_EN_DCB
 
 #define MLX5E_MAX_PRIORITY (8)

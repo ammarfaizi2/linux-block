@@ -12,6 +12,8 @@
 #ifndef __NSP_IO_H__
 #define __NSP_IO_H__
 
+#include <linux/types.h>
+
 static inline          void nsp_write(unsigned int base,
 				      unsigned int index,
 				      unsigned char val);

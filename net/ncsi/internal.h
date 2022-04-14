@@ -6,6 +6,8 @@
 #ifndef __NCSI_INTERNAL_H__
 #define __NCSI_INTERNAL_H__
 
+#include <linux/types.h>
+
 enum {
 	NCSI_CAP_BASE		= 0,
 	NCSI_CAP_GENERIC	= 0,

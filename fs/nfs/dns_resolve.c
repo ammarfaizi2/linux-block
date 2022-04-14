@@ -7,6 +7,8 @@
  * Resolves DNS hostnames into valid ip addresses
  */
 
+#include <linux/types.h>
+
 #ifdef CONFIG_NFS_USE_KERNEL_DNS
 
 #include <linux/module.h>

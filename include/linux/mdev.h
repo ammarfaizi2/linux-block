@@ -10,6 +10,8 @@
 #ifndef MDEV_H
 #define MDEV_H
 
+#include <linux/types.h>
+
 struct mdev_type;
 
 struct mdev_device {

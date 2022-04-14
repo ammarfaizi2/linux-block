@@ -20,6 +20,8 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/types.h>
+
 #define LOG_ELS		0x00000001	/* ELS events */
 #define LOG_DISCOVERY	0x00000002	/* Link discovery events */
 #define LOG_MBOX	0x00000004	/* Mailbox events */

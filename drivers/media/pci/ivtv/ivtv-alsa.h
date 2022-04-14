@@ -6,6 +6,8 @@
  *  Copyright (C) 2009  Devin Heitmueller <dheitmueller@kernellabs.com>
  */
 
+#include <linux/types.h>
+
 struct snd_card;
 
 struct snd_ivtv_card {

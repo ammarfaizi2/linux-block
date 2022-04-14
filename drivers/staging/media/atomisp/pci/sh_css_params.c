@@ -13,6 +13,8 @@
  * more details.
  */
 
+#include <linux/types.h>
+
 #include "gdc_device.h"		/* gdc_lut_store(), ... */
 #include "isp.h"			/* ISP_VEC_ELEMBITS */
 #include "vamem.h"

@@ -4,6 +4,8 @@
 
 #ifdef __KERNEL__
 
+#include <linux/types.h>
+
 /* rx buffer sizes */
 
 #define SMALL_BUFFER_SIZE    384     /* size of small buffers (multiple of 48 (PCA) and 64 (SBA) bytes) */

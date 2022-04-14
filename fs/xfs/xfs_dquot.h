@@ -6,6 +6,8 @@
 #ifndef __XFS_DQUOT_H__
 #define __XFS_DQUOT_H__
 
+#include <linux/types.h>
+
 /*
  * Dquots are structures that hold quota information about a user or a group,
  * much like inodes are for files. In fact, dquots share many characteristics

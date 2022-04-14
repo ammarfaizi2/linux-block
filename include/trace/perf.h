@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
+#include <linux/types.h>
+
 #undef TRACE_SYSTEM_VAR
 
 #ifdef CONFIG_PERF_EVENTS

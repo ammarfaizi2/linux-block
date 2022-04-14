@@ -4,6 +4,8 @@
 #ifndef _E1000_REGS_H_
 #define _E1000_REGS_H_
 
+#include <linux/types.h>
+
 #define E1000_CTRL     0x00000  /* Device Control - RW */
 #define E1000_STATUS   0x00008  /* Device Status - RO */
 #define E1000_EECD     0x00010  /* EEPROM/Flash Control - RW */

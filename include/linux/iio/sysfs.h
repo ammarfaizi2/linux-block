@@ -9,6 +9,8 @@
 #ifndef _INDUSTRIAL_IO_SYSFS_H_
 #define _INDUSTRIAL_IO_SYSFS_H_
 
+#include <linux/types.h>
+
 struct iio_buffer;
 struct iio_chan_spec;
 

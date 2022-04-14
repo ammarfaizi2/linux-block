@@ -2,6 +2,8 @@
 #ifndef __LINUX_SOC_RENESAS_RCAR_RST_H__
 #define __LINUX_SOC_RENESAS_RCAR_RST_H__
 
+#include <linux/types.h>
+
 #ifdef CONFIG_RST_RCAR
 int rcar_rst_read_mode_pins(u32 *mode);
 int rcar_rst_set_rproc_boot_addr(u64 boot_addr);

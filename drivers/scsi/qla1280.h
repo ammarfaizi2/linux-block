@@ -11,6 +11,8 @@
 #ifndef	_QLA1280_H
 #define	_QLA1280_H
 
+#include <linux/types.h>
+
 /*
  * Data bit definitions.
  */

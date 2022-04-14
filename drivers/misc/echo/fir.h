@@ -14,6 +14,8 @@
 #if !defined(_FIR_H_)
 #define _FIR_H_
 
+#include <linux/types.h>
+
 /*
    Ideas for improvement:
 

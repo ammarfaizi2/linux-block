@@ -3,6 +3,8 @@
  * Copyright (c) 2001-2002 by David Brownell
  */
 
+#include <linux/types.h>
+
 /* this file is part of ehci-hcd.c */
 
 #ifdef CONFIG_DYNAMIC_DEBUG

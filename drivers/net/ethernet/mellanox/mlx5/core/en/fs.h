@@ -4,6 +4,8 @@
 #ifndef __MLX5E_FLOW_STEER_H__
 #define __MLX5E_FLOW_STEER_H__
 
+#include <linux/types.h>
+
 #include "mod_hdr.h"
 #include "lib/fs_ttc.h"
 

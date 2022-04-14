@@ -2,6 +2,8 @@
 #ifndef __LINUX_PAGEISOLATION_H
 #define __LINUX_PAGEISOLATION_H
 
+#include <linux/types.h>
+
 #ifdef CONFIG_MEMORY_ISOLATION
 static inline bool has_isolate_pageblock(struct zone *zone)
 {

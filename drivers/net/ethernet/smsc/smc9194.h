@@ -25,6 +25,8 @@
 #ifndef _SMC9194_H_
 #define _SMC9194_H_
 
+#include <linux/types.h>
+
 /* I want some simple types */
 
 typedef unsigned char			byte;

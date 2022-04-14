@@ -1,8 +1,9 @@
 #ifndef _INTELFBHW_H
 #define _INTELFBHW_H
 
-/* $DHD: intelfb/intelfbhw.h,v 1.5 2003/06/27 15:06:25 dawes Exp $ */
+#include <linux/types.h>
 
+/* $DHD: intelfb/intelfbhw.h,v 1.5 2003/06/27 15:06:25 dawes Exp $ */
 
 /*** HW-specific data ***/
 

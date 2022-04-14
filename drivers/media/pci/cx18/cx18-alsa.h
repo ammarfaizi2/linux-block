@@ -5,6 +5,8 @@
  *  Copyright (C) 2009  Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/types.h>
+
 struct snd_card;
 
 struct snd_cx18_card {

@@ -5,6 +5,8 @@
  * COPYRIGHT (C) by L. Wassmann <LW@KARO-electronics.de>
  */
 
+#include <linux/types.h>
+
 /* ------------------------------------------------------------------------- */
 
 #define MAX_ROOT_PORTS		2

@@ -7,6 +7,8 @@
 #ifndef _DNET_H
 #define _DNET_H
 
+#include <linux/types.h>
+
 #define DRV_NAME		"dnet"
 #define PFX				DRV_NAME ": "
 

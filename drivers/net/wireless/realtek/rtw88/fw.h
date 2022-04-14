@@ -5,6 +5,8 @@
 #ifndef __RTW_FW_H_
 #define __RTW_FW_H_
 
+#include <linux/types.h>
+
 #define H2C_PKT_SIZE		32
 #define H2C_PKT_HDR_SIZE	8
 

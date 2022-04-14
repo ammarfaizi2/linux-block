@@ -4,6 +4,8 @@
  * is 16 bits, but aligned on a 32 bit PCI boundary
  */
 
+#include <linux/types.h>
+
 static inline u16 get_u16(const u32 __iomem *p)
 {
 	return (u16)readl(p);

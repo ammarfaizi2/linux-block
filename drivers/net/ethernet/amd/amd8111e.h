@@ -25,6 +25,8 @@ Revision History:
 #ifndef _AMD811E_H
 #define _AMD811E_H
 
+#include <linux/types.h>
+
 /* Command style register access
 
 Registers CMD0, CMD2, CMD3,CMD7 and INTEN0 uses a write access technique called command style access. It allows the write to selected bits of this register without altering the bits that are not selected. Command style registers are divided into 4 bytes that can be written independently. Higher order bit of each byte is the  value bit that specifies the value that will be written into the selected bits of register.

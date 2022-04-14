@@ -13,6 +13,8 @@
 #ifndef CNIC_H
 #define CNIC_H
 
+#include <linux/types.h>
+
 #define HC_INDEX_ISCSI_EQ_CONS			6
 
 #define HC_INDEX_FCOE_EQ_CONS			3

@@ -24,6 +24,8 @@
  *
  */
 
+#include <linux/types.h>
+
 /*
  * Sources: Olivetti M700-10 Risc Personal Computer hardware handbook,
  * National Semiconductors data sheet for the DP83932B Sonic Ethernet

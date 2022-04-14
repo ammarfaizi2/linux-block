@@ -14,6 +14,8 @@
 #ifndef _MYRS_H
 #define _MYRS_H
 
+#include <linux/types.h>
+
 #define MYRS_MAILBOX_TIMEOUT 1000000
 
 #define MYRS_DCMD_TAG 1
