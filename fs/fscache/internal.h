@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "FS-Cache: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/refcount_api.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>

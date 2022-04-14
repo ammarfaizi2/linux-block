@@ -11,6 +11,7 @@
 #ifndef __BFAD_IM_H__
 #define __BFAD_IM_H__
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 
 #include "bfa_fcs.h"

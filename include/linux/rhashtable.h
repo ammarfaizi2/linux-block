@@ -18,6 +18,7 @@
 #ifndef _LINUX_RHASHTABLE_H
 #define _LINUX_RHASHTABLE_H
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/lockdep_api.h>
 #include <linux/cache.h>

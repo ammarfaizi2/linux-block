@@ -7,6 +7,7 @@
 #ifndef __OSDEP_LINUX_SERVICE_H_
 #define __OSDEP_LINUX_SERVICE_H_
 
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_types.h>
 #include <linux/pid.h>
 #include <linux/netdevice_api.h>

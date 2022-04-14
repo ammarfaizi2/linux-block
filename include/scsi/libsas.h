@@ -10,6 +10,7 @@
 #define _LIBSAS_H_
 
 
+#include <linux/workqueue_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/cache.h>
 #include <linux/atomic_api.h>

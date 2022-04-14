@@ -8,6 +8,7 @@
 #ifndef _KERNEL_WORKQUEUE_INTERNAL_H
 #define _KERNEL_WORKQUEUE_INTERNAL_H
 
+#include <linux/workqueue_api.h>
 #include <linux/workqueue.h>
 #include <linux/kthread.h>
 #include <linux/preempt.h>

@@ -24,6 +24,7 @@
 #ifndef _AMDGPU_RAS_H
 #define _AMDGPU_RAS_H
 
+#include <linux/workqueue_api.h>
 #include <linux/debugfs.h>
 #include <linux/list.h>
 #include "ta_ras_if.h"

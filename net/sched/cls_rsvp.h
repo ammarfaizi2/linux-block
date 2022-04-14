@@ -4,6 +4,7 @@
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
+#include <linux/workqueue_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/types.h>
 
