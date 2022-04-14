@@ -33,6 +33,7 @@
 #ifndef RB_TREE_LATCH_H
 #define RB_TREE_LATCH_H
 
+#include <linux/rbtree_api.h>
 #include <linux/rbtree.h>
 #include <linux/seqlock.h>
 #include <linux/rcupdate.h>
