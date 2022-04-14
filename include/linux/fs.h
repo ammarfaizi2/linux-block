@@ -20,8 +20,20 @@
 #include <linux/mount.h>
 #include <linux/mnt_idmapping.h>
 #include <linux/slab.h>
+#include <linux/quota_types.h>
 
 #include <uapi/linux/fs.h>
+
+/*
+ * Use sequence counter to get consistent i_size on 32-bit processors.
+ */
+#if BITS_PER_LONG==32 && defined(CONFIG_SMP)
+#include <linux/seqlock_api.h>
+#define __NEED_I_SIZE_ORDERED
+#define i_size_ordered_init(inode) seqcount_init(&inode->i_size_seqcount)
+#else
+#define i_size_ordered_init(inode) do { } while (0)
+#endif
 
 struct backing_dev_info;
 struct bdi_writeback;
@@ -209,11 +221,6 @@ struct iattr {
 	 */
 	struct file	*ia_file;
 };
-
-/*
- * Includes for diskquotas.
- */
-#include <linux/quota.h>
 
 /*
  * Maximum number of layers of fs stack.  Needs to be limited to
@@ -513,17 +520,6 @@ static inline void mapping_allow_writable(struct address_space *mapping)
 {
 	atomic_inc(&mapping->i_mmap_writable);
 }
-
-/*
- * Use sequence counter to get consistent i_size on 32-bit processors.
- */
-#if BITS_PER_LONG==32 && defined(CONFIG_SMP)
-#include <linux/seqlock.h>
-#define __NEED_I_SIZE_ORDERED
-#define i_size_ordered_init(inode) seqcount_init(&inode->i_size_seqcount)
-#else
-#define i_size_ordered_init(inode) do { } while (0)
-#endif
 
 struct posix_acl;
 #define ACL_NOT_CACHED ((void *)(-1))
@@ -2836,8 +2832,6 @@ extern bool is_subdir(struct dentry *, struct dentry *);
 extern bool path_is_under(const struct path *, const struct path *);
 
 extern char *file_path(struct file *, char *, int);
-
-#include <linux/err.h>
 
 /* needed for stackable file system support */
 extern loff_t default_llseek(struct file *file, loff_t offset, int whence);
