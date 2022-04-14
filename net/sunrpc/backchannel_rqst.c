@@ -21,6 +21,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
 
+#include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>

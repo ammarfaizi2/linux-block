@@ -54,6 +54,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <linux/sunrpc/debug.h>
 #include <linux/slab.h>
 #include <crypto/skcipher.h>
 #include <linux/err.h>

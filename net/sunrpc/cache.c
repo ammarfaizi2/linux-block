@@ -8,6 +8,7 @@
  * Copyright (C) 2002 Neil Brown <neilb@cse.unsw.edu.au>
  */
 
+#include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/prandom.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 1997 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/sunrpc/debug.h>
 #include <linux/module.h>
 
 #include <linux/types.h>

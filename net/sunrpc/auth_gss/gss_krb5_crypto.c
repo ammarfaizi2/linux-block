@@ -34,6 +34,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <linux/sunrpc/debug.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <crypto/algapi.h>

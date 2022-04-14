@@ -31,6 +31,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/sunrpc/debug.h>
 #include <linux/slab.h>
 #include <crypto/skcipher.h>
 #include <linux/types.h>
