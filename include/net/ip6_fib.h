@@ -9,6 +9,7 @@
 #ifndef _IP6_FIB_H
 #define _IP6_FIB_H
 
+#include <net/net_namespace_types.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
