@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/wait_types.h>
 #include <net/genetlink.h>
 #include <linux/dlm.h>
 #include <linux/dlm_netlink.h>
