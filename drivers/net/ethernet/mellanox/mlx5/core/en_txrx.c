@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dim.h>
 #include <linux/cpumask_api.h>
 #include <linux/irq.h>
 #include "en.h"

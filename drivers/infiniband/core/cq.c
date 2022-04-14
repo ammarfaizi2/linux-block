@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015 HGST, a Western Digital Company.
  */
+#include <linux/dim.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/err.h>
