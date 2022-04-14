@@ -6,6 +6,7 @@
  * Copyright (c) 2006-2009, Intel Corporation
  */
 
+#include <asm/halt.h>
 #include <linux/intel-iommu.h>
 #include <linux/init_task.h>
 #include <linux/spinlock.h>
