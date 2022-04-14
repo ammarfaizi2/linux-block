@@ -11,6 +11,7 @@
 #ifndef LINUX_DMAPOOL_H
 #define	LINUX_DMAPOOL_H
 
+#include <linux/gfp_types.h>
 #include <linux/scatterlist.h>
 #include <asm/io.h>
 
