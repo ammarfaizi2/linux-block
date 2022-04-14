@@ -491,7 +491,7 @@ static int reclaim_pages_cmd(struct mlx5_core_dev *dev,
 	return 0;
 }
 
-static int reclaim_pages(struct mlx5_core_dev *dev, u16 func_id, int npages,
+static int mlx5_reclaim_pages(struct mlx5_core_dev *dev, u16 func_id, int npages,
 			 int *nclaimed, bool event, bool ec_function)
 {
 	u32 function = get_function(func_id, ec_function);
@@ -566,7 +566,7 @@ static void pages_work_handler(struct work_struct *work)
 	if (req->release_all)
 		release_all_pages(dev, req->func_id, req->ec_function);
 	else if (req->npages < 0)
-		err = reclaim_pages(dev, req->func_id, -1 * req->npages, NULL,
+		err = mlx5_reclaim_pages(dev, req->func_id, -1 * req->npages, NULL,
 				    true, req->ec_function);
 	else if (req->npages > 0)
 		err = give_pages(dev, req->func_id, req->npages, 1, req->ec_function);
@@ -665,7 +665,7 @@ static int mlx5_reclaim_root_pages(struct mlx5_core_dev *dev,
 		int nclaimed;
 		int err;
 
-		err = reclaim_pages(dev, func_id, optimal_reclaimed_pages(),
+		err = mlx5_reclaim_pages(dev, func_id, optimal_reclaimed_pages(),
 				    &nclaimed, false, mlx5_core_is_ecpf(dev));
 		if (err) {
 			mlx5_core_warn(dev, "failed reclaiming pages (%d) for func id 0x%x\n",
