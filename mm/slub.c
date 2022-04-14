@@ -10,6 +10,7 @@
  * (C) 2011 Linux Foundation, Christoph Lameter
  */
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

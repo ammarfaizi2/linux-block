@@ -27,6 +27,7 @@
  *      qemu_fw_cfg.mmio=16@0x9020000:8:0:16	(the default on arm)
  */
 
+#include <linux/kobject_api.h>
 #include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

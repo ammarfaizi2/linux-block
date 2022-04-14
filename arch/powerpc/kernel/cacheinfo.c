@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "cacheinfo: " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/cpumask.h>

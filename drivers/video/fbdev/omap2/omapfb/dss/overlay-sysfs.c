@@ -9,6 +9,7 @@
 
 #define DSS_SUBSYS_NAME "OVERLAY"
 
+#include <linux/kobject_api.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/sysfs.h>

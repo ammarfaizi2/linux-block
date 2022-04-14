@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/kobject_api.h>
 #include <linux/ctype.h>
 #include <linux/module.h>
 #include <linux/slab.h>

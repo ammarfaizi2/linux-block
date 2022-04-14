@@ -10,6 +10,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

@@ -34,6 +34,7 @@
 
 #include "core_priv.h"
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/stat.h>

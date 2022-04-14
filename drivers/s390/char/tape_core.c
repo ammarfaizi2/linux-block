@@ -14,6 +14,7 @@
 #define KMSG_COMPONENT "tape"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

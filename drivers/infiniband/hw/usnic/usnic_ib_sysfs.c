@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/kobject_api.h>
 #include <linux/init.h>
 #include <linux/errno.h>
 

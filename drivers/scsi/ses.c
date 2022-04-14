@@ -5,6 +5,7 @@
  * Copyright (C) 2008 James Bottomley <James.Bottomley@HansenPartnership.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/module.h>

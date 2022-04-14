@@ -8,6 +8,7 @@
  *
  * Copyright (C) 2003 IBM.
  */
+#include <linux/kobject_api.h>
 #include <linux/kobject.h>
 #include <linux/string.h>
 #include <linux/pci.h>

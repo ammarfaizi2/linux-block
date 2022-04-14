@@ -6,6 +6,7 @@
  * Written by: Martin K. Petersen <martin.petersen@oracle.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/capability.h>
 #include <linux/blk-integrity.h>
 #include <linux/backing-dev.h>

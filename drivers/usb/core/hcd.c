@@ -9,6 +9,7 @@
  * (C) Copyright David Brownell 2000-2002
  */
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/idr_api.h>

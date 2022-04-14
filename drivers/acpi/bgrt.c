@@ -6,6 +6,7 @@
  * Copyright 2012 Intel Corporation
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/device.h>

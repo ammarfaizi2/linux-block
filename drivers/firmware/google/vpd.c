@@ -7,6 +7,7 @@
  * Copyright 2017 Google Inc.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/ctype.h>
 #include <linux/init.h>
 #include <linux/io.h>

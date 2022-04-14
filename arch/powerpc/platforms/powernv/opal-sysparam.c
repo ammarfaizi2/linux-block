@@ -5,6 +5,7 @@
  * Copyright (C) 2013 IBM
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kobject.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>

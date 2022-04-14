@@ -23,6 +23,7 @@
  * with no callbacks.  Callbacks are evil.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

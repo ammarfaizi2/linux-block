@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>

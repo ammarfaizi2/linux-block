@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Joel Fernandes (Google) <joel@joelfernandes.org>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/trace_clock.h>

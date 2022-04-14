@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/hashtable_api.h>

@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt)	"debugfs: " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>

@@ -6,6 +6,8 @@
  * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/kobject_api.h>
+
 #include "cpufreq_governor.h"
 
 static inline struct governor_attr *to_gov_attr(struct attribute *attr)

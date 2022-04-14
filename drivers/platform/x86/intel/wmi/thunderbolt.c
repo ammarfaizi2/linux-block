@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/acpi.h>
 #include <linux/device.h>
 #include <linux/fs.h>

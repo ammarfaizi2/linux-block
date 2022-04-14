@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2017, The Linux Foundation
  */
 
+#include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

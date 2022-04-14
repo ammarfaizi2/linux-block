@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api_sb.h>

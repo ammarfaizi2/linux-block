@@ -4,6 +4,7 @@
  * Copyright (C) 2012-2013, NVIDIA Corporation
  */
 
+#include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/dma-mapping.h>

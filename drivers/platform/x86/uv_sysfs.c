@@ -6,6 +6,7 @@
  *  Copyright (c) Justin Ernst
  */
 
+#include <linux/kobject_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

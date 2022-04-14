@@ -14,6 +14,7 @@
 #define KMSG_COMPONENT "ap"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hashtable_api.h>

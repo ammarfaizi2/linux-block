@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/fwnode.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

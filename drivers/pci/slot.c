@@ -5,6 +5,7 @@
  *	Alex Chiang <achiang@hp.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/device_api.h>
 #include <linux/kobject.h>
 #include <linux/slab.h>

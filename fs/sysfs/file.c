@@ -9,6 +9,7 @@
  * Please see Documentation/filesystems/sysfs.rst for more information.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

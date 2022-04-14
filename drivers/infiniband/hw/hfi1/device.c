@@ -3,6 +3,7 @@
  * Copyright(c) 2015, 2016 Intel Corporation.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

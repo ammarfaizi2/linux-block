@@ -6,6 +6,7 @@
  * Copyright (C) 2004 Kay Sievers <kay.sievers@vrfy.org>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kobject.h>
 #include <linux/string.h>
 #include <linux/sysfs.h>

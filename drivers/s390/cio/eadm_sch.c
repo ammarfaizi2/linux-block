@@ -6,6 +6,7 @@
  * Author(s): Sebastian Ott <sebott@linux.vnet.ibm.com>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/kernel_stat.h>

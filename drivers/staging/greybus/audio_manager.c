@@ -5,6 +5,7 @@
  * Copyright 2015-2016 Google Inc.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/string.h>
 #include <linux/sysfs.h>

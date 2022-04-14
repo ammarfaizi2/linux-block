@@ -5,6 +5,7 @@
  * Copyright 2013,2014 IBM Corp.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/kobject.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

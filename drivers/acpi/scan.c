@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/fwnode.h>
 #include <linux/device_api_lock.h>

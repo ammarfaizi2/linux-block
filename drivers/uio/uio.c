@@ -12,6 +12,7 @@
  * Base Functions
  */
 
+#include <linux/kobject_api.h>
 #include <linux/interrupt.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

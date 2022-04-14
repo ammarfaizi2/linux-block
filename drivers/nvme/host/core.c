@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>

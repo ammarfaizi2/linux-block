@@ -5,6 +5,7 @@
  *
  *  Copyright (C) 2016 Jens Axboe <axboe@kernel.dk>
  */
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioprio.h>
 #include <linux/cpumask_api.h>

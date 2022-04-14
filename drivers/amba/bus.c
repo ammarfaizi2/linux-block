@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2003 Deep Blue Solutions Ltd, All Rights Reserved.
  */
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

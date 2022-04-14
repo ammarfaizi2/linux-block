@@ -17,6 +17,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioprio.h>
 #include <linux/iocontext.h>

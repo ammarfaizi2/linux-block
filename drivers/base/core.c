@@ -8,6 +8,7 @@
  * Copyright (c) 2006 Novell, Inc.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/device/driver.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

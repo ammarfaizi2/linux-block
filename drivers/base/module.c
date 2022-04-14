@@ -2,6 +2,7 @@
 /*
  * module.c - module sysfs fun for drivers
  */
+#include <linux/kobject_api.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/errno.h>

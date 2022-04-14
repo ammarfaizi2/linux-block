@@ -20,6 +20,7 @@
  * the list of BIOSs which have been reported to implement EDD.
  */
 
+#include <linux/kobject_api.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/types.h>
