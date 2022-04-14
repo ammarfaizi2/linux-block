@@ -5,6 +5,7 @@
 // Copyright 2007, 2008 Wolfson Microelectronics PLC.
 // Copyright 2008 SlimLogic Ltd.
 
+#include <linux/limits.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/delay.h>

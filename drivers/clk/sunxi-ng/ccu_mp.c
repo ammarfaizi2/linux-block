@@ -4,6 +4,7 @@
  * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/limits.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>
 
