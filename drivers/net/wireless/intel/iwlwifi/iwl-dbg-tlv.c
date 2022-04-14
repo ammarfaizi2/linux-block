@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2018-2022 Intel Corporation
  */
+#include <linux/dma-mapping.h>
 #include <linux/firmware.h>
 #include "iwl-drv.h"
 #include "iwl-trans.h"

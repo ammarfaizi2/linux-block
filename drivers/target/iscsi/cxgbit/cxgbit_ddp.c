@@ -3,6 +3,8 @@
  * Copyright (c) 2016 Chelsio Communications, Inc.
  */
 
+#include <linux/dma-mapping.h>
+
 #include "cxgbit.h"
 
 static void

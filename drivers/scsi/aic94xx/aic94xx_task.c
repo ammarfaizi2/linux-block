@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/spinlock.h>
 #include "aic94xx.h"
 #include "aic94xx_sas.h"

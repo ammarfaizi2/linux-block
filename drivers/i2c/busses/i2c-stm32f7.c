@@ -14,6 +14,7 @@
  * This driver is based on i2c-stm32f4.c
  *
  */
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/clk.h>

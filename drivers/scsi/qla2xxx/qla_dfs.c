@@ -5,6 +5,7 @@
  */
 #include "qla_def.h"
 
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>

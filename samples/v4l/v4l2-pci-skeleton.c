@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

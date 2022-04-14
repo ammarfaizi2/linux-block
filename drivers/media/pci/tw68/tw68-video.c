@@ -16,6 +16,7 @@
  *  Copyright (C) 2014 Hans Verkuil <hverkuil@xs4all.nl>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <media/v4l2-common.h>
 #include <media/v4l2-event.h>

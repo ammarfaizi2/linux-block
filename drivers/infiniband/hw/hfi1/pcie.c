@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2019 Intel Corporation.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/pci.h>
 #include <linux/io.h>

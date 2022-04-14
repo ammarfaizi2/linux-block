@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
 
+#include <linux/dma-mapping.h>
 #include <linux/bcma/bcma.h>
 #include <linux/etherdevice.h>
 #include <linux/interrupt.h>

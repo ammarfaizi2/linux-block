@@ -3,6 +3,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/prefetch.h>
 #include "ixgb.h"

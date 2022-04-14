@@ -4,6 +4,8 @@
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
+#include <linux/dma-mapping.h>
+
 #include "iwl-drv.h"
 #include "runtime.h"
 #include "fw/api/commands.h"

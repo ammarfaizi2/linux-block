@@ -7,6 +7,7 @@
 #include "gve.h"
 #include "gve_adminq.h"
 #include "gve_utils.h"
+#include <linux/dma-mapping.h>
 #include <linux/etherdevice.h>
 
 static void gve_rx_free_buffer(struct device *dev,

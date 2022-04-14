@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <rdma/ib_user_verbs.h>
 

@@ -8,6 +8,8 @@
 */
 
 
+#include <linux/dma-mapping.h>
+
 #include "mv_sas.h"
 
 int interrupt_coalescing = 0x80;

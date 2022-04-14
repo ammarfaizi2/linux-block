@@ -6,6 +6,7 @@
  * busses using the iommu infrastructure
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/dma-direct.h>
 #include <linux/pci.h>
 #include <asm/iommu.h>

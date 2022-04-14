@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/wait.h>

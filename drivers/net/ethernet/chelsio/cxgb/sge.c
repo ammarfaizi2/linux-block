@@ -38,6 +38,7 @@
 
 #include "common.h"
 
+#include <linux/dma-mapping.h>
 #include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>

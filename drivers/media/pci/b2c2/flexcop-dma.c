@@ -4,6 +4,8 @@
  * flexcop-dma.c - configuring and controlling the DMA of the FlexCop
  * see flexcop.c for copyright information
  */
+#include <linux/dma-mapping.h>
+
 #include "flexcop.h"
 
 int flexcop_dma_allocate(struct pci_dev *pdev,

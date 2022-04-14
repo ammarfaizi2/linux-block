@@ -24,6 +24,7 @@
 #include "nv50.h"
 #include "ram.h"
 
+#include <linux/dma-mapping.h>
 #include <core/client.h>
 #include <core/enum.h>
 #include <engine/fifo.h>

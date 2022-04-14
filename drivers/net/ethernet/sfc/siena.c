@@ -5,6 +5,7 @@
  * Copyright 2006-2013 Solarflare Communications Inc.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/pci.h>

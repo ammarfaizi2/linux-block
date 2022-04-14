@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Hisilicon Limited.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

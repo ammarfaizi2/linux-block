@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/align.h>
 
 #include "otx_cptvf.h"

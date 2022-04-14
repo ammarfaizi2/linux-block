@@ -37,6 +37,7 @@
  * QLogic_IB 6120 PCIe chip.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

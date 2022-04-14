@@ -33,6 +33,7 @@
  *  should stick to this procedure.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/moduleparam.h>

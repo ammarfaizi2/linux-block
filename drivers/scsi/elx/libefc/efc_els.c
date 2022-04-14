@@ -8,6 +8,7 @@
  * Functions to build and send ELS/CT/BLS commands and responses.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 
 #include "efc.h"

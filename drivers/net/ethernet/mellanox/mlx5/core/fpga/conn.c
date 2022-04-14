@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/dma-mapping.h>
 #include <net/addrconf.h>
 #include <linux/etherdevice.h>
 #include <linux/mlx5/vport.h>

@@ -7,6 +7,7 @@
  * linux-drivers@broadcom.com
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <scsi/iscsi_proto.h>
 

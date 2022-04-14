@@ -46,6 +46,7 @@
  *
  ************************************************************************
  */
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/delay.h>

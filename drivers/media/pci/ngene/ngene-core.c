@@ -10,6 +10,7 @@
  *                         support for new dual DVB-S2 card prototype
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/delay.h>

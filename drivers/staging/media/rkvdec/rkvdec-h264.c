@@ -9,6 +9,7 @@
  *	Jeffy Chen <jeffy.chen@rock-chips.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <media/v4l2-h264.h>
 #include <media/v4l2-mem2mem.h>
 

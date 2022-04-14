@@ -8,6 +8,7 @@
  */
 
 #include "mpi3mr.h"
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

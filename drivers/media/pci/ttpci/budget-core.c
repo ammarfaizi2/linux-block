@@ -18,6 +18,7 @@
  */
 
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 
 #include "budget.h"

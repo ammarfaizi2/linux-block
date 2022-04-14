@@ -4,6 +4,7 @@
  * Author: Moritz Fischer <mdf@kernel.org>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/etherdevice.h>
 #include <linux/module.h>

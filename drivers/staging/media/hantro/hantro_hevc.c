@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Safran Passenger Innovations LLC
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/types.h>
 #include <media/v4l2-mem2mem.h>
 

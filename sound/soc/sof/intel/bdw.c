@@ -12,6 +12,7 @@
  * Hardware interface for audio DSP on Broadwell
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <sound/sof.h>

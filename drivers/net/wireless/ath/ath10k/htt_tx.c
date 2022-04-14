@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/etherdevice.h>
 #include "htt.h"
 #include "mac.h"

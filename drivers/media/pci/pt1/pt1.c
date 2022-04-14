@@ -8,6 +8,7 @@
  *	by Tomoaki Ishikawa <tomy@users.sourceforge.jp>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/sched/signal.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <rdma/ib_umem.h>
 #include "hns_roce_device.h"

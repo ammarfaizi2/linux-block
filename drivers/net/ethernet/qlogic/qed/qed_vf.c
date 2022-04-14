@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/etherdevice.h>

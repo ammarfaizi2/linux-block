@@ -43,6 +43,7 @@
  */
 #include "priv.h"
 
+#include <linux/dma-mapping.h>
 #include <core/memory.h>
 #include <core/tegra.h>
 #include <subdev/ltc.h>

@@ -11,6 +11,7 @@
  * @Date 	May 14 2008
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>

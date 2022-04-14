@@ -7,6 +7,8 @@
 
  */
 
+#include <linux/dma-mapping.h>
+
 #include "ivtv-driver.h"
 #include "ivtv-queue.h"
 

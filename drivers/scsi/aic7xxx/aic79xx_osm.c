@@ -44,6 +44,7 @@
 
 #include "aic79xx_osm.h"
 #include "aic79xx_inline.h"
+#include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <scsi/scsicam.h>
 

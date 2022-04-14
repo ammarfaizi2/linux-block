@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 #define CREATE_TRACE_POINTS
+#include <linux/dma-mapping.h>
+
 #include "lib/eq.h"
 #include "fw_tracer.h"
 #include "fw_tracer_tracepoint.h"

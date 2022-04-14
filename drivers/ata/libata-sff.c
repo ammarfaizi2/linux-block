@@ -12,6 +12,7 @@
  *  http://www.sata-io.org/
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/capability.h>

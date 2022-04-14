@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/dma-fence-api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

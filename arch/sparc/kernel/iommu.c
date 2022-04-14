@@ -5,6 +5,7 @@
  * Copyright (C) 1999, 2000 Jakub Jelinek (jakub@redhat.com)
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/slab.h>

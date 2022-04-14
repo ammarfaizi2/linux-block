@@ -15,6 +15,8 @@
  *
  */
 
+#include <linux/dma-mapping.h>
+
 #include "device.h"
 #include "baseband.h"
 #include "rf.h"

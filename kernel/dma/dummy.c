@@ -2,6 +2,7 @@
 /*
  * Dummy DMA ops that always fail.
  */
+#include <linux/dma-mapping.h>
 #include <linux/dma-map-ops.h>
 
 static int dma_dummy_mmap(struct device *dev, struct vm_area_struct *vma,

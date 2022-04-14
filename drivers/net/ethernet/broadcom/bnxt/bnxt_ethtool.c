@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/ctype.h>
 #include <linux/stringify.h>

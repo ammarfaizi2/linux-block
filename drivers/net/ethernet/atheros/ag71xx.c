@@ -27,6 +27,7 @@
  *  Imre Kaloz <kaloz@openwrt.org>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/if_vlan.h>

@@ -10,6 +10,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/aer.h>
 #include "efx_common.h"

@@ -12,6 +12,7 @@
  *	info@addi-data.com
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/comedi/comedi_pci.h>

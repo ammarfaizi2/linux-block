@@ -3,6 +3,7 @@
  * Copyright 2017 IBM Corp.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/hugetlb.h>
 #include <linux/sched/mm.h>
 #include <asm/pnv-pci.h>

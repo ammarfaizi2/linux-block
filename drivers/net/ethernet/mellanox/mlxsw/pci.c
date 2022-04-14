@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2015-2018 Mellanox Technologies. All rights reserved */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/sched/cond_resched.h>

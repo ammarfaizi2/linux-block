@@ -65,6 +65,7 @@
 #include "sg_sw_sec4.h"
 #include "key_gen.h"
 #include "caamhash_desc.h"
+#include <linux/dma-mapping.h>
 #include <crypto/engine.h>
 
 #define CAAM_CRA_PRIORITY		3000

@@ -28,6 +28,7 @@
 
 #include "bcm47xx_private.h"
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bcm47xx_sprom.h>

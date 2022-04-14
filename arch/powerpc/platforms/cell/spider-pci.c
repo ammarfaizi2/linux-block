@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/of_platform.h>
 #include <linux/slab.h>

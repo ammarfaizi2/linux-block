@@ -7,6 +7,7 @@
 #define DRV_NAME "r852"
 #define pr_fmt(fmt)  DRV_NAME ": " fmt
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

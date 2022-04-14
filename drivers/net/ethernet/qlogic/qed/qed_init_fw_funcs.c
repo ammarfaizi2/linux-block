@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2021 Marvell International Ltd.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/types.h>
 #include <linux/crc8.h>
 #include <linux/delay.h>

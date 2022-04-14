@@ -15,6 +15,7 @@
  *	and ima_file_check.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2020-2021 NVIDIA CORPORATION & AFFILIATES
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/skbuff.h>
 
 #include "mlxbf_gige.h"

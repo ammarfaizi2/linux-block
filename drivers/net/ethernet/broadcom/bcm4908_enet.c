@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include <linux/if_vlan.h>

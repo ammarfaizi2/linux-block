@@ -24,6 +24,7 @@
  *
  *-----------------------------------------------------------------------------
  */
+#include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/ctype.h>
 #include <linux/init.h>

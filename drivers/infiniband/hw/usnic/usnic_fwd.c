@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/dma-mapping.h>
 #include <linux/netdevice.h>
 #include <linux/pci.h>
 

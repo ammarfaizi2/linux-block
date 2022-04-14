@@ -14,6 +14,7 @@
 
 #include "cx88.h"
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

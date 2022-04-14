@@ -5,6 +5,7 @@
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
 #include <linux/wait.h>

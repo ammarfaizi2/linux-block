@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/bitmap.h>

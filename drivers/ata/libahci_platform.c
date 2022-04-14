@@ -8,6 +8,7 @@
  *   Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>

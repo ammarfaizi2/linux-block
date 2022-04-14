@@ -47,6 +47,7 @@
  * Intel PCIe NTB Linux driver
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/init.h>

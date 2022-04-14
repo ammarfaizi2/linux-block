@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/pci.h>
 #include <linux/io.h>
 #include <linux/delay.h>

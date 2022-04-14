@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Maxime Jourdan <mjourdan@baylibre.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <media/v4l2-mem2mem.h>
 #include <media/videobuf2-dma-contig.h>
 

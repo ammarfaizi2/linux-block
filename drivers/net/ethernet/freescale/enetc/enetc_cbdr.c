@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2017-2019 NXP */
 
+#include <linux/dma-mapping.h>
+
 #include "enetc.h"
 
 int enetc_setup_cbdr(struct device *dev, struct enetc_hw *hw, int bd_count,

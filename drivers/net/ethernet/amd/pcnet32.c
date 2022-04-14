@@ -27,6 +27,7 @@
 #define DRV_RELDATE	"21.Apr.2008"
 #define PFX		DRV_NAME ": "
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

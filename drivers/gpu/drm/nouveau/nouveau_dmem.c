@@ -27,6 +27,7 @@
 #include "nouveau_bo.h"
 #include "nouveau_svm.h"
 
+#include <linux/dma-mapping.h>
 #include <nvif/class.h>
 #include <nvif/object.h>
 #include <nvif/push906f.h>

@@ -39,6 +39,7 @@
  *
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/inetdevice.h>
 #include <linux/init.h>

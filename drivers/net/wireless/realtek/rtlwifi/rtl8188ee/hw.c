@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2013  Realtek Corporation.*/
 
+#include <linux/dma-mapping.h>
+
 #include "../wifi.h"
 #include "../efuse.h"
 #include "../base.h"

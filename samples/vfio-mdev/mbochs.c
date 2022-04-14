@@ -19,6 +19,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+#include <linux/dma-mapping.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

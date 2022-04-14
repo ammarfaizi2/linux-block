@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

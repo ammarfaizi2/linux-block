@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/align.h>
 #include <soc/tegra/ivc.h>
 

@@ -8,6 +8,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/types.h>
 
 /*-------------------------------------------------------------------------*/

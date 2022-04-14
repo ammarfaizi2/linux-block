@@ -6,6 +6,7 @@
 #include "saa7134.h"
 #include "saa7134-reg.h"
 
+#include <linux/dma-mapping.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/time.h>

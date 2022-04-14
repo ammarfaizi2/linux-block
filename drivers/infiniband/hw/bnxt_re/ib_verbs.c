@@ -36,6 +36,7 @@
  * Description: IB Verbs interpreter
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/types.h>

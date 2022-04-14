@@ -4,6 +4,7 @@
  * Author: Jacob Chen <jacob-chen@iotwrt.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/pm_runtime.h>
 
 #include <media/v4l2-device.h>

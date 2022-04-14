@@ -22,6 +22,7 @@
  *	the command fifo mode.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

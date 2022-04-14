@@ -73,6 +73,7 @@
  * manual attachment.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/gfp.h>

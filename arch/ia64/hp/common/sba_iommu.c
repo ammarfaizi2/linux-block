@@ -16,6 +16,7 @@
 **
 */
 
+#include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/mempool.h>

@@ -9,6 +9,7 @@
  *          Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

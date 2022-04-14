@@ -27,6 +27,7 @@
 	* big endian support with CFG:BEM instead of cpu_to_le32
 */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

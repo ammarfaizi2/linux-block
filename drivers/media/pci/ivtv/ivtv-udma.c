@@ -8,6 +8,8 @@
 
  */
 
+#include <linux/dma-mapping.h>
+
 #include "ivtv-driver.h"
 #include "ivtv-udma.h"
 

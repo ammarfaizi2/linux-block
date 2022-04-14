@@ -67,6 +67,7 @@ static int rx_copybreak;
 #define TX_FIFO_THRESH 256
 #define RX_FIFO_THRESH 1		/* 0-3, 0==32, 64,96, or 3==128 bytes  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

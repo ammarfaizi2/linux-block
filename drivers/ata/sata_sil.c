@@ -18,6 +18,7 @@
  *  Other errata and documentation available under NDA.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

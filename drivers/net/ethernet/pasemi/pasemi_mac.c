@@ -5,6 +5,7 @@
  * Driver for the PA Semi PWRficient onchip 1G/10G Ethernet MACs
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/reboot.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

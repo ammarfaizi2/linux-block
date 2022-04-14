@@ -4,6 +4,7 @@
  * Author: Jacob Chen <jacob-chen@iotwrt.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/pm_runtime.h>
 
 #include "rga-hw.h"

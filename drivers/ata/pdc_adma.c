@@ -16,6 +16,7 @@
  *  This requires careful attention to a number of quirks of the chip.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

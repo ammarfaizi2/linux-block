@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c)  2018 Intel Corporation */
 
+#include <linux/dma-mapping.h>
+
 #include "igc.h"
 
 struct igc_reg_info {

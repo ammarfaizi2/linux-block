@@ -43,6 +43,7 @@
 /*#define DBGRBUF(info) dump_rbufs(info)*/
 
 
+#include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/errno.h>

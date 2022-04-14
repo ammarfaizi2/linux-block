@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/export.h>
 #include <linux/dma-buf.h>
 #include <linux/rbtree.h>

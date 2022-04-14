@@ -3,6 +3,7 @@
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

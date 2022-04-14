@@ -14,6 +14,7 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/gfp.h>
 #include <scsi/scsi_tcq.h>

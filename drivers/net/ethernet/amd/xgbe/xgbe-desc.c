@@ -114,6 +114,8 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/dma-mapping.h>
+
 #include "xgbe.h"
 #include "xgbe-common.h"
 

@@ -16,6 +16,7 @@
  * rendering can return quickly.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/dma-buf.h>
 
 #include "vc4_drv.h"

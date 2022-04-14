@@ -5,6 +5,8 @@
  * Copyright 2008-2011 Freescale Semiconductor, Inc.
  *
  */
+#include <linux/dma-mapping.h>
+
 #include "compat.h"
 #include "jr.h"
 #include "error.h"

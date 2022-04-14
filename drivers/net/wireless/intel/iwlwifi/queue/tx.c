@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2020-2022 Intel Corporation
  */
+#include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <asm/unaligned.h>
 #include <net/tso.h>

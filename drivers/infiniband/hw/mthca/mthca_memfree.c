@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/mm.h>
 #include <linux/scatterlist.h>

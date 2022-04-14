@@ -50,6 +50,7 @@
  * happy to assist.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gfp.h>

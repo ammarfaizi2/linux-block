@@ -5,6 +5,7 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/crc32.h>
 #include <linux/slab.h>
 

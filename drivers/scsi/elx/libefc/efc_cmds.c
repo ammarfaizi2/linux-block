@@ -4,6 +4,8 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <linux/dma-mapping.h>
+
 #include "efclib.h"
 #include "../libefc_sli/sli4.h"
 #include "efc_cmds.h"

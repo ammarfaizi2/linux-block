@@ -8,6 +8,7 @@
 // Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <sound/soc-acpi.h>

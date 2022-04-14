@@ -12,6 +12,8 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/dma-mapping.h>
+
 #include "stmmac.h"
 
 static int jumbo_frm(void *p, struct sk_buff *skb, int csum)

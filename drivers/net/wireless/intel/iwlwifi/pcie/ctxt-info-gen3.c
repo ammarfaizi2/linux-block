@@ -2,6 +2,8 @@
 /*
  * Copyright (C) 2018-2022 Intel Corporation
  */
+#include <linux/dma-mapping.h>
+
 #include "iwl-trans.h"
 #include "iwl-fh.h"
 #include "iwl-context-info-gen3.h"

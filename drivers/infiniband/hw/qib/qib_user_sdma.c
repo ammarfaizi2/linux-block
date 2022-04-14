@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/dma-mapping.h>
 #include <linux/mm.h>
 #include <linux/types.h>
 #include <linux/device.h>

@@ -4,6 +4,8 @@
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  */
 
+#include <linux/dma-mapping.h>
+
 #include "core.h"
 #include "hif.h"
 #include "debug.h"

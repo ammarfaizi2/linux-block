@@ -4,6 +4,7 @@
  * Copyright (c)  2003-2014 QLogic Corporation
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/vmalloc.h>
 #include <linux/delay.h>
 

@@ -40,6 +40,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/idr.h>
 #include <rdma/ib_verbs.h>

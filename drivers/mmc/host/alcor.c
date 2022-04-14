@@ -12,6 +12,7 @@
  * thing what I did. 2018 Oleksij Rempel <linux@rempel-privat.de>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
 #include <linux/module.h>

@@ -22,6 +22,7 @@
  * Documentation:
  *	Not publicly available.
  */
+#include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

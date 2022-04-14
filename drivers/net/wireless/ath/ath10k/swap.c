@@ -8,6 +8,7 @@
  * memory to store some of the code segments.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 
 #include "core.h"

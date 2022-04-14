@@ -17,6 +17,7 @@
  *    This is a platform dependent module for the pci cyclone board.
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

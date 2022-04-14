@@ -4,6 +4,7 @@
 /* ethtool support for e1000 */
 
 #include "e1000.h"
+#include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/uaccess.h>
