@@ -7,6 +7,7 @@
 #ifndef _NET_DEVLINK_H_
 #define _NET_DEVLINK_H_
 
+#include <linux/ioport.h>
 #include <linux/device.h>
 #include <linux/slab.h>
 #include <linux/gfp.h>

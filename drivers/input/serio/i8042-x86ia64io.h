@@ -4,6 +4,7 @@
 
 
 #ifdef CONFIG_X86
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <asm/x86_init.h>
 #endif

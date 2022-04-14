@@ -2,6 +2,7 @@
 #ifndef _I8042_JAZZ_H
 #define _I8042_JAZZ_H
 
+#include <linux/ioport.h>
 #include <asm/jazz.h>
 
 

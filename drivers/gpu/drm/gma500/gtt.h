@@ -8,6 +8,7 @@
 #ifndef _PSB_GTT_H_
 #define _PSB_GTT_H_
 
+#include <linux/ioport.h>
 #include <drm/drm_gem.h>
 
 struct drm_psb_private;

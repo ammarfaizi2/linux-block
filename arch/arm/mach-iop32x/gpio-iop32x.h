@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
+#include <linux/ioport.h>
 #include <linux/types.h>
 
 static struct resource iop32x_gpio_res[] = {
