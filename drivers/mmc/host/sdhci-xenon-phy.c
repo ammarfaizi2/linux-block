@@ -8,6 +8,7 @@
  * Date:	2016-8-24
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>

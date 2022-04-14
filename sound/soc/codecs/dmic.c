@@ -5,6 +5,7 @@
  * Author: Liam Girdwood <lrg@slimlogic.co.uk>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

@@ -7,6 +7,7 @@
  * Author(s): Amelie Delaunay <amelie.delaunay@st.com>
  */
 
+#include <linux/property.h>
 #include <linux/clk.h>
 #include <linux/iopoll.h>
 #include <linux/platform_device.h>

@@ -9,6 +9,7 @@
  * Copyright (c) 2016 Intel Corporation.
  */
 
+#include <linux/property.h>
 #include <linux/of.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

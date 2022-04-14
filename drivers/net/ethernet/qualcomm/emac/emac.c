@@ -4,6 +4,7 @@
 
 /* Qualcomm Technologies, Inc. EMAC Gigabit Ethernet Driver */
 
+#include <linux/property.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

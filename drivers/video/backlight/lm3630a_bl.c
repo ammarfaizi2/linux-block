@@ -3,6 +3,7 @@
 * Simple driver for Texas Instruments LM3630A Backlight driver chip
 * Copyright (C) 2012 Texas Instruments
 */
+#include <linux/property.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Texas Instruments Incorporated - https://www.ti.com
  *
  */
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/phy/phy.h>

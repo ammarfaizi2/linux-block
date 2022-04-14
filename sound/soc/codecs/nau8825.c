@@ -8,6 +8,7 @@
  *  Co-author: Meng-Huang Kuo <mhkuo@nuvoton.com>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

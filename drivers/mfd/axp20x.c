@@ -13,6 +13,7 @@
  * Author: Carlo Caione <carlo@caione.org>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/acpi.h>

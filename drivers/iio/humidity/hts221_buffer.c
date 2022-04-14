@@ -6,6 +6,7 @@
  *
  * Lorenzo Bianconi <lorenzo.bianconi@st.com>
  */
+#include <linux/property.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/device.h>

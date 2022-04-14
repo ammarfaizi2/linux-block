@@ -8,6 +8,7 @@
  * TODO: bias voltage + polarity control, and multiple chip support
  */
 
+#include <linux/property.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>

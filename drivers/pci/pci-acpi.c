@@ -7,6 +7,7 @@
  * Copyright (C) 2004 Intel Corp.
  */
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>

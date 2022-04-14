@@ -8,6 +8,7 @@
  * Datasheet: https://www.ti.com/lit/ds/symlink/ads131e08.pdf
  */
 
+#include <linux/property.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

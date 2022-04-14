@@ -5,6 +5,7 @@
  * Copyright (c) 2016 - 2020 Intel Corporation.
  */
 
+#include <linux/property.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

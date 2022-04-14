@@ -5,6 +5,7 @@
  * Copyright (C) 2010-2011 Pixcir, Inc.
  */
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

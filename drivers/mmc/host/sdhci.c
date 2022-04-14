@@ -9,6 +9,7 @@
  *     - JMicron (hardware and technical support)
  */
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

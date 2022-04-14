@@ -6,6 +6,7 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -4,6 +4,7 @@
 // Copyright (c) 2012 Samsung Electronics Co., Ltd.
 // Author: Joonyoung Shim <jy0922.shim@samsung.com>
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

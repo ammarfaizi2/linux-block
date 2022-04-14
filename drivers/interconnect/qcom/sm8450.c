@@ -4,6 +4,7 @@
  * Copyright (c) 2021, Linaro Limited
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/interconnect.h>

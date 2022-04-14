@@ -6,6 +6,7 @@
  * Author: Chunyan Zhang <chunyan.zhang@unisoc.com>
  */
 
+#include <linux/property.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/io.h>

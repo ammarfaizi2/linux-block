@@ -6,6 +6,7 @@
 // Author: Derek Fang <derek.fang@realtek.com>
 //
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

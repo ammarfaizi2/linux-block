@@ -11,6 +11,7 @@
  * Copyright (C) 2021 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

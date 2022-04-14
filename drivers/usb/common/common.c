@@ -8,6 +8,7 @@
  * compiled as module, this file is compiled as module as well.
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)				"bcmgenet: " fmt
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

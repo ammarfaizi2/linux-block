@@ -8,6 +8,7 @@
  * Andrzej Hajda <a.hajda@samsung.com>
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_panel.h>

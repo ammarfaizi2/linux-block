@@ -6,6 +6,7 @@
  * Copyright (C) 2007-2008 Marvell Ltd.
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

@@ -6,6 +6,7 @@
  * out of the ACPI ASL and using it to populate an mii_bus.
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/acpi_mdio.h>

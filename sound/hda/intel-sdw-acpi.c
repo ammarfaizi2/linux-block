@@ -5,6 +5,7 @@
  * SDW Intel ACPI scan helpers
  */
 
+#include <linux/property.h>
 #include <linux/acpi.h>
 #include <linux/bits.h>
 #include <linux/bitfield.h>

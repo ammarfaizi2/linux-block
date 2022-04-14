@@ -6,6 +6,7 @@
  * Copyright (C) 2020 Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/property.h>
 #include <linux/mod_devicetable.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

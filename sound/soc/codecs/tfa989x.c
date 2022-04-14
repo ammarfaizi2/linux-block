@@ -7,6 +7,7 @@
  * Copyright (C) 2013 Sony Mobile Communications Inc.
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>

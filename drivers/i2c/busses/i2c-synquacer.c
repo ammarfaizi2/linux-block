@@ -3,6 +3,7 @@
  * Copyright (C) 2012 FUJITSU SEMICONDUCTOR LIMITED
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

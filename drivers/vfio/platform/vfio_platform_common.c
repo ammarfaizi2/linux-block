@@ -6,6 +6,7 @@
 
 #define dev_fmt(fmt)	"VFIO: " fmt
 
+#include <linux/property.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

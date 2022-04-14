@@ -8,6 +8,7 @@
  *   Author: Wolfram Sang <kernel@pengutronix.de>
  */
 
+#include <linux/property.h>
 #include <linux/prefetch.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

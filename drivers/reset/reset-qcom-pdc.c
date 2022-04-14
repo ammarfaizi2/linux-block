@@ -3,6 +3,7 @@
  * Copyright (C) 2018 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/property.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

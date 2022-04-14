@@ -6,6 +6,7 @@
  * Copyright (c) 2020 HiSilicon Limited.
  */
 
+#include <linux/property.h>
 #include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

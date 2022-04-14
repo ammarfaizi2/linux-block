@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Yassine Oudjana <y.oudjana@protonmail.com>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

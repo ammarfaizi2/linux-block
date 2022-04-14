@@ -10,6 +10,7 @@
  *          Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/property.h>
 #include <linux/fwnode.h>
 #include <linux/acpi.h>
 #include <linux/device.h>

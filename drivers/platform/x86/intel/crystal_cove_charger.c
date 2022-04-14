@@ -8,6 +8,7 @@
  * level 2 interrupt for this must be explicitly acked.
  */
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>

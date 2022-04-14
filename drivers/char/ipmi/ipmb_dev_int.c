@@ -8,6 +8,7 @@
  * This was inspired by Brendan Higgins' ipmi-bmc-bt-i2c driver.
  */
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/device_api_lock.h>

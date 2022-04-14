@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Sebastian Reichel <sre@kernel.org>
  */
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/leds.h>

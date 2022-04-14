@@ -7,6 +7,7 @@
  * To do: Interrupt support.
  */
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

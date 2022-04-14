@@ -17,6 +17,7 @@
  * IRQ event to the next one.
  */
 
+#include <linux/property.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

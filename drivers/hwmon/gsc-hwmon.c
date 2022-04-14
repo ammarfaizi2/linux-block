@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2020 Gateworks Corporation
  */
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

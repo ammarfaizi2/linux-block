@@ -8,6 +8,7 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

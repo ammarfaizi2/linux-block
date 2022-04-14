@@ -5,6 +5,7 @@
 // Author: Daniel Baluta <daniel.baluta@nxp.com>
 //
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/firmware.h>
 #include <linux/module.h>

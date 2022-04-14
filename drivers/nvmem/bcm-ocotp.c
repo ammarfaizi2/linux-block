@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/property.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

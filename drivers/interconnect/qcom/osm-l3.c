@@ -3,6 +3,7 @@
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/property.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

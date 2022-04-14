@@ -9,6 +9,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

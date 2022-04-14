@@ -8,6 +8,7 @@
  * Author: yanglsh@embest-tech.com
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>
 #include <linux/init.h>

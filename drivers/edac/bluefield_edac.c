@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Mellanox Technologies.
  */
 
+#include <linux/property.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

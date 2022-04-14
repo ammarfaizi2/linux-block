@@ -4,6 +4,7 @@
  *
  * Based on the i2c-axxia.c driver.
  */
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

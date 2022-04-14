@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/property.h>
 #include <linux/of.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

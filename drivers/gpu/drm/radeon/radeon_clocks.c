@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/delay.h>
 #include <linux/pci.h>

@@ -15,6 +15,7 @@
  * iProc SDHCI platform driver
  */
 
+#include <linux/property.h>
 #include <linux/io.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>

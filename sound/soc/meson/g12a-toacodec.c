@@ -3,6 +3,7 @@
 // Copyright (c) 2020 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
+#include <linux/property.h>
 #include <linux/mod_devicetable.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

@@ -6,6 +6,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

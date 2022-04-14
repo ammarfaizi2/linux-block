@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Spreadtrum Communications Inc.
 
+#include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/minmax.h>
