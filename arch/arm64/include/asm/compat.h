@@ -5,6 +5,7 @@
 #ifndef __ASM_COMPAT_H
 #define __ASM_COMPAT_H
 
+#include <asm/processor.h>
 #include <linux/types.h>
 
 #define compat_mode_t compat_mode_t
