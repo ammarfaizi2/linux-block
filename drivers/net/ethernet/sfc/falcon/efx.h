@@ -8,6 +8,7 @@
 #ifndef EF4_EFX_H
 #define EF4_EFX_H
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 
 #include "net_driver.h"
