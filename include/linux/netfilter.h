@@ -2,6 +2,7 @@
 #ifndef __LINUX_NETFILTER_H
 #define __LINUX_NETFILTER_H
 
+#include <linux/rcupdate.h>
 #include <linux/init.h>
 #include <linux/skbuff.h>
 #include <linux/net.h>
