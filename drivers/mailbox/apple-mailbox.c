@@ -16,6 +16,7 @@
  * other direction.
  */
 
+#include <linux/bitfield.h>
 #include <linux/apple-mailbox.h>
 #include <linux/device.h>
 #include <linux/gfp.h>
