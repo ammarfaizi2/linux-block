@@ -17,6 +17,7 @@
  * Authors: Will Deacon <will@kernel.org> and Marc Zyngier <maz@kernel.org>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/arm-smccc.h>
 #include <linux/bpf.h>
 #include <linux/cpu.h>

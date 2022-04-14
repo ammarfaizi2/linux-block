@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_FPU_SCHED_H
 #define _ASM_X86_FPU_SCHED_H
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched.h>
 
 #include <asm/cpufeature.h>

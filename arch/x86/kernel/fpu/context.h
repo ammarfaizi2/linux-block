@@ -2,6 +2,7 @@
 #ifndef __X86_KERNEL_FPU_CONTEXT_H
 #define __X86_KERNEL_FPU_CONTEXT_H
 
+#include <linux/sched/task_flags.h>
 #include <asm/fpu/xstate.h>
 #include <asm/trace/fpu.h>
 
