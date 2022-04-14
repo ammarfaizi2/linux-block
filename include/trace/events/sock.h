@@ -5,6 +5,7 @@
 #if !defined(_TRACE_SOCK_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_SOCK_H
 
+#include <linux/refcount_api.h>
 #include <net/sock.h>
 #include <net/ipv6.h>
 #include <linux/tracepoint.h>

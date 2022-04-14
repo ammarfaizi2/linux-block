@@ -2,6 +2,7 @@
 #ifndef _LINUX_SCHED_USER_H
 #define _LINUX_SCHED_USER_H
 
+#include <linux/refcount_api.h>
 #include <linux/uidgid.h>
 #include <linux/atomic.h>
 #include <linux/percpu_counter.h>

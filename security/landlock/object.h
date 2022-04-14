@@ -9,6 +9,7 @@
 #ifndef _SECURITY_LANDLOCK_OBJECT_H
 #define _SECURITY_LANDLOCK_OBJECT_H
 
+#include <linux/refcount_api.h>
 #include <linux/compiler_types.h>
 #include <linux/refcount.h>
 #include <linux/spinlock.h>

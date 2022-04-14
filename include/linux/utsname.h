@@ -3,6 +3,7 @@
 #define _LINUX_UTSNAME_H
 
 
+#include <linux/refcount_api.h>
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <linux/ns_common.h>

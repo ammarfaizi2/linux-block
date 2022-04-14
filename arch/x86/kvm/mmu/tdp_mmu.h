@@ -3,6 +3,7 @@
 #ifndef __KVM_X86_MMU_TDP_MMU_H
 #define __KVM_X86_MMU_TDP_MMU_H
 
+#include <linux/refcount_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kvm_host.h>
 

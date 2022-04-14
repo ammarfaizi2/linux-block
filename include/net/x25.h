@@ -10,6 +10,7 @@
 
 #ifndef _X25_H
 #define _X25_H 
+#include <linux/refcount_api.h>
 #include <linux/x25.h>
 #include <linux/slab.h>
 #include <linux/refcount.h>
