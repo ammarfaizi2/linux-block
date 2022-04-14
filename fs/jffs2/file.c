@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

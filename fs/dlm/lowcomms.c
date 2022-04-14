@@ -42,6 +42,7 @@
  *
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/kmod.h>

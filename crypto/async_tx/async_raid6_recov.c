@@ -6,6 +6,7 @@
  * based on raid6recov.c:
  *   Copyright 2002 H. Peter Anvin
  */
+#include <linux/mm_page_address.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2021 Google, Inc.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>

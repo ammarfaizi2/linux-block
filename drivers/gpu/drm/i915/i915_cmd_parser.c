@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/highmem.h>
 #include <linux/hashtable_api.h>
 #include <linux/bitmap.h>

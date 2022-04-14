@@ -9,6 +9,7 @@
  *  affs symlink handling code
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/fs_api.h>
 
 #include "affs.h"

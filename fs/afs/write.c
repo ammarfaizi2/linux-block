@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api_sb.h>

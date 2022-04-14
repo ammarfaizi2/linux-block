@@ -12,6 +12,7 @@
  *	Rajaram Regupathy <ragupathy.rajaram@stericsson.com>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/ioport.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

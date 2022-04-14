@@ -4,6 +4,7 @@
  * Copyright 2010 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

@@ -8,6 +8,7 @@
  * (C) Copyright 1995 1996, 2014 Linus Torvalds
  *
  */
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

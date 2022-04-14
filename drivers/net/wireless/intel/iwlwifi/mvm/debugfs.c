@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
+#include <linux/mm_page_address.h>
 #include <linux/lockdep_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

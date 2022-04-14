@@ -4,6 +4,7 @@
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>

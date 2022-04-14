@@ -35,6 +35,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>

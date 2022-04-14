@@ -4,6 +4,7 @@
  *  Nick Kossifidis <mick@ics.forth.gr>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/kexec.h>
 #include <asm/kexec.h>		/* For riscv_kexec_* symbol defines */

@@ -19,6 +19,7 @@
  *  Copyright (C) 2004 MontaVista Software, Inc.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/highmem.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

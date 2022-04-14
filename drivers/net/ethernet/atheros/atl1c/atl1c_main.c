@@ -6,6 +6,7 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/ipv6.h>
 #include <linux/io.h>

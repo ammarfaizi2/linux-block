@@ -25,6 +25,7 @@
 #include "hyperv.h"
 #include "xen.h"
 
+#include <linux/mm_page_address.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>

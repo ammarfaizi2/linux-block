@@ -23,6 +23,7 @@
  * - persistent bitmap code
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

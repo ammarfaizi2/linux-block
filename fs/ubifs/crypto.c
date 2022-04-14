@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/mm_page_address.h>
+
 #include "ubifs.h"
 
 static int ubifs_crypt_get_context(struct inode *inode, void *ctx, size_t len)

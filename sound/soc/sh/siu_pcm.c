@@ -5,6 +5,7 @@
 // Copyright (C) 2009-2010 Guennadi Liakhovetski <g.liakhovetski@gmx.de>
 // Copyright (C) 2006 Carlos Munoz <carlos@kenati.com>
 
+#include <linux/mm_page_address.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmaengine.h>

@@ -8,6 +8,7 @@
  *  Copyright (C) 2000 Anton Blanchard (anton@samba.org)
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/module.h>
 #include <linux/signal.h>

@@ -4,6 +4,7 @@
 // Copyright (C) 2005 David Brownell
 // Copyright (C) 2008 Secret Lab Technologies Ltd.
 
+#include <linux/mm_page_address.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

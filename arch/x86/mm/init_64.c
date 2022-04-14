@@ -7,6 +7,7 @@
  *  Copyright (C) 2002,2003 Andi Kleen <ak@suse.de>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_gate_area.h>
 #include <linux/mm_api_extra.h>

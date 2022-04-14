@@ -18,6 +18,7 @@
  * each client.  This is not yet implemented.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/device_api.h>
 
 #include "v3d_drv.h"

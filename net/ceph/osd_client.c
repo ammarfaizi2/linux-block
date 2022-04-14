@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/mm_page_address.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

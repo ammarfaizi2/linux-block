@@ -15,6 +15,7 @@
 /* [Feb-Apr 2000, AV] Rewrite to the new namespace architecture.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api_rw_access.h>

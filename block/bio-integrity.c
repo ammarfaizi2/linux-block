@@ -6,6 +6,7 @@
  * Written by: Martin K. Petersen <martin.petersen@oracle.com>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/highmem.h>
 #include <linux/bvec_api.h>
 #include <linux/blk-integrity.h>

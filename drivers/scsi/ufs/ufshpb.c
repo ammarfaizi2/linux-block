@@ -9,6 +9,7 @@
  *	Jinyoung Choi <j-young.choi@samsung.com>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>

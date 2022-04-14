@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/kthread.h>

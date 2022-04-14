@@ -9,6 +9,7 @@
  * Copyright (c) 2015 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

@@ -3,6 +3,8 @@
  *
  * Copyright © 2018 Intel Corporation
  */
+#include <linux/mm_page_address.h>
+
 #include "gt/intel_gpu_commands.h"
 #include "gt/intel_gt.h"
 

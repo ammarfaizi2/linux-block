@@ -3,6 +3,7 @@
  * Copyright (C) 2020 SiFive
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/io.h>

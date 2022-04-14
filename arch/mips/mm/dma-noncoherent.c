@@ -4,6 +4,7 @@
  * Copyright (C) 2000, 2001, 06	 Ralf Baechle <ralf@linux-mips.org>
  * swiped from i386, and cloned for MIPS by Geert, polished by Ralf.
  */
+#include <linux/mm_page_address.h>
 #include <linux/dma-direct.h>
 #include <linux/dma-map-ops.h>
 #include <linux/highmem.h>

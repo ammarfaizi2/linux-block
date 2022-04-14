@@ -6,6 +6,7 @@
  * Copyright 2012 Google, Inc.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

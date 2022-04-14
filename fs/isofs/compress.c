@@ -11,6 +11,7 @@
  * Transparent decompression of files on an iso9660 filesystem
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

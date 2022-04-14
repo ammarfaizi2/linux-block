@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "kvm-s390"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>

@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"UDC core: " fmt
 
+#include <linux/mm_page_address.h>
 #include <linux/kobject_api.h>
 #include <linux/hardirq.h>
 #include <linux/device/class.h>

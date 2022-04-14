@@ -6,6 +6,7 @@
  *
  *    Author(s): David Hildenbrand <dahi@linux.vnet.ibm.com>
  */
+#include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/vmalloc.h>

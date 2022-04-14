@@ -4,6 +4,7 @@
  * Copyright (C) 2004 David S. Miller <davem@redhat.com>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/percpu.h>

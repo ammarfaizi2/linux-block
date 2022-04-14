@@ -11,6 +11,7 @@
 #include "cx23885.h"
 #include "cx23885-reg.h"
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/export.h>
 #include <linux/atomic_api.h>

@@ -3,6 +3,7 @@
  * Copyright(c) 2017 IBM Corporation. All rights reserved.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/string.h>
 #include <linux/export.h>
 #include <linux/uaccess.h>

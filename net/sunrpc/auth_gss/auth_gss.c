@@ -11,6 +11,7 @@
  *  Andy Adamson   <andros@umich.edu>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/hashtable_api.h>

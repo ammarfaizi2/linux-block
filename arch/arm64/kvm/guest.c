@@ -8,6 +8,7 @@
  * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/memory_hotplug.h>
 #include <asm/pgtable.h>
 #include <linux/bits.h>

@@ -13,6 +13,7 @@
  * Giuseppe De Robertis <Giuseppe.DeRobertis@ba.infn.it>
  * Gary Chen & Ch Hsu Storlink Semiconductor
  */
+#include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>

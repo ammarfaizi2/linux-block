@@ -11,6 +11,7 @@
  * Joe Taylor <joe@tensilica.com, joetylr@yahoo.com>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/io_extra.h>
 #include <linux/dma-map-ops.h>
 #include <linux/dma-direct.h>

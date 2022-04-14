@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/gfp.h>
 #include <linux/slab.h>
 

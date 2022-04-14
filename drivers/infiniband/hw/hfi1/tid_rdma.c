@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>

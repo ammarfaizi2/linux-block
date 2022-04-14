@@ -11,6 +11,7 @@
  * et al.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/fs.h>

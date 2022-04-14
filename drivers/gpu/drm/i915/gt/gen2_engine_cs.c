@@ -3,6 +3,8 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/mm_page_address.h>
+
 #include "gen2_engine_cs.h"
 #include "i915_drv.h"
 #include "i915_reg.h"

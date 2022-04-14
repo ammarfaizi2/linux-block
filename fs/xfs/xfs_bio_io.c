@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2019 Christoph Hellwig.
  */
+#include <linux/mm_page_address.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 

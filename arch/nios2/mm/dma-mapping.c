@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/io_extra.h>
 #include <linux/types.h>
 #include <linux/mm.h>

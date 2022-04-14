@@ -3,6 +3,8 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/mm_page_address.h>
+
 #include "gen6_engine_cs.h"
 #include "intel_engine.h"
 #include "intel_engine_regs.h"

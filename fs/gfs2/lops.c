@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

@@ -8,6 +8,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/gfp_api.h>

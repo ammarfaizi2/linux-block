@@ -3,6 +3,8 @@
  * Copyright © 2014 Intel Corporation
  */
 
+#include <linux/mm_page_address.h>
+
 #include "gen8_engine_cs.h"
 #include "i915_drv.h"
 #include "intel_gpu_commands.h"

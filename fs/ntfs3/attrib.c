@@ -6,6 +6,7 @@
  * TODO: Merge attr_set_size/attr_data_get_block/attr_allocate_frame?
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>

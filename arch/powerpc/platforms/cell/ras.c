@@ -5,6 +5,7 @@
 
 #undef DEBUG
 
+#include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

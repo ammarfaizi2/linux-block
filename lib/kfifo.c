@@ -5,6 +5,7 @@
  * Copyright (C) 2009/2010 Stefani Seibold <stefani@seibold.net>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/math64.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

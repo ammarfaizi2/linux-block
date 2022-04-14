@@ -4,6 +4,7 @@
  * Author: Catalin Marinas <catalin.marinas@arm.com>
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/io_extra.h>
 #include <linux/gfp.h>
 #include <linux/cache.h>

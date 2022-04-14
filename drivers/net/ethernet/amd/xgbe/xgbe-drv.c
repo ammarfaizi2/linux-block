@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>

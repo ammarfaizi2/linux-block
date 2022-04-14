@@ -6,6 +6,7 @@
  *  Copyright (C) 2000 Russell King
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/types.h>

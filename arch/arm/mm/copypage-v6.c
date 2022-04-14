@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2002 Deep Blue Solutions Ltd, All Rights Reserved.
  */
+#include <linux/mm_page_address.h>
 #include <linux/init.h>
 #include <linux/spinlock.h>
 #include <linux/mm.h>
