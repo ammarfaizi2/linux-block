@@ -11,6 +11,7 @@
 #ifndef _LINUX_PREFETCH_H
 #define _LINUX_PREFETCH_H
 
+#include <asm/processor_api.h>
 #include <linux/types.h>
 #include <asm/processor.h>
 #include <asm/cache.h>

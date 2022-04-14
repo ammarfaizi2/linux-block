@@ -13,6 +13,7 @@
 #ifndef _ASM_X86_VIRTEX_H
 #define _ASM_X86_VIRTEX_H
 
+#include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <asm/processor.h>
 
