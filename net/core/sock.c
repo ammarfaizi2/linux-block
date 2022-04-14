@@ -85,6 +85,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/pid.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

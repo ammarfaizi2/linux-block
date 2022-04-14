@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/pid.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>

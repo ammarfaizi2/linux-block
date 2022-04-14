@@ -23,6 +23,7 @@
  * Pavel Emelianov <xemul@openvz.org>
  */
 
+#include <linux/pid.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/ktime_api.h>
 #include <linux/idr_api.h>

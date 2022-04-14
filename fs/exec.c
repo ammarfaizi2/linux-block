@@ -23,6 +23,7 @@
  * formats.
  */
 
+#include <linux/pid.h>
 #include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

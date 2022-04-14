@@ -2,6 +2,7 @@
 /*
  * umd - User mode driver support
  */
+#include <linux/pid.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/shmem_fs.h>

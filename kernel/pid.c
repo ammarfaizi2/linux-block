@@ -27,6 +27,7 @@
  *
  */
 
+#include <linux/pid.h>
 #include <linux/idr_api.h>
 #include <linux/fs.h>
 #include <linux/file.h>

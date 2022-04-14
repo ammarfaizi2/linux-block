@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020 Facebook */
 
+#include <linux/pid.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

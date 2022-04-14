@@ -3,6 +3,7 @@
  * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
+#include <linux/pid.h>
 #include <linux/irqreturn.h>
 #include <linux/kd.h>
 #include <linux/sched/signal.h>

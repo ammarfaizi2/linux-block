@@ -11,6 +11,7 @@
  *		to allow signals to be sent reliably.
  */
 
+#include <linux/pid.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
