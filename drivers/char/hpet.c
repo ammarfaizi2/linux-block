@@ -8,6 +8,7 @@
  *	Bob Picco <robert.picco@hp.com>
  */
 
+#include <linux/irq.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
