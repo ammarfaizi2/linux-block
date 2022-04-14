@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  * Copyright (C) 2013-2014 Christoph Hellwig
  */
+#include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/softirq.h>
 #include <linux/sched/thread_info_api.h>

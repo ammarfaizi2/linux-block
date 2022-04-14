@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2016-20 Intel Corporation. */
 
+#include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>

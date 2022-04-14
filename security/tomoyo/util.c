@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
+#include <linux/srcu.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_exe_file.h>
 #include <linux/file.h>

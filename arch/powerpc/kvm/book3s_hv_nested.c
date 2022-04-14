@@ -8,6 +8,7 @@
  * on Book3S processors (specifically POWER9 and later).
  */
 
+#include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>

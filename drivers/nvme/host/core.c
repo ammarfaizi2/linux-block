@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
+#include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

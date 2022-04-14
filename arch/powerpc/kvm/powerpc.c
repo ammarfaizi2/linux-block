@@ -7,6 +7,7 @@
  *          Christian Ehrhardt <ehrhardt@linux.vnet.ibm.com>
  */
 
+#include <linux/srcu.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/preempt.h>

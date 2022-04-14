@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xive-kvm: " fmt
 
+#include <linux/srcu.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

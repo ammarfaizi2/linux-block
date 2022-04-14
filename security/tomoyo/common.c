@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
+#include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>

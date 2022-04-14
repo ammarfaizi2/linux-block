@@ -12,6 +12,7 @@
  * processors.
  */
 
+#include <linux/srcu.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/anon_inodes.h>
