@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "CPUidle PSCI: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

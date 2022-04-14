@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "kasan test: %s " fmt, __func__
 
+#include <linux/rcupdate.h>
 #include <linux/mm_api.h>
 #include <linux/mman.h>
 #include <linux/module.h>

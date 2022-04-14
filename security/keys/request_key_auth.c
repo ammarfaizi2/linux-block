@@ -7,6 +7,7 @@
  * See Documentation/security/keys/request-key.rst
  */
 
+#include <linux/rcupdate.h>
 #include <linux/cred.h>
 #include <linux/sched.h>
 #include <linux/err.h>

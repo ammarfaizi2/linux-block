@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/compiler.h>
 
 #define selftest(name, func) __idx_##name,

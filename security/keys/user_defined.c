@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/rcupdate.h>
 #include <linux/export.h>
 #include <linux/init.h>
 #include <linux/slab.h>
