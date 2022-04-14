@@ -5,6 +5,7 @@
 #ifndef __ASM_MMU_H
 #define __ASM_MMU_H
 
+#include <asm/page.h>
 #include <asm/cputype.h>
 
 #define MMCF_AARCH32	0x1	/* mm context flag for AArch32 executables */
