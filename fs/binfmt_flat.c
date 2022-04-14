@@ -18,6 +18,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
