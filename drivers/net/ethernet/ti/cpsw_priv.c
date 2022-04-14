@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments
  */
 
+#include <net/pkt_sched.h>
 #include <linux/uaccess.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api_lock.h>
