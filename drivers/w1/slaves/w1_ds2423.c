@@ -9,6 +9,7 @@
  * Inspired by the w1_therm and w1_ds2431 drivers.
  */
 
+#include <linux/mm_types.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

@@ -18,6 +18,7 @@
  * TODO: orientation events
  */
 
+#include <linux/mm_types.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

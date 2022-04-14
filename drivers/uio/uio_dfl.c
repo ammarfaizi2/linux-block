@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2021 Intel Corporation, Inc.
  */
+#include <linux/mm_types.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

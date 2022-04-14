@@ -9,6 +9,7 @@
 
 #define DSS_SUBSYS_NAME "DISPLAY"
 
+#include <linux/mm_types.h>
 #include <linux/kobject_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
