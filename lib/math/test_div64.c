@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/time64_api.h>
 #include <linux/ktime_api.h>
 #include <linux/init.h>
 #include <linux/ktime.h>

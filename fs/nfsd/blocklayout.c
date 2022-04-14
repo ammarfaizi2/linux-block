@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014-2016 Christoph Hellwig.
  */
+#include <linux/time64_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/exportfs.h>

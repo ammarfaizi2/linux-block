@@ -15,6 +15,7 @@
 #define KMSG_COMPONENT "time"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/time64_api.h>
 #include <linux/preempt.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

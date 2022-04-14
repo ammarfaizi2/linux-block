@@ -6,6 +6,7 @@
  *  Davide Libenzi <davidel@xmailserver.org>
  */
 
+#include <linux/time64_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/user.h>

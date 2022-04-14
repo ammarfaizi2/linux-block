@@ -5,6 +5,7 @@
  * Copyright (c) 2001-2014 Anton Altaparmakov and Tuxera Inc.
  */
 
+#include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

@@ -9,6 +9,7 @@
  *	    Kurt Kanzenbach <kurt@linutronix.de>
  */
 
+#include <linux/time64_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

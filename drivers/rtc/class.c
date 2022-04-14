@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/time64_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

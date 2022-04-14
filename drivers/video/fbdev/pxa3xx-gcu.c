@@ -17,6 +17,7 @@
  * your bootloader for now.
  */
 
+#include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

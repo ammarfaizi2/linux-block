@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/time64_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
