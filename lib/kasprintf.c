@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/memory.h>
 #include <linux/log2.h>
 #include <linux/stdarg.h>
 #include <linux/export.h>
