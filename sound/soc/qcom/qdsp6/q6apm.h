@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __Q6APM_H__
 #define __Q6APM_H__
+#include <linux/idr_types.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/wait.h>

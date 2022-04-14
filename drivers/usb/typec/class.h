@@ -3,6 +3,7 @@
 #ifndef __USB_TYPEC_CLASS__
 #define __USB_TYPEC_CLASS__
 
+#include <linux/idr_types.h>
 #include <linux/device.h>
 #include <linux/usb/typec.h>
 

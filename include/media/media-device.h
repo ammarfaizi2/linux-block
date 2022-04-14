@@ -11,6 +11,7 @@
 #ifndef _MEDIA_DEVICE_H
 #define _MEDIA_DEVICE_H
 
+#include <linux/idr_types.h>
 #include <linux/list.h>
 #include <linux/mutex.h>
 
