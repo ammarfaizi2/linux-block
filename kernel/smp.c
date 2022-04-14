@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/softirq.h>
 #include <linux/lockdep_api.h>

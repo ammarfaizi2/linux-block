@@ -5,6 +5,7 @@
  * Copyright (C) 2017-2019 Microchip Technology Inc.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

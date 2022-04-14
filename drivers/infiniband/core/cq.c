@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015 HGST, a Western Digital Company.
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/dim.h>
 #include <linux/cpumask_api.h>

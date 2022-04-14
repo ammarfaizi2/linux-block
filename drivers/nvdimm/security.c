@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2018 Intel Corporation. All rights reserved. */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/rwsem_api.h>
 #include <linux/lockdep_api.h>

@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/rwsem_api.h>

@@ -7,6 +7,7 @@
  * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

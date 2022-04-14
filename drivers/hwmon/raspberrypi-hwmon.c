@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2018 Stefan Wahren <stefan.wahren@i2se.com>
  */
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

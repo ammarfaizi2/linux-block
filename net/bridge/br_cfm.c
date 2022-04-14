@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

@@ -5,6 +5,7 @@
  * All rights reserved.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/radix-tree-api.h>

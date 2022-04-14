@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"reboot: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>

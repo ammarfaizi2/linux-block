@@ -6,6 +6,7 @@
  * Copyright (C) 2005-2007 Richard Purdie <rpurdie@openedhand.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/rwsem_api.h>
 #include <linux/of_api.h>

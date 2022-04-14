@@ -8,6 +8,7 @@
  *   K. Y. Srinivasan <kys@microsoft.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uuid_api.h>
 #include <linux/topology.h>

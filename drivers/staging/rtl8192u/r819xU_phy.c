@@ -8,6 +8,7 @@
 #include "r819xU_firmware_img.h"
 
 #include "ieee80211/dot11d.h"
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

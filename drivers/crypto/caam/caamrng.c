@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

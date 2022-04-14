@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Avago Technologies.  All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uuid_api.h>
 #include <linux/topology.h>

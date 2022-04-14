@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/stddef.h>
 #include <asm/errno.h>
 #include <linux/sysrq.h>

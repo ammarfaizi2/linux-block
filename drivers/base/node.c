@@ -3,6 +3,7 @@
  * Basic Node interface support
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/stat.h>
 #include <linux/sched.h>

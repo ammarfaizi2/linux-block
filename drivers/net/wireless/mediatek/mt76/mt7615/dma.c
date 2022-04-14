@@ -7,6 +7,7 @@
  *         Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/netdevice_api.h>
 
 #include "mt7615.h"

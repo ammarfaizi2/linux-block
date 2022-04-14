@@ -9,6 +9,7 @@
  * Authors: Tobias Schramm <t.schramm@manjaro.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>

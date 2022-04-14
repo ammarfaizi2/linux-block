@@ -3,6 +3,7 @@
  * Copyright (c) 2016, Linaro Ltd.
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  */
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/firmware.h>

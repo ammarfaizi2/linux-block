@@ -18,6 +18,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 
 #include "device.h"

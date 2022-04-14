@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Cavium, Inc.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

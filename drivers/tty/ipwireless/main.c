@@ -21,6 +21,7 @@
 #include "main.h"
 #include "tty.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/atomic_api.h>

@@ -42,6 +42,7 @@ static const char version[] =
 			 )
 #endif
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api_lock.h>

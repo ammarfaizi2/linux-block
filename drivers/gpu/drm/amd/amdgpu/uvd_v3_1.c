@@ -22,6 +22,7 @@
  * Authors: Sonny Jiang <sonny.jiang@amd.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 

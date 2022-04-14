@@ -9,6 +9,7 @@
  * (C) 2013 Daniel Borkmann <dborkman@redhat.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

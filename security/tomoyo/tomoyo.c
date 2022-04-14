@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/stat.h>
 #include <linux/atomic_api.h>
 #include <linux/lsm_hooks.h>

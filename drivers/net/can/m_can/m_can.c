@@ -8,6 +8,7 @@
  * https://github.com/linux-can/can-doc/tree/master/m_can
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/property.h>
 #include <linux/netdevice_api.h>

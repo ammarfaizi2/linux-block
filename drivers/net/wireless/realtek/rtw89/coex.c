@@ -2,6 +2,7 @@
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/mutex_api.h>

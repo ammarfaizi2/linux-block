@@ -10,6 +10,7 @@
  * Updated by Felipe Balbi <felipe.balbi@nokia.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/preempt.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

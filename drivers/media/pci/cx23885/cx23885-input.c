@@ -24,6 +24,7 @@
 #include "cx23885.h"
 #include "cx23885-input.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <media/rc-core.h>

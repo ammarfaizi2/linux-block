@@ -7,6 +7,7 @@
  * Copyright © 2007 Anton Vorontsov <cbou@mail.ru>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ioport.h>
 #include <linux/module.h>

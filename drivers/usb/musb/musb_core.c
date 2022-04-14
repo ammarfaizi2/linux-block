@@ -64,6 +64,7 @@
  * Most of the conditional compilation will (someday) vanish.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>

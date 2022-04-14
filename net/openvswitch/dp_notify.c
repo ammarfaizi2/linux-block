@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2012 Nicira, Inc.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice.h>

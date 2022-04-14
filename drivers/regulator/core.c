@@ -7,6 +7,7 @@
 //
 // Author: Liam Girdwood <lrg@slimlogic.co.uk>
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

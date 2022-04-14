@@ -5,6 +5,7 @@
  * Copyright (c) 2007, 2008 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

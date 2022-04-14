@@ -47,6 +47,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

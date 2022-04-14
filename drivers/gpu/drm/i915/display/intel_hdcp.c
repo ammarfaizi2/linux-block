@@ -8,6 +8,7 @@
  * Ramalingam C <ramalingam.c@intel.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

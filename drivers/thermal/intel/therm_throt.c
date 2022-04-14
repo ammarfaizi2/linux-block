@@ -14,6 +14,7 @@
  * Credits: Adapted from Zwane Mwaikambo's original code in mce_intel.c.
  *          Inspired by Ross Biro's and Al Borchers' counter code.
  */
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/smp_api.h>
 #include <linux/cpumask_api.h>

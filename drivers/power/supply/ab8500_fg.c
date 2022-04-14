@@ -15,6 +15,7 @@
  *	Arun R Murthy <arun.murthy@stericsson.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/sched.h>

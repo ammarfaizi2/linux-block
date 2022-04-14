@@ -7,6 +7,7 @@
  * Author: David Dajun Chen <dchen@diasemi.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/input.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2016-2017 Glider bvba
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

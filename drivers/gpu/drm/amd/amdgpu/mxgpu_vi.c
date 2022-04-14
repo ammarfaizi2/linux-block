@@ -22,6 +22,7 @@
  * Authors: Xiangliang.Yu@amd.com
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/delay.h>
 
 #include "amdgpu.h"

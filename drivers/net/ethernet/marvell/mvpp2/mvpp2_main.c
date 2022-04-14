@@ -7,6 +7,7 @@
  * Marcin Wojtas <mw@semihalf.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>

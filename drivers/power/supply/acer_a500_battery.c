@@ -10,6 +10,7 @@
  * Copyright (c) 2010, NVIDIA Corporation.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Tty buffer allocation management
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

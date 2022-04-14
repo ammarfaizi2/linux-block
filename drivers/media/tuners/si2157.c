@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

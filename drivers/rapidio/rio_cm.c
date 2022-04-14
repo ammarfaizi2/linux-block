@@ -7,6 +7,7 @@
  * Copyright (c) 2015, RapidIO Trade Association
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

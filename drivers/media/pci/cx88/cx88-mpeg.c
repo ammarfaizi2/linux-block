@@ -11,6 +11,7 @@
 
 #include "cx88.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>

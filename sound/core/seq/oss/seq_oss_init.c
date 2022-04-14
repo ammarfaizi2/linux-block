@@ -14,6 +14,7 @@
 #include "seq_oss_readq.h"
 #include "seq_oss_timer.h"
 #include "seq_oss_event.h"
+#include <linux/workqueue_api.h>
 #include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/init.h>

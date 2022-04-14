@@ -14,6 +14,7 @@
 
 /* XXX TBD some includes may be extraneous */
 
+#include <linux/workqueue_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>

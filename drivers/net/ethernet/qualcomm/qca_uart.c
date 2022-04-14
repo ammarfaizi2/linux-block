@@ -22,6 +22,7 @@
  *   serial converter;
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api_lock.h>

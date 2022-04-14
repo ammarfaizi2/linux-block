@@ -12,6 +12,7 @@
  * Copyright(c) 2018-2021 Intel Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/rculist.h>

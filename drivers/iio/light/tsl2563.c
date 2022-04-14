@@ -11,6 +11,7 @@
  * Amit Kucheria <amit.kucheria@verdurent.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

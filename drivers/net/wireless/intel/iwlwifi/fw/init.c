@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2019-2021 Intel Corporation
  */
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 
 #include "iwl-drv.h"

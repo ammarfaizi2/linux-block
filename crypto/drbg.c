@@ -97,6 +97,7 @@
  * Just mix both scenarios above.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/random.h>

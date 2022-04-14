@@ -10,6 +10,7 @@
  * Alex <alex@pilotsoft.com> : 2004xxyy: Added Action extension
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>

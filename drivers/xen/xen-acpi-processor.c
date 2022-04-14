@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/percpu.h>

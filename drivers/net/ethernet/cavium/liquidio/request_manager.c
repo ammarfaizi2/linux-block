@@ -16,6 +16,7 @@
  * NONINFRINGEMENT.  See the GNU General Public License for more
  * details.
  **********************************************************************/
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

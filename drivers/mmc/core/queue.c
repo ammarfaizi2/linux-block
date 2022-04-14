@@ -3,6 +3,7 @@
  *  Copyright (C) 2003 Russell King, All Rights Reserved.
  *  Copyright 2006-2007 Pierre Ossman
  */
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

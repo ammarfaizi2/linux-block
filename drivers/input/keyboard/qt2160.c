@@ -5,6 +5,7 @@
  *  Copyright (C) 2009 Raphael Derosso Pereira <raphaelpereira@gmail.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/kernel.h>
 #include <linux/leds.h>
 #include <linux/module.h>

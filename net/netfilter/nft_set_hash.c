@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/rculist.h>
 #include <linux/random.h>
 #include <linux/math64.h>

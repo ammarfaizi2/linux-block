@@ -14,6 +14,7 @@
  */
 #define pr_fmt(fmt) "cpufreq: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/types.h>
 #include <linux/cpufreq.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2004 Andreas Monitzer <andy@monitzer.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/bitops.h>
 #include <linux/input.h>
 #include <linux/kernel.h>

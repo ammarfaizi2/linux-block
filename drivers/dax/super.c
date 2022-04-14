@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2017 Intel Corporation. All rights reserved.
  */
+#include <linux/workqueue_api.h>
 #include <linux/uio_api.h>
 #include <linux/stringhash.h>
 #include <linux/srcu.h>

@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/dma-fence-api.h>

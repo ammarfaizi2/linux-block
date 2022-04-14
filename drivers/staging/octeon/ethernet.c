@@ -5,6 +5,7 @@
  * Copyright (c) 2003-2007 Cavium Networks
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>

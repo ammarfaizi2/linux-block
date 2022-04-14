@@ -2,6 +2,7 @@
 /* Copyright (c) 2015, Sony Mobile Communications, AB.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

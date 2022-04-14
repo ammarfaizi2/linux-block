@@ -8,6 +8,7 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>

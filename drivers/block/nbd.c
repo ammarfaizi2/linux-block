@@ -11,6 +11,7 @@
  * (part of code stolen from loop.c)
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/topology.h>

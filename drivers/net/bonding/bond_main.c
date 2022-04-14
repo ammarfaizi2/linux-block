@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>

@@ -14,6 +14,7 @@
 #include "i915_drv.h"
 
 #if defined(CONFIG_X86)
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <asm/smp.h>
 #else

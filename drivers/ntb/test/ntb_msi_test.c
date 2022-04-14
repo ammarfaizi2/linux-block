@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

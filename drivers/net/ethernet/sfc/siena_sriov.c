@@ -3,6 +3,7 @@
  * Driver for Solarflare network controllers and boards
  * Copyright 2010-2012 Solarflare Communications Inc.
  */
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

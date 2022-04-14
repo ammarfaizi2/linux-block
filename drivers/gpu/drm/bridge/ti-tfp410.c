@@ -4,6 +4,7 @@
  * Author: Jyri Sarha <jsarha@ti.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

@@ -64,6 +64,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

@@ -7,6 +7,7 @@
  * Stephen Boyd <stephen.boyd@linaro.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"dlpar: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>

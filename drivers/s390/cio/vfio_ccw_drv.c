@@ -10,6 +10,7 @@
  *            Cornelia Huck <cohuck@redhat.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

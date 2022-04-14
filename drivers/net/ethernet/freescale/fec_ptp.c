@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>

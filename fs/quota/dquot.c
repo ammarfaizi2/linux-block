@@ -54,6 +54,7 @@
  * (C) Copyright 1994 - 1997 Marco van Wieringen
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/vfs_pressure.h>
 #include <linux/timekeeping.h>

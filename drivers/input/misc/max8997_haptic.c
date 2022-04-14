@@ -8,6 +8,7 @@
  * This program is not provided / owned by Maxim Integrated Products.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

@@ -15,6 +15,7 @@
  * https://www.ti.com/product/bq24158
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

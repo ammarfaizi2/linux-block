@@ -6,6 +6,7 @@
  * Copyright (C) 2006-2007 Michael Wu <flamingice@sourmilk.net>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

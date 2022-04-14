@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/smp_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

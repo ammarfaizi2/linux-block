@@ -7,6 +7,7 @@
  * Author: Andreas Dannenberg <dannenberg@ti.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

@@ -4,6 +4,7 @@
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/topology.h>
 #include <linux/pci-dma-compat.h>

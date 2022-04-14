@@ -13,6 +13,7 @@
 #include "writeback.h"
 #include "features.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

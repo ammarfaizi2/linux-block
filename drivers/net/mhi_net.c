@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Linaro Ltd <loic.poulain@linaro.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

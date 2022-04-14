@@ -5,6 +5,7 @@
  * Authors:
  * Sean Paul <seanpaul@chromium.org>
  */
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/average.h>

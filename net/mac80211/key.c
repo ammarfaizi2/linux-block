@@ -9,6 +9,7 @@
  * Copyright 2018-2020  Intel Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

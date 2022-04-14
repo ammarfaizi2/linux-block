@@ -4,6 +4,7 @@
 //
 // Based on cx88-alsa.c
 
+#include <linux/workqueue_api.h>
 #include <linux/export.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

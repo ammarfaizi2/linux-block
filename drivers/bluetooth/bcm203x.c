@@ -7,6 +7,7 @@
  *  Copyright (C) 2003  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

@@ -8,6 +8,7 @@
 
 #undef DEBUG
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>

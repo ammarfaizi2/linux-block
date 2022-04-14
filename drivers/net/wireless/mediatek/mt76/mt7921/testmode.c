@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 
 #include "mt7921.h"

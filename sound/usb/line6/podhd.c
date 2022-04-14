@@ -7,6 +7,7 @@
  * Copyright (C) 2017 Hans P. Moller <hmoller@uc.cl>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 #include <linux/usb.h>
 #include <linux/slab.h>

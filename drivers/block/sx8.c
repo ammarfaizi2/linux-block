@@ -10,6 +10,7 @@
  *  for more details.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>

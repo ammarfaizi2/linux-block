@@ -2,6 +2,7 @@
 /*
  *  Implementation of operations over global quota file
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>

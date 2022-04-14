@@ -7,6 +7,7 @@
  * Author: Richard Purdie <rpurdie@openedhand.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

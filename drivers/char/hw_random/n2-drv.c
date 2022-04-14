@@ -4,6 +4,7 @@
  * Copyright (C) 2008, 2011 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

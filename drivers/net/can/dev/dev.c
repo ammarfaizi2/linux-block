@@ -4,6 +4,7 @@
  * Copyright (C) 2008-2009 Wolfgang Grandegger <wg@grandegger.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

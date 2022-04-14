@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012 Broadcom Corporation
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <asm/unaligned.h>

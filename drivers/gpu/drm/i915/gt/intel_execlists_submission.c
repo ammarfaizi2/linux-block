@@ -106,6 +106,7 @@
  * preemption, but just sampling the new tail pointer).
  *
  */
+#include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>

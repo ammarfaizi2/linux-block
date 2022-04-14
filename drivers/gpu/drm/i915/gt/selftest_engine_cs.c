@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/math64.h>
 #include <linux/atomic_api.h>
 #include <linux/sort.h>

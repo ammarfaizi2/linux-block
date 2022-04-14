@@ -6,6 +6,7 @@
  *  Copyright (c) 2014 Red Hat, Inc
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

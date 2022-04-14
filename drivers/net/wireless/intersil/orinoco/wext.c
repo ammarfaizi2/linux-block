@@ -2,6 +2,7 @@
  *
  * See copyright notice in main.c
  */
+#include <linux/workqueue_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>

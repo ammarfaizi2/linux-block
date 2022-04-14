@@ -12,6 +12,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/cred.h>

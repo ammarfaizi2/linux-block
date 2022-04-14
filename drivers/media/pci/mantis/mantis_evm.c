@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/kernel.h>
 

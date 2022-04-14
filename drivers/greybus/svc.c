@@ -6,6 +6,7 @@
  * Copyright 2015 Linaro Ltd.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>

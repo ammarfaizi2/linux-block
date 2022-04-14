@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (C) 2011 Richard Cochran <richardcochran@gmail.com> */
 
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>

@@ -8,6 +8,7 @@
  *           Marc Dietrich <marvin24@gmx.de>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

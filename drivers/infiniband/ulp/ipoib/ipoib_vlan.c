@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>

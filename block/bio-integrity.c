@@ -6,6 +6,7 @@
  * Written by: Martin K. Petersen <martin.petersen@oracle.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/highmem.h>

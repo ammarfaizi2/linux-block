@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

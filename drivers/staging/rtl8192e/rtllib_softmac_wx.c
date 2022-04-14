@@ -11,6 +11,7 @@
  * PS wx handler mostly stolen from hostap, copyright who
  * own it's copyright ;-)
  */
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

@@ -10,6 +10,7 @@ Copyright (C) 2005-2009, Uri Shkolnik, Anatoly Greenblat
 
 #include "smscoreapi.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/usb.h>

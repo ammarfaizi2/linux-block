@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -6,6 +6,7 @@
  *  Copyright 2007 Sony Corp.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

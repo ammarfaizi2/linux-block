@@ -5,6 +5,7 @@
  * Copyright 2009-2010 Analog Devices Inc.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

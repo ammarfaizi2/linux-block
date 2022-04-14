@@ -5,6 +5,7 @@
  *  Copyright (c) 2020 Sony Interactive Entertainment
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

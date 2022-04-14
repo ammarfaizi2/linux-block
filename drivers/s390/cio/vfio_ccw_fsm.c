@@ -9,6 +9,7 @@
  *            Cornelia Huck <cohuck@redhat.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/vfio.h>

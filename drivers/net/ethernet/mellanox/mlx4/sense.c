@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/errno.h>
 #include <linux/if_ether.h>

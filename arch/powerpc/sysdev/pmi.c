@@ -11,6 +11,7 @@
  * Author: Christian Krafft <krafft@de.ibm.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2020 by Renesas Electronics Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

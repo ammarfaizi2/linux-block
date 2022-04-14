@@ -6,6 +6,7 @@
  */
 
 #define FSCACHE_DEBUG_LEVEL CACHE
+#include <linux/workqueue_api.h>
 #include <linux/sysctl.h>
 #include <linux/slab.h>
 #include <linux/kobject_api.h>

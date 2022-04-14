@@ -19,6 +19,7 @@
  */
 
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>

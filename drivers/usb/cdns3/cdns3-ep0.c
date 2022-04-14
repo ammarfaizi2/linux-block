@@ -10,6 +10,7 @@
  *          Peter Chen <peter.chen@nxp.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/usb/composite.h>

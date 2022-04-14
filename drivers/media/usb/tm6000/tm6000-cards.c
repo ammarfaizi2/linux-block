@@ -3,6 +3,7 @@
 //
 // Copyright (c) 2006-2007 Mauro Carvalho Chehab <mchehab@kernel.org>
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/device_api_lock.h>

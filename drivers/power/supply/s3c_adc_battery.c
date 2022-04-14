@@ -4,6 +4,7 @@
 // Copyright (c) Vasily Khoruzhick
 // Based on h1940_battery.c by Arnaud Patard
 
+#include <linux/workqueue_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>

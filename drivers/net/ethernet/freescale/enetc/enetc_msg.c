@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2017-2019 NXP */
 
+#include <linux/workqueue_api.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 

@@ -6,6 +6,7 @@
  *
  * based on tosa_battery.c
  */
+#include <linux/workqueue_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>

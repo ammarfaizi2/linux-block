@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 Steven Rostedt <srostedt@redhat.com>
  */
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

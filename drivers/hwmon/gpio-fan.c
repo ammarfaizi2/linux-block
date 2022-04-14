@@ -7,6 +7,7 @@
  * Author: Simon Guinot <sguinot@lacie.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) "ACPI: thermal: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

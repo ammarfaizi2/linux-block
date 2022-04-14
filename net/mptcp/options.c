@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "MPTCP: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <asm/unaligned.h>
 #include <linux/kernel.h>

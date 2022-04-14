@@ -16,6 +16,7 @@
  *   Copyright (C) 2007 David Sterba
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>

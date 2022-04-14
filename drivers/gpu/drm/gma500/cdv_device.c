@@ -5,6 +5,7 @@
  *
  **************************************************************************/
 
+#include <linux/workqueue_api.h>
 #include <linux/io.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>

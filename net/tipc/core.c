@@ -44,6 +44,7 @@
 #include "node.h"
 #include "crypto.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/random.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

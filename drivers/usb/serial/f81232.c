@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Linux Foundation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

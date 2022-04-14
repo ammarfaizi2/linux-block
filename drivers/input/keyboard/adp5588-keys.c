@@ -8,6 +8,7 @@
  * Copyright (C) 2008-2010 Analog Devices Inc.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

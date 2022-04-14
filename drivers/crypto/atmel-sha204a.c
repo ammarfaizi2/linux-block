@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Linaro, Ltd. <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/atomic_api.h>

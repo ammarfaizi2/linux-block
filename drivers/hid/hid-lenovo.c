@@ -23,6 +23,7 @@
 /*
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

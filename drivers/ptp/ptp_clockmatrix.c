@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2019 Integrated Device Technology, Inc., a Renesas Company.
  */
+#include <linux/workqueue_api.h>
 #include <linux/time64_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

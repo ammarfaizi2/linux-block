@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>

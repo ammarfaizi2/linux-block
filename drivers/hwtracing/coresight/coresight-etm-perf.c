@@ -4,6 +4,7 @@
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/perf_event_api.h>

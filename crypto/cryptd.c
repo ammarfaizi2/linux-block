@@ -12,6 +12,7 @@
  *    Copyright (c) 2010, Intel Corporation.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/smp_api.h>
 #include <linux/refcount_api.h>
 #include <linux/percpu.h>

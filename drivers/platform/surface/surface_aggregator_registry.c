@@ -9,6 +9,7 @@
  * Copyright (C) 2020-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

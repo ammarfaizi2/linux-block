@@ -5,6 +5,7 @@
  *	   Neil Zhang <zhangwm@marvell.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

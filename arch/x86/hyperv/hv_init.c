@@ -7,6 +7,7 @@
  * Author : K. Y. Srinivasan <kys@microsoft.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timex.h>
 #include <linux/sched/task_stack.h>
 #include <linux/percpu.h>

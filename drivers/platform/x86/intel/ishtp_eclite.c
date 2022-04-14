@@ -6,6 +6,7 @@
  * Copyright (c) 2021, Intel Corporation.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Daniel Ribeiro <drwyrm@gmail.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>

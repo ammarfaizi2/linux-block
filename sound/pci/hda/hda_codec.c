@@ -5,6 +5,7 @@
  * Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

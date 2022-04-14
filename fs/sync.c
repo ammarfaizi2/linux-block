@@ -3,6 +3,7 @@
  * High-level sync()-related operations
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_api.h>

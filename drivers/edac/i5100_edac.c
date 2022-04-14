@@ -20,6 +20,7 @@
  * them as DIMM's. An internal table creates the association between ranks
  * and DIMM's.
  */
+#include <linux/workqueue_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

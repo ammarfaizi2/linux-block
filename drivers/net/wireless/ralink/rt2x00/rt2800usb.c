@@ -16,6 +16,7 @@
 	Supported chipsets: RT2800U.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/hrtimer_api.h>
 #include <linux/delay.h>

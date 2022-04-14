@@ -10,6 +10,7 @@
 // Based on ak4535.c by Richard Purdie
 // Based on wm8753.c by Liam Girdwood
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/log2.h>

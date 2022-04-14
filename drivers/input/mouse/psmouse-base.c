@@ -10,6 +10,7 @@
 #define pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
 #define psmouse_fmt(fmt)	fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

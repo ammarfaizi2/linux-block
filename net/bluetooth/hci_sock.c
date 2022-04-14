@@ -23,6 +23,7 @@
 */
 
 /* Bluetooth HCI sockets. */
+#include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

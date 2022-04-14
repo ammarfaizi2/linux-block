@@ -8,6 +8,7 @@
  * Author: Paul McKenney <paulmck@linux.ibm.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/swait_api.h>
 #include <linux/spinlock_api.h>

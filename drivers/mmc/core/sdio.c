@@ -5,6 +5,7 @@
  *  Copyright 2006-2007 Pierre Ossman
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/atomic_api.h>

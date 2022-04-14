@@ -15,6 +15,7 @@
  * Hardware interface for generic Intel audio DSP HDA IP
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/module.h>

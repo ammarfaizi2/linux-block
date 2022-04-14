@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

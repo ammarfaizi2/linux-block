@@ -29,6 +29,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/capability.h>
 #include <linux/export.h>

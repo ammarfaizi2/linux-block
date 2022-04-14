@@ -8,6 +8,7 @@
  * Copyright Sarah Sharp for Intel Corp, 2010
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

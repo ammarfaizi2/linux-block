@@ -6,6 +6,7 @@
  * Copyright (C) 2012 - 2013 Pali Rohár <pali@kernel.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -6,6 +6,7 @@
  * Partly based/Inspired by Stephen Tiedemann's nfcpy
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>

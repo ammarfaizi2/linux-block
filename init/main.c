@@ -12,6 +12,7 @@
 
 #define DEBUG		/* Enable initcall_debug */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysctl.h>
 #include <linux/softirq.h>

@@ -13,6 +13,7 @@
  */
 
 #include "cyttsp4_core.h"
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>

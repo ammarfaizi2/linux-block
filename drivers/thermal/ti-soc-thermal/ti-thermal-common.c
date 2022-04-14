@@ -7,6 +7,7 @@
  *   Eduardo Valentin <eduardo.valentin@ti.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2019, 2021 Intel Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

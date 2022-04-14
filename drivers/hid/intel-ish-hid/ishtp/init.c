@@ -5,6 +5,7 @@
  * Copyright (c) 2003-2016, Intel Corporation.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/export.h>

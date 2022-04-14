@@ -22,6 +22,7 @@
  */
 
 
+#include <linux/workqueue_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>

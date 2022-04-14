@@ -25,6 +25,7 @@
 #include "xfs_ag.h"
 #include "xfs_log_priv.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

@@ -23,6 +23,7 @@
  * Copyright (c) 2017 Josef Filzmaier <j.filzmaier@gmx.at>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

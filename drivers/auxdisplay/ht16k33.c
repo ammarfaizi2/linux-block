@@ -8,6 +8,7 @@
  * Copyright (C) 2021 Glider bv
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>

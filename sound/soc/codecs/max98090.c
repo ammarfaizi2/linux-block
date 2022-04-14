@@ -5,6 +5,7 @@
  * Copyright 2011-2012 Maxim Integrated Products
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

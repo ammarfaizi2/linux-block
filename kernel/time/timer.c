@@ -18,6 +18,7 @@
  *              Designed by David S. Miller, Alexey Kuznetsov and Ingo Molnar
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysctl.h>
 #include <linux/syscalls_api.h>

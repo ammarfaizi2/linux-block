@@ -6,6 +6,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/mutex_api.h>

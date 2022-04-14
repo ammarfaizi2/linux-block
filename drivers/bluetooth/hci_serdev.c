@@ -11,6 +11,7 @@
  *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/percpu_rwsem.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

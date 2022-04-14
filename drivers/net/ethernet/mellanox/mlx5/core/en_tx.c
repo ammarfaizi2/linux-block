@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api_prefetch.h>
 #include <linux/netdevice_api.h>

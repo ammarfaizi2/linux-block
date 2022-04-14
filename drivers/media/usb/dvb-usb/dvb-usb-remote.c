@@ -7,6 +7,7 @@
  * This file contains functions for initializing the input-device and for handling remote-control-queries.
  */
 #include "dvb-usb-common.h"
+#include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/usb/input.h>

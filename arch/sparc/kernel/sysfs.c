@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007 David S. Miller <davem@davemloft.net>
  */
+#include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

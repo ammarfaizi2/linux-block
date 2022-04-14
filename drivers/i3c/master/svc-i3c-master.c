@@ -7,6 +7,7 @@
  * Based on a work from: Conor Culhane <conor.culhane@silvaco.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

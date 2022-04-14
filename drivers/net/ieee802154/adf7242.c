@@ -7,6 +7,7 @@
  * https://www.analog.com/ADF7242
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>

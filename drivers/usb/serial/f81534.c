@@ -21,6 +21,7 @@
  * 128x1,2,3,4 bytes.
  *
  */
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

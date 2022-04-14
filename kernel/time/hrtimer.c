@@ -22,6 +22,7 @@
  *	et. al.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/timerqueue_api.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>

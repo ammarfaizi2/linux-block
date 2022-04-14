@@ -6,6 +6,7 @@
  * The Sparx5 Chip Register Model can be browsed at this location:
  * https://github.com/microchip-ung/sparx-5_reginfo
  */
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

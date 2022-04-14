@@ -14,6 +14,7 @@
  */
 #undef DEBUG
 
+#include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

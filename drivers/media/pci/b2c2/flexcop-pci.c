@@ -6,6 +6,7 @@
  */
 
 #define FC_LOG_PREFIX "flexcop-pci"
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>

@@ -10,6 +10,7 @@
  * Author: David Cohen <david.a.cohen@linux.intel.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

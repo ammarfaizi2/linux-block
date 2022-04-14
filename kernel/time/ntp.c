@@ -6,6 +6,7 @@
  * Please see those files for relevant copyright info and historical
  * changelogs.
  */
+#include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/sched.h>

@@ -10,6 +10,7 @@
 #include "dm-cache-metadata.h"
 #include "dm-io-tracker.h"
 
+#include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

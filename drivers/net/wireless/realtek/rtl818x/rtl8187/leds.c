@@ -12,6 +12,7 @@
 
 #ifdef CONFIG_RTL8187_LEDS
 
+#include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <net/mac80211.h>
 #include <linux/usb.h>

@@ -3,6 +3,7 @@
  *
  * This code is licenced under the GPL.
  */
+#include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/sched.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2006 Michael Hanselmann (linux-kernel@hansmi.ch)
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
