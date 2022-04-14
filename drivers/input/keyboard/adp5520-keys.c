@@ -5,6 +5,7 @@
  * Copyright 2009 Analog Devices Inc.
  */
 
+#include <linux/notifier.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/module.h>

@@ -15,6 +15,7 @@
  *	and ima_file_check.
  */
 
+#include <linux/notifier.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api_mapping.h>

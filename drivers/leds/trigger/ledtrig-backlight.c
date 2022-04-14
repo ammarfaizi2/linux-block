@@ -6,6 +6,7 @@
  * Copyright 2008 (C) Eurotech S.p.A. <info@eurotech.it>
  */
 
+#include <linux/notifier.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

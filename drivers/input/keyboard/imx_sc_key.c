@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/notifier.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/device.h>
