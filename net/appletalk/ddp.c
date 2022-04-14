@@ -46,6 +46,7 @@
  *						use seq_file
  */
 
+#include <uapi/linux/route.h>
 #include <net/sock_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
