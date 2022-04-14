@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/radix-tree-api.h>

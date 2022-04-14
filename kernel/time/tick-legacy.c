@@ -4,6 +4,7 @@
  * consolidated here from m68k/ia64/parisc/arm.
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/irq.h>
 #include <linux/profile.h>
 #include <linux/timekeeper_internal.h>

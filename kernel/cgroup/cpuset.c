@@ -22,6 +22,7 @@
  *  distribution for more details.
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/sched/topology.h>
 #include <linux/percpu_rwsem_api.h>
 #include <linux/notifier_api.h>

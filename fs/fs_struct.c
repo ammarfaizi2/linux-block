@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/seqlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/sched/signal.h>

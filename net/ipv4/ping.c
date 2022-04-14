@@ -15,6 +15,7 @@
  * none of the bugs are Pavel's now.
  */
 
+#include <linux/seqlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

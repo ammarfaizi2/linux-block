@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2004, 2005 IBM, John Stultz (johnstul@us.ibm.com)
  */
+#include <linux/seqlock_api.h>
 #include <linux/clocksource.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

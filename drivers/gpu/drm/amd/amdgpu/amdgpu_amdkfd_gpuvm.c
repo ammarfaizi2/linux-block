@@ -19,6 +19,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <linux/seqlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
