@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/backlight.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
