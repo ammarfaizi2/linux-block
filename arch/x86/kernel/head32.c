@@ -6,6 +6,7 @@
  *  Copyright (C) 2007 Eric Biederman <ebiederm@xmission.com>
  */
 
+#include <asm/pgtable.h>
 #include <linux/init.h>
 #include <linux/start_kernel.h>
 #include <linux/mm.h>

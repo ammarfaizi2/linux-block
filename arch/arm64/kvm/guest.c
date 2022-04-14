@@ -8,6 +8,7 @@
  * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
+#include <asm/pgtable.h>
 #include <linux/bits.h>
 #include <linux/errno.h>
 #include <linux/err.h>

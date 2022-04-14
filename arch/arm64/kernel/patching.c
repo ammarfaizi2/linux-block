@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <asm/pgtable.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/smp.h>

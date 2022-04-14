@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Wind River Systems,
  *   written by Ralf Baechle (ralf@linux-mips.org)
  */
+#include <asm/pgtable.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

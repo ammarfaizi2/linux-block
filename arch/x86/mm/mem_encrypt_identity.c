@@ -36,6 +36,7 @@
  */
 #define USE_EARLY_PGTABLE_L5
 
+#include <asm/pgtable.h>
 #include <asm/msr.h>
 #include <asm/desc_defs.h>
 #include <linux/kernel.h>
