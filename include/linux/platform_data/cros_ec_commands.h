@@ -14,6 +14,7 @@
 #define __CROS_EC_COMMANDS_H
 
 
+#include <vdso/bits.h>
 #include <linux/types.h>
 
 

@@ -7,6 +7,7 @@
 #ifndef __KSMBD_GLOB_H
 #define __KSMBD_GLOB_H
 
+#include <vdso/bits.h>
 #include <linux/ctype.h>
 
 #include "unicode.h"
