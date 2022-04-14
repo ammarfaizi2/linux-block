@@ -7,6 +7,7 @@
 #if !defined(_MLX5_ESW_BRIDGE_TRACEPOINT_) || defined(TRACE_HEADER_MULTI_READ)
 #define _MLX5_ESW_BRIDGE_TRACEPOINT_
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/tracepoint.h>
 #include "../bridge_priv.h"

@@ -22,6 +22,7 @@
 #ifndef _CHECKSUM_IPV6_H
 #define _CHECKSUM_IPV6_H
 
+#include <linux/netdevice_api_extra.h>
 #include <asm/types.h>
 #include <asm/byteorder.h>
 #include <net/ip.h>
