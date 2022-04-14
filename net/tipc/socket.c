@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <net/sock_api_extra.h>
 #include <net/netlink_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

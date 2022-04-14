@@ -4,6 +4,7 @@
  *
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
+#include <net/sock_api_extra.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

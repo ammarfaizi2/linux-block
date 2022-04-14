@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "MPTCP: " fmt
 
+#include <net/sock_api_extra.h>
 #include <net/ipv6_api.h>
 #include <linux/uaccess.h>
 #include <linux/ipv6.h>
