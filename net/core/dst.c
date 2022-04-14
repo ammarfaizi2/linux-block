@@ -6,6 +6,7 @@
  *
  */
 
+#include <net/dst_ops_api.h>
 #include <net/dst_api.h>
 #include <linux/refcount_api.h>
 #include <linux/ratelimit.h>
