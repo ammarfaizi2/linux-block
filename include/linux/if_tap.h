@@ -2,6 +2,7 @@
 #ifndef _LINUX_IF_TAP_H_
 #define _LINUX_IF_TAP_H_
 
+#include <linux/net.h>
 #include <net/sock.h>
 #include <linux/skb_array.h>
 

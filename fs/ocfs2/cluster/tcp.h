@@ -10,6 +10,7 @@
 #ifndef O2CLUSTER_TCP_H
 #define O2CLUSTER_TCP_H
 
+#include <linux/net.h>
 #include <linux/socket.h>
 #ifdef __KERNEL__
 #include <net/sock.h>
