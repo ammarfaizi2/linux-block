@@ -3,6 +3,7 @@
  * Copyright (C) STMicroelectronics SA 2014
  * Author: Fabien Dessenne <fabien.dessenne@st.com> for STMicroelectronics.
  */
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/seq_file.h>
 

@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api.h>

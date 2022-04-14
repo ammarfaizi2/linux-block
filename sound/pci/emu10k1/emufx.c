@@ -14,6 +14,7 @@
  *    --
  */
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/capability.h>
 #include <linux/delay.h>

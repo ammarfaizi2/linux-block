@@ -84,6 +84,7 @@ static int gx_fix;
 
 #define yellowfin_debug debug
 
+#include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

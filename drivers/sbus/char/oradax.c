@@ -21,6 +21,7 @@
  * See Documentation/sparc/oradax/oracle-dax.rst for more details.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

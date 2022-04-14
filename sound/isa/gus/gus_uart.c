@@ -4,6 +4,7 @@
  *  Routines for the GF1 MIDI interface - like UART 6850
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/time.h>

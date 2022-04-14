@@ -19,6 +19,7 @@
  * - Fix more bugs.
  */
 
+#include <linux/io.h>
 #include <linux/eisa.h>
 #include <linux/types.h>
 #include <linux/init.h>

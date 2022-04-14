@@ -2,6 +2,7 @@
 /*
  * Implement the sparc iomap interfaces
  */
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/module.h>
 #include <asm/io.h>

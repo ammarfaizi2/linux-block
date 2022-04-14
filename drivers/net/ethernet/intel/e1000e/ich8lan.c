@@ -38,6 +38,7 @@
  * Ethernet Connection (3) I218-V
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/capability.h>

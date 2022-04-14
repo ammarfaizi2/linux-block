@@ -30,6 +30,7 @@
  *  - scheduled action on the stream.
  */
 
+#include <linux/io.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <sound/core.h>

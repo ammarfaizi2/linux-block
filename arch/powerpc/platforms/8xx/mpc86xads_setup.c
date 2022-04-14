@@ -14,6 +14,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/of_address.h>
 #include <linux/of_fdt.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2000-2004 Russell King
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

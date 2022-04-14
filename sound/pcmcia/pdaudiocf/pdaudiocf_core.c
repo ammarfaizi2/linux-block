@@ -5,6 +5,7 @@
  * Copyright (c) 2003 by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <sound/core.h>

@@ -22,6 +22,7 @@
 #include "head.h"
 #include "core.h"
 
+#include <linux/io.h>
 #include <nvif/push507c.h>
 
 #include <nvhw/class/cl507d.h>

@@ -7,6 +7,7 @@
  * Based on work done by Phil Edworthy <phil@edworthys.org>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

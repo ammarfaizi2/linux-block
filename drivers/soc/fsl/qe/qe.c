@@ -10,6 +10,7 @@
  * General Purpose functions for the global management of the
  * QUICC Engine (QE).
  */
+#include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

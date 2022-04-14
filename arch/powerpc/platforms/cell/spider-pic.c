@@ -7,6 +7,7 @@
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/ioport.h>

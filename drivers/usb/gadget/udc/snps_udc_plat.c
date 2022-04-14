@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Broadcom
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/extcon.h>
 #include <linux/of_address.h>

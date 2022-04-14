@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/prandom.h>
 
 #include "intel_memory_region.h"

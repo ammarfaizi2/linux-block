@@ -8,6 +8,7 @@
  * Some code borrowed from the Linux EHCI driver.
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/usb.h>
 #include <linux/pci.h>

@@ -79,6 +79,7 @@
 #	endif
 #endif
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

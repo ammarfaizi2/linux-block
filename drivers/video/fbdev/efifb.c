@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/efi.h>
 #include <linux/efi-bgrt.h>

@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

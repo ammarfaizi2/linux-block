@@ -4,6 +4,8 @@
  * Authors: Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/io.h>
+
 #include "vbox_drv.h"
 #include "vboxvideo_vbe.h"
 #include "hgsmi_defs.h"

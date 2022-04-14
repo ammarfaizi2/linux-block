@@ -20,6 +20,7 @@
  *   [0] - I/O port base address
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 #include <linux/delay.h>

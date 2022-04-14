@@ -7,6 +7,7 @@
  *
  * 14/04/2005 Initial version, colin.king@philips.com
  */
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of_address.h>

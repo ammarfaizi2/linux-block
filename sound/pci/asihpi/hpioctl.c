@@ -17,6 +17,7 @@
 #include "hpioctl.h"
 #include "hpicmn.h"
 
+#include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>

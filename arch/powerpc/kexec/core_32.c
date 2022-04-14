@@ -7,6 +7,7 @@
  * Copyright (C) 2005 IBM Corporation.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/kexec.h>
 #include <linux/mm.h>

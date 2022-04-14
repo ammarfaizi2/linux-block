@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/pci.h>

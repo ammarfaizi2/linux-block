@@ -10,6 +10,7 @@
  * drivers/pci/pci-sysfs.c
  */
 
+#include <linux/io.h>
 #include <linux/sched.h>
 #include <linux/stat.h>
 #include <linux/slab.h>

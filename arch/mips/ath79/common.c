@@ -9,6 +9,7 @@
  *  Parts of this file are based on Atheros' 2.6.15/2.6.31 BSP
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/types.h>

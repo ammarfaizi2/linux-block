@@ -10,6 +10,7 @@
  *   Wu Hao <hao.wu@intel.com>
  *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
  */
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

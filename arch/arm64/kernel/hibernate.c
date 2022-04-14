@@ -10,6 +10,7 @@
  * Copyright (C) 2006 Rafael J. Wysocki <rjw@sisk.pl>
  */
 #define pr_fmt(x) "hibernate: " x
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>

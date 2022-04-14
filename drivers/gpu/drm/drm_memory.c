@@ -33,6 +33,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/io.h>
 #include <linux/export.h>
 #include <linux/highmem.h>
 #include <linux/pci.h>

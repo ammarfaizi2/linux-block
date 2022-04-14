@@ -11,6 +11,7 @@
  * Copyright (C) 2007 MIPS Technologies, Inc.
  * Copyright (C) 2007 Ralf Baechle <ralf@linux-mips.org>
  */
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

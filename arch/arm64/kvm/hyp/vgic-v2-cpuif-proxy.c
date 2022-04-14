@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/io.h>
 #include <hyp/adjust_pc.h>
 
 #include <linux/compiler.h>

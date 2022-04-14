@@ -7,6 +7,7 @@
  * Author: Samuel Iglesias Gonsalvez <siglesias@igalia.com>
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

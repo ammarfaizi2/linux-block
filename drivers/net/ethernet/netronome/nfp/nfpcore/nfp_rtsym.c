@@ -10,6 +10,7 @@
  *          Francois H. Theron <francois.theron@netronome.com>
  */
 
+#include <linux/io.h>
 #include <asm/unaligned.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

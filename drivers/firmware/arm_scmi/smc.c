@@ -6,6 +6,7 @@
  * Copyright 2020 NXP
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/arm-smccc.h>
 #include <linux/atomic.h>

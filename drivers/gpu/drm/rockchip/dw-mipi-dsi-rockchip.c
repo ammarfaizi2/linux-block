@@ -6,6 +6,7 @@
  *      Nickey Yang <nickey.yang@rock-chips.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/clk.h>

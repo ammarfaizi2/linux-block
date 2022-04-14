@@ -5,6 +5,7 @@
  * Copyright (C) 2013, Intel Corporation. All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/slab.h>

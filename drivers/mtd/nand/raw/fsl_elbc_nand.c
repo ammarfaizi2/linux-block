@@ -9,6 +9,7 @@
  *          Roy Zang <tie-fei.zang@freescale.com>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/types.h>

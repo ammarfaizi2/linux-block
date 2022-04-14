@@ -3,6 +3,7 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/acpi.h>
 #include <linux/bitfield.h>

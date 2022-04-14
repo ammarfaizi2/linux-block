@@ -40,6 +40,7 @@
  * fully tested as yet. Terry Barnaby, BEAM Ltd.
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/sched.h>
 #include <linux/delay.h>

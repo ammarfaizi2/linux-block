@@ -10,6 +10,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/pm_runtime.h>
 #include <linux/delay.h>

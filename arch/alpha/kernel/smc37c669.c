@@ -1,6 +1,7 @@
 /*
  * SMC 37C669 initialization code
  */
+#include <linux/io.h>
 #include <linux/kernel.h>
 
 #include <linux/mm.h>

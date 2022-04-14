@@ -12,6 +12,7 @@
  * Copyright Linas Vepstas 2005, 2006
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/atomic.h>
 #include <linux/delay.h>

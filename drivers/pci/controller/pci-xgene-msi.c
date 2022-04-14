@@ -6,6 +6,7 @@
  * Author: Tanmay Inamdar <tinamdar@apm.com>
  *	   Duc Dang <dhdang@apm.com>
  */
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>

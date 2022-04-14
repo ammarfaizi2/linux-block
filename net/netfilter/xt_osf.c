@@ -3,6 +3,7 @@
  * Copyright (c) 2003+ Evgeniy Polyakov <zbr@ioremap.net>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 

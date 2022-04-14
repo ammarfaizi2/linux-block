@@ -108,6 +108,7 @@
  * allowed -- SouthBridge, JP4, JP5, JP6
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

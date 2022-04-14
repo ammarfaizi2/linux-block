@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/io.h>
 #include <linux/ahci_platform.h>
 #include <linux/kernel.h>
 #include <linux/mbus.h>

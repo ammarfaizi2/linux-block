@@ -6,6 +6,7 @@
  *  All rights reserved.
  */
 
+#include <linux/io.h>
 #include <media/i2c/adv7604.h>
 
 #include "cobalt-driver.h"

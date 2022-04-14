@@ -36,6 +36,7 @@
  *                                                                           *
  ****************************************************************************/
 
+#include <linux/io.h>
 #include <linux/etherdevice_api.h>
 
 #include "common.h"

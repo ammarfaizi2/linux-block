@@ -9,6 +9,7 @@
  * Those can be found on Bechhoff CX50xx industrial PCs.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/hrtimer_api.h>
 #include <linux/etherdevice_api.h>

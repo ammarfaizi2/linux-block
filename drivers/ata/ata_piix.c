@@ -66,6 +66,7 @@
  *	ICH3	errata #18	- Don't use native mode
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 1999, 2000, 04 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>

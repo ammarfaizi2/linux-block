@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Endless Mobile
  */
 
+#include <linux/io.h>
 #include <linux/export.h>
 #include <linux/bitfield.h>
 

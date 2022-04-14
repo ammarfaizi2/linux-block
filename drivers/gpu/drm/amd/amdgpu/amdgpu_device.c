@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/hashtable_api.h>
 #include <linux/dma-fence-api.h>

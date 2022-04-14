@@ -32,6 +32,7 @@
  * subdevice 1 is unused.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/comedi/comedi_pci.h>

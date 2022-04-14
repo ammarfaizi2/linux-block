@@ -9,6 +9,7 @@
  * Copyright (C) 2001 by Ladislav Michl
  * Copyright (C) 2003, 06 Ralf Baechle (ralf@linux-mips.org)
  */
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/bcd.h>
 #include <linux/i8253.h>

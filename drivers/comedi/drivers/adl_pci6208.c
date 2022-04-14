@@ -22,6 +22,7 @@
  * channels exist in registers, but don't go to DAC chips.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/comedi/comedi_pci.h>

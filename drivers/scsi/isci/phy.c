@@ -53,6 +53,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/io.h>
+
 #include "isci.h"
 #include "host.h"
 #include "phy.h"

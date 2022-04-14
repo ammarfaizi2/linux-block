@@ -4,6 +4,7 @@
  * Copyright:	(C) 2015 Linaro Ltd.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu_pm.h>

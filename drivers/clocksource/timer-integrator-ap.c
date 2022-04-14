@@ -5,6 +5,7 @@
  * Copyright (c) 2014, Linaro Limited
  */
 
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/clocksource.h>
 #include <linux/of_irq.h>

@@ -4,6 +4,7 @@
  * Author: Quentin Perret <qperret@google.com>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/kvm_pgtable.h>
 

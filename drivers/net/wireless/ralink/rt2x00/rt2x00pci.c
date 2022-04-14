@@ -10,6 +10,7 @@
 	Abstract: rt2x00 generic pci device routines.
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

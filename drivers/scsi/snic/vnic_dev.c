@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/align.h>
 #include <linux/kernel.h>

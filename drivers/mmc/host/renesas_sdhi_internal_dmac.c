@@ -7,6 +7,7 @@
  * Copyright (C) 2018-19 Sang Engineering, Wolfram Sang
  */
 
+#include <linux/io.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>

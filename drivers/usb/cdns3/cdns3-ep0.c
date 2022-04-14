@@ -10,6 +10,7 @@
  *          Peter Chen <peter.chen@nxp.com>
  */
 
+#include <linux/io.h>
 #include <linux/usb/composite.h>
 #include <linux/iopoll.h>
 

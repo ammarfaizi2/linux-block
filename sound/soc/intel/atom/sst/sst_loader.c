@@ -14,6 +14,7 @@
  *  This file contains all dsp controlling functions like firmware download,
  * setting/resetting dsp cores, etc
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

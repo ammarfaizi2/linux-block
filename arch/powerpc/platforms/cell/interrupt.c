@@ -16,6 +16,7 @@
  *   a non-active node to the active node)
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/export.h>

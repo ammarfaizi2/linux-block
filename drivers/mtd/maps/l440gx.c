@@ -5,6 +5,7 @@
  * Bugs this currently does not work under linuxBIOS.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

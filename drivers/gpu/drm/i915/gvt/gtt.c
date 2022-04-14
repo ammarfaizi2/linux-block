@@ -33,6 +33,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

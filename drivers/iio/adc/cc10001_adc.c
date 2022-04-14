@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Imagination Technologies Ltd.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>

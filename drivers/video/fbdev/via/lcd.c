@@ -4,6 +4,7 @@
  * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
 
  */
+#include <linux/io.h>
 #include <linux/via-core.h>
 #include <linux/via_i2c.h>
 #include "global.h"

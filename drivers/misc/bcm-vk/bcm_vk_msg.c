@@ -3,6 +3,7 @@
  * Copyright 2018-2020 Broadcom.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>

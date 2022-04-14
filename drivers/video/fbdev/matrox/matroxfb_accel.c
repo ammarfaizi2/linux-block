@@ -77,6 +77,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/capability.h>
 #include <asm/unaligned.h>
 

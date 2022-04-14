@@ -3,6 +3,7 @@
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <linux/list.h>

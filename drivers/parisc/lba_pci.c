@@ -27,6 +27,7 @@
 ** FIXME: Add support for PCI card hot-plug (OLARD).
 */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

@@ -8,6 +8,7 @@
 #include "../habanalabs.h"
 #include "../../include/hw_ip/pci/pci_general.h"
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/pci.h>

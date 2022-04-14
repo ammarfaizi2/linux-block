@@ -22,6 +22,7 @@
  *                 was usable/enabled ?)
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/slab.h>

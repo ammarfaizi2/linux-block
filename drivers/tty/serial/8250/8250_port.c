@@ -11,6 +11,7 @@
  *  membase is an 'ioremapped' cookie.
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hardirq.h>

@@ -26,6 +26,7 @@
 /*#define DEBUG 1 */
 /*#define UARTDELAY 1 */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

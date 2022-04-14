@@ -6,6 +6,7 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/bitfield.h>

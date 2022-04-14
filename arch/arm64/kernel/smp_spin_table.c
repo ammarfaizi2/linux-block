@@ -5,6 +5,7 @@
  * Copyright (C) 2013 ARM Ltd.
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/of.h>

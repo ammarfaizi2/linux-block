@@ -7,6 +7,8 @@
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/io.h>
+
 #include "seq_oss_device.h"
 #include "seq_oss_readq.h"
 #include "seq_oss_writeq.h"

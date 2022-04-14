@@ -6,6 +6,7 @@
  *  Copyright (C) 2010 Renesas Electronics Corporation
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -11,6 +11,7 @@
  * Eric Biederman, of course, was a major help in this effort.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

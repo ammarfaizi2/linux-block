@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/module.h>

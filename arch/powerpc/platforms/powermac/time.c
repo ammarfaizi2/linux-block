@@ -10,6 +10,7 @@
  * Copyright (C) 2003-2005 Benjamin Herrenschmidt.
  *
  */
+#include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

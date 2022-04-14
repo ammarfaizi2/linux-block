@@ -8,6 +8,7 @@
  *	     used by other architectures		/Roman Zippel
  */
 
+#include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/module.h>
 #include <linux/mm.h>

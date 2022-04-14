@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) "QCOM80B1:" fmt
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/irqchip/chained_irq.h>

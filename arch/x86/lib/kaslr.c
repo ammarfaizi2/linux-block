@@ -6,6 +6,7 @@
  * kernel starts. This file is included in the compressed kernel and
  * normally linked in the regular.
  */
+#include <linux/io.h>
 #include <asm/asm.h>
 #include <asm/kaslr.h>
 #include <asm/msr.h>

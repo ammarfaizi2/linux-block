@@ -10,6 +10,7 @@
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <asm/io.h>
 #include <linux/clk.h>

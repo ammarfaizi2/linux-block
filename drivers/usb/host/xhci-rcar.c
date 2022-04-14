@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Renesas Electronics Corporation
  */
 
+#include <linux/io.h>
 #include <linux/firmware.h>
 #include <linux/iopoll.h>
 #include <linux/module.h>

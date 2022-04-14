@@ -8,6 +8,7 @@
  */
 
 #include "mpi3mr.h"
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/fs_api.h>

@@ -25,6 +25,7 @@
  *     2 USB ports
  */
 
+#include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

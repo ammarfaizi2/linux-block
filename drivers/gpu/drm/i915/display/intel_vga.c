@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/vgaarb.h>
 

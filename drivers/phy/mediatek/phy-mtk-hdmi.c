@@ -4,6 +4,7 @@
  * Author: Jie Qiu <jie.qiu@mediatek.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 
 #include "phy-mtk-hdmi.h"

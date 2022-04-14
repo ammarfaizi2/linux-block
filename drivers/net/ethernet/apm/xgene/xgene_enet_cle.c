@@ -7,6 +7,7 @@
  *          Iyappan Subramanian <isubramanian@apm.com>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 
 #include "xgene_enet_main.h"

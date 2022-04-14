@@ -128,6 +128,7 @@ Conditional Compilation Options
 Include Files
 ---------------------------------------------------------------------------- */
 
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>

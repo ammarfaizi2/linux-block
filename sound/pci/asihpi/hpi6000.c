@@ -19,6 +19,8 @@
 *******************************************************************************/
 #define SOURCEFILE_NAME "hpi6000.c"
 
+#include <linux/io.h>
+
 #include "hpi_internal.h"
 #include "hpimsginit.h"
 #include "hpidebug.h"

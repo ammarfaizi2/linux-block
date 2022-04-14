@@ -6,6 +6,7 @@
 //
 // Author: Sanjay R Mehta <sanju.mehta@amd.com>
 
+#include <linux/io.h>
 #include <linux/acpi.h>
 #include <linux/init.h>
 #include <linux/module.h>

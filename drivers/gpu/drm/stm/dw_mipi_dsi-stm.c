@@ -6,6 +6,7 @@
  *          Yannick Fertre <yannick.fertre@st.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/iopoll.h>

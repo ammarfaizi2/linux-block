@@ -9,6 +9,7 @@
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+#include <linux/io.h>
 #include <linux/slab.h>
 #include <linux/pci.h>
 #include <sound/core.h>

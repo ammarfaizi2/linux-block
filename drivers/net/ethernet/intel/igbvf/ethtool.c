@@ -3,6 +3,7 @@
 
 /* ethtool support for igbvf */
 
+#include <linux/io.h>
 #include <linux/netdevice.h>
 #include <linux/ethtool.h>
 #include <linux/pci.h>

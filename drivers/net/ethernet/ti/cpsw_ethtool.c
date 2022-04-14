@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments
  */
 
+#include <linux/io.h>
 #include <linux/if_ether.h>
 #include <linux/if_vlan.h>
 #include <linux/kmemleak.h>

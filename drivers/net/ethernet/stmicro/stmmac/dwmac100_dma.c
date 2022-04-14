@@ -14,6 +14,7 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/io.h>
 #include <asm/io.h>
 #include "dwmac100.h"
 #include "dwmac_dma.h"

@@ -9,6 +9,7 @@
  * copy operations.
  */
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>

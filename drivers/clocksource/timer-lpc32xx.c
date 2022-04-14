@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/clockchips.h>
 #include <linux/clocksource.h>

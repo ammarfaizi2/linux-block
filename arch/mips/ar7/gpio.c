@@ -5,6 +5,7 @@
  * Copyright (C) 2009-2010 Florian Fainelli <florian@openwrt.org>
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/export.h>
 #include <linux/gpio.h>

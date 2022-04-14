@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/highmem.h>
 #include <linux/bitmap.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2017 Microsemi Corporation
  */
+#include <linux/io.h>
 #include <asm/machine.h>
 #include <asm/prom.h>
 

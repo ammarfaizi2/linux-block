@@ -31,6 +31,7 @@
  *  more details.
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/string.h>

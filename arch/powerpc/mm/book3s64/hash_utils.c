@@ -18,6 +18,7 @@
 #undef DEBUG_LOW
 
 #define pr_fmt(fmt) "hash-mmu: " fmt
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/spinlock.h>

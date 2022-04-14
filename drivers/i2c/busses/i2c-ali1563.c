@@ -15,6 +15,7 @@
  *	with a little help from the ALi 1563 spec.
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/delay.h>

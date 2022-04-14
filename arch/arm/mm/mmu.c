@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2005 Russell King
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <asm/cacheflush.h>

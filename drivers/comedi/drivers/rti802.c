@@ -21,6 +21,7 @@
  *   [3,5,7,9,11,13,15,17] - dac#[0-7]  0=bipolar, 1=unipolar
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 

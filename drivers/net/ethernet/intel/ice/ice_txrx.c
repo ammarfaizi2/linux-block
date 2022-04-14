@@ -3,6 +3,7 @@
 
 /* The driver transmit and receive code */
 
+#include <linux/io.h>
 #include <linux/if_vlan_api.h>
 #include <linux/gfp_api.h>
 #include <linux/filter_api.h>

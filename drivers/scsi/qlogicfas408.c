@@ -39,6 +39,7 @@
 
 */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>		/* to get disk capacity */
 #include <linux/kernel.h>

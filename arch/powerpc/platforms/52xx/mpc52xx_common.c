@@ -12,6 +12,7 @@
 
 #undef DEBUG
 
+#include <linux/io.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>

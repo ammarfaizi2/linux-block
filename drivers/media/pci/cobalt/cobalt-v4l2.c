@@ -8,6 +8,7 @@
  *  All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/capability.h>

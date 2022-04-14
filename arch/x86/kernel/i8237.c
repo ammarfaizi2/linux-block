@@ -5,6 +5,7 @@
  * Written by Pierre Ossman, 2005.
  */
 
+#include <linux/io.h>
 #include <linux/dmi.h>
 #include <linux/init.h>
 #include <linux/syscore_ops.h>

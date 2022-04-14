@@ -19,6 +19,7 @@
  * for more details
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/edac.h>
 #include <linux/module.h>

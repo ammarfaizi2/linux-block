@@ -32,6 +32,7 @@
  * https://www.mccdaq.com/PDFs/Manuals/pcie-das1602-16.pdf
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/comedi/comedi_pci.h>

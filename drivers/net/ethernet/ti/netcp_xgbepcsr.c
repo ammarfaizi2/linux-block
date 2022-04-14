@@ -7,6 +7,7 @@
  *		WingMan Kwok <w-kwok2@ti.com>
  *
  */
+#include <linux/io.h>
 #include <linux/delay.h>
 
 #include "netcp.h"

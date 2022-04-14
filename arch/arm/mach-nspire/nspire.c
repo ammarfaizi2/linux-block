@@ -4,6 +4,7 @@
  *
  *	Copyright (C) 2013 Daniel Tang <tangrs@tangrs.id.au>
  */
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/of_irq.h>
 #include <linux/of_address.h>

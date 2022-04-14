@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>

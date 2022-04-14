@@ -2,6 +2,7 @@
 /* Copyright (c) 2016, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/ethtool.h>
 #include <linux/phy.h>
 

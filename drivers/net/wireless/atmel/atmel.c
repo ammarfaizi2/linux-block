@@ -39,6 +39,7 @@
 
 ******************************************************************************/
 
+#include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/interrupt.h>

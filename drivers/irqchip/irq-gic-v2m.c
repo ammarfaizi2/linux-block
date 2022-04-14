@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "GICv2m: " fmt
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>
 #include <linux/acpi.h>

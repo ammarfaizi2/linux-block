@@ -7,6 +7,7 @@
 //
 // This code is based on spi-dw-core.c.
 
+#include <linux/io.h>
 #include <linux/acpi.h>
 #include <linux/bitfield.h>
 #include <linux/debugfs.h>

@@ -7,6 +7,7 @@
  * 460GX support by Chris Ahna <christopher.j.ahna@intel.com>
  * Clean up & simplification by David Mosberger-Tang <davidm@hpl.hp.com>
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>

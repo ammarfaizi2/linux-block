@@ -24,6 +24,7 @@
  *         1 for 0V to 10V unipolar
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 #include <linux/comedi/comedi_8254.h>

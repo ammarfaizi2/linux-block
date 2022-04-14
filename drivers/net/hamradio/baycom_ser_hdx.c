@@ -45,6 +45,7 @@
 
 /*****************************************************************************/
 
+#include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/ioport.h>

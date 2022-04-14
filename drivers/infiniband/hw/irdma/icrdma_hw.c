@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 or Linux-OpenIB
 /* Copyright (c) 2017 - 2021 Intel Corporation */
+#include <linux/io.h>
+
 #include "osdep.h"
 #include "type.h"
 #include "icrdma_hw.h"

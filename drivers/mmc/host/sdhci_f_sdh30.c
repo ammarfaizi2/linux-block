@@ -7,6 +7,7 @@
  * Copyright (C) 2015 Linaro Ltd  Andy Green <andy.green@linaro.org>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/err.h>

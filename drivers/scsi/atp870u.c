@@ -17,6 +17,7 @@
  *
  * atp885 support add by ACARD Hao Ping Lian 2005/01/05
  */
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

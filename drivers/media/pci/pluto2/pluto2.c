@@ -9,6 +9,7 @@
  *	Copyright (c) 2004 TDF
  */
 
+#include <linux/io.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

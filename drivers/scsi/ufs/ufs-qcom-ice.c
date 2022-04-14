@@ -6,6 +6,7 @@
  * Copyright 2019 Google LLC
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/qcom_scm.h>

@@ -12,6 +12,7 @@
  * Author: Stephen Chivers <schivers@csc.com>
  */
 
+#include <linux/io.h>
 #include <linux/of_platform.h>
 
 #include <asm/i8259.h>

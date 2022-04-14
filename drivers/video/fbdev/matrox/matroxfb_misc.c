@@ -87,6 +87,7 @@
 
 
 #include "matroxfb_misc.h"
+#include <linux/io.h>
 #include <asm/unaligned.h>
 #include <linux/interrupt.h>
 #include <linux/matroxfb.h>

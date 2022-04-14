@@ -18,6 +18,7 @@
  * bootup setup stuff..
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

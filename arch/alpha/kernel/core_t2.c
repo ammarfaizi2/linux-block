@@ -11,6 +11,7 @@
  */
 
 #define __EXTERN_INLINE
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/io.h>
 #include <asm/core_t2.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2017 BayLibre SAS
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/device.h>

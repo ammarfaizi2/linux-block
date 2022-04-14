@@ -3,6 +3,8 @@
  * QLogic Fibre Channel HBA Driver
  * Copyright (c)  2003-2014 QLogic Corporation
  */
+#include <linux/io.h>
+
 #include "qla_def.h"
 #include "qla_tmpl.h"
 

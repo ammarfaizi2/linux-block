@@ -4,6 +4,7 @@
  * Copyright (C) 2015 Broadcom Corporation
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

@@ -17,6 +17,7 @@
  *  Copyright (C) 2014 Hans Verkuil <hverkuil@xs4all.nl>
  */
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>

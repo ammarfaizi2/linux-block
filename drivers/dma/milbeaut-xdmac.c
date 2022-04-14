@@ -3,6 +3,7 @@
 // Copyright (C) 2019 Linaro Ltd.
 // Copyright (C) 2019 Socionext Inc.
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/dma-mapping.h>

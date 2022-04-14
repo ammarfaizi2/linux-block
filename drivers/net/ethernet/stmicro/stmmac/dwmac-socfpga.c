@@ -4,6 +4,7 @@
  * Adopted from dwmac-sti.c
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/mfd/altera-sysmgr.h>
 #include <linux/of.h>

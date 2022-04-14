@@ -10,6 +10,7 @@
  * by Sylvain Munaut for the Bestcomm SRAM allocator.
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/slab.h>

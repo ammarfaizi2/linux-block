@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/io.h>
 #include <sound/core.h>
 #include <sound/info.h>
 #include <sound/gus.h>

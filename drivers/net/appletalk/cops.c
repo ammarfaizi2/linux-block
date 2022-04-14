@@ -48,6 +48,7 @@ static const char *version =
  *	  the driver figure it out.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

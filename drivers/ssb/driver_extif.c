@@ -12,6 +12,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/io.h>
 #include <linux/serial.h>
 #include <linux/serial_core.h>
 #include <linux/serial_reg.h>

@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/shmem_fs.h>

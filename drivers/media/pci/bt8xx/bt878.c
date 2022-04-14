@@ -10,6 +10,7 @@
  * (c) 1999,2000 Gerd Knorr <kraxel@goldbach.in-berlin.de>
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

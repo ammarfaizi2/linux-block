@@ -4,6 +4,7 @@
  * Author: Elaine Zhang <zhangqing@rock-chips.com>
  */
 
+#include <linux/io.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>
 #include <linux/of.h>

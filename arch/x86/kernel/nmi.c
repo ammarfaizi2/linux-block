@@ -11,6 +11,7 @@
 /*
  * Handle hardware traps and faults.
  */
+#include <linux/io.h>
 #include <asm/ptrace.h>
 #include <asm/cpumask.h>
 #include <linux/spinlock.h>

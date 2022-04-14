@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright 2017 IBM Corp.
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/pnv-ocxl.h>
 #include <asm/opal.h>

@@ -6,6 +6,7 @@
  * This file contains TC6387XB base support.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/clk.h>

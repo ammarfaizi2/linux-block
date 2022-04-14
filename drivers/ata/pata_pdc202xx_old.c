@@ -13,6 +13,7 @@
  *	Channel interlock/reset on both required ?
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

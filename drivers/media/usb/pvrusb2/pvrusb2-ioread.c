@@ -6,6 +6,7 @@
 
 #include "pvrusb2-ioread.h"
 #include "pvrusb2-debug.h"
+#include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/mm.h>

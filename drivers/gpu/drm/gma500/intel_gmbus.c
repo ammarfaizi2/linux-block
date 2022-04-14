@@ -27,6 +27,7 @@
  *	Chris Wilson <chris@chris-wilson.co.uk>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/i2c-algo-bit.h>
 #include <linux/i2c.h>

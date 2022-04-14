@@ -26,6 +26,7 @@
  *  Paul G. (03/2001) Fix mdacon= boot prompt to use __setup().
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>

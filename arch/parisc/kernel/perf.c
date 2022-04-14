@@ -29,6 +29,7 @@
  *  on every box.
  */
 
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/init.h>

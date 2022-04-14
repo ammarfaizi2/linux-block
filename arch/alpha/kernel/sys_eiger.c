@@ -10,6 +10,7 @@
  * Code supporting the EIGER (EV6+TSUNAMI).
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

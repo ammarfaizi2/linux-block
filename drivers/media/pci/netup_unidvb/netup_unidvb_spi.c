@@ -10,6 +10,7 @@
  */
 
 #include "netup_unidvb.h"
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/spi/spi.h>
 #include <linux/spi/flash.h>

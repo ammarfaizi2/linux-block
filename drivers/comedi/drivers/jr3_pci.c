@@ -28,6 +28,7 @@
  * comedi_nonfree_firmware tarball.  The file is called "jr3pci.idm".
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/delay.h>

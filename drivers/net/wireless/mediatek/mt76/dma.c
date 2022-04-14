@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>

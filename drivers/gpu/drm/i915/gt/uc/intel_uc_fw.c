@@ -3,6 +3,7 @@
  * Copyright © 2016-2019 Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/highmem.h>
 #include <linux/bitfield.h>

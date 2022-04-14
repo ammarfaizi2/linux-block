@@ -6,6 +6,7 @@
  * Copyright (C) 2011  Magnus Damm
  * Copyright (C) 2013  Cogent Embedded, Inc.
  */
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/irqchip.h>
 

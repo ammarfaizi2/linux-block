@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/mm.h>

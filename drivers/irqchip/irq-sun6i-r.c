@@ -39,6 +39,7 @@
  * set of 128 mux bits. This requires a second set of top-level registers.
  */
 
+#include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/interrupt.h>

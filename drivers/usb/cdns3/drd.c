@@ -9,6 +9,7 @@
  *         Roger Quadros <rogerq@ti.com>
  *
  */
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>

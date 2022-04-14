@@ -9,6 +9,7 @@
  *	   Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

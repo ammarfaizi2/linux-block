@@ -9,6 +9,7 @@
  * Code supporting the Sable, Sable-Gamma, and Lynx systems.
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

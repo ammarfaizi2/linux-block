@@ -9,6 +9,7 @@
  *   Copied from i82875p_edac.c source:
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/pci.h>

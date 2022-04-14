@@ -6,6 +6,7 @@
  */
 
 #define __EXTERN_INLINE inline
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/io.h>
 #include <asm/core_titan.h>

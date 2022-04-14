@@ -26,6 +26,7 @@
 #undef DEBUG
 #undef DEBUG_LOW
 
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/init.h>

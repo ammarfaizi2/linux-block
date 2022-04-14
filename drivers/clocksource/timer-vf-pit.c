@@ -3,6 +3,7 @@
  * Copyright 2012-2013 Freescale Semiconductor, Inc.
  */
 
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/clockchips.h>

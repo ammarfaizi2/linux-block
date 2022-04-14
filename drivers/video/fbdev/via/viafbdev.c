@@ -5,6 +5,7 @@
 
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/align.h>
 #include <linux/compiler.h>

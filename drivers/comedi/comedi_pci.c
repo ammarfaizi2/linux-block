@@ -7,6 +7,7 @@
  * Copyright (C) 1997-2000 David A. Schleef <ds@schleef.org>
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/comedi/comedi_pci.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>
 #include <linux/virtio_pci_modern.h>

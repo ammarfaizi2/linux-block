@@ -36,6 +36,8 @@
  *                                                                           *
  ****************************************************************************/
 
+#include <linux/io.h>
+
 #include "common.h"
 #include "regs.h"
 #include "espi.h"

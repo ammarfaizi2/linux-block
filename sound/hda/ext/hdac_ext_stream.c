@@ -9,6 +9,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <sound/pcm.h>

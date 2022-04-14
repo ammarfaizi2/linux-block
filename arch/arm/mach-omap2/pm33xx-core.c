@@ -6,6 +6,7 @@
  *	Dave Gerlach
  */
 
+#include <linux/io.h>
 #include <linux/cpuidle.h>
 #include <linux/platform_data/pm33xx.h>
 #include <linux/suspend.h>

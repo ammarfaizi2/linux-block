@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Intel Corporation.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>

@@ -9,6 +9,7 @@
  * Copylight (C) 2002 Atom Create Engineering Co., Ltd.
  * Copyright (C) 2005-2007 kogiidena
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

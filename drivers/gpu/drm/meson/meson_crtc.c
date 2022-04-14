@@ -9,6 +9,7 @@
  *     Jasper St. Pierre <jstpierre@mecheye.net>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/soc/amlogic/meson-canvas.h>

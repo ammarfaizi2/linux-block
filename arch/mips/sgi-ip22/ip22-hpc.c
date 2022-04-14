@@ -6,6 +6,7 @@
  * Copyright (C) 1998 Ralf Baechle
  */
 
+#include <linux/io.h>
 #include <linux/export.h>
 #include <linux/init.h>
 #include <linux/types.h>

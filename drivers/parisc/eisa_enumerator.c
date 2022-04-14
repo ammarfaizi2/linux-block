@@ -5,6 +5,7 @@
  * Copyright (c) 2002 Daniel Engstrom <5116@telia.com>
  */
 
+#include <linux/io.h>
 #include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

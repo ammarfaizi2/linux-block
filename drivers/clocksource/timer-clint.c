@@ -7,6 +7,7 @@
  */
 
 #define pr_fmt(fmt) "clint: " fmt
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/bitops.h>

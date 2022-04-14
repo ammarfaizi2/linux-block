@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/debugfs.h>
 #include <linux/pci.h>

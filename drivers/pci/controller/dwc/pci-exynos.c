@@ -9,6 +9,7 @@
  *	   Jaehoon Chung <jh80.chung@samsung.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

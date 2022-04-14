@@ -6,6 +6,7 @@
  * Authors: Jan Glauber <jglauber@cavium.com>
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/spi/spi.h>

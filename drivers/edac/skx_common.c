@@ -14,6 +14,7 @@
  * Copyright (c) 2018, Intel Corporation.
  */
 
+#include <linux/io.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>
 #include <linux/adxl.h>

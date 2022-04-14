@@ -10,6 +10,7 @@
  * Origin: Copyright (C) 2008 Intel Corp.
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>
 #include <linux/slab.h>

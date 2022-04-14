@@ -9,6 +9,7 @@
  *      Tian Tao <tiantao6@hisilicon.com>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
 

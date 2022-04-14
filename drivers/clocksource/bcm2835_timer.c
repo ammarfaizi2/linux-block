@@ -3,6 +3,7 @@
  * Copyright 2012 Simon Arlott
  */
 
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitops.h>
 #include <linux/clockchips.h>

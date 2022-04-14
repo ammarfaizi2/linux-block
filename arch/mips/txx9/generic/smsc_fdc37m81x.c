@@ -10,6 +10,7 @@
  *
  * Copyright 2004 (c) MontaVista Software, Inc.
  */
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <asm/io.h>

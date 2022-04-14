@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Ansuel Smith <ansuelsmth@gmail.com>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

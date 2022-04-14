@@ -10,6 +10,7 @@
  * Firmware must be in binary "rbf" format.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>

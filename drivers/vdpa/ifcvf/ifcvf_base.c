@@ -8,6 +8,8 @@
  *
  */
 
+#include <linux/io.h>
+
 #include "ifcvf_base.h"
 
 struct ifcvf_adapter *vf_to_adapter(struct ifcvf_hw *hw)

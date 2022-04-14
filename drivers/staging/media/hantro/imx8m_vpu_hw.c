@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Pengutronix, Philipp Zabel <kernel@pengutronix.de>
  */
 
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 

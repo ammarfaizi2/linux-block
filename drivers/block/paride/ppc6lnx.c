@@ -1,3 +1,6 @@
+
+#include <linux/io.h>
+
 /*
 	ppc6lnx.c (c) 2001 Micro Solutions Inc.
 		Released under the terms of the GNU General Public license

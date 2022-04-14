@@ -10,6 +10,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/io.h>
 #include <linux/bcm47xx_nvram.h>
 #include <linux/ssb/ssb.h>
 

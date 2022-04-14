@@ -9,6 +9,7 @@
  * Code supporting the SX164 (PCA56+PYXIS).
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

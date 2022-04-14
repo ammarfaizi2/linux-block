@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/atomic_api.h>
 
 #include "gem/i915_gem_domain.h"

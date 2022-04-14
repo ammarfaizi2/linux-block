@@ -14,6 +14,7 @@
  * Platform devices for Atheros AR2315 SoCs
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

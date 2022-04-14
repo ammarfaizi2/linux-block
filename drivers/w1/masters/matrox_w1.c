@@ -5,6 +5,7 @@
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/io.h>
 #include <asm/types.h>
 #include <linux/atomic.h>
 #include <asm/io.h>

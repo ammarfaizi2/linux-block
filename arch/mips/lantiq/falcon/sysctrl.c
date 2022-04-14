@@ -5,6 +5,7 @@
  * Copyright (C) 2011 John Crispin <john@phrozen.org>
  */
 
+#include <linux/io.h>
 #include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/clkdev.h>

@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/console.h>
 #include <linux/errno.h>
 #include <linux/init.h>

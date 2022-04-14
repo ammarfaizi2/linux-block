@@ -9,6 +9,7 @@
 #define DRV_MODULE_NAME "flipper-pic"
 #define pr_fmt(fmt) DRV_MODULE_NAME ": " fmt
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/irq.h>

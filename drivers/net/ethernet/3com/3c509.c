@@ -66,6 +66,7 @@
 /* Time in jiffies before concluding the transmitter is hung. */
 #define TX_TIMEOUT  (400*HZ/1000)
 
+#include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/isa.h>

@@ -40,6 +40,7 @@
  * analog outputs are not "reset" when the driver attaches.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/comedi/comedi_pci.h>

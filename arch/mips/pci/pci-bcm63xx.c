@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

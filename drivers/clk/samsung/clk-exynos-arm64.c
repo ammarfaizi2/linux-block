@@ -8,6 +8,7 @@
  * This file contains shared functions used by some arm64 Exynos SoCs,
  * such as Exynos7885 or Exynos850 to register and init CMUs.
  */
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/of_address.h>
 

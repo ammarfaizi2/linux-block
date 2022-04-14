@@ -14,6 +14,7 @@
  * Platform devices for Atheros AR5312 SoCs
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/bitops.h>

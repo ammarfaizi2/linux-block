@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 or Linux-OpenIB
 /* Copyright (c) 2015 - 2021 Intel Corporation */
+#include <linux/io.h>
+
 #include "osdep.h"
 #include "defs.h"
 #include "user.h"

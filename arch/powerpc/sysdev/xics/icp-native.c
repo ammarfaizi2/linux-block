@@ -3,6 +3,7 @@
  * Copyright 2011 IBM Corporation.
  */
 
+#include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

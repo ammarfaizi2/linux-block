@@ -40,6 +40,7 @@
 #define DRIVER_NAME "orinoco_nortel"
 #define PFX DRIVER_NAME ": "
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

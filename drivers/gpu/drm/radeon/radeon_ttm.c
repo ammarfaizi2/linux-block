@@ -30,6 +30,7 @@
  *    Dave Airlie
  */
 
+#include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>

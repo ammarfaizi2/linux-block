@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Intel Corporation
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/align.h>

@@ -9,6 +9,7 @@
 
 /* #define RMH_DEBUG 1 */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/bitops.h>
 #include <linux/module.h>

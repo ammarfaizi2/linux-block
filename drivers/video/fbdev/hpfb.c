@@ -6,6 +6,7 @@
  *	Kars de Jong <jongk@linux-m68k.org>, May 2004.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

@@ -3,6 +3,8 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/io.h>
+
 #include "mt76.h"
 #include "trace.h"
 

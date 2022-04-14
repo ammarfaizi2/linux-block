@@ -8,6 +8,7 @@
  * Nobuhiro Iwamatsu <nobuhiro1.iwamatsu@toshiba.co.jp>
  */
 
+#include <linux/io.h>
 #include <linux/clk-provider.h>
 #include <linux/of_address.h>
 #include <linux/slab.h>

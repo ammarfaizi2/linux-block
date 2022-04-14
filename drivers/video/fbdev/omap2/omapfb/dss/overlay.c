@@ -11,6 +11,7 @@
 
 #define DSS_SUBSYS_NAME "OVERLAY"
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/err.h>

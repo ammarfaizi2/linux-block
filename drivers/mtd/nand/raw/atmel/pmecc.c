@@ -41,6 +41,7 @@
  * to expose the needed lib/bch.c helpers/functions and re-use them here.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/genalloc.h>
 #include <linux/iopoll.h>

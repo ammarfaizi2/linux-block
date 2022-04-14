@@ -7,6 +7,7 @@
  * Copyright (C) 2008,2009 Albert Herranz
  */
 
+#include <linux/io.h>
 #include <mm/mmu_decl.h>
 
 #include <asm/io.h>

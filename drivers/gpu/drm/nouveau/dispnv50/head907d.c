@@ -19,6 +19,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <linux/io.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_mode_config.h>
 #include <drm/drm_vblank.h>

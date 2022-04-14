@@ -40,6 +40,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

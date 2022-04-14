@@ -4,6 +4,8 @@
  * Copyright (c)  2003-2012 QLogic Corporation
  */
 
+#include <linux/io.h>
+
 #include "ql4_def.h"
 #include "ql4_glbl.h"
 #include "ql4_dbg.h"

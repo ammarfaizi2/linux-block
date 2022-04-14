@@ -6,6 +6,7 @@
  *   Author: Angelo Dureghello <angelo.dureghello@timesys.it>
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/platform_data/mmc-esdhc-mcf.h>

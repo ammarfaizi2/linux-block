@@ -7,6 +7,7 @@
  * Version: v0.9.0 (2019-08-08)
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>

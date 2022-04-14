@@ -10,6 +10,7 @@
 	Please submit bug reports to http://bugzilla.kernel.org/.
 */
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/slab.h>
 #include "tulip.h"

@@ -6,6 +6,7 @@
  *   Derived in part from arch/arm/mach-sa1100/dma.c,
  *   Copyright (C) 2000, 2001 by Nicolas Pitre
  */
+#include <linux/io.h>
 #include <linux/sched.h>
 #include <linux/device.h>
 #include <linux/dmaengine.h>

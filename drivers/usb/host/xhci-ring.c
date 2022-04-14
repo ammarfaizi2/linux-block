@@ -52,6 +52,7 @@
  *   endpoint rings; it generates events on the event ring for these.
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/scatterlist.h>
 #include <linux/slab.h>

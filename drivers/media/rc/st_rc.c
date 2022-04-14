@@ -3,6 +3,7 @@
  * Copyright (C) 2013 STMicroelectronics Limited
  * Author: Srinivas Kandagatla <srinivas.kandagatla@st.com>
  */
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <asm/io.h>
 #include <linux/kernel.h>

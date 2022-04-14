@@ -21,6 +21,7 @@
  * Only synchronous operations are supported.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 #include <linux/comedi/comedi_8255.h>

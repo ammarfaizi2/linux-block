@@ -1,3 +1,6 @@
+
+#include <linux/io.h>
+
 /*
 
   FlashPoint.c -- FlashPoint SCCB Manager for Linux

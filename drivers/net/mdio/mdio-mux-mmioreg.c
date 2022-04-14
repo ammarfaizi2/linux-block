@@ -7,6 +7,7 @@
  * Copyright 2012 Freescale Semiconductor, Inc.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/mdio-mux.h>

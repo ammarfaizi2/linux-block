@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/pci.h>

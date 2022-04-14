@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/wait.h>
 #include <linux/time.h>
 #include <linux/completion.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2019 Netronome Systems, Inc. */
 
+#include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 #include <linux/bitfield.h>

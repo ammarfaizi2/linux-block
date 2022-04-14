@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/io.h>
 #include <linux/bitops.h>
 #include <linux/blkdev.h>
 #include <linux/dma-mapping.h>

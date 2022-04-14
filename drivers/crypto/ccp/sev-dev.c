@@ -7,6 +7,7 @@
  * Author: Brijesh Singh <brijesh.singh@amd.com>
  */
 
+#include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

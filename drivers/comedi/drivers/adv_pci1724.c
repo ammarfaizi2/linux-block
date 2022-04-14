@@ -37,6 +37,7 @@
  * outputs in the desired range.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pci.h>
 

@@ -23,6 +23,7 @@
  * matching, so you need to enable IFF_PROMISC when using it.
  */
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>

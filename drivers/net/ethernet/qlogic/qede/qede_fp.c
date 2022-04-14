@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/io.h>
 #include <linux/if_vlan_api.h>
 #include <linux/gfp_api.h>
 #include <linux/filter_api.h>

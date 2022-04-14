@@ -6,6 +6,7 @@
  * Copyright © 2013 Alistair Popple <alistair@popple.id.au> IBM Corporation
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/msi.h>

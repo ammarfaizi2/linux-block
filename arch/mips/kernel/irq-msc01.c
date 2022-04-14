@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2004, 06 Ralf Baechle <ralf@linux-mips.org>
  */
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

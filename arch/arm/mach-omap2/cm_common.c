@@ -8,6 +8,7 @@
  * XXX This code should eventually be moved to a CM driver.
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/errno.h>

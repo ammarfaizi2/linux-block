@@ -7,6 +7,7 @@
  *     this driver is based on leds-spitz.c by Richard Purdie.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

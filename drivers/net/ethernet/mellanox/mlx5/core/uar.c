@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/io-mapping.h>

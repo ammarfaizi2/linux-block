@@ -5,6 +5,7 @@
  *  Copyright (C) 2008 Alex Dubov <oakad@yahoo.com>
  */
 
+#include <linux/io.h>
 #include <linux/spinlock.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>

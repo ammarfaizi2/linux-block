@@ -5,6 +5,7 @@
  * Copyright (C) 2000 - 2009  Stuart Menefy
  * Copyright (C) 2005  Paul Mundt
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/pci.h>

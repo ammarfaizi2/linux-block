@@ -16,6 +16,7 @@
  * Major updates contributed by GlobalLogic
  */
 
+#include <linux/io.h>
 #include <linux/ethtool.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>

@@ -5,6 +5,7 @@
  * (C) Copyright 2020 Toshiba Electronic Devices & Storage Corporation
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of_device.h>

@@ -5,6 +5,7 @@
  * This file contains the setup_arch() code, which handles the architecture-dependent
  * parts of early kernel initialization.
  */
+#include <linux/io.h>
 #include <asm/sections.h>
 #include <asm/processor_api.h>
 #include <linux/acpi.h>

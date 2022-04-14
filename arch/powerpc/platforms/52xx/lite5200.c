@@ -12,6 +12,7 @@
 
 #undef DEBUG
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/of.h>

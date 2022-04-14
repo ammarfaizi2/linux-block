@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/io.h>
 #include <linux/dmi.h>
 #include <linux/init.h>
 #include <linux/ioport.h>

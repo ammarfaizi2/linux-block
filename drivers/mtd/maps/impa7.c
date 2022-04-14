@@ -5,6 +5,7 @@
  * Copyright 2002 SYSGO Real-Time Solutions GmbH
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

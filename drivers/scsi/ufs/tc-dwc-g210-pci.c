@@ -11,6 +11,7 @@
 #include "ufshcd-dwc.h"
 #include "tc-dwc-g210.h"
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/pm_runtime.h>
 

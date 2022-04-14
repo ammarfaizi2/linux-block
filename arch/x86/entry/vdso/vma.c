@@ -4,6 +4,7 @@
  *
  * This contains most of the x86 vDSO kernel-side code.
  */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/io.h>
 #include <asm/elf_api.h>

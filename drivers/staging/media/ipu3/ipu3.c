@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

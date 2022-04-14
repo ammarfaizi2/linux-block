@@ -28,6 +28,7 @@
  * a timer to limit the rate at which DMA is reset on DMA channels error.
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/init.h>

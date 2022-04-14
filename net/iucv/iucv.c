@@ -23,6 +23,7 @@
 #define KMSG_COMPONENT "iucv"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>

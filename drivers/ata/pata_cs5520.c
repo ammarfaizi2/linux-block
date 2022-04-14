@@ -22,6 +22,7 @@
  * Documentation:
  *	Not publicly available.
  */
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

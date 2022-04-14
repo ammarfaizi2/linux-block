@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>
 #include <linux/types.h>

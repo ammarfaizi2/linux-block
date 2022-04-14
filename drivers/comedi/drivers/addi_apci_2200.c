@@ -13,6 +13,7 @@
  *	info@addi-data.com
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pci.h>
 

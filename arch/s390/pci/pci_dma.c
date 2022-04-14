@@ -6,6 +6,7 @@
  *   Jan Glauber <jang@linux.vnet.ibm.com>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

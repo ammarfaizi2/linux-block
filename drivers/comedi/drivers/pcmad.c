@@ -28,6 +28,7 @@
  *	   1 = two's complement (+-10V input range)
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedidev.h>
 

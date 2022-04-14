@@ -4,6 +4,7 @@
  *  Loongson-2K1000 reset support
  */
 
+#include <linux/io.h>
 #include <linux/of_address.h>
 #include <linux/pm.h>
 #include <asm/reboot.h>

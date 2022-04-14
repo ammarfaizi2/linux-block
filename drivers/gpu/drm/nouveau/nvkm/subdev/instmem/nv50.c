@@ -24,6 +24,7 @@
 #define nv50_instmem(p) container_of((p), struct nv50_instmem, base)
 #include "priv.h"
 
+#include <linux/io.h>
 #include <core/memory.h>
 #include <subdev/bar.h>
 #include <subdev/fb.h>

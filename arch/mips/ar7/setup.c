@@ -3,6 +3,7 @@
  * Carsten Langgaard, carstenl@mips.com
  * Copyright (C) 2000 MIPS Technologies, Inc.  All rights reserved.
  */
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
 #include <linux/pm.h>

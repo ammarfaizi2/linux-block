@@ -8,6 +8,7 @@
  * Author: Raymond Tan <raymond.tan@intel.com>
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

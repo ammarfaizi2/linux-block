@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
+#include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/compiler.h>

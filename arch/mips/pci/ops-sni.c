@@ -7,6 +7,7 @@
  *
  * Copyright (C) 1997 - 2000, 2003 Ralf Baechle <ralf@linux-mips.org>
  */
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/types.h>

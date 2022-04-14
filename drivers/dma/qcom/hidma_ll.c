@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/dmaengine.h>

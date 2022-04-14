@@ -6,6 +6,7 @@
  *		Jorge Ramirez-Ortiz	<jorge.ramirez-ortiz@linaro.org>
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>

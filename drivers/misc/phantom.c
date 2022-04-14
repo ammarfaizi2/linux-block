@@ -8,6 +8,7 @@
  *  or alternatively, you might use OpenHaptics provided by Sensable.
  */
 
+#include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

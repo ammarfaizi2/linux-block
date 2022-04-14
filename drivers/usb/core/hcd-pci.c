@@ -3,6 +3,7 @@
  * (C) Copyright David Brownell 2000-2002
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/device_api.h>

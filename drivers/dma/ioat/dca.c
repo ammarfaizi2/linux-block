@@ -4,6 +4,7 @@
  * Copyright(c) 2007 - 2009 Intel Corporation.
  */
 
+#include <linux/io.h>
 #include <asm/processor_api.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

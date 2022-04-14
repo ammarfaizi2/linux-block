@@ -14,6 +14,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

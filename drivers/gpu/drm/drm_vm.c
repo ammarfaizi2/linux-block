@@ -33,6 +33,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>

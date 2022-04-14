@@ -17,6 +17,7 @@
  * Configuration Options: not applicable, uses PCI auto config
  */
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pci.h>

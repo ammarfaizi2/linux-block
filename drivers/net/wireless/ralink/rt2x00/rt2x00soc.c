@@ -11,6 +11,7 @@
 	Abstract: rt2x00 generic soc device routines.
  */
 
+#include <linux/io.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

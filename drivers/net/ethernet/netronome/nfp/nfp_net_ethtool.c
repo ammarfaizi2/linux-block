@@ -10,6 +10,7 @@
  *          Brad Petrus <brad.petrus@netronome.com>
  */
 
+#include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/bitfield.h>
 #include <linux/kernel.h>

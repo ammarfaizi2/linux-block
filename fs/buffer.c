@@ -19,6 +19,7 @@
  * async buffer flushing, 1999 Andrea Arcangeli <andrea@suse.de>
  */
 
+#include <linux/io.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

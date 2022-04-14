@@ -12,6 +12,7 @@
  *    --
  */
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

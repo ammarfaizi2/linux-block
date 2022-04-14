@@ -13,6 +13,7 @@
  * Written by: Bhanu Prakash Gollapudi (bprakash@broadcom.com)
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

@@ -6,6 +6,7 @@
  * Copyright 2006-2008, 2011-2012, 2015 Freescale Semiconductor Inc.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

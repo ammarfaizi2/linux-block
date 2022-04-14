@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "sead3: " fmt
 
+#include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/libfdt.h>
 #include <linux/printk.h>

@@ -4,6 +4,7 @@
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <linux/io.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>
 #include <linux/iopoll.h>

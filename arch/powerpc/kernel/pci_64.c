@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/string.h>

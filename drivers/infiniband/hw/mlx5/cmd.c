@@ -3,6 +3,8 @@
  * Copyright (c) 2017-2020, Mellanox Technologies inc. All rights reserved.
  */
 
+#include <linux/io.h>
+
 #include "cmd.h"
 
 int mlx5_cmd_dump_fill_mkey(struct mlx5_core_dev *dev, u32 *mkey)

@@ -5,6 +5,7 @@
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

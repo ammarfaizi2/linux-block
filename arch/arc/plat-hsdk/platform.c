@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/of_fdt.h>
 #include <linux/libfdt.h>

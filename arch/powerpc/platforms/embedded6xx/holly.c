@@ -10,6 +10,7 @@
  * Based on code from mpc7448_hpc2.c
  */
 
+#include <linux/io.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

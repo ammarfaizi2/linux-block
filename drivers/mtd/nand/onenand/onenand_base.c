@@ -15,6 +15,7 @@
  *	OTP support
  */
 
+#include <linux/io.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

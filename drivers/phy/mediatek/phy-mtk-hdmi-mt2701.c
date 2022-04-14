@@ -4,6 +4,7 @@
  * Author: Chunhui Dai <chunhui.dai@mediatek.com>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 
 #include "phy-mtk-hdmi.h"

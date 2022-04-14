@@ -5,6 +5,7 @@
  * Copyright (C) 2020 John Crispin <john@phrozen.org>
  */
 
+#include <linux/io.h>
 #include <linux/of_irq.h>
 #include <linux/irqchip.h>
 #include <linux/spinlock.h>

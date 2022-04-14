@@ -4,6 +4,7 @@
  * stmmac XGMAC support.
  */
 
+#include <linux/io.h>
 #include <linux/iopoll.h>
 #include "stmmac.h"
 #include "dwxgmac2.h"

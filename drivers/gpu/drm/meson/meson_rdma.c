@@ -4,6 +4,7 @@
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
+#include <linux/io.h>
 #include <linux/bitfield.h>
 #include <linux/dma-mapping.h>
 

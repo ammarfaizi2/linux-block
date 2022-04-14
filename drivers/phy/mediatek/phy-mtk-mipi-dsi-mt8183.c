@@ -4,6 +4,7 @@
  * Author: jitao.shi <jitao.shi@mediatek.com>
  */
 
+#include <linux/io.h>
 #include <linux/delay.h>
 
 #include "phy-mtk-mipi-dsi.h"

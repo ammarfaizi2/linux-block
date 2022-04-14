@@ -14,6 +14,7 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/io.h>
 #include <linux/crc32.h>
 #include <net/dsa.h>
 #include <asm/io.h>

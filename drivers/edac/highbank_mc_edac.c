@@ -2,6 +2,7 @@
 /*
  * Copyright 2011-2012 Calxeda, Inc.
  */
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

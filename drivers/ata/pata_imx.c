@@ -13,6 +13,7 @@
  * - dmaengine support
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/ata.h>
 #include <linux/clk.h>

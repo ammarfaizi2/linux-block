@@ -20,6 +20,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>
 #include <linux/mempool.h>

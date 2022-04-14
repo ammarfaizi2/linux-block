@@ -8,6 +8,7 @@
  * Author: Haojian Zhuang <haojian.zhuang@linaro.org>
 */
 
+#include <linux/io.h>
 #include <linux/clocksource.h>
 #include <linux/irqchip.h>
 

@@ -4,6 +4,7 @@
  * Copyright(C) 2020 Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/ethtool.h>
 #include <linux/module.h>

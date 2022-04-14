@@ -7,6 +7,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>

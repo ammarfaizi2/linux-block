@@ -3,6 +3,7 @@
  * Copyright (c) 2015 MediaTek Inc.
  */
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <drm/drm_fourcc.h>

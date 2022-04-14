@@ -7,6 +7,7 @@
  *  Copyright (C) 2010 Alexey Charkov <alchark@gmail.com>
  */
 
+#include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/fb.h>

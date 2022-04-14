@@ -12,6 +12,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/ioport.h>
 #include <linux/slab.h>

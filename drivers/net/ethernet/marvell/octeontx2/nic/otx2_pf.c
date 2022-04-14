@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/if_link.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>

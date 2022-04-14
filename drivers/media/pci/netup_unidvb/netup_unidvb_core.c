@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

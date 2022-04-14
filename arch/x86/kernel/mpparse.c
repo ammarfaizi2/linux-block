@@ -8,6 +8,7 @@
  *      (c) 2008 Alexey Starikovskiy <astarikovskiy@suse.de>
  */
 
+#include <linux/io.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/delay.h>

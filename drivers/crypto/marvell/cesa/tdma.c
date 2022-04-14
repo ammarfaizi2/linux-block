@@ -10,6 +10,7 @@
  * Sebastian Andrzej Siewior < sebastian at breakpoint dot cc >
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 
 #include "cesa.h"

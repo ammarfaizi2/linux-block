@@ -2,6 +2,7 @@
 /* Copyright (c) 2020, Intel Corporation
  */
 
+#include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/pci.h>
