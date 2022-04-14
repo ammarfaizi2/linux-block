@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

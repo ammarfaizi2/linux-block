@@ -86,6 +86,7 @@
  * page-sizes, we need to break this assumption.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>

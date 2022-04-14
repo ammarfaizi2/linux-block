@@ -3,6 +3,7 @@
  * Split spinlock implementation out into its own file, so it can be
  * compiled in a FTRACE-compatible way.
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/preempt.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>

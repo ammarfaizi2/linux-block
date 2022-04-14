@@ -10,6 +10,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "lpar: " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -8,6 +8,7 @@
  *
  * JEDEC probe based on drivers/mtd/devices/m25p80.c
  */
+#include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

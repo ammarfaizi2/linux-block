@@ -6,6 +6,7 @@
  *     Anup Patel <anup.patel@wdc.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>

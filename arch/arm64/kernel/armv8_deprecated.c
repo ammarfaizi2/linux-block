@@ -3,6 +3,7 @@
  *  Copyright (C) 2014 ARM Limited
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/perf_event_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpu.h>

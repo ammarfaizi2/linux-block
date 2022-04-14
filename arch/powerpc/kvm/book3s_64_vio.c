@@ -6,6 +6,7 @@
  * Copyright 2016 Alexey Kardashevskiy, IBM Corporation <aik@au1.ibm.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

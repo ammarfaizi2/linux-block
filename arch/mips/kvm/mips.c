@@ -9,6 +9,7 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/rcuwait_api.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>

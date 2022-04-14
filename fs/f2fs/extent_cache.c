@@ -8,6 +8,7 @@
  *          Chao Yu <chao2.yu@samsung.com>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/rbtree_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/mutex_api.h>

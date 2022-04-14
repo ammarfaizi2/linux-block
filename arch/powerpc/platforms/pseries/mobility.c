@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "mobility: " fmt
 
+#include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>
 #include <linux/kobject_api.h>
 #include <linux/hardirq.h>

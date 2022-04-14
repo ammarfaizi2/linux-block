@@ -24,6 +24,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/llist_api.h>

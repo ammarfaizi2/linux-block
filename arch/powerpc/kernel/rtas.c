@@ -7,6 +7,7 @@
  * Copyright (C) 2001 IBM.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/hardirq.h>

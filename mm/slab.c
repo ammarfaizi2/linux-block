@@ -87,6 +87,7 @@
  *	All object allocations for a node occur from node specific slab lists.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/random.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu.h>

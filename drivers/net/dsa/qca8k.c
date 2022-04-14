@@ -6,6 +6,7 @@
  * Copyright (c) 2016 John Crispin <john@phrozen.org>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
