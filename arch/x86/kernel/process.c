@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/pkru.h>
 #include <asm/msr.h>
 #include <asm/halt.h>
 #include <asm/unistd.h>
