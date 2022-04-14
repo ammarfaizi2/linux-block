@@ -3,6 +3,7 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

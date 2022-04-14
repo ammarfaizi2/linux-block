@@ -7,6 +7,7 @@
  *    LGDT3304 support by Jarod Wilson <jarod@redhat.com>
  */
 
+#include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
 #include <asm/div64.h>

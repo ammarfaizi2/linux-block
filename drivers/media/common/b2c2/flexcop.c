@@ -18,6 +18,7 @@
  *               filtering)
  */
 
+#include <linux/module.h>
 #include <linux/delay.h>
 
 #include "flexcop.h"

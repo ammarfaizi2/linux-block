@@ -5,6 +5,7 @@
  *  Copyright (c) 2008 Steven Toth <stoth@linuxtv.org>
  */
 
+#include <linux/module.h>
 #include <linux/delay.h>
 
 #include "au0828.h"

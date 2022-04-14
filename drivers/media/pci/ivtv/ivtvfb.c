@@ -33,6 +33,7 @@
 #include "ivtv-mailbox.h"
 #include "ivtv-firmware.h"
 
+#include <linux/module.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>

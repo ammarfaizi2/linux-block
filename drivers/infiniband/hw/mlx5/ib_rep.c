@@ -3,6 +3,7 @@
  * Copyright (c) 2018 Mellanox Technologies. All rights reserved.
  */
 
+#include <linux/module.h>
 #include <linux/mlx5/vport.h>
 #include "ib_rep.h"
 #include "srq.h"

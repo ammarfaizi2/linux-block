@@ -36,6 +36,7 @@ all:
 
 #define MODULE_NAME "sonixb"
 
+#include <linux/module.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

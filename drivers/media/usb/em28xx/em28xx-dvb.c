@@ -23,6 +23,7 @@
 
 #include "em28xx.h"
 
+#include <linux/module.h>
 #include <linux/kref_api.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>

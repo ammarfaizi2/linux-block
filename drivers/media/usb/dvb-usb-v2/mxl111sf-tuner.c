@@ -5,6 +5,8 @@
  *  Copyright (C) 2010-2014 Michael Krufky <mkrufky@linuxtv.org>
  */
 
+#include <linux/module.h>
+
 #include "mxl111sf-tuner.h"
 #include "mxl111sf-phy.h"
 #include "mxl111sf-reg.h"

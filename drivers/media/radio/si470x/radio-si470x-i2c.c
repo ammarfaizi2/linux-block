@@ -16,6 +16,7 @@
 #define DRIVER_VERSION "1.0.2"
 
 /* kernel includes */
+#include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/device_api_lock.h>
 #include <asm/unaligned.h>

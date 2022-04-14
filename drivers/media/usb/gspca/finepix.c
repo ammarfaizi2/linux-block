@@ -9,6 +9,7 @@
 
 #define MODULE_NAME "finepix"
 
+#include <linux/module.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 

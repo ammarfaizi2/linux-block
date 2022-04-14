@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Thomas Mair <thomas.mair86@googlemail.com>
  */
 
+#include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>

@@ -8,6 +8,7 @@
  * Author: Xiaowei Song <songxiaowei@huawei.com>
  */
 
+#include <linux/module.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

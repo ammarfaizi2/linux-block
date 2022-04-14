@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/module.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/mmc/sdio_func.h>

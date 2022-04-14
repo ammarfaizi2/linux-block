@@ -9,6 +9,7 @@
 
 #define MODULE_NAME "benq"
 
+#include <linux/module.h>
 #include <linux/export.h>
 
 #include "gspca.h"

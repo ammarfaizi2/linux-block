@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Henrik Kurelid <henrik@kurelid.se>
  */
 
+#include <linux/module.h>
 #include <linux/bug.h>
 #include <linux/crc32.h>
 #include <linux/delay.h>

@@ -9,6 +9,7 @@
 
 #define DVB_USB_LOG_PREFIX "opera"
 
+#include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

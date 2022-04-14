@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2017 Helen Koike <helen.fornazier@gmail.com>
  */
 
+#include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/string.h>
 #include <linux/vmalloc.h>

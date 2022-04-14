@@ -14,6 +14,7 @@
 
 #include "stb6100.h"
 #include "stb6100_cfg.h"
+#include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>

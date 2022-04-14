@@ -5,6 +5,7 @@
  * Copyright (C) 2003-2004 Alex Woods <linux-dvb@giblets.org>
  */
 
+#include <linux/module.h>
 #include <media/dvb_frontend.h>
 #include "ttusbdecfe.h"
 

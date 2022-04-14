@@ -2,6 +2,7 @@
 /* Copyright(c) 2020  Realtek Corporation
  */
 
+#include <linux/module.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

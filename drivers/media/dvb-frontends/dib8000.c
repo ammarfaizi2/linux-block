@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/capability.h>

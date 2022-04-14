@@ -4,6 +4,8 @@
  * Author: Mike Leach <mike.leach@linaro.org>
  */
 
+#include <linux/module.h>
+
 #include "coresight-config.h"
 #include "coresight-syscfg.h"
 

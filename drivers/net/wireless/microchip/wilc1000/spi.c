@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/spi/spi.h>

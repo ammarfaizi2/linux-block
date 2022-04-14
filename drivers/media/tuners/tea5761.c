@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2005-2007 Mauro Carvalho Chehab <mchehab@kernel.org>
 
+#include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

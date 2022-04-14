@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/module.h>
 #include <linux/math64.h>
 #include <linux/i2c.h>
 #include <linux/device_api.h>

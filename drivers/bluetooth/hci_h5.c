@@ -6,6 +6,7 @@
  *  Copyright (C) 2012  Intel Corporation
  */
 
+#include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

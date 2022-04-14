@@ -10,6 +10,7 @@
  * Software (RCOS) for helping me learn kernel development
  */
 
+#include <linux/module.h>
 #include <linux/export.h>
 
 #include "gspca.h"

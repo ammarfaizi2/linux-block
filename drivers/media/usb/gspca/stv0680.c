@@ -17,6 +17,7 @@
 
 #define MODULE_NAME "stv0680"
 
+#include <linux/module.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 

@@ -7,6 +7,7 @@
 
  */
 
+#include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/device_api.h>

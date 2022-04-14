@@ -13,6 +13,7 @@
  *  Protocol Spec published on http://qanu.de/specs/terratec_cinergyT2.pdf
  */
 
+#include <linux/module.h>
 #include <linux/export.h>
 
 #include "cinergyT2.h"

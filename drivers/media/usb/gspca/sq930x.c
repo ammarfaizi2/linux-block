@@ -11,6 +11,7 @@
 
 #define MODULE_NAME "sq930x"
 
+#include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/delay.h>

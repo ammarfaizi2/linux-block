@@ -10,6 +10,8 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/module.h>
+
 #include "af9005.h"
 /* debug */
 static int dvb_usb_af9005_remote_debug;

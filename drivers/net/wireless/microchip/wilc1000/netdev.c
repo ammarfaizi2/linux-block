@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>

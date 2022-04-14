@@ -8,6 +8,7 @@
  *  All rights reserved.
  */
 
+#include <linux/module.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/i2c.h>
