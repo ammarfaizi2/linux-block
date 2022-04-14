@@ -7,6 +7,8 @@
 #ifndef _HFI1_USER_EXP_RCV_H
 #define _HFI1_USER_EXP_RCV_H
 
+#include <linux/mmu_notifier.h>
+
 #include "hfi.h"
 #include "exp_rcv.h"
 
