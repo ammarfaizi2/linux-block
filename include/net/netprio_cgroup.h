@@ -8,6 +8,7 @@
 #ifndef _NETPRIO_CGROUP_H
 #define _NETPRIO_CGROUP_H
 
+#include <linux/cgroup_api.h>
 #include <linux/cgroup.h>
 #include <linux/hardirq.h>
 #include <linux/rcupdate.h>

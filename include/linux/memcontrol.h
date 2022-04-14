@@ -10,6 +10,7 @@
 
 #ifndef _LINUX_MEMCONTROL_H
 #define _LINUX_MEMCONTROL_H
+#include <linux/cgroup_api.h>
 #include <linux/backing-dev-types.h>
 #include <linux/cgroup.h>
 #include <linux/vm_event_item.h>

@@ -25,6 +25,7 @@ struct misc_cg;
 
 #ifdef CONFIG_CGROUP_MISC
 
+#include <linux/cgroup_api.h>
 #include <linux/cgroup.h>
 
 /**
