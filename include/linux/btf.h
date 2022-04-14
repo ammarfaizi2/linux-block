@@ -4,6 +4,7 @@
 #ifndef _LINUX_BTF_H
 #define _LINUX_BTF_H 1
 
+#include <linux/mutex_types.h>
 #include <linux/types.h>
 #include <linux/bpfptr.h>
 #include <uapi/linux/btf.h>
