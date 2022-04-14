@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <asm/qspinlock.h>
 #include <linux/thread_info.h>
 #include <asm/smp.h>
 
