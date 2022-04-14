@@ -54,6 +54,7 @@
 #ifndef _LINUX_P80211CONV_H
 #define _LINUX_P80211CONV_H
 
+#include <linux/skbuff_types.h>
 #include <linux/types.h>
 
 #define WLAN_IEEE_OUI_LEN	3

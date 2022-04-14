@@ -16,6 +16,7 @@
 #ifndef BNX2X_H
 #define BNX2X_H
 
+#include <linux/skbuff_types.h>
 #include <linux/semaphore.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
