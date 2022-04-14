@@ -15,6 +15,7 @@
  * none of the bugs are Pavel's now.
  */
 
+#include <net/inet_sock_api.h>
 #include <net/dst_api.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>

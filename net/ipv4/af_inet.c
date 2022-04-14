@@ -63,6 +63,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <net/inet_sock_api.h>
 #include <net/dst_api.h>
 #include <linux/wait_api.h>
 #include <linux/u64_stats_sync_api.h>
