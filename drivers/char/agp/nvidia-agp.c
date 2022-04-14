@@ -4,6 +4,7 @@
  * to work in 2.5 by Dave Jones.
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/msr.h>

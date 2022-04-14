@@ -3,6 +3,7 @@
  *
  * This code is licenced under the GPL.
  */
+#include <linux/memory_hotplug.h>
 #include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/irqdesc.h>

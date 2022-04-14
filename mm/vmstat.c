@@ -10,6 +10,7 @@
  *		Christoph Lameter <christoph@lameter.com>
  *  Copyright (C) 2008-2014 Christoph Lameter
  */
+#include <linux/memory_hotplug.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

@@ -15,6 +15,7 @@
  * /fairy-tale-mode off
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

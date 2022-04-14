@@ -2,6 +2,7 @@
  * Intel AGPGART routines.
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

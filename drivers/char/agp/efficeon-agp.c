@@ -20,6 +20,7 @@
  *   - tested with c3/c4 enabled (with the mobility m9 card)
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

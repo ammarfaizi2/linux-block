@@ -10,6 +10,7 @@
  *                     Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>

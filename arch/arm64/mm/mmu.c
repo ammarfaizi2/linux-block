@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/cache.h>

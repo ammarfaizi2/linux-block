@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2016-2019 Intel Corporation. All rights reserved. */
+#include <linux/memory_hotplug.h>
 #include <linux/ioport.h>
 #include <linux/memremap.h>
 #include <linux/pagemap.h>

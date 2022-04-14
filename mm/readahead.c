@@ -113,6 +113,7 @@
  * ->readpage() which may be less efficient.
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>
