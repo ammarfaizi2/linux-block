@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <linux/compat.h>
 #include <linux/capability.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/atomic_api.h>
