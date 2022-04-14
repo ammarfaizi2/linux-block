@@ -17,6 +17,7 @@
  *  nfs regular file handling functions
  */
 
+#include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/time.h>

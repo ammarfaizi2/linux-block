@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/backing-dev-api.h>
 #include <linux/blkdev.h>
 #include <linux/fs.h>
 #include <linux/fs_context.h>

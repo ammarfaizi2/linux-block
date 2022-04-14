@@ -113,6 +113,7 @@
  *
  * http://www.cs.berkeley.edu/~istoica/papers/eevdf-tr-95.pdf
  */
+#include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>

@@ -8,6 +8,7 @@
  *              David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/backing-dev-api.h>
 #include <linux/mtd/super.h>
 #include <linux/namei.h>
 #include <linux/export.h>

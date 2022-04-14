@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/bio.h>
 #include <linux/sched/signal.h>
