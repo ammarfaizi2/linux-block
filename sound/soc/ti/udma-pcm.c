@@ -4,6 +4,7 @@
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
+#include <linux/sizes.h>
 #include <linux/module.h>
 #include <sound/core.h>
 #include <sound/pcm.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/sizes.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/vmalloc.h>

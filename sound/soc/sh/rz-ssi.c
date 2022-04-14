@@ -6,6 +6,7 @@
 // Copyright (C) 2019 Chris Brandt.
 //
 
+#include <linux/sizes.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
