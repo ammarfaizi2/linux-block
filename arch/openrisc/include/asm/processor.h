@@ -77,5 +77,9 @@ unsigned long __get_wchan(struct task_struct *p);
 
 #define cpu_relax()     barrier()
 
+#ifndef TASK_SIZE_OF
+# define TASK_SIZE_OF(tsk) TASK_SIZE
+#endif
+
 #endif /* __ASSEMBLY__ */
 #endif /* __ASM_OPENRISC_PROCESSOR_H */

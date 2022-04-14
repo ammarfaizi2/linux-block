@@ -93,5 +93,9 @@ unsigned long __get_wchan(struct task_struct *p);
 extern struct dentry *of_debugfs_root;
 #endif
 
+#ifndef TASK_SIZE_OF
+# define TASK_SIZE_OF(tsk) TASK_SIZE
+#endif
+
 #  endif /* __ASSEMBLY__ */
 #endif /* _ASM_MICROBLAZE_PROCESSOR_H */
