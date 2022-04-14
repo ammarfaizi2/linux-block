@@ -9,6 +9,8 @@
 #include <linux/kernel.h>
 #include <linux/thread_info.h>
 #include <linux/mm_types.h>
+#include <linux/check_size.h>
+
 #include <uapi/linux/uio.h>
 
 struct page;
