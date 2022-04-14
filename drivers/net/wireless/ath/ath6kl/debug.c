@@ -17,6 +17,7 @@
 
 #include "core.h"
 
+#include <linux/semaphore.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

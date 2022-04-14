@@ -19,6 +19,7 @@
 
 ======================================================================*/
 
+#include <linux/semaphore.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api_lock.h>

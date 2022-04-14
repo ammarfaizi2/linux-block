@@ -13,6 +13,7 @@
  *          This new driver allows more than one USB-LCD to be connected     *
  *          and controlled, at once                                          *
  *****************************************************************************/
+#include <linux/semaphore.h>
 #include <linux/rwsem_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
