@@ -8,6 +8,7 @@
 #ifndef _LINUX_NTFS_MALLOC_H
 #define _LINUX_NTFS_MALLOC_H
 
+#include <linux/mm_api.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/highmem.h>

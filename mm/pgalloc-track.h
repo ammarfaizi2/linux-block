@@ -2,6 +2,7 @@
 #ifndef _LINUX_PGALLOC_TRACK_H
 #define _LINUX_PGALLOC_TRACK_H
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/types.h>
 

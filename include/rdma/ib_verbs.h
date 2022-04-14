@@ -12,6 +12,7 @@
 #ifndef IB_VERBS_H
 #define IB_VERBS_H
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ethtool.h>
 #include <linux/types.h>

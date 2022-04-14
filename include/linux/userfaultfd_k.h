@@ -11,6 +11,7 @@
 
 #ifdef CONFIG_USERFAULTFD
 
+#include <linux/mm_api.h>
 #include <linux/userfaultfd.h> /* linux/include/uapi/linux/userfaultfd.h */
 
 #include <linux/fcntl.h>

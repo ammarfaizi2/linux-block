@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _LINUX_PFN_T_H_
 #define _LINUX_PFN_T_H_
+#include <linux/mm_api.h>
 #include <linux/mm.h>
 
 /*

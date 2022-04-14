@@ -11,6 +11,7 @@
 #ifndef SUNRPC_SVC_H
 #define SUNRPC_SVC_H
 
+#include <linux/mm_api.h>
 #include <linux/in.h>
 #include <linux/in6.h>
 #include <linux/sunrpc/types.h>

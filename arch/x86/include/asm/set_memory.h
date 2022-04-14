@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_SET_MEMORY_H
 #define _ASM_X86_SET_MEMORY_H
 
+#include <linux/mm_api.h>
 #include <asm/pgtable_types.h>
 #include <linux/mm.h>
 #include <asm/page.h>

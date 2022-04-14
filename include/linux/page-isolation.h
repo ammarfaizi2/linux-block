@@ -2,6 +2,7 @@
 #ifndef __LINUX_PAGEISOLATION_H
 #define __LINUX_PAGEISOLATION_H
 
+#include <linux/mm_api.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_MEMORY_ISOLATION
