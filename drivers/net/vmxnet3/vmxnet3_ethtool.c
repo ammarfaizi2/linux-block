@@ -26,6 +26,7 @@
 
 
 #include "vmxnet3_int.h"
+#include <linux/if_vlan_api.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <net/vxlan.h>

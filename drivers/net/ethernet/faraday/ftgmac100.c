@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/clk.h>

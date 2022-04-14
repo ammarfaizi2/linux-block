@@ -6,6 +6,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/if_bridge.h>

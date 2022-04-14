@@ -6,6 +6,7 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>

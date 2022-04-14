@@ -7,6 +7,7 @@
  * This file contains HFI1 support for VNIC functionality
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/io.h>
 #include <linux/if_vlan.h>

@@ -11,6 +11,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/if_link.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>

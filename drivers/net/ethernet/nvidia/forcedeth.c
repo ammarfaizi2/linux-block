@@ -32,6 +32,7 @@
 #define FORCEDETH_VERSION		"0.64"
 #define DRV_NAME			"forcedeth"
 
+#include <linux/if_vlan_api.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>

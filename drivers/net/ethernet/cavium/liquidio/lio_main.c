@@ -15,6 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
  * NONINFRINGEMENT.  See the GNU General Public License for more details.
  ***********************************************************************/
+#include <linux/if_vlan_api.h>
 #include <linux/if_link.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

@@ -7,6 +7,7 @@
  * Page recycling code is mostly taken from gianfar driver.
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

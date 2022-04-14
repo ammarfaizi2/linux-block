@@ -3,6 +3,7 @@
  * Copyright 2021 Marvell. All rights reserved.
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/types.h>
 #include <asm/byteorder.h>
 #include <asm/param.h>

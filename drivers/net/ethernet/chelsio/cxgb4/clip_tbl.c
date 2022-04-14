@@ -10,6 +10,7 @@
  *  release for licensing terms and conditions.
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

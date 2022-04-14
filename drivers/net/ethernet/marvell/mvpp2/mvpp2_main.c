@@ -7,6 +7,7 @@
  * Marcin Wojtas <mw@semihalf.com>
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>

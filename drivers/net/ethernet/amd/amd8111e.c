@@ -54,6 +54,7 @@ Revision History:
 */
 
 
+#include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

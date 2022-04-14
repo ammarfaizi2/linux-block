@@ -2,6 +2,7 @@
 /* Copyright 2017-2019 NXP */
 
 #include "enetc.h"
+#include <linux/if_vlan_api.h>
 #include <linux/gfp_api.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>

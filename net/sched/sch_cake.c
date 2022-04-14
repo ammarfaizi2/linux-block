@@ -50,6 +50,7 @@
  * granted us permission to leverage.
  */
 
+#include <linux/if_vlan_api.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/types.h>

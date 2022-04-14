@@ -6,6 +6,7 @@
  *	Roopa Prabhu		<roopa@cumulusnetworks.com>
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
 #include <linux/rtnetlink.h>

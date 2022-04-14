@@ -16,6 +16,7 @@
 
 #include "bnx2fc.h"
 
+#include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/highmem.h>
 #include <linux/etherdevice_api.h>

@@ -4,6 +4,7 @@
  * Author: Florian Westphal <fw@strlen.de>
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/module.h>
 #include <linux/static_key.h>
 #include <linux/hash.h>

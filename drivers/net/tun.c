@@ -32,6 +32,7 @@
 #define DRV_DESCRIPTION	"Universal TUN/TAP device driver"
 #define DRV_COPYRIGHT	"(C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>"
 
+#include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

@@ -4,6 +4,7 @@
 /* Written 1998-2000 by Werner Almesberger, EPFL ICA */
 
 
+#include <linux/if_vlan_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

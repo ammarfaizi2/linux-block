@@ -7,6 +7,7 @@
  *              - Ingress support
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bitops.h>

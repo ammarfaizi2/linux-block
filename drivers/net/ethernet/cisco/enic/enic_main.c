@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
