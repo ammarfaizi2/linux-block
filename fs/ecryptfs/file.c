@@ -9,6 +9,7 @@
  *   		Michael C. Thompson <mcthomps@us.ibm.com>
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/file.h>

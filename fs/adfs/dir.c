@@ -6,6 +6,7 @@
  *
  *  Common directory handling for ADFS
  */
+#include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/slab.h>
 #include "adfs.h"

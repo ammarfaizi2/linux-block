@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/buffer_head.h>
 #include <linux/slab.h>
 #include <linux/blkdev.h>

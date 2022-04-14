@@ -4,6 +4,8 @@
  *             https://www.huawei.com/
  * Copyright (C) 2022, Alibaba Cloud
  */
+#include <linux/fs_api_dir_context.h>
+
 #include "internal.h"
 
 static void debug_one_dentry(unsigned char d_type, const char *de_name,

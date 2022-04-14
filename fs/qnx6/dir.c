@@ -11,6 +11,8 @@
  *
  */
 
+#include <linux/fs_api_dir_context.h>
+
 #include "qnx6.h"
 
 static unsigned qnx6_lfile_checksum(char *name, unsigned size)

@@ -7,6 +7,7 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/sched.h>

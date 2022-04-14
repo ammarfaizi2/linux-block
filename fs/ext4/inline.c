@@ -4,6 +4,7 @@
  * Written by Tao Ma <boyu.mt@taobao.com>
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/backing-dev-api.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>

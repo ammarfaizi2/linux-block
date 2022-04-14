@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/fs_api_dio.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>

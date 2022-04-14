@@ -5,6 +5,7 @@
  * Copyright (C) 1998      Eddie C. Dost  (ecd@skynet.be)
  */
 
+#include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/types.h>
