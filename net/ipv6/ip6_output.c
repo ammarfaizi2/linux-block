@@ -15,7 +15,7 @@
  *				ip6_forward does not confuse sniffers.
  *				etc.
  *
- *      H. von Brand    :       Added missing #include <linux/string.h>
+ *      H. von Brand    :       Added missing include <linux/string.h>
  *	Imran Patel	:	frag id should be in NBO
  *      Kazunori MIYAZAWA @USAGI
  *			:       add ip6_append_data and related functions
