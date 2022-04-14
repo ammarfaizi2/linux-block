@@ -7,6 +7,7 @@
  * Charles University, Faculty of Mathematics and Physics
  */
 
+#include <linux/pagemap.h>
 #include <linux/ktime_api.h>
 #include <linux/fs_entry_types.h>
 #include <linux/bitmap.h>
