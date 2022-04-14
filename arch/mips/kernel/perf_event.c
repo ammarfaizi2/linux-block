@@ -11,6 +11,7 @@
  * support references the code of MIPS stacktrace.c.
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/perf_event.h>
 #include <linux/sched/task_stack.h>
 

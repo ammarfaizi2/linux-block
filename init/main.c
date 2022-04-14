@@ -12,6 +12,7 @@
 
 #define DEBUG		/* Enable initcall_debug */
 
+#include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_ptlock.h>

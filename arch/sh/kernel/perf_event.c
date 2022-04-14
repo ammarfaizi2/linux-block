@@ -17,6 +17,7 @@
  * ppc:
  *  Copyright 2008-2009 Paul Mackerras, IBM Corporation.
  */
+#include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>

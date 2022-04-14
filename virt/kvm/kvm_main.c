@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

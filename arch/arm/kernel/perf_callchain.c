@@ -7,6 +7,7 @@
  *
  * This code is based on the ARM OProfile backtrace code.
  */
+#include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/perf_event.h>
 #include <linux/uaccess.h>

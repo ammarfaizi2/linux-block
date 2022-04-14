@@ -17,6 +17,7 @@
  * This file contains the arch-independent routines.
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

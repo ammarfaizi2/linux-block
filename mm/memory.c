@@ -39,6 +39,7 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_types_task.h>

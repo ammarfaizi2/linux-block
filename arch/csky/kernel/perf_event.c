@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
+#include <linux/perf_event_api.h>
 #include <linux/percpu.h>
 #include <linux/of_api.h>
 #include <linux/cpumask_api.h>

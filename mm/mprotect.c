@@ -9,6 +9,7 @@
  *  (C) Copyright 2002 Red Hat Inc, All Rights Reserved
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>

@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "hv-24x7: " fmt
 
+#include <linux/perf_event_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

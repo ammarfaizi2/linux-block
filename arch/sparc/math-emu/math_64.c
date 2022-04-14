@@ -9,6 +9,7 @@
  * of glibc and has appropriate copyrights in it.
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/errno.h>

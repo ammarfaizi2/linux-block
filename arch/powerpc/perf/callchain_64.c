@@ -4,6 +4,7 @@
  *
  * Copyright © 2009 Paul Mackerras, IBM Corporation.
  */
+#include <linux/perf_event_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>

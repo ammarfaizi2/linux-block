@@ -4,6 +4,7 @@
  * Copyright © 2017-2018 Intel Corporation
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

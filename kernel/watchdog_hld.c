@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "NMI watchdog: " fmt
 
+#include <linux/perf_event_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

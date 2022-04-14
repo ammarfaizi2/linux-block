@@ -7,6 +7,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>

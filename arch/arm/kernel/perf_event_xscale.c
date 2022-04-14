@@ -15,6 +15,7 @@
 
 #ifdef CONFIG_CPU_XSCALE
 
+#include <linux/perf_event_api.h>
 #include <asm/cputype.h>
 #include <asm/irq_regs.h>
 

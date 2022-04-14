@@ -6,6 +6,7 @@
  * Copyright (C) 2015 Cadence Design Systems Inc.
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <asm/local64_api.h>

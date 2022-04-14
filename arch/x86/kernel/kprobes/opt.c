@@ -5,6 +5,7 @@
  * Copyright (C) IBM Corporation, 2002, 2004
  * Copyright (C) Hitachi Ltd., 2012
  */
+#include <linux/perf_event_api.h>
 #include <asm/ptrace.h>
 #include <linux/kprobes.h>
 #include <linux/perf_event.h>

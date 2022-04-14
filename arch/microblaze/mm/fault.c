@@ -17,6 +17,7 @@
  *
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/pagemap.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>
