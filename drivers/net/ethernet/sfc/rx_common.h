@@ -11,6 +11,7 @@
 #ifndef EFX_RX_COMMON_H
 #define EFX_RX_COMMON_H
 
+#include <linux/dma-mapping.h>
 #include <linux/types.h>
 
 /* Preferred number of descriptors to fill at once */

@@ -11,6 +11,7 @@
 #ifndef __BNAD_H__
 #define __BNAD_H__
 
+#include <linux/dma-mapping.h>
 #include <linux/rtnetlink.h>
 #include <linux/workqueue.h>
 #include <linux/ipv6.h>

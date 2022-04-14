@@ -7,6 +7,8 @@
 #ifndef _MSCC_OCELOT_FDMA_H_
 #define _MSCC_OCELOT_FDMA_H_
 
+#include <linux/dma-mapping.h>
+
 #include "ocelot.h"
 
 #define MSCC_FDMA_DCB_STAT_BLOCKO(x)	(((x) << 20) & GENMASK(31, 20))

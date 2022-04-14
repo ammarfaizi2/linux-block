@@ -23,6 +23,7 @@
 
 #ifndef __OCTEON_NETWORK_H__
 #define __OCTEON_NETWORK_H__
+#include <linux/dma-mapping.h>
 #include <linux/dev_printk.h>
 #include <linux/ptp_clock_kernel.h>
 

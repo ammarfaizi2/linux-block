@@ -9,6 +9,7 @@
 #include "e1000_mac.h"
 #include "e1000_82575.h"
 
+#include <linux/dma-mapping.h>
 #include <linux/timecounter.h>
 #include <linux/net_tstamp.h>
 #include <linux/ptp_clock_kernel.h>

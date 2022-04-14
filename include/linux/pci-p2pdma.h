@@ -11,6 +11,7 @@
 #ifndef _LINUX_PCI_P2PDMA_H
 #define _LINUX_PCI_P2PDMA_H
 
+#include <linux/dma-mapping.h>
 #include <linux/pci.h>
 
 struct block_device;

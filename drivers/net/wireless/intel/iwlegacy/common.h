@@ -11,6 +11,7 @@
 #ifndef __il_core_h__
 #define __il_core_h__
 
+#include <linux/dma-mapping.h>
 #include <linux/dev_printk.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>		/* for struct pci_device_id */

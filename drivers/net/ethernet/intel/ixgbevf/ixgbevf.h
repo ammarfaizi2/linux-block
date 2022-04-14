@@ -4,6 +4,7 @@
 #ifndef _IXGBEVF_H_
 #define _IXGBEVF_H_
 
+#include <linux/dma-mapping.h>
 #include <linux/types.h>
 #include <linux/bitops.h>
 #include <linux/timer.h>

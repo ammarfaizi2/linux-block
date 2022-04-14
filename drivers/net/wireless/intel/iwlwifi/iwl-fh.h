@@ -6,6 +6,7 @@
 #ifndef __iwl_fh_h__
 #define __iwl_fh_h__
 
+#include <linux/dma-mapping.h>
 #include <linux/types.h>
 #include <linux/bitfield.h>
 
