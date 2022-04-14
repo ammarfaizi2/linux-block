@@ -10,6 +10,7 @@
  *		by Arnaldo Carvalho de Melo <acme@mandriva.com>
  */
 
+#include <linux/filter_api.h>
 #include <linux/module.h>
 #include <linux/random.h>
 

@@ -3,6 +3,7 @@
 
 /* The driver transmit and receive code */
 
+#include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dim.h>

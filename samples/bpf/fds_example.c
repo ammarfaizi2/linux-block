@@ -1,3 +1,4 @@
+#include <linux/filter_api.h>
 #include <linux/unistd.h>
 #include <linux/bpf.h>
 

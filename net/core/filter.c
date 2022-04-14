@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/compat.h>

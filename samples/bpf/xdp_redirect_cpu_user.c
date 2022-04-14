@@ -13,6 +13,7 @@ static const char *__doc__ =
 "    Optionally, also pass --redirect-map/-m and --redirect-device/-r together\n"
 "    to configure DEVMAP in BPF object <filename>\n";
 
+#include <linux/filter_api.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>

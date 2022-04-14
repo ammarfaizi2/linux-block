@@ -44,6 +44,7 @@
  * ifindexes. The setup and packet enqueue/send code is shared between the two
  * types of devmap; only the lookup and insertion is different.
  */
+#include <linux/filter_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

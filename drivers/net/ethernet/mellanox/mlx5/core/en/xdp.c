@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/filter_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/bpf_trace.h>
 #include <net/xdp_sock_drv.h>

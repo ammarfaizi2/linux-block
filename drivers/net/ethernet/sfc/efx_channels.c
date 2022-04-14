@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/filter_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

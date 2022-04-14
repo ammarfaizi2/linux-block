@@ -18,6 +18,7 @@
 #define KMSG_COMPONENT "bpf_jit"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/filter_api.h>
 #include <linux/netdevice.h>
 #include <linux/filter.h>
 #include <linux/init.h>

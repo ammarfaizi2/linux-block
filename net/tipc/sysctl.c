@@ -37,6 +37,7 @@
 #include "trace.h"
 #include "crypto.h"
 #include "bcast.h"
+#include <linux/filter_api.h>
 #include <linux/sysctl.h>
 
 static struct ctl_table_header *tipc_ctl_hdr;

@@ -7,6 +7,7 @@
  *
  * Based on PPC64 eBPF JIT compiler by Naveen N. Rao
  */
+#include <linux/filter_api.h>
 #include <linux/moduleloader.h>
 #include <asm/cacheflush.h>
 #include <asm/asm-compat.h>

@@ -9,6 +9,7 @@
  * the BPF JIT compiler for 32-bit ARM by Shubham Bansal and Mircea Gherzan.
  */
 
+#include <linux/filter_api.h>
 #include <linux/bpf.h>
 #include <linux/filter.h>
 #include "bpf_jit.h"
