@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_AMD_NB_H
 #define _ASM_X86_AMD_NB_H
 
+#include <asm/processor_types.h>
 #include <linux/ioport.h>
 #include <linux/pci.h>
 #include <linux/refcount.h>
