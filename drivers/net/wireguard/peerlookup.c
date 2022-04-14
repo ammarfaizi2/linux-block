@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
+#include <linux/siphash_api.h>
 #include <linux/rculist.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>

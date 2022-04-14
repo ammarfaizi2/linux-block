@@ -15,6 +15,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/siphash_api.h>
 #include <linux/refcount_api.h>
 #include <linux/random.h>
 #include <linux/netfilter/nf_conntrack_common_api.h>

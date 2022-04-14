@@ -4,6 +4,7 @@
  */
 
 #include "ratelimiter.h"
+#include <linux/siphash_api.h>
 #include <linux/rculist.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>
