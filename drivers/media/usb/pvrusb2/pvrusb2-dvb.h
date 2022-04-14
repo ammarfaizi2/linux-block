@@ -2,6 +2,7 @@
 #ifndef __PVRUSB2_DVB_H__
 #define __PVRUSB2_DVB_H__
 
+#include <media/dvbdev.h>
 #include <linux/mm_api.h>
 #include <linux/i2c.h>
 #include <media/dvb_frontend.h>

@@ -8,6 +8,7 @@
 #ifndef SP2_H
 #define SP2_H
 
+#include <media/dvbdev.h>
 #include <media/dvb_ca_en50221.h>
 
 /*

@@ -7,6 +7,7 @@
  *  Copyright (C) 2007  Hans Verkuil <hverkuil@xs4all.nl>
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
+#include <media/dvbdev.h>
 #include <linux/workqueue_api.h>
 #include <linux/types.h>
 

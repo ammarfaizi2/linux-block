@@ -6,6 +6,7 @@
 
 #ifndef _AS102_DRV_H
 #define _AS102_DRV_H
+#include <media/dvbdev.h>
 #include <linux/usb.h>
 #include <media/dvb_demux.h>
 #include <media/dvb_frontend.h>
