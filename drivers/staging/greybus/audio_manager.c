@@ -5,6 +5,7 @@
  * Copyright 2015-2016 Google Inc.
  */
 
+#include <linux/rwsem.h>
 #include <linux/rwsem_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>
