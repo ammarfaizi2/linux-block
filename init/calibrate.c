@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/kstrtox.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/init.h>
