@@ -4,6 +4,7 @@
  * Copyright(c) 2015-2020 Intel Corporation.
  */
 
+#include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/srcu.h>

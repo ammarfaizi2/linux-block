@@ -20,6 +20,7 @@
  *		added IO completion notifier.
  */
 
+#include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>

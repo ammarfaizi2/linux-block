@@ -16,6 +16,7 @@
  *    Copyright (c) 2010, Intel Corporation.
  */
 
+#include <linux/uio_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>

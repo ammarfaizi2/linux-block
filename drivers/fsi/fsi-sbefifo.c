@@ -12,6 +12,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/uio_api.h>
 #include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

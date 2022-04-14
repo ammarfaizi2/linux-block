@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 #define FSCACHE_DEBUG_LEVEL OPERATION
+#include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/atomic_api.h>

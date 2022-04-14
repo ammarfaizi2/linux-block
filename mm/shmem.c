@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/uio_api.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/swap_api_device.h>

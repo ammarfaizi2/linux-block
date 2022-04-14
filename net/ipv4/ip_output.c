@@ -43,6 +43,7 @@
  *		Hirokazu Takahashi:	sendfile() on UDP works now.
  */
 
+#include <linux/uio_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>

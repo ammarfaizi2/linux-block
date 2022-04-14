@@ -7,6 +7,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/uio_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

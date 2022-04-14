@@ -11,6 +11,7 @@
  * (part of code stolen from loop.c)
  */
 
+#include <linux/uio_api.h>
 #include <linux/topology.h>
 #include <linux/seq_file.h>
 #include <linux/refcount_api.h>

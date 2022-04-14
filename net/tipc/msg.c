@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/uio_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/ratelimit.h>
 #include <net/sock.h>

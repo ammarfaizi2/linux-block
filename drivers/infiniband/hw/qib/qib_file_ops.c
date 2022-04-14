@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

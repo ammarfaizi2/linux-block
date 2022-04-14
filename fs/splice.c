@@ -18,6 +18,7 @@
  * Copyright (C) 2006 Ingo Molnar <mingo@elte.hu>
  *
  */
+#include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/ratelimit.h>

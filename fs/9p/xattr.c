@@ -4,6 +4,7 @@
  * Author Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
  */
 
+#include <linux/uio_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/sched.h>
