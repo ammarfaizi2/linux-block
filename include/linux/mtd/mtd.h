@@ -6,6 +6,7 @@
 #ifndef __MTD_MTD_H__
 #define __MTD_MTD_H__
 
+#include <linux/device_api.h>
 #include <linux/types.h>
 #include <linux/uio.h>
 #include <linux/list.h>

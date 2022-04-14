@@ -10,6 +10,8 @@
 #ifndef __iwl_debug_h__
 #define __iwl_debug_h__
 
+#include <linux/device_api.h>
+
 #include "iwl-modparams.h"
 
 

@@ -7,6 +7,7 @@
 #if !defined(_TRACE_DEVLINK_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_DEVLINK_H
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <net/devlink.h>
 #include <linux/tracepoint.h>

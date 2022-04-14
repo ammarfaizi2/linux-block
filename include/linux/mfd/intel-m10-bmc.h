@@ -7,6 +7,7 @@
 #ifndef __MFD_INTEL_M10_BMC_H
 #define __MFD_INTEL_M10_BMC_H
 
+#include <linux/device_api.h>
 #include <linux/regmap.h>
 
 #define M10BMC_LEGACY_BUILD_VER		0x300468

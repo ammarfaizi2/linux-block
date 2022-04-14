@@ -6,6 +6,7 @@
  */
 #ifndef __NFIT_H__
 #define __NFIT_H__
+#include <linux/device_api.h>
 #include <linux/workqueue.h>
 #include <linux/libnvdimm.h>
 #include <linux/ndctl.h>

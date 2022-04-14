@@ -25,6 +25,8 @@
 #ifndef QXL_OBJECT_H
 #define QXL_OBJECT_H
 
+#include <linux/device_api.h>
+
 #include "qxl_drv.h"
 
 static inline int qxl_bo_reserve(struct qxl_bo *bo)
