@@ -25,6 +25,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <linux/file.h>

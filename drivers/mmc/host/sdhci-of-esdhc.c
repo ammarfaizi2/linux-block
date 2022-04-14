@@ -10,6 +10,7 @@
  *	    Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/of.h>

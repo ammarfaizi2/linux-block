@@ -4,6 +4,7 @@
  * Copyright (C) 2008 Takashi Iwai
  */
 
+#include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>

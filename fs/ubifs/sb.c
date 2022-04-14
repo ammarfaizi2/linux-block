@@ -15,6 +15,7 @@
  */
 
 #include "ubifs.h"
+#include <linux/ktime_api.h>
 #include <linux/slab.h>
 #include <linux/math64.h>
 #include <linux/uuid.h>

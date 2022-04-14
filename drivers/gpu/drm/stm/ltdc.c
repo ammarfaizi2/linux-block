@@ -8,6 +8,7 @@
  *          Mickael Reulier <mickael.reulier@st.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

@@ -7,6 +7,7 @@
  * Tao Peng <bergwolf@primarydata.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/gfp_api.h>
 #include <linux/delay.h>
 #include <linux/cred.h>

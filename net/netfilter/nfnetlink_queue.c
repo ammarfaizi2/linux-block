@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/kmod.h>
 #include <linux/if_vlan_api.h>
 #include <linux/cred.h>

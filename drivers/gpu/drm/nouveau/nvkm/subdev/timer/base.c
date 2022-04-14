@@ -21,6 +21,8 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/ktime_api.h>
+
 #include "priv.h"
 
 s64

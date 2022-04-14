@@ -5,6 +5,7 @@
  * Copyright (c) 2018-2019 Paulo Alcantara <palcantara@suse.de>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/jhash.h>

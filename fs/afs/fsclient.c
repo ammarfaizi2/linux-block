@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/ktime_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

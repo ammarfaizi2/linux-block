@@ -37,6 +37,7 @@
  * Includes useful feedback from Clark Williams <williams@redhat.com>
  *
  */
+#include <linux/ktime_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/sched/affinity.h>

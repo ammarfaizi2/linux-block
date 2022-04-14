@@ -5,6 +5,7 @@
  * USB Power Delivery protocol stack.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/fwnode.h>
 #include <linux/device_api_lock.h>

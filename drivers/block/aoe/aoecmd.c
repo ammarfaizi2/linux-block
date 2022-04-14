@@ -4,6 +4,7 @@
  * Filesystem request handling methods
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

@@ -6,6 +6,7 @@
  *  Davide Libenzi <davidel@xmailserver.org>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

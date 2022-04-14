@@ -9,6 +9,7 @@
  * Contact: Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/ktime_api.h>
 #include <media/v4l2-dev.h>
 #include <media/v4l2-fh.h>
 #include <media/v4l2-event.h>

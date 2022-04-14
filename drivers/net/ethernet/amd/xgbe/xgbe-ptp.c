@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/clk.h>
 #include <linux/clocksource.h>

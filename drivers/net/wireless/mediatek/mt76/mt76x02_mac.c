@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Stanislaw Gruszka <stf_xl@wp.pl>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

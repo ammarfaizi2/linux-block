@@ -70,6 +70,7 @@
  *   The worst-case behavior is nevertheless O(N^2) for N wakeups.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/sched/cond_resched.h>

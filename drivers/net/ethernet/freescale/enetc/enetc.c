@@ -2,6 +2,7 @@
 /* Copyright 2017-2019 NXP */
 
 #include "enetc.h"
+#include <linux/ktime_api.h>
 #include <linux/ipv6.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

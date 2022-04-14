@@ -7,6 +7,7 @@
  *   broadsheetfb.c, Copyright (C) 2008, Jaya Kumar
  */
 
+#include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

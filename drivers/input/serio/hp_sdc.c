@@ -61,6 +61,7 @@
  * sure it doesn't freeze up and to allow for bad reads to time out.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>

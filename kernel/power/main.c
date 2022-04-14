@@ -6,6 +6,7 @@
  * Copyright (c) 2003 Open Source Development Lab
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kobject_api.h>
 #include <linux/export.h>
 #include <linux/kobject.h>

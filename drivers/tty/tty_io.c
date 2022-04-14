@@ -65,6 +65,7 @@
  *			 -- Andrew Morton <andrewm@uow.edu.eu> 17Mar01
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>

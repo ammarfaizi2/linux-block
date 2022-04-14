@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>

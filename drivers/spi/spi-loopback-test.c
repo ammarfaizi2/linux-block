@@ -9,6 +9,7 @@
  *  this can also get used for regression testing
  */
 
+#include <linux/ktime_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/ktime.h>

@@ -30,6 +30,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <crypto/hash.h>

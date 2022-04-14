@@ -6,6 +6,7 @@
  *          for STMicroelectronics.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/types.h>
 
 #include <drm/drm_fb_cma_helper.h>

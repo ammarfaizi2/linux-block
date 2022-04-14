@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/ktime_api.h>
 #include <linux/delay.h>
 #include <acpi/video.h>
 

@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Google, Inc.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/delay.h>

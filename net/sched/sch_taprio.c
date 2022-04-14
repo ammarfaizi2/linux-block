@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/atomic_api.h>
 #include <linux/ethtool.h>

@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/mlx4/device.h>
 #include <linux/clocksource.h>

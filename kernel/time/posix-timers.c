@@ -9,6 +9,7 @@
  *
  * These are all the functions necessary to implement POSIX clocks & timers
  */
+#include <linux/ktime_api.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/mm.h>

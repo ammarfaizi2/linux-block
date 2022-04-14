@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/ktime_api.h>
+
 #include "umc_v6_1.h"
 #include "amdgpu_ras.h"
 #include "amdgpu_umc.h"

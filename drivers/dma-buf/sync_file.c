@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Google, Inc.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/dma-fence-unwrap.h>

@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "iio-core: " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>

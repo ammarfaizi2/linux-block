@@ -8,6 +8,7 @@
  * This code is licenced under the GPL.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/device/bus.h>
 #include <linux/cpumask_api.h>
 #include <linux/clockchips.h>

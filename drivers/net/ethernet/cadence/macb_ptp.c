@@ -7,6 +7,7 @@
  * Authors: Rafal Ozieblo <rafalo@cadence.com>
  *          Bartosz Folta <bfolta@cadence.com>
  */
+#include <linux/ktime_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

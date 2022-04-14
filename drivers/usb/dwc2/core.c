@@ -40,6 +40,7 @@
  * DWC_otg hardware. These services are used by both the Host Controller
  * Driver and the Peripheral Controller Driver.
  */
+#include <linux/ktime_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

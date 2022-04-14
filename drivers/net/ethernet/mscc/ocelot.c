@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2017 Microsemi Corporation
  */
+#include <linux/ktime_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

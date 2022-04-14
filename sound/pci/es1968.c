@@ -80,6 +80,7 @@
  *	places.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/io.h>

@@ -6,6 +6,7 @@
  *  - Altera Avalon EPCS flash controller driver
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

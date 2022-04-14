@@ -6,6 +6,7 @@
  *	Peter Wang <peter.wang@mediatek.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

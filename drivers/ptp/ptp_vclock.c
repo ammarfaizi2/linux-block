@@ -4,6 +4,7 @@
  *
  * Copyright 2021 NXP
  */
+#include <linux/ktime_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/slab.h>

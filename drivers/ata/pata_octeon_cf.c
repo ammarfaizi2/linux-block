@@ -9,6 +9,7 @@
  * Copyright (C) 2008 Wind River Systems
  */
 
+#include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/hrtimer_api.h>

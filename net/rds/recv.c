@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

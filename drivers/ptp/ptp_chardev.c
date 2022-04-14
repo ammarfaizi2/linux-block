@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
+#include <linux/ktime_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/posix-clock.h>

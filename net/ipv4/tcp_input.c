@@ -64,6 +64,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  * Based on panfrost_devfreq.c:
  *   Copyright 2019 Collabora ltd.
  */
+#include <linux/ktime_api.h>
 #include <linux/clk.h>
 #include <linux/devfreq.h>
 #include <linux/devfreq_cooling.h>

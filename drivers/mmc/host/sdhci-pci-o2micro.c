@@ -7,6 +7,7 @@
  *          Ernest Zhang <ernest.zhang@bayhubtech.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/pci.h>
 #include <linux/mmc/host.h>
 #include <linux/mmc/mmc.h>

@@ -18,6 +18,7 @@
 /*
  * @file octeon_console.c
  */
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/moduleparam.h>
 #include <linux/pci.h>

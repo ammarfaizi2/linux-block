@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "psci: " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/of.h>

@@ -15,6 +15,7 @@
  * putting it all in one file would make that file too big and unreadable.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 

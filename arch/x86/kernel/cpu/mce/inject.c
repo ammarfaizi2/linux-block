@@ -16,6 +16,7 @@
  *			   Advanced Micro Devices Inc.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/fs_api.h>

@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/file.h>
 #include <linux/sched/cond_resched.h>

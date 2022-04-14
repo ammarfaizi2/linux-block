@@ -6,6 +6,7 @@
  * Enhanced Scheduler Traffic (EST - P802.1Qbv/D2.2)
  */
 
+#include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/pm_runtime.h>

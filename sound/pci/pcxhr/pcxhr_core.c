@@ -7,6 +7,7 @@
  * Copyright (c) 2004 by Digigram <alsa@digigram.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/delay.h>

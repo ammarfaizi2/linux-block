@@ -34,6 +34,7 @@
  *                              pulse time measured
  *                              --> one round trip of ultra sonic waves
  */
+#include <linux/ktime_api.h>
 #include <linux/err.h>
 #include <linux/gpio/consumer.h>
 #include <linux/kernel.h>

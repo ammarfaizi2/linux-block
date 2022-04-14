@@ -17,6 +17,7 @@
  *   interrupts (VCNL4040, VCNL4200)
  */
 
+#include <linux/ktime_api.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/err.h>

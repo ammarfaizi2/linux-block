@@ -23,6 +23,7 @@
 
 #define SWSMU_CODE_LAYER_L2
 
+#include <linux/ktime_api.h>
 #include <linux/bitmap.h>
 
 #include "amdgpu.h"

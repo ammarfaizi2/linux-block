@@ -6,6 +6,7 @@
  * Copyright:   (C) 2016 Linaro Limited
  */
 
+#include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/linkage.h>
 #include <linux/kernel.h>

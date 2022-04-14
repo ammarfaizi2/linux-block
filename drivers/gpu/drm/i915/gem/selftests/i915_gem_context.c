@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

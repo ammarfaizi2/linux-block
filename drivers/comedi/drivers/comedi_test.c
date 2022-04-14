@@ -44,6 +44,7 @@
  * zero volts).
  */
 
+#include <linux/ktime_api.h>
 #include <linux/interrupt.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

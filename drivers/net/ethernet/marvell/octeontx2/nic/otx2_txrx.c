@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/ktime_api.h>
 #include <linux/ipv6.h>
 #include <linux/io_extra.h>
 #include <linux/if_vlan_api.h>

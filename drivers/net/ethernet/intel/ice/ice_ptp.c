@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2021, Intel Corporation. */
 
+#include <linux/ktime_api.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

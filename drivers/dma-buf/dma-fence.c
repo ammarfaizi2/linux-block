@@ -10,6 +10,7 @@
  * Maarten Lankhorst <maarten.lankhorst@canonical.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>

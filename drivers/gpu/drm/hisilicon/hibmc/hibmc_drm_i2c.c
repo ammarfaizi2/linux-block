@@ -9,6 +9,7 @@
  *      Tian Tao <tiantao6@hisilicon.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/delay.h>

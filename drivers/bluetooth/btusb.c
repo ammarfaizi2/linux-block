@@ -6,6 +6,7 @@
  *  Copyright (C) 2005-2008  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/fs_api.h>

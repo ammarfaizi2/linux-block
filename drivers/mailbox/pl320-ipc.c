@@ -2,6 +2,7 @@
 /*
  * Copyright 2012 Calxeda, Inc.
  */
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/types.h>

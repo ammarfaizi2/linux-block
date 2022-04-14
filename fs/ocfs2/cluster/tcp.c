@@ -37,6 +37,7 @@
  * and only accepts the connection if the higher numbered node is heartbeating.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>

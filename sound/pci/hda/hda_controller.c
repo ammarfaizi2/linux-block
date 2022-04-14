@@ -9,6 +9,7 @@
  *                     PeiSen Hou <pshou@realtek.com.tw>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/clocksource.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

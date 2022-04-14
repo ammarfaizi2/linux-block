@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

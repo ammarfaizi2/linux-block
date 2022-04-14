@@ -4,6 +4,7 @@
  * Copyright (C) 2002-2004 Eric Biederman  <ebiederm@xmission.com>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/gfp_api.h>
 #include <linux/buildid.h>
 #include <linux/crash_core.h>

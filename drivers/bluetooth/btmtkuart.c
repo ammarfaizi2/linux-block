@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>

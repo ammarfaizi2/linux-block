@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/hrtimer_api.h>

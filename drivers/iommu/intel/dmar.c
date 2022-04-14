@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)     "DMAR: " fmt
 
+#include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

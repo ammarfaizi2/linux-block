@@ -41,6 +41,7 @@
  * way that is expected by existing tools.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

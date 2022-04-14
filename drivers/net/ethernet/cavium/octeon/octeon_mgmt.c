@@ -6,6 +6,7 @@
  * Copyright (C) 2009-2012 Cavium, Inc
  */
 
+#include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

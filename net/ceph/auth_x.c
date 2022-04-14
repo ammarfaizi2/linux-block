@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/ktime_api.h>
 #include <linux/ceph/ceph_debug.h>
 
 #include <linux/err.h>

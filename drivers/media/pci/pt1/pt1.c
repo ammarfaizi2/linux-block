@@ -8,6 +8,7 @@
  *	by Tomoaki Ishikawa <tomy@users.sourceforge.jp>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>

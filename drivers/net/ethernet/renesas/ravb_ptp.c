@@ -6,6 +6,8 @@
  * Copyright (C) 2015-2016 Cogent Embedded, Inc. <source@cogentembedded.com>
  */
 
+#include <linux/ktime_api.h>
+
 #include "ravb.h"
 
 static int ravb_ptp_tcr_request(struct ravb_private *priv, u32 request)

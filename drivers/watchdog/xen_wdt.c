@@ -7,6 +7,7 @@
 
 #define DRV_NAME	"xen_wdt"
 
+#include <linux/ktime_api.h>
 #include <linux/bug.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

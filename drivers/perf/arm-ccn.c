@@ -4,6 +4,7 @@
  * Copyright (C) 2014 ARM Limited
  */
 
+#include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>

@@ -19,6 +19,7 @@
  * if syslogd is configured to eliminate duplicate messages.)
  */
 
+#include <linux/ktime_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/kprobes.h>

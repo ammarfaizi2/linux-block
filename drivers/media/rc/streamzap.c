@@ -18,6 +18,7 @@
  * kernel; copyright (C) 2001-2003 Greg Kroah-Hartman (greg@kroah.com)
  */
 
+#include <linux/ktime_api.h>
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/slab.h>

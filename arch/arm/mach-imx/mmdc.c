@@ -5,6 +5,7 @@
  * Copyright 2011 Linaro Ltd.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2016, Intel Corporation.
  */
 
+#include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched.h>

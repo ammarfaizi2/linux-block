@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/ktime_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 

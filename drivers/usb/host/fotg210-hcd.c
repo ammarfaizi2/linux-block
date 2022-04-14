@@ -9,6 +9,7 @@
  *
  * Most of code borrowed from the Linux-3.7 EHCI driver
  */
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hardirq.h>

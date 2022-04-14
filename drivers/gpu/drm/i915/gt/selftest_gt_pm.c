@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/ktime_api.h>
 #include <linux/sort.h>
 
 #include "intel_engine_regs.h"
