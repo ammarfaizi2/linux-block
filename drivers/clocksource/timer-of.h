@@ -2,6 +2,7 @@
 #ifndef __TIMER_OF_H__
 #define __TIMER_OF_H__
 
+#include <linux/kernel.h>
 #include <linux/clockchips.h>
 
 #define TIMER_OF_BASE	0x1

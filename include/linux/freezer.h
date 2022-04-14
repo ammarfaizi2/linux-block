@@ -4,6 +4,7 @@
 #ifndef FREEZER_H_INCLUDED
 #define FREEZER_H_INCLUDED
 
+#include <linux/kernel.h>
 #include <linux/atomic_api.h>
 #include <linux/debug_locks.h>
 #include <linux/sched/task_flags.h>
