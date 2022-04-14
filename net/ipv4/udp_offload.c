@@ -6,6 +6,7 @@
  *	UDPv4 GSO support
  */
 
+#include <net/udp_api_table.h>
 #include <net/sock_api.h>
 #include <net/route_api.h>
 #include <net/dst_api.h>

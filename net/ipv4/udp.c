@@ -74,6 +74,7 @@
 
 #define pr_fmt(fmt) "UDP: " fmt
 
+#include <net/udp_api_table.h>
 #include <net/udp_api_sock.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>
