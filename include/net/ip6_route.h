@@ -19,6 +19,7 @@ struct route_info {
 	__u8			prefix[];	/* 0,8 or 16 */
 };
 
+#include <linux/types.h>
 #include <linux/skbuff_api.h>
 #include <net/addrconf.h>
 #include <net/flow.h>
