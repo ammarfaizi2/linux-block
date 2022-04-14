@@ -7,6 +7,7 @@
  * Author: David Lopo
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>

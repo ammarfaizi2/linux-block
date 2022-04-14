@@ -8,6 +8,7 @@
  * Licensed under the GNU/GPL. See COPYING for details.
  */
 
+#include <linux/ioport.h>
 #include <linux/ssb/ssb.h>
 #include <linux/ssb/ssb_driver_gige.h>
 #include <linux/export.h>

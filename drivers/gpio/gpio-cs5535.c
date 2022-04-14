@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2009  Andres Salomon <dilinger@collabora.co.uk>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
 #include <linux/module.h>

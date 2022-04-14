@@ -3,6 +3,7 @@
  * Copyright (C) 2014 Texas Instruments Incorporated - https://www.ti.com/
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

@@ -10,6 +10,7 @@
  *	Dreamcast PCI: Supports SEGA Broadband Adaptor only.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

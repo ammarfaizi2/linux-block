@@ -14,6 +14,7 @@
  * Copyright 2021 Linaro, Rui Miguel Silva <rui.silva@linaro.org>
  *
  */
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

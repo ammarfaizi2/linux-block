@@ -5,6 +5,7 @@
  * Driver is originally developed by Pavel Sokolov <psokolov@synopsys.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/module.h>

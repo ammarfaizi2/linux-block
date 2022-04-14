@@ -7,6 +7,7 @@
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

@@ -12,6 +12,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/of_address.h>
 

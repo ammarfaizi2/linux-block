@@ -5,6 +5,7 @@
  * Copyright 2006-2008 Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/slab.h>

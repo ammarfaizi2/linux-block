@@ -26,6 +26,7 @@
  * linux-scsi@vger.kernel.org .
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

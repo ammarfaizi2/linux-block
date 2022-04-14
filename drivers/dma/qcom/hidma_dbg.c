@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/ioport.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>

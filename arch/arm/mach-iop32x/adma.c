@@ -3,6 +3,7 @@
  * platform device definitions for the iop3xx dma/xor engines
  * Copyright © 2006, Intel Corporation.
  */
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/platform_data/dma-iop32x.h>

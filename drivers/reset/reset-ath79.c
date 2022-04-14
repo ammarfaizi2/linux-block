@@ -6,6 +6,7 @@
  * Copyright (C) 2015 Alban Bedel <albeu@free.fr>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/io.h>

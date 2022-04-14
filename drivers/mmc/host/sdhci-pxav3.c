@@ -7,6 +7,7 @@
  *		Philip Rakity <prakity@marvell.com>
  *		Mark Brown <markb@marvell.com>
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/err.h>

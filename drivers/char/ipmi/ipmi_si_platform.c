@@ -9,6 +9,7 @@
 #define pr_fmt(fmt) "ipmi_platform: " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/types.h>

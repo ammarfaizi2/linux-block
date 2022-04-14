@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 
 #include "ipa.h"

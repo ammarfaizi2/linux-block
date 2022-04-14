@@ -23,6 +23,7 @@
  * indication of where the hardware is currently working.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

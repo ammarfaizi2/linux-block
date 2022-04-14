@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/fb.h>

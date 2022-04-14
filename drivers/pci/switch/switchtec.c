@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Microsemi Corporation
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/idr_api.h>

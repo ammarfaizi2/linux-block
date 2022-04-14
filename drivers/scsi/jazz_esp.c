@@ -4,6 +4,7 @@
  * Copyright (C) 2007 Thomas Bogendörfer (tsbogend@alpha.frankende)
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/gfp.h>
 #include <linux/types.h>

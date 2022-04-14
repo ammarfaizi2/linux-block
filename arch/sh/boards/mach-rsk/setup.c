@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Paul Mundt
  * Copyright (C) 2008 Peter Griffin <pgriffin@mpc-data.co.uk>
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/platform_device.h>

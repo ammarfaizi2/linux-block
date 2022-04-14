@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>

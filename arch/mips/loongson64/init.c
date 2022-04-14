@@ -4,6 +4,7 @@
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/irqchip.h>
 #include <linux/logic_pio.h>

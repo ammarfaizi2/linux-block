@@ -32,6 +32,7 @@
  *   Copyright (C) 2006 Tower Technologies
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

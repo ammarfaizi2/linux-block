@@ -5,6 +5,7 @@
  * (c) 2009 Manuel Lauss <manuel.lauss@googlemail.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

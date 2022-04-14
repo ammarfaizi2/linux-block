@@ -18,6 +18,7 @@
  * all compliant PCI Express devices should support this bit.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/module.h>

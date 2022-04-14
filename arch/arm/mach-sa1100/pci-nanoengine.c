@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2010 Marcelo Roberto Jimenez <mroberto@cpti.cetuc.puc-rio.br>
  */
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/irq.h>
 #include <linux/pci.h>

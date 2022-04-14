@@ -9,6 +9,7 @@
  * Rewritten to use 53c700.c by Kars de Jong <jongk@linux-m68k.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/init.h>

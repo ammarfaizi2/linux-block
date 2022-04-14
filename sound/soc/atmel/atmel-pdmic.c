@@ -6,6 +6,7 @@
  * Author: Songjun Wu <songjun.wu@atmel.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/of.h>

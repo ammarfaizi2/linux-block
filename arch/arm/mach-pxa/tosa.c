@@ -8,6 +8,7 @@
  *	Based on code written by Sharp/Lineo for 2.4 kernels
  */
 
+#include <linux/ioport.h>
 #include <linux/clkdev.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

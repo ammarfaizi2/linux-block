@@ -17,6 +17,7 @@
  * All rights reserved, Dual BSD/GPL Licensed.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

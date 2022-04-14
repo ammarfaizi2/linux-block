@@ -36,6 +36,7 @@
  * orientation, false is normal orientation.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

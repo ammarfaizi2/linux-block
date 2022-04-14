@@ -8,6 +8,7 @@
  * Initialization based on code from Shlomi Gridish.
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

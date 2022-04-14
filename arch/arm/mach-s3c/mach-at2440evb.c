@@ -7,6 +7,7 @@
 //
 // For product information, visit http://www.arm.com/
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/gpio/machine.h>

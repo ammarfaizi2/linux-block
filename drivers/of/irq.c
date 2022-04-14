@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	"OF: " fmt
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/errno.h>

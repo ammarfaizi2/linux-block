@@ -7,6 +7,7 @@
  *	   Honghui Zhang <honghui.zhang@mediatek.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/interrupt.h>

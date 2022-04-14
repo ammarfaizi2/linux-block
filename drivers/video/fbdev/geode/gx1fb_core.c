@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Arcom Control Systems Ltd.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/device_api.h>

@@ -7,6 +7,7 @@
  *
  *  With cleanup by Paul van Gool <pvangool@mimotech.com>, 2003.
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/types.h>

@@ -7,6 +7,7 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/ctype.h>

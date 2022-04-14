@@ -17,6 +17,7 @@
  *  Copyright 2007 Juergen Beisert @ Pengutronix (j.beisert@pengutronix.de)
  */
 
+#include <linux/ioport.h>
 #include <linux/irq.h>
 #include <linux/platform_device.h>
 #include <linux/mtd/physmap.h>

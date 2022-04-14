@@ -119,6 +119,7 @@ that only one external action is invoked at a time.
 
 */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>

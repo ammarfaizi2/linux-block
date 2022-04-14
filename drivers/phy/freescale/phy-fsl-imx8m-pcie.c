@@ -3,6 +3,7 @@
  * Copyright 2021 NXP
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

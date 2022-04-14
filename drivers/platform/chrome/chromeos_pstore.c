@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2013 Google, Inc.
 
+#include <linux/ioport.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>
 #include <linux/module.h>

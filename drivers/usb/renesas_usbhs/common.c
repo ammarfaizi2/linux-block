@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Renesas Electronics Corporation
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/err.h>

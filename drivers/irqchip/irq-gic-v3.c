@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)	"GICv3: " fmt
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

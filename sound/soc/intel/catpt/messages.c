@@ -5,6 +5,7 @@
 // Author: Cezary Rojewski <cezary.rojewski@intel.com>
 //
 
+#include <linux/ioport.h>
 #include <linux/slab.h>
 #include "core.h"
 #include "messages.h"

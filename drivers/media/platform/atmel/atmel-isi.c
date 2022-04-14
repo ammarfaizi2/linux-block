@@ -8,6 +8,7 @@
  * Based on the bttv driver for Bt848 with respective copyright holders
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

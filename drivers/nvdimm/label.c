@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
+#include <linux/ioport.h>
 #include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/ndctl.h>

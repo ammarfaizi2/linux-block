@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Spreadtrum Communications Inc.
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/dmaengine.h>

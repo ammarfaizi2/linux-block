@@ -11,6 +11,7 @@
  *   are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

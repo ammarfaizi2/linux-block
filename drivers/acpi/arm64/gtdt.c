@@ -8,6 +8,7 @@
  *         Hanjun Guo <hanjun.guo@linaro.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/acpi.h>
 #include <linux/init.h>
 #include <linux/irqdomain.h>

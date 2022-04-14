@@ -7,6 +7,7 @@
  *   the OSS/Free SoundScape driver, written by Hannu Savolainen.
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/io.h>

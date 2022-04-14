@@ -41,6 +41,7 @@ static const char version2[] =
 "Last modified Nov 1, 2000 by Paul Gortmaker\n";
 
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  * Copyright (c) 2006 Carlos Munoz <carlos@kenati.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

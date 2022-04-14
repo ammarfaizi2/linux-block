@@ -8,6 +8,7 @@
  * This code was derived from the IXP46X driver.
  */
 
+#include <linux/ioport.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>

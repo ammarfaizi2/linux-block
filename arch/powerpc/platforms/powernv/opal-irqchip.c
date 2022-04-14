@@ -7,6 +7,7 @@
  *
  * Copyright Alistair Popple, IBM Corporation 2014.
  */
+#include <linux/ioport.h>
 #include <linux/hardirq.h>
 #include <linux/bitops.h>
 #include <linux/irq.h>

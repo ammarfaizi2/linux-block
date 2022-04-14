@@ -9,6 +9,7 @@
  * 		Hu Yongqi <yongqi.hu@windriver.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

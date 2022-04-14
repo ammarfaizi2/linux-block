@@ -16,6 +16,7 @@
  * - DMA support
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

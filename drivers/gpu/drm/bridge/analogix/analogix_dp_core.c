@@ -6,6 +6,7 @@
 * Author: Jingoo Han <jg1.han@samsung.com>
 */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

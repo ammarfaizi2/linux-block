@@ -13,6 +13,7 @@
  *  Copyright © 2009 Alessandro Rubini
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/clk.h>

@@ -11,6 +11,7 @@
  *  Copyright:  (C) 2006-2009 Instrumentation Technologies
  */
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/i2c.h>
 #include <linux/platform_data/i2c-pxa.h>

@@ -9,6 +9,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

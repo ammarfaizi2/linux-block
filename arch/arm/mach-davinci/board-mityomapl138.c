@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "MityOMAPL138: " fmt
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/console.h>

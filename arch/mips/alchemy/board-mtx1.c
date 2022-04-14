@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2009, Florian Fainelli <florian@openwrt.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

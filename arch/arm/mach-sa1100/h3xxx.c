@@ -6,6 +6,7 @@
  * Copyright (c) 2009 Dmitry Artamonow <mad_soft@inbox.ru>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/gpio/machine.h>
 #include <linux/gpio.h>

@@ -4,6 +4,7 @@
  * Author: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/gpio/driver.h>

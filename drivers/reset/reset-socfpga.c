@@ -4,6 +4,7 @@
  * Copied from reset-sunxi.c
  */
 
+#include <linux/ioport.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/init.h>

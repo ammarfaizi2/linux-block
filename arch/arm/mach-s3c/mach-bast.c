@@ -5,6 +5,7 @@
 //
 // http://www.simtec.co.uk/products/EB2410ITX/
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

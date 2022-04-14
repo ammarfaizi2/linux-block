@@ -26,6 +26,7 @@
  *	341080a.pdf  DAQCard E Series Register Level Programmer Manual
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/comedi/comedi_pcmcia.h>

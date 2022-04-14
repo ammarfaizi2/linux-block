@@ -4,6 +4,7 @@
  * Copyright (C) 2012 Intel, Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

@@ -6,6 +6,7 @@
 
 #undef DEBUG
 
+#include <linux/ioport.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

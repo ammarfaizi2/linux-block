@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "ACPI: PCI: " fmt
 
+#include <linux/ioport.h>
 #include <linux/syscore_ops.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

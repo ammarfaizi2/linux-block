@@ -7,6 +7,7 @@
  * Note: clock supplied to the I2S controller must be 256x samplerate.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>

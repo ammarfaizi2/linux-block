@@ -5,6 +5,7 @@
  *  Copyright 2012-2014 Freescale Semiconductor, Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

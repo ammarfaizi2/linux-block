@@ -7,6 +7,7 @@
  * Original OMAP730 support by Jean Pihet <j-pihet@ti.com>
  * Updated for 2.6 by Kevin Hilman <kjh@hilman.org>
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>

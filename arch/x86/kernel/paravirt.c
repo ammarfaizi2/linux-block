@@ -6,6 +6,7 @@
     2007 - x86_64 support added by Glauber de Oliveira Costa, Red Hat Inc
 */
 
+#include <linux/ioport.h>
 #include <asm/paravirt_api_clock.h>
 #include <asm/msr.h>
 #include <asm/halt.h>

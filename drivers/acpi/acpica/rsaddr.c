@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/ioport.h>
 #include <acpi/acpi.h>
 #include "accommon.h"
 #include "acresrc.h"

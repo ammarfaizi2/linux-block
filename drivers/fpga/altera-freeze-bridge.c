@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2016 Altera Corporation. All rights reserved.
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/io.h>

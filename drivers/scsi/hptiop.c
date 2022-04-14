@@ -7,6 +7,7 @@
  *
  * For more information, visit http://www.highpoint-tech.com
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/dma-mapping.h>

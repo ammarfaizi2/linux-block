@@ -6,6 +6,7 @@
  *  Copyright 2006 Sony Corp.
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/slab.h>

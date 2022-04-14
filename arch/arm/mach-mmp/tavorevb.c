@@ -4,6 +4,7 @@
  *
  *  Support for the Marvell PXA910-based TavorEVB Development Platform.
  */
+#include <linux/ioport.h>
 #include <linux/gpio.h>
 #include <linux/gpio-pxa.h>
 #include <linux/init.h>

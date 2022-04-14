@@ -9,6 +9,7 @@
  *
  * MIPS boards specific PCI support.
  */
+#include <linux/ioport.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

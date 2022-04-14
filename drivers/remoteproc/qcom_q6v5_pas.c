@@ -7,6 +7,7 @@
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/firmware.h>
 #include <linux/interrupt.h>

@@ -8,6 +8,7 @@
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
+#include <linux/ioport.h>
 #include <linux/clk-provider.h>
 #include <linux/clk/davinci.h>
 #include <linux/gpio.h>

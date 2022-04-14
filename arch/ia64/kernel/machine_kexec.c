@@ -8,6 +8,7 @@
  * Copyright (C) 2006 Intel Corp, Zou Nan hai <nanhai.zou@intel.com>
  */
 
+#include <linux/ioport.h>
 #include <asm/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/kexec.h>

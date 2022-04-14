@@ -11,6 +11,7 @@
  * Cluster cache enable trampoline code adapted from MCPM framework
  */
 
+#include <linux/ioport.h>
 #include <linux/arm-cci.h>
 #include <linux/cpu_pm.h>
 #include <linux/delay.h>

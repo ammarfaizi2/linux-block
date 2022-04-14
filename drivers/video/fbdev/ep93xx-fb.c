@@ -13,6 +13,7 @@
  * drivers.
  */
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>
 #include <linux/dma-mapping.h>

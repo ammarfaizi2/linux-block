@@ -5,6 +5,7 @@
  * Author: Ganapatrao Kulkarni <gkulkarni@cavium.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>

@@ -6,6 +6,7 @@
    National Semiconductor SCx200 flash mapped with DOCCS
 */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/types.h>

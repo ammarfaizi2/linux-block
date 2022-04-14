@@ -17,6 +17,7 @@
  *  Copyright:	MontaVista Software Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/types.h>
 #include <linux/memory.h>
 #include <linux/cpu.h>

@@ -8,6 +8,7 @@
  *          John Youn <johnyoun@synopsys.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

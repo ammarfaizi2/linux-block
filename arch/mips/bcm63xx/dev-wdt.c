@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Florian Fainelli <florian@openwrt.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

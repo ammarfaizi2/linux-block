@@ -6,6 +6,7 @@
  * Mingkai Hu from Freescale Semiconductor, Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/list.h>
 #include <linux/of_platform.h>

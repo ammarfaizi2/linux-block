@@ -14,6 +14,7 @@
  *  Copyright (c) 1999 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/ioport.h>
 #include <linux/bitmap.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

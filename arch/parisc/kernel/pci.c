@@ -8,6 +8,7 @@
  * Copyright (C) 1999-2001 Hewlett-Packard Company
  * Copyright (C) 1999-2001 Grant Grundler
  */
+#include <linux/ioport.h>
 #include <linux/eisa.h>
 #include <linux/init.h>
 #include <linux/module.h>

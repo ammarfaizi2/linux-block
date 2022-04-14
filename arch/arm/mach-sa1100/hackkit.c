@@ -7,6 +7,7 @@
  * This file contains all HackKit tweaks. Based on original work from
  * Nicolas Pitre's assabet fixes
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

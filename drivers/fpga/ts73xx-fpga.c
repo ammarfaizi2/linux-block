@@ -8,6 +8,7 @@
  * TS-7300, heavily based on load_fpga.c in their vendor tree.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/io.h>

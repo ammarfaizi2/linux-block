@@ -8,6 +8,7 @@
  * Initial Code: Syed Rafiuddin <rafiuddin.syed@ti.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>

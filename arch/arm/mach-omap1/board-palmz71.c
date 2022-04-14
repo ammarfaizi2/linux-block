@@ -11,6 +11,7 @@
  * Modified for zire71 : Marek Vasut
  */
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>

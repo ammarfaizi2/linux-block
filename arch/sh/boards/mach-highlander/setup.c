@@ -10,6 +10,7 @@
  * This contains support for the R7780RP-1, R7780MP, and R7785RP
  * Highlander modules.
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>

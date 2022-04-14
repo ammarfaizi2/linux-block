@@ -13,6 +13,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/crc32.h>

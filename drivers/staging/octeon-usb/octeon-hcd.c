@@ -45,6 +45,7 @@
  * PERFORMANCE OF THE SOFTWARE LIES WITH YOU.
  */
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/usb.h>
 #include <linux/slab.h>

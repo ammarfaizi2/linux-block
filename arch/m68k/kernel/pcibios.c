@@ -5,6 +5,7 @@
  * (C) Copyright 2011, Greg Ungerer <gerg@uclinux.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

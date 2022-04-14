@@ -12,6 +12,7 @@
  * Copyright (C) 1996 Paul Mackerras
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/fb.h>

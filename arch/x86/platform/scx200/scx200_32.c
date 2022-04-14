@@ -5,6 +5,7 @@
  *  National Semiconductor SCx200 support.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/errno.h>

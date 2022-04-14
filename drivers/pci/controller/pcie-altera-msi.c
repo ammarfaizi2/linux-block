@@ -7,6 +7,7 @@
  * Copyright Altera Corporation (C) 2013-2015. All rights reserved
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bitmap.h>

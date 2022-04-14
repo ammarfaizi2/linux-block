@@ -2,6 +2,7 @@
 /*
  * Copyright 2012 Calxeda, Inc.
  */
+#include <linux/ioport.h>
 #include <linux/types.h>
 #include <linux/err.h>
 #include <linux/delay.h>

@@ -4,6 +4,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/file.h>
 #include <linux/random.h>

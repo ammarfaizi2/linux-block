@@ -7,6 +7,7 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>

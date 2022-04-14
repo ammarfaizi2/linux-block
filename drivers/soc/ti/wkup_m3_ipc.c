@@ -7,6 +7,7 @@
  * Dave Gerlach <d-gerlach@ti.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

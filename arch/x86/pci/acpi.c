@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/pci.h>
 #include <linux/acpi.h>

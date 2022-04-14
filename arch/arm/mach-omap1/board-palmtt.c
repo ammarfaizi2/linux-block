@@ -8,6 +8,7 @@
  * by Marek Vasut <marek.vasut@gmail.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>

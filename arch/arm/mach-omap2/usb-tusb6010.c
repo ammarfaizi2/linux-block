@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Nokia Corporation
  */
 
+#include <linux/ioport.h>
 #include <linux/err.h>
 #include <linux/string.h>
 #include <linux/types.h>

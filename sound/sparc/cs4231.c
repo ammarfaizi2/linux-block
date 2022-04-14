@@ -9,6 +9,7 @@
  * Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

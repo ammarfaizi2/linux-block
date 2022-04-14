@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Quentin Schulz <quentin.schulz@free-electrons.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

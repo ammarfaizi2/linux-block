@@ -8,6 +8,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/mbus.h>

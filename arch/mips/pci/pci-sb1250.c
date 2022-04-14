@@ -17,6 +17,7 @@
  * kernel mapped memory.  Hopefully neither of these should be a huge
  * problem.
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/types.h>
 #include <linux/pci.h>

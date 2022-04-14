@@ -7,6 +7,7 @@
  * Copyright © 2007 Anton Vorontsov <cbou@mail.ru>
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/err.h>

@@ -26,6 +26,7 @@
  * for more details.
  *
  */
+#include <linux/ioport.h>
 #include <linux/capability.h>
 #include <linux/fb.h>
 #include <linux/module.h>

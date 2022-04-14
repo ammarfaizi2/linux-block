@@ -9,6 +9,7 @@
  * <vvlasov@dev.rtsoft.ru>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/log2.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 2006  Paul Mundt
  *  Copyright (C) 2006  Jamie Lenehan
  */
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/serial.h>

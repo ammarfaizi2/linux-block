@@ -6,6 +6,7 @@
  *
  * Hitachi UL SolutionEngine 7780 Support.
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <asm/machvec.h>

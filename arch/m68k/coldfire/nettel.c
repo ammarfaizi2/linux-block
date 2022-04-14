@@ -9,6 +9,7 @@
 
 /***************************************************************************/
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/param.h>
 #include <linux/init.h>

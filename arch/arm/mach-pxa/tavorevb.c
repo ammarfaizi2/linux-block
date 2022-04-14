@@ -7,6 +7,7 @@
  *  Copyright (C) 2007-2008 Marvell International Ltd.
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>

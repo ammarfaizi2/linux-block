@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2007 Ralf Baechle (ralf@linux-mips.org)
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/serial_8250.h>

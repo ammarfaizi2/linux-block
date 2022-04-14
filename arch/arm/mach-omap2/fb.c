@@ -6,6 +6,7 @@
  * Author: Imre Deak <imre.deak@nokia.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

@@ -4,6 +4,7 @@
  * Author: Xudong Chen <xudong.chen@mediatek.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/completion.h>

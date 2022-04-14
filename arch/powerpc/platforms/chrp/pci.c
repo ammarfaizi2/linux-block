@@ -3,6 +3,7 @@
  * CHRP pci routines.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

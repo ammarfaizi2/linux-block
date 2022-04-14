@@ -7,6 +7,7 @@
  * Driver layout based loosely on tgafb.c, see that file for credits.
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

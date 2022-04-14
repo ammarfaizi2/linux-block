@@ -7,6 +7,7 @@
 //
 // Base S3C64XX UART resource and device definitions
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

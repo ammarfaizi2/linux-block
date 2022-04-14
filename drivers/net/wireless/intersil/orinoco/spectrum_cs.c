@@ -21,6 +21,7 @@
 #define DRIVER_NAME "spectrum_cs"
 #define PFX DRIVER_NAME ": "
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device/driver.h>
 #include <linux/module.h>

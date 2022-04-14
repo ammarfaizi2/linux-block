@@ -10,6 +10,7 @@
  * Copyright (c) 2010  Andres Salomon <dilinger@queued.net>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/mfd/core.h>

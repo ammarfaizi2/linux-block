@@ -10,6 +10,7 @@
  * Copyright (C) 2008  Byron Bradley <byron.bbradley@gmail.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

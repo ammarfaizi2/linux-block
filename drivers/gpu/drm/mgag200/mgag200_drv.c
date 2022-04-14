@@ -6,6 +6,7 @@
  *          Dave Airlie
  */
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

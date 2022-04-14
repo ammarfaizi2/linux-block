@@ -9,6 +9,7 @@
  * Copyright 2017 Samuel Holland <samuel@sholland.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

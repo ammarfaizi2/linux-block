@@ -7,6 +7,7 @@
  * Based on vim2m driver.
  */
 
+#include <linux/ioport.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>

@@ -5,6 +5,7 @@
  *  Copyright (C) 2006 Felix Fietkau <nbd@openwrt.org>
  *  Copyright (C) 2007 Florian Fainelli <florian@openwrt.org>
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

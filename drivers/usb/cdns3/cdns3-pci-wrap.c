@@ -7,6 +7,7 @@
  * Author: Pawel Laszczak <pawell@cadence.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

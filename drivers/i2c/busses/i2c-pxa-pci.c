@@ -7,6 +7,7 @@
  * It does not support slave mode, the register slightly moved. This PCI
  * device provides three bars, every contains a single I2C controller.
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/platform_device.h>

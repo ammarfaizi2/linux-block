@@ -2,6 +2,7 @@
 /* Copyright 2017 Microsemi Corporation
  * Copyright 2018-2019 NXP
  */
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>

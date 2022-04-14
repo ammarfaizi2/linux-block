@@ -41,6 +41,7 @@
  *  with this program; if not, write  to the Free Software Foundation, Inc.,
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/clk.h>

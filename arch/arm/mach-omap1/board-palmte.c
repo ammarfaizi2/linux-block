@@ -13,6 +13,7 @@
  *
  * Copyright (c) 2006 Andrzej Zaborowski  <balrog@zabor.org>
  */
+#include <linux/ioport.h>
 #include <linux/gpio.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

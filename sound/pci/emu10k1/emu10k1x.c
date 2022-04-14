@@ -15,6 +15,7 @@
  *    - EMU10K1X-DBQ
  *    - STAC 9708T
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2010 NXP Semiconductors
  */
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>

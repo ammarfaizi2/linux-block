@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>

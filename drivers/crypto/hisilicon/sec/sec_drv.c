@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2016-2017 HiSilicon Limited.
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/acpi.h>

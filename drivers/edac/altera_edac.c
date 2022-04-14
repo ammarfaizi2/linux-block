@@ -5,6 +5,7 @@
  *  Copyright 2011-2012 Calxeda, Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>

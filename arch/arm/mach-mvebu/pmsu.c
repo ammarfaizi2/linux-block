@@ -18,6 +18,7 @@
 
 #define pr_fmt(fmt) "mvebu-pmsu: " fmt
 
+#include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/cpu_pm.h>
 #include <linux/delay.h>

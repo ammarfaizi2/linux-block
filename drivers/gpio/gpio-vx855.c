@@ -7,6 +7,7 @@
  * Author: Harald Welte <HaraldWelte@viatech.com>
  * All rights reserved.
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

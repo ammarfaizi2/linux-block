@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Álvaro Fernández Rojas <noltari@gmail.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/soc/bcm6318-pm.h>
 #include <dt-bindings/soc/bcm6328-pm.h>

@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2005  Paul Mundt
  */
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/superhyway.h>

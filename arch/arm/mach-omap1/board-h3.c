@@ -10,6 +10,7 @@
  * Author: RidgeRun, Inc.
  *         Greg Lonnon (glonnon@ridgerun.com) or info@ridgerun.com
  */
+#include <linux/ioport.h>
 #include <linux/gpio.h>
 #include <linux/types.h>
 #include <linux/init.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2007 Arnaud Patard <arnaud.patard@rtp-net.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/mm.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

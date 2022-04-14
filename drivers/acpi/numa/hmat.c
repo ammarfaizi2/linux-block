@@ -11,6 +11,7 @@
 #define pr_fmt(fmt) "acpi/hmat: " fmt
 #define dev_fmt(fmt) "acpi/hmat: " fmt
 
+#include <linux/ioport.h>
 #include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/bitops.h>

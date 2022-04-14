@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/interrupt.h>

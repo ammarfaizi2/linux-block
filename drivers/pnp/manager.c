@@ -8,6 +8,7 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/init.h>

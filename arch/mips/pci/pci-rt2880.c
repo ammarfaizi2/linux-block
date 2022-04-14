@@ -8,6 +8,7 @@
  *  Parts of this file are based on Ralink's 2.6.21 BSP
  */
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/pci.h>

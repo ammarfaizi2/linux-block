@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Dave S.r.l. <www.dave.eu>
  * Copyright (C) 2009 Ilya Yanok, Emcraft Systems Ltd, <yanok@emcraft.com>
  */
+#include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/io.h>
 #include <linux/module.h>

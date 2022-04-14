@@ -3,6 +3,7 @@
  * Copyright 2016 Broadcom
  */
 
+#include <linux/ioport.h>
 #include <linux/device.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

@@ -8,6 +8,7 @@
  *
  * JEDEC probe based on drivers/mtd/devices/m25p80.c
  */
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

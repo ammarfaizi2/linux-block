@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/ioport.h>
 #include <linux/idr_api.h>
 #include <linux/pci.h>
 #include "hns_roce_device.h"

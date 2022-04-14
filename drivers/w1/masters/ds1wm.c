@@ -11,6 +11,7 @@
  * preserved in its entirety in all copies and derived works.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

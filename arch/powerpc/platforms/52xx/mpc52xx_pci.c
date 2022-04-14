@@ -12,6 +12,7 @@
 
 #undef DEBUG
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <asm/mpc52xx.h>

@@ -60,6 +60,7 @@
  *
  */
 
+#include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>

@@ -54,6 +54,7 @@
  */
 
 #include "multiface.h"
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/parport.h>

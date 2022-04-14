@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/time.h>

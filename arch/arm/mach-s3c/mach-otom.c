@@ -3,6 +3,7 @@
 // Copyright (c) 2004 Nex Vision
 //   Guillaume GOURAT <guillaume.gourat@nexvision.fr>
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

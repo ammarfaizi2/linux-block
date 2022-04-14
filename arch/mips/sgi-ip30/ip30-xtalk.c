@@ -6,6 +6,7 @@
  *   Copyright (C) 2007, 2014-2016 Joshua Kinard <kumba@gentoo.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

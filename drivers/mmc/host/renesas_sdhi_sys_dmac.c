@@ -8,6 +8,7 @@
  * Copyright (C) 2010-2011 Guennadi Liakhovetski
  */
 
+#include <linux/ioport.h>
 #include <linux/gfp_api.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>

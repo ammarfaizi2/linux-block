@@ -7,6 +7,7 @@
  *		Juha Yrjola <juha.yrjola@nokia.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>

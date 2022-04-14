@@ -6,6 +6,7 @@
  * of ex. a LS1021A
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/fsl/ftm.h>
 #include <linux/module.h>

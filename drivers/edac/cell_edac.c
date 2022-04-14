@@ -9,6 +9,7 @@
  */
 #undef DEBUG
 
+#include <linux/ioport.h>
 #include <linux/edac.h>
 #include <linux/module.h>
 #include <linux/init.h>

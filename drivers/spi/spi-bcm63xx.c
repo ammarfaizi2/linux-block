@@ -6,6 +6,7 @@
  * Copyright (C) 2010 Tanguy Bouzeloc <tanguy.bouzeloc@efixo.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

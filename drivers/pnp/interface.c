@@ -8,6 +8,7 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/bitmap.h>
 #include <linux/pnp.h>
 #include <linux/string.h>

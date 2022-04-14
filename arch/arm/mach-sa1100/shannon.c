@@ -3,6 +3,7 @@
  * linux/arch/arm/mach-sa1100/shannon.c
  */
 
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/gpio/machine.h>

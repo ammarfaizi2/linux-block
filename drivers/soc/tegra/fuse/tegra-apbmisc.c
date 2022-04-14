@@ -3,6 +3,7 @@
  * Copyright (c) 2014, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/of.h>

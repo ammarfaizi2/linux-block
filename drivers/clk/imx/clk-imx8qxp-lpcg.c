@@ -4,6 +4,7 @@
  *	Dong Aisheng <aisheng.dong@nxp.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>

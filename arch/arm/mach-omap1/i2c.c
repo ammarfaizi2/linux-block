@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Nokia Corporation.
  */
 
+#include <linux/ioport.h>
 #include <linux/i2c.h>
 #include <linux/platform_data/i2c-omap.h>
 #include <mach/mux.h>

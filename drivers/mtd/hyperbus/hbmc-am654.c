@@ -3,6 +3,7 @@
 // Copyright (C) 2019 Texas Instruments Incorporated - https://www.ti.com/
 // Author: Vignesh Raghavendra <vigneshr@ti.com>
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>

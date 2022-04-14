@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "### dt-test ### " fmt
 
+#include <linux/ioport.h>
 #include <linux/hashtable_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/memblock.h>

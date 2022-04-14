@@ -8,6 +8,7 @@
  *  Parts of this file are based on Atheros' 2.6.15 BSP
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/resource.h>
 #include <linux/types.h>

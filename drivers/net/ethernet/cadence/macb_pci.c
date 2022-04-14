@@ -8,6 +8,7 @@
  *	    Bartosz Folta <bfolta@cadence.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/etherdevice.h>

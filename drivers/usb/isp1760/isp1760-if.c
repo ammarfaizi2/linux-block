@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/ioport.h>
 #include <linux/usb.h>
 #include <linux/io.h>
 #include <linux/irq.h>

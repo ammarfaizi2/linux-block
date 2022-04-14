@@ -6,6 +6,7 @@
  *
  * Based on linux/arch/sh/kernel/cpu/sh4a/setup-sh7722.c
  */
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/serial.h>

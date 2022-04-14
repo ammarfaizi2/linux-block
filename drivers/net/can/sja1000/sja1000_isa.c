@@ -3,6 +3,7 @@
  * Copyright (C) 2009 Wolfgang Grandegger <wg@grandegger.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

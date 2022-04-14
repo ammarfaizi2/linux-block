@@ -10,6 +10,7 @@
  * Copyright (C) 2004 Ian Molton
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/device.h>

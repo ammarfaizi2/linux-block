@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Lemote, Inc. & Institute of Computing Technology
  * Author: Fuxin Zhang, zhangfx@lemote.com
  */
+#include <linux/ioport.h>
 #include <linux/pci.h>
 
 #include <pci.h>

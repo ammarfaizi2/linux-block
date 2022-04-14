@@ -10,6 +10,7 @@
  * Harald Welte <laforge@openmoko.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

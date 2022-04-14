@@ -24,6 +24,7 @@
 #include "priv.h"
 #include "acpi.h"
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <core/notify.h>
 #include <core/option.h>

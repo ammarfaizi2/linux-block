@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Unisoc Inc.
  */
 
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/component.h>
 #include <linux/delay.h>

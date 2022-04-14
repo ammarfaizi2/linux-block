@@ -4,6 +4,7 @@
  * A FSI master controller, using a simple GPIO bit-banging interface
  */
 
+#include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/crc4.h>

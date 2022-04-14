@@ -15,6 +15,7 @@
  * abstraction builds upon this BAR interface.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>

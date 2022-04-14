@@ -9,6 +9,7 @@
  * (C) 1999		David A. Hinds
  */
 
+#include <linux/ioport.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2019 Andrew Lunn <andrew@lunn.ch>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/dmi.h>

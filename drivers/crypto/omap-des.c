@@ -16,6 +16,7 @@
 #define prx(num)  do { } while (0)
 #endif
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/module.h>

@@ -11,6 +11,7 @@
  *		Chetan S. Kumar <shivakumar.chetan@gmail.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
 #include <linux/irq.h>

@@ -8,6 +8,7 @@
  * Based on board-sh7785lcr.c
  * Copyright (C) 2008  Yoshihiro Shimoda
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/fb.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2017 Texas Instruments Incorporated - http://www.ti.com/
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/slab.h>

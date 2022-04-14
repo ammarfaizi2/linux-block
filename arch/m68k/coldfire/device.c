@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

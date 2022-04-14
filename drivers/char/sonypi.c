@@ -21,6 +21,7 @@
  * Earlier work by Werner Almesberger, Paul `Rusty' Russell and Paul Mackerras.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/fs.h>

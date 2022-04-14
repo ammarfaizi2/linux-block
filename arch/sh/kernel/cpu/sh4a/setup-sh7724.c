@@ -9,6 +9,7 @@
  * Based on SH7723 Setup
  * Copyright (C) 2008  Paul Mundt
  */
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/serial.h>

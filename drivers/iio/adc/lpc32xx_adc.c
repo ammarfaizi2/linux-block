@@ -7,6 +7,7 @@
  *  Copyright (C) 2011, 2012 Roland Stigge <stigge@antcom.de>
  */
 
+#include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/err.h>

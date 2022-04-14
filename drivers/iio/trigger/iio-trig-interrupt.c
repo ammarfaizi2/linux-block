@@ -5,6 +5,7 @@
  * Copyright (c) 2008-2013 Jonathan Cameron
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

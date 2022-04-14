@@ -13,6 +13,7 @@
  * Contributors: Daniel Hellstrom <daniel@gaisler.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

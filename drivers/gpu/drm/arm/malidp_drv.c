@@ -6,6 +6,7 @@
  * ARM Mali DP500/DP550/DP650 KMS/DRM driver
  */
 
+#include <linux/ioport.h>
 #include <linux/dma-fence-api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

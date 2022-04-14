@@ -7,6 +7,7 @@
  * Copyright (C) 2004 Intel Corp.
  */
 
+#include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/irqdomain.h>

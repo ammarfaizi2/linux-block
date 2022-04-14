@@ -12,6 +12,7 @@
  * Author: Wadim Egorov <w.egorov@phytec.de>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/io.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2010 EF Johnson Technologies
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

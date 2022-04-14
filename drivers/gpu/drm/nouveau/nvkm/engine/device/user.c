@@ -25,6 +25,7 @@
 #include "priv.h"
 #include "ctrl.h"
 
+#include <linux/ioport.h>
 #include <core/client.h>
 #include <subdev/fb.h>
 #include <subdev/instmem.h>

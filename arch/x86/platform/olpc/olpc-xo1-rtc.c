@@ -5,6 +5,7 @@
  * Copyright (C) 2011 One Laptop per Child
  */
 
+#include <linux/ioport.h>
 #include <linux/mc146818rtc.h>
 #include <linux/platform_device.h>
 #include <linux/rtc.h>

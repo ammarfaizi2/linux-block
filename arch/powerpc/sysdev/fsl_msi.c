@@ -7,6 +7,7 @@
  *
  * The hwirq alloc and free code reuse from sysdev/mpic_msi.c
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/irq.h>
 #include <linux/msi.h>

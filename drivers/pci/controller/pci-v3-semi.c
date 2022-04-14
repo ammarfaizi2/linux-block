@@ -16,6 +16,7 @@
  * Arnd Bergmann <arnd@arndb.de>
  * Bjorn Helgaas <bhelgaas@google.com>
  */
+#include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

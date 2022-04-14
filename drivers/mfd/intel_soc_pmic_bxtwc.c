@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Intel Corporation. All rights reserved.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>

@@ -7,6 +7,7 @@
  *
  * Author: Linus Walleij <triad@df.lth.se>
  */
+#include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>

@@ -13,6 +13,7 @@
  *     https://www.cirrus.com/en/pubs/manual/EP93xx_Users_Guide_UM1.pdf
  */
 
+#include <linux/ioport.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

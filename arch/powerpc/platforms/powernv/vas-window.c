@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "vas: " fmt
 
+#include <linux/ioport.h>
 #include <linux/idr_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

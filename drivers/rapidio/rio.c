@@ -10,6 +10,7 @@
  * Alex Bounine <alexandre.bounine@idt.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

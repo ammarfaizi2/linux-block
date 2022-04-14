@@ -20,6 +20,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/err.h>

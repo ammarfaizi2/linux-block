@@ -10,6 +10,7 @@
  *	    Leo Yan <leo.yan@linaro.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/clk-provider.h>
 #include <linux/device.h>
 #include <linux/err.h>

@@ -8,6 +8,7 @@
  * Modelled after arch/mips/pci/pci.c:
  *  Copyright (C) 2003, 04 Ralf Baechle (ralf@linux-mips.org)
  */
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/pci.h>

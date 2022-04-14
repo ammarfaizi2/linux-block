@@ -6,6 +6,7 @@
  * for more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

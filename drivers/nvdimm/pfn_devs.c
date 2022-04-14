@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2016 Intel Corporation. All rights reserved.
  */
+#include <linux/ioport.h>
 #include <linux/idr_api.h>
 #include <linux/huge_mm.h>
 #include <linux/device_api_lock.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2006-2007  Paul Mundt
  * Copyright (C) 2007  kogiidena
  */
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

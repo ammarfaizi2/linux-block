@@ -12,6 +12,7 @@
  * 2008-10-30 (lv) - Port to 2.6
  */
 
+#include <linux/ioport.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/fd.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2010 Will Deacon, ARM Ltd.
  */
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include "irqs.h"
 

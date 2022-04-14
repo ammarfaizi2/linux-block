@@ -6,6 +6,7 @@
  * Copyright (c) 2014 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/ioport.h>
 #include <linux/ascii85.h>
 #include <linux/interconnect.h>
 #include <linux/qcom_scm.h>

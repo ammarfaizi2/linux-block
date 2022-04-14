@@ -11,6 +11,7 @@
  *  http://www.sata-io.org/
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/blkdev.h>
 #include <linux/export.h>

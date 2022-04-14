@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Magnus Damm
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <asm/clock.h>
 #include <asm/io.h>

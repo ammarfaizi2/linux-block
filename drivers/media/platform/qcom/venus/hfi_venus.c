@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Linaro Ltd.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/device.h>

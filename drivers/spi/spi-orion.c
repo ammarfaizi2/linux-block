@@ -6,6 +6,7 @@
  * Copyright (C) 2007-2008 Marvell Ltd.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>

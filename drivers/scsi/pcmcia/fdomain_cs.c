@@ -8,6 +8,7 @@
  * are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <scsi/scsi_host.h>

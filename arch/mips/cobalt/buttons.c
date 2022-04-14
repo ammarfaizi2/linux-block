@@ -5,6 +5,7 @@
  *  Copyright (C) 2007  Yoichi Yuasa <yuasa@linux-mips.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/errno.h>
 #include <linux/init.h>

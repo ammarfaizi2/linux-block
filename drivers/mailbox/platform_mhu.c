@@ -8,6 +8,7 @@
  * Author: Jassi Brar <jaswinder.singh@linaro.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>

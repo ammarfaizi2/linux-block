@@ -6,6 +6,7 @@
 // Copyright 2011 Simtec Electronics
 //	Ben Dooks <ben@simtec.co.uk>
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/serial_core.h>

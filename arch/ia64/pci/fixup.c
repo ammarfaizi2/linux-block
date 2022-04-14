@@ -4,6 +4,7 @@
  * Derived from fixup.c of i386 tree.
  */
 
+#include <linux/ioport.h>
 #include <linux/pci.h>
 #include <linux/init.h>
 #include <linux/vgaarb.h>

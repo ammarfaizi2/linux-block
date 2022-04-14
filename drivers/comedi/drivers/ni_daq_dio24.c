@@ -22,6 +22,7 @@
  * the PCMCIA interface.
  */
 
+#include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pcmcia.h>
 #include <linux/comedi/comedi_8255.h>

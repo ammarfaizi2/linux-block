@@ -8,6 +8,7 @@
  *  Maintained by Marc Zyngier <maz@misterjones.org>
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/cpufreq.h>
 #include <linux/interrupt.h>

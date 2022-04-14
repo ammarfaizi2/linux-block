@@ -9,6 +9,7 @@
  * Copyright (c) 2008 Zbynek Michl <Zbynek.Michl@seznam.cz>
  */
 
+#include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/device.h>

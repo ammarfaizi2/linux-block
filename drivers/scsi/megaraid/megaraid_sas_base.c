@@ -17,6 +17,7 @@
  *  Send feedback to: megaraidlinux.pdl@broadcom.com
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

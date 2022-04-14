@@ -13,6 +13,7 @@
  * Dynamic DMA mapping support, Apple U3, U4 & IBM CPC925 "DART" iommu.
  */
 
+#include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/init.h>

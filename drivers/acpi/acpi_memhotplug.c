@@ -12,6 +12,7 @@
  * ranges.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/memory.h>

@@ -6,6 +6,7 @@
  * the WDT and power drivers.
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/io.h>

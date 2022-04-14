@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>
 #include <linux/dm9000.h>

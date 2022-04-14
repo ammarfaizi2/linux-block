@@ -7,6 +7,7 @@
  *   Copyright (C) 2015 NextThing Co
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/component.h>
 #include <linux/dma-mapping.h>

@@ -11,6 +11,7 @@
  *
  * U8500 PRCM Unit interface driver
  */
+#include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

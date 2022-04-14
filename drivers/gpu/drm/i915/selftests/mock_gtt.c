@@ -22,6 +22,8 @@
  *
  */
 
+#include <linux/ioport.h>
+
 #include "mock_gtt.h"
 
 static void mock_insert_page(struct i915_address_space *vm,

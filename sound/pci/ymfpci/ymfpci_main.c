@@ -4,6 +4,7 @@
  *  Routines for control of YMF724/740/744/754 chips
  */
 
+#include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>
