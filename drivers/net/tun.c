@@ -32,6 +32,7 @@
 #define DRV_DESCRIPTION	"Universal TUN/TAP device driver"
 #define DRV_COPYRIGHT	"(C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>"
 
+#include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/netdevice_api_dev_stats.h>

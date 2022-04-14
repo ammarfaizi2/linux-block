@@ -11,6 +11,7 @@
 #include "peer.h"
 #include "messages.h"
 
+#include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
