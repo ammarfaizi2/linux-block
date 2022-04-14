@@ -6,6 +6,7 @@
 #ifndef BTRFS_CTREE_H
 #define BTRFS_CTREE_H
 
+#include <linux/ratelimit.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/ioprio.h>

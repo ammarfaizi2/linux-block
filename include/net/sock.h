@@ -35,6 +35,7 @@
 #ifndef _SOCK_H
 #define _SOCK_H
 
+#include <linux/ratelimit.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/debug_locks.h>
 #include <linux/hardirq.h>

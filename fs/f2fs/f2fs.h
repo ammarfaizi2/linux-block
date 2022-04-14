@@ -8,6 +8,7 @@
 #ifndef _LINUX_F2FS_H
 #define _LINUX_F2FS_H
 
+#include <linux/ratelimit.h>
 #include <linux/radix-tree-api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/pagemap.h>

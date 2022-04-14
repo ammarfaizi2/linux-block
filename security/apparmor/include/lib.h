@@ -10,6 +10,7 @@
 #ifndef __AA_LIB_H
 #define __AA_LIB_H
 
+#include <linux/ratelimit.h>
 #include <linux/kref_api.h>
 #include <linux/fs_types_sb.h>
 #include <linux/dcache.h>
