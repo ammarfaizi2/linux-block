@@ -6,6 +6,7 @@
 #ifndef ATH11K_DBRING_H
 #define ATH11K_DBRING_H
 
+#include <linux/idr_api.h>
 #include <linux/types.h>
 #include <linux/idr.h>
 #include <linux/spinlock.h>
