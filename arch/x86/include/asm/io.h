@@ -38,6 +38,7 @@
 #define ARCH_HAS_IOREMAP_WC
 #define ARCH_HAS_IOREMAP_WT
 
+#include <asm/special_insns.h>
 #include <asm/io.h>
 #include <linux/string.h>
 #include <linux/compiler.h>
