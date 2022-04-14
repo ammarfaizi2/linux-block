@@ -6,6 +6,7 @@
 #ifndef __ILA_H
 #define __ILA_H
 
+#include <linux/rhashtable-types.h>
 #include <linux/errno.h>
 #include <linux/ip.h>
 #include <linux/kernel.h>

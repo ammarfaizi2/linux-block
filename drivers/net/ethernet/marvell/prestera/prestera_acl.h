@@ -4,6 +4,7 @@
 #ifndef _PRESTERA_ACL_H_
 #define _PRESTERA_ACL_H_
 
+#include <linux/rhashtable-types.h>
 #include <linux/types.h>
 #include "prestera_counter.h"
 

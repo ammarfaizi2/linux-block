@@ -4,6 +4,7 @@
 #ifndef __MLX5E_FLOW_STEER_H__
 #define __MLX5E_FLOW_STEER_H__
 
+#include <linux/rhashtable-types.h>
 #include <linux/types.h>
 
 #include "mod_hdr.h"
