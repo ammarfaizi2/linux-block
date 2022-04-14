@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/pci-dma-compat.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

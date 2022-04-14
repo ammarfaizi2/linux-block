@@ -7,6 +7,7 @@
 
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/dma-mapping.h>
 
 #include "ivtv-driver.h"

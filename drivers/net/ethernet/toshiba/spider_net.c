@@ -9,6 +9,7 @@
  *           Jens Osterkamp <Jens.Osterkamp@de.ibm.com>
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/of_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>

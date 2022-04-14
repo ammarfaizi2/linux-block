@@ -201,6 +201,7 @@
  */
 
 /* Include files */
+#include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

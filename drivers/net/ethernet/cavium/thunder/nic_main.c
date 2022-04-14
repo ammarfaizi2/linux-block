@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Cavium, Inc.
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/nodemask.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

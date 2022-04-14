@@ -3,6 +3,7 @@
  * Copyright(c) 2020 Cornelis Networks, Inc.
  * Copyright(c) 2015-2018 Intel Corporation.
  */
+#include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/mmu_notifier.h>
 #include <linux/mm_api.h>

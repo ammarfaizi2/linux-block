@@ -69,6 +69,7 @@ static const char * const boot_msg =
 
 /* Include files */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

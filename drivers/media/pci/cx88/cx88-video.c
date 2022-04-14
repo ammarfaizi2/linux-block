@@ -14,6 +14,7 @@
 
 #include "cx88.h"
 
+#include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/i2c.h>
 #include <linux/fs.h>

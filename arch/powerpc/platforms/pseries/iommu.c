@@ -10,6 +10,7 @@
  * Dynamic DMA mapping support, pSeries-specific parts, both SMP and LPAR.
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

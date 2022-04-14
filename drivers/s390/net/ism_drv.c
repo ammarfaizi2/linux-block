@@ -7,6 +7,7 @@
 #define KMSG_COMPONENT "ism"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/pci-dma-compat.h>
 #include <linux/mm_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>

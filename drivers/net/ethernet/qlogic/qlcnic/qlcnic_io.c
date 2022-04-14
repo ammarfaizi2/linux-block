@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>

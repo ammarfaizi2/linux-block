@@ -11,6 +11,7 @@
  * et al.
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/io.h>

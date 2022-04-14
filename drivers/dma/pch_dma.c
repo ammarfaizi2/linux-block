@@ -5,6 +5,7 @@
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dmaengine.h>

@@ -7,6 +7,7 @@
  * the chip is a quasi-EHCI compatible.
  */
 
+#include <linux/pci-dma-compat.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>
