@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT "kvm-s390"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/rwsem_api.h>

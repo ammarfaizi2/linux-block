@@ -2,6 +2,7 @@
 /*
  * x86 FPU boot time init code:
  */
+#include <linux/sched/thread.h>
 #include <asm/processor_api.h>
 #include <asm/fpu/api.h>
 #include <asm/tlbflush.h>

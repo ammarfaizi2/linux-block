@@ -8,6 +8,7 @@
  * Derived from i386 and Alpha versions.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/preempt.h>
 #include <linux/restart_block_api.h>

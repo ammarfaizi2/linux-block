@@ -4,6 +4,7 @@
  * Copyright (C) 2014 Regents of the University of California
  */
 
+#include <linux/sched/thread.h>
 #include <linux/export.h>
 #include <linux/kallsyms.h>
 #include <linux/sched.h>

@@ -6,6 +6,7 @@
  * Author: Catalin Marinas <catalin.marinas@arm.com>
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/task.h>
 #include <linux/notifier_api.h>
 #include <linux/cpuhotplug.h>

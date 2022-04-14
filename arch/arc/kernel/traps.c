@@ -10,6 +10,7 @@
  * Rahul Trivedi: Codito Technologies 2004
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/kdebug.h>
 #include <linux/uaccess.h>

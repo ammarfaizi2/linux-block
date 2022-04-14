@@ -10,6 +10,7 @@
  *      MIPS R2 user space instruction emulator for MIPS R6
  *
  */
+#include <linux/sched/thread.h>
 #include <linux/bug.h>
 #include <linux/compiler.h>
 #include <linux/debugfs.h>

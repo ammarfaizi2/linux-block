@@ -14,6 +14,7 @@
  * 2001/08/13	Correct size of extended floats (float_fsz) from 16 to 10 bytes.
  * 2001/01/17	Add support emulation of unaligned kernel accesses.
  */
+#include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/jiffies.h>

@@ -15,6 +15,7 @@
  * fully comply with IEEE-754 floating point standard.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/types.h>
 #include <linux/prctl.h>
 

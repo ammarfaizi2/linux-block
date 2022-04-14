@@ -3,6 +3,7 @@
  * Copyright 2017 IBM Corp.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

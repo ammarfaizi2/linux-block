@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2009 - 2010  Paul Mundt
  */
+#include <linux/sched/thread.h>
 #include <linux/perf_event_api.h>
 #include <linux/init.h>
 #include <linux/perf_event.h>

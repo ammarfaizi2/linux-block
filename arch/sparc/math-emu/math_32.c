@@ -65,6 +65,7 @@
  * emulate it if it did. This is going to be a pain.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/perf_event_api.h>
 #include <linux/types.h>
 #include <linux/sched.h>

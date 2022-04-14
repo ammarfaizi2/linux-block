@@ -11,6 +11,7 @@
  * This file handles the architecture-dependent parts of hardware exceptions
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/preempt.h>
 #include <linux/pagefault_ctrl.h>

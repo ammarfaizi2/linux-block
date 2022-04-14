@@ -3,6 +3,7 @@
  * Copyright (C) 1999  Eddie C. Dost  (ecd@atecom.com)
  */
 
+#include <linux/sched/thread.h>
 #include <linux/types.h>
 #include <linux/sched.h>
 

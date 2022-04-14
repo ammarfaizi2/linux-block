@@ -9,6 +9,7 @@
  *  SuperH version:  Copyright (C) 1999, 2000  Niibe Yutaka & Kaz Kojima
  *
  */
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/restart_block_api.h>

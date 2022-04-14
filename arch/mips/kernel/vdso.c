@@ -4,6 +4,7 @@
  * Author: Alex Smith <alex.smith@imgtec.com>
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/task_flags.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmap_lock.h>

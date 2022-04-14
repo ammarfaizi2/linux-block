@@ -6,6 +6,7 @@
  *    Author(s): Jan Glauber <jan.glauber@de.ibm.com>
  */
 
+#include <linux/sched/thread.h>
 #include <linux/preempt.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

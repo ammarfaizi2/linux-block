@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/sched/thread.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

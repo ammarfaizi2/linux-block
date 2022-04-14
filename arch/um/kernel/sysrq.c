@@ -4,6 +4,7 @@
  * Copyright (C) 2013 Richard Weinberger <richrd@nod.at>
  */
 
+#include <linux/sched/thread.h>
 #include <asm/unwind.h>
 #include <linux/kallsyms.h>
 #include <linux/kernel.h>

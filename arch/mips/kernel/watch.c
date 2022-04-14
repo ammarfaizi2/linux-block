@@ -6,6 +6,7 @@
  * Copyright (C) 2008 David Daney
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched.h>
 
 #include <asm/processor.h>

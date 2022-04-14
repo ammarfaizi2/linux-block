@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/sched/thread.h>
 #include <linux/sched/rseq_api.h>
 #include <linux/sched.h>
 #include <linux/preempt.h>

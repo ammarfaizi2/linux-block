@@ -10,6 +10,7 @@
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  */
 
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/preempt.h>

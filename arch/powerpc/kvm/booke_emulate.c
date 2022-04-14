@@ -7,6 +7,7 @@
  * Authors: Hollis Blanchard <hollisb@us.ibm.com>
  */
 
+#include <linux/sched/thread.h>
 #include <linux/kvm_host.h>
 #include <asm/disassemble.h>
 

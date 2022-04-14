@@ -9,6 +9,7 @@
  * 2005-10-07 Keith Owens <kaos@sgi.com>
  *	      Add notify_die() hooks.
  */
+#include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <linux/cpu.h>
 #include <linux/pm.h>

@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/sched/thread.h>
 #include <linux/minmax.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

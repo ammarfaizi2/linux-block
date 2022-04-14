@@ -8,6 +8,7 @@
 /*
  * This file handles the architecture-dependent parts of process handling..
  */
+#include <linux/sched/thread.h>
 #include <linux/sched/task_flags.h>
 #include <linux/ptrace_api.h>
 #include <linux/of_api.h>

@@ -3,6 +3,7 @@
  * Licensed under the GPL
  */
 
+#include <linux/sched/thread.h>
 #include <asm/ptrace.h>
 #include <linux/percpu.h>
 #include <linux/sched.h>

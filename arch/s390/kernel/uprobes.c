@@ -6,6 +6,7 @@
  *    Author(s): Jan Willeke,
  */
 
+#include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <linux/uaccess.h>
 #include <linux/uprobes.h>

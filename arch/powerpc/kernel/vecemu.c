@@ -3,6 +3,7 @@
  * Routines to emulate some Altivec/VMX instructions, specifically
  * those that can trap when given denormalized operands in Java mode.
  */
+#include <linux/sched/thread.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

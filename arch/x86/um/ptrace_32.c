@@ -3,6 +3,7 @@
  * Licensed under the GPL
  */
 
+#include <linux/sched/thread.h>
 #include <linux/mm_api.h>
 #include <linux/mm.h>
 #include <linux/sched.h>

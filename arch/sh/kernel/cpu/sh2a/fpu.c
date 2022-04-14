@@ -6,6 +6,7 @@
  *
  * FIXME! These routines can be optimized in big endian case.
  */
+#include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/signal.h>
 #include <asm/processor.h>

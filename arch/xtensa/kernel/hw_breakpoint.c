@@ -8,6 +8,7 @@
  * Copyright (C) 2016 Cadence Design Systems Inc.
  */
 
+#include <linux/sched/thread.h>
 #include <linux/perf_event_api.h>
 #include <linux/hw_breakpoint.h>
 #include <linux/log2.h>

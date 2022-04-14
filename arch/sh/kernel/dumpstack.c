@@ -5,6 +5,7 @@
  *  Copyright (C) 2009  Matt Fleming
  *  Copyright (C) 2002 - 2012  Paul Mundt
  */
+#include <linux/sched/thread.h>
 #include <linux/kallsyms.h>
 #include <linux/ftrace.h>
 #include <linux/debug_locks.h>

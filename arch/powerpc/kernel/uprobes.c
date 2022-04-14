@@ -6,6 +6,7 @@
  *
  * Adapted from the x86 port by Ananth N Mavinakayanahalli <ananth@in.ibm.com>
  */
+#include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
