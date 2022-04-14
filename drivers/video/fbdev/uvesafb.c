@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/umh.h>
 #include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
