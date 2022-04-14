@@ -10,6 +10,8 @@
 #ifndef _LINUX_NTFS_RUNLIST_H
 #define _LINUX_NTFS_RUNLIST_H
 
+#include <linux/rwsem_api.h>
+
 #include "types.h"
 #include "layout.h"
 #include "volume.h"

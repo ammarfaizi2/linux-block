@@ -99,6 +99,8 @@
  * and fails if the sequence number doesn't match.
  */
 
+#include <linux/rwsem_api.h>
+
 #include "bset.h"
 #include "debug.h"
 

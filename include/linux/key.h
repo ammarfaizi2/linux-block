@@ -10,6 +10,7 @@
 #ifndef _LINUX_KEY_H
 #define _LINUX_KEY_H
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/types.h>
 #include <linux/list.h>

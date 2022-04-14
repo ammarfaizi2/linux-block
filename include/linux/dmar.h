@@ -9,6 +9,7 @@
 #ifndef __DMAR_H__
 #define __DMAR_H__
 
+#include <linux/rwsem_api.h>
 #include <linux/acpi.h>
 #include <linux/types.h>
 #include <linux/msi.h>

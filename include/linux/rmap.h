@@ -5,6 +5,7 @@
  * Declarations for Reverse Mapping functions in mm/rmap.c
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/mm.h>

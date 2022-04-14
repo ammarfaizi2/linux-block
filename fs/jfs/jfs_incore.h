@@ -6,6 +6,7 @@
 #ifndef _H_JFS_INCORE
 #define _H_JFS_INCORE
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_types_sb.h>
 #include <linux/mutex.h>
 #include <linux/rwsem.h>

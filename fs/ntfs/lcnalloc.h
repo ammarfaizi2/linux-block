@@ -11,6 +11,7 @@
 
 #ifdef NTFS_RW
 
+#include <linux/rwsem_api.h>
 #include <linux/fs.h>
 
 #include "attrib.h"
