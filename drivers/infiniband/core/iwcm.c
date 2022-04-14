@@ -35,6 +35,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/dma-mapping.h>

@@ -12,6 +12,7 @@
 
 */
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/init.h>
 #include <linux/wait.h>

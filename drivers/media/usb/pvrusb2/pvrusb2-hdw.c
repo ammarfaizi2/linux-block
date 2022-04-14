@@ -4,6 +4,7 @@
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>

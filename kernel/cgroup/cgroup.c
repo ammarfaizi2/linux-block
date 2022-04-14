@@ -30,6 +30,7 @@
 
 #include "cgroup-internal.h"
 
+#include <linux/wait_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>

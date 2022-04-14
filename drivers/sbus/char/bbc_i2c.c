@@ -5,6 +5,7 @@
  * Copyright (C) 2001, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/wait_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

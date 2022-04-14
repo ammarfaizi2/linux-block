@@ -6,6 +6,7 @@
  * Author: Matti J. Aaltonen <matti.j.aaltonen@nokia.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/poll.h>

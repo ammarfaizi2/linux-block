@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Microsemi Corporation
  */
 
+#include <linux/wait_api.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

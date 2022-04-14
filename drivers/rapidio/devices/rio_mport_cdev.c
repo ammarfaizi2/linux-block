@@ -10,6 +10,7 @@
  * Copyright (C) 2014 Texas Instruments Incorporated
  *    Aurelien Jacquiot <a-jacquiot@ti.com>
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/scatterlist_api.h>

@@ -3,6 +3,7 @@
  * Test module for unwind_for_each_frame
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <kunit/test.h>

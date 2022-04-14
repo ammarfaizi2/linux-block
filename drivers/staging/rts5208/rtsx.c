@@ -9,6 +9,7 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

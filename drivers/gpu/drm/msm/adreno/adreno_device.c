@@ -6,6 +6,7 @@
  * Copyright (c) 2014,2017 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/wait_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

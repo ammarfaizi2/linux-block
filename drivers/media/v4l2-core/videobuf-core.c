@@ -10,6 +10,7 @@
  * (c) 2006 Ted Walther and John Sokol
  */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/poll.h>

@@ -14,6 +14,7 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

@@ -8,6 +8,7 @@
  * Author: Andrey Smirnov <andrew.smirnov@gmail.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/fs.h>

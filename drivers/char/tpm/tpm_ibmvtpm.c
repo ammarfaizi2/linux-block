@@ -10,6 +10,7 @@
  * Specifications at www.trustedcomputinggroup.org
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/gfp_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2012-2016, Intel Corporation.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kobject_api.h>

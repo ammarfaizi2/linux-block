@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "llcp: %s: " fmt, __func__
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

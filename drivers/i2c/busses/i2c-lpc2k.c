@@ -12,6 +12,7 @@
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

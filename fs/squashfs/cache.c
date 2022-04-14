@@ -31,6 +31,7 @@
  * near future access without requiring an additional read and decompress.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/fs.h>
 #include <linux/vfs.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2017 Takashi Sakamoto
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 
 #include "ff.h"

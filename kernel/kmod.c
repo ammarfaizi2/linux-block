@@ -1,6 +1,7 @@
 /*
  * kmod - the kernel module loader
  */
+#include <linux/wait_api.h>
 #include <linux/ratelimit.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>

@@ -9,6 +9,7 @@
 
 #include "seq_oss_readq.h"
 #include "seq_oss_event.h"
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/io.h>

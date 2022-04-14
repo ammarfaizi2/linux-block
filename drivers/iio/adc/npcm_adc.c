@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Nuvoton Technology corporation.
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

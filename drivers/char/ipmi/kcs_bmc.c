@@ -4,6 +4,7 @@
  * Copyright (c) 2021, IBM Corp.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs.h>

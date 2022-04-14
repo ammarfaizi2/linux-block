@@ -25,6 +25,7 @@
  * Copyright (C) 2020 Alibaba, Inc, Alex Shi
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmstat.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>

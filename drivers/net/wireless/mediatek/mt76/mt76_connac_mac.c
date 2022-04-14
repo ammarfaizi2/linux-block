@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

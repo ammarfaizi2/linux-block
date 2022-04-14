@@ -13,6 +13,7 @@
  *  Copyright (C) 2002 Ralf Baechle (ralf@linux-mips.org)
  *  Copyright (C) 2002 David S. Miller (davem@redhat.com)
  */
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/interrupt.h>

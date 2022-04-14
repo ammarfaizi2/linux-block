@@ -15,6 +15,7 @@
 
 #define KMSG_COMPONENT "dasd"
 
+#include <linux/wait_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

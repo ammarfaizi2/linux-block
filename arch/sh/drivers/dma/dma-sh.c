@@ -8,6 +8,7 @@
  * Copyright (C) 2003, 2004 Paul Mundt
  * Copyright (C) 2005 Andriy Skulysh
  */
+#include <linux/wait_api.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

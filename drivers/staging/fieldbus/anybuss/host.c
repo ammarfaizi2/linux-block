@@ -139,6 +139,7 @@
  *	manuals-design-guides/hms-hmsi-27-275.pdf
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/kref_api.h>

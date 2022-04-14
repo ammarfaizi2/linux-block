@@ -46,6 +46,7 @@
 *	First release to the public
 */
 
+#include <linux/wait_api.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/ptrace.h>

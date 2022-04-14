@@ -24,6 +24,7 @@
 
 /* Bluetooth HCI event handling. */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/jiffies.h>

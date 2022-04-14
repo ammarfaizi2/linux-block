@@ -6,6 +6,7 @@
  * Based on the LCD driver for TI Avalanche processors written by
  * Ajay Singh and Shalom Hai.
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

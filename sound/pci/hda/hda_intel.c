@@ -20,6 +20,7 @@
  *  2004.12.01	Major rewrite by tiwai, merged the work of pshou
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

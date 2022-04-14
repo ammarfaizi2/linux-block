@@ -8,6 +8,7 @@
  *	      Halil Pasic <pasic@linux.ibm.com>
  *	      Pierre Morel <pmorel@linux.ibm.com>
  */
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>

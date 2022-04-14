@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/pagemap.h>
 #include <linux/mm_page_address.h>

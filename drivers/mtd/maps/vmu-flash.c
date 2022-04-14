@@ -5,6 +5,7 @@
  * Copyright (c) Adrian McMenamin 2002 - 2009
  * Copyright (c) Paul Mundt 2001
  */
+#include <linux/wait_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

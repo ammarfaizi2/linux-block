@@ -3,6 +3,7 @@
  *
  */
 
+#include <linux/wait_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/iopoll.h>

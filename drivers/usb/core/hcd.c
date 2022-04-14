@@ -9,6 +9,7 @@
  * (C) Copyright David Brownell 2000-2002
  */
 
+#include <linux/wait_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

@@ -21,6 +21,7 @@ static int sg_version_num = 30536;	/* 2 digits for each component */
  *        (otherwise the macros compile to empty statements).
  *
  */
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/sysfs.h>

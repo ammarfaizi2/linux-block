@@ -18,6 +18,7 @@
  * allocated and used.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

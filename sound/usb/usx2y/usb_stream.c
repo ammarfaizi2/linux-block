@@ -3,6 +3,7 @@
  * Copyright (C) 2007, 2008 Karsten Wiese <fzu@wemgehoertderstaat.de>
  */
 
+#include <linux/wait_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/delay.h>

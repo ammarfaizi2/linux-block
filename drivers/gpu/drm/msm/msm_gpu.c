@@ -11,6 +11,7 @@
 #include "msm_gpu_trace.h"
 #include "adreno/adreno_gpu.h"
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

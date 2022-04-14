@@ -10,6 +10,7 @@
  * Author: Tom Lyon, pugs@cisco.com
  */
 
+#include <linux/wait_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/notifier_api.h>

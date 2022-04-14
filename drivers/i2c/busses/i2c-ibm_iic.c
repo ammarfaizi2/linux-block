@@ -26,6 +26,7 @@
  *	and even Frodo Looijaard <frodol@dds.nl>
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>

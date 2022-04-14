@@ -20,6 +20,7 @@
  *
  * See the GNU General Public License for more details.
  */
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/net.h>

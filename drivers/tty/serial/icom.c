@@ -8,6 +8,7 @@
   *
   * Based on code from serial.c
   */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/io_extra.h>

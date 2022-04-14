@@ -4,6 +4,7 @@
  * Copyright (c) 2008 Dave Chinner
  * All Rights Reserved.
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/mm.h>
 #include <linux/sched.h>

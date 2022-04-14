@@ -7,6 +7,7 @@
  * DOC: Nitro Enclaves (NE) PCI device driver.
  */
 
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

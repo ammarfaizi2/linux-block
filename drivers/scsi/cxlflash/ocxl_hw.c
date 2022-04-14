@@ -8,6 +8,7 @@
  * Copyright (C) 2018 IBM Corporation
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

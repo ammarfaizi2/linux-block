@@ -58,6 +58,7 @@
  * --------------------------------------------------------------------
  */
 
+#include <linux/wait_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_arp.h>

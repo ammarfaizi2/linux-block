@@ -5,6 +5,7 @@
  * Copyright 2011 Free Electrons
  */
 
+#include <linux/wait_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

@@ -8,6 +8,7 @@
  *  Copyright (C) 2004-2006  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/mutex_api.h>

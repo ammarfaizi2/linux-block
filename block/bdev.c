@@ -5,6 +5,7 @@
  *  Copyright (C) 2016 - 2020 Christoph Hellwig
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/percpu.h>

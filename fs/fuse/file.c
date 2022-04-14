@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/wait_api.h>
 #include <linux/vmstat.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>

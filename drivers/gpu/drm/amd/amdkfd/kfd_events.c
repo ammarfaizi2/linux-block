@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/wait_api.h>
 #include <linux/srcu.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2015 MediaTek Inc.
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sched.h>
 #include <linux/module.h>

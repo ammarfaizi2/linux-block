@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2015 Takashi Sakamoto
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <sound/asound.h>
 #include "digi00x.h"

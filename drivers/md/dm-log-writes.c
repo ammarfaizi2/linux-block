@@ -4,6 +4,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

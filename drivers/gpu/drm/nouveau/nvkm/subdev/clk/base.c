@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/atomic_api.h>

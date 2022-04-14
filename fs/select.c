@@ -15,6 +15,7 @@
  *     of fds to overcome nfds < 16390 descriptors limit (Tigran Aivazian).
  */
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/syscalls_api.h>

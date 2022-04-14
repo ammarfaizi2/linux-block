@@ -10,6 +10,7 @@
  * Copyright (C) Hans Alblas PE1AYX (hans@esrac.ele.tue.nl)
  * Copyright (C) Frederic Rible F1OAT (frible@teaser.fr)
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

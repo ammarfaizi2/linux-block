@@ -11,6 +11,7 @@
  * Copyright 2002 MontaVista Software Inc.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/signal.h>

@@ -14,6 +14,7 @@
  * 06/07 Michael Schmitz
  */
 
+#include <linux/wait_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/sched.h>

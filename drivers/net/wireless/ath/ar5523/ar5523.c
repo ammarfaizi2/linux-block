@@ -24,6 +24,7 @@
  * out how the hardware works.  It contains a lot magic numbers because of
  * that and only has minimal functionality.
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

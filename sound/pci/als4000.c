@@ -51,6 +51,7 @@
  * - power management? (card can do voice wakeup according to datasheet!!)
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

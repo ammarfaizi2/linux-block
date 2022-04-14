@@ -100,6 +100,7 @@
  *
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

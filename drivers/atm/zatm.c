@@ -4,6 +4,7 @@
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/sched.h>

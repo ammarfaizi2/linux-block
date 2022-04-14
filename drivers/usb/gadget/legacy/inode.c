@@ -9,6 +9,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>

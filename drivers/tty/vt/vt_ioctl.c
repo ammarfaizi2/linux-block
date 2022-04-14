@@ -9,6 +9,7 @@
  *  Check put/get_user, cleanups - acme@conectiva.com.br - Jun 2001
  */
 
+#include <linux/wait_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

@@ -6,6 +6,7 @@
  * Sean Paul <seanpaul@chromium.org>
  */
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>

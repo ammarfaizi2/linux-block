@@ -9,6 +9,7 @@
  * Authors:	See the TCP sources
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seqlock_api.h>

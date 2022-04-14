@@ -6,6 +6,7 @@
  * Copyright (C) 1999 - 2002 Greg Kroah-Hartman (greg@kroah.com)
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

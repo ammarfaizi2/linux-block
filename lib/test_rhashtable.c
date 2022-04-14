@@ -10,6 +10,7 @@
  * Self Test
  **************************************************************************/
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/numa.h>
 #include <linux/mutex_api.h>

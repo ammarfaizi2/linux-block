@@ -5,6 +5,7 @@
  * Copyright (c) 2012-2016, Intel Corporation.
  */
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

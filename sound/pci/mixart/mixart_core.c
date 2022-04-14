@@ -7,6 +7,7 @@
  * Copyright (c) 2003 by Digigram <alsa@digigram.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/io_extra.h>

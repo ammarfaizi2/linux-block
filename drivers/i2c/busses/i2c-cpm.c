@@ -16,6 +16,7 @@
  * (C) 2007,2008 Jochen Friedrich <jochen@scram.de>
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/kernel.h>

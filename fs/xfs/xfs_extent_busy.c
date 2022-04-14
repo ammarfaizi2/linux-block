@@ -5,6 +5,7 @@
  * Copyright (c) 2011 Christoph Hellwig.
  * All Rights Reserved.
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>

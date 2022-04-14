@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uuid_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

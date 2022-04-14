@@ -17,6 +17,7 @@
  *  to keep track of what period we are in.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>

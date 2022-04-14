@@ -54,6 +54,7 @@
  * - fixed some race conditions (who finds the next may send it to me ;-)
  */
 
+#include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

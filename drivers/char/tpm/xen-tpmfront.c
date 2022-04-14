@@ -4,6 +4,7 @@
  *
  * Author:  Daniel De Graaf <dgdegra@tycho.nsa.gov>
  */
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>

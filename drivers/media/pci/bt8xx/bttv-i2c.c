@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

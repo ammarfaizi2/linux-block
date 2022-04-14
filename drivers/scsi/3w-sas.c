@@ -50,6 +50,7 @@
    3.26.02.000 - Initial driver release.
 */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>

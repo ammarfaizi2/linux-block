@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Broadcom Corporation
  */
 
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/net.h>

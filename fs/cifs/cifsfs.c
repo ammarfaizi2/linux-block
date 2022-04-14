@@ -10,6 +10,7 @@
 
 /* Note that BB means BUGBUG (ie something to fix eventually) */
 
+#include <linux/wait_api.h>
 #include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

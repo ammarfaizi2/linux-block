@@ -10,6 +10,7 @@
  * Bill Richardson.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/notifier_api.h>

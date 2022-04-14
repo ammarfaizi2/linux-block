@@ -4,6 +4,7 @@
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
+#include <linux/wait_api.h>
 #include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

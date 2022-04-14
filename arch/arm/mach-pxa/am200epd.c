@@ -18,6 +18,7 @@
  *
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/kmod.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>

@@ -19,6 +19,7 @@
  * not supported by the hardware.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

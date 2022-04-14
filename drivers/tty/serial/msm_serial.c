@@ -7,6 +7,7 @@
  * Copyright (c) 2011, Code Aurora Forum. All rights reserved.
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>

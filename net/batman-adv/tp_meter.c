@@ -7,6 +7,7 @@
 #include "tp_meter.h"
 #include "main.h"
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/etherdevice_api.h>

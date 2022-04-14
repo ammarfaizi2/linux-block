@@ -9,6 +9,7 @@
  * Contact: Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>

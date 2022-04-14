@@ -16,6 +16,7 @@
 #define DRIVER_VERSION "1.0.2"
 
 /* kernel includes */
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

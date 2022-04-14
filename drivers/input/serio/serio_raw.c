@@ -6,6 +6,7 @@
  * Copyright (c) 2004 Dmitry Torokhov
  */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sched/signal.h>
 #include <linux/mutex_api.h>

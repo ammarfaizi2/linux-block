@@ -8,6 +8,7 @@
  *    Copyright (C) 2009 Integrated Device Technology, Inc.
  */
 
+#include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

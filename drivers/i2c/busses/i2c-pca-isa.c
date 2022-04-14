@@ -5,6 +5,7 @@
  *    Copyright (C) 2008 Pengutronix
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/ioport.h>

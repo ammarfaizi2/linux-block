@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2015 Google, Inc.
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

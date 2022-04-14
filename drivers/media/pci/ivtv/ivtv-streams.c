@@ -43,6 +43,7 @@
 #include "ivtv-cards.h"
 #include "ivtv-streams.h"
 #include "ivtv-firmware.h"
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/jiffies.h>

@@ -9,6 +9,7 @@
  *          Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

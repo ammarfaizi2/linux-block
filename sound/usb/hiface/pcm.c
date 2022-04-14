@@ -10,6 +10,7 @@
  * The driver is based on the work done in TerraTec DMX 6Fire USB
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

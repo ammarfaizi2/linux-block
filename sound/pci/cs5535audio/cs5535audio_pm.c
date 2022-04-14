@@ -4,6 +4,7 @@
  * Copyright (C) Jaya Kumar
  */
 
+#include <linux/wait_api.h>
 #include <linux/init.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

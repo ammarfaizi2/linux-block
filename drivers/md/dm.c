@@ -10,6 +10,7 @@
 #include "dm-uevent.h"
 #include "dm-ima.h"
 
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/topology.h>
 #include <linux/srcu.h>

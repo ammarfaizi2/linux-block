@@ -31,6 +31,7 @@
  * prepare/check/commit/cleanup steps.
  */
 
+#include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/math64.h>
 #include <drm/drm_atomic_helper.h>

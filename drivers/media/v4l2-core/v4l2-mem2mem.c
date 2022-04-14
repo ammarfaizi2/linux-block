@@ -9,6 +9,7 @@
  * Pawel Osciak, <pawel@osciak.com>
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>

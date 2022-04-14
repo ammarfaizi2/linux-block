@@ -17,6 +17,7 @@
  *   For further TODOs check also belkin_sa.c.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

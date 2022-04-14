@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/wait_api.h>
 #include <linux/kernel.h>
 
 #include <linux/signal.h>

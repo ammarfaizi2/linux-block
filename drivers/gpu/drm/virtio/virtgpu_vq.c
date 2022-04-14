@@ -26,6 +26,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>

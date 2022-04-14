@@ -11,6 +11,7 @@
  * Author: Ajitpal Singh <ajitpal.singh@stericsson.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

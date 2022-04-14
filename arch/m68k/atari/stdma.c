@@ -28,6 +28,7 @@
 /* (can be determined by looking at its status register).              */
 
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/kdev_t.h>

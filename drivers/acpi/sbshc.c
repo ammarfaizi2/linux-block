@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

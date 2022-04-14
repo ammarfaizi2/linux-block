@@ -18,6 +18,7 @@
  * ==FILEVERSION 20041108==
  */
 
+#include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

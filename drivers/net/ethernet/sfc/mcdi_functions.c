@@ -8,6 +8,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>

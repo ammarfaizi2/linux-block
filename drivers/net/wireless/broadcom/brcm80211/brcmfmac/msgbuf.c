@@ -8,6 +8,7 @@
  * For certain dcmd codes, the dongle interprets string data from the host.
  ******************************************************************************/
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>

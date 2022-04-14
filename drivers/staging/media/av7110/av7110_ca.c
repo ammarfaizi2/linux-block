@@ -11,6 +11,7 @@
  * the project's page is at https://linuxtv.org
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>

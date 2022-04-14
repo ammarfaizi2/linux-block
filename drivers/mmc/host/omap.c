@@ -8,6 +8,7 @@
  *  Other hacks (DMA, SD, etc) by David Brownell
  */
 
+#include <linux/wait_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

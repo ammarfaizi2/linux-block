@@ -13,6 +13,7 @@
  *     Copyright (C) 2004-2011 Comtrol, Inc.
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

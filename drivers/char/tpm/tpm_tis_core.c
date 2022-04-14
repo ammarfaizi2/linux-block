@@ -15,6 +15,7 @@
  * This device driver implements the TPM interface as defined in
  * the TCG TPM Interface Spec version 1.2, revision 1.0.
  */
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>

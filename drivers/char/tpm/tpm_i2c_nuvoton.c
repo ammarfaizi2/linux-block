@@ -12,6 +12,7 @@
  * Nuvoton contact information: APC.Support@nuvoton.com
  *****************************************************************************/
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

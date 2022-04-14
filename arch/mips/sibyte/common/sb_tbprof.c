@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

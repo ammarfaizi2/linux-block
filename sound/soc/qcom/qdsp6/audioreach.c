@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020, Linaro Limited
 
+#include <linux/wait_api.h>
 #include <linux/sysctl.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

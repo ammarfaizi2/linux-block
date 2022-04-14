@@ -7,6 +7,7 @@
  * Author: Oleg Nesterov <oleg@redhat.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/rcu_sync_api.h>

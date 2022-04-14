@@ -15,6 +15,7 @@
  *	- Fixed x86_64 cleanness
  */
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/mutex_api.h>

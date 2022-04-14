@@ -6,6 +6,7 @@
  *  Tugrul Galatali <galatalt@stuy.edu>
  */
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/init.h>
 #include <linux/err.h>

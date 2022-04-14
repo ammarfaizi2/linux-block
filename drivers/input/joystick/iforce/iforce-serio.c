@@ -6,6 +6,7 @@
  *  USB/RS232 I-Force joysticks and wheels.
  */
 
+#include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

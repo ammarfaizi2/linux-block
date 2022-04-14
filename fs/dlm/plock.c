@@ -3,6 +3,7 @@
  * Copyright (C) 2005-2008 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

@@ -19,6 +19,7 @@
 #include "ctamixer.h"
 #include "ctdaio.h"
 #include "cttimer.h"
+#include <linux/wait_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

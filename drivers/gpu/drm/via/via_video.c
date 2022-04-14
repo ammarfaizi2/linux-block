@@ -25,6 +25,7 @@
  * Video and XvMC related functions.
  */
 
+#include <linux/wait_api.h>
 #include <drm/drm_device.h>
 #include <drm/via_drm.h>
 

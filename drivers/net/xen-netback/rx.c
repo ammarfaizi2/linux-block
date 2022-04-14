@@ -28,6 +28,7 @@
  */
 #include "common.h"
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>

@@ -7,6 +7,7 @@
  * It reads bitstream buffers and feeds them to the VIFIFO
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/kthread.h>

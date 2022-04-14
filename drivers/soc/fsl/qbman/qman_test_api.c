@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 
 #include "qman_test.h"

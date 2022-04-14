@@ -17,6 +17,7 @@
  *	Copyright (C) 2005 Dirk Behme
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

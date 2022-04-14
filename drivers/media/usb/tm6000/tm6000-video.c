@@ -6,6 +6,7 @@
 // Copyright (c) 2007 Michel Ludwig <michel.ludwig@gmail.com>
 //	- Fixed module load/unload
 
+#include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/poll.h>

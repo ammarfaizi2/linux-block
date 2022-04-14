@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>

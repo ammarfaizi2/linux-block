@@ -12,6 +12,7 @@
  * Copyright 2008 Embedded Alley Solutions, Inc All Rights Reserved.
  */
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>

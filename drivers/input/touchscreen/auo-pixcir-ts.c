@@ -10,6 +10,7 @@
  * Copyright (c) 2008 QUALCOMM USA, INC.
  */
 
+#include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
