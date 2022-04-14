@@ -2,6 +2,7 @@
 #ifndef _INET_DIAG_H_
 #define _INET_DIAG_H_ 1
 
+#include <net/netlink_api.h>
 #include <net/netlink.h>
 #include <uapi/linux/inet_diag.h>
 

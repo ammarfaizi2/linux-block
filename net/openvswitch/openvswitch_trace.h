@@ -5,6 +5,7 @@
 #if !defined(_TRACE_OPENVSWITCH_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_OPENVSWITCH_H
 
+#include <net/netlink_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/tracepoint.h>
 

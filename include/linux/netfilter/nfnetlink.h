@@ -2,6 +2,7 @@
 #ifndef _NFNETLINK_H
 #define _NFNETLINK_H
 
+#include <net/netlink_api.h>
 #include <linux/netlink.h>
 #include <linux/capability.h>
 #include <net/netlink.h>
