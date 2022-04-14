@@ -24,6 +24,13 @@
 #define RCU_SEQ_STATE_MASK	((1 << RCU_SEQ_CTR_SHIFT) - 1)
 
 /*
+ * Low-order bit definitions for polled grace-period APIs.
+ */
+#define RCU_GET_STATE_FROM_EXPEDITED	0x1
+#define RCU_GET_STATE_USE_NORMAL	0x2
+#define RCU_GET_STATE_BAD_FOR_NORMAL	(RCU_GET_STATE_FROM_EXPEDITED | RCU_GET_STATE_USE_NORMAL)
+
+/*
  * Return the counter portion of a sequence number previously returned
  * by rcu_seq_snap() or rcu_seq_current().
  */
@@ -115,6 +122,18 @@ static inline bool rcu_seq_started(unsigned long *sp, unsigned long s)
 static inline bool rcu_seq_done(unsigned long *sp, unsigned long s)
 {
 	return ULONG_CMP_GE(READ_ONCE(*sp), s);
+}
+
+/*
+ * Given a snapshot from rcu_seq_snap(), determine whether or not a
+ * full update-side operation has occurred, but do not allow the
+ * (ULONG_MAX / 2) safety-factor/guard-band.
+ */
+static inline bool rcu_seq_done_exact(unsigned long *sp, unsigned long s)
+{
+	unsigned long cur_s = READ_ONCE(*sp);
+
+	return ULONG_CMP_GE(cur_s, s) || ULONG_CMP_LT(cur_s, s - (2 * RCU_SEQ_STATE_MASK + 1));
 }
 
 /*
@@ -210,7 +229,9 @@ static inline bool rcu_stall_is_suppressed_at_boot(void)
 extern int rcu_cpu_stall_ftrace_dump;
 extern int rcu_cpu_stall_suppress;
 extern int rcu_cpu_stall_timeout;
+extern int rcu_exp_cpu_stall_timeout;
 int rcu_jiffies_till_stall_check(void);
+int rcu_exp_jiffies_till_stall_check(void);
 
 static inline bool rcu_stall_is_suppressed(void)
 {
@@ -316,6 +337,9 @@ extern void rcu_init_geometry(void);
 /* Is this rcu_node a leaf? */
 #define rcu_is_leaf_node(rnp) ((rnp)->level == rcu_num_lvls - 1)
 
+/* Is this srcu_node a leaf? */
+#define srcu_is_leaf_node(ssp, snp) ((snp) >= (ssp)->level[rcu_num_lvls - 1])
+
 /* Is this rcu_node the last leaf? */
 #define rcu_is_last_leaf_node(rnp) ((rnp) == &rcu_state.node[rcu_num_nodes - 1])
 
@@ -347,6 +371,11 @@ extern void rcu_init_geometry(void);
 	for (WARN_ON_ONCE(!rcu_is_leaf_node(rnp)), \
 	     (cpu) = cpumask_next((rnp)->grplo - 1, cpu_possible_mask); \
 	     (cpu) <= rnp->grphi; \
+	     (cpu) = cpumask_next((cpu), cpu_possible_mask))
+#define srcu_for_each_leaf_node_possible_cpu(ssp, snp, cpu) \
+	for (WARN_ON_ONCE(!srcu_is_leaf_node(ssp, snp)), \
+	     (cpu) = cpumask_next((snp)->grplo - 1, cpu_possible_mask); \
+	     (cpu) <= snp->grphi; \
 	     (cpu) = cpumask_next((cpu), cpu_possible_mask))
 
 /*
@@ -523,6 +552,8 @@ static inline bool rcu_check_boost_fail(unsigned long gp_state, int *cpup) { ret
 static inline void show_rcu_gp_kthreads(void) { }
 static inline int rcu_get_gp_kthreads_prio(void) { return 0; }
 static inline void rcu_fwd_progress_check(unsigned long j) { }
+static inline void rcu_gp_slow_register(atomic_t *rgssp) { }
+static inline void rcu_gp_slow_unregister(atomic_t *rgssp) { }
 #else /* #ifdef CONFIG_TINY_RCU */
 bool rcu_dynticks_zero_in_eqs(int cpu, int *vp);
 unsigned long rcu_get_gp_seq(void);
@@ -535,13 +566,13 @@ void rcu_fwd_progress_check(unsigned long j);
 void rcu_force_quiescent_state(void);
 extern struct workqueue_struct *rcu_gp_wq;
 extern struct workqueue_struct *rcu_par_gp_wq;
+void rcu_gp_slow_register(atomic_t *rgssp);
+void rcu_gp_slow_unregister(atomic_t *rgssp);
 #endif /* #else #ifdef CONFIG_TINY_RCU */
 
 #ifdef CONFIG_RCU_NOCB_CPU
-bool rcu_is_nocb_cpu(int cpu);
 void rcu_bind_current_to_nocb(void);
 #else
-static inline bool rcu_is_nocb_cpu(int cpu) { return false; }
 static inline void rcu_bind_current_to_nocb(void) { }
 #endif
 
