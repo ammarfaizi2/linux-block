@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <uapi/linux/if_arp.h>
 #include <net/neighbour_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>

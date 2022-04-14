@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <uapi/linux/if_arp.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/spinlock_api.h>

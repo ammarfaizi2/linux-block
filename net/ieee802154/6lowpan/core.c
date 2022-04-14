@@ -44,6 +44,7 @@
  * SUCH DAMAGE.
  */
 
+#include <uapi/linux/if_arp.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <net/neighbour.h>

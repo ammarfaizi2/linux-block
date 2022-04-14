@@ -5,6 +5,7 @@
  * (C) 2015 Pengutronix, Alexander Aring <aar@pengutronix.de>
  */
 
+#include <uapi/linux/if_arp.h>
 #include <net/ipv6_api.h>
 #include <linux/sysfs.h>
 #include <linux/rtnetlink.h>
