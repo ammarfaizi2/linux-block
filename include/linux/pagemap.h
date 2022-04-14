@@ -5,6 +5,7 @@
 /*
  * Copyright 1995 Linus Torvalds
  */
+#include <linux/page-flags-thp.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/huge_mm.h>
