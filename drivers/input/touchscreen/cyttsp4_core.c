@@ -13,6 +13,7 @@
  */
 
 #include "cyttsp4_core.h"
+#include <linux/bitops.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>

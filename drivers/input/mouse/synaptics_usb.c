@@ -34,6 +34,7 @@
  * This driver uses setting 1.
  */
 
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/module.h>

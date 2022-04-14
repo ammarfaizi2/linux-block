@@ -22,6 +22,7 @@
  */
 
 
+#include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/delay.h>
 #include <linux/input.h>

@@ -4,6 +4,7 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/export.h>
 #include <linux/slab.h>

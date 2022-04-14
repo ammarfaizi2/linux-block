@@ -68,6 +68,7 @@
  * Copyright (c) 2006-2011 Michael Hennerich <michael.hennerich@analog.com>
  */
 
+#include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

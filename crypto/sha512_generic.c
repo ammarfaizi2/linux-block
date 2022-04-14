@@ -5,6 +5,7 @@
  * Copyright (c) Andrew McDonald <andrew@mcdonald.org.uk>
  * Copyright (c) 2003 Kyle McMartin <kyle@debian.org>
  */
+#include <linux/bitops.h>
 #include <crypto/internal/hash.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

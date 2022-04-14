@@ -8,6 +8,7 @@
  *	Olof Johansson <olof@lixom.net>
  */
 
+#include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/export.h>
 #include <linux/gfp.h>

@@ -13,6 +13,7 @@
 */
 
 
+#include <linux/bitops.h>
 #include <asm/unaligned.h>
 #include <linux/init.h>
 #include <linux/crypto.h>

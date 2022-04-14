@@ -11,6 +11,7 @@
  * __c[lt]z[sd]i2 can be overridden by linking arch-specific versions.
  */
 
+#include <linux/bitops.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 

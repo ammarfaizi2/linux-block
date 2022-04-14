@@ -7,6 +7,7 @@
  *  Copyright (c) 2008,2009 Ilya Petrov <ilya.muromec@gmail.com>
  */
 
+#include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>

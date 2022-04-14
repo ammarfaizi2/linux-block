@@ -25,6 +25,7 @@
  *   - Read/write EEPROM
  */
 
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/slab.h>

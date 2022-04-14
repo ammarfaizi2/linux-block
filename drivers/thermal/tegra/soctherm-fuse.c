@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <soc/tegra/fuse.h>

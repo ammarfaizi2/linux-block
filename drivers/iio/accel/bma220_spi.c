@@ -5,6 +5,7 @@
  * Copyright (c) 2016,2020 Intel Corporation.
  */
 
+#include <linux/bitops.h>
 #include <linux/bits.h>
 #include <linux/kernel.h>
 #include <linux/mod_devicetable.h>

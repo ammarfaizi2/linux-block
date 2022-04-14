@@ -5,6 +5,7 @@
  * Copyright (c) 2017 Jack Andersen
  */
 
+#include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

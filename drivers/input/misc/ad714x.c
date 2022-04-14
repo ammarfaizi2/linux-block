@@ -5,6 +5,7 @@
  * Copyright 2009-2011 Analog Devices Inc.
  */
 
+#include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>

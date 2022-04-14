@@ -8,6 +8,7 @@
  * and Keyspan, Inc the manufacturers of the Keyspan USB DMR product.
  */
 
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Prevas A/S
  */
 
+#include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

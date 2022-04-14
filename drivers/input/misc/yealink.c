@@ -33,6 +33,7 @@
  *   20050816 henk	Merge 2.6.13-rc6
  */
 
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/module.h>

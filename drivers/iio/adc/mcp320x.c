@@ -37,6 +37,7 @@
  * http://ww1.microchip.com/downloads/en/DeviceDoc/21950D.pdf  mcp3550/1/3
  */
 
+#include <linux/bitops.h>
 #include <linux/err.h>
 #include <linux/delay.h>
 #include <linux/spi/spi.h>

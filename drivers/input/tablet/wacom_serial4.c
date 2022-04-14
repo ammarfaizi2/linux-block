@@ -99,6 +99,7 @@
  *	bit 0  Yt1
  */
 
+#include <linux/bitops.h>
 #include <linux/completion.h>
 #include <linux/init.h>
 #include <linux/input.h>

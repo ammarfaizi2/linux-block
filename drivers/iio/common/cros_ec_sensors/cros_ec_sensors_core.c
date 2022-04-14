@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Google, Inc
  */
 
+#include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/device.h>

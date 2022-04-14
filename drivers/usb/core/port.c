@@ -7,6 +7,7 @@
  * Author: Lan Tianyu <tianyu.lan@intel.com>
  */
 
+#include <linux/bitops.h>
 #include <linux/slab.h>
 #include <linux/pm_qos.h>
 #include <linux/component.h>

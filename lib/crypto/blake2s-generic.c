@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/bitops.h>
 #include <crypto/internal/blake2s.h>
 #include <linux/types.h>
 #include <linux/string.h>

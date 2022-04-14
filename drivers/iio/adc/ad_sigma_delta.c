@@ -6,6 +6,7 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>

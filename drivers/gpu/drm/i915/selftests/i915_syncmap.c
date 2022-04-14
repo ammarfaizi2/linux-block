@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/bitops.h>
 #include <linux/bitmap.h>
 
 #include "../i915_selftest.h"

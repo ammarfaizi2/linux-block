@@ -3,6 +3,7 @@
  * Input driver for joysticks connected over ADC.
  * Copyright (c) 2019-2020 Artur Rojek <contact@artur-rojek.eu>
  */
+#include <linux/bitops.h>
 #include <linux/ctype.h>
 #include <linux/input.h>
 #include <linux/iio/iio.h>

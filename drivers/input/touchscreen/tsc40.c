@@ -6,6 +6,7 @@
  * Author: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
+#include <linux/bitops.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>
