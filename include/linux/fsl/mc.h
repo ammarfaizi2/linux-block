@@ -10,6 +10,7 @@
 #ifndef _FSL_MC_H_
 #define _FSL_MC_H_
 
+#include <asm/byteorder.h>
 #include <linux/device.h>
 #include <linux/mod_devicetable.h>
 #include <linux/interrupt.h>

@@ -6,6 +6,7 @@
 #ifndef __LINUX_SPI_H
 #define __LINUX_SPI_H
 
+#include <asm/byteorder.h>
 #include <linux/bits.h>
 #include <linux/device.h>
 #include <linux/mod_devicetable.h>

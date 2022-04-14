@@ -6,6 +6,7 @@
 
 #ifndef CFPKT_H_
 #define CFPKT_H_
+#include <asm/byteorder.h>
 #include <net/caif/caif_layer.h>
 #include <linux/types.h>
 struct cfpkt;

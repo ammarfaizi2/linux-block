@@ -17,6 +17,7 @@
 #ifndef _LINUX_EXT2_FS_H
 #define _LINUX_EXT2_FS_H
 
+#include <asm/byteorder.h>
 #include <linux/types.h>
 #include <linux/magic.h>
 
