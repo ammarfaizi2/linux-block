@@ -33,6 +33,7 @@
 #ifndef MLX5_DRIVER_H
 #define MLX5_DRIVER_H
 
+#include <uapi/linux/net_tstamp.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/completion.h>
