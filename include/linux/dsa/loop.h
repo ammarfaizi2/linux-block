@@ -2,6 +2,7 @@
 #ifndef DSA_LOOP_H
 #define DSA_LOOP_H
 
+#include <linux/if_vlan_types.h>
 #include <linux/if_vlan.h>
 #include <linux/types.h>
 #include <linux/ethtool.h>
