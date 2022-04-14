@@ -17,6 +17,7 @@
 #ifndef _WCN36XX_H_
 #define _WCN36XX_H_
 
+#include <linux/ipv6.h>
 #include <linux/completion.h>
 #include <linux/in6.h>
 #include <linux/printk.h>
