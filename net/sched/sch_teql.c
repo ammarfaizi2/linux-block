@@ -4,6 +4,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <net/neighbour_api.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>

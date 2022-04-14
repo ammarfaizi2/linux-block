@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Neil Horman <nhorman@tuxdriver.com>
  */
 
+#include <net/neighbour_api.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/string.h>

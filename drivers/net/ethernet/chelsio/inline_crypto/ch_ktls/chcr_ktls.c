@@ -3,6 +3,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/neighbour_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/xarray_api.h>

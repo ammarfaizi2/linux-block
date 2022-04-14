@@ -31,6 +31,7 @@
  *
  */
 
+#include <net/neighbour_api.h>
 #include <net/ipv6_api.h>
 #include <net/ip_extra.h>
 #include <linux/workqueue_api.h>

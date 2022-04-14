@@ -44,6 +44,7 @@
  * SUCH DAMAGE.
  */
 
+#include <net/neighbour_api.h>
 #include <net/inet_sock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

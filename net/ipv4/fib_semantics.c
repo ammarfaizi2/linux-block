@@ -9,6 +9,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <net/neighbour_api.h>
 #include <net/ndisc_api.h>
 #include <net/l3mdev.h>
 #include <net/ipv6_api.h>

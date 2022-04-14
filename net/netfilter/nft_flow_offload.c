@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <net/neighbour_api.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>

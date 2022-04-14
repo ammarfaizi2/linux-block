@@ -22,6 +22,7 @@
  */
 
 
+#include <net/neighbour_api.h>
 #include <net/l3mdev.h>
 #include <net/ip_fib_api.h>
 #include <linux/workqueue_api.h>

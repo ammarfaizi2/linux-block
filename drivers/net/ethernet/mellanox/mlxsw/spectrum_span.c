@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2018 Mellanox Technologies. All rights reserved */
 
+#include <net/neighbour_api.h>
 #include <net/dst_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

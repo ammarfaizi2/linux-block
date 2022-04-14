@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Pablo Neira Ayuso <pablo@netfilter.org>
  */
 
+#include <net/neighbour_api.h>
 #include <net/ip_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/kernel.h>

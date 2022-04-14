@@ -25,6 +25,7 @@
  *                             devices. All mtu based now.
  */
 
+#include <net/neighbour_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rtnetlink.h>
