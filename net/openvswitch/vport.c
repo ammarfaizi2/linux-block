@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
+#include <net/netlink_api.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>

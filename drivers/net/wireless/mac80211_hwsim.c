@@ -14,6 +14,7 @@
  * - RX filtering based on filter configuration (data->rx_filter)
  */
 
+#include <net/netlink_api.h>
 #include <net/dst_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>

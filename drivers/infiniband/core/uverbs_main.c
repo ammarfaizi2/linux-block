@@ -34,6 +34,7 @@
  * SOFTWARE.
  */
 
+#include <net/netlink_api.h>
 #include <linux/wait_api.h>
 #include <linux/sysfs.h>
 #include <linux/srcu.h>

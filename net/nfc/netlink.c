@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

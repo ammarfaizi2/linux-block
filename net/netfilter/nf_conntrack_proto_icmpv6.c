@@ -6,6 +6,7 @@
  *	Yasuyuki Kozakai @USAGI <yasuyuki.kozakai@toshiba.co.jp>
  */
 
+#include <net/netlink_api.h>
 #include <net/ndisc_api.h>
 #include <linux/types.h>
 #include <linux/timer.h>

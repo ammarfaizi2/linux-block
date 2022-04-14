@@ -4,6 +4,7 @@
  * Copyright (c) 2017 Yotam Gigi <yotamg@mellanox.com>
  */
 
+#include <net/netlink_api.h>
 #include <net/act_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>

@@ -1,5 +1,6 @@
 /* License: GPL */
 
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

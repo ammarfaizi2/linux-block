@@ -6,6 +6,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <net/netlink_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

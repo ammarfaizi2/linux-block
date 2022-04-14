@@ -7,6 +7,7 @@
  *						 original idea by Martin Devera
  */
 
+#include <net/netlink_api.h>
 #include <linux/timekeeping.h>
 #include <linux/ratelimit.h>
 #include <linux/netdevice_api.h>

@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>

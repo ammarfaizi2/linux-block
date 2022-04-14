@@ -4,6 +4,7 @@
  * RMNET configuration engine
  */
 
+#include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

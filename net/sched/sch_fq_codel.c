@@ -5,6 +5,7 @@
  *  Copyright (C) 2012,2015 Eric Dumazet <edumazet@google.com>
  */
 
+#include <net/netlink_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/module.h>

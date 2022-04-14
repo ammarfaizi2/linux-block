@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

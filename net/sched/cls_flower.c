@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <net/netlink_api.h>
 #include <net/act_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/string.h>

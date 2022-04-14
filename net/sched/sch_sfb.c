@@ -12,6 +12,7 @@
  * http://www.thefengs.com/wuchang/blue/CSE-TR-387-99.pdf
  */
 
+#include <net/netlink_api.h>
 #include <linux/siphash_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

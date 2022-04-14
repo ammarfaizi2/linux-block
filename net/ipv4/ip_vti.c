@@ -14,6 +14,7 @@
  */
 
 
+#include <net/netlink_api.h>
 #include <net/dst_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>

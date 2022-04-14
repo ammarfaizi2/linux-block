@@ -5,6 +5,7 @@
  * Author: Alexander Duyck <alexander.h.duyck@intel.com>
  */
 
+#include <net/netlink_api.h>
 #include <net/act_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

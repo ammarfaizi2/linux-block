@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2018 - 2021 Intel Corporation
  */
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

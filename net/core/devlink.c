@@ -7,6 +7,7 @@
  * Copyright (c) 2016 Jiri Pirko <jiri@mellanox.com>
  */
 
+#include <net/netlink_api.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>

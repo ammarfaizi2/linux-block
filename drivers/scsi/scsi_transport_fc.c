@@ -8,6 +8,7 @@
  *    statistics, and service functions...
  *    Add vports, etc
  */
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>

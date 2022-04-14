@@ -12,6 +12,7 @@
  *	Vitaly E. Lavrov		RTA_OK arithmetic was wrong.
  */
 
+#include <net/netlink_api.h>
 #include <net/dst_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

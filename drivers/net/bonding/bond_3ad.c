@@ -3,6 +3,7 @@
  * Copyright(c) 1999 - 2004 Intel Corporation. All rights reserved.
  */
 
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>

@@ -32,6 +32,7 @@
  *       ........
  */
 
+#include <net/netlink_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/types.h>

@@ -6,6 +6,7 @@
 
 #include "main.h"
 
+#include <net/netlink_api.h>
 #include <linux/errno.h>
 #include <linux/list.h>
 #include <linux/moduleparam.h>

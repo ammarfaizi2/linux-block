@@ -11,6 +11,7 @@
  *		YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
  */
 
+#include <net/netlink_api.h>
 #include <net/l3mdev.h>
 #include <net/ipv6_api.h>
 #include <net/ip_fib_api.h>

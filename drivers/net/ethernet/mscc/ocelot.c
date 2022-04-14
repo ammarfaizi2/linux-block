@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2017 Microsemi Corporation
  */
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

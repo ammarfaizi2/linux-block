@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <net/netlink_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/spinlock.h>

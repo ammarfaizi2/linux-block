@@ -6,6 +6,7 @@
  *		Vinicius Costa Gomes <vinicius.gomes@intel.com>
  */
 
+#include <net/netlink_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/rbtree_api.h>
 #include <linux/netdevice_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Sabrina Dubroca <sd@queasysnail.net>
  */
 
+#include <net/netlink_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

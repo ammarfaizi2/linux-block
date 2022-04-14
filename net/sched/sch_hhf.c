@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Nandita Dukkipati <nanditad@google.com>
  */
 
+#include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/random.h>

@@ -7,6 +7,7 @@
  *
  * (As all part of the Linux kernel, this file is GPL)
  */
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/netdevice_api.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2016, Intel Corporation
  * Author: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
  */
+#include <net/netlink_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

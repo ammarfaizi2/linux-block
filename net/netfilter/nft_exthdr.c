@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <net/checksum.h>
 #include <asm/unaligned.h>

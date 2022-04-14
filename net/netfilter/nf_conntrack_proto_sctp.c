@@ -9,6 +9,7 @@
  * are to this RFC.
  */
 
+#include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/timer.h>

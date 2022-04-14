@@ -18,6 +18,7 @@
 #include "testmode.h"
 #include "debug.h"
 
+#include <net/netlink_api.h>
 #include <net/netlink.h>
 
 enum ath6kl_tm_attr {

@@ -6,6 +6,7 @@
  * Author: Stefan Hajnoczi <stefanha@redhat.com>
  */
 
+#include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/sock_diag.h>

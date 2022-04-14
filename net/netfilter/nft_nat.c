@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Intel Corporation
  */
 
+#include <net/netlink_api.h>
 #include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/init.h>

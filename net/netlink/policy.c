@@ -7,6 +7,7 @@
  * Copyright 2019 Intel Corporation
  */
 
+#include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

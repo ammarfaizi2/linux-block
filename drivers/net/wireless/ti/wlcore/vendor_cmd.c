@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Texas Instruments. All rights reserved.
  */
 
+#include <net/netlink_api.h>
 #include <linux/mutex_api.h>
 #include <linux/pm_runtime.h>
 

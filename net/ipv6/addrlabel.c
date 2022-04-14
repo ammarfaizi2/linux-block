@@ -10,6 +10,7 @@
  *	YOSHIFUJI Hideaki @ USAGI/WIDE Project <yoshfuji@linux-ipv6.org>
  */
 
+#include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <net/inet_sock_api.h>
 #include <linux/spinlock_api.h>

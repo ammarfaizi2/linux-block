@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <net/netlink_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/mutex_api.h>
 #include <linux/capability.h>

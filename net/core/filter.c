@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <net/netlink_api.h>
 #include <net/neighbour_api_output.h>
 #include <net/ndisc_api.h>
 #include <net/l3mdev.h>

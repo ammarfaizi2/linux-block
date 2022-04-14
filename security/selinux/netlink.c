@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2004 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
+#include <net/netlink_api.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/slab.h>

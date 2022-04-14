@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <net/netlink_api.h>
 #include <net/ip_fib_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

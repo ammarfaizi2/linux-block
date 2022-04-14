@@ -38,6 +38,7 @@
 #include "socket.h"
 #include "node.h"
 #include "net.h"
+#include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/capability.h>

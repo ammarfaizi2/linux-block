@@ -7,6 +7,7 @@
  * Copyright (c) 2007-2015 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <net/netlink_api.h>
 #include <crypto/internal/aead.h>
 #include <linux/errno.h>
 #include <linux/init.h>

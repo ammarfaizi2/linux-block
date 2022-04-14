@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016 Pablo Neira Ayuso <pablo@netfilter.org>
  */
 
+#include <net/netlink_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

@@ -13,6 +13,7 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2006
  */
 
+#include <net/netlink_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/socket.h>

@@ -21,6 +21,7 @@
  *			fixed requeue routine
  *		and many others. thanks.
  */
+#include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/timekeeping.h>

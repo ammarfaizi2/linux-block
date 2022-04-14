@@ -4,6 +4,7 @@
  * Author: Dmitry Safonov <dima@arista.com>
  * Based on code and translator idea by: Florian Westphal <fw@strlen.de>
  */
+#include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/mm_api_kvmalloc.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2014-2015  STMicroelectronics SAS. All rights reserved.
  */
 
+#include <net/netlink_api.h>
 #include <net/genetlink.h>
 #include <linux/module.h>
 #include <linux/nfc.h>
