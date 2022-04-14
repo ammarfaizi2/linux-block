@@ -9,6 +9,7 @@
 #ifndef _SECURITY_SMACK_H
 #define _SECURITY_SMACK_H
 
+#include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/spinlock.h>
 #include <linux/lsm_hooks.h>
