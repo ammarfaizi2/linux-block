@@ -3,6 +3,7 @@
  * i2c-core.h - interfaces internal to the I2C framework
  */
 
+#include <linux/irqflags.h>
 #include <linux/dev_printk.h>
 #include <linux/rwsem.h>
 

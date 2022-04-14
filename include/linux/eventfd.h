@@ -9,6 +9,7 @@
 #ifndef _LINUX_EVENTFD_H
 #define _LINUX_EVENTFD_H
 
+#include <linux/irqflags.h>
 #include <linux/fcntl.h>
 #include <linux/wait.h>
 #include <linux/err.h>
