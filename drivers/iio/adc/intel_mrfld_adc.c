@@ -10,6 +10,7 @@
  *	 Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/jiffies.h>
 #include <linux/bitops.h>
 #include <linux/completion.h>

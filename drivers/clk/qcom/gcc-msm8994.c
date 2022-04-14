@@ -2,6 +2,7 @@
 /* Copyright (c) 2013-2016, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/clk-provider.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

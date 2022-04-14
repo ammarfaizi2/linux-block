@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Linaro Ltd.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

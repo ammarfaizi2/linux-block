@@ -8,6 +8,7 @@
  * Baikal-T1 APB-bus driver
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

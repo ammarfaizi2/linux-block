@@ -6,6 +6,7 @@
  * Author: Yakir Yang <ykk@@rock-chips.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/mfd/syscon.h>

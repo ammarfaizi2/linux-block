@@ -6,6 +6,7 @@
  */
 #define MTK_RNG_DEV KBUILD_MODNAME
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

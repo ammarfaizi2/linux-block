@@ -7,6 +7,7 @@
  * Derived from the original pwm-lpss.c
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>

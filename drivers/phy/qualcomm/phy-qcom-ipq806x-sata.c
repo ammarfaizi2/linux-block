@@ -3,6 +3,7 @@
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2010 - NVIDIA, Inc.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/io.h>

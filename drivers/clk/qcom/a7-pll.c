@@ -6,6 +6,7 @@
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  * Author: Lee Jones <lee.jones@linaro.org>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>

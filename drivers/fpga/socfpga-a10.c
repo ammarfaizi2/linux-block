@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2015-2016 Altera Corporation
  */
+#include <linux/mod_devicetable.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

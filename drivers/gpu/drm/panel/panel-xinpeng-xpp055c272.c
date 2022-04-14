@@ -9,6 +9,7 @@
  * Copyright (C) Purism SPC 2019
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_modes.h>

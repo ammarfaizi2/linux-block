@@ -4,6 +4,7 @@
 // Copyright (C) 2013 Renesas Solutions Corp.
 // Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 
+#include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <sound/soc.h>
 

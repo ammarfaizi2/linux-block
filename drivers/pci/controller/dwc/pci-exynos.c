@@ -9,6 +9,7 @@
  *	   Jaehoon Chung <jh80.chung@samsung.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/kmod.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

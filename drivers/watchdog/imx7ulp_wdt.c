@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/irqflags.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

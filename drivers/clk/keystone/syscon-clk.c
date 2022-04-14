@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Texas Instruments Incorporated - https://www.ti.com/
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>

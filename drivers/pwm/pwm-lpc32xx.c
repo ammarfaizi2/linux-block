@@ -3,6 +3,7 @@
  * Copyright 2012 Alexandre Pereira da Silva <aletes.xgr@gmail.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

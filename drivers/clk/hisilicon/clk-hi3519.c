@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2016 HiSilicon Technologies Co., Ltd.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <dt-bindings/clock/hi3519-clock.h>

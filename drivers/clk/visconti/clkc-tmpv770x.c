@@ -8,6 +8,7 @@
  * Nobuhiro Iwamatsu <nobuhiro1.iwamatsu@toshiba.co.jp>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>
 

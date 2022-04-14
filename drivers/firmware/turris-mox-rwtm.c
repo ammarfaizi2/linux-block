@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Marek Behún <kabel@kernel.org>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

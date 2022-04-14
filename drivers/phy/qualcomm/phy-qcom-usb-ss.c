@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2020, Linaro Limited
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

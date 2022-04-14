@@ -5,6 +5,7 @@
  * Copyright 2021 Google LLC.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/ktime_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

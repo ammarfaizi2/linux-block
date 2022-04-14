@@ -3,6 +3,7 @@
  * Author: Kevin Chen <kevin-cw.chen@mediatek.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>

@@ -5,6 +5,7 @@
 // Copyright (C) 2012, Maarten ter Huurne <maarten@treewalker.org>
 // Copyright (C) 2019, Paul Cercueil <paul@crapouillou.net>
 
+#include <linux/mod_devicetable.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

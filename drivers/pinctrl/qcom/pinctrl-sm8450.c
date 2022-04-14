@@ -4,6 +4,7 @@
  * Copyright (c) 2021, Linaro Limited
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

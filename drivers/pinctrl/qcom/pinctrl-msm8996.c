@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

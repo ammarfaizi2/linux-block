@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2012 Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
  */
+#include <linux/mod_devicetable.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

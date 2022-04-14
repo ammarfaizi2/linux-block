@@ -8,6 +8,7 @@
  *
  * Based on the gpio-poweroff driver.
  */
+#include <linux/mod_devicetable.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  * Copyright (C) Purism SPC 2019
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

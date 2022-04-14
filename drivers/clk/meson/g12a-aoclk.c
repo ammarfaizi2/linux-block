@@ -8,6 +8,7 @@
  * Copyright (c) 2019 Baylibre SAS.
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
+#include <linux/mod_devicetable.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>

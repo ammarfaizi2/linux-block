@@ -8,6 +8,7 @@
  * Rajan Vaja <rajan.vaja@xilinx.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/pinctrl/pinctrl-zynqmp.h>
 

@@ -3,6 +3,7 @@
  * Copyright 2018-2019 NXP
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2012 Intel, Inc.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

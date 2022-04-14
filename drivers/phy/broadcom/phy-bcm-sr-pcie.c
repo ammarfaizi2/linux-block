@@ -3,6 +3,7 @@
  * Copyright (C) 2016-2018 Broadcom
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

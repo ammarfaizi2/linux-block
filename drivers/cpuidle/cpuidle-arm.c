@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "CPUidle arm: " fmt
 
+#include <linux/mod_devicetable.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu_cooling.h>
 #include <linux/cpuidle.h>

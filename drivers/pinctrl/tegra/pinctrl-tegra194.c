@@ -14,6 +14,7 @@
  * more details.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/init.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

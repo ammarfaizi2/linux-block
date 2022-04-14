@@ -3,6 +3,7 @@
  * Copyright (c) 2015, Sony Mobile Communications AB.
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

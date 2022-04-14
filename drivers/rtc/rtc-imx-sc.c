@@ -3,6 +3,7 @@
  * Copyright 2018 NXP.
  */
 
+#include <linux/mod_devicetable.h>
 #include <dt-bindings/firmware/imx/rsrc.h>
 #include <linux/arm-smccc.h>
 #include <linux/firmware/imx/sci.h>

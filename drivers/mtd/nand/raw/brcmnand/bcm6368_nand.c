@@ -12,6 +12,7 @@
  * Copyright 2000-2010 Broadcom Corporation
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/io.h>

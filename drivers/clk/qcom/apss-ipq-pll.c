@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2018, The Linux Foundation. All rights reserved.
+#include <linux/mod_devicetable.h>
 #include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>

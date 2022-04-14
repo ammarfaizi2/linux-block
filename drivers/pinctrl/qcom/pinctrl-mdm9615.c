@@ -5,6 +5,7 @@
  * Author : Neil Armstrong <narmstrong@baylibre.com>
  */
 
+#include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

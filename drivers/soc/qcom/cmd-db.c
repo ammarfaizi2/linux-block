@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2016-2018, 2020, The Linux Foundation. All rights reserved. */
 
+#include <linux/mod_devicetable.h>
 #include <linux/debugfs.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
