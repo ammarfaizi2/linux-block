@@ -3,6 +3,7 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/dma-direction.h>
 #include <linux/delay.h>
 
 #include "iosm_ipc_chnl_cfg.h"
