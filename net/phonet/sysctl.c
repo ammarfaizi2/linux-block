@@ -9,6 +9,7 @@
  * Author: Rémi Denis-Courmont
  */
 
+#include <net/net_namespace.h>
 #include <net/net_namespace_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/seqlock.h>

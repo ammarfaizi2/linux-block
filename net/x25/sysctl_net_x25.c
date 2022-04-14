@@ -6,6 +6,7 @@
  * Added /proc/sys/net/x25 directory entry (empty =) ). [MS]
  */
 
+#include <net/net_namespace.h>
 #include <net/net_namespace_api.h>
 #include <linux/sysctl.h>
 #include <linux/skbuff.h>

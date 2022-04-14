@@ -5,6 +5,7 @@
  * Authors:	Mike Shaver.
  */
 
+#include <net/net_namespace.h>
 #include <net/net_namespace_api.h>
 #include <linux/string.h>
 #include <linux/mm.h>
