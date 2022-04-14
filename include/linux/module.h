@@ -9,6 +9,7 @@
 #ifndef _LINUX_MODULE_H
 #define _LINUX_MODULE_H
 
+#include <linux/kobject_types.h>
 #include <linux/err.h>
 #include <linux/list.h>
 #include <linux/stat.h>
