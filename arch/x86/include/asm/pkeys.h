@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_PKEYS_H
 #define _ASM_X86_PKEYS_H
 
+#include <asm/cpufeature.h>
 #include <linux/types.h>
 
 /*

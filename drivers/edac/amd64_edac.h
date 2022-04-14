@@ -8,6 +8,7 @@
  * GNU General Public License.
  */
 
+#include <asm/cpufeature.h>
 #include <linux/module.h>
 #include <linux/ctype.h>
 #include <linux/init.h>

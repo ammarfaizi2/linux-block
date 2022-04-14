@@ -18,6 +18,7 @@
 #ifndef ATOMISP_PLATFORM_H_
 #define ATOMISP_PLATFORM_H_
 
+#include <asm/cpufeature.h>
 #include <asm/intel-family.h>
 #include <asm/processor.h>
 

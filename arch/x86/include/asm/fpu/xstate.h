@@ -2,6 +2,7 @@
 #ifndef __ASM_X86_XSAVE_H
 #define __ASM_X86_XSAVE_H
 
+#include <asm/cpufeature.h>
 #include <linux/uaccess.h>
 #include <linux/types.h>
 
