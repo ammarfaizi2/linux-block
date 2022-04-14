@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/swap.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/vmalloc.h>
