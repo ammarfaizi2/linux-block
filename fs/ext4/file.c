@@ -19,6 +19,7 @@
  *	(jj@sunsite.ms.mff.cuni.cz)
  */
 
+#include <linux/huge_mm.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>

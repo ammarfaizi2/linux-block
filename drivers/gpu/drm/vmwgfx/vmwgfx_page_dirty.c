@@ -24,6 +24,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+#include <linux/huge_mm.h>
 #include <linux/bitmap.h>
 
 #include "vmwgfx_drv.h"

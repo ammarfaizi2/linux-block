@@ -3,6 +3,7 @@
  * Basic Node interface support
  */
 
+#include <linux/huge_mm.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>
