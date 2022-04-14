@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Peter Hurley <peter@hurleysoftware.com>
  */
 
+#include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/list.h>

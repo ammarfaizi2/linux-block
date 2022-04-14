@@ -9,6 +9,7 @@
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
+#include <linux/errno.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/pinctrl/devinfo.h>
