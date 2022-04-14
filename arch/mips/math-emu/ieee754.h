@@ -12,6 +12,7 @@
 #ifndef __ARCH_MIPS_MATH_EMU_IEEE754_H
 #define __ARCH_MIPS_MATH_EMU_IEEE754_H
 
+#include <linux/sched/thread.h>
 #include <linux/compiler.h>
 #include <asm/byteorder.h>
 #include <linux/kernel.h>
