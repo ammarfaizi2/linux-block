@@ -24,6 +24,7 @@
  *	More Testing
  */
 
+#include <linux/prefetch.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

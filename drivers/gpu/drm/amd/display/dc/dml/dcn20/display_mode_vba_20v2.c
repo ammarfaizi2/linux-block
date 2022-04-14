@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/prefetch.h>
+
 #include "../display_mode_lib.h"
 #include "display_mode_vba_20v2.h"
 #include "../dml_inline_defs.h"

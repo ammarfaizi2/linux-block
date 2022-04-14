@@ -50,6 +50,7 @@
  *    comedi_do_insn(cf,&insn); //executing configuration
  */
 
+#include <linux/prefetch.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

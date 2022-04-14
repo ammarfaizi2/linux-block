@@ -3,6 +3,7 @@
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/prefetch.h>
 #include <linux/pgtable_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

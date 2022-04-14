@@ -14,6 +14,7 @@
  */
 
 
+#include <linux/prefetch.h>
 #include <asm/hardware.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

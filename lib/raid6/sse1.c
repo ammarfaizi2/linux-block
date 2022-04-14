@@ -18,6 +18,7 @@
 
 #ifdef CONFIG_X86_32
 
+#include <linux/prefetch.h>
 #include <linux/raid/pq.h>
 #include "x86.h"
 

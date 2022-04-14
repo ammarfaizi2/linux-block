@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2005-2009 Cavium Networks
  */
+#include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

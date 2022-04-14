@@ -24,6 +24,8 @@
  */
 
 
+#include <linux/prefetch.h>
+
 #include "../display_mode_lib.h"
 #include "../dml_inline_defs.h"
 #include "../display_mode_vba.h"

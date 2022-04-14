@@ -8,6 +8,8 @@
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
 
+#include <linux/prefetch.h>
+
 #include "ops.h"
 #include "stdio.h"
 #include "cuboot.h"

@@ -12,6 +12,7 @@
  *    and doesn't require the funky clock selection.
  */
 
+#include <linux/prefetch.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

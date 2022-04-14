@@ -12,6 +12,7 @@
  *   Document ID MV-S104858-00, Rev. A, October 23 2007.
  */
 
+#include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/of.h>

@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/prefetch.h>
 #include <linux/capability.h>
 #include <linux/pci.h>
 #include <linux/pci_regs.h>

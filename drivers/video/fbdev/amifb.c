@@ -40,6 +40,7 @@
  * for more details.
  */
 
+#include <linux/prefetch.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

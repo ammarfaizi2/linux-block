@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2016 Broadcom
  */
 
+#include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

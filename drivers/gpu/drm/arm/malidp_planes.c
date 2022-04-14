@@ -6,6 +6,7 @@
  * ARM Mali DP plane manipulation routines.
  */
 
+#include <linux/prefetch.h>
 #include <linux/iommu.h>
 #include <linux/platform_device.h>
 

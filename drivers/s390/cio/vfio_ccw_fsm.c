@@ -9,6 +9,7 @@
  *            Cornelia Huck <cohuck@redhat.com>
  */
 
+#include <linux/prefetch.h>
 #include <linux/vfio.h>
 #include <linux/mdev.h>
 

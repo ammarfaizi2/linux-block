@@ -2,6 +2,7 @@
 /* Copyright (c) 2020, Intel Corporation
  */
 
+#include <linux/prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

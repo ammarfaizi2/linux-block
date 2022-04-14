@@ -8,6 +8,7 @@
  * Copyright 1997 -- 2000 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/prefetch.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

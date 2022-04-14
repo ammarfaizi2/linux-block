@@ -11,6 +11,7 @@
 
 #include "ext4_jbd2.h"
 #include "mballoc.h"
+#include <linux/prefetch.h>
 #include <linux/percpu.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/pagemap.h>

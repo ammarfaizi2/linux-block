@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
 
+#include <linux/prefetch.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

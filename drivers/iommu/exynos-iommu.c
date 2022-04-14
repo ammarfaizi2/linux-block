@@ -8,6 +8,7 @@
 #define DEBUG
 #endif
 
+#include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

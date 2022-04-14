@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/prefetch.h>
 #include <linux/fs_api.h>
 #include <asm/bcache.h>
 #include <asm/debug.h>

@@ -16,6 +16,7 @@
 #include "dm-verity.h"
 #include "dm-verity-fec.h"
 #include "dm-verity-verify-sig.h"
+#include <linux/prefetch.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/kobject_api.h>
