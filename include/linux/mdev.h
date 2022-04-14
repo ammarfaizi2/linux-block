@@ -10,6 +10,7 @@
 #ifndef MDEV_H
 #define MDEV_H
 
+#include <uapi/linux/uuid.h>
 #include <linux/types.h>
 
 struct mdev_type;
