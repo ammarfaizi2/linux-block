@@ -2,6 +2,7 @@
 #define pr_fmt(fmt) "kcov: " fmt
 
 #define DISABLE_BRANCH_PROFILING
+#include <linux/local_lock.h>
 #include <linux/hashtable_api.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
