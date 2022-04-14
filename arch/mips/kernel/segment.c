@@ -6,6 +6,7 @@
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
 
+#include <asm/cpu-features.h>
 #include <linux/kernel.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
