@@ -45,6 +45,8 @@
 #include <asm/errno.h>
 #include <linux/uaccess.h>
 
+DEFINE_PER_TASK(struct llist_head, kretprobe_instances);
+
 #define KPROBE_HASH_BITS 6
 #define KPROBE_TABLE_SIZE (1 << KPROBE_HASH_BITS)
 
@@ -1296,7 +1298,7 @@ void kprobe_flush_task(struct task_struct *tk)
 
 	kprobe_busy_begin();
 
-	node = __llist_del_all(&tk->kretprobe_instances);
+	node = __llist_del_all(&per_task(tk, kretprobe_instances));
 	while (node) {
 		ri = container_of(node, struct kretprobe_instance, llist);
 		node = node->next;
@@ -1936,7 +1938,7 @@ static kprobe_opcode_t *__kretprobe_find_ret_addr(struct task_struct *tsk,
 	struct llist_node *node = *cur;
 
 	if (!node)
-		node = tsk->kretprobe_instances.first;
+		node = per_task(tsk, kretprobe_instances).first;
 	else
 		node = node->next;
 
@@ -2019,7 +2021,7 @@ unsigned long __kretprobe_trampoline_handler(struct pt_regs *regs,
 	instruction_pointer_set(regs, (unsigned long)correct_ret_addr);
 
 	/* Run the user handler of the nodes. */
-	first = current->kretprobe_instances.first;
+	first = per_task(current, kretprobe_instances).first;
 	while (first) {
 		ri = container_of(first, struct kretprobe_instance, llist);
 
@@ -2044,8 +2046,8 @@ unsigned long __kretprobe_trampoline_handler(struct pt_regs *regs,
 	arch_kretprobe_fixup_return(regs, correct_ret_addr);
 
 	/* Unlink all nodes for this frame. */
-	first = current->kretprobe_instances.first;
-	current->kretprobe_instances.first = node->next;
+	first = per_task(current, kretprobe_instances).first;
+	per_task(current, kretprobe_instances).first = node->next;
 	node->next = NULL;
 
 	/* Recycle free instances. */
@@ -2085,7 +2087,7 @@ static int pre_handler_kretprobe(struct kprobe *p, struct pt_regs *regs)
 
 	arch_prepare_kretprobe(ri, regs);
 
-	__llist_add(&ri->llist, &current->kretprobe_instances);
+	__llist_add(&ri->llist, &per_task(current, kretprobe_instances));
 
 	return 0;
 }

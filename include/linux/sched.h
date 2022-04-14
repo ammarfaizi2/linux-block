@@ -1317,9 +1317,6 @@ struct task_struct {
 	int				mce_count;
 #endif
 
-#ifdef CONFIG_KRETPROBES
-	struct llist_head               kretprobe_instances;
-#endif
 #ifdef CONFIG_RETHOOK
 	struct llist_head               rethooks;
 #endif
