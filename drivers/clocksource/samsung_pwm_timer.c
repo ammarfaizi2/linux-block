@@ -6,6 +6,7 @@
  * samsung - Common hr-timer support (s3c and s5p)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/err.h>

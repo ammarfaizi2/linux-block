@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "genirq/ipi: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/irqdomain.h>
 #include <linux/irq.h>
 

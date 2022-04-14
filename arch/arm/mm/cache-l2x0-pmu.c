@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 ARM Limited
  */
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <asm/local64_api.h>
 #include <linux/errno.h>

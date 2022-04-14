@@ -4,6 +4,7 @@
  * (C) Copyright 2007 Novell Inc.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/pci.h>
 #include <linux/module.h>
 #include <linux/init.h>

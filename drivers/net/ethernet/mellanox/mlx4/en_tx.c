@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/unaligned.h>
 #include <asm/page.h>
 #include <linux/mlx4/cq.h>

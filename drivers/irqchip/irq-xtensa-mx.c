@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/irqdomain.h>
 #include <linux/irq.h>

@@ -14,6 +14,7 @@
  */
 #undef DEBUG
 
+#include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

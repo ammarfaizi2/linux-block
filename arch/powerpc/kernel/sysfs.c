@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/device.h>
 #include <linux/cpu.h>

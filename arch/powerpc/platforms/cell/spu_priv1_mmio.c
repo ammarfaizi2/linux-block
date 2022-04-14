@@ -6,6 +6,7 @@
  *  Copyright 2006 Sony Corp.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/list.h>
 #include <linux/ptrace.h>

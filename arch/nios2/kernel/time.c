@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>
 #include <linux/clockchips.h>

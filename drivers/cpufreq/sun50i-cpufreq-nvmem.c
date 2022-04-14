@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/nvmem-consumer.h>
 #include <linux/of_device.h>

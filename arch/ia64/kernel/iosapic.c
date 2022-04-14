@@ -78,6 +78,7 @@
  * (isa_irq) is the only exception in this source code.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/acpi.h>
 #include <linux/init.h>
 #include <linux/irq.h>

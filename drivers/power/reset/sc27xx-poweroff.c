@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Linaro Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

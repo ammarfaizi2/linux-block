@@ -12,6 +12,7 @@
 
 #define DEBUG		/* Enable initcall_debug */
 
+#include <linux/cpumask_api.h>
 #include <linux/restart_block_api.h>
 #include <linux/types.h>
 #include <linux/extable.h>

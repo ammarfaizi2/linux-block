@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/clk.h>
 #include <linux/cpumask.h>
 #include <linux/etherdevice.h>

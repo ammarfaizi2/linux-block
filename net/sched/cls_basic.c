@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/types.h>

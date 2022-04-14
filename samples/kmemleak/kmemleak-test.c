@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "kmemleak: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

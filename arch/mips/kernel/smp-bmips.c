@@ -8,6 +8,7 @@
  * SMP support for BMIPS
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/cpu-type.h>
 #include <linux/init.h>
 #include <linux/sched.h>

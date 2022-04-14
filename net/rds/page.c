@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/cpumask_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp.h>
 #include <linux/cpu.h>

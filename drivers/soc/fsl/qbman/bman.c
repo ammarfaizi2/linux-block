@@ -28,6 +28,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/cpumask_api.h>
+
 #include "bman_priv.h"
 
 #define IRQNAME		"BMan portal %d"

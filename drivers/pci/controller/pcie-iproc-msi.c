@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Broadcom Corporation
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/interrupt.h>
 #include <linux/irqchip/chained_irq.h>

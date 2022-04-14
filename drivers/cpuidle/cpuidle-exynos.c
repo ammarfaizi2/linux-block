@@ -8,6 +8,7 @@
  *	Daniel Lezcano <daniel.lezcano@linaro.org>
 */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuidle.h>
 #include <linux/cpu_pm.h>
 #include <linux/export.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/err.h>

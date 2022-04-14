@@ -26,6 +26,7 @@
 #include "debug.h"
 #include "extents.h"
 
+#include <linux/cpumask_api.h>
 #include <linux/bvec_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

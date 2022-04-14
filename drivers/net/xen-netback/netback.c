@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kthread.h>

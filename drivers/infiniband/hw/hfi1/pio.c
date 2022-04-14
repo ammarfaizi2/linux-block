@@ -3,6 +3,7 @@
  * Copyright(c) 2015-2018 Intel Corporation.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/delay.h>
 #include "hfi.h"
 #include "qp.h"

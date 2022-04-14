@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <asm/local_api.h>

@@ -7,6 +7,7 @@
  *
  * Support for the Synopsys DesignWare APB Timers.
  */
+#include <linux/cpumask_api.h>
 #include <linux/dw_apb_timer.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

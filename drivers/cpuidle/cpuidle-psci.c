@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "CPUidle PSCI: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpu_cooling.h>
 #include <linux/cpuidle.h>

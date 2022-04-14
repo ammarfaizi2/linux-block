@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2001 Russell King
  */
+#include <linux/cpumask_api.h>
 #include <linux/efi.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

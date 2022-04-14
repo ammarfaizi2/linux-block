@@ -14,6 +14,7 @@
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/stop_machine.h>

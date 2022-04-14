@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 
 #include "qman_priv.h"

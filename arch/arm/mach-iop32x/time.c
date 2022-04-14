@@ -9,6 +9,7 @@
  * Copyright 2002-2003 MontaVista Software Inc.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/time.h>

@@ -15,6 +15,7 @@
 #define KMSG_COMPONENT "zram"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/bit_spinlock.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

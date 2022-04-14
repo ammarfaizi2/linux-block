@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/of_irq.h>

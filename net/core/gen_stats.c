@@ -9,6 +9,7 @@
  * See Documentation/networking/gen_stats.rst
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

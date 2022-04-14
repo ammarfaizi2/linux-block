@@ -8,6 +8,7 @@
  * This code is licenced under the GPL.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/mutex.h>
 #include <linux/module.h>
 #include <linux/sched.h>

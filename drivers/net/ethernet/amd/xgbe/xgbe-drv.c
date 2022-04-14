@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>
 #include <linux/tcp.h>

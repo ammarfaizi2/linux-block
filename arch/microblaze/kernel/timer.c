@@ -9,6 +9,7 @@
  * for more details.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/sched.h>

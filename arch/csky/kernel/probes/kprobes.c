@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kprobes.h>
 #include <linux/extable.h>

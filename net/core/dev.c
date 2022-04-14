@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

@@ -8,6 +8,7 @@
  *	Andi Kleen / Andreas Herrmann	: CPUID4 emulation on AMD.
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <asm/apicdef.h>
 #include <linux/slab.h>

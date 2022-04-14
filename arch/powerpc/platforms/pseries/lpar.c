@@ -10,6 +10,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "lpar: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/dma-mapping.h>
 #include <linux/console.h>

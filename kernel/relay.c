@@ -12,6 +12,7 @@
  *
  * This file is released under the GPL.
  */
+#include <linux/cpumask_api.h>
 #include <linux/errno.h>
 #include <linux/stddef.h>
 #include <linux/slab.h>

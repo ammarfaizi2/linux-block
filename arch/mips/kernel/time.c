@@ -6,6 +6,7 @@
  *
  * Common time service routines for MIPS machines.
  */
+#include <linux/cpumask_api.h>
 #include <linux/bug.h>
 #include <linux/clockchips.h>
 #include <linux/types.h>

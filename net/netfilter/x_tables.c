@@ -10,6 +10,7 @@
  *   Copyright (C) 2000-2005 Netfilter Core Team <coreteam@netfilter.org>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/cpumask_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

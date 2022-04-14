@@ -10,6 +10,7 @@
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/time.h>
 #include <linux/timex.h>

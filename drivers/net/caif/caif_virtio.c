@@ -5,6 +5,7 @@
  *	    Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  *	    Sjur Brendeland
  */
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/if_arp.h>
 #include <linux/virtio.h>

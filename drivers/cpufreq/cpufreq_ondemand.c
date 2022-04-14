@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/cpu.h>
 #include <linux/percpu-defs.h>

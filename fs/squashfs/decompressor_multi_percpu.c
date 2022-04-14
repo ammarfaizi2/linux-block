@@ -4,6 +4,7 @@
  * Phillip Lougher <phillip@squashfs.org.uk>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/percpu.h>

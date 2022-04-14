@@ -6,6 +6,7 @@
  *    Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2006 Ralf Baechle (ralf@linux-mips.org)
  */
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/cpumask.h>

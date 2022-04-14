@@ -172,6 +172,7 @@
  * - usages	: Usage history
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/local_api.h>
 #include <asm/local64_api.h>

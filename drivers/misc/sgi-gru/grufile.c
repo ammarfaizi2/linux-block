@@ -11,6 +11,7 @@
  *  Copyright (c) 2008-2014 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

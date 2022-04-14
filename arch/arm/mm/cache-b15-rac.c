@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2016 Broadcom
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/err.h>
 #include <linux/spinlock.h>

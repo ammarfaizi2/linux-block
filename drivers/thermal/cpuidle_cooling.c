@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt) "cpuidle cooling: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu_cooling.h>
 #include <linux/cpuidle.h>
 #include <linux/device.h>

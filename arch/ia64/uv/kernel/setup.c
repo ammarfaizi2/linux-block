@@ -8,6 +8,7 @@
  * Copyright (C) 2008 Silicon Graphics, Inc. All rights reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/acpi.h>
 #include <linux/efi.h>
 #include <linux/module.h>

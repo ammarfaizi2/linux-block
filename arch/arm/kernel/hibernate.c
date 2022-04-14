@@ -14,6 +14,7 @@
  * Copyright (C) 2006 Rafael J. Wysocki <rjw@sisk.pl>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/mm.h>
 #include <linux/suspend.h>
 #include <asm/system_misc.h>

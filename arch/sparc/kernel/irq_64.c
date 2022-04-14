@@ -6,6 +6,7 @@
  * Copyright (C) 1998  Jakub Jelinek    (jj@ultra.linux.cz)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/sched.h>
 #include <linux/linkage.h>
 #include <linux/ptrace.h>

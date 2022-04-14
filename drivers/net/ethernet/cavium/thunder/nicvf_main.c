@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Cavium, Inc.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

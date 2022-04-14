@@ -6,6 +6,7 @@
 #define KMSG_COMPONENT "sclp_config"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/errno.h>
 #include <linux/cpu.h>

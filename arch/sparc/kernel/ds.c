@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>

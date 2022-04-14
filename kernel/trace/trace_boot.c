@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)	"trace_boot: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/bootconfig.h>
 #include <linux/cpumask.h>
 #include <linux/ftrace.h>

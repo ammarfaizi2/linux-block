@@ -9,6 +9,7 @@
  *  All Rights Reserved
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/clk/tegra.h>
 #include <linux/delay.h>
 #include <linux/device.h>

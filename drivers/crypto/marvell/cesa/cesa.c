@@ -11,6 +11,7 @@
  * Sebastian Andrzej Siewior < sebastian at breakpoint dot cc >
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

@@ -5,6 +5,7 @@
  * Copyright 2014 Freescale Semiconductor, Inc.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/clk.h>
 #include <linux/clockchips.h>
 #include <linux/clocksource.h>

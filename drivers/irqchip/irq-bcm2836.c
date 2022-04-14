@@ -5,6 +5,7 @@
  * Copyright 2015 Broadcom
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpu.h>
 #include <linux/of_address.h>

@@ -7,6 +7,7 @@
  *
  * Highly modified by Steven Rostedt (VMware).
  */
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/per_task.h>
 #include <linux/jump_label.h>

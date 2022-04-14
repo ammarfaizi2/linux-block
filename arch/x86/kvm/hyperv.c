@@ -25,6 +25,7 @@
 #include "hyperv.h"
 #include "xen.h"
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/msr.h>

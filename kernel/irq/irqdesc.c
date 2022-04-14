@@ -7,6 +7,7 @@
  * information is available in Documentation/core-api/genericirq.rst
  *
  */
+#include <linux/cpumask_api.h>
 #include <linux/irq.h>
 #include <linux/slab.h>
 #include <linux/export.h>

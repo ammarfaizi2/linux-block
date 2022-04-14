@@ -15,6 +15,7 @@
  * ( The serial nature of the boot logic and the CPU hotplug lock
  *   protects against more than 2 CPUs entering this code. )
  */
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/msr.h>
 #include <linux/topology.h>

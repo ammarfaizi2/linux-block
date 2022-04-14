@@ -15,6 +15,7 @@
  * Software Developer Manual June 2016, volume 3, section 17.17.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <asm/msr.h>
 #include <linux/module.h>

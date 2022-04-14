@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu_pm.h>
 #include <linux/cpuidle.h>
 #include <linux/init.h>

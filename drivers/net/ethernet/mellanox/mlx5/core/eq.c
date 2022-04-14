@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2021, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/notifier.h>
 #include <linux/mlx5/driver.h>

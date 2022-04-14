@@ -2,6 +2,7 @@
 /* Copyright 2014-2016 Freescale Semiconductor Inc.
  * Copyright 2016-2020 NXP
  */
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

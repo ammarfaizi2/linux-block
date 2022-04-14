@@ -3,6 +3,7 @@
  * i8253.c  8253/PIT functions
  *
  */
+#include <linux/cpumask_api.h>
 #include <linux/clockchips.h>
 #include <linux/i8253.h>
 #include <linux/export.h>

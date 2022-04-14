@@ -5,6 +5,7 @@
  * Copyright (c) 2020 Western Digital Corporation or its affiliates.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bits.h>
 #include <linux/init.h>
 #include <linux/pm.h>

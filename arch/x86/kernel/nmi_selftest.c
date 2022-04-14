@@ -10,6 +10,7 @@
  *   Copyright (C) 2011 Red Hat, Inc., Don Zickus <dzickus@redhat.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/smp.h>
 #include <linux/cpumask.h>
 #include <linux/delay.h>

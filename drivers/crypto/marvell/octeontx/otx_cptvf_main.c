@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include "otx_cptvf.h"

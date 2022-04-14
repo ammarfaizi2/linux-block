@@ -6,6 +6,7 @@
  * Copyright (C) 2004, 2005 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

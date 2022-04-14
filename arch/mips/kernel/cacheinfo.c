@@ -2,6 +2,7 @@
 /*
  * MIPS cacheinfo support
  */
+#include <linux/cpumask_api.h>
 #include <linux/cacheinfo.h>
 
 /* Populates leaf and increments to next leaf */

@@ -11,6 +11,7 @@
  * (C) Copyright IBM Deutschland Entwicklung GmbH 2005
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpufreq.h>
 #include <linux/timer.h>
 #include <linux/module.h>

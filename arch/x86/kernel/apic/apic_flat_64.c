@@ -8,6 +8,7 @@
  * Martin Bligh, Andi Kleen, James Bottomley, John Stultz, and
  * James Cleverdon.
  */
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/cpumask.h>
 #include <linux/export.h>

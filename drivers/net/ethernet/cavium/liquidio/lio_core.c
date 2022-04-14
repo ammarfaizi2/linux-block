@@ -15,6 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
  * NONINFRINGEMENT.  See the GNU General Public License for more details.
  ***********************************************************************/
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/if_vlan.h>

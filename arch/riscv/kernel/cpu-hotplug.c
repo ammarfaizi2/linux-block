@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/sched.h>

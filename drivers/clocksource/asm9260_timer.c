@@ -3,6 +3,7 @@
  * Copyright (C) 2014 Oleksij Rempel <linux@rempel-privat.de>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

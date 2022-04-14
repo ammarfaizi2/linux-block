@@ -5,6 +5,7 @@
  * All rights reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/interrupt.h>

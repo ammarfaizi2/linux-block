@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/clockchips.h>
 #include <linux/clocksource.h>

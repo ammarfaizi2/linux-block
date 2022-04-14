@@ -9,6 +9,7 @@
 
 #include "nx-842.h"
 
+#include <linux/cpumask_api.h>
 #include <linux/timer.h>
 
 #include <asm/prom.h>

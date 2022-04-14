@@ -5,6 +5,7 @@
  * Hypervisor Call Instrumentation
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/percpu.h>
 #include <linux/debugfs.h>

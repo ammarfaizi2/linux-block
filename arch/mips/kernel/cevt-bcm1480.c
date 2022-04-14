@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2000,2001,2004 Broadcom Corporation
  */
+#include <linux/cpumask_api.h>
 #include <linux/clockchips.h>
 #include <linux/interrupt.h>
 #include <linux/percpu.h>

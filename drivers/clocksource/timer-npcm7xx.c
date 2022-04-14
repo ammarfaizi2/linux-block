@@ -6,6 +6,7 @@
  * Copyright 2017 Google, Inc.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/init.h>

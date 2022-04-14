@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2016 Facebook
  */
+#include <linux/cpumask_api.h>
+
 #include "percpu_freelist.h"
 
 int pcpu_freelist_init(struct pcpu_freelist *s)

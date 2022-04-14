@@ -8,6 +8,7 @@
 
 #undef DEBUG
 
+#include <linux/cpumask_api.h>
 #include <linux/export.h>
 #include <linux/panic_notifier.h>
 #include <linux/string.h>

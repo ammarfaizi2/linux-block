@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/etherdevice.h>
 #include <linux/module.h>
 #include <linux/pci.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2015 Hisilicon Limited.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 
 #include "hisi_sas.h"

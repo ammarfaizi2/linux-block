@@ -4,6 +4,7 @@
  * Based almost entirely upon the powerpc iommu allocator.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/export.h>
 #include <linux/bitmap.h>
 #include <linux/bug.h>

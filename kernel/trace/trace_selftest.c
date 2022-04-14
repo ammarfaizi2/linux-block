@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Include in trace.c */
 
+#include <linux/cpumask_api.h>
 #include <uapi/linux/sched/types.h>
 #include <linux/stringify.h>
 #include <linux/kthread.h>

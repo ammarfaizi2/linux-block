@@ -5,6 +5,7 @@
  * Antoine Tenart <antoine.tenart@free-electrons.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/device.h>

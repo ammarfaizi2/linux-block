@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/memblock.h>

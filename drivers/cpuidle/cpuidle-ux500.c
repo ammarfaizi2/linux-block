@@ -6,6 +6,7 @@
  * and Jonas Aaberg <jonas.aberg@stericsson.com>.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/cpuidle.h>

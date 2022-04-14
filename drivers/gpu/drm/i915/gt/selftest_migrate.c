@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/sort.h>
 
 #include "gem/i915_gem_internal.h"

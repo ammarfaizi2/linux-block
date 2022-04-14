@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/cpumask_api.h>
 #include <linux/kexec.h>
 #include <linux/smp.h>
 #include <linux/thread_info.h>

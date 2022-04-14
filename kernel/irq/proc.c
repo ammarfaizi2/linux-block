@@ -5,6 +5,7 @@
  * This file contains the /proc/irq/ handling code.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/irq.h>
 #include <linux/gfp.h>
 #include <linux/proc_fs.h>

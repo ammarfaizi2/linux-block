@@ -9,6 +9,7 @@
  * Authors:	Lotsa people, from code originally in tcp
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/random.h>

@@ -7,6 +7,7 @@
  * Copyright(C) 2006-2007, Timesys Corp., Thomas Gleixner
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/clockchips.h>
 #include <linux/hrtimer.h>
 #include <linux/init.h>

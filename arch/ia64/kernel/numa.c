@@ -7,6 +7,7 @@
  * Copyright (C) 2004 Silicon Graphics, Inc.
  *   Jesse Barnes <jbarnes@sgi.com>
  */
+#include <linux/cpumask_api.h>
 #include <linux/topology.h>
 #include <linux/module.h>
 #include <asm/processor.h>

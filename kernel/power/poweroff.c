@@ -3,6 +3,7 @@
  * poweroff.c - sysrq handler to gracefully power down machine.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/sysrq.h>
 #include <linux/init.h>

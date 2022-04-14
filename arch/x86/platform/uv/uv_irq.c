@@ -8,6 +8,7 @@
  * Copyright (C) 2008 Silicon Graphics, Inc. All rights reserved.
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/x86_irq.h>
 #include <linux/export.h>
 #include <linux/rbtree.h>

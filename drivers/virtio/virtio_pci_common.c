@@ -14,6 +14,8 @@
  *  Michael S. Tsirkin <mst@redhat.com>
  */
 
+#include <linux/cpumask_api.h>
+
 #include "virtio_pci_common.h"
 
 static bool force_legacy = false;

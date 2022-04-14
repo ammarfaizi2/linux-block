@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/device.h>

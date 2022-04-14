@@ -6,6 +6,7 @@
  */
 
 #define FSCACHE_DEBUG_LEVEL CACHE
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #define CREATE_TRACE_POINTS

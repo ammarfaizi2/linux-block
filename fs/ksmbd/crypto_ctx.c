@@ -3,6 +3,7 @@
  *   Copyright (C) 2019 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/err.h>

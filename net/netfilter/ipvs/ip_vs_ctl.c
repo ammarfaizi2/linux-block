@@ -16,6 +16,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>

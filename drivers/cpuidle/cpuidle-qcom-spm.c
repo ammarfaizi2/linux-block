@@ -6,6 +6,7 @@
  * SAW power controller driver
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/io.h>

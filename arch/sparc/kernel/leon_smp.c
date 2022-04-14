@@ -7,6 +7,7 @@
  * Copyright (C) 2009 Konrad Eisele (konrad@gaisler.com) Aeroflex Gaisler AB
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/head.h>
 
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)		"uniphier: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/bitops.h>
 #include <linux/init.h>
 #include <linux/io.h>

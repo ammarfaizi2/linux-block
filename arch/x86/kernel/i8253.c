@@ -3,6 +3,7 @@
  * 8253/PIT functions
  *
  */
+#include <linux/cpumask_api.h>
 #include <linux/clockchips.h>
 #include <linux/init.h>
 #include <linux/timex.h>

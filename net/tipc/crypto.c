@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <crypto/aead.h>
 #include <crypto/aes.h>

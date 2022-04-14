@@ -9,6 +9,7 @@
  *	Yakui Zhao <yakui.zhao@intel.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/io.h>
 #include <linux/mm.h>

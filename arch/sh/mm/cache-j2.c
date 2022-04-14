@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2016 Smart Energy Instruments, Inc.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/mm.h>
 #include <linux/cpumask.h>

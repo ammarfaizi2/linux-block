@@ -5,6 +5,7 @@
  * Copyright (C) 2017 ARM Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/acpi.h>
 #include <linux/cpumask.h>

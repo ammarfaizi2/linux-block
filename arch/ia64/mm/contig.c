@@ -14,6 +14,7 @@
  * Routines used by ia64 machines with contiguous (or virtually contiguous)
  * memory.
  */
+#include <linux/cpumask_api.h>
 #include <linux/efi.h>
 #include <linux/memblock.h>
 #include <linux/mm.h>

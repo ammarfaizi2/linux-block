@@ -5,6 +5,7 @@
  *    Copyright IBM Corp. 2012
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/seq_file.h>
 #include <linux/cpu.h>
 #include <linux/cacheinfo.h>

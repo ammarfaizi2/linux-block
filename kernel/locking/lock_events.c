@@ -16,6 +16,7 @@
 /*
  * Collect locking event counts
  */
+#include <linux/cpumask_api.h>
 #include <linux/debugfs.h>
 #include <linux/sched.h>
 #include <linux/sched/clock.h>

@@ -31,6 +31,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/cpumask_api.h>
 #include <linux/ctype.h>
 #include <rdma/ib_sysfs.h>
 

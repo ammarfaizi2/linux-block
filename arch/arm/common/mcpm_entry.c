@@ -6,6 +6,7 @@
  * Copyright:   (C) 2012-2013  Linaro Limited
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

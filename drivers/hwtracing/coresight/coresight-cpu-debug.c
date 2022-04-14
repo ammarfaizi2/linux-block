@@ -4,6 +4,7 @@
  *
  * Author: Leo Yan <leo.yan@linaro.org>
  */
+#include <linux/cpumask_api.h>
 #include <linux/amba/bus.h>
 #include <linux/coresight.h>
 #include <linux/cpu.h>

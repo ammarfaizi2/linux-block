@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	"OF: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/console.h>
 #include <linux/ctype.h>
 #include <linux/cpu.h>

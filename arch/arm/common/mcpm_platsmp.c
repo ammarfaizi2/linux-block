@@ -8,6 +8,7 @@
  * Code to handle secondary CPU bringup and hotplug for the cluster power API.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/smp.h>
 #include <linux/spinlock.h>

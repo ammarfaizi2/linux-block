@@ -15,6 +15,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

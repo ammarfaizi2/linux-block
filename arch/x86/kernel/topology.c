@@ -25,6 +25,7 @@
  *
  * Send feedback to <colpatch@us.ibm.com>
  */
+#include <linux/cpumask_api.h>
 #include <asm/processor_types.h>
 #include <linux/interrupt.h>
 #include <linux/nodemask.h>

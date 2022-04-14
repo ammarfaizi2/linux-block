@@ -7,6 +7,7 @@
  * Author: Jeremy Kerr <jk@ozlabs.org>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>

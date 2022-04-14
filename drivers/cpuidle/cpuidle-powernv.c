@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

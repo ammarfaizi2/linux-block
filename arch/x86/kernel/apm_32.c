@@ -194,6 +194,7 @@
 
 #define pr_fmt(fmt) "apm: " fmt
 
+#include <linux/cpumask_api.h>
 #include <asm/segment_api.h>
 #include <asm/processor_api.h>
 #include <linux/sched/affinity.h>

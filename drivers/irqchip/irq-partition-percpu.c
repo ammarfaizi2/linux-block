@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/interrupt.h>

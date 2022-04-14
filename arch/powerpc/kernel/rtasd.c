@@ -5,6 +5,7 @@
  * Communication to userspace based on kernel/printk.c
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

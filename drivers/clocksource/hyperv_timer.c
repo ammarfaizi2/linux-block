@@ -11,6 +11,7 @@
  * Author:  Michael Kelley <mikelley@microsoft.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/paravirt_api_clock.h>
 #include <linux/percpu.h>
 #include <linux/cpumask.h>

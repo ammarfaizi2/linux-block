@@ -6,6 +6,7 @@
  * Author: Andrey Ryabinin <ryabinin.a.a@gmail.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/ctype.h>

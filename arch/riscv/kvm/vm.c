@@ -6,6 +6,7 @@
  *     Anup Patel <anup.patel@wdc.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/err.h>

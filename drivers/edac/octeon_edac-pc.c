@@ -8,6 +8,7 @@
  * Copyright (C) 2009 Wind River Systems,
  *   written by Ralf Baechle <ralf@linux-mips.org>
  */
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

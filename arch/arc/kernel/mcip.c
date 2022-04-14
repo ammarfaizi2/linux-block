@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/smp.h>
 #include <linux/irq.h>
 #include <linux/irqchip/chained_irq.h>

@@ -3,6 +3,7 @@
  * Common prep/pmac/chrp boot and setup code.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/sched.h>

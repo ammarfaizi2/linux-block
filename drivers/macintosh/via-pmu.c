@@ -18,6 +18,7 @@
  *    a sleep or a freq. switch
  *
  */
+#include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/stdarg.h>
 #include <linux/mutex.h>

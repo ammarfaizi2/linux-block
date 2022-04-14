@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/seq_file.h>
 #include <linux/interrupt.h>

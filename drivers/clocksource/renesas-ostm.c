@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Chris Brandt
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/clk.h>
 #include <linux/clockchips.h>
 #include <linux/interrupt.h>

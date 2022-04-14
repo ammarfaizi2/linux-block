@@ -16,6 +16,7 @@
 #include "dm-verity.h"
 #include "dm-verity-fec.h"
 #include "dm-verity-verify-sig.h"
+#include <linux/cpumask_api.h>
 #include <linux/bvec_api.h>
 #include <linux/module.h>
 #include <linux/reboot.h>

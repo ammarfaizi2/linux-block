@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "NUMA: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/acpi.h>
 #include <linux/memblock.h>
 #include <linux/module.h>

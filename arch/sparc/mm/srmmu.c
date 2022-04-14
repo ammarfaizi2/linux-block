@@ -9,6 +9,7 @@
  * Copyright (C) 1999,2000 Anton Blanchard (anton@samba.org)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/seq_file.h>
 #include <linux/spinlock.h>

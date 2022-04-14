@@ -12,6 +12,7 @@
  *    Sridhar Samudrala <sri@us.ibm.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/seq_file.h>

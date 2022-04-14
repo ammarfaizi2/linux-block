@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "rtas fadump: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/string.h>
 #include <linux/memblock.h>
 #include <linux/delay.h>

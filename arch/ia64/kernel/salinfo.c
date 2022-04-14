@@ -37,6 +37,7 @@
  *   Modify the locking to make the test for "work to do" an atomic operation.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/capability.h>
 #include <linux/cpu.h>

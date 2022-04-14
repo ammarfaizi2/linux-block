@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/errno.h>
 #include <linux/percpu.h>
 #include <linux/spinlock.h>

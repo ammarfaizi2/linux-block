@@ -4,6 +4,7 @@
  * RMNET Data virtual network driver
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/etherdevice.h>
 #include <linux/ethtool.h>
 #include <linux/if_arp.h>

@@ -64,6 +64,7 @@
  *
  * Copyright (C) 2018 Josef Bacik
  */
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/blk_types.h>

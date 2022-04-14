@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "energy_model: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
 #include <linux/cpumask.h>

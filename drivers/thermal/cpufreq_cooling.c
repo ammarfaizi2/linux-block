@@ -10,6 +10,7 @@
  *		Viresh Kumar <viresh.kumar@linaro.org>
  *
  */
+#include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
 #include <linux/cpu_cooling.h>

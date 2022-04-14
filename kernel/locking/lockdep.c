@@ -27,6 +27,7 @@
  * mapping lock dependencies runtime.
  */
 #define DISABLE_BRANCH_PROFILING
+#include <linux/cpumask_api.h>
 #include <linux/mutex.h>
 #include <linux/sched.h>
 #include <linux/sched/clock.h>

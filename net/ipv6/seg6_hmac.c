@@ -6,6 +6,7 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

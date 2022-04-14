@@ -7,6 +7,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/completion.h>

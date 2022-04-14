@@ -2,6 +2,7 @@
 /* Copyright 2015 Freescale Semiconductor Inc.
  * Copyright 2018-2019 NXP
  */
+#include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/debugfs.h>
 #include "dpaa2-eth.h"

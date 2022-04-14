@@ -3,6 +3,7 @@
  * Copyright (C) 1999, 2000, 05, 06 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  */
+#include <linux/cpumask_api.h>
 #include <linux/bcd.h>
 #include <linux/clockchips.h>
 #include <linux/init.h>

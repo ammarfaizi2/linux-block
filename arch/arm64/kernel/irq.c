@@ -10,6 +10,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/irq.h>
 #include <linux/memory.h>
 #include <linux/smp.h>

@@ -8,6 +8,7 @@
  * Kevin D. Kissell, kevink@mips.com and Carsten Langgaard, carstenl@mips.com
  * Copyright (C) 2000 MIPS Technologies, Inc.  All rights reserved.
  */
+#include <linux/cpumask_api.h>
 #include <asm/cacheflush.h>
 #include <linux/bug.h>
 #include <linux/init.h>

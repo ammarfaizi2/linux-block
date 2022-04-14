@@ -19,6 +19,7 @@
  * async buffer flushing, 1999 Andrea Arcangeli <andrea@suse.de>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

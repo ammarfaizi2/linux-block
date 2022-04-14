@@ -12,6 +12,7 @@
  * Copyright (C) 2004 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/pagemap.h>
 #include <linux/slab.h>

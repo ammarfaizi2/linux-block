@@ -10,6 +10,7 @@
  * Copyright (C) 2002 ARM Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/export.h>
 #include <linux/jiffies.h>
 #include <linux/init.h>

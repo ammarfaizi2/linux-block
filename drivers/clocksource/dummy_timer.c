@@ -5,6 +5,7 @@
  *  Copyright (C) 2013 ARM Ltd.
  *  All Rights Reserved
  */
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/clockchips.h>
 #include <linux/cpu.h>

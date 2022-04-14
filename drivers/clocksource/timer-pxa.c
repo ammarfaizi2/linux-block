@@ -9,6 +9,7 @@
  * by MontaVista Software, Inc.  (Nico, your code rocks!)
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

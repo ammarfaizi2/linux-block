@@ -11,6 +11,7 @@
  * used as clock_event_device.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

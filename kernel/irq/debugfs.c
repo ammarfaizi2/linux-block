@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright 2017 Thomas Gleixner <tglx@linutronix.de>
 
+#include <linux/cpumask_api.h>
 #include <linux/irqdomain.h>
 #include <linux/irq.h>
 #include <linux/uaccess.h>

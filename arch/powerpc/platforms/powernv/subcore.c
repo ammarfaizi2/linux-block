@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt)	"powernv: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/cpu.h>
 #include <linux/cpumask.h>

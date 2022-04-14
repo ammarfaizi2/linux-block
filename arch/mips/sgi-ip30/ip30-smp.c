@@ -9,6 +9,7 @@
  *               2009 Johannes Dickgreber <tanzy@gmx.de>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2004 Keith M Wesolowski (wesolows@foobazco.org)
  */
 
+#include <linux/cpumask_api.h>
 #include <asm/head.h>
 
 #include <linux/kernel.h>

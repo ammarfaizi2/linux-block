@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2018 Intel Corporation.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <linux/seqlock.h>

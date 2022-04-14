@@ -3,6 +3,7 @@
  * MSI hooks for standard x86 apic
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/pci.h>
 #include <linux/irq.h>
 #include <linux/msi.h>

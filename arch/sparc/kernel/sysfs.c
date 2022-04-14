@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007 David S. Miller <davem@davemloft.net>
  */
+#include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/sched.h>
 #include <linux/device.h>

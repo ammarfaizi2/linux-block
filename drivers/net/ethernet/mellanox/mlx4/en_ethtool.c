@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/ethtool.h>
 #include <linux/netdevice.h>

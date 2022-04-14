@@ -7,6 +7,8 @@
  * data if inplace decompression is failed (due to unmet inplace margin for
  * example).
  */
+#include <linux/cpumask_api.h>
+
 #include "internal.h"
 
 struct erofs_pcpubuf {

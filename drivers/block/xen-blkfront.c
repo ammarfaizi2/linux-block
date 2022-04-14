@@ -35,6 +35,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/blkdev.h>
 #include <linux/blk-mq.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
 #include <linux/delay.h>
