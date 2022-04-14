@@ -6,6 +6,7 @@
  */
 
 #include "common.h"
+#include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kthread.h>

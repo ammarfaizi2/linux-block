@@ -22,6 +22,7 @@
  */
 
 
+#include <linux/rculist.h>
 #include <linux/nsproxy.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>

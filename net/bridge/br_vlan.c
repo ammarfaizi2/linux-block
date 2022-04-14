@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api_pcpu_stats.h>

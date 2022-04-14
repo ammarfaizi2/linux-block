@@ -11,6 +11,7 @@
  *		YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
  */
 
+#include <linux/rculist.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

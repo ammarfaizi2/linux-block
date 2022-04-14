@@ -32,6 +32,7 @@
 *
 */
 
+#include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

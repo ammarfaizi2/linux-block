@@ -24,6 +24,7 @@
 
 /* Bluetooth HCI connection handling. */
 
+#include <linux/rculist.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>

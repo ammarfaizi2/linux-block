@@ -21,6 +21,7 @@
  *					Relax this requirement to work with older peers.
  */
 
+#include <linux/rculist.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

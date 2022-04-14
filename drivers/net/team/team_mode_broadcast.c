@@ -4,6 +4,7 @@
  * Copyright (c) 2012 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/module.h>

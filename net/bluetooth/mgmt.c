@@ -24,6 +24,7 @@
 
 /* Bluetooth HCI Management interface */
 
+#include <linux/rculist.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/bitmap.h>

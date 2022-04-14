@@ -8,6 +8,7 @@
  * This file contains interrupt related functions.
  */
 
+#include <linux/rculist.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api_pcpu_stats.h>

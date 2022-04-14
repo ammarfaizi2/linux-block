@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>

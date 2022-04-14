@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/rculist.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_arp.h>

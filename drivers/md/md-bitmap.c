@@ -16,6 +16,7 @@
  * flush after percent set rather than just time based. (maybe both).
  */
 
+#include <linux/rculist.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

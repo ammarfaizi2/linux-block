@@ -9,6 +9,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/rculist.h>
 #include <linux/netlink_api_skb_clone.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>

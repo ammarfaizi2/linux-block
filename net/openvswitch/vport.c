@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
+#include <linux/rculist.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

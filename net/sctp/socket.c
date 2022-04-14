@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rculist.h>
 #include <linux/ptrace_api.h>
 #include <linux/nsproxy.h>
 #include <linux/net.h>

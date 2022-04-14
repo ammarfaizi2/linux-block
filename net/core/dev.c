@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>
 #include <linux/net.h>

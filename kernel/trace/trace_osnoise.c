@@ -16,6 +16,7 @@
  * Copyright (C) 2021 Daniel Bristot de Oliveira, Red Hat, Inc. <bristot@redhat.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

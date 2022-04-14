@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/rculist.h>
 #include <linux/module.h>
 #include <linux/net.h>
 #include <linux/sock_diag.h>

@@ -8,6 +8,7 @@
  *		 Janosch Frank <frankja@linux.vnet.ibm.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/radix-tree-api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>

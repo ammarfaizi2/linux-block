@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/rculist.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/net.h>

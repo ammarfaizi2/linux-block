@@ -37,6 +37,7 @@
 
 */
 
+#include <linux/rculist.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

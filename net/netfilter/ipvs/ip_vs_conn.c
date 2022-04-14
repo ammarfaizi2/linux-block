@@ -20,6 +20,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/rculist.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

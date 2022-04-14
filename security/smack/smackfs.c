@@ -12,6 +12,7 @@
  *	James Morris <jmorris@redhat.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>

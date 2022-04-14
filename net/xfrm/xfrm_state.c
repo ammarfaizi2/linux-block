@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>

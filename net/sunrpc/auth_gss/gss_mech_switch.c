@@ -8,6 +8,7 @@
  *  J. Bruce Fields   <bfields@umich.edu>
  */
 
+#include <linux/rculist.h>
 #include <linux/kmod.h>
 #include <linux/types.h>
 #include <linux/slab.h>

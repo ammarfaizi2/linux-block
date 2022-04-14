@@ -9,6 +9,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/random.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

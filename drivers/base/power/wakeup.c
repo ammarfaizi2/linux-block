@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/rculist.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

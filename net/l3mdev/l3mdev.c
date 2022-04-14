@@ -5,6 +5,7 @@
  * Copyright (c) 2015 David Ahern <dsa@cumulusnetworks.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <net/fib_rules.h>

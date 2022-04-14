@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <net/sock.h>
 #include <linux/list_sort.h>

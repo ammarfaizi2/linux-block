@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/rculist.h>
 #include <linux/random.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

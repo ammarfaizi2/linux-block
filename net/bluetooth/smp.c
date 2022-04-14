@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/rculist.h>
 #include <linux/random.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

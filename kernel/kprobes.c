@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/rculist.h>
 #include <linux/perf_event_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

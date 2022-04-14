@@ -70,6 +70,7 @@
  *   The worst-case behavior is nevertheless O(N^2) for N wakeups.
  */
 
+#include <linux/rculist.h>
 #include <linux/pid.h>
 #include <linux/mm.h>
 #include <linux/mm_api_kvmalloc.h>
