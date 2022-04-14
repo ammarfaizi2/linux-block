@@ -4,6 +4,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/uaccess.h>
 #include <linux/export.h>
 

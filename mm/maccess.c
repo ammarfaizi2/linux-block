@@ -2,6 +2,7 @@
 /*
  * Access kernel or user memory without faulting.
  */
+#include <linux/pagefault_ctrl.h>
 #include <linux/export.h>
 #include <linux/mm.h>
 #include <linux/uaccess.h>

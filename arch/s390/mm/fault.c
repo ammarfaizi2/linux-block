@@ -9,6 +9,7 @@
  *    Copyright (C) 1995  Linus Torvalds
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
