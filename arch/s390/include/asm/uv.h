@@ -11,6 +11,7 @@
 #ifndef _ASM_S390_UV_H
 #define _ASM_S390_UV_H
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/bug.h>
