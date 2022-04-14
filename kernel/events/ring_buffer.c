@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <asm/local_api.h>
 #include <linux/perf_event.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>

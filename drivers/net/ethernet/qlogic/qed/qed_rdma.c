@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <asm/local_api.h>
 #include <linux/types.h>
 #include <asm/byteorder.h>
 #include <linux/bitops.h>

@@ -5,6 +5,7 @@
  * Description: CoreSight Program Flow Trace driver
  */
 
+#include <asm/local_api.h>
 #include <linux/kernel.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

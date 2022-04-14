@@ -5,6 +5,7 @@
  *
  *  Copyright (C) 2016 Jens Axboe <axboe@kernel.dk>
  */
+#include <asm/local_api.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/blkdev.h>
