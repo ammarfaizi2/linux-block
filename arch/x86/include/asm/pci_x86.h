@@ -5,6 +5,7 @@
  *	(c) 1999 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/spinlock_types.h>
 #include <linux/printk.h>
 #include <linux/errno.h>
 #include <linux/init.h>

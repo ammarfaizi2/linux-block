@@ -6,6 +6,7 @@
 #ifndef __LINUX_CLK_PROVIDER_H
 #define __LINUX_CLK_PROVIDER_H
 
+#include <linux/spinlock_types.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/of.h>
