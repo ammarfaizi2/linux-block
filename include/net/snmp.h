@@ -14,6 +14,7 @@
 #ifndef _SNMP_H
 #define _SNMP_H
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/cache.h>
 #include <linux/snmp.h>
 #include <linux/smp.h>

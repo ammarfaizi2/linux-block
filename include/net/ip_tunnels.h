@@ -2,6 +2,7 @@
 #ifndef __NET_IP_TUNNELS_H
 #define __NET_IP_TUNNELS_H 1
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/percpu.h>
 #include <linux/if_tunnel.h>
