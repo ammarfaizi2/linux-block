@@ -3,6 +3,7 @@
 
 #include "ice.h"
 #include "ice_lib.h"
+#include <linux/kthread.h>
 #include <linux/tty_driver.h>
 
 /**

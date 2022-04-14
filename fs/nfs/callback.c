@@ -7,6 +7,7 @@
  * NFSv4 callback handling
  */
 
+#include <linux/kthread.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

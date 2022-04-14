@@ -7,6 +7,7 @@
 #include "msm_gpu.h"
 #include "msm_gpu_trace.h"
 
+#include <linux/kthread.h>
 #include <linux/timekeeping.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
