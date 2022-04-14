@@ -10,6 +10,7 @@
 
 #ifdef __KERNEL__
 
+#include <linux/spinlock_api.h>
 #include <linux/idr_api.h>
 #include <linux/dcache.h>
 #include <linux/idr.h> /* inotify uses this */

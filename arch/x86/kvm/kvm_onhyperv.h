@@ -6,6 +6,7 @@
 #ifndef __ARCH_X86_KVM_KVM_ONHYPERV_H__
 #define __ARCH_X86_KVM_KVM_ONHYPERV_H__
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 #if IS_ENABLED(CONFIG_HYPERV)

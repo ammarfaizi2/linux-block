@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <drm/drm_mm.h>
 #include <linux/mm.h>

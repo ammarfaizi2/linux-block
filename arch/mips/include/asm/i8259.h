@@ -10,6 +10,7 @@
 #ifndef _ASM_I8259_H
 #define _ASM_I8259_H
 
+#include <linux/spinlock_api.h>
 #include <linux/compiler.h>
 #include <linux/spinlock.h>
 

@@ -7,6 +7,7 @@
 #ifndef _ASM_SPARC64_PARPORT_H
 #define _ASM_SPARC64_PARPORT_H 1
 
+#include <linux/spinlock_api.h>
 #include <linux/of_device.h>
 
 #include <asm/ebus_dma.h>

@@ -19,6 +19,7 @@
  * basically just enough here to get kernel/dma.c to compile.
  */
 
+#include <linux/spinlock_api.h>
 #include <asm/io.h>
 #include <linux/spinlock.h>
 

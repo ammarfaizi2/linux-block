@@ -7,6 +7,7 @@
 #ifndef _AX25_H
 #define _AX25_H 
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/ax25.h>
 #include <linux/spinlock.h>

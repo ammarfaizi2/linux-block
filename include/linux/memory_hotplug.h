@@ -2,6 +2,7 @@
 #ifndef __LINUX_MEMORY_HOTPLUG_H
 #define __LINUX_MEMORY_HOTPLUG_H
 
+#include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_types.h>

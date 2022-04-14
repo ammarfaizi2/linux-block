@@ -4,6 +4,7 @@
 #ifndef _IP_SET_HASH_GEN_H
 #define _IP_SET_HASH_GEN_H
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api_kvmalloc.h>

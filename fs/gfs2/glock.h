@@ -7,6 +7,7 @@
 #ifndef __GLOCK_DOT_H__
 #define __GLOCK_DOT_H__
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/parser.h>
 #include "incore.h"

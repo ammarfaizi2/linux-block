@@ -6,6 +6,7 @@
 #ifndef CAVIUM_PTP_H
 #define CAVIUM_PTP_H
 
+#include <linux/spinlock_api.h>
 #include <linux/ptp_clock_kernel.h>
 #include <linux/timecounter.h>
 

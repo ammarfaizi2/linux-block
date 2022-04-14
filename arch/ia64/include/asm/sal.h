@@ -36,6 +36,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/spinlock_api.h>
 #include <linux/bcd.h>
 #include <linux/spinlock.h>
 #include <linux/efi.h>

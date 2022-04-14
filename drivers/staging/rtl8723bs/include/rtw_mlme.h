@@ -7,6 +7,7 @@
 #ifndef __RTW_MLME_H_
 #define __RTW_MLME_H_
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 #define	MAX_BSS_CNT	128

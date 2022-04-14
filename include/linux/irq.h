@@ -10,6 +10,7 @@
  * Thanks. --rmk
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/cache.h>
 #include <linux/spinlock.h>
 #include <linux/cpumask.h>

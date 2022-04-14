@@ -8,6 +8,7 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
+#include <linux/spinlock_api.h>
 #include <linux/usb.h>
 #include <linux/mutex.h>
 #include <linux/kfifo.h>

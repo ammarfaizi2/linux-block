@@ -2,6 +2,7 @@
 #ifndef _PARISC_PGTABLE_H
 #define _PARISC_PGTABLE_H
 
+#include <linux/spinlock_api.h>
 #include <asm/page.h>
 
 #if CONFIG_PGTABLE_LEVELS == 3

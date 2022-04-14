@@ -27,6 +27,7 @@
 #ifndef _USB_H_
 #define _USB_H_
 
+#include <linux/spinlock_api.h>
 #include <linux/usb.h>
 #include <linux/usb_usual.h>
 #include <linux/blkdev.h>

@@ -19,6 +19,7 @@
 #ifndef __ORANGEFSKERNEL_H
 #define __ORANGEFSKERNEL_H
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/moduleparam.h>

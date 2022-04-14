@@ -4,6 +4,7 @@
 #ifndef __IP_SET_BITMAP_IP_GEN_H
 #define __IP_SET_BITMAP_IP_GEN_H
 
+#include <linux/spinlock_api.h>
 #include <linux/bitmap.h>
 #include <linux/sched/cond_resched.h>
 

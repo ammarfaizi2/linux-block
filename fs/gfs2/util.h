@@ -12,6 +12,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #endif
 
+#include <linux/spinlock_api.h>
 #include <linux/mempool.h>
 
 #include "incore.h"

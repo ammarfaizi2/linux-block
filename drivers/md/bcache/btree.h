@@ -99,6 +99,7 @@
  * and fails if the sequence number doesn't match.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/semaphore.h>
 #include <linux/rwsem_api.h>
 

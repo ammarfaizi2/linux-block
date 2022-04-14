@@ -7,6 +7,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/wait.h>
 #include <linux/nospec.h>
 #include <sound/asound.h>

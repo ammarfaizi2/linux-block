@@ -9,6 +9,7 @@
 #ifndef _LINUX_NFS_FS_H
 #define _LINUX_NFS_FS_H
 
+#include <linux/spinlock_api.h>
 #include <uapi/linux/nfs_fs.h>
 
 

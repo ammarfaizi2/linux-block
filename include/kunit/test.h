@@ -9,6 +9,7 @@
 #ifndef _KUNIT_TEST_H
 #define _KUNIT_TEST_H
 
+#include <linux/spinlock_api.h>
 #include <linux/minmax.h>
 #include <linux/kref_api.h>
 #include <kunit/assert.h>

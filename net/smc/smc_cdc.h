@@ -12,6 +12,7 @@
 #ifndef SMC_CDC_H
 #define SMC_CDC_H
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h> /* max_t */
 #include <linux/atomic.h>
 #include <linux/in.h>

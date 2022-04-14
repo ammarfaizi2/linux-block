@@ -30,6 +30,7 @@
 #ifndef _NET_PAGE_POOL_H
 #define _NET_PAGE_POOL_H
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount.h>
 #include <linux/refcount_api.h>
 #include <linux/mm.h> /* Needed by ptr_ring */

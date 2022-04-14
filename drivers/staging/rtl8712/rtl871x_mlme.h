@@ -14,6 +14,8 @@
 #ifndef __RTL871X_MLME_H_
 #define __RTL871X_MLME_H_
 
+#include <linux/spinlock_api.h>
+
 #include "osdep_service.h"
 #include "drv_types.h"
 #include "wlan_bssdef.h"

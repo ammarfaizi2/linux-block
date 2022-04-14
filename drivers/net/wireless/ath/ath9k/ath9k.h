@@ -17,6 +17,7 @@
 #ifndef ATH9K_H
 #define ATH9K_H
 
+#include <linux/spinlock_api.h>
 #include <linux/etherdevice.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

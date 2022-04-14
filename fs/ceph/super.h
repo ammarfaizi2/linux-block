@@ -2,6 +2,7 @@
 #ifndef _FS_CEPH_SUPER_H
 #define _FS_CEPH_SUPER_H
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/ratelimit.h>
 #include <linux/fs_api.h>

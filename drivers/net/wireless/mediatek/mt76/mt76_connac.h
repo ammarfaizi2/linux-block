@@ -4,6 +4,7 @@
 #ifndef __MT76_CONNAC_H
 #define __MT76_CONNAC_H
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 
 #include "mt76.h"

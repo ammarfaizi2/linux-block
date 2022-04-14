@@ -8,6 +8,7 @@
 #ifndef EF4_IO_H
 #define EF4_IO_H
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/spinlock.h>

@@ -36,6 +36,7 @@
  * to lock the reader.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
 #include <linux/stddef.h>

@@ -41,6 +41,7 @@
  * USA.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/semaphore.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

@@ -10,6 +10,7 @@
 #ifndef OCFS2_H
 #define OCFS2_H
 
+#include <linux/spinlock_api.h>
 #include <linux/bitmap.h>
 #include <linux/spinlock.h>
 #include <linux/sched.h>

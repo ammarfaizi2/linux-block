@@ -12,6 +12,7 @@
 #ifndef _EXT4_JBD2_H
 #define _EXT4_JBD2_H
 
+#include <linux/spinlock_api.h>
 #include <linux/fs.h>
 #include <linux/jbd2.h>
 #include "ext4.h"

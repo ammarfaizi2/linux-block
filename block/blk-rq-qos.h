@@ -2,6 +2,7 @@
 #ifndef RQ_QOS_H
 #define RQ_QOS_H
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/blkdev.h>
 #include <linux/blk_types.h>

@@ -12,6 +12,7 @@
 #ifndef MEDIA_REQUEST_H
 #define MEDIA_REQUEST_H
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/types.h>
 #include <linux/kref_api.h>
 #include <linux/list.h>

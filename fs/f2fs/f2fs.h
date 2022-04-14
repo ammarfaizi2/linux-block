@@ -8,6 +8,7 @@
 #ifndef _LINUX_F2FS_H
 #define _LINUX_F2FS_H
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/ratelimit.h>
 #include <linux/radix-tree-api.h>

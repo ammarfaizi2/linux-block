@@ -6,6 +6,7 @@
 #ifndef _INTEL_GUC_H_
 #define _INTEL_GUC_H_
 
+#include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/iosys-map.h>
 #include <linux/xarray.h>

@@ -8,6 +8,7 @@
 #ifndef _ASM_PGALLOC_H
 #define _ASM_PGALLOC_H
 
+#include <linux/spinlock_api.h>
 #include <asm/mem-layout.h>
 #include <asm/atomic.h>
 

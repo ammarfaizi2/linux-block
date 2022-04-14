@@ -12,6 +12,7 @@
 #ifndef _UFSHCD_H
 #define _UFSHCD_H
 
+#include <linux/spinlock_api.h>
 #include <linux/semaphore.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

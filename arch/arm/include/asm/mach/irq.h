@@ -7,6 +7,7 @@
 #ifndef __ASM_ARM_MACH_IRQ_H
 #define __ASM_ARM_MACH_IRQ_H
 
+#include <linux/spinlock_api.h>
 #include <linux/irq.h>
 
 struct seq_file;

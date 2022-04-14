@@ -20,6 +20,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/irq_poll.h>
 #include <linux/cpufreq.h>
 

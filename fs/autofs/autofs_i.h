@@ -6,6 +6,7 @@
 
 /* Internal header file for autofs */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

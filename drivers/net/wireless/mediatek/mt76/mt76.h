@@ -6,6 +6,7 @@
 #ifndef __MT76_H
 #define __MT76_H
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/mm_api.h>
 #include <linux/idr_api.h>

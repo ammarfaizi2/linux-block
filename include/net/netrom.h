@@ -8,6 +8,7 @@
 #ifndef _NETROM_H
 #define _NETROM_H 
 
+#include <linux/spinlock_api.h>
 #include <linux/netrom.h>
 #include <linux/list.h>
 #include <linux/slab.h>

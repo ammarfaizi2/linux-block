@@ -35,6 +35,7 @@
 #ifndef __CSIO_INIT_H__
 #define __CSIO_INIT_H__
 
+#include <linux/spinlock_api.h>
 #include <linux/pci.h>
 #include <linux/if_ether.h>
 #include <scsi/scsi.h>

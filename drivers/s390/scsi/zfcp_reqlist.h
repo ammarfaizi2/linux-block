@@ -11,6 +11,7 @@
 #ifndef ZFCP_REQLIST_H
 #define ZFCP_REQLIST_H
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 /* number of hash buckets */

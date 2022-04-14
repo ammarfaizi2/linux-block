@@ -38,6 +38,7 @@
 #ifndef __DWC2_CORE_H__
 #define __DWC2_CORE_H__
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/acpi.h>
 #include <linux/phy/phy.h>

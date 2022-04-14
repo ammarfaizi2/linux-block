@@ -6,6 +6,7 @@
 #ifndef BTRFS_TRANSACTION_H
 #define BTRFS_TRANSACTION_H
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount.h>
 #include "btrfs_inode.h"
 #include "delayed-ref.h"

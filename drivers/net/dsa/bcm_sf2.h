@@ -8,6 +8,7 @@
 #ifndef __BCM_SF2_H
 #define __BCM_SF2_H
 
+#include <linux/spinlock_api.h>
 #include <linux/platform_device.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

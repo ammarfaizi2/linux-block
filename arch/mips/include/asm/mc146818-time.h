@@ -8,6 +8,7 @@
 #ifndef __ASM_MC146818_TIME_H
 #define __ASM_MC146818_TIME_H
 
+#include <linux/spinlock_api.h>
 #include <linux/bcd.h>
 #include <linux/mc146818rtc.h>
 #include <linux/time.h>

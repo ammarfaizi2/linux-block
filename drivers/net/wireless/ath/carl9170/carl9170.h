@@ -39,6 +39,7 @@
 #ifndef __CARL9170_H
 #define __CARL9170_H
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/firmware.h>
 #include <linux/completion.h>

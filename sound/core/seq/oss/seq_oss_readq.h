@@ -9,6 +9,8 @@
 #ifndef __SEQ_OSS_READQ_H
 #define __SEQ_OSS_READQ_H
 
+#include <linux/spinlock_api.h>
+
 #include "seq_oss_device.h"
 
 
