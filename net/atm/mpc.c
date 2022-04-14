@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <net/net_namespace_types.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

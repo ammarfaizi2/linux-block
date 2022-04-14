@@ -16,6 +16,7 @@
  *              Updated for Thomas Graf's generic rules
  *
  */
+#include <net/net_namespace_types.h>
 #include <net/netlink_api.h>
 #include <linux/net.h>
 #include <linux/init.h>
