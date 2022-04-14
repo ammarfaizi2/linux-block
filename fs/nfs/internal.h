@@ -4,6 +4,7 @@
  */
 
 #include "nfs4_fs.h"
+#include <linux/sched/task_flags.h>
 #include <linux/rculist.h>
 #include <linux/pagemap.h>
 #include <linux/fs_api.h>
