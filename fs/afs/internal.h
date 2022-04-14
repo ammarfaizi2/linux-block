@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/wait_bit.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>

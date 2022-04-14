@@ -2,6 +2,7 @@
 #ifndef _FS_CEPH_MDS_CLIENT_H
 #define _FS_CEPH_MDS_CLIENT_H
 
+#include <linux/wait_bit.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/completion.h>

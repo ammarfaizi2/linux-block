@@ -6,6 +6,7 @@
 #ifndef BTRFS_CTREE_H
 #define BTRFS_CTREE_H
 
+#include <linux/wait_bit.h>
 #include <linux/spinlock_api.h>
 #include <linux/ratelimit.h>
 #include <linux/mutex_api.h>
