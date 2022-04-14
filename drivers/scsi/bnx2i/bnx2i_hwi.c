@@ -14,6 +14,7 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/kthread.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>

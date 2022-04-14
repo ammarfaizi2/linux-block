@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/kthread.h>
 #include <linux/kallsyms.h>
 #include <linux/jiffies.h>
 #include <linux/file.h>

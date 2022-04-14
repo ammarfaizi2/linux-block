@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/kthread.h>
 #include <linux/atomic_api.h>
 
 #include "rsi_main.h"

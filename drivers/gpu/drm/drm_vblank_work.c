@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+#include <linux/kthread.h>
 #include <linux/atomic_api.h>
 #include <uapi/linux/sched/types.h>
 

@@ -18,6 +18,7 @@
  * this warranty disclaimer.
  **/
 
+#include <linux/kthread.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <net/bluetooth/bluetooth.h>

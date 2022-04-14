@@ -2,6 +2,7 @@
 /* Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/kthread.h>
 #include <linux/kref_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

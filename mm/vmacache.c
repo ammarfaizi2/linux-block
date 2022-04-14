@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2014 Davidlohr Bueso.
  */
+#include <linux/kthread.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/task.h>

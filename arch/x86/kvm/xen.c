@@ -10,6 +10,7 @@
 #include "xen.h"
 #include "hyperv.h"
 
+#include <linux/kthread.h>
 #include <linux/kvm_host.h>
 #include <linux/sched/stat.h>
 

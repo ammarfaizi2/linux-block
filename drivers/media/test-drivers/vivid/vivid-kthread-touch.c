@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/kthread.h>
 #include <linux/freezer.h>
 #include <linux/jiffies.h>
 #include "vivid-core.h"
