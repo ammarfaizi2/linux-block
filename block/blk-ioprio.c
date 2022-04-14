@@ -12,6 +12,7 @@
  *   Documentation/admin-guide/cgroup-v2.rst.
  */
 
+#include <linux/ioprio.h>
 #include <linux/blk-mq.h>
 #include <linux/blk_types.h>
 #include <linux/kernel.h>

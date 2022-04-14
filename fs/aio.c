@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/ioprio.h>
 #include <linux/iocontext.h>
 #include <linux/hrtimer_api.h>
 #include <linux/fs_api_sb.h>

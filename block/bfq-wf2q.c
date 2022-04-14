@@ -6,6 +6,7 @@
  * either single bfq queues (associated with processes) or groups of
  * bfq queues (associated with cgroups).
  */
+#include <linux/ioprio.h>
 #include <linux/hrtimer_api.h>
 
 #include "bfq-iosched.h"

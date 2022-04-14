@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  * Copyright (C) 2013-2014 Christoph Hellwig
  */
+#include <linux/ioprio.h>
 #include <linux/iocontext.h>
 #include <linux/hrtimer_api.h>
 #include <linux/gfp_api.h>

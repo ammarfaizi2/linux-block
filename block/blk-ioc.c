@@ -2,6 +2,7 @@
 /*
  * Functions related to io context handling
  */
+#include <linux/ioprio.h>
 #include <linux/iocontext.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
