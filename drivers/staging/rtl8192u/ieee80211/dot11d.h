@@ -2,6 +2,8 @@
 #ifndef __INC_DOT11D_H
 #define __INC_DOT11D_H
 
+#include <linux/etherdevice_api_addr.h>
+
 #include "ieee80211.h"
 
 struct chnl_txpower_triple {
