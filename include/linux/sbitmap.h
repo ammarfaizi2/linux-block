@@ -9,6 +9,7 @@
 #ifndef __LINUX_SCALE_BITMAP_H
 #define __LINUX_SCALE_BITMAP_H
 
+#include <linux/wait_types.h>
 #include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/bitmap.h>

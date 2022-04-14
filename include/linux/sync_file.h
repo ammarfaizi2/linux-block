@@ -13,6 +13,7 @@
 #ifndef _LINUX_SYNC_FILE_H
 #define _LINUX_SYNC_FILE_H
 
+#include <linux/wait_types.h>
 #include <linux/types.h>
 #include <linux/ktime.h>
 #include <linux/list.h>
