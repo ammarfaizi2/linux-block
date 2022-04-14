@@ -25,6 +25,7 @@
  * Copyright (C) 2020 Alibaba, Inc, Alex Shi
  */
 
+#include <linux/percpu-refcount-api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>

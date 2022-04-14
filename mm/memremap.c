@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2015 Intel Corporation. All rights reserved. */
+#include <linux/percpu-refcount-api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/memcontrol.h>

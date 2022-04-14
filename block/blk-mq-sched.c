@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 Jens Axboe
  */
+#include <linux/percpu-refcount-api.h>
 #include <linux/kobject_api.h>
 #include <linux/iocontext.h>
 #include <linux/kernel.h>

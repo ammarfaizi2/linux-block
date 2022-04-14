@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/percpu-refcount-api.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>
