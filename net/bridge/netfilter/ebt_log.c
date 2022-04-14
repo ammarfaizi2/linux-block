@@ -9,6 +9,7 @@
  *  April, 2002
  *
  */
+#include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/module.h>

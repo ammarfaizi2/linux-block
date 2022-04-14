@@ -1,3 +1,4 @@
+#include <net/ipv6_api.h>
 #include <uapi/linux/bpf.h>
 #include <uapi/linux/in.h>
 #include <uapi/linux/if.h>

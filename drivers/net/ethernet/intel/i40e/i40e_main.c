@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2021 Intel Corporation. */
 
+#include <net/ipv6_api.h>
 #include <net/dcbnl.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>

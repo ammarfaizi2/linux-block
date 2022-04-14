@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/ipv6_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/net.h>
 #include <linux/mm_api_kvmalloc.h>

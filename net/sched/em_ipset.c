@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Florian Westphal <fw@strlen.de>
  */
 
+#include <net/ipv6_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>

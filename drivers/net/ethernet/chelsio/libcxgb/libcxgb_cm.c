@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/tcp.h>
 #include <linux/ipv6.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2005-2006 Intel Corporation.  All rights reserved.
  */
 
+#include <net/ipv6_api.h>
 #include <net/ip_fib_api.h>
 #include <net/ip_extra.h>
 #include <linux/xarray_api.h>

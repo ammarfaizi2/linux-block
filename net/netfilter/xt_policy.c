@@ -4,6 +4,7 @@
  * Copyright (c) 2004,2005 Patrick McHardy, <kaber@trash.net>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <net/ipv6_api.h>
 #include <linux/ratelimit.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

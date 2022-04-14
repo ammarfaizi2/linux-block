@@ -10,6 +10,7 @@
  *	Lennert dedicates this file to Kerstin Wurdinger.
  */
 
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_ether_api.h>

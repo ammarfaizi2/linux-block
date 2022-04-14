@@ -3,6 +3,7 @@
  * Copyright (c) 2020 Mellanox Technologies. All rights reserved.
  */
 
+#include <net/ipv6_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_ether_api.h>

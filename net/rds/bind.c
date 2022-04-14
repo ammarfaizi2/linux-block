@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <net/ipv6_api.h>
 #include <linux/refcount_api.h>
 #include <linux/random.h>
 #include <linux/kernel.h>

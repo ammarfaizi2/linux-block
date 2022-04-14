@@ -36,6 +36,7 @@
  * SOFTWARE.
  */
 
+#include <net/ipv6_api.h>
 #include <net/ip_extra.h>
 #include <net/checksum.h>
 #include <linux/xarray_api.h>

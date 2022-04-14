@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "qeth"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <net/ipv6_api.h>
 #include <net/ip_extra.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

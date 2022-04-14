@@ -36,6 +36,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <net/ipv6_api.h>
 #include <net/ip_extra.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>

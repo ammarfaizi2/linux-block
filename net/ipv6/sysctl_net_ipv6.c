@@ -6,6 +6,7 @@
  * YOSHIFUJI Hideaki @USAGI:	added icmp sysctl table.
  */
 
+#include <net/ipv6_api.h>
 #include <net/ip_fib_api.h>
 #include <linux/mm.h>
 #include <linux/sysctl.h>

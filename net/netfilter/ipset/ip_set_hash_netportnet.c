@@ -3,6 +3,7 @@
 
 /* Kernel module implementing an IP set type: the hash:ip,port,net type */
 
+#include <net/ipv6_api.h>
 #include <linux/jhash.h>
 #include <linux/module.h>
 #include <linux/ip.h>

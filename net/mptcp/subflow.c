@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "MPTCP: " fmt
 
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <net/checksum.h>
 #include <linux/workqueue_api.h>

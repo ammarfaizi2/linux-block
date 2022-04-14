@@ -16,6 +16,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>

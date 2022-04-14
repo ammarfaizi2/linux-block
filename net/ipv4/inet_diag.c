@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

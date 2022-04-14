@@ -24,6 +24,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <net/ipv6_api.h>
 #include <net/ip_extra.h>
 #include <net/inet_ecn.h>
 #include <net/dst_api.h>

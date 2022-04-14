@@ -3,6 +3,7 @@
 
 /* ethtool support for i40e */
 
+#include <net/ipv6_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/slab.h>
 #include <linux/pm_wakeup.h>

@@ -15,6 +15,7 @@
  *  Copyright (C) 2011 Intel Corporation.
  */
 
+#include <net/ipv6_api.h>
 #include <linux/uaccess.h>
 #include <linux/rculist.h>
 #include <linux/ptrace_api.h>

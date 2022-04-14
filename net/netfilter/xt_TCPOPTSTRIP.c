@@ -6,6 +6,7 @@
  * Copyright © CC Computer Consultants GmbH, 2007
  */
 
+#include <net/ipv6_api.h>
 #include <net/checksum.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

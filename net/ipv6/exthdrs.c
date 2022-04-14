@@ -17,6 +17,7 @@
  *				  handlers as inet6_protocol{}.
  */
 
+#include <net/ipv6_api.h>
 #include <net/dst_api_tunnel.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api_extra.h>

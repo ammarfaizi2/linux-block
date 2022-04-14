@@ -5,6 +5,7 @@
  *
  * Extracted from xt_TEE.c
  */
+#include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/ipv6.h>

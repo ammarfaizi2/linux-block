@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <net/ipv6_api.h>
 #include <net/ip_fib_api.h>
 #include <net/dst_api.h>
 #include <net/checksum.h>
