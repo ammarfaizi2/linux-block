@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/delayed_call.h>
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>
 #include <linux/pagemap.h>

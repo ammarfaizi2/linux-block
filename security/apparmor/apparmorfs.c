@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/delayed_call.h>
 #include <linux/dcache.h>
 #include <linux/ctype.h>
 #include <linux/security.h>

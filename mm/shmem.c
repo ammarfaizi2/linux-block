@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/delayed_call.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>

@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/delayed_call.h>
 #include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/errno.h>
