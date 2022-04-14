@@ -4,6 +4,7 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
+#include <linux/bitops_types.h>
 #include <linux/types.h>
 
 extern struct mutex pnp_lock;
