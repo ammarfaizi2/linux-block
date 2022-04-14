@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/rcuwait_api.h>
 #include <linux/pid.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
