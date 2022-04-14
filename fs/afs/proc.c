@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>

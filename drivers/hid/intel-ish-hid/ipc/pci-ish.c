@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2016, Intel Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

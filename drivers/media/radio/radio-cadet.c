@@ -31,6 +31,7 @@
  *		Changed API to V4L2
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/module.h>	/* Modules			*/

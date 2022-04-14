@@ -3,6 +3,8 @@
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
+#include <linux/jiffies.h>
+
 #include "timers.h"
 #include "device.h"
 #include "peer.h"

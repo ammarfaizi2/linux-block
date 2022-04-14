@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/module.h>

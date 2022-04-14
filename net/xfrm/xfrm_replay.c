@@ -6,6 +6,7 @@
  * Copyright (C) 2010 Steffen Klassert <steffen.klassert@secunet.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/export.h>
 #include <net/xfrm.h>
 

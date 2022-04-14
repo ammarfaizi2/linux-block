@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/jiffies.h>
+
 #include "hw.h"
 #include "hw-ops.h"
 #include "ar9002_phy.h"

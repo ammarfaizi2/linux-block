@@ -21,6 +21,7 @@
  */
 #include "priv.h"
 
+#include <linux/jiffies.h>
 #include <subdev/acr.h>
 
 #include <nvfw/flcn.h>

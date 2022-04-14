@@ -3,6 +3,8 @@
 
 #define _RTW_IOCTL_SET_C_
 
+#include <linux/jiffies.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/rtw_ioctl_set.h"

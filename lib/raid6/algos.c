@@ -11,6 +11,7 @@
  * Algorithm list and algorithm selection for RAID-6
  */
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/raid/pq.h>
 #ifndef __KERNEL__

@@ -13,6 +13,7 @@
  * (C) Copyright 2004 Alan Stern, stern@rowland.harvard.edu
  */
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 static const __u8 root_hub_hub_des[] =

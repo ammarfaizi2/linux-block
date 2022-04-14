@@ -5,6 +5,7 @@
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2008      Janne Grunau (j@jannau.net)
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/delay.h>

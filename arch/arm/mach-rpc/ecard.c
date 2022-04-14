@@ -24,6 +24,7 @@
  */
 #define ECARD_C
 
+#include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

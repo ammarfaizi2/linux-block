@@ -9,6 +9,7 @@
 #include "pch_gbe.h"
 #include "pch_gbe_phy.h"
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>

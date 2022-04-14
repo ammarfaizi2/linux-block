@@ -38,6 +38,7 @@
 
 #include "common.h"
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

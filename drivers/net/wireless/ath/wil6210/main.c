@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

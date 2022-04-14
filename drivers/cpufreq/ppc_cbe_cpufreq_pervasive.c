@@ -10,6 +10,7 @@
  * Author: Christian Krafft <krafft@de.ibm.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/time.h>

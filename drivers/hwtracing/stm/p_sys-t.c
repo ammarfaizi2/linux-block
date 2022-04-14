@@ -4,6 +4,7 @@
  * Copyright (c) 2018, Intel Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/configfs.h>
 #include <linux/module.h>
 #include <linux/device.h>

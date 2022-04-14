@@ -17,6 +17,7 @@
  * r8187 driver sources.  Thanks to Realtek for their support!
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/usb.h>
 #include <linux/slab.h>

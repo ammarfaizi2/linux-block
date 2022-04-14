@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "llcp: %s: " fmt, __func__
 
+#include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

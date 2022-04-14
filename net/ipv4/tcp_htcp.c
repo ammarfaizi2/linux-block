@@ -7,6 +7,7 @@
  * https://www.hamilton.ie/net/htcp3.pdf
  */
 
+#include <linux/jiffies.h>
 #include <linux/mm.h>
 #include <linux/module.h>
 #include <net/tcp.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2014 - 2020 Intel Corporation */
+#include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

@@ -16,6 +16,7 @@
  * http://www.intel.com/technology/serialata/pdf/rev1_1.pdf
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

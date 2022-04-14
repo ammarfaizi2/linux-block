@@ -5,6 +5,7 @@
  *               Igor Kotrasinski <i.kotrasinsk@samsung.com>
  */
 
+#include <linux/jiffies.h>
 #include <net/sock.h>
 #include <linux/list.h>
 #include <linux/kthread.h>

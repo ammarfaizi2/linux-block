@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2017 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include "motu.h"
 

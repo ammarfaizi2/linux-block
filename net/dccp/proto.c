@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/dccp.h>

@@ -7,6 +7,7 @@
  *	MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

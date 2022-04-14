@@ -20,6 +20,7 @@
  *	Copyright (C) 2006-2008 Analog Devices Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/delay.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2013 Broadcom Corporation
  */
+#include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/netdevice.h>
 #include <net/cfg80211.h>

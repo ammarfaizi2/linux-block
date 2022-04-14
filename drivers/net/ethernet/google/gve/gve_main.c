@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2021 Google, Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

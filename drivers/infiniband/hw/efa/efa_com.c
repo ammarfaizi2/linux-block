@@ -3,6 +3,7 @@
  * Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

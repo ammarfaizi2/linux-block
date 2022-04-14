@@ -40,6 +40,7 @@
  * $Id: //depot/aic7xxx/aic7xxx/aic79xx.c#250 $
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/capability.h>
 

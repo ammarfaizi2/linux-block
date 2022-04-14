@@ -8,6 +8,7 @@
  */
 
 #include "radeonfb.h"
+#include <linux/jiffies.h>
 #include <linux/backlight.h>
 #include <linux/slab.h>
 

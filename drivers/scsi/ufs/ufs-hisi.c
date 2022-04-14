@@ -6,6 +6,7 @@
  * Copyright (c) 2016-2017 HiSilicon Technologies Co., Ltd.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/time.h>

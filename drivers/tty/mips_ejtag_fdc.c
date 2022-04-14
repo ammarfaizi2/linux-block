@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2015 Imagination Technologies Ltd
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

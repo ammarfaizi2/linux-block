@@ -3,6 +3,8 @@
 
 #define _RTW_P2P_C_
 
+#include <linux/jiffies.h>
+
 #include "../include/drv_types.h"
 #include "../include/rtw_p2p.h"
 #include "../include/wifi.h"

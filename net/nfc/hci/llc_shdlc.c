@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "shdlc: %s: " fmt, __func__
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/wait.h>

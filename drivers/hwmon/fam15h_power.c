@@ -6,6 +6,7 @@
  * Author: Andreas Herrmann <herrmann.der.user@googlemail.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>

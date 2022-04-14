@@ -10,6 +10,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr.h>
 #include <linux/kconfig.h>
 #include <linux/mctp.h>

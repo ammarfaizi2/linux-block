@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/jiffies.h>
+
 #include "ath9k.h"
 
 /* Set/change channels.  If the channel is really being changed, it's done

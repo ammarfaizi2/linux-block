@@ -3,6 +3,8 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/jiffies.h>
+
 #include "i915_drv.h"
 #include "i915_reg.h"
 #include "intel_display.h"

@@ -24,6 +24,7 @@
  * this behaves the same as the original Reno.
  */
 
+#include <linux/jiffies.h>
 #include <linux/mm.h>
 #include <linux/btf.h>
 #include <linux/btf_ids.h>

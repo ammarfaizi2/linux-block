@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
  */
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

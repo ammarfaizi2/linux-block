@@ -7,6 +7,7 @@
  * (c) 2005-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/netfilter.h>

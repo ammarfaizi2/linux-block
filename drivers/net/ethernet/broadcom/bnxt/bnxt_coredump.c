@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/pci.h>

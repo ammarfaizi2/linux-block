@@ -22,6 +22,7 @@
 
 #define SWSMU_CODE_LAYER_L4
 
+#include <linux/jiffies.h>
 #include <linux/bitmap.h>
 
 #include "amdgpu.h"

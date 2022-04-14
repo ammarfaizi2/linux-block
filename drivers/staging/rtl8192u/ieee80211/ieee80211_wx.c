@@ -14,6 +14,7 @@
   Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
 
 ******************************************************************************/
+#include <linux/jiffies.h>
 #include <linux/wireless.h>
 #include <linux/kmod.h>
 #include <linux/slab.h>

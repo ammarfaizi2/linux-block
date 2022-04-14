@@ -82,6 +82,7 @@
 
 #define SCSI_NCR_DEBUG_FLAGS	(0)
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/capability.h>

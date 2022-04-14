@@ -18,6 +18,8 @@
  *
  */
 
+#include <linux/jiffies.h>
+
 #include "device.h"
 #include "mac.h"
 #include "wcmd.h"

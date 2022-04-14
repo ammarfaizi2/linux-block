@@ -2,6 +2,7 @@
 /*
  * Functions related to sysfs handling
  */
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/kernel.h>

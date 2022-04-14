@@ -25,6 +25,7 @@
  * Authors: Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>

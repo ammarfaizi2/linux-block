@@ -9,6 +9,7 @@
  * John Brooks <john.brooks@bluecherry.net>
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/device_api_lock.h>

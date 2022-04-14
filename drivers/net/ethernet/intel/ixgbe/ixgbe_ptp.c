@@ -2,6 +2,7 @@
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
 #include "ixgbe.h"
+#include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/ptp_classify.h>
 #include <linux/clocksource.h>

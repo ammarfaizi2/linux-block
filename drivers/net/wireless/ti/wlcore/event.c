@@ -7,6 +7,7 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitmap.h>
 
 #include "wlcore.h"

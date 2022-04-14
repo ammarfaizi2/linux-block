@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2019 Collabora Ltd */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/iopoll.h>

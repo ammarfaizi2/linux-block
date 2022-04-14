@@ -6,6 +6,7 @@
  *   (c) 2006 Keith Bennett <keith@mcs.st-and.ac.uk>
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/slab.h>

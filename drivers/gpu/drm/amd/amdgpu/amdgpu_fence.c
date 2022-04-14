@@ -28,6 +28,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  *    Dave Airlie
  */
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/debugfs.h>

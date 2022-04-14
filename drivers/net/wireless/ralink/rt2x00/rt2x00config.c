@@ -10,6 +10,7 @@
 	Abstract: rt2x00 generic configuration routines.
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 

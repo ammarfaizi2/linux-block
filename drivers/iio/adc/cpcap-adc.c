@@ -8,6 +8,7 @@
  * Copyright (C) 2009-2010 Motorola, Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/err.h>

@@ -12,6 +12,7 @@
  */
 /* #define DEBUG */
 
+#include <linux/jiffies.h>
 #include <linux/gfp.h>
 #include <linux/delay.h>
 #include <linux/vmalloc.h>

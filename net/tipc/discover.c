@@ -34,6 +34,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/jiffies.h>
+
 #include "core.h"
 #include "node.h"
 #include "discover.h"

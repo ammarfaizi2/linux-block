@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "damon: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/damon.h>
 #include <linux/delay.h>
 #include <linux/kthread.h>

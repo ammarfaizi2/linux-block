@@ -46,6 +46,7 @@
 #include "trace.h"
 #include "crypto.h"
 
+#include <linux/jiffies.h>
 #include <linux/pkt_sched.h>
 
 struct tipc_stats {

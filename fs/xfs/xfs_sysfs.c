@@ -4,6 +4,7 @@
  * All Rights Reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 
 #include "xfs.h"

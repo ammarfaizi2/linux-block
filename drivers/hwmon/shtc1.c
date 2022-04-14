@@ -5,6 +5,7 @@
  * Author: Johannes Winkelmann <johannes.winkelmann@sensirion.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/init.h>

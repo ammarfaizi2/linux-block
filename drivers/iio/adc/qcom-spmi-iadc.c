@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitops.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

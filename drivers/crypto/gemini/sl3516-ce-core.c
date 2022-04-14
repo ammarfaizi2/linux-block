@@ -6,6 +6,7 @@
  *
  * Core file which registers crypto algorithms supported by the CryptoEngine
  */
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/crypto.h>

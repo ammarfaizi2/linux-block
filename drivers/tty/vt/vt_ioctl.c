@@ -9,6 +9,7 @@
  *  Check put/get_user, cleanups - acme@conectiva.com.br - Jun 2001
  */
 
+#include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/errno.h>

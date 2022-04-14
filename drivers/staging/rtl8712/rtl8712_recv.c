@@ -16,6 +16,7 @@
 
 #define _RTL8712_RECV_C_
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/if_ether.h>
 #include <linux/ip.h>

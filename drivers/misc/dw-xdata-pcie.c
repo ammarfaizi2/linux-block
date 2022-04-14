@@ -6,6 +6,7 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

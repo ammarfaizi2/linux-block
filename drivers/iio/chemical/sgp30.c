@@ -16,6 +16,7 @@
  * - power mode switching (SGPC3)
  */
 
+#include <linux/jiffies.h>
 #include <linux/crc8.h>
 #include <linux/delay.h>
 #include <linux/kthread.h>

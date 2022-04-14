@@ -63,6 +63,7 @@
  * merged in the usual way.
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/bio.h>

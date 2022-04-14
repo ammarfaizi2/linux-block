@@ -16,6 +16,7 @@
  *   Copyright (C) 2007 David Sterba
  */
 
+#include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/mutex.h>
 #include <linux/inetdevice.h>

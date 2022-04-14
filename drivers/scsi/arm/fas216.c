@@ -31,6 +31,7 @@
  *			automatically request sense data upon check
  *			condition status from targets.
  */
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/module.h>

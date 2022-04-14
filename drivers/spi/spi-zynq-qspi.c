@@ -5,6 +5,7 @@
  * Author: Naga Sureshkumar Relli <nagasure@xilinx.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

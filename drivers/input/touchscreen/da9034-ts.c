@@ -8,6 +8,7 @@
  *	Eric Miao <eric.miao@marvell.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/module.h>

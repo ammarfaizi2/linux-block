@@ -22,6 +22,7 @@
 #include "../dccp.h"
 #include "ccid3.h"
 
+#include <linux/jiffies.h>
 #include <asm/unaligned.h>
 
 #ifdef CONFIG_IP_DCCP_CCID3_DEBUG

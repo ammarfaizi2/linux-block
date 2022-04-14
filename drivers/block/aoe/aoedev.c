@@ -4,6 +4,7 @@
  * AoE device utility functions; maintains device list.
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/hdreg.h>
 #include <linux/blk-mq.h>

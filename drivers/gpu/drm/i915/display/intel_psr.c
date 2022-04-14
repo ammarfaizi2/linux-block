@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_damage_helper.h>

@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 /* See Fibre Channel protocol T11 FC-LS for details */
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

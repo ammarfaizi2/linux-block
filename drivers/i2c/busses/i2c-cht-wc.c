@@ -7,6 +7,7 @@
  * Copyright (C) 2011 - 2014 Intel Corporation. All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

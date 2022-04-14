@@ -7,6 +7,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

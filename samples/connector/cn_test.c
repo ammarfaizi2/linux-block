@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "cn_test: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

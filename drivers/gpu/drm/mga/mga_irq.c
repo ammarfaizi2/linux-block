@@ -31,6 +31,7 @@
  *    Eric Anholt <anholt@FreeBSD.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 
 #include "mga_drv.h"

@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>

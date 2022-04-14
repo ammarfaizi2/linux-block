@@ -6,6 +6,7 @@
  *  (C) 2004 Zou Nan hai <nanhai.zou@intel.com>.
  */
 
+#include <linux/jiffies.h>
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
 #include <linux/module.h>

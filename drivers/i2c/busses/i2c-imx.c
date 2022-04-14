@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>

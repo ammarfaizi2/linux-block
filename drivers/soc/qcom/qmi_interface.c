@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2017 Linaro Ltd.
  */
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

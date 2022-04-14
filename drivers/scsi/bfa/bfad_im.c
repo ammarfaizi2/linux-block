@@ -12,6 +12,7 @@
  *  bfad_im.c Linux driver IM module.
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/export.h>
 

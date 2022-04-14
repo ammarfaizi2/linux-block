@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Broadcom Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
 #include <linux/export.h>

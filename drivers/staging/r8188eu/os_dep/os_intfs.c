@@ -3,6 +3,8 @@
 
 #define _OS_INTFS_C_
 
+#include <linux/jiffies.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/xmit_osdep.h"

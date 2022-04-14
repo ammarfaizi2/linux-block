@@ -3,6 +3,8 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/jiffies.h>
+
 #include "i915_selftest.h"
 
 #include "gt/intel_context.h"

@@ -9,6 +9,7 @@
  * (C) Copyright 2010, Tobias Klauser <tklauser@distanz.ch>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

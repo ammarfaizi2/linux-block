@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Mike Sinkovsky <msink@permonline.ru>
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/unaligned.h>

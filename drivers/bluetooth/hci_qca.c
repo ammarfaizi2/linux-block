@@ -15,6 +15,7 @@
  *  by Maxim Krasnyansky and Marcel Holtmann.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/clk.h>

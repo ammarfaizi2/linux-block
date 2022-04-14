@@ -13,6 +13,7 @@
  *	<rmthomas--a.t--sciolus.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 
 #include "stk1160.h"

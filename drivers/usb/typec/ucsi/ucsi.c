@@ -6,6 +6,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/completion.h>
 #include <linux/property.h>
 #include <linux/device.h>

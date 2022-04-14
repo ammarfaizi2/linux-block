@@ -3,6 +3,7 @@
  * Copyright (C) 2021-2022 Intel Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>

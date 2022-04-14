@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/clk.h>
 #include <linux/mutex.h>

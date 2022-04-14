@@ -24,6 +24,7 @@
  *	More Testing
  */
 
+#include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

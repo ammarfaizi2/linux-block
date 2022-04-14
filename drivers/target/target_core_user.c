@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Chinamobile, Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api.h>
 #include <linux/bitmap.h>

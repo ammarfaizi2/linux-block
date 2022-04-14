@@ -8,6 +8,7 @@
  *
  *  Started by: Thomas Gleixner and Ingo Molnar
  */
+#include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

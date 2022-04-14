@@ -24,6 +24,7 @@
  *	with nanosecond accuracy
  */
 
+#include <linux/jiffies.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/timex.h>

@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/skbuff.h>
 #include <linux/rtnetlink.h>
 #include <linux/moduleparam.h>

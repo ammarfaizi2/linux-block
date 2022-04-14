@@ -11,6 +11,7 @@
 #include "msm_gpu_trace.h"
 #include "adreno/adreno_gpu.h"
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/dma-fence-api.h>
 #include <generated/utsrelease.h>

@@ -9,6 +9,7 @@
  *	    Kurt Kanzenbach <kurt@linutronix.de>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ptp_classify.h>
 
 #include "hellcreek.h"

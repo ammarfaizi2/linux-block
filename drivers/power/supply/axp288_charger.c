@@ -7,6 +7,7 @@
  * Author: Ramakrishna Pallala <ramakrishna.pallala@intel.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

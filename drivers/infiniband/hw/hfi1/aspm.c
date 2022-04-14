@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 
 #include "aspm.h"

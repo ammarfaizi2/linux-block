@@ -22,6 +22,7 @@
  */
 
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/bitops.h>

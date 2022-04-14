@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2019 MediaTek Inc.
 
+#include <linux/jiffies.h>
 #include <linux/align.h>
 #include <asm/barrier.h>
 #include <linux/clk.h>

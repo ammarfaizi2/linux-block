@@ -12,6 +12,7 @@
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/errno.h>

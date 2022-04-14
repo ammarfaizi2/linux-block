@@ -13,6 +13,7 @@
  *
  * A special thanks goes to Realtek for their support !
  */
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/compiler.h>

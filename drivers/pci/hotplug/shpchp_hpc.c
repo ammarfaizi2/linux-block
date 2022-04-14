@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>

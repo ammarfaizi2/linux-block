@@ -16,6 +16,7 @@
  * NONINFRINGEMENT.  See the GNU General Public License for more
  * details.
  **********************************************************************/
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>

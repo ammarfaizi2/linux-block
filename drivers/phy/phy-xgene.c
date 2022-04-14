@@ -38,6 +38,7 @@
  *
  * Currently, this driver only supports Gen3 SATA mode with external clock.
  */
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

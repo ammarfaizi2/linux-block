@@ -11,6 +11,7 @@
  * This file is part of the Inventra Controller Driver for Linux.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/clk.h>

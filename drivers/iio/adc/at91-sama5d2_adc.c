@@ -8,6 +8,7 @@
  *		 2021 Eugen Hristev <eugen.hristev@microchip.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

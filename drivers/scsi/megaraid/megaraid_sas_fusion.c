@@ -17,6 +17,7 @@
  *  Send feedback to: megaraidlinux.pdl@broadcom.com
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>

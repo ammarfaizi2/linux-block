@@ -6,6 +6,7 @@
  *   Copyright (C) 2009 Renesas Technology Corp.
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>

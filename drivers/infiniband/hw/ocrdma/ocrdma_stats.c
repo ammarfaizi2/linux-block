@@ -40,6 +40,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/debugfs.h>

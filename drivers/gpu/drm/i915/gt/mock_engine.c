@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 
 #include "gem/i915_gem_context.h"

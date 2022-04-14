@@ -4,6 +4,7 @@
 #include "wifi.h"
 #include "base.h"
 #include "ps.h"
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/export.h>

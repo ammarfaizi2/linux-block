@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/module.h>
 #include <linux/idr.h>

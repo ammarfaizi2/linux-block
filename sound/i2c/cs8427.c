@@ -5,6 +5,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/init.h>

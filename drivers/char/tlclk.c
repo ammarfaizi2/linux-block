@@ -27,6 +27,7 @@
  * MPCBL0010 ATCA computer.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

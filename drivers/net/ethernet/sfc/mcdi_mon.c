@@ -4,6 +4,7 @@
  * Copyright 2011-2013 Solarflare Communications Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitops.h>
 #include <linux/slab.h>
 #include <linux/hwmon.h>

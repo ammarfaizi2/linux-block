@@ -6,6 +6,7 @@
  * Copyright 2014 Linaro Ltd.
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

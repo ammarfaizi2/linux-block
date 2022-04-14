@@ -26,6 +26,7 @@
  *    Ardelle Fan <ardelle.fan@intel.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/filter_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

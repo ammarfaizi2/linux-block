@@ -49,6 +49,7 @@
  *      v0.011: Converted the PMAD to the driver model. macro
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>

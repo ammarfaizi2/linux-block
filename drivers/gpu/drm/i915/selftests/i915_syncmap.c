@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>
 

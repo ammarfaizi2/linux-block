@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

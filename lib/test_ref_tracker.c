@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2021 Eric Dumazet <edumazet@google.com>
  */
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

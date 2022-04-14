@@ -17,6 +17,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>

@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

@@ -9,6 +9,7 @@
  * Baikal-T1 Process, Voltage, Temperature sensor driver
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

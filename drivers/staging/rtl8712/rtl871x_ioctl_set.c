@@ -16,6 +16,7 @@
 
 #define _RTL871X_IOCTL_SET_C_
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 
 #include "osdep_service.h"

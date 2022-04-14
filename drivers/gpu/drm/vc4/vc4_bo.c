@@ -16,6 +16,7 @@
  * rendering can return quickly.
  */
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/dma-buf.h>
 

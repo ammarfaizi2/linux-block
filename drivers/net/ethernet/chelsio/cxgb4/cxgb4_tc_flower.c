@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <net/tc_act/tc_mirred.h>
 #include <net/tc_act/tc_pedit.h>
 #include <net/tc_act/tc_gact.h>

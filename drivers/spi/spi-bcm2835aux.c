@@ -10,6 +10,7 @@
  * Copyright (C) 2015 Martin Sperl
  */
 
+#include <linux/jiffies.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/debugfs.h>

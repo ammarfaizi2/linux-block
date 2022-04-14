@@ -3,6 +3,7 @@
  * Copyright 1997-1998 Transmeta Corporation -- All Rights Reserved
  */
 
+#include <linux/jiffies.h>
 #include <linux/dcache.h>
 
 #include "autofs_i.h"

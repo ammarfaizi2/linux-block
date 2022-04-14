@@ -8,6 +8,7 @@
  * Datasheet: https://www.allsensors.com/cad/DS-0355_Rev_B.PDF
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>

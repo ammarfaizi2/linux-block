@@ -15,6 +15,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>

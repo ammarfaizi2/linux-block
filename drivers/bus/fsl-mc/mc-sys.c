@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/ioport.h>

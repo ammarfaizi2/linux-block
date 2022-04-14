@@ -9,6 +9,7 @@
  * Wendy Xiong   <wendyx@us.ibm.com>
  *
  ***********************************************************************/
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/delay.h>	/* For udelay */

@@ -4,6 +4,7 @@
  * Copyright (c) 2008 Dave Chinner
  * All Rights Reserved.
  */
+#include <linux/jiffies.h>
 #include <linux/freezer.h>
 
 #include "xfs.h"

@@ -4,6 +4,7 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <linux/jiffies.h>
 #include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 

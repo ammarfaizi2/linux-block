@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <hal_data.h>
 #include <rtw_debug.h>

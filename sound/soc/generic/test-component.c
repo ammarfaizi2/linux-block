@@ -5,6 +5,7 @@
 // Copyright (C) 2020 Renesas Electronics Corporation
 // Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include <linux/of_device.h>

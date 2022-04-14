@@ -19,6 +19,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/dma-mapping.h>
 #include <linux/dma-fence-api.h>

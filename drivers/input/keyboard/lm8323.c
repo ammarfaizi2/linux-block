@@ -10,6 +10,7 @@
  * Updated by Felipe Balbi <felipe.balbi@nokia.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

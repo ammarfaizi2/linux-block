@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <rdma/ib_mad.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2018 Nuvoton Technology corporation.
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>

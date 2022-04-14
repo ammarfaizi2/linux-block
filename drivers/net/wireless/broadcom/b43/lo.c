@@ -19,6 +19,7 @@
 #include "phy_g.h"
 #include "main.h"
 
+#include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/delay.h>
 #include <linux/sched.h>

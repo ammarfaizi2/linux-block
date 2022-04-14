@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/jiffies.h>
 #include <drv_types.h>
 #include <rtw_debug.h>
 #include <hal_com_h2c.h>

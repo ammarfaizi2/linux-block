@@ -10,6 +10,7 @@
  * counter which decrements on every clock cycle.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/clk.h>

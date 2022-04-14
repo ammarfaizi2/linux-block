@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

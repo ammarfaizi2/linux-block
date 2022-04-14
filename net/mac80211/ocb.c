@@ -8,6 +8,7 @@
  * Funded by: Volkswagen Group Research
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/if_ether.h>
 #include <linux/skbuff.h>

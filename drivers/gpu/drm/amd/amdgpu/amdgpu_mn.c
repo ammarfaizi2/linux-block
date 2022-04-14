@@ -43,6 +43,7 @@
  * address space.
  */
 
+#include <linux/jiffies.h>
 #include <linux/firmware.h>
 #include <linux/module.h>
 #include <drm/drm.h>

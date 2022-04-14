@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt) "ipmi_si: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>

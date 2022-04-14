@@ -6,6 +6,7 @@
  *  Copyright (c) 2014 Red Hat, Inc
  */
 
+#include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

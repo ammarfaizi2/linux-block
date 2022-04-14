@@ -9,6 +9,7 @@
  *    -- Initial Write (Borrowed heavily from ARM)
  */
 
+#include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock.h>

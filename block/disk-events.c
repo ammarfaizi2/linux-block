@@ -2,6 +2,7 @@
 /*
  * Disk events - monitor disk events like media change and eject request.
  */
+#include <linux/jiffies.h>
 #include <linux/export.h>
 #include <linux/moduleparam.h>
 #include <linux/blkdev.h>

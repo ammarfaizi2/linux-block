@@ -9,6 +9,7 @@
  * can express various gestures.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/completion.h>

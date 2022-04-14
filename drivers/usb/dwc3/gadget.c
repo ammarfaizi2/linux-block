@@ -8,6 +8,7 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
+#include <linux/jiffies.h>
 #include <linux/debugfs.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

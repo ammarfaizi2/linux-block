@@ -12,6 +12,7 @@
  * Copyright (C) 2018 - 2022 Intel Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/ieee80211.h>
 #include <linux/slab.h>

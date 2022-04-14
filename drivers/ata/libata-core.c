@@ -25,6 +25,7 @@
  * Do not depend on ABI/API stability.
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioprio.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

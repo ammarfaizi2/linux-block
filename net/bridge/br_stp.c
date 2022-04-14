@@ -6,6 +6,7 @@
  *	Authors:
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/rculist.h>
 #include <net/switchdev.h>

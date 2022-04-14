@@ -6,6 +6,7 @@
  *
  * Various evolutions by Benjamin Herrenschmidt & Henry Worth
  */
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/types.h>

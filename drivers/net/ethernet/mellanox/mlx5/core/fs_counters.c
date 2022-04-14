@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/bitmap.h>
 #include <linux/mlx5/driver.h>

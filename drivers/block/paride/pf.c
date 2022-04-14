@@ -118,6 +118,7 @@
 #define PF_NAME		"pf"
 #define PF_UNITS	4
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 /* Here are things one can override from the insmod command.

@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/module.h>
 #include <linux/net.h>

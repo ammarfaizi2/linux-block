@@ -8,6 +8,7 @@
  * Author: Noboru Iwamatsu <n_iwamatsu@jp.fujitsu.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/gfp_api.h>
 #include <linux/module.h>

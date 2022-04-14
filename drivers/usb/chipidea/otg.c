@@ -12,6 +12,7 @@
  * are also included.
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/usb/otg.h>

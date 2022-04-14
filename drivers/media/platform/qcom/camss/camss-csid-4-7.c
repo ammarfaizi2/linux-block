@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2020 Linaro Ltd.
  */
+#include <linux/jiffies.h>
 #include <linux/completion.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

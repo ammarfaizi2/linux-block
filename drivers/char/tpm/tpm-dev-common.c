@@ -12,6 +12,7 @@
  *
  * Device file system interface to the TPM
  */
+#include <linux/jiffies.h>
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>

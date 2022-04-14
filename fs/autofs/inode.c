@@ -4,6 +4,7 @@
  * Copyright 2005-2006 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/dcache.h>

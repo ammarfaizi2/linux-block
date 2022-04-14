@@ -5,6 +5,7 @@
  * Copyright (C) 2008-2010 Nokia Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

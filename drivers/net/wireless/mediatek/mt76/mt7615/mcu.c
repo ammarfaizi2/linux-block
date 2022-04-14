@@ -5,6 +5,7 @@
  *         Ryder Lee <ryder.lee@mediatek.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/firmware.h>
 #include "mt7615.h"

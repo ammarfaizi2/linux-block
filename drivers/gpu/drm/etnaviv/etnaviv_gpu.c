@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>

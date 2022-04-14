@@ -4,6 +4,7 @@
  *			  (C) 2006 Red Hat Inc
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

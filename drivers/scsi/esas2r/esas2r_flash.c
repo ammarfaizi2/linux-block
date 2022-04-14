@@ -42,6 +42,8 @@
  * USA.
  */
 
+#include <linux/jiffies.h>
+
 #include "esas2r.h"
 
 /* local macro defs */

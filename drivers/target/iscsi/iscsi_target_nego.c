@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/ctype.h>

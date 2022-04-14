@@ -8,6 +8,7 @@
  * Copyright (C) 2008  Renesas Solutions Corp.
  * Copyright (C) 2008  Atom Create Engineering Co., Ltd.
  */
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api.h>
 #include <linux/sched/cond_resched.h>

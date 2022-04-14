@@ -8,6 +8,7 @@
  * Copyright (c) 2008 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

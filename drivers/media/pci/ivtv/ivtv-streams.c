@@ -43,6 +43,7 @@
 #include "ivtv-cards.h"
 #include "ivtv-streams.h"
 #include "ivtv-firmware.h"
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/export.h>
 #include <linux/atomic_api.h>

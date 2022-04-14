@@ -6,6 +6,7 @@
  * Author: Matti J. Aaltonen <matti.j.aaltonen@nokia.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/fs.h>
 #include <linux/export.h>

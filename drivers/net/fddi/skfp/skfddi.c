@@ -69,6 +69,7 @@ static const char * const boot_msg =
 
 /* Include files */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

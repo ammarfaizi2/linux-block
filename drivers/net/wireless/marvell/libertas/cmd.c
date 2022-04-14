@@ -4,6 +4,7 @@
  * It prepares command and sends it to firmware when it is ready.
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/hardirq.h>
 #include <linux/kfifo.h>

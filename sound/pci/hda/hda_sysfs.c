@@ -7,6 +7,7 @@
  * split from hda_hwdep.c
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>

@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

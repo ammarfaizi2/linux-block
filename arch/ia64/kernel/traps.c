@@ -8,6 +8,7 @@
  * 05/12/00 grao <goutham.rao@intel.com> : added isr in siginfo for SIGFPE
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -11,6 +11,7 @@
  * Copyright (C) 2004 Texas Instruments
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

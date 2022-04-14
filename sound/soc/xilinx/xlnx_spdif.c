@@ -7,6 +7,7 @@
 // Author: Maruthi Srinivas Bayyavarapu <maruthis@xilinx.com>
 //
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

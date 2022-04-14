@@ -3,6 +3,8 @@
  * Copyright (c) 2006-2007 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/jiffies.h>
+
 #include "xfs.h"
 #include "xfs_mru_cache.h"
 

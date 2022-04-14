@@ -8,6 +8,7 @@
  * Based on code written by Paul Gortmaker.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/rtc.h>

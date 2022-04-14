@@ -8,6 +8,7 @@
 
 #define dev_fmt(fmt) "DPC: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/aer.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

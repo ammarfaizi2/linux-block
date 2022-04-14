@@ -23,6 +23,7 @@
  * Note: The emulation does not include isochronous transfers!
  */
 
+#include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

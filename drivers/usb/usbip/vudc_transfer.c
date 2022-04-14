@@ -9,6 +9,7 @@
  * Copyright (C) 2003-2005 Alan Stern
  */
 
+#include <linux/jiffies.h>
 #include <linux/usb.h>
 #include <linux/timer.h>
 #include <linux/usb/ch9.h>

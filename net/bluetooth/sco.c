@@ -24,6 +24,7 @@
 
 /* Bluetooth SCO sockets. */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/debugfs.h>

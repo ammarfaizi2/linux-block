@@ -13,6 +13,7 @@
 #include "request.h"
 #include "writeback.h"
 
+#include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

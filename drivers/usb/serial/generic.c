@@ -6,6 +6,7 @@
  * Copyright (C) 1999 - 2002 Greg Kroah-Hartman (greg@kroah.com)
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>

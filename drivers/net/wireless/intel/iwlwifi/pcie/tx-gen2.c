@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2018-2020 Intel Corporation
  */
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <net/tso.h>
 #include <linux/tcp.h>

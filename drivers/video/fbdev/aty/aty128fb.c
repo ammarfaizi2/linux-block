@@ -47,6 +47,7 @@
  */
 
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/ioctl.h>
 #include <linux/module.h>

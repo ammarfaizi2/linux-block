@@ -98,6 +98,7 @@ static const int multicast_filter_limit = 32;
 
 #define pr_fmt(fmt)		KBUILD_MODNAME " " fmt
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

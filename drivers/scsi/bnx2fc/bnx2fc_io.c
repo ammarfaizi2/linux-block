@@ -12,6 +12,7 @@
  * Written by: Bhanu Prakash Gollapudi (bprakash@broadcom.com)
  */
 
+#include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>

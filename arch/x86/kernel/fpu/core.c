@@ -6,6 +6,7 @@
  *  General FPU state handling cleanups
  *	Gareth Hughes <gareth@valinux.com>, May 2000
  */
+#include <linux/jiffies.h>
 #include <asm/ptrace.h>
 #include <asm/pkru.h>
 #include <asm/fpu/api.h>

@@ -26,6 +26,7 @@
  * 		or a LUN is seen that cannot have a device attached to it.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device/driver.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

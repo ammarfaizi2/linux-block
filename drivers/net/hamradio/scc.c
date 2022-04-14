@@ -148,6 +148,7 @@
 
 /* ----------------------------------------------------------------------- */
 
+#include <linux/jiffies.h>
 #include <linux/irqnr.h>
 #include <linux/capability.h>
 #include <linux/compat.h>

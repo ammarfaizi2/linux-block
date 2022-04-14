@@ -3,6 +3,7 @@
 
 #define _RECV_OSDEP_C_
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 
 #include "../include/osdep_service.h"

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/spinlock.h>
 #include <linux/pci.h>
 #include <linux/io.h>

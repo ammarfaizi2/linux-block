@@ -5,6 +5,7 @@
  *
  * Inspired by mach-imx/src.c
  */
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

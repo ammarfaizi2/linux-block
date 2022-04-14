@@ -3,6 +3,8 @@
 
 #define _USB_OPS_LINUX_C_
 
+#include <linux/jiffies.h>
+
 #include "../include/drv_types.h"
 #include "../include/usb_ops_linux.h"
 #include "../include/rtl8188e_recv.h"

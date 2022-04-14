@@ -21,6 +21,7 @@
  * Configuration Options: not applicable, uses PCI auto config
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/comedi/comedi_pci.h>

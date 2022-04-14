@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/slab.h>
 
 #include "mad_priv.h"

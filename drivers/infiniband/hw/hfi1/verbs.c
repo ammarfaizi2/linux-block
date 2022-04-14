@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2020 Intel Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <rdma/ib_mad.h>
 #include <rdma/ib_user_verbs.h>

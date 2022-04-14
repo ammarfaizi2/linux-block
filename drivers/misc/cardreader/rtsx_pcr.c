@@ -7,6 +7,7 @@
  *   Wei WANG <wei_wang@realsil.com.cn>
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/idr_api.h>
 #include <linux/hardirq.h>

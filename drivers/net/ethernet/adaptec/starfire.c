@@ -28,6 +28,7 @@
 
 #define DRV_NAME	"starfire"
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>

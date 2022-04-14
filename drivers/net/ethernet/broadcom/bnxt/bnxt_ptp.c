@@ -6,6 +6,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

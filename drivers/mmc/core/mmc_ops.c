@@ -5,6 +5,7 @@
  *  Copyright 2006-2007 Pierre Ossman
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/slab.h>

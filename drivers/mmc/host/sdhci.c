@@ -9,6 +9,7 @@
  *     - JMicron (hardware and technical support)
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>

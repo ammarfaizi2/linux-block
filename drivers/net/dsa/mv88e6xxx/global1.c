@@ -8,6 +8,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/bitfield.h>
 

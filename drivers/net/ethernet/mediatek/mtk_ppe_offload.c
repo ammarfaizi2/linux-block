@@ -3,6 +3,7 @@
  *  Copyright (C) 2020 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/if_ether.h>
 #include <linux/rhashtable.h>

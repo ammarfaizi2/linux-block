@@ -28,6 +28,7 @@
 #include "amdgpu.h"
 #include "amdgpu_dpm.h"
 #include "soc15_common.h"
+#include <linux/jiffies.h>
 #include <drm/drm_fixed.h>
 #include <drm/drm_drv.h>
 #include "amdgpu_amdkfd.h"

@@ -7,6 +7,7 @@
  */
 
 #include "dvb_usb_common.h"
+#include <linux/jiffies.h>
 #include <media/media-device.h>
 
 static int dvb_usbv2_disable_rc_polling;

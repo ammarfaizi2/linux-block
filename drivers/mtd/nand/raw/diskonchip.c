@@ -16,6 +16,7 @@
  * Interface to generic NAND code for M-Systems DiskOnChip devices
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

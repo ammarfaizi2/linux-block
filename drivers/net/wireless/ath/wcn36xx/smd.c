@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/bitfield.h>
 #include <linux/etherdevice.h>

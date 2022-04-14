@@ -5,6 +5,7 @@
 // Author: Cezary Rojewski <cezary.rojewski@intel.com>
 //
 
+#include <linux/jiffies.h>
 #include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/irqreturn.h>

@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/jiffies.h>
 #include <asm/cacheflush.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>

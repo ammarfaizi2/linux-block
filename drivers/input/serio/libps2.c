@@ -7,6 +7,7 @@
  */
 
 
+#include <linux/jiffies.h>
 #include <linux/bug.h>
 #include <linux/delay.h>
 #include <linux/module.h>

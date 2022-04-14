@@ -22,6 +22,8 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/jiffies.h>
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "r600.h"

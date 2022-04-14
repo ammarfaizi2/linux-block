@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "i2c-core: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/idr_api.h>

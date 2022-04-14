@@ -9,6 +9,7 @@
  *   No. 450, Shenhu Road, Suzhou Industry Park, Suzhou, China
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>

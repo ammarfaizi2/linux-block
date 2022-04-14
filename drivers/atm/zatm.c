@@ -4,6 +4,7 @@
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/atomic_api.h>

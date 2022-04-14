@@ -5,6 +5,7 @@
  * Authors:
  * Sean Paul <seanpaul@chromium.org>
  */
+#include <linux/jiffies.h>
 #include <linux/average.h>
 #include <linux/bitops.h>
 #include <linux/slab.h>

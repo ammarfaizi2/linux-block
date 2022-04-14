@@ -32,6 +32,7 @@
  *             bits and driver data fields reflect that limit by using
  *             u8, u16, u32
  */
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

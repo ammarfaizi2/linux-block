@@ -16,6 +16,7 @@
 
 #define _RTL871X_MLME_C_
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 

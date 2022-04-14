@@ -8,6 +8,7 @@
  *  All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

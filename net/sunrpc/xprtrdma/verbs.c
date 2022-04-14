@@ -49,6 +49,7 @@
  *  o buffer memory
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>

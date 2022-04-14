@@ -7,6 +7,7 @@
  *	     Basavaraj Natikar <Basavaraj.Natikar@amd.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>
 #include <linux/hid.h>

@@ -21,6 +21,7 @@
  *					Relax this requirement to work with older peers.
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/types.h>

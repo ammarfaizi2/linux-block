@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/hardirq.h>
 #include <linux/mlx5/driver.h>

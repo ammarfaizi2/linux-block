@@ -12,6 +12,7 @@
  * References:
  *   [USHC] USB SD Host Controller specification (CS-118793-SP)
  */
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/usb.h>
 #include <linux/kernel.h>

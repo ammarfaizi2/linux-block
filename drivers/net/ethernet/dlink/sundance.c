@@ -75,6 +75,7 @@ static char *media[MAX_UNITS];
 #define PKT_BUF_SZ		1536	/* Size of each temporary Rx buffer.*/
 
 /* Include files, designed to support most kernel versions 2.0.0 and later. */
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>

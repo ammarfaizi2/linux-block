@@ -6,6 +6,8 @@
  * Copyright (C) 2015 STMicroelectronics Pvt. Ltd. All rights reserved.
  */
 
+#include <linux/jiffies.h>
+
 #include "spi.h"
 
 /* Function to send user provided buffer to ST95HF through SPI */

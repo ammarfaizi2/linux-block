@@ -8,6 +8,8 @@
  *  Author: Manjunatha Halli <manjunatha_halli@ti.com>
  */
 
+#include <linux/jiffies.h>
+
 #include "fmdrv.h"
 #include "fmdrv_common.h"
 #include "fmdrv_rx.h"

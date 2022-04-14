@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/firmware/imx/ipc.h>

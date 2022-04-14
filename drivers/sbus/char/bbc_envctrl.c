@@ -4,6 +4,7 @@
  * Copyright (C) 2001, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/kthread.h>
 #include <linux/delay.h>

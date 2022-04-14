@@ -10,6 +10,7 @@
  * Copyright (C) 2012  Intel Corporation. All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/completion.h>
 #include <linux/firmware.h>
 #include <linux/nfc.h>

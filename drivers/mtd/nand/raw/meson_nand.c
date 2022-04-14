@@ -6,6 +6,7 @@
  * Author: Liang Yang <liang.yang@amlogic.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

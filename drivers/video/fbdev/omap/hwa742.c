@@ -7,6 +7,7 @@
  *	        Imre Deak     <imre.deak@nokia.com>
  * YUV support: Jussi Laako   <jussi.laako@nokia.com>
  */
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/fb.h>

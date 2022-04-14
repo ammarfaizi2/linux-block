@@ -6,6 +6,7 @@
  *	Mason Yang <masonccyang@mxic.com.tw>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/io.h>

@@ -6,6 +6,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/export.h>
 #include <linux/i2c-algo-bit.h>

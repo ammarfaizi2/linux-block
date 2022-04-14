@@ -32,6 +32,7 @@
  *	- Optimize position calculation for the 823x chips. 
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>

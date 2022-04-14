@@ -19,6 +19,7 @@
  *  Removed it and replaced it with older style, 03/23/00, Bill Wendling
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/filter_api.h>
 #include <linux/bpf-cgroup-api.h>

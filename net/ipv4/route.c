@@ -60,6 +60,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/export.h>
 #include <linux/cred.h>
 #include <linux/cpumask_api.h>

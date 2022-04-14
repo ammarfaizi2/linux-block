@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2019 Chelsio Communications.  All rights reserved. */
 
+#include <linux/jiffies.h>
+
 #include "cxgb4.h"
 #include "cxgb4_tc_matchall.h"
 #include "sched.h"

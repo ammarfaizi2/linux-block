@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 
 #include "amdgpu.h"

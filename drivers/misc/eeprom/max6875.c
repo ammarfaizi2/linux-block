@@ -23,6 +23,7 @@
  * address, so this driver is destructive if loaded for the wrong EEPROM chip.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

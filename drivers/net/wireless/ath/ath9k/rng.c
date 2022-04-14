@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/hw_random.h>
 #include <linux/kthread.h>
 

@@ -5,6 +5,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

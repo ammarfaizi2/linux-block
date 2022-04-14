@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (C) 2011 Richard Cochran <richardcochran@gmail.com> */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/pci.h>

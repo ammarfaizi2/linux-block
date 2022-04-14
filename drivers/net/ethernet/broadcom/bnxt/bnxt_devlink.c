@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/pci.h>

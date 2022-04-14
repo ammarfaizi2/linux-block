@@ -9,6 +9,7 @@
  * Copyright 2004-2006 Jean-Baptiste Note <jbnote@gmail.com>, et al.
  */
 
+#include <linux/jiffies.h>
 #include <linux/usb.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

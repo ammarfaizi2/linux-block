@@ -42,6 +42,8 @@
  */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
+#include <linux/jiffies.h>
+
 #include "esas2r.h"
 
 /* Miscellaneous internal discovery routines */

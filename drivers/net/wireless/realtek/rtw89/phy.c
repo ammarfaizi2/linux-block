@@ -2,6 +2,7 @@
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 
 #include "debug.h"

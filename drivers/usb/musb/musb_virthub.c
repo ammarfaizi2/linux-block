@@ -7,6 +7,7 @@
  * Copyright (C) 2006-2007 Nokia Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

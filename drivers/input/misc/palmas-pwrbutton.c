@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitfield.h>
 #include <linux/init.h>
 #include <linux/input.h>

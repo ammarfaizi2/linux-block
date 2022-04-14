@@ -14,6 +14,7 @@
  * da8xx.c would be merged to this file after testing.
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

@@ -15,6 +15,7 @@
  *  Hardware documentation available under NDA.
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

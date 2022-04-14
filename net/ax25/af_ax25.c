@@ -10,6 +10,7 @@
  * Copyright (C) Hans Alblas PE1AYX (hans@esrac.ele.tue.nl)
  * Copyright (C) Frederic Rible F1OAT (frible@teaser.fr)
  */
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/capability.h>

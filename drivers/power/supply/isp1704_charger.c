@@ -6,6 +6,7 @@
  * Copyright (C) 2012 - 2013 Pali Rohár <pali@kernel.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

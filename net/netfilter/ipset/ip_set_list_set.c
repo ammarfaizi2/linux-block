@@ -3,6 +3,7 @@
 
 /* Kernel module implementing an IP set type: the list:set type */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/ip.h>
 #include <linux/rculist.h>

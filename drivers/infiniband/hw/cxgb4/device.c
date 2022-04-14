@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

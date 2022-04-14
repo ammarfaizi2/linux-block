@@ -10,6 +10,7 @@
  * TODO: event generation, pm.
  */
 
+#include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

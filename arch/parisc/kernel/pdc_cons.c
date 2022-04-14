@@ -30,6 +30,7 @@
 #define EARLY_BOOTUP_DEBUG
 
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/console.h>
 #include <linux/string.h>

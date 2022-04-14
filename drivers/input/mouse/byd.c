@@ -9,6 +9,7 @@
  * Copyright (C) 2015 Jay Kuri
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/input.h>
 #include <linux/libps2.h>

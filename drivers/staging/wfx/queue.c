@@ -5,6 +5,7 @@
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <net/mac80211.h>

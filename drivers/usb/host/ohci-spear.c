@@ -8,6 +8,7 @@
 * Based on various ohci-*.c drivers
 */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

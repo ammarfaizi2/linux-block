@@ -5,6 +5,7 @@
  * Copyright (C) 2008-2011 Manuel Lauss
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/clk.h>

@@ -6,6 +6,7 @@
  *                         Emil Myhrman (emil.myhrman@gmail.com)
  */
 
+#include <linux/jiffies.h>
 #include <linux/wait.h>
 #include <linux/usb.h>
 #include <linux/slab.h>

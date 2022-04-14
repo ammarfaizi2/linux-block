@@ -75,6 +75,7 @@
  * (i.e. _enter_* function).
  */
 
+#include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/timer.h>
 #include <linux/delay.h>

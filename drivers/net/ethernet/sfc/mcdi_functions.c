@@ -8,6 +8,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 
 #include "net_driver.h"

@@ -5,6 +5,7 @@
  *	Copyright (c) 2004 Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs.h>
 #include <linux/delay.h>
 #include <linux/module.h>

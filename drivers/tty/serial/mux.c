@@ -12,6 +12,7 @@
 **
 */
 
+#include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/ioport.h>

@@ -60,6 +60,7 @@
  * www.measurementcomputing.com
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

@@ -20,6 +20,7 @@
  * https://wireless.wiki.kernel.org/en/users/Drivers/at76c50x-usb#TODO
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

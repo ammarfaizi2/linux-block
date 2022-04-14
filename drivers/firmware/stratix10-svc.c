@@ -3,6 +3,7 @@
  * Copyright (C) 2017-2018, Intel Corporation
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

@@ -7,6 +7,8 @@
  * Copyright (C) 2020 Linaro Ltd.
  */
 
+#include <linux/jiffies.h>
+
 #include "camss.h"
 #include "camss-vfe.h"
 #include "camss-vfe-gen1.h"

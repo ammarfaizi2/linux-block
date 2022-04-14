@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2015 Freescale Semiconductor, Inc.
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

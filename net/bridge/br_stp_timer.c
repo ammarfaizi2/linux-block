@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/times.h>
 

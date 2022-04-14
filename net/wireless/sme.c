@@ -9,6 +9,7 @@
  * Copyright 2017	Intel Deutschland GmbH
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/if_arp.h>

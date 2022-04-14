@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/file.h>
 #include <linux/dma-fence-api.h>
 #include <linux/delay.h>

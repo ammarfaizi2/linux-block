@@ -4,6 +4,7 @@
  *
  *	Copyright (c) 2008 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/timer.h>

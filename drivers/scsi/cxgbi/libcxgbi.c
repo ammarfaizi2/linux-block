@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/highmem.h>

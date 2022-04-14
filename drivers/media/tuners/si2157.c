@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
 

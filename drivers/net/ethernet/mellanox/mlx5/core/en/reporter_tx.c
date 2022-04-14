@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2019 Mellanox Technologies. */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 
 #include "health.h"

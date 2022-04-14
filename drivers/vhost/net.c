@@ -5,6 +5,7 @@
  * virtio-net server in host kernel.
  */
 
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

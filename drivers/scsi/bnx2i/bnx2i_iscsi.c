@@ -15,6 +15,7 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/if_ether.h>
 #include <linux/if_ether_api.h>

@@ -5,6 +5,7 @@
  *
  * This "tuner-simple" module was split apart from the original "tuner" module.
  */
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/videodev2.h>

@@ -76,6 +76,7 @@
 
 #define DRIVER_NAME "orinoco"
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

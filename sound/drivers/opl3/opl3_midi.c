@@ -9,6 +9,7 @@
 #undef DEBUG_MIDI
 
 #include "opl3_voice.h"
+#include <linux/jiffies.h>
 #include <sound/asoundef.h>
 
 static void snd_opl3_note_off_unsafe(void *p, int note, int vel,

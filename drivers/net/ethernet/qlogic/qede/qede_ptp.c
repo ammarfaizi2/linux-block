@@ -4,6 +4,8 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/jiffies.h>
+
 #include "qede_ptp.h"
 #define QEDE_PTP_TX_TIMEOUT (2 * HZ)
 

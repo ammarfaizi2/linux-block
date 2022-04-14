@@ -7,6 +7,7 @@
  * Copyright (C) 1996, 1997, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/backing-dev-api.h>

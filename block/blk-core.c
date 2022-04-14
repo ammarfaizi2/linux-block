@@ -12,6 +12,7 @@
 /*
  * This handles all read/write requests to block devices
  */
+#include <linux/jiffies.h>
 #include <linux/ioprio.h>
 #include <linux/idr_api.h>
 #include <linux/error-injection.h>

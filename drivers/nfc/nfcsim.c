@@ -4,6 +4,7 @@
  * Copyright (c) 2013, Intel Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

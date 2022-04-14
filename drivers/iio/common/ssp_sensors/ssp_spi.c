@@ -3,6 +3,7 @@
  *  Copyright (C) 2014, Samsung Electronics Co. Ltd. All Rights Reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/align.h>
 

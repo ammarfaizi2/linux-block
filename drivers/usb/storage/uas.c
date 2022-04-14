@@ -8,6 +8,7 @@
  * Copyright Sarah Sharp for Intel Corp, 2010
  */
 
+#include <linux/jiffies.h>
 #include <linux/blkdev.h>
 #include <linux/slab.h>
 #include <linux/types.h>

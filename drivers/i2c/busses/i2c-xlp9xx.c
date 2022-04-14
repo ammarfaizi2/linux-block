@@ -6,6 +6,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

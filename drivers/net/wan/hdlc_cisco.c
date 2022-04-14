@@ -6,6 +6,7 @@
  * Copyright (C) 2000 - 2006 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
+#include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/hdlc.h>

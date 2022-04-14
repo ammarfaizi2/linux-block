@@ -5,6 +5,7 @@
  * Copyright 2013 Free Electrons
  */
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

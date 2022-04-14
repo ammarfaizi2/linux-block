@@ -3,6 +3,7 @@
 
 #define _RTW_XMIT_C_
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 

@@ -5,6 +5,7 @@
  * Copyright (c) 2012-2016, Intel Corporation.
  */
 
+#include <linux/jiffies.h>
 #include <linux/device/bus.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

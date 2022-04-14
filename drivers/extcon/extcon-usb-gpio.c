@@ -6,6 +6,7 @@
  * Author: Roger Quadros <rogerq@ti.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/extcon-provider.h>
 #include <linux/gpio/consumer.h>

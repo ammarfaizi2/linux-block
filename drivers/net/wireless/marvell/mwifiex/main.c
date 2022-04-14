@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/if_ether_api.h>
 #include <linux/idr_api.h>

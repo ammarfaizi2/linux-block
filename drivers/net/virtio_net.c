@@ -4,6 +4,7 @@
  * Copyright 2007 Rusty Russell <rusty@rustcorp.com.au> IBM Corporation
  */
 //#define DEBUG
+#include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>

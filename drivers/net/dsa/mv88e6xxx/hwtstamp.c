@@ -14,6 +14,7 @@
 #include "global2.h"
 #include "hwtstamp.h"
 #include "ptp.h"
+#include <linux/jiffies.h>
 #include <linux/ptp_classify.h>
 
 #define SKB_PTP_TYPE(__skb) (*(unsigned int *)((__skb)->cb))

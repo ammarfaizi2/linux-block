@@ -10,6 +10,7 @@
 #include "libertas_tf.h"
 #include "if_usb.h"
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/firmware.h>

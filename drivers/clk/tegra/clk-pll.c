@@ -3,6 +3,7 @@
  * Copyright (c) 2012, 2013, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/delay.h>

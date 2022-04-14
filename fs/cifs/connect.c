@@ -5,6 +5,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/net.h>

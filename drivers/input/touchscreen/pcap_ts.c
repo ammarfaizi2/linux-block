@@ -6,6 +6,7 @@
  *  Copyright (C) 2009 Daniel Ribeiro <drwyrm@gmail.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/string.h>

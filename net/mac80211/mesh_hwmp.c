@@ -5,6 +5,7 @@
  * Author:     Luis Carlos Cobo <luisca@cozybit.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/slab.h>
 #include <linux/etherdevice.h>

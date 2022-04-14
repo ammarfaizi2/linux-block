@@ -12,6 +12,7 @@
  *
  * sysfs filesystem inspection interface to the TPM
  */
+#include <linux/jiffies.h>
 #include <linux/device.h>
 #include "tpm.h"
 

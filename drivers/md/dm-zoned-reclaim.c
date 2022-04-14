@@ -7,6 +7,7 @@
 
 #include "dm-zoned.h"
 
+#include <linux/jiffies.h>
 #include <linux/module.h>
 
 #define	DM_MSG_PREFIX		"zoned reclaim"

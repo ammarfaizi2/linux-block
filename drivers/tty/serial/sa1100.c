@@ -7,6 +7,7 @@
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/jiffies.h>
 #include <linux/delay.h>
 
 #include "odm_precomp.h"

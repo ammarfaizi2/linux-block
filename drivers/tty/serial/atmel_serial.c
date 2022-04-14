@@ -8,6 +8,7 @@
  *
  *  DMA support added by Chip Coldwell.
  */
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/bitmap.h>

@@ -8,6 +8,7 @@
  * Implemetation based on sbs-battery.c
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/init.h>
 #include <linux/module.h>

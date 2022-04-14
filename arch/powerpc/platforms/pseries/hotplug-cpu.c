@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)     "pseries-hotplug-cpu: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

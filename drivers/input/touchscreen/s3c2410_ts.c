@@ -10,6 +10,7 @@
  * Harald Welte <laforge@openmoko.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

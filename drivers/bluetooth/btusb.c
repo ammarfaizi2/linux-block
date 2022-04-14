@@ -6,6 +6,7 @@
  *  Copyright (C) 2005-2008  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

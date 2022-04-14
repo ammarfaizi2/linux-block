@@ -18,6 +18,7 @@
  * semaphores to interlock between them.
  */
 
+#include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>
 #include <linux/device_api.h>
 #include <linux/kthread.h>

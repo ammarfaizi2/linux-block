@@ -7,6 +7,7 @@
  *                          Thomas Charbonnel
  */
 
+#include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/delay.h>

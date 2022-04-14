@@ -46,6 +46,7 @@ static int options[MAX_UNITS];
 /* #define PACKETBUF_MEMSIZE	0x40 */
 
 
+#include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>

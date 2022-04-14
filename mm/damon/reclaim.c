@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "damon-reclaim: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/damon.h>
 #include <linux/ioport.h>
 #include <linux/module.h>

@@ -32,6 +32,7 @@
  /***********************************************************/
 /*This file support the handling of the Alias GUID feature. */
 /***********************************************************/
+#include <linux/jiffies.h>
 #include <rdma/ib_mad.h>
 #include <rdma/ib_smi.h>
 #include <rdma/ib_cache.h>

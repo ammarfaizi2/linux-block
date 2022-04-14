@@ -12,6 +12,7 @@
  * This driver only supports the asynchronous serial interface.
  */
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/tty.h>
 #include <linux/module.h>
