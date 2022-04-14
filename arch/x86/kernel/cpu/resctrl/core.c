@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	"resctrl: " fmt
 
+#include <linux/smp_api.h>
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

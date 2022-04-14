@@ -16,6 +16,7 @@
  *   Mitchel, Henry <henry.mitchel@intel.com>
  */
 
+#include <linux/smp_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

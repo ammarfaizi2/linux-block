@@ -35,6 +35,7 @@
  * miss any bits.
  */
 
+#include <linux/smp_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched.h>
 #include <linux/percpu.h>

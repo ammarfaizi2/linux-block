@@ -6,6 +6,7 @@
  *  Swap reorganised 29.12.95, Stephen Tweedie
  */
 
+#include <linux/smp_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>

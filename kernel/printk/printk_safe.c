@@ -3,6 +3,7 @@
  * printk_safe.c - Safe printk for printk-deadlock-prone contexts
  */
 
+#include <linux/smp_api.h>
 #include <linux/init.h>
 #include <linux/cpumask_api.h>
 #include <linux/preempt.h>

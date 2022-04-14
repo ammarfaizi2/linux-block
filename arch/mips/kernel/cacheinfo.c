@@ -2,6 +2,7 @@
 /*
  * MIPS cacheinfo support
  */
+#include <linux/smp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cacheinfo.h>
 

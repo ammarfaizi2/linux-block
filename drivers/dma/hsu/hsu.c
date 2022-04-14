@@ -16,6 +16,7 @@
  *    port 3, and so on.
  */
 
+#include <linux/smp_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

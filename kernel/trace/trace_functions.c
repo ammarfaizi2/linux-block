@@ -10,6 +10,7 @@
  *  Copyright (C) 2004-2006 Ingo Molnar
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
+#include <linux/smp_api.h>
 #include <linux/seq_file.h>
 #include <linux/percpu.h>
 #include <linux/atomic_api.h>

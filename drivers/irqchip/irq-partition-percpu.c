@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/smp_api.h>
 #include <linux/irqdesc.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

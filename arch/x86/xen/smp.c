@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/smp_api.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched/affinity.h>

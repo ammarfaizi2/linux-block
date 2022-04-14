@@ -13,6 +13,7 @@
  *
  *  Bits copied from original nmi.c file
  */
+#include <linux/smp_api.h>
 #include <linux/moduleparam.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpumask.h>

@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/smp_api.h>
 #include <linux/sched.h>
 #include <linux/pid.h>
 #include <linux/percpu_rwsem_api.h>

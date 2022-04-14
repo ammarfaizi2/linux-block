@@ -3,6 +3,7 @@
  * Test cases for the drm_framebuffer functions
  */
 
+#include <linux/smp_api.h>
 #include <linux/limits.h>
 #include <linux/err.h>
 #include <linux/kernel.h>

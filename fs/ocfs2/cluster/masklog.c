@@ -3,6 +3,7 @@
  * Copyright (C) 2004, 2005 Oracle.  All rights reserved.
  */
 
+#include <linux/smp_api.h>
 #include <linux/sched.h>
 #include <linux/kobject_api.h>
 #include <linux/module.h>

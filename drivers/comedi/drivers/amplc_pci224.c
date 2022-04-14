@@ -93,6 +93,7 @@
  *      correctly.
  */
 
+#include <linux/smp_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

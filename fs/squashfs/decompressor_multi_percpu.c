@@ -4,6 +4,7 @@
  * Phillip Lougher <phillip@squashfs.org.uk>
  */
 
+#include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/cpumask_api.h>
 #include <linux/types.h>

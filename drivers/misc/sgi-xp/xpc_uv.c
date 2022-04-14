@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/smp_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

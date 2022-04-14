@@ -5,6 +5,7 @@
  * Copyright 2015-2016 Google Inc.
  */
 
+#include <linux/smp_api.h>
 #include <linux/kobject_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/slab.h>

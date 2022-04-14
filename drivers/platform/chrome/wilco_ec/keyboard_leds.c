@@ -8,6 +8,7 @@
  * we don't need to implement a brightness_get() method.
  */
 
+#include <linux/smp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

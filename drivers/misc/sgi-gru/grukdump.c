@@ -7,6 +7,7 @@
  *  Copyright (c) 2008 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
+#include <linux/smp_api.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/spinlock.h>

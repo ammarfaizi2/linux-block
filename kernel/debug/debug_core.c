@@ -27,6 +27,7 @@
 
 #define pr_fmt(fmt) "KGDB: " fmt
 
+#include <linux/smp_api.h>
 #include <linux/notifier_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

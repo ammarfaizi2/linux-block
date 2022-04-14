@@ -7,6 +7,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <linux/smp_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/bitmap.h>
 #include <asm/msr.h>

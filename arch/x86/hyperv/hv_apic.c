@@ -19,6 +19,7 @@
  *
  */
 
+#include <linux/smp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/msr.h>

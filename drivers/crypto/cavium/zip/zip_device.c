@@ -43,6 +43,8 @@
  * WITH YOU.
  ***********************license end**************************************/
 
+#include <linux/smp_api.h>
+
 #include "common.h"
 #include "zip_deflate.h"
 

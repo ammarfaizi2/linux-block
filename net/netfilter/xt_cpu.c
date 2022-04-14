@@ -10,6 +10,7 @@
 /* (C) 2010 Eric Dumazet
  */
 
+#include <linux/smp_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

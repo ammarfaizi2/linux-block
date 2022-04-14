@@ -8,6 +8,7 @@
 #define pr_fmt(fmt) "hw perfevents: " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/smp_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/smp_api.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/percpu-refcount-api.h>

@@ -19,6 +19,7 @@
  * async buffer flushing, 1999 Andrea Arcangeli <andrea@suse.de>
  */
 
+#include <linux/smp_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/ratelimit.h>

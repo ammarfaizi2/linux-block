@@ -8,6 +8,7 @@
  * Based on code by Dmitry Chernenkov.
  */
 
+#include <linux/smp_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/cpumask_api.h>

@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/smp_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/minmax.h>

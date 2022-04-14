@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/smp_api.h>
 #include <linux/percpu.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

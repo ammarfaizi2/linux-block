@@ -43,6 +43,7 @@
  * WITH YOU.
  ***********************license end**************************************/
 
+#include <linux/smp_api.h>
 #include <linux/seq_file.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "microcode: " fmt
 
+#include <linux/smp_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

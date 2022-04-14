@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/smp_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>

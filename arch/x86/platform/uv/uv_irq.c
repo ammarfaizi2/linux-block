@@ -8,6 +8,7 @@
  * Copyright (C) 2008 Silicon Graphics, Inc. All rights reserved.
  */
 
+#include <linux/smp_api.h>
 #include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>

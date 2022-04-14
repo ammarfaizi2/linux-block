@@ -7,6 +7,7 @@
  * data if inplace decompression is failed (due to unmet inplace margin for
  * example).
  */
+#include <linux/smp_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

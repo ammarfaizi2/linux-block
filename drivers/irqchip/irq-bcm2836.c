@@ -5,6 +5,7 @@
  * Copyright 2015 Broadcom
  */
 
+#include <linux/smp_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

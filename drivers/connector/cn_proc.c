@@ -8,6 +8,7 @@
  * Copyright (C) 2005 BULL SA.
  */
 
+#include <linux/smp_api.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/netlink.h>

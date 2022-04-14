@@ -6,6 +6,7 @@
  * Author: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
  */
 
+#include <linux/smp_api.h>
 #include <linux/acpi.h>
 #include <linux/cpuidle.h>
 #include <linux/cpu_pm.h>
