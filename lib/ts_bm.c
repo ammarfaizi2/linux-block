@@ -31,6 +31,7 @@
  *   matchings spread over multiple fragments, then go BM.
  */
 
+#include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>

@@ -15,6 +15,7 @@
 /*
  */
 
+#include <linux/minmax.h>
 #include <linux/hid.h>
 #include <linux/input.h>
 #include <linux/slab.h>

@@ -12,6 +12,7 @@
  *	we have to worry about.
  */
 
+#include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

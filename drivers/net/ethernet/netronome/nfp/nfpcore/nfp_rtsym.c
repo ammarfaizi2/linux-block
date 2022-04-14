@@ -10,6 +10,7 @@
  *          Francois H. Theron <francois.theron@netronome.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/io.h>
 #include <asm/unaligned.h>

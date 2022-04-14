@@ -8,6 +8,7 @@
  * NAND support by Christian Gan <cgan@iders.ca>
  */
 
+#include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

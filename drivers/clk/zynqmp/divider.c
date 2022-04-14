@@ -7,6 +7,7 @@
  * Adjustable divider clock implementation
  */
 
+#include <linux/minmax.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/slab.h>

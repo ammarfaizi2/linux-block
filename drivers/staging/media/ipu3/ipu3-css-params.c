@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Intel Corporation
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/math64.h>
 #include <linux/err.h>

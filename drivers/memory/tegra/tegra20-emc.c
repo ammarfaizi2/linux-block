@@ -5,6 +5,7 @@
  * Author: Dmitry Osipenko <digetx@gmail.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

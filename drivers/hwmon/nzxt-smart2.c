@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Aleksandr Mezin
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/hid.h>
 #include <linux/hwmon.h>

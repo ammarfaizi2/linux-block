@@ -2,6 +2,7 @@
 /*
  * Componentized device handling.
  */
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/component.h>
 #include <linux/device.h>

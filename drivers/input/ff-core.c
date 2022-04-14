@@ -11,6 +11,7 @@
 
 /* #define DEBUG */
 
+#include <linux/minmax.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>
 #include <linux/input.h>

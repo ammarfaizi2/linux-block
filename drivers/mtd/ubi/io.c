@@ -73,6 +73,7 @@
  * back and writes the whole sub-page.
  */
 
+#include <linux/minmax.h>
 #include <linux/crc32.h>
 #include <linux/err.h>
 #include <linux/slab.h>

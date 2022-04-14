@@ -7,6 +7,7 @@
  * You can do whatever you want with this file.
  */
 
+#include <linux/minmax.h>
 #include <linux/crc32.h>
 
 #include "xz_private.h"

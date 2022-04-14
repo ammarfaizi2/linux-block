@@ -3,6 +3,7 @@
  * Copyright (C) 2013 NVIDIA Corporation
  */
 
+#include <linux/minmax.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 

@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s, %d: " fmt, __func__, __LINE__
 
+#include <linux/minmax.h>
 #include <linux/ktime_api.h>
 #include <asm/byteorder.h>
 #include <linux/bcd.h>

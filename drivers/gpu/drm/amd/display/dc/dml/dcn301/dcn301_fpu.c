@@ -22,6 +22,8 @@
  * Authors: AMD
  *
  */
+#include <linux/minmax.h>
+
 #include "resource.h"
 #include "clk_mgr.h"
 #include "dcn20/dcn20_resource.h"

@@ -5,6 +5,7 @@
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
+#include <linux/minmax.h>
 #include <linux/slab.h>
 #include "vmci_handle_array.h"
 

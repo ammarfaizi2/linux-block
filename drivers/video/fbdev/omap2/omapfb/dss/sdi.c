@@ -8,6 +8,7 @@
 
 #define DSS_SUBSYS_NAME "SDI"
 
+#include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/err.h>

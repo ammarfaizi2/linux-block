@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Google, Inc
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/bitmap.h>

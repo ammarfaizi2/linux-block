@@ -13,6 +13,7 @@
  * Vojtech Pavlik, Simunkova 1594, Prague 8, 182 00 Czech Republic
  */
 
+#include <linux/minmax.h>
 #include <linux/ktime_api.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>

@@ -8,6 +8,7 @@
  *        Arjan van de Ven <arjan@linux.intel.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/ktime_api.h>
 #include <linux/kernel.h>
 #include <linux/cpuidle.h>

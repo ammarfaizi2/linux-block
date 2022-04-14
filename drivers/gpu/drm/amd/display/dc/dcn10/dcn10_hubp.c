@@ -22,6 +22,8 @@
  * Authors: AMD
  *
  */
+#include <linux/minmax.h>
+
 #include "dm_services.h"
 #include "dce_calcs.h"
 #include "reg_helper.h"

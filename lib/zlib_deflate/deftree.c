@@ -34,6 +34,7 @@
 
 /* #include "deflate.h" */
 
+#include <linux/minmax.h>
 #include <linux/zutil.h>
 #include <linux/bitrev.h>
 #include "defutil.h"

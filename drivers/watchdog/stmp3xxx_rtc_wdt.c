@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2011-12 Wolfram Sang, Pengutronix
  */
+#include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/watchdog.h>

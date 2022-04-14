@@ -3,6 +3,7 @@
  * Copyright (c) 2003 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/minmax.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>

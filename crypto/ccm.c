@@ -5,6 +5,7 @@
  * (C) Copyright IBM Corp. 2007 - Joy Latten <latten@us.ibm.com>
  */
 
+#include <linux/minmax.h>
 #include <crypto/internal/aead.h>
 #include <crypto/internal/cipher.h>
 #include <crypto/internal/hash.h>

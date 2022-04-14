@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Nathan Rossi <nathan.rossi@digi.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

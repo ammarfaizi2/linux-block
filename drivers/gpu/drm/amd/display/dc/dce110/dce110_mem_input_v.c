@@ -22,6 +22,8 @@
  * Authors: AMD
  *
  */
+#include <linux/minmax.h>
+
 #include "dm_services.h"
 
 #include "dce/dce_11_0_d.h"

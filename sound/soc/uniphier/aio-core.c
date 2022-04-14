@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2016-2018 Socionext Inc.
 
+#include <linux/minmax.h>
 #include <linux/bitfield.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

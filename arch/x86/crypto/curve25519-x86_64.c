@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2020 INRIA, CMU and Microsoft Corporation
  */
 
+#include <linux/minmax.h>
 #include <crypto/curve25519.h>
 #include <crypto/internal/kpp.h>
 

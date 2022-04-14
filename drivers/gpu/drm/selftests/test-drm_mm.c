@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "drm_mm: " fmt
 
+#include <linux/minmax.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/bitmap.h>

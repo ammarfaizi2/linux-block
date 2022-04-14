@@ -10,6 +10,7 @@
  * Copyright (C) 2019 Renesas Electronics Corp.
  */
 
+#include <linux/minmax.h>
 #include <linux/math64.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

@@ -8,6 +8,7 @@
  * board inside the router is named E119921
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>

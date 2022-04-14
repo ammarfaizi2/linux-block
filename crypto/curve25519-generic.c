@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/minmax.h>
 #include <crypto/curve25519.h>
 #include <crypto/internal/kpp.h>
 #include <crypto/kpp.h>

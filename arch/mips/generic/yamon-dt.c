@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "yamon-dt: " fmt
 
+#include <linux/minmax.h>
 #include <linux/bug.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

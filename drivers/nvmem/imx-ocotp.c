@@ -14,6 +14,7 @@
  * Copyright (C) 2010-2013 Freescale Semiconductor, Inc
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/device.h>

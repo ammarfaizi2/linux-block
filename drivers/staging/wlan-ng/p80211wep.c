@@ -49,6 +49,7 @@
 /*================================================================*/
 /* System Includes */
 
+#include <linux/minmax.h>
 #include <linux/crc32.h>
 #include <linux/netdevice.h>
 #include <linux/wireless.h>

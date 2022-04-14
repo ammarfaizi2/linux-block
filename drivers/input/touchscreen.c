@@ -6,6 +6,7 @@
  *  Copyright (c) 2014 Sebastian Reichel <sre@kernel.org>
  */
 
+#include <linux/minmax.h>
 #include <linux/export.h>
 #include <linux/bitops.h>
 #include <linux/property.h>

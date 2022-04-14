@@ -6,6 +6,7 @@
  * Copyright (C) 2018 Zodiac Inflight Innovations
  *
  */
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/mfd/rave-sp.h>

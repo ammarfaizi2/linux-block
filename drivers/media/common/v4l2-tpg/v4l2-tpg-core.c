@@ -8,6 +8,7 @@
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/minmax.h>
 #include <linux/module.h>
 #include <media/tpg/v4l2-tpg.h>
 

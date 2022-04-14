@@ -24,6 +24,8 @@
  */
 
 
+#include <linux/minmax.h>
+
 #include "dccg.h"
 #include "clk_mgr_internal.h"
 #include "dce_clk_mgr.h"

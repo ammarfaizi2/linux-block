@@ -9,6 +9,7 @@
  * Based on w1-ds2760 driver
  */
 
+#include <linux/minmax.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -11,6 +11,7 @@
  */
 
 
+#include <linux/minmax.h>
 #include <linux/device.h>
 #include <linux/libps2.h>
 #include <linux/input/mt.h>

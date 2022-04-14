@@ -6,6 +6,7 @@
  * Copyright 2018 Google LLC
  */
 
+#include <linux/minmax.h>
 #include <asm/neon.h>
 #include <asm/simd.h>
 #include <crypto/internal/hash.h>

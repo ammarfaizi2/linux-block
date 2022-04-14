@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/minmax.h>
+
 #include "dm_services.h"
 
 #include "core_types.h"

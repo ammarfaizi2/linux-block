@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "bt1-ccu-div: " fmt
 
+#include <linux/minmax.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>

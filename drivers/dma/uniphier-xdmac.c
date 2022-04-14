@@ -5,6 +5,7 @@
  * Author: Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

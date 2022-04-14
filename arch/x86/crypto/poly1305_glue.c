@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <asm/unaligned.h>
 #include <asm/processor_api.h>

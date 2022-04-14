@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/minmax.h>
 #include <linux/slab.h>
 
 #include "dm_services.h"

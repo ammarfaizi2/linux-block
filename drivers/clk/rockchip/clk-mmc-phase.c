@@ -4,6 +4,7 @@
  * Author: Alexandru M Stan <amstan@chromium.org>
  */
 
+#include <linux/minmax.h>
 #include <linux/slab.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

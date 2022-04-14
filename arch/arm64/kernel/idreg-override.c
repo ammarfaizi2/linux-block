@@ -6,6 +6,7 @@
  * Author: Marc Zyngier <maz@kernel.org>
  */
 
+#include <linux/minmax.h>
 #include <linux/ctype.h>
 #include <linux/kernel.h>
 #include <linux/libfdt.h>

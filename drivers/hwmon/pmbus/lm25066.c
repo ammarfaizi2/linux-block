@@ -6,6 +6,7 @@
  * Copyright (c) 2013 Guenter Roeck
  */
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

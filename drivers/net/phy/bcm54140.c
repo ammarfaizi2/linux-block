@@ -4,6 +4,7 @@
  * Copyright (c) 2020 Michael Walle <michael@walle.cc>
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/brcmphy.h>

@@ -7,6 +7,7 @@
  *
  * Baikal-T1 Physically Mapped Internal ROM driver
  */
+#include <linux/minmax.h>
 #include <linux/bits.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

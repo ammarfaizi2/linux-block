@@ -10,6 +10,7 @@
  * Author: Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/sort.h>
 
 #include "u_uvc.h"

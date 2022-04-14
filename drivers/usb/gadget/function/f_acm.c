@@ -11,6 +11,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/minmax.h>
 #include <linux/capability.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

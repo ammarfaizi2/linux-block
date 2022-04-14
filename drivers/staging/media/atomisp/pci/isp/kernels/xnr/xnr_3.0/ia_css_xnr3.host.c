@@ -13,6 +13,8 @@
  * more details.
  */
 
+#include <linux/minmax.h>
+
 #include "type_support.h"
 #include "math_support.h"
 #include "sh_css_defs.h"

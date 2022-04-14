@@ -5,6 +5,7 @@
  * Authors: Salvator Benedetto <salvatore.benedetto@intel.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/module.h>
 #include <crypto/internal/ecc.h>
 #include <crypto/internal/kpp.h>

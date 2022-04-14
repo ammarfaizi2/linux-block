@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/minmax.h>
 #include <linux/bcm963xx_nvram.h>
 #include <linux/bcm963xx_tag.h>
 #include <linux/crc32.h>

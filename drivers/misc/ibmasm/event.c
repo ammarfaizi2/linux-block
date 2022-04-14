@@ -8,6 +8,7 @@
  * Author: Max Asböck <amax@us.ibm.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/io_extra.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

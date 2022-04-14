@@ -12,6 +12,7 @@
  * The firmware interface is realised using the SMCCC specification.
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/bits.h>

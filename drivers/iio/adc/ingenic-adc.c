@@ -6,6 +6,7 @@
  * based on drivers/mfd/jz4740-adc.c
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <dt-bindings/iio/adc/ingenic,adc.h>

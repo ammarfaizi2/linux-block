@@ -9,6 +9,7 @@
  * Note: This driver assumes that the sensor has been calibrated beforehand.
  */
 
+#include <linux/minmax.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

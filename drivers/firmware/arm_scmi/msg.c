@@ -8,6 +8,7 @@
  * Copyright (C) 2020-2021 OpenSynergy GmbH
  */
 
+#include <linux/minmax.h>
 #include <linux/types.h>
 
 #include "common.h"

@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/math64.h>
 #include <linux/bug.h>

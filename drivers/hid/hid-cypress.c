@@ -12,6 +12,7 @@
 /*
  */
 
+#include <linux/minmax.h>
 #include <linux/device.h>
 #include <linux/hid.h>
 #include <linux/input.h>

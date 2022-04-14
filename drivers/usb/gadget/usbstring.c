@@ -3,6 +3,7 @@
  * Copyright (C) 2003 David Brownell
  */
 
+#include <linux/minmax.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

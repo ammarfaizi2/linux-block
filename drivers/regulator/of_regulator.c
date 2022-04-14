@@ -6,6 +6,7 @@
  * Rajendra Nayak <rnayak@ti.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  *
  * Copyright 2019 Analog Devices Inc.
  */
+#include <linux/minmax.h>
 #include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

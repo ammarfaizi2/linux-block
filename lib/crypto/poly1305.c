@@ -7,6 +7,7 @@
  * Based on public domain code by Andrew Moon and Daniel J. Bernstein.
  */
 
+#include <linux/minmax.h>
 #include <crypto/internal/poly1305.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

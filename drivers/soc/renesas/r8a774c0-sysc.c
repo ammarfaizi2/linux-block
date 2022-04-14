@@ -6,6 +6,7 @@
  * Based on Renesas R-Car E3 System Controller
  */
 
+#include <linux/minmax.h>
 #include <linux/bits.h>
 #include <linux/kernel.h>
 #include <linux/sys_soc.h>

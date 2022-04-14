@@ -27,6 +27,7 @@
  *       |------------+-------------|        |------------+-------------|
  */
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/interconnect/qcom,msm8974.h>
 #include <linux/clk.h>

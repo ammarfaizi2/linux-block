@@ -33,6 +33,7 @@
 /*-************************************
  *	Dependencies
  **************************************/
+#include <linux/minmax.h>
 #include <linux/export.h>
 #include <linux/lz4.h>
 #include "lz4defs.h"

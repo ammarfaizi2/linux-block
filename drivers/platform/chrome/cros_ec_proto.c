@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2015 Google, Inc
 
+#include <linux/minmax.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>

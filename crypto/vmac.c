@@ -28,6 +28,7 @@
  *	Last modified: 17 APR 08, 1700 PDT
  */
 
+#include <linux/minmax.h>
 #include <asm/unaligned.h>
 #include <linux/init.h>
 #include <linux/types.h>

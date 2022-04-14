@@ -11,6 +11,7 @@
  * (at your option) any later version.
  */
 
+#include <linux/minmax.h>
 #include <crypto/algapi.h>
 #include <crypto/internal/hash.h>
 #include <crypto/internal/poly1305.h>

@@ -6,6 +6,7 @@
  *          Jason Mcmullan <jason.mcmullan@netronome.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/bitfield.h>
 #include <linux/ethtool.h>
 #include <linux/if_ether.h>

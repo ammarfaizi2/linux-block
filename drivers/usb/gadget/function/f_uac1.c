@@ -14,6 +14,7 @@
  *   Copyright (C) 2008 Analog Devices, Inc
  */
 
+#include <linux/minmax.h>
 #include <linux/atomic_api.h>
 #include <linux/usb/audio.h>
 #include <linux/module.h>
