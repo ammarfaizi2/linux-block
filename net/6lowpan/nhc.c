@@ -6,6 +6,7 @@
  *	Alexander Aring		<aar@pengutronix.de>
  */
 
+#include <uapi/linux/ipv6.h>
 #include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/netdevice_api.h>

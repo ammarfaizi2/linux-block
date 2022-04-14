@@ -10,6 +10,7 @@
  *	Jon Smirl <jonsmirl@gmail.com>
  */
 
+#include <uapi/linux/ipv6.h>
 #include <linux/udp.h>
 #include <linux/skbuff_api_extra.h>
 
