@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Tom Zanussi <tom.zanussi@linux.intel.com>
  */
 
+#include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

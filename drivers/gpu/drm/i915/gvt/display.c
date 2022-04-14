@@ -32,6 +32,7 @@
  *
  */
 
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/bitmap.h>

@@ -6,6 +6,7 @@
  * Author: John Hsu <KCHSU0@nuvoton.com>
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

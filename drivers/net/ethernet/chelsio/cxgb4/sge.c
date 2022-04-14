@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/ipv6.h>
 #include <linux/io.h>

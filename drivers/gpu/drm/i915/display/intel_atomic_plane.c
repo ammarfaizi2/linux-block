@@ -31,6 +31,7 @@
  * prepare/check/commit/cleanup steps.
  */
 
+#include <linux/math64.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_fourcc.h>
 #include <drm/drm_plane_helper.h>

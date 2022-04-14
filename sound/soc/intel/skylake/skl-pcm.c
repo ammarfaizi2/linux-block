@@ -10,6 +10,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+#include <linux/math64.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/pm_runtime.h>

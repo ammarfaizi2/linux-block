@@ -11,6 +11,7 @@
  *	* 0x4B - ADDR connected to SCL
  */
 
+#include <linux/math64.h>
 #include <linux/interrupt.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>

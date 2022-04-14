@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/math64.h>
 #include <linux/delay.h>
 
 #include "dc_bios_types.h"

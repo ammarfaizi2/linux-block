@@ -4,6 +4,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

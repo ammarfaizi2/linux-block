@@ -5,6 +5,7 @@
  * All Rights Reserved.
  */
 
+#include <linux/math64.h>
 #include <linux/slab.h>
 
 #include "../habanalabs.h"

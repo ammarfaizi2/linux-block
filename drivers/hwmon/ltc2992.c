@@ -5,6 +5,7 @@
  * Copyright 2020 Analog Devices Inc.
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>

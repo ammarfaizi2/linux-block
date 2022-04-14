@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Chinamobile, Inc.
  */
 
+#include <linux/math64.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

@@ -3,6 +3,7 @@
  * Copyright(c) 2018 Intel Corporation.
  */
 
+#include <linux/math64.h>
 #include <linux/idr_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

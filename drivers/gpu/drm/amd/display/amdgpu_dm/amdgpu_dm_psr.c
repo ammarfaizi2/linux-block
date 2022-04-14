@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/math64.h>
+
 #include "amdgpu_dm_psr.h"
 #include "dc.h"
 #include "dm_helpers.h"

@@ -6,6 +6,7 @@
  * (C) 2009 Uwe Kleine-Koenig, Pengutronix
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/mfd/mc13xxx.h>
 #include <linux/platform_device.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2019, Linaro Limited
  */
 
+#include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

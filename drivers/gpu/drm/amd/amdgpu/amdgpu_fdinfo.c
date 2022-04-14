@@ -23,6 +23,7 @@
  *          Roy Sun
  */
 
+#include <linux/math64.h>
 #include <linux/debugfs.h>
 #include <linux/list.h>
 #include <linux/module.h>

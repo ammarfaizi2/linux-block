@@ -12,6 +12,7 @@
  * encoded stream if the hardware does not generate the units.
  */
 
+#include <linux/math64.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/string.h>

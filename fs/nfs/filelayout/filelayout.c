@@ -29,6 +29,7 @@
  *  such damages.
  */
 
+#include <linux/math64.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/nfs_fs.h>

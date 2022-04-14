@@ -3,6 +3,7 @@
  * vivid-meta-cap.c - meta capture support functions.
  */
 
+#include <linux/math64.h>
 #include <linux/fs.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Cogent Embedded Inc.
  */
 
+#include <linux/math64.h>
 #include <linux/bug.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

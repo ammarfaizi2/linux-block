@@ -8,6 +8,7 @@
  *         Fenghua Yu <fenghua.yu@intel.com>
  */
 
+#include <linux/math64.h>
 #include <linux/spinlock.h>
 #include <linux/intel-iommu.h>
 

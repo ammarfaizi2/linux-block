@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>
 

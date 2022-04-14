@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Facebook
  * Copyright (c) 2018 Covalent IO, Inc. http://covalent.io
  */
+#include <linux/math64.h>
 #include <linux/kallsyms.h>
 #include <linux/jiffies.h>
 #include <linux/filter_api.h>

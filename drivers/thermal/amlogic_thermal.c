@@ -16,6 +16,7 @@
  *  u_efuse : fused calibration value, it's a signed 16 bits value
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

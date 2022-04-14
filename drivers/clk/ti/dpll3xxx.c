@@ -15,6 +15,7 @@
  * Richard Woodruff, Tony Lindgren, Tuukka Tikkanen, Karthik Dasu
  */
 
+#include <linux/math64.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/list.h>

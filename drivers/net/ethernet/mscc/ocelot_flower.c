@@ -3,6 +3,7 @@
  * Copyright (c) 2019 Microsemi Corporation
  */
 
+#include <linux/math64.h>
 #include <linux/etherdevice_api.h>
 #include <net/pkt_cls.h>
 #include <net/tc_act/tc_gact.h>

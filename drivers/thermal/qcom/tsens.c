@@ -4,6 +4,7 @@
  * Copyright (c) 2019, 2020, Linaro Ltd.
  */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

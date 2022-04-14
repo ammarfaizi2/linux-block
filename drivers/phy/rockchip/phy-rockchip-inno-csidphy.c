@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Fuzhou Rockchip Electronics Co., Ltd.
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

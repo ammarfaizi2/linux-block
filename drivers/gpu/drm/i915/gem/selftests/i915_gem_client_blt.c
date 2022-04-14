@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 
 #include "i915_selftest.h"

@@ -25,6 +25,7 @@
  *-----------------------------------------------------------------------------
  */
 
+#include <linux/math64.h>
 #include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/capability.h>

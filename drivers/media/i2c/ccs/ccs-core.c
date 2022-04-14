@@ -13,6 +13,7 @@
  * Based on smia-sensor.c by Tuukka Toivonen <tuukkat76@gmail.com>
  */
 
+#include <linux/math64.h>
 #include <linux/i2c.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>

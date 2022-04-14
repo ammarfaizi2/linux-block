@@ -2,6 +2,7 @@
 /*
  * Functions related to sysfs handling
  */
+#include <linux/math64.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

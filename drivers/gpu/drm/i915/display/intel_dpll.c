@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/math64.h>
 #include <linux/kernel.h>
 
 #include "intel_crtc.h"

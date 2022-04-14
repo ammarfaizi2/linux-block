@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/math64.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/mlx5/qp.h>

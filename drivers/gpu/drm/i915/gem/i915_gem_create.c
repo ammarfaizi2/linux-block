@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/math64.h>
 #include <drm/drm_fourcc.h>
 
 #include "gem/i915_gem_ioctls.h"

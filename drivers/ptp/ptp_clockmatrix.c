@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2019 Integrated Device Technology, Inc., a Renesas Company.
  */
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/firmware.h>

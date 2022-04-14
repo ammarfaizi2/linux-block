@@ -5,6 +5,7 @@
  * register-compatible with Ocelot and that perform I/O to their host CPU
  * through an NPI (Node Processor Interface) Ethernet port.
  */
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

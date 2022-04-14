@@ -6,6 +6,7 @@
  *	Marcus Wolf <linux@wolf-entwicklungen.de>
  */
 
+#include <linux/math64.h>
 #include <linux/types.h>
 #include <linux/spi/spi.h>
 

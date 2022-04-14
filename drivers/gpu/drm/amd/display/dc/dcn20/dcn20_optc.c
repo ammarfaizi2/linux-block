@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/math64.h>
+
 #include "reg_helper.h"
 #include "dcn20_optc.h"
 #include "dc.h"

@@ -66,6 +66,7 @@
  * Evgeniy Dushistov <dushistov@mail.ru>, 2007
  */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

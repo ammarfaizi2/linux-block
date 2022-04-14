@@ -5,6 +5,7 @@
  *
  * Copyright 2021 Analog Devices Inc.
  */
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>

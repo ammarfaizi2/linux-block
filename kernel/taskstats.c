@@ -6,6 +6,7 @@
  *           (C) Balbir Singh,   IBM Corp. 2006
  */
 
+#include <linux/math64.h>
 #include <linux/cred.h>
 #include <linux/cpumask_api.h>
 #include <linux/cgroup_api.h>

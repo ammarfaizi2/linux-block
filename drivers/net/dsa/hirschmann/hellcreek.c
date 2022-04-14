@@ -7,6 +7,7 @@
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -12,6 +12,7 @@
  *		Initial version
  */
 
+#include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

@@ -4,6 +4,7 @@
  * Zhu YiXin <yixin.zhu@intel.com>
  * Rahul Tanwar <rahul.tanwar@intel.com>
  */
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/device.h>

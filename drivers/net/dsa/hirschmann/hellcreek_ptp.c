@@ -9,6 +9,7 @@
  *	    Kurt Kanzenbach <kurt@linutronix.de>
  */
 
+#include <linux/math64.h>
 #include <linux/io.h>
 #include <linux/ptp_clock_kernel.h>
 #include "hellcreek.h"

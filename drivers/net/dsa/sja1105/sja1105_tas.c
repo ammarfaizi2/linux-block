@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019, Vladimir Oltean <olteanv@gmail.com>
  */
+#include <linux/math64.h>
+
 #include "sja1105.h"
 
 #define SJA1105_TAS_CLKSRC_DISABLED	0

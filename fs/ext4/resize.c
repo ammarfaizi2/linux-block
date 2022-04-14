@@ -12,6 +12,7 @@
 
 #define EXT4FS_DEBUG
 
+#include <linux/math64.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

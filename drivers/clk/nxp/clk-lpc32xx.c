@@ -3,6 +3,7 @@
  * Copyright 2015 Vladimir Zapolskiy <vz@mleia.com>
  */
 
+#include <linux/math64.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

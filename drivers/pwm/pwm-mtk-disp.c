@@ -5,6 +5,7 @@
  * Author: YH Huang <yh.huang@mediatek.com>
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

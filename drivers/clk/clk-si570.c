@@ -10,6 +10,7 @@
  *	   Sören Brinkmann <soren.brinkmann@xilinx.com>
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

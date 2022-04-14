@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"nand-bbt: " fmt
 
+#include <linux/math64.h>
 #include <linux/mtd/nand.h>
 #include <linux/slab.h>
 

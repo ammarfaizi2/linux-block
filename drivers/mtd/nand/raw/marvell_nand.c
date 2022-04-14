@@ -74,6 +74,7 @@
  *     markers.
  */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

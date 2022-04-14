@@ -4,6 +4,7 @@
  * datasheet: https://www.ti.com/lit/ds/symlink/sn65dsi86.pdf
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

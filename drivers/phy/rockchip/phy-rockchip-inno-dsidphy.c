@@ -5,6 +5,7 @@
  * Author: Wyon Bi <bivvy.bi@rock-chips.com>
  */
 
+#include <linux/math64.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>

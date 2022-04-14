@@ -11,6 +11,7 @@
  *
  ******************************************************************************/
 
+#include <linux/math64.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

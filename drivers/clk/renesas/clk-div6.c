@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/math64.h>
 #include <linux/clk-provider.h>
 #include <linux/init.h>
 #include <linux/io.h>

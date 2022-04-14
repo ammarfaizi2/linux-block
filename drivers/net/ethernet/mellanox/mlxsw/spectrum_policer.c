@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2020 Mellanox Technologies. All rights reserved */
 
+#include <linux/math64.h>
 #include <linux/idr_api.h>
 #include <linux/atomic_api.h>
 #include <linux/idr.h>

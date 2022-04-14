@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/math64.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/clk-provider.h>

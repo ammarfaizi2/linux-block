@@ -5,6 +5,7 @@
  * Copyright (c) 2014-2017 Mentor Graphics Inc.
  * Copyright (C) 2017 Pengutronix, Philipp Zabel <kernel@pengutronix.de>
  */
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

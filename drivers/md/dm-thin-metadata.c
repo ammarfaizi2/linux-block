@@ -10,6 +10,7 @@
 #include "persistent-data/dm-space-map-disk.h"
 #include "persistent-data/dm-transaction-manager.h"
 
+#include <linux/math64.h>
 #include <linux/fs_api.h>
 #include <linux/list.h>
 #include <linux/device-mapper.h>

@@ -9,6 +9,7 @@
  * Base on code in raid1.c.  See raid1.c for further copyright information.
  */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>

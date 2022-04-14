@@ -5,6 +5,7 @@
  * Helper functions to generate a raw byte sequence payload from values.
  */
 
+#include <linux/math64.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/string.h>

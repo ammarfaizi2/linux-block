@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/math64.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

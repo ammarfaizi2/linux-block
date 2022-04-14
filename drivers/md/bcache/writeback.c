@@ -12,6 +12,7 @@
 #include "debug.h"
 #include "writeback.h"
 
+#include <linux/math64.h>
 #include <linux/llist_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioprio.h>

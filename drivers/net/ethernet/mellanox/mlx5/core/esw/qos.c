@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES. All rights reserved. */
 
+#include <linux/math64.h>
+
 #include "eswitch.h"
 #include "esw/qos.h"
 #include "en/port.h"

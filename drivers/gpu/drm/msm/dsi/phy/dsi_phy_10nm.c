@@ -3,6 +3,7 @@
  * Copyright (c) 2018, The Linux Foundation
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/clk.h>

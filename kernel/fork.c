@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/ioprio.h>
 #include <linux/hrtimer_api.h>

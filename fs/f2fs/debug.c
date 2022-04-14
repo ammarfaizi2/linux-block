@@ -8,6 +8,7 @@
  * Copyright (c) 2012 Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  */
 
+#include <linux/math64.h>
 #include <linux/llist_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

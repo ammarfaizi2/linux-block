@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2006 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/math64.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 

@@ -11,6 +11,7 @@
  * - The hardware cannot generate a 100% duty cycle.
  * - The hardware generates only inverted output.
  */
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

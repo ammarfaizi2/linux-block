@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/cpuhotplug.h>
 #include <asm/processor_api.h>

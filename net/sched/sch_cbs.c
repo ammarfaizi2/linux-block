@@ -50,6 +50,7 @@
  *	locredit = max_frame_size * (sendslope / port_transmit_rate)
  */
 
+#include <linux/math64.h>
 #include <linux/atomic_api.h>
 #include <linux/ethtool.h>
 #include <linux/module.h>

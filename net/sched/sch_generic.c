@@ -7,6 +7,7 @@
  *              - Ingress support
  */
 
+#include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>

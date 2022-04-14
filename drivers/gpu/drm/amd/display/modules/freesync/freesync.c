@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/math64.h>
 #include <linux/slab.h>
 
 #include "dm_services.h"

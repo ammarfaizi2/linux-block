@@ -4,6 +4,7 @@
  * Author: jitao.shi <jitao.shi@mediatek.com>
  */
 
+#include <linux/math64.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 

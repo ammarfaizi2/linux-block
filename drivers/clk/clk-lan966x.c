@@ -7,6 +7,7 @@
  * Author: Kavyasree Kotagiri <kavyasree.kotagiri@microchip.com>
  */
 
+#include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

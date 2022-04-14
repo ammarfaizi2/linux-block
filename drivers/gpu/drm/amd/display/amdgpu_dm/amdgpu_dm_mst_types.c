@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/math64.h>
 #include <linux/capability.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
