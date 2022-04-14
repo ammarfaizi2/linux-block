@@ -3,6 +3,7 @@
  * Implement CPU time clocks for the POSIX clock interface.
  */
 
+#include <linux/timerqueue_api.h>
 #include <linux/time64_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>

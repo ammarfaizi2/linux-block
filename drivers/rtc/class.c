@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timerqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/property.h>
