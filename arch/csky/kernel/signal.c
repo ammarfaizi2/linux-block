@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/sched/rseq_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/restart_block_api.h>
 #include <linux/signal.h>
