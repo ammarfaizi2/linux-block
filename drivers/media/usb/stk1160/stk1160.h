@@ -10,6 +10,7 @@
  *	<rmthomas--a.t--sciolus.org>
  */
 
+#include <linux/fs.h>
 #include <linux/i2c.h>
 #include <sound/core.h>
 #include <sound/ac97_codec.h>

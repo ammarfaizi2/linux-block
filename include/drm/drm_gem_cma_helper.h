@@ -2,6 +2,7 @@
 #ifndef __DRM_GEM_CMA_HELPER_H__
 #define __DRM_GEM_CMA_HELPER_H__
 
+#include <linux/fs.h>
 #include <drm/drm_file.h>
 #include <drm/drm_ioctl.h>
 #include <drm/drm_gem.h>

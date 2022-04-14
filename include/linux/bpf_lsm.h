@@ -7,6 +7,7 @@
 #ifndef _LINUX_BPF_LSM_H
 #define _LINUX_BPF_LSM_H
 
+#include <linux/fs.h>
 #include <linux/sched.h>
 #include <linux/bpf.h>
 #include <linux/lsm_hooks.h>

@@ -6,6 +6,7 @@
 #ifndef _SIW_H
 #define _SIW_H
 
+#include <linux/fs.h>
 #include <rdma/ib_verbs.h>
 #include <rdma/restrack.h>
 #include <linux/socket.h>

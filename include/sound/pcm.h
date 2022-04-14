@@ -8,6 +8,7 @@
  *                   Abramo Bagnara <abramo@alsa-project.org>
  */
 
+#include <linux/fs.h>
 #include <linux/dev_printk.h>
 #include <linux/atomic_api.h>
 #include <sound/asound.h>

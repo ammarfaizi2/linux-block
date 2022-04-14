@@ -8,6 +8,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/fs.h>
 #include <linux/pci.h>
 #include <linux/i2c.h>
 #include <linux/kdev_t.h>
