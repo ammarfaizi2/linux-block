@@ -4,6 +4,7 @@
 #ifndef __MLX5E_DCBNL_H__
 #define __MLX5E_DCBNL_H__
 
+#include <uapi/linux/dcbnl.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_MLX5_CORE_EN_DCB
