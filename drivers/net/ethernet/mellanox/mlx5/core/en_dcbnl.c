@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <net/dcbnl.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
