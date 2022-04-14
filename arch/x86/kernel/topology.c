@@ -25,6 +25,7 @@
  *
  * Send feedback to <colpatch@us.ibm.com>
  */
+#include <asm/processor_types.h>
 #include <linux/interrupt.h>
 #include <linux/nodemask.h>
 #include <linux/export.h>
