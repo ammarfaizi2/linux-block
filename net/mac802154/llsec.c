@@ -6,6 +6,7 @@
  * Phoebe Buckheister <phoebe.buckheister@itwm.fraunhofer.de>
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/err.h>
 #include <linux/bug.h>
 #include <linux/completion.h>

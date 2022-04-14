@@ -20,6 +20,7 @@
  *    managed alongside the master keys in the filesystem-level keyring)
  */
 
+#include <linux/hashtable_api.h>
 #include <crypto/algapi.h>
 #include <crypto/skcipher.h>
 #include <keys/user-type.h>

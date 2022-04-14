@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/kconfig.h>
 
 #if IS_REACHABLE(CONFIG_AMD_IOMMU_V2)

@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2010 Hannes Reinecke, SUSE Linux Products GmbH.
  * All rights reserved.
  */
+#include <linux/hashtable_api.h>
 #include <linux/device_api.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

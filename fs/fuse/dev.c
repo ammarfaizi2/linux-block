@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/hashtable_api.h>
 #include <linux/hash.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

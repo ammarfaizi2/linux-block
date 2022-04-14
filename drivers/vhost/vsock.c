@@ -6,6 +6,7 @@
  * Author: Asias He <asias@redhat.com>
  *         Stefan Hajnoczi <stefanha@redhat.com>
  */
+#include <linux/hashtable_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

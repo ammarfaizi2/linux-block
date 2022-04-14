@@ -3,6 +3,8 @@
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
+#include <linux/hashtable_api.h>
+
 #include "peerlookup.h"
 #include "peer.h"
 #include "noise.h"

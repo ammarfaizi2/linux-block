@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/bitmap.h>
 #include <drm/drm_cache.h>
 

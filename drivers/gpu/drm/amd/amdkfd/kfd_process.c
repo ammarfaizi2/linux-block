@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/bitmap.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/kernel.h>
 #include <linux/refcount.h>
 #include <linux/mlx5/driver.h>

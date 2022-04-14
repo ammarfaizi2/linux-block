@@ -2,6 +2,7 @@
 /* Copyright(c) 2018 Oracle and/or its affiliates. All rights reserved. */
 
 #include "ixgbevf.h"
+#include <linux/hashtable_api.h>
 #include <linux/dma-mapping.h>
 #include <net/xfrm.h>
 #include <crypto/aead.h>

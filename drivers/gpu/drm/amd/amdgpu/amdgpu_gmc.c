@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/atomic_api.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 

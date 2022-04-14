@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

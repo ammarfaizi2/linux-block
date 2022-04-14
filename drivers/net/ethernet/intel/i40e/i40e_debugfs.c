@@ -3,6 +3,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/hashtable_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/debugfs.h>

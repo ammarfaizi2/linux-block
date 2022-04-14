@@ -11,6 +11,7 @@
  * Jamal Hadi Salim <hadi@nortelnetworks.com>: 990601: ingress support
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/capability.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>

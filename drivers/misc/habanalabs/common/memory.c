@@ -5,6 +5,7 @@
  * All Rights Reserved.
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

@@ -10,6 +10,7 @@
  * storage device to each channel for storing ECC data.
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>

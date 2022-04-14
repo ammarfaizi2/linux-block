@@ -28,6 +28,7 @@
  *    Xiaoguang Chen <xiaoguang.chen@intel.com>
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

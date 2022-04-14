@@ -7,6 +7,7 @@
  *		 Frank Blaschka <frank.blaschka@de.ibm.com>
  */
 
+#include <linux/hashtable_api.h>
 #include <linux/slab.h>
 #include <asm/ebcdic.h>
 #include <linux/hashtable.h>
