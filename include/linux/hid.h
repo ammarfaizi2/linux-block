@@ -14,6 +14,7 @@
 #define __HID_H
 
 
+#include <linux/pm_wakeup.h>
 #include <linux/dev_printk.h>
 #include <linux/bitops.h>
 #include <linux/types.h>
