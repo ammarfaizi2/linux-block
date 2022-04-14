@@ -119,7 +119,7 @@ static void __put_compound_page(struct page *page)
 	destroy_compound_page(page);
 }
 
-void __put_page(struct page *page)
+inline void __put_page(struct page *page)
 {
 	if (unlikely(is_zone_device_page(page)))
 		free_zone_device_page(page);
@@ -129,6 +129,20 @@ void __put_page(struct page *page)
 		__put_single_page(page);
 }
 EXPORT_SYMBOL(__put_page);
+
+void put_page(struct page *page)
+{
+	struct folio *folio = page_folio(page);
+
+	/*
+	 * For some devmap managed pages we need to catch refcount transition
+	 * from 2 to 1:
+	 */
+	if (put_devmap_managed_page(&folio->page))
+		return;
+	folio_put(folio);
+}
+EXPORT_SYMBOL(put_page);
 
 /**
  * put_pages_list() - release a list of pages
