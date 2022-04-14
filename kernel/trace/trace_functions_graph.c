@@ -7,6 +7,7 @@
  * is Copyright (c) Steven Rostedt <srostedt@redhat.com>
  *
  */
+#include <asm/sections.h>
 #include <linux/uaccess.h>
 #include <linux/ftrace.h>
 #include <linux/interrupt.h>
