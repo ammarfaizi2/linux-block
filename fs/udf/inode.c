@@ -30,6 +30,7 @@
  */
 
 #include "udfdecl.h"
+#include <linux/fs_api_dio.h>
 #include <asm/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/module.h>

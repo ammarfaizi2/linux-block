@@ -5,6 +5,7 @@
  * I/O and data path helper functionality.
  */
 
+#include <linux/fs_api_dio.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/bitops.h>

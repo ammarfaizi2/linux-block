@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
+#include <linux/fs_api_dio.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/mpage.h>

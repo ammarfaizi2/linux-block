@@ -13,6 +13,7 @@
  *  affs regular file handling primitives
  */
 
+#include <linux/fs_api_dio.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/uio.h>

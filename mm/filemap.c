@@ -10,6 +10,7 @@
  * most "normal" filesystems (but you don't /have/ to use this:
  * the NFS filesystem used to do this differently, for example)
  */
+#include <linux/fs_api_dio.h>
 #include <linux/cacheflush.h>
 #include <linux/backing-dev-api.h>
 #include <asm/cacheflush.h>

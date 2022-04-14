@@ -8,6 +8,7 @@
  * Heavily borrowed from equivalent code in fs/nfs/io.c
  */
 
+#include <linux/fs_api_dio.h>
 #include <linux/ceph/ceph_debug.h>
 
 #include <linux/types.h>
