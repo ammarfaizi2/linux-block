@@ -6,6 +6,7 @@
 #ifndef __CPTVF_H
 #define __CPTVF_H
 
+#include <linux/cpumask_types.h>
 #include <linux/list.h>
 #include "cpt_common.h"
 
