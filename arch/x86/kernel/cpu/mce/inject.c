@@ -16,6 +16,7 @@
  *			   Advanced Micro Devices Inc.
  */
 
+#include <linux/topology.h>
 #include <linux/timekeeping.h>
 #include <linux/smp_api.h>
 #include <linux/preempt.h>

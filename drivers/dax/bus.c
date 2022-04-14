@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2017-2018 Intel Corporation. All rights reserved. */
+#include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

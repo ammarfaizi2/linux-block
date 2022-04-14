@@ -6,6 +6,7 @@
  * Author: Andreas Herrmann <herrmann.der.user@googlemail.com>
  */
 
+#include <linux/topology.h>
 #include <linux/smp_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

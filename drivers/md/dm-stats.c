@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/topology.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/percpu.h>

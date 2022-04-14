@@ -43,6 +43,7 @@
  * WITH YOU.
  ***********************license end**************************************/
 
+#include <linux/topology.h>
 #include <linux/smp_api.h>
 #include <linux/seq_file.h>
 #include <linux/io.h>

@@ -7,6 +7,7 @@
  * Author: Jeremy Kerr <jk@ozlabs.org>
  */
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>

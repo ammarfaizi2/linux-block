@@ -2,6 +2,7 @@
 /*
  * Common SMP CPU bringup/teardown functions
  */
+#include <linux/topology.h>
 #include <linux/smp_api.h>
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>

@@ -8,6 +8,7 @@
  * (C) Copyright 2020 Hewlett Packard Enterprise Development LP
  * Copyright (C) 2007-2014 Silicon Graphics, Inc. All rights reserved.
  */
+#include <linux/topology.h>
 #include <linux/timex.h>
 #include <linux/smp_api.h>
 #include <linux/slab.h>

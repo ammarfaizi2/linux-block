@@ -9,6 +9,7 @@
  * with minor modifications, see there for credits.
  */
 
+#include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/stat.h>
 #include <linux/spinlock_api.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 1999 - 2001 Kanoj Sarcar
  */
 
+#include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/sched/affinity.h>
 #include <linux/irqdesc.h>

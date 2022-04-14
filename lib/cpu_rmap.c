@@ -4,6 +4,7 @@
  * Copyright 2011 Solarflare Communications Inc.
  */
 
+#include <linux/topology.h>
 #include <linux/smp_api.h>
 #include <linux/slab.h>
 #include <linux/kref_api.h>

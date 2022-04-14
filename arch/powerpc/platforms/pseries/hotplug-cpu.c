@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)     "pseries-hotplug-cpu: " fmt
 
+#include <linux/topology.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

@@ -5,6 +5,7 @@
  * Copyright 2013 Linaro Ltd
  */
 
+#include <linux/topology.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/err.h>

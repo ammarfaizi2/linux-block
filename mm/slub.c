@@ -10,6 +10,7 @@
  * (C) 2011 Linux Foundation, Christoph Lameter
  */
 
+#include <linux/topology.h>
 #include <linux/timex.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

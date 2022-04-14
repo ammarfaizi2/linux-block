@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Thomas Gleixner.
  * Copyright (C) 2016-2017 Christoph Hellwig.
  */
+#include <linux/topology.h>
 #include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

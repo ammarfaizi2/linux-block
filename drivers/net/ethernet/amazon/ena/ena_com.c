@@ -3,6 +3,7 @@
  * Copyright 2015-2020 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

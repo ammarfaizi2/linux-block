@@ -5,6 +5,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/io.h>

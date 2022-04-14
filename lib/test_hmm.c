@@ -5,6 +5,7 @@
  * Userspace programs can register with the driver to mirror their own address
  * space and can use the device to read/write any valid virtual address.
  */
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

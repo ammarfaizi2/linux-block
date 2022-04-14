@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>

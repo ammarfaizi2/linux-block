@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/stringhash.h>
 #include <linux/spinlock_api.h>

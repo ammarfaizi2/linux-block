@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/topology.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

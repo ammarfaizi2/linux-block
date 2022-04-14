@@ -6,6 +6,7 @@
  * Author: Chanwoo Choi <cw00.choi@samsung.com>
  */
 
+#include <linux/topology.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 

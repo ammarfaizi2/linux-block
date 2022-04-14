@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api_lock.h>

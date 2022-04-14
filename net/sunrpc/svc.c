@@ -11,6 +11,7 @@
  * by Greg Banks <gnb@melbourne.sgi.com>
  */
 
+#include <linux/topology.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>

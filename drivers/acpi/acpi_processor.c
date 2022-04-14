@@ -10,6 +10,7 @@
  *                     Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/memory_hotplug.h>
 #include <linux/device_api.h>

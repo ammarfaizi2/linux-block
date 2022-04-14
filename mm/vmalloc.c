@@ -8,6 +8,7 @@
  *  Improving global KVA allocator, Uladzislau Rezki, Sony, May 2019
  */
 
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/rwsem_api.h>

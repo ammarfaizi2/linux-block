@@ -3,6 +3,7 @@
  * c 2001 PPC 64 Team, IBM Corp
  */
 
+#include <linux/topology.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/smp.h>

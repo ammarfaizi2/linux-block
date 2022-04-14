@@ -11,6 +11,7 @@
 #define KMSG_COMPONENT "dasd"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/topology.h>
 #include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

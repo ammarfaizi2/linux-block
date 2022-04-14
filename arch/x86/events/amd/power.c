@@ -7,6 +7,7 @@
  * Author: Huang Rui <ray.huang@amd.com>
  */
 
+#include <linux/topology.h>
 #include <linux/perf_event_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

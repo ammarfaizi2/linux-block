@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

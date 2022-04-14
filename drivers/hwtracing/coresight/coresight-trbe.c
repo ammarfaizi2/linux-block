@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) DRVNAME ": " fmt
 
+#include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>

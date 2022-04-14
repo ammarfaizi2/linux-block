@@ -6,6 +6,7 @@
  *           (C) Balbir Singh,   IBM Corp. 2006
  */
 
+#include <linux/topology.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/task.h>

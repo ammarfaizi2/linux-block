@@ -8,6 +8,7 @@
  * Copyright (c) 2006 Novell, Inc.
  */
 
+#include <linux/topology.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

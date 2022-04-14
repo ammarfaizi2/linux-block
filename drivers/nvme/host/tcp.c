@@ -4,6 +4,7 @@
  * Copyright (c) 2018 Lightbits Labs. All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

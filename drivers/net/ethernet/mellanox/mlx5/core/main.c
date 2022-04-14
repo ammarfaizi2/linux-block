@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/topology.h>
 #include <linux/random.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>

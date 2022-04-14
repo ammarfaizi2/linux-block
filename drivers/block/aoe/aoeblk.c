@@ -4,6 +4,7 @@
  * block device routines
  */
 
+#include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>

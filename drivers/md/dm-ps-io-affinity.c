@@ -6,6 +6,7 @@
  */
 #include "dm-path-selector.h"
 
+#include <linux/topology.h>
 #include <linux/smp_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>
