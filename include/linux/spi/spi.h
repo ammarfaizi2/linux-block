@@ -6,6 +6,7 @@
 #ifndef __LINUX_SPI_H
 #define __LINUX_SPI_H
 
+#include <linux/device_api_lock.h>
 #include <asm/byteorder.h>
 #include <linux/bits.h>
 #include <linux/device.h>

@@ -7,6 +7,7 @@
 #ifndef _INDUSTRIAL_IO_H_
 #define _INDUSTRIAL_IO_H_
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/cdev.h>
 #include <linux/iio/types.h>

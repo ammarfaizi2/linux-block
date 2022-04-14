@@ -2,6 +2,7 @@
 #ifndef DRIVERS_PCI_H
 #define DRIVERS_PCI_H
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/pci.h>
 

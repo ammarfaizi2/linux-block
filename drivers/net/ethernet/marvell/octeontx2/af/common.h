@@ -7,6 +7,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <linux/device_api_lock.h>
 #include <linux/align.h>
 
 #include "rvu_struct.h"

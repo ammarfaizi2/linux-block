@@ -11,6 +11,7 @@
 #ifndef __NET_NFC_H
 #define __NET_NFC_H
 
+#include <linux/device_api_lock.h>
 #include <linux/nfc.h>
 #include <linux/device.h>
 #include <linux/skbuff.h>

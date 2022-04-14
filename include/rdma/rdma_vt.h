@@ -11,6 +11,7 @@
  * rdmavt layer.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/spinlock.h>
 #include <linux/list.h>
 #include <linux/hash.h>

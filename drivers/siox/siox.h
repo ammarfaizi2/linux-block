@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2015-2017 Pengutronix, Uwe Kleine-König <kernel@pengutronix.de>
  */
+#include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/kthread.h>
 #include <linux/siox.h>
