@@ -2,6 +2,7 @@
 #ifndef _LINUX_PART_STAT_H
 #define _LINUX_PART_STAT_H
 
+#include <asm/local_api.h>
 #include <linux/blkdev.h>
 #include <asm/local.h>
 
