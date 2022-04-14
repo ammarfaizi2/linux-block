@@ -5,6 +5,7 @@
  * just do it by hand with the magic northbridge registers.
  */
 
+#include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/pci.h>
 #include <linux/security.h>

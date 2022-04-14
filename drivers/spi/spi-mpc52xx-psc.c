@@ -7,6 +7,7 @@
  * Copyright (C) 2006 TOPTICA Photonics AG.
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/errno.h>

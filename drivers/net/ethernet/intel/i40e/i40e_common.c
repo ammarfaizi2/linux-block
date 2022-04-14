@@ -5,6 +5,7 @@
 #include "i40e_type.h"
 #include "i40e_adminq.h"
 #include "i40e_prototype.h"
+#include <linux/capability.h>
 #include <linux/avf/virtchnl.h>
 
 /**

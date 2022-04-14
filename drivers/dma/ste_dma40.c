@@ -6,6 +6,7 @@
  * Author: Jonas Aaberg <jonas.aberg@stericsson.com> for ST-Ericsson
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

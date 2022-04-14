@@ -34,6 +34,7 @@
  *	with usb 338x chip. Based on PLX driver
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/dma-mapping.h>

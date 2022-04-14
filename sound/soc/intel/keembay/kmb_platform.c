@@ -5,6 +5,7 @@
 // Intel KeemBay Platform driver.
 //
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/bitrev.h>
 #include <linux/clk.h>

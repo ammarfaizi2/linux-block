@@ -7,6 +7,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

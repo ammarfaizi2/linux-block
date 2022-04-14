@@ -15,6 +15,7 @@
  * mode accordingly.
  */
 
+#include <linux/capability.h>
 #include <linux/acpi.h>
 #include <linux/device.h>
 #include <linux/suspend.h>

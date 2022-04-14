@@ -5,6 +5,7 @@
  * Author: Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  */
 
+#include <linux/capability.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/io.h>

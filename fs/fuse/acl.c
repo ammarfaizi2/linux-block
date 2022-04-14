@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/capability.h>
 #include <linux/posix_acl.h>
 #include <linux/posix_acl_xattr.h>
 

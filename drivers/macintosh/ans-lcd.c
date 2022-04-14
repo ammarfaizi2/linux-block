@@ -3,6 +3,7 @@
  * /dev/lcd driver for Apple Network Servers.
  */
 
+#include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

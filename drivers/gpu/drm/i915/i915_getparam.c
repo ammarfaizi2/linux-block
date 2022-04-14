@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <linux/capability.h>
+
 #include "gem/i915_gem_mman.h"
 #include "gt/intel_engine_user.h"
 

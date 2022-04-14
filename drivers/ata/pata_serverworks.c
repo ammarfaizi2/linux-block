@@ -32,6 +32,7 @@
  *	Available under NDA only. Errata info very hard to get.
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

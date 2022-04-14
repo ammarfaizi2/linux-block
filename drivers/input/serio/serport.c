@@ -9,6 +9,7 @@
  */
 
 
+#include <linux/capability.h>
 #include <linux/uaccess.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

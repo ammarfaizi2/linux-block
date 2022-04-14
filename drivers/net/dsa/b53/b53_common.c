@@ -17,6 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/export.h>

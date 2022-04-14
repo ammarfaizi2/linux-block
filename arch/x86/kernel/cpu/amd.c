@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/capability.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <asm/elf_api.h>

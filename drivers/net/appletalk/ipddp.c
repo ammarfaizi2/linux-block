@@ -23,6 +23,7 @@
  *      of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/capability.h>
 #include <linux/compat.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

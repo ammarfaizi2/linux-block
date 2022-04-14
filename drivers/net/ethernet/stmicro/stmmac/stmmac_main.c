@@ -14,6 +14,7 @@
 	https://bugzilla.stlinux.com/
 *******************************************************************************/
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  * Author: Daniel Palmer <daniel@thingy.jp>
  */
 
+#include <linux/capability.h>
 #include <linux/init.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>

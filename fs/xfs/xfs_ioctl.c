@@ -27,6 +27,7 @@
 #include "xfs_trans.h"
 #include "xfs_acl.h"
 #include "xfs_btree.h"
+#include <linux/capability.h>
 #include <linux/fsmap.h>
 #include "xfs_fsmap.h"
 #include "scrub/xfs_scrub.h"

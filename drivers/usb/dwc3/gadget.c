@@ -8,6 +8,7 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

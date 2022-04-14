@@ -32,6 +32,7 @@
 #define UDC_MOD_DESCRIPTION		"AMD 5536 UDC - USB Device Controller"
 
 /* system */
+#include <linux/capability.h>
 #include <linux/device.h>
 #include <linux/dmapool.h>
 #include <linux/interrupt.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018 Facebook
  */
+#include <linux/capability.h>
 #include <linux/bpf.h>
 #include <linux/err.h>
 #include <linux/sock_diag.h>

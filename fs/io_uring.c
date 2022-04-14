@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <asm/io.h>
 #include <linux/sched/cond_resched.h>

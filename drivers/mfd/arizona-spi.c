@@ -7,6 +7,7 @@
  * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
+#include <linux/capability.h>
 #include <linux/acpi.h>
 #include <linux/err.h>
 #include <linux/gpio/consumer.h>

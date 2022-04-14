@@ -53,6 +53,7 @@
  *			 :  base.c too.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <linux/sched/affinity.h>

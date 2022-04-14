@@ -6,6 +6,7 @@
  * Matt Porter <mporter@kernel.crashing.org>
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <asm/page.h>
 #include <linux/module.h>

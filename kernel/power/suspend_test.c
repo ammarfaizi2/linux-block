@@ -5,6 +5,7 @@
  * Copyright (c) 2009 Pavel Machek <pavel@ucw.cz>
  */
 
+#include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/rtc.h>
 

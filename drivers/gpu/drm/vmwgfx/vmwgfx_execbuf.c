@@ -24,6 +24,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+#include <linux/capability.h>
 #include <linux/sync_file.h>
 
 #include "vmwgfx_drv.h"

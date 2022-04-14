@@ -25,6 +25,7 @@
  *-----------------------------------------------------------------------------
  */
 
+#include <linux/capability.h>
 #include <linux/slab.h>
 #include <asm/param.h>		/* for timeouts in units of HZ */
 

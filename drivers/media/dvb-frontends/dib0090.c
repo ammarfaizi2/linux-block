@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/i2c.h>

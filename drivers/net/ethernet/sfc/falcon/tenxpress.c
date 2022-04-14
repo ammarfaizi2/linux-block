@@ -4,6 +4,7 @@
  * Copyright 2007-2011 Solarflare Communications Inc.
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/rtnetlink.h>
 #include <linux/seq_file.h>

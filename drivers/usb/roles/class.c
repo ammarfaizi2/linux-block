@@ -7,6 +7,7 @@
  *         Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/capability.h>
 #include <linux/usb/role.h>
 #include <linux/property.h>
 #include <linux/device.h>

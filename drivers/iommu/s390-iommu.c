@@ -6,6 +6,7 @@
  * Author(s): Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
+#include <linux/capability.h>
 #include <linux/pci.h>
 #include <linux/iommu.h>
 #include <linux/iommu-helper.h>

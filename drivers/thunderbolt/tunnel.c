@@ -6,6 +6,7 @@
  * Copyright (C) 2019, Intel Corporation
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/list.h>

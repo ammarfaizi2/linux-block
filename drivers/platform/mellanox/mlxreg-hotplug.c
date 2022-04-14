@@ -5,6 +5,7 @@
  * Copyright (C) 2016-2020 Mellanox Technologies
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/device.h>

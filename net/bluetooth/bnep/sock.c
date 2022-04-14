@@ -24,6 +24,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/capability.h>
 #include <linux/compat.h>
 #include <linux/export.h>
 #include <linux/file.h>

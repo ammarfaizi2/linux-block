@@ -8,6 +8,7 @@
  * Copyright (C) 2018-2022 Intel Corporation
  */
 
+#include <linux/capability.h>
 #include <linux/if.h>
 #include <linux/module.h>
 #include <linux/err.h>

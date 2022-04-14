@@ -65,6 +65,7 @@
  * For history of changes, see Documentation/scsi/ChangeLog.megaraid
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>

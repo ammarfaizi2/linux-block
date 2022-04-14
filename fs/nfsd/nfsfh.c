@@ -8,6 +8,7 @@
  * ... and again Southern-Winter 2001 to support export_operations
  */
 
+#include <linux/capability.h>
 #include <linux/exportfs.h>
 
 #include <linux/sunrpc/svcauth_gss.h>

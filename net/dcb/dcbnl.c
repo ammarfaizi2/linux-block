@@ -6,6 +6,7 @@
  * Author: Lucy Liu <lucy.liu@intel.com>
  */
 
+#include <linux/capability.h>
 #include <linux/netdevice.h>
 #include <linux/netlink.h>
 #include <linux/slab.h>

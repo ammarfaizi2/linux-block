@@ -6,6 +6,7 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
+#include <linux/capability.h>
 #include <linux/mISDNif.h>
 #include <linux/slab.h>
 #include <linux/export.h>

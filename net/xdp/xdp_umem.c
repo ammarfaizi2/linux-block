@@ -3,6 +3,7 @@
  * Copyright(c) 2018 Intel Corporation.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/sched/mm.h>

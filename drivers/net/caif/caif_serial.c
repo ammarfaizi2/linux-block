@@ -4,6 +4,7 @@
  * Author:	Sjur Brendeland
  */
 
+#include <linux/capability.h>
 #include <linux/hardirq.h>
 #include <linux/init.h>
 #include <linux/module.h>

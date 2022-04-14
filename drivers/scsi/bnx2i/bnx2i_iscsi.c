@@ -15,6 +15,7 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <scsi/scsi_tcq.h>

@@ -8,6 +8,7 @@
  * Copyright 2009-2017 Canonical Ltd.
  */
 
+#include <linux/capability.h>
 #include <linux/gfp.h>
 #include <linux/ptrace.h>
 

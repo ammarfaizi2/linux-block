@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
+#include <linux/capability.h>
 #include <linux/bvec_api.h>
 #include <linux/atomic_api.h>
 #include <linux/blkdev.h>

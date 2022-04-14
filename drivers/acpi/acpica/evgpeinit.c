@@ -7,6 +7,7 @@
  *
  *****************************************************************************/
 
+#include <linux/capability.h>
 #include <acpi/acpi.h>
 #include "accommon.h"
 #include "acevents.h"

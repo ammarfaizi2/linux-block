@@ -33,6 +33,7 @@
  *	check resource allocation in sr_init and some cleanups
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2018 Sean Young <sean@mess.org>
 
+#include <linux/capability.h>
 #include <linux/bpf-cgroup.h>
 #include <linux/bpf.h>
 #include <linux/filter.h>

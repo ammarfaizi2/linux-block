@@ -8,6 +8,7 @@
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/file.h>
 #include <linux/fs.h>

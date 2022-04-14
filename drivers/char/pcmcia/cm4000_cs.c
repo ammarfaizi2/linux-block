@@ -23,6 +23,7 @@
   * All rights reserved. Licensed under dual BSD/GPL license.
   */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

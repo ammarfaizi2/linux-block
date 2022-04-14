@@ -4,6 +4,7 @@
  * Copyright (c) 2008-2009 Marvell Semiconductor
  */
 
+#include <linux/capability.h>
 #include <linux/list.h>
 #include <linux/etherdevice.h>
 #include <linux/netdevice.h>

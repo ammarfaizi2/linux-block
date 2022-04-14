@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/etherdevice.h>
 #include <rdma/ib_umem.h>

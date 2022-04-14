@@ -11,6 +11,7 @@
  * RFC 8033: https://tools.ietf.org/html/rfc8033
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/types.h>

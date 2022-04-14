@@ -20,6 +20,7 @@
 /*
  * ISP MMU management wrap code
  */
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/gfp.h>

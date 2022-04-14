@@ -5,6 +5,7 @@
  *  BIG FAT DISCLAIMER: Work in progress code. Possibly *dangerous*
  */
 
+#include <linux/capability.h>
 #include <asm/processor_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

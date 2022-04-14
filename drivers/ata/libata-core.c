@@ -25,6 +25,7 @@
  * Do not depend on ABI/API stability.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

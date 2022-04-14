@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Google, Inc.
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/err.h>

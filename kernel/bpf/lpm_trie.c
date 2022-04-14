@@ -6,6 +6,7 @@
  * Copyright (c) 2016 David Herrmann
  */
 
+#include <linux/capability.h>
 #include <linux/bpf.h>
 #include <linux/btf.h>
 #include <linux/err.h>

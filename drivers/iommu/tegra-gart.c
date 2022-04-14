@@ -9,6 +9,7 @@
 
 #define dev_fmt(fmt)	"gart: " fmt
 
+#include <linux/capability.h>
 #include <linux/io.h>
 #include <linux/iommu.h>
 #include <linux/moduleparam.h>

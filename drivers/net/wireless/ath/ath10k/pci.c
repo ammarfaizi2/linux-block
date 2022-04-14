@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  */
 
+#include <linux/capability.h>
 #include <linux/pci.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

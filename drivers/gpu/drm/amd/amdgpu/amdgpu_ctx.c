@@ -22,6 +22,7 @@
  * Authors: monk liu <monk.liu@amd.com>
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_auth.h>
 #include <drm/drm_drv.h>

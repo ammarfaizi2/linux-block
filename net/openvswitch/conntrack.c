@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Nicira, Inc.
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/openvswitch.h>
 #include <linux/tcp.h>

@@ -5,6 +5,7 @@
  * Shared functions for accessing and configuring the MAC
  */
 
+#include <linux/capability.h>
 #include <linux/sched/cond_resched.h>
 
 #include "e1000.h"

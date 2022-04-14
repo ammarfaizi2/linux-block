@@ -12,6 +12,7 @@
  * protocol.
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/tty.h>
 #include <linux/module.h>

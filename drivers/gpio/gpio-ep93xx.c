@@ -9,6 +9,7 @@
  *  linux/arch/arm/mach-ep93xx/core.c
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/module.h>

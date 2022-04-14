@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2005-2007 Atmel Corporation
  */
+#include <linux/capability.h>
 #include <linux/clk.h>
 #include <linux/clk/at91_pmc.h>
 #include <linux/module.h>

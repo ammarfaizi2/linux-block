@@ -13,6 +13,7 @@
  * Copyright (c) 2021 Code Construct
  */
 
+#include <linux/capability.h>
 #include <linux/idr.h>
 #include <linux/if_arp.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Johan Hovold <johan@kernel.org>
  */
 
+#include <linux/capability.h>
 #include <linux/bcd.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

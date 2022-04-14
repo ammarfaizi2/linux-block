@@ -2,6 +2,7 @@
 /* Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/debugfs.h>
 

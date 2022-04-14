@@ -3,6 +3,7 @@
  * Copyright (c) 2021, Mellanox Technologies inc. All rights reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <rdma/uverbs_std_types.h>
 #include "dm.h"

@@ -5,6 +5,8 @@
  * Copyright (c) 2018 Melvin Vermeeren
  */
 
+#include <linux/capability.h>
+
 #include "dice.h"
 
 struct dice_mytek_spec {

@@ -6,6 +6,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/capability.h>
 #include <linux/device.h>
 #include <linux/idr.h>
 #include <linux/irq.h>

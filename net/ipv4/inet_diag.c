@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/capability.h>
 #include <asm/unaligned.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>

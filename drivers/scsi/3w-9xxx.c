@@ -78,6 +78,7 @@
    2.26.02.014 - Force 60 second timeout default.
 */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/reboot.h>
 #include <linux/spinlock.h>

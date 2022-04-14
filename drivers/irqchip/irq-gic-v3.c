@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)	"GICv3: " fmt
 
+#include <linux/capability.h>
 #include <linux/acpi.h>
 #include <linux/cpu.h>
 #include <linux/cpu_pm.h>

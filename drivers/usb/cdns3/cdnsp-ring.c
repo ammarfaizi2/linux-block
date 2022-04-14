@@ -55,6 +55,7 @@
  *    for these.
  */
 
+#include <linux/capability.h>
 #include <linux/scatterlist.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

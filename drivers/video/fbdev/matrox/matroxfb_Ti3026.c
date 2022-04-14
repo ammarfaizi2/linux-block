@@ -83,6 +83,7 @@
 #include "matroxfb_Ti3026.h"
 #include "matroxfb_misc.h"
 #include "matroxfb_accel.h"
+#include <linux/capability.h>
 #include <linux/matroxfb.h>
 
 #ifdef CONFIG_FB_MATROX_MILLENIUM

@@ -4,6 +4,7 @@
  * Copyright (C) 2008 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/cred.h>

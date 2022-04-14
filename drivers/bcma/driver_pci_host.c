@@ -10,6 +10,7 @@
  */
 
 #include "bcma_private.h"
+#include <linux/capability.h>
 #include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/export.h>

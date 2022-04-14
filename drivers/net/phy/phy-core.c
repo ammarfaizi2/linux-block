@@ -2,6 +2,7 @@
 /*
  * Core PHY library, taken from phy.c
  */
+#include <linux/capability.h>
 #include <linux/export.h>
 #include <linux/phy.h>
 #include <linux/of.h>

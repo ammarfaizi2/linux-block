@@ -10,6 +10,7 @@
  *	- Get the key and enable EVM
  */
 
+#include <linux/capability.h>
 #include <linux/audit.h>
 #include <linux/uaccess.h>
 #include <linux/init.h>

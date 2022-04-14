@@ -3,6 +3,7 @@
 
 #ifdef CONFIG_I40E_DCB
 #include "i40e.h"
+#include <linux/capability.h>
 #include <net/dcbnl.h>
 
 #define I40E_DCBNL_STATUS_SUCCESS	0

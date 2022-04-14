@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/capability.h>
 #include <linux/bpf.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

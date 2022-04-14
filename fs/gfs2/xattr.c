@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/completion.h>

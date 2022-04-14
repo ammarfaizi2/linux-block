@@ -15,6 +15,7 @@
  *	and ima_file_check.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/file.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2005-2007  Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/bug.h>
 #include <linux/completion.h>

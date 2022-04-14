@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGES.
  *
  */
+#include <linux/capability.h>
 #include <linux/firmware.h>
 #include <linux/slab.h>
 #include "pm8001_sas.h"

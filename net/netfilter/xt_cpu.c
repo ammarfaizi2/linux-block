@@ -10,6 +10,7 @@
 /* (C) 2010 Eric Dumazet
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/netfilter/xt_cpu.h>

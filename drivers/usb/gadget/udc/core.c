@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"UDC core: " fmt
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/device.h>

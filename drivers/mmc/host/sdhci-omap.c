@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/mmc/mmc.h>
 #include <linux/mmc/slot-gpio.h>

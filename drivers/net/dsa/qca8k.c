@@ -6,6 +6,7 @@
  * Copyright (c) 2016 John Crispin <john@phrozen.org>
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/phy.h>
 #include <linux/netdevice.h>

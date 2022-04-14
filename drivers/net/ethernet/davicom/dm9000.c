@@ -10,6 +10,7 @@
  *	Sascha Hauer <s.hauer@pengutronix.de>
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/ioport.h>
 #include <linux/netdevice.h>

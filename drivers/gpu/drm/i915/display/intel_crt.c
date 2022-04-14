@@ -24,6 +24,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 
+#include <linux/capability.h>
 #include <linux/dmi.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>

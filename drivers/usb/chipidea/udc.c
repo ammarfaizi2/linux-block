@@ -7,6 +7,7 @@
  * Author: David Lopo
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/dmapool.h>

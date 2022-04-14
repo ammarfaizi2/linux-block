@@ -12,6 +12,7 @@
  * Pete Delaney <piet@tensilica.com
  */
 
+#include <linux/capability.h>
 #include <linux/cpu.h>
 #include <linux/cpumask.h>
 #include <linux/delay.h>

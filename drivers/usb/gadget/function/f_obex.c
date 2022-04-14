@@ -10,6 +10,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/capability.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

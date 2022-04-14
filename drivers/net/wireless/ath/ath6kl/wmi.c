@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/capability.h>
 #include <asm/unaligned.h>
 #include <linux/ip.h>
 #include <linux/in.h>

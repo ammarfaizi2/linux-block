@@ -53,6 +53,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/capability.h>
+
 #include "isci.h"
 #include "port.h"
 #include "request.h"

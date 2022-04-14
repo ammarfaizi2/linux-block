@@ -10,6 +10,7 @@
  *
  * Common management module
  */
+#include <linux/capability.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>

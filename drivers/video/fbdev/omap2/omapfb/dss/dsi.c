@@ -8,6 +8,7 @@
 
 #define DSS_SUBSYS_NAME "DSI"
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/clk.h>

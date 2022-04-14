@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/moduleparam.h>
 #include <linux/gfp.h>

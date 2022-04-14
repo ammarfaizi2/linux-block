@@ -8,6 +8,7 @@
  *	Bob Picco <robert.picco@hp.com>
  */
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

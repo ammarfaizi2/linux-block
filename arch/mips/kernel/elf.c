@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/capability.h>
 #include <linux/binfmts.h>
 #include <linux/elf.h>
 #include <linux/export.h>

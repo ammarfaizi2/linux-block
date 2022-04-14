@@ -10,6 +10,7 @@
  * Copyright (C) 2004-2010   Dominik Brodowski
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>

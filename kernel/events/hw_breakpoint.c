@@ -17,6 +17,7 @@
  * This file contains the arch-independent routines.
  */
 
+#include <linux/capability.h>
 #include <linux/irqflags.h>
 #include <linux/kallsyms.h>
 #include <linux/notifier.h>

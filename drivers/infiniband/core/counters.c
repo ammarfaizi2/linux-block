@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2019 Mellanox Technologies. All rights reserved.
  */
+#include <linux/capability.h>
 #include <rdma/ib_verbs.h>
 #include <rdma/rdma_counter.h>
 

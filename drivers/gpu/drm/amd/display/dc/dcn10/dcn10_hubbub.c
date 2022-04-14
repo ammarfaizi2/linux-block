@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 
 #include "dm_services.h"

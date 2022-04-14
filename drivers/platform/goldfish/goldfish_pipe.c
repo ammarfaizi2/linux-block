@@ -47,6 +47,7 @@
  * exchange is properly mapped during a transfer.
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
 #include <linux/interrupt.h>

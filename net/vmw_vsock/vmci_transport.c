@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2013 VMware, Inc. All rights reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/bitops.h>
 #include <linux/cred.h>

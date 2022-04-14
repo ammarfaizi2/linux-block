@@ -48,6 +48,7 @@
  * the output mode.  This driver does not change the output mode setting.
  */
 
+#include <linux/capability.h>
 #include <linux/device.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>

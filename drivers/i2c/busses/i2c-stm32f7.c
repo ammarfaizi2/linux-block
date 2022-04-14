@@ -14,6 +14,7 @@
  * This driver is based on i2c-stm32f4.c
  *
  */
+#include <linux/capability.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

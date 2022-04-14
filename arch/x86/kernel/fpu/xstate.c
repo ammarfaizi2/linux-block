@@ -4,6 +4,7 @@
  *
  * Author: Suresh Siddha <suresh.b.siddha@intel.com>
  */
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <asm/processor_api.h>
 #include <asm/pkru.h>

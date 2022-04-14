@@ -60,6 +60,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/capability.h>
+
 #include "tehuti.h"
 
 static const struct pci_device_id bdx_pci_tbl[] = {

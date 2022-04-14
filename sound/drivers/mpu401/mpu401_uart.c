@@ -13,6 +13,7 @@
  *      mpu->write to your own I/O functions.
  */
 
+#include <linux/capability.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/init.h>

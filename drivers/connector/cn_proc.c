@@ -8,6 +8,7 @@
  * Copyright (C) 2005 BULL SA.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/ktime.h>

@@ -6,6 +6,7 @@
  * Added /proc/sys/net/core directory entry (empty =) ). [MS]
  */
 
+#include <linux/capability.h>
 #include <linux/filter.h>
 #include <linux/mm.h>
 #include <linux/sysctl.h>

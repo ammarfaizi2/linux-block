@@ -38,6 +38,8 @@
  * Ethernet Connection (3) I218-V
  */
 
+#include <linux/capability.h>
+
 #include "e1000.h"
 
 /* ICH GbE Flash Hardware Sequencing Flash Status Register bit breakdown */

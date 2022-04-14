@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992, 1999  Linus Torvalds
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/file.h>

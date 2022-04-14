@@ -31,6 +31,7 @@
 
 #define NVRAM_VERSION	"1.3"
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/nvram.h>
 #include <linux/types.h>

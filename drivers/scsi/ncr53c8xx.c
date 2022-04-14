@@ -82,6 +82,7 @@
 
 #define SCSI_NCR_DEBUG_FLAGS	(0)
 
+#include <linux/capability.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

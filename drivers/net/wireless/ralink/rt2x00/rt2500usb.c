@@ -11,6 +11,7 @@
 	Supported chipsets: RT2570.
  */
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
  * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  */
 
+#include <linux/capability.h>
 #include <asm/msr.h>
 #include <linux/module.h>
 #include <linux/cpuhotplug.h>

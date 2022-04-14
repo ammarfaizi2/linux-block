@@ -191,6 +191,7 @@
  *   with the rest of the i915 driver.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/anon_inodes.h>
 #include <linux/sizes.h>

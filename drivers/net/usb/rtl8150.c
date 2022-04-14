@@ -3,6 +3,7 @@
  *  Copyright (c) 2002 Petko Manolov (petkan@users.sourceforge.net)
  */
 
+#include <linux/capability.h>
 #include <linux/signal.h>
 #include <linux/slab.h>
 #include <linux/module.h>

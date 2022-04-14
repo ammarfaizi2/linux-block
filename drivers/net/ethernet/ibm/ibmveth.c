@@ -11,6 +11,7 @@
  *	    Anton Blanchard <anton@au.ibm.com>
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/types.h>

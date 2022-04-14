@@ -7,6 +7,7 @@
  *     Tushar Dave <tushar.n.dave@intel.com>
  */
 
+#include <linux/capability.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/module.h>

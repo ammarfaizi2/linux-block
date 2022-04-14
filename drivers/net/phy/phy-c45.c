@@ -2,6 +2,7 @@
 /*
  * Clause 45 PHY support
  */
+#include <linux/capability.h>
 #include <linux/ethtool.h>
 #include <linux/export.h>
 #include <linux/mdio.h>

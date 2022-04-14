@@ -18,6 +18,7 @@
 #undef DEBUG
 #undef VERBOSE_DEBUG
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>
 #include <linux/errno.h>

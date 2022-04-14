@@ -3,6 +3,7 @@
  * Copyright(c) 2015-2017 Intel Corporation.
  */
 
+#include <linux/capability.h>
 #include <linux/ctype.h>
 #include <rdma/ib_sysfs.h>
 

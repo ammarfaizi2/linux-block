@@ -7,6 +7,7 @@
  *  MMCv4 support Copyright (C) 2006 Philip Langdale, All Rights Reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/err.h>
 #include <linux/of.h>
 #include <linux/slab.h>

@@ -112,6 +112,7 @@
  * Copyright (C) 2000 by Tim Waugh (added LPSETTIMEOUT ioctl)
  */
 
+#include <linux/capability.h>
 #include <asm/processor_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>

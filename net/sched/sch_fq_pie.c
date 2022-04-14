@@ -9,6 +9,7 @@
  * Copyright (C) 2019 Gautam Ramakrishnan <gautamramk@gmail.com>
  */
 
+#include <linux/capability.h>
 #include <linux/jhash.h>
 #include <linux/sizes.h>
 #include <linux/vmalloc.h>

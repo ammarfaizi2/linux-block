@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)				"bcmgenet_wol: " fmt
 
+#include <linux/capability.h>
 #include <asm/unaligned.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

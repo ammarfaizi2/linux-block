@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2016 IBM Corp.
  */
+#include <linux/capability.h>
 #include <linux/bitops.h>
 #include <linux/init.h>
 #include <linux/io.h>

@@ -8,6 +8,7 @@
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

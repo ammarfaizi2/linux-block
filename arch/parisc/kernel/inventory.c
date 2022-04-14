@@ -14,6 +14,7 @@
  * problems, but...
  */
 
+#include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

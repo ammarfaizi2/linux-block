@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

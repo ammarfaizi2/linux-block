@@ -12,6 +12,7 @@
  *	James Morris <jmorris@redhat.com>
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/vmalloc.h>
 #include <linux/security.h>

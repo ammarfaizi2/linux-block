@@ -3,6 +3,7 @@
  * Copyright (c) 2004-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/capability.h>
 #include <linux/mount.h>
 #include <linux/fsmap.h>
 #include "xfs.h"

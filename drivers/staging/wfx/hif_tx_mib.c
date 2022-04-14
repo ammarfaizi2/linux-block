@@ -7,6 +7,7 @@
  * Copyright (C) 2010, ST-Ericsson SA
  */
 
+#include <linux/capability.h>
 #include <linux/etherdevice.h>
 
 #include "wfx.h"

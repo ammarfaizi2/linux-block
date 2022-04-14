@@ -12,6 +12,7 @@
  *   Vlad Yasevich     <vladislav.yasevich@hp.com>
  */
 
+#include <linux/capability.h>
 #include <crypto/hash.h>
 #include <linux/slab.h>
 #include <linux/types.h>

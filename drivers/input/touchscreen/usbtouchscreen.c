@@ -34,6 +34,7 @@
 
 //#define DEBUG
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/input.h>

@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  * Copyright (C) 2021-2022, Alibaba Cloud
  */
+#include <linux/capability.h>
 #include <linux/security.h>
 #include "xattr.h"
 

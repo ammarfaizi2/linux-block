@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <crypto/algapi.h>
 #include <crypto/aes.h>
 #include <crypto/internal/skcipher.h>

@@ -13,6 +13,7 @@
  * May, 2, 1997: Added support for QLGC,isp --jj
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/types.h>

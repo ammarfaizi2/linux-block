@@ -7,6 +7,7 @@
  *	Copyright (c) 2009 Novell Inc.
  */
 
+#include <linux/capability.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>
 #include <linux/module.h>

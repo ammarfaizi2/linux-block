@@ -28,6 +28,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/log2.h>

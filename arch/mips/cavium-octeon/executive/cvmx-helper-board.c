@@ -31,6 +31,7 @@
  * network ports from the rest of the cvmx-helper files.
  */
 
+#include <linux/capability.h>
 #include <linux/bug.h>
 #include <asm/octeon/octeon.h>
 #include <asm/octeon/cvmx-bootinfo.h>

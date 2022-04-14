@@ -77,6 +77,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <asm/unaligned.h>
 
 #include "matroxfb_accel.h"

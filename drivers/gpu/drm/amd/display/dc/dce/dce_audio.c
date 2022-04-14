@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/capability.h>
 #include <linux/slab.h>
 
 #include "reg_helper.h"

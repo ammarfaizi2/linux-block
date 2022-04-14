@@ -6,6 +6,7 @@
 #include "qla_def.h"
 #include "qla_target.h"
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/kthread.h>
 #include <linux/vmalloc.h>

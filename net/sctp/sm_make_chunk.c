@@ -30,6 +30,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/capability.h>
 #include <crypto/hash.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

@@ -5,6 +5,7 @@
  * Author: Patrice Chotard <patrice.chotard@stericsson.com> for ST-Ericsson.
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/gpio/driver.h>
 #include <linux/pinctrl/pinctrl.h>

@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/capability.h>
 #include <drm/drm_debugfs.h>
 #include <drm/drm_fourcc.h>
 

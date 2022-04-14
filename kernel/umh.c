@@ -2,6 +2,7 @@
 /*
  * umh - the kernel usermode helper
  */
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/sched.h>

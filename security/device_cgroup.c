@@ -5,6 +5,7 @@
  * Copyright 2007 IBM Corp
  */
 
+#include <linux/capability.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/bpf-cgroup.h>
 #include <linux/device_cgroup.h>

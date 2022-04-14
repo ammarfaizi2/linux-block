@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/capability.h>
 #include <linux/acpi.h>
 #include <linux/acpi_iort.h>
 #include <linux/device.h>

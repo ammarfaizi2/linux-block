@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":OPAL: " fmt
 
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

@@ -12,6 +12,7 @@
  * simultaneously to rs485.
  */
 
+#include <linux/capability.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/module.h>

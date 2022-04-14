@@ -6,6 +6,8 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/capability.h>
+
 #include "dsa_priv.h"
 
 static int dsa_master_get_regs_len(struct net_device *dev)

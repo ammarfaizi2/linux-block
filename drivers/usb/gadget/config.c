@@ -5,6 +5,7 @@
  * Copyright (C) 2003 David Brownell
  */
 
+#include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

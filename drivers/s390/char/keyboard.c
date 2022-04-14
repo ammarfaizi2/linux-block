@@ -7,6 +7,7 @@
  *    Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com),
  */
 
+#include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/sched/signal.h>
 #include <linux/slab.h>

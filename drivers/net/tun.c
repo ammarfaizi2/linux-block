@@ -32,6 +32,7 @@
 #define DRV_DESCRIPTION	"Universal TUN/TAP device driver"
 #define DRV_COPYRIGHT	"(C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>"
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/errno.h>

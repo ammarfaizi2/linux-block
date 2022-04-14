@@ -7,6 +7,7 @@
  *
  * (As all part of the Linux kernel, this file is GPL)
  */
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
 #include <linux/rtnetlink.h>

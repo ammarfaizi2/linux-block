@@ -7,6 +7,7 @@
  *   Reworked by Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <linux/capability.h>
 #include <linux/bitfield.h>
 #include <linux/completion.h>
 #include <linux/dma-mapping.h>

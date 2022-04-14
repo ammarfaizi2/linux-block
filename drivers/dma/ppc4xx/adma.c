@@ -15,6 +15,7 @@
  * ADMA driver written by D.Williams.
  */
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

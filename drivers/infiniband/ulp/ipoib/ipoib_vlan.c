@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/capability.h>
 #include <linux/sched/signal.h>
 
 #include <linux/init.h>

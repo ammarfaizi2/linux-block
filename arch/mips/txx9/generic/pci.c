@@ -13,6 +13,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

@@ -8,6 +8,7 @@
  * compiled as module, this file is compiled as module as well.
  */
 
+#include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of.h>

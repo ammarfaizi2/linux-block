@@ -5,6 +5,7 @@
  */
 #include "qla_def.h"
 
+#include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/moduleparam.h>

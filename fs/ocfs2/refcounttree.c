@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Oracle.  All rights reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/sort.h>
 #include <cluster/masklog.h>
 #include "ocfs2.h"
