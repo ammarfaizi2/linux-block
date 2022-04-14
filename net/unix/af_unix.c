@@ -77,6 +77,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/socket_alloc.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/wait_api.h>

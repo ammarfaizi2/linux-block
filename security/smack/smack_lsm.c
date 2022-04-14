@@ -15,6 +15,7 @@
  *  Copyright (C) 2011 Intel Corporation.
  */
 
+#include <net/socket_alloc.h>
 #include <net/sock_api.h>
 #include <net/ipv6_api.h>
 #include <linux/uaccess.h>
