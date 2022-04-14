@@ -26,10 +26,14 @@
 #include <linux/kbuild.h>
 #include <linux/arm-smccc.h>
 
-int main(void)
-{
 #include "../../../kernel/sched/per_task_area_struct_defs.h"
 
+#define TSK_PER_TASK_BASE	offsetof(struct task_struct, per_task_area)
+#define TI_BASE			TSK_PER_TASK_BASE + offsetof(struct task_struct_per_task, ti)
+#define THREAD_BASE		TSK_PER_TASK_BASE + offsetof(struct task_struct_per_task, thread)
+
+int main(void)
+{
   DEFINE(TSK_ACTIVE_MM,		offsetof(struct task_struct, active_mm));
   BLANK();
   DEFINE(TSK_TI_CPU,		offsetof(struct task_struct, thread_info.cpu));
@@ -47,16 +51,16 @@ int main(void)
   DEFINE(TSK_STACK_CANARY,	offsetof(struct task_struct, stack_canary));
 #endif
   BLANK();
-  DEFINE(THREAD_CPU_CONTEXT,	offsetof(struct task_struct, thread.cpu_context));
-  DEFINE(THREAD_SCTLR_USER,	offsetof(struct task_struct, thread.sctlr_user));
+  DEFINE(THREAD_CPU_CONTEXT,	THREAD_BASE + offsetof(struct thread_struct, cpu_context));
+  DEFINE(THREAD_SCTLR_USER,	THREAD_BASE + offsetof(struct thread_struct, sctlr_user));
 #ifdef CONFIG_ARM64_PTR_AUTH
-  DEFINE(THREAD_KEYS_USER,	offsetof(struct task_struct, thread.keys_user));
+  DEFINE(THREAD_KEYS_USER,	THREAD_BASE + offsetof(struct thread_struct, keys_user));
 #endif
 #ifdef CONFIG_ARM64_PTR_AUTH_KERNEL
-  DEFINE(THREAD_KEYS_KERNEL,	offsetof(struct task_struct, thread.keys_kernel));
+  DEFINE(THREAD_KEYS_KERNEL,	THREAD_BASE + offsetof(struct thread_struct, keys_kernel));
 #endif
 #ifdef CONFIG_ARM64_MTE
-  DEFINE(THREAD_MTE_CTRL,	offsetof(struct task_struct, thread.mte_ctrl));
+  DEFINE(THREAD_MTE_CTRL,	THREAD_BASE + offsetof(struct thread_struct, mte_ctrl));
 #endif
   BLANK();
   DEFINE(S_X0,			offsetof(struct pt_regs, regs[0]));

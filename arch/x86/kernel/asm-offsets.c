@@ -36,7 +36,10 @@
 static void __used common(void)
 {
 	BLANK();
-	OFFSET(TASK_threadsp, task_struct, thread.sp);
+	DEFINE(TASK_threadsp, offsetof(struct task_struct, per_task_area) +
+			      offsetof(struct task_struct_per_task, thread) +
+			      offsetof(struct thread_struct, sp));
+
 #ifdef CONFIG_STACKPROTECTOR
 	OFFSET(TASK_stack_canary, task_struct, stack_canary);
 #endif

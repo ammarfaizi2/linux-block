@@ -8,6 +8,7 @@
 #ifndef _LINUX_SCS_H
 #define _LINUX_SCS_H
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/gfp.h>
 #include <linux/poison.h>
 #include <linux/sched.h>
@@ -24,6 +25,8 @@
 
 #define task_scs(tsk)		(task_thread_info(tsk)->scs_base)
 #define task_scs_sp(tsk)	(task_thread_info(tsk)->scs_sp)
+
+extern unsigned long init_shadow_call_stack[SCS_SIZE / sizeof(long)];
 
 void *scs_alloc(int node);
 void scs_free(void *s);
