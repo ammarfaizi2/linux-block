@@ -14,6 +14,7 @@
  *		Marc Boucher	:	routing by fwmark
  */
 
+#include <net/ip_fib_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

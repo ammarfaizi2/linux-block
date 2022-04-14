@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <net/ip_fib_api.h>
 #include <net/inet_ecn.h>
 #include <net/dst_api.h>
 #include <net/checksum.h>

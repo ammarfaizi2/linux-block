@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Scott Feldman <sfeldma@gmail.com>
  */
 
+#include <net/ip_fib_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>

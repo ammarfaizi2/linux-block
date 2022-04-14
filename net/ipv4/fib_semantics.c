@@ -9,6 +9,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <net/ip_fib_api.h>
 #include <net/ip_extra.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>
