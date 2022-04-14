@@ -2,6 +2,7 @@
 /* Copyright (c) 2017 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/idr_api.h>
 #include <linux/kref.h>
 #include <linux/uaccess.h>
 

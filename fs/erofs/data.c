@@ -5,6 +5,7 @@
  * Copyright (C) 2021, Alibaba Cloud
  */
 #include "internal.h"
+#include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/prefetch.h>
 #include <linux/dax.h>

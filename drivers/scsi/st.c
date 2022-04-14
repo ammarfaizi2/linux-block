@@ -20,6 +20,7 @@
 
 static const char *verstr = "20160209";
 
+#include <linux/idr_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>

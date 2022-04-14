@@ -7,6 +7,7 @@
  * Copyright (C) 2005 Pete Zaitcev (zaitcev@redhat.com)
  */
 
+#include <linux/idr_api.h>
 #include <linux/hardirq.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

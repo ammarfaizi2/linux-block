@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
+#include <linux/idr_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/idr.h>
 #include <linux/list.h>

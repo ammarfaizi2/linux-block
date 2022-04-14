@@ -13,6 +13,7 @@
 #include "netdev.h"
 #include "hfi.h"
 
+#include <linux/idr_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/netdevice.h>

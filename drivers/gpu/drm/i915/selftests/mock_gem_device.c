@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/idr_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

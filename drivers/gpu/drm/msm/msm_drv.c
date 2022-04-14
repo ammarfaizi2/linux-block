@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/device_api_lock.h>

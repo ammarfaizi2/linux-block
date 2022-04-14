@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
+#include <linux/idr_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/slab.h>

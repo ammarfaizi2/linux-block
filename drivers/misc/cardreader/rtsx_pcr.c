@@ -7,6 +7,7 @@
  *   Wei WANG <wei_wang@realsil.com.cn>
  */
 
+#include <linux/idr_api.h>
 #include <linux/hardirq.h>
 #include <linux/pci.h>
 #include <linux/module.h>

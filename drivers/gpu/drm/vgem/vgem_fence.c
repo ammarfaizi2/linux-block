@@ -20,6 +20,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/dma-buf.h>
 #include <linux/dma-resv.h>

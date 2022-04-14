@@ -8,6 +8,7 @@
  * Copyright 2021-2022  Intel Corporation
  */
 
+#include <linux/idr_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/export.h>
 #include <linux/etherdevice.h>

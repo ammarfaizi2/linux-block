@@ -10,6 +10,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>

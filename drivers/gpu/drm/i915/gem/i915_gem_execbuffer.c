@@ -4,6 +4,7 @@
  * Copyright © 2008,2010 Intel Corporation
  */
 
+#include <linux/idr_api.h>
 #include <linux/highmem.h>
 #include <linux/file.h>
 #include <linux/dma-fence-api.h>

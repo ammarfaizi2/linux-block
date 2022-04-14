@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/errno.h>
 #include <linux/device/class.h>

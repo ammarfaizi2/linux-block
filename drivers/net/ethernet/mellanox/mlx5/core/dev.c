@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/mlx5/driver.h>
 #include <linux/mlx5/eswitch.h>

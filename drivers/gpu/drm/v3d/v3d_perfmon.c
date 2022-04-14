@@ -3,6 +3,8 @@
  * Copyright (C) 2021 Raspberry Pi
  */
 
+#include <linux/idr_api.h>
+
 #include "v3d_drv.h"
 #include "v3d_regs.h"
 

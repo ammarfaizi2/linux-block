@@ -7,6 +7,7 @@
  * Trond Myklebust <trond.myklebust@primarydata.com>
  *
  */
+#include <linux/idr_api.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/types.h>

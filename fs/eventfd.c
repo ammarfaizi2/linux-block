@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/poll.h>

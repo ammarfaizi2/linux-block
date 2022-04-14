@@ -36,6 +36,7 @@
 
  */
 
+#include <linux/idr_api.h>
 #include <linux/hashtable_api.h>
 
 #include "i915_drv.h"

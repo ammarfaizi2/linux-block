@@ -6,6 +6,7 @@
  * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/idr_api.h>
 #include <kunit/test.h>
 #include <linux/idr.h>
 

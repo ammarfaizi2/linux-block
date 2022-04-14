@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>

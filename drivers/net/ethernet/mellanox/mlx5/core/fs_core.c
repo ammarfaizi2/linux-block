@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mutex.h>
 #include <linux/mlx5/driver.h>

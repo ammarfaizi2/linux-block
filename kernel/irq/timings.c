@@ -2,6 +2,7 @@
 // Copyright (C) 2016, Linaro Ltd - Daniel Lezcano <daniel.lezcano@linaro.org>
 #define pr_fmt(fmt) "irq_timings: " fmt
 
+#include <linux/idr_api.h>
 #include <linux/kernel.h>
 #include <linux/percpu.h>
 #include <linux/slab.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

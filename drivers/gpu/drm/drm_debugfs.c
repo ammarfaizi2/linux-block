@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/cred.h>
 #include <linux/debugfs.h>
 #include <linux/export.h>

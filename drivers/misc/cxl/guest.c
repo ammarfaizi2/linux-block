@@ -3,6 +3,7 @@
  * Copyright 2015 IBM Corp.
  */
 
+#include <linux/idr_api.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/cred.h>

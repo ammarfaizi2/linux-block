@@ -8,6 +8,7 @@
  * pfr_update driver is used for Platform Firmware Runtime
  * Update, which includes the code injection and driver update.
  */
+#include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

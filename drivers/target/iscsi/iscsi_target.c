@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/idr_api.h>
 #include <linux/highmem.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

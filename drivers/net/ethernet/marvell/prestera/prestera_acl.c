@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2020-2021 Marvell International Ltd. All rights reserved */
 
+#include <linux/idr_api.h>
 #include <linux/rhashtable.h>
 
 #include "prestera_acl.h"

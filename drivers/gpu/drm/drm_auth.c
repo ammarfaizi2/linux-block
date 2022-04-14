@@ -28,6 +28,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/idr_api.h>
 #include <linux/capability.h>
 #include <linux/slab.h>
 

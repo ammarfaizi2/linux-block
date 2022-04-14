@@ -4,6 +4,7 @@
  * Copyright (C) 2014 ARM Limited
  */
 
+#include <linux/idr_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

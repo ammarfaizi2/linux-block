@@ -11,6 +11,7 @@
 
 */
 
+#include <linux/idr_api.h>
 #include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

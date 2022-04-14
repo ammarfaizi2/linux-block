@@ -5,6 +5,7 @@
  * Copyright (c) 2020 Samuel Cabrero <scabrero@suse.de>
  */
 
+#include <linux/idr_api.h>
 #include <linux/kref.h>
 #include <net/genetlink.h>
 #include <uapi/linux/cifs/cifs_netlink.h>

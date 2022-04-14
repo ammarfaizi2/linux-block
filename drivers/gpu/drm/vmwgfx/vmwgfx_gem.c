@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/idr_api.h>
 #include <linux/debugfs.h>
 
 #include "vmwgfx_drv.h"

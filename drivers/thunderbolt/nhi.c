@@ -9,6 +9,7 @@
  * Copyright (C) 2018, Intel Corporation
  */
 
+#include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/pm_runtime.h>
 #include <linux/slab.h>

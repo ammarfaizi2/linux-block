@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
+#include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/scatterlist.h>

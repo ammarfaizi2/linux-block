@@ -33,6 +33,7 @@
  *	than the level indicated above to trigger output.	
  */
 
+#include <linux/idr_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/device/class.h>

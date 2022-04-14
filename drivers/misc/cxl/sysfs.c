@@ -3,6 +3,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

@@ -3,6 +3,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/idr_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/capability.h>
 #include <linux/jhash.h>

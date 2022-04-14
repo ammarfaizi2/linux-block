@@ -24,6 +24,7 @@
 
 /* Bluetooth HCI Management interface */
 
+#include <linux/idr_api.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <asm/unaligned.h>

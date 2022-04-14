@@ -53,6 +53,7 @@
                                    R: do_xxxx()
    L: receive_xxxx_reply()     <-  R: send_xxxx_reply()
 */
+#include <linux/idr_api.h>
 #include <linux/delay.h>
 #include <linux/sched/cond_resched.h>
 #include <trace/events/dlm.h>

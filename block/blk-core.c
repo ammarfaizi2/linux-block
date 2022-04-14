@@ -12,6 +12,7 @@
 /*
  * This handles all read/write requests to block devices
  */
+#include <linux/idr_api.h>
 #include <linux/error-injection.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

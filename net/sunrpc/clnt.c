@@ -19,6 +19,7 @@
  */
 
 
+#include <linux/idr_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/capability.h>

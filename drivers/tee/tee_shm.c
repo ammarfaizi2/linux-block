@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015-2017, 2019-2021 Linaro Limited
  */
+#include <linux/idr_api.h>
 #include <linux/fs_types.h>
 #include <linux/anon_inodes.h>
 #include <linux/device.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/relay.h>
