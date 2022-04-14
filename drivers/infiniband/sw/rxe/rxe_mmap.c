@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/kref_api.h>
 #include <linux/shm.h>
 #include <linux/vmalloc.h>
 #include <linux/mm.h>

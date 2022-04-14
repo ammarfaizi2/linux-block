@@ -10,6 +10,7 @@
  *     Robert Jennings <rcjenn@us.ibm.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 
 #include "core.h"

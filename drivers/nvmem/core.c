@@ -6,6 +6,7 @@
  * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/device/bus.h>

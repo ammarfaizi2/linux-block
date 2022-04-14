@@ -8,6 +8,7 @@
  * but has been rewritten to be easier to read and use.
  */
 
+#include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

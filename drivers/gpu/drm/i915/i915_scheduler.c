@@ -4,6 +4,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/kref_api.h>
 #include <linux/mutex.h>
 
 #include "i915_drv.h"

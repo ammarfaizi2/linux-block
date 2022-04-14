@@ -3,6 +3,7 @@
  * Copyright (C) 2015, 2016 ARM Ltd.
  */
 
+#include <linux/kref_api.h>
 #include <linux/irqdesc.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

@@ -32,6 +32,7 @@
  *
  */
 
+#include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>

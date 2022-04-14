@@ -15,6 +15,7 @@
  /* treated slightly differently for reconnection purposes since we never     */
  /* want to reuse a stale file handle and only the caller knows the file info */
 
+#include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>

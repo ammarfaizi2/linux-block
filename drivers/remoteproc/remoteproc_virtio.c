@@ -9,6 +9,7 @@
  * Brian Swetland <swetland@google.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/dma-map-ops.h>

@@ -7,6 +7,7 @@
 
 
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/device.h>
 #include <linux/hid.h>

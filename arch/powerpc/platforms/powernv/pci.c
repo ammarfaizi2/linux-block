@@ -5,6 +5,7 @@
  * Copyright 2011 Benjamin Herrenschmidt, IBM Corp.
  */
 
+#include <linux/kref_api.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

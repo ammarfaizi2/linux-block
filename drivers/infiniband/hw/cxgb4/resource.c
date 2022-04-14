@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 /* Crude resource management */
+#include <linux/kref_api.h>
 #include <linux/spinlock.h>
 #include <linux/genalloc.h>
 #include <linux/ratelimit.h>

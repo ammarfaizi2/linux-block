@@ -6,6 +6,7 @@
  * Copyright (C) 2020-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/ioctl.h>

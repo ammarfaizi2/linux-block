@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Chelsio Communications, Inc.
  */
 
+#include <linux/kref_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/module.h>
 #include <linux/list.h>

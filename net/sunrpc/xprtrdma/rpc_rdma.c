@@ -47,6 +47,7 @@
  * to the Linux RPC framework lives.
  */
 
+#include <linux/kref_api.h>
 #include <linux/gfp_api.h>
 #include <asm/cacheflush.h>
 #include <linux/highmem.h>

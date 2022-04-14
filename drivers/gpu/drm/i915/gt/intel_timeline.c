@@ -3,6 +3,7 @@
  * Copyright © 2016-2018 Intel Corporation
  */
 
+#include <linux/kref_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_cache.h>

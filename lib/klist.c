@@ -33,6 +33,7 @@
  * all accessors have finished).
  */
 
+#include <linux/kref_api.h>
 #include <linux/klist.h>
 #include <linux/export.h>
 #include <linux/sched.h>

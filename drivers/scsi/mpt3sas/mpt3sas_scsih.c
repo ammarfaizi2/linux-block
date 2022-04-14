@@ -42,6 +42,7 @@
  * USA.
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioprio.h>
 #include <linux/bitmap.h>

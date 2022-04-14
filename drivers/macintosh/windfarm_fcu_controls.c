@@ -6,6 +6,7 @@
  */
 #undef DEBUG
 
+#include <linux/kref_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

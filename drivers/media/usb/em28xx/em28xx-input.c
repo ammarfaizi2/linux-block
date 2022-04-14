@@ -19,6 +19,7 @@
 
 #include "em28xx.h"
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

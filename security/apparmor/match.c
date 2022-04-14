@@ -8,6 +8,7 @@
  * Copyright 2009-2012 Canonical Ltd.
  */
 
+#include <linux/kref_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

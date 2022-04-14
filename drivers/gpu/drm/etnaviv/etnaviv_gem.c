@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <drm/drm_prime.h>

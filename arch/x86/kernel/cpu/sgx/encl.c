@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2016-20 Intel Corporation. */
 
+#include <linux/kref_api.h>
 #include <linux/highmem.h>
 #include <linux/file.h>
 #include <linux/bitmap.h>

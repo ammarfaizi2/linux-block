@@ -28,6 +28,7 @@
  *    Xiaoguang Chen <xiaoguang.chen@intel.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/hashtable_api.h>

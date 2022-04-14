@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <linux/kref_api.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>
 #include <linux/list.h>

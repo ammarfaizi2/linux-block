@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sched/mm.h>
 

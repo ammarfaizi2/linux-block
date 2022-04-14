@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 
 #include "gem/i915_gem_internal.h"

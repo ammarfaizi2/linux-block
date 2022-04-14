@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
+#include <linux/kref_api.h>
 #include <core/memory.h>
 #include <core/mm.h>
 #include <subdev/fb.h>

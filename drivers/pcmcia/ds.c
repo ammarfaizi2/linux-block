@@ -10,6 +10,7 @@
  * (C) 2003 - 2010	Dominik Brodowski
  */
 
+#include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/ioport.h>
 #include <linux/device/class.h>

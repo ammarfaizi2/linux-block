@@ -4,6 +4,7 @@
  * Copyright 2011 Solarflare Communications Inc.
  */
 
+#include <linux/kref_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu_rmap.h>
 #include <linux/interrupt.h>

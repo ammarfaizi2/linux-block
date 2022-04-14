@@ -7,6 +7,7 @@
  * Written by: Darrick J. Wong <djwong@us.ibm.com>, IBM Corporation
  */
 
+#include <linux/kref_api.h>
 #include <linux/scatterlist.h>
 #include <linux/slab.h>
 #include <linux/async.h>

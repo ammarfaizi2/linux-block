@@ -3,6 +3,7 @@
  * Copyright(c) 2016 Intel Corporation.
  */
 
+#include <linux/kref_api.h>
 #include <linux/shm.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>

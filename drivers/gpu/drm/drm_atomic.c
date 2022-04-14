@@ -27,6 +27,7 @@
  */
 
 
+#include <linux/kref_api.h>
 #include <linux/sync_file.h>
 
 #include <drm/drm_atomic.h>

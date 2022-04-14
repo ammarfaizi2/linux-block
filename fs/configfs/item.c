@@ -11,6 +11,7 @@
  * critical information about using the config_item interface.
  */
 
+#include <linux/kref_api.h>
 #include <linux/string.h>
 #include <linux/module.h>
 #include <linux/stat.h>

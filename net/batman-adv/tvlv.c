@@ -6,6 +6,7 @@
 
 #include "main.h"
 
+#include <linux/kref_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/byteorder/generic.h>
 #include <linux/container_of.h>

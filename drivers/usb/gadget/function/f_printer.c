@@ -11,6 +11,7 @@
  * Copyright (C) 2006 Craig W. Nadler
  */
 
+#include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

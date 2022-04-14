@@ -5,6 +5,7 @@
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api.h>
 #include <linux/atomic_api.h>

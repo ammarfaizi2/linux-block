@@ -4,6 +4,7 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/kref_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

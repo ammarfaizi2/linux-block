@@ -6,6 +6,7 @@
  * Copyright (C) 2018, Intel Corporation
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/crc32.h>
 #include <linux/delay.h>

@@ -20,6 +20,7 @@
 /*
  * This file contains functions for buffer object structure management
  */
+#include <linux/kref_api.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>
 #include <asm/cacheflush.h>

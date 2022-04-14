@@ -7,6 +7,7 @@
 #include "soft-interface.h"
 #include "main.h"
 
+#include <linux/kref_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>

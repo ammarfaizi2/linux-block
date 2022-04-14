@@ -4,6 +4,7 @@
  *
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
+#include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/highmem.h>
 #include <linux/atomic_api.h>

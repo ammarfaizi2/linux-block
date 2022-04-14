@@ -3,6 +3,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/kref_api.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/usb.h>

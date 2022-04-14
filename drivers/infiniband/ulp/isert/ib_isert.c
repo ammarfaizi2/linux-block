@@ -8,6 +8,7 @@
  *
  ****************************************************************************/
 
+#include <linux/kref_api.h>
 #include <asm/unaligned.h>
 #include <linux/string.h>
 #include <linux/module.h>

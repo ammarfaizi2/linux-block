@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
 /* Copyright 2019 Collabora ltd. */
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/hardirq.h>
 #include <linux/dma-fence-api.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/kref_api.h>
 #include <linux/gfp_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>

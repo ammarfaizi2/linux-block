@@ -22,6 +22,7 @@
  * Authors: AMD
  */
 
+#include <linux/kref_api.h>
 #include <linux/slab.h>
 #include <linux/mm.h>
 

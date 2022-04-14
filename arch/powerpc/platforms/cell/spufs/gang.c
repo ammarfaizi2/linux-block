@@ -7,6 +7,7 @@
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 

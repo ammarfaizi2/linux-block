@@ -3,6 +3,7 @@
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
+#include <linux/kref_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/list.h>

@@ -9,6 +9,7 @@
  *  Ryan S. Arnold <rsa@us.ibm.com>
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/atomic_api.h>

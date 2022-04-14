@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
 
+#include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <drm/panfrost_drm.h>
 

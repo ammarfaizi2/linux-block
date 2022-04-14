@@ -5,6 +5,7 @@
  * Copyright © 2003-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/kref_api.h>
 #include <linux/highmem.h>
 #include <asm/cacheflush.h>
 #include <linux/kernel.h>

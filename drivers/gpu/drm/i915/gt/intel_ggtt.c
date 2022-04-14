@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/kref_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>

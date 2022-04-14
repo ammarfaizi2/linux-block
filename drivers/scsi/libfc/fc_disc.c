@@ -20,6 +20,7 @@
  * details.
  */
 
+#include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/timer.h>
 #include <linux/slab.h>

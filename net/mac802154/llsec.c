@@ -6,6 +6,7 @@
  * Phoebe Buckheister <phoebe.buckheister@itwm.fraunhofer.de>
  */
 
+#include <linux/kref_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/err.h>
 #include <linux/bug.h>
