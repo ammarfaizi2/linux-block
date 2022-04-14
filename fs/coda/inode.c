@@ -9,6 +9,7 @@
  * Copyright (C) Carnegie Mellon University
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/module.h>

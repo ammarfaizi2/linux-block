@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

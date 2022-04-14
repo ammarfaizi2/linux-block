@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012 Bryan Schumaker <bjschuma@netapp.com>
  */
+#include <linux/mm_api_truncate.h>
 #include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

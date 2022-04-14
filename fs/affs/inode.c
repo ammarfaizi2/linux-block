@@ -10,6 +10,7 @@
  *
  *  (C) 1991  Linus Torvalds - minix filesystem
  */
+#include <linux/mm_api_truncate.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

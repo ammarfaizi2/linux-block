@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>

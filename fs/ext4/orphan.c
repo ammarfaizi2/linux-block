@@ -1,6 +1,7 @@
 /*
  * Ext4 orphan inode handling
  */
+#include <linux/mm_api_truncate.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

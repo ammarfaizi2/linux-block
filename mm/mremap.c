@@ -8,6 +8,7 @@
  *	(C) Copyright 2002 Red Hat Inc, All Rights Reserved
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/fs_api.h>

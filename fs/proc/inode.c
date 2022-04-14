@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/delayed_call.h>

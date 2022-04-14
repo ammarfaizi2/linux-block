@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2018 Christoph Hellwig.
  * All Rights Reserved.
  */
+#include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

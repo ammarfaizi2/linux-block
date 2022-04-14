@@ -6,6 +6,7 @@
  *          Haicheng Li <haicheng.li@intel.com>
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

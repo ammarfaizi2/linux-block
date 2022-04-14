@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/mm_api_truncate.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/llist_api.h>
 #include <linux/highmem.h>

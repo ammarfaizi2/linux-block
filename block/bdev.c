@@ -5,6 +5,7 @@
  *  Copyright (C) 2016 - 2020 Christoph Hellwig
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

@@ -22,6 +22,7 @@
  *  the superblock.
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/ktime_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
