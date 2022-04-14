@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched/user.h>
 #include <linux/sched/signal.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>
