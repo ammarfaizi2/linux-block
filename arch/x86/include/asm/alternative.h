@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_ALTERNATIVE_H
 #define _ASM_X86_ALTERNATIVE_H
 
+#include <asm/cpufeatures.h>
 #include <linux/types.h>
 #include <linux/stringify.h>
 #include <asm/asm.h>
