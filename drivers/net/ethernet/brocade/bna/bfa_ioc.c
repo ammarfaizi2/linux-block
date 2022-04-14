@@ -9,6 +9,7 @@
  * www.qlogic.com
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 
 #include "bfa_ioc.h"

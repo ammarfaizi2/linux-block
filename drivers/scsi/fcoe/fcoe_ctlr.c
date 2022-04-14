@@ -6,6 +6,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 #include <linux/types.h>
 #include <linux/module.h>

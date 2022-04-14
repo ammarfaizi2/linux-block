@@ -13,6 +13,7 @@
  */
 #include "rtllib.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/random.h>
 #include <linux/delay.h>
 #include <linux/uaccess.h>

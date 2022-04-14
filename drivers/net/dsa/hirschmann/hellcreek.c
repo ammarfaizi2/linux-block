@@ -7,6 +7,7 @@
  * Author Kurt Kanzenbach <kurt@linutronix.de>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bitmap.h>

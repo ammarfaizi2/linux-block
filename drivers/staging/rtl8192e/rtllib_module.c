@@ -13,6 +13,7 @@
  * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>

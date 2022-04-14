@@ -43,6 +43,7 @@
  *
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

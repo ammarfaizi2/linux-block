@@ -32,6 +32,8 @@
  * SOFTWARE.
  */
 
+#include <linux/etherdevice_api.h>
+
 #include "cxgb4.h"
 #include "smt.h"
 #include "t4_msg.h"

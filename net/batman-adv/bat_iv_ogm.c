@@ -7,6 +7,7 @@
 #include "bat_iv_ogm.h"
 #include "main.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bitmap.h>

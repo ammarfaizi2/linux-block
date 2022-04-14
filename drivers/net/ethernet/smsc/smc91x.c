@@ -53,6 +53,7 @@ static const char version[] =
 #endif
 
 
+#include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

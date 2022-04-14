@@ -7,6 +7,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 #include <linux/fs.h>
 #include <linux/debugfs.h>

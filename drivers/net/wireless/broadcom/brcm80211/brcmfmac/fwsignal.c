@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
+#include <linux/etherdevice_api.h>
 #include <linux/types.h>
 #include <linux/module.h>
 #include <linux/if_ether.h>

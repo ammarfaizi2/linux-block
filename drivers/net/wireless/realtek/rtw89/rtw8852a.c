@@ -2,6 +2,7 @@
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 
 #include "coex.h"

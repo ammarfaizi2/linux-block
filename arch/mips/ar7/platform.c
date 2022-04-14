@@ -4,6 +4,7 @@
  * Copyright (C) 2006,2007 Eugene Konev <ejka@openwrt.org>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/delay.h>

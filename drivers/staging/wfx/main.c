@@ -10,6 +10,7 @@
  * Copyright (c) 2006, Michael Wu <flamingice@sourmilk.net>
  * Copyright (c) 2004-2006 Jean-Baptiste Note <jbnote@gmail.com>, et al.
  */
+#include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/of.h>

@@ -13,6 +13,7 @@
  *   Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/export.h>
 #include <linux/firmware.h>

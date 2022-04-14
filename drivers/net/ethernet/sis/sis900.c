@@ -49,6 +49,7 @@
    Rev 1.05 Aug. 7 1999 Jim Huang (cmhuang@sis.com.tw) Initial release
 */
 
+#include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

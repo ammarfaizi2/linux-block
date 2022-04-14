@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/slab.h>

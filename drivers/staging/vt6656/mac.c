@@ -14,6 +14,7 @@
  * Revision History:
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 
 #include "desc.h"

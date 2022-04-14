@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Mellanox Technologies
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

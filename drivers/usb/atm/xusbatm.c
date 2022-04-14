@@ -5,6 +5,7 @@
  *  Copyright (C) 2005 Duncan Sands, Roman Kagan (rkagan % mail ! ru)
  ******************************************************************************/
 
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/etherdevice.h>		/* for eth_random_addr() */
 

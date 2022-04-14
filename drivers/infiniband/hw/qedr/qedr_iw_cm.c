@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/etherdevice_api.h>
 #include <net/ip.h>
 #include <net/ipv6.h>
 #include <net/udp.h>

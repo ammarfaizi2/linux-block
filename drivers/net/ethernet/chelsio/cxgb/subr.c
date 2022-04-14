@@ -36,6 +36,8 @@
  *                                                                           *
  ****************************************************************************/
 
+#include <linux/etherdevice_api.h>
+
 #include "common.h"
 #include "elmer0.h"
 #include "regs.h"

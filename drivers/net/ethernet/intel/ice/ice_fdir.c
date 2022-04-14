@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2018-2020, Intel Corporation. */
 
+#include <linux/etherdevice_api.h>
+
 #include "ice_common.h"
 
 /* These are training packet headers used to program flow director filters. */

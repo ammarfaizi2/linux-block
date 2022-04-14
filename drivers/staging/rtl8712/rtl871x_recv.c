@@ -16,6 +16,7 @@
 
 #define _RTL871X_RECV_C_
 
+#include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 #include <linux/ip.h>
 #include <linux/slab.h>

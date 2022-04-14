@@ -7,6 +7,7 @@
 
 #include "mac.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <net/cfg80211.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2011 Andre Heider <a.heider@gmail.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/if_ether.h>
 #include <linux/etherdevice.h>
 #include <linux/if_vlan.h>

@@ -5,6 +5,7 @@
  * Derived from Intel e1000 driver
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

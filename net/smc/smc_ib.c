@@ -12,6 +12,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/etherdevice.h>

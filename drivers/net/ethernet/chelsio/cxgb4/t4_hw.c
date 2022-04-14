@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/delay.h>
 #include "cxgb4.h"

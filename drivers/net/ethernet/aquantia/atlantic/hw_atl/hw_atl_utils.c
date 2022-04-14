@@ -15,6 +15,7 @@
 #include "hw_atl_llh.h"
 #include "hw_atl_llh_internal.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/random.h>
 

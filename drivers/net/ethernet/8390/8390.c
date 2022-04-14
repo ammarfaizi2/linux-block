@@ -4,6 +4,8 @@
 static const char version[] =
     "8390.c:v1.10cvs 9/23/94 Donald Becker (becker@cesdis.gsfc.nasa.gov)\n";
 
+#include <linux/etherdevice_api.h>
+
 #include "lib8390.c"
 
 int ei_open(struct net_device *dev)

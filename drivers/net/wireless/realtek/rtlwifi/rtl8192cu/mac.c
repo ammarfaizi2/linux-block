@@ -16,6 +16,7 @@
 #include "trx.h"
 #include "../rtl8192c/fw_common.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 
 /* macro to shorten lines */

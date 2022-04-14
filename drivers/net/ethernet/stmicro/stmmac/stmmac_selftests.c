@@ -6,6 +6,7 @@
  * Author: Jose Abreu <joabreu@synopsys.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/bitrev.h>
 #include <linux/completion.h>

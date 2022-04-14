@@ -7,6 +7,7 @@
  * the information ethtool needs.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 #include <linux/compat.h>
 #include <linux/etherdevice.h>

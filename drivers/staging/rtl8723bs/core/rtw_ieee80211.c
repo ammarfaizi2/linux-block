@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/etherdevice_api.h>
 #include <drv_types.h>
 #include <rtw_debug.h>
 #include <linux/of.h>

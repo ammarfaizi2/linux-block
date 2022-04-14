@@ -17,6 +17,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/etherdevice_api.h>
+
 #include "core.h"
 #include "debug.h"
 #include "htc-ops.h"

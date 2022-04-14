@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

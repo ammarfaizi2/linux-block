@@ -2,6 +2,7 @@
 /* Copyright (c)  2018 Intel Corporation */
 
 /* ethtool support for igc */
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/if_vlan.h>
 #include <linux/pm_runtime.h>

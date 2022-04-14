@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/etherdevice_api.h>
 #include <linux/mrp_bridge.h>
 #include "br_private_mrp.h"
 

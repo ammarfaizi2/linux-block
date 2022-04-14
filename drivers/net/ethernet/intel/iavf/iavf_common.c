@@ -4,6 +4,7 @@
 #include "iavf_type.h"
 #include "iavf_adminq.h"
 #include "iavf_prototype.h"
+#include <linux/etherdevice_api.h>
 #include <linux/avf/virtchnl.h>
 
 /**

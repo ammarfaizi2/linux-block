@@ -9,6 +9,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 
 #include "mcdi_filters.h"

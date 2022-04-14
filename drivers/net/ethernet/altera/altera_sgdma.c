@@ -3,6 +3,7 @@
  * Copyright (C) 2014 Altera Corporation. All rights reserved
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/list.h>
 #include "altera_utils.h"

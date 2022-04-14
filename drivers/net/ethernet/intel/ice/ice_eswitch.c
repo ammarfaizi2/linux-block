@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2019-2021, Intel Corporation. */
 
+#include <linux/etherdevice_api.h>
+
 #include "ice.h"
 #include "ice_lib.h"
 #include "ice_eswitch.h"

@@ -6,6 +6,7 @@
  * Author: Bartosz Golaszewski <bgolaszewski@baylibre.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/clk.h>

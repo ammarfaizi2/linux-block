@@ -50,6 +50,7 @@
  * netdev functionality.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/if_vlan.h>
 #include <linux/crc32.h>
 

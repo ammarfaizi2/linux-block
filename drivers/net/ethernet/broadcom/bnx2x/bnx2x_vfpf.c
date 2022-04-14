@@ -21,6 +21,7 @@
 
 #include "bnx2x.h"
 #include "bnx2x_cmn.h"
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/crc32.h>
 

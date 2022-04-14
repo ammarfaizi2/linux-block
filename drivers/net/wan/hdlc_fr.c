@@ -30,6 +30,7 @@
 
 */
 
+#include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/etherdevice.h>

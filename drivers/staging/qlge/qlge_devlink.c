@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <linux/etherdevice_api.h>
+
 #include "qlge.h"
 #include "qlge_devlink.h"
 

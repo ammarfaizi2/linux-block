@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>

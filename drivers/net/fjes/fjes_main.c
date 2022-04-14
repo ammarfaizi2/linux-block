@@ -4,6 +4,7 @@
  *  Copyright (c) 2015 FUJITSU LIMITED
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/types.h>

@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/etherdevice_api.h>
 #include <uapi/linux/ipv6.h>
 #include <net/ndisc.h>
 #include "decl.h"

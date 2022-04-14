@@ -5,6 +5,8 @@
  *
  */
 
+#include <linux/etherdevice_api.h>
+
 #include "otx2_common.h"
 
 static int otx2_dmacflt_do_add(struct otx2_nic *pf, const u8 *mac,

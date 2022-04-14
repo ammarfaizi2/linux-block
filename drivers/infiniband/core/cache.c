@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/if_vlan.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

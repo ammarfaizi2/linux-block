@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/etherdevice_api.h>
 #include <net/sock.h>
 #include "core.h"
 #include "bearer.h"

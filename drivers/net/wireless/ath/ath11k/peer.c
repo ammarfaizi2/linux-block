@@ -3,6 +3,8 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/etherdevice_api.h>
+
 #include "core.h"
 #include "peer.h"
 #include "debug.h"

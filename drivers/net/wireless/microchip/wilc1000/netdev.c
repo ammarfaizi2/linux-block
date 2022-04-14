@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/irq.h>
 #include <linux/kthread.h>
 #include <linux/firmware.h>

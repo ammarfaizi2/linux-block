@@ -2,6 +2,7 @@
 /* Copyright 2017-2019 NXP */
 
 #include "enetc.h"
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dim.h>
 #include <linux/device_api_lock.h>

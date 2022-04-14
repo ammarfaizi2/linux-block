@@ -10,6 +10,7 @@
  * Copyright (C) 2004-2010   Dominik Brodowski
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

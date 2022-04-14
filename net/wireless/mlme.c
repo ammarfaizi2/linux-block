@@ -7,6 +7,7 @@
  * Copyright (C) 2019-2020 Intel Corporation
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/etherdevice.h>

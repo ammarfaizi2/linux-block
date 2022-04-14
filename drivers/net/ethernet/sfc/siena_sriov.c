@@ -3,6 +3,7 @@
  * Driver for Solarflare network controllers and boards
  * Copyright 2010-2012 Solarflare Communications Inc.
  */
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/pci.h>

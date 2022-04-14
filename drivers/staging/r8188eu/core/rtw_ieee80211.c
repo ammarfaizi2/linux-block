@@ -3,6 +3,7 @@
 
 #define _IEEE80211_C
 
+#include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 
 #include "../include/drv_types.h"

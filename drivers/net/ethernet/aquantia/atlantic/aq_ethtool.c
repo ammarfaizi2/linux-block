@@ -14,6 +14,7 @@
 #include "aq_filters.h"
 #include "aq_macsec.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/ptp_clock_kernel.h>
 
 static void aq_ethtool_get_regs(struct net_device *ndev,

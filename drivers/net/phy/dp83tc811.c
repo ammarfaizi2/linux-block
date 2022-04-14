@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/ethtool.h>
 #include <linux/etherdevice.h>
 #include <linux/kernel.h>

@@ -16,6 +16,7 @@
 
 *******************************************************************************/
 
+#include <linux/etherdevice_api.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>
 #include <linux/if_arp.h>

@@ -12,6 +12,7 @@
  * See the GNU General Public License for more details.
  */
 
+#include <linux/etherdevice_api.h>
 #include <net/llc.h>
 #include <net/llc_if.h>
 #include <net/llc_conn.h>

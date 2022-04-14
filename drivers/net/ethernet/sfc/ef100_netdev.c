@@ -8,6 +8,8 @@
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation, incorporated herein by reference.
  */
+#include <linux/etherdevice_api.h>
+
 #include "net_driver.h"
 #include "mcdi_port_common.h"
 #include "mcdi_functions.h"

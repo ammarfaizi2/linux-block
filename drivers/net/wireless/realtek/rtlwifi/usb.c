@@ -7,6 +7,7 @@
 #include "base.h"
 #include "ps.h"
 #include "rtl8192c/fw_common.h"
+#include <linux/etherdevice_api.h>
 #include <linux/export.h>
 #include <linux/module.h>
 

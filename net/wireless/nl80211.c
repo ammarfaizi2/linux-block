@@ -8,6 +8,7 @@
  * Copyright (C) 2018-2022 Intel Corporation
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/if.h>
 #include <linux/module.h>

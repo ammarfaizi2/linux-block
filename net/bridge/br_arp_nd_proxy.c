@@ -9,6 +9,7 @@
  *	Roopa Prabhu <roopa@cumulusnetworks.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>

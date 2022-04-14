@@ -23,6 +23,7 @@
 #include "isl6423.h"
 #include "lnbp22.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <media/dvb_ca_en50221.h>
 #include "ttpci-eeprom.h"

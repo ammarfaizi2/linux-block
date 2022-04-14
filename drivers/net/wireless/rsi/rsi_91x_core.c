@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/etherdevice_api.h>
+
 #include "rsi_mgmt.h"
 #include "rsi_common.h"
 #include "rsi_hal.h"

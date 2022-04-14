@@ -13,6 +13,7 @@
  * additional 8xxx chips like the 8192cu, 8188cus, etc.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/init.h>

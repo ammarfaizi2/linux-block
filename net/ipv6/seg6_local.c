@@ -7,6 +7,7 @@
  *  eBPF support: Mathieu Xhonneux <m.xhonneux@gmail.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/filter.h>
 #include <linux/types.h>

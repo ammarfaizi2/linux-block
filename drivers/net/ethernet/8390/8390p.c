@@ -9,6 +9,8 @@ static const char version[] =
 #define ei_inb_p(_p)	inb_p(_p)
 #define ei_outb_p(_v, _p) outb_p(_v, _p)
 
+#include <linux/etherdevice_api.h>
+
 #include "lib8390.c"
 
 int eip_open(struct net_device *dev)

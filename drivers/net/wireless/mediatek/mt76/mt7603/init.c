@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/etherdevice.h>
 #include "mt7603.h"

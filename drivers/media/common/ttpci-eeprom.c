@@ -19,6 +19,7 @@
 
 */
 
+#include <linux/etherdevice_api.h>
 #include <asm/errno.h>
 #include <linux/init.h>
 #include <linux/module.h>

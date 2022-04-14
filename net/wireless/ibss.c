@@ -6,6 +6,7 @@
  * Copyright (C) 2020-2021 Intel Corporation
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/if_arp.h>
 #include <linux/slab.h>

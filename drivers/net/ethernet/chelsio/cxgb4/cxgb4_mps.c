@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 Chelsio Communications, Inc. All rights reserved. */
 
+#include <linux/etherdevice_api.h>
+
 #include "cxgb4.h"
 
 static int cxgb4_mps_ref_dec_by_mac(struct adapter *adap,

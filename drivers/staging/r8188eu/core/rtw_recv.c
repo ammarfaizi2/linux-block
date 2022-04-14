@@ -3,6 +3,7 @@
 
 #define _RTW_RECV_C_
 
+#include <linux/etherdevice_api.h>
 #include <linux/ieee80211.h>
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"

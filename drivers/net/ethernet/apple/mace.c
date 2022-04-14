@@ -6,6 +6,7 @@
  * Copyright (C) 1996 Paul Mackerras.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>

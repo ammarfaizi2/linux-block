@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/etherdevice_api.h>
 #include <rdma/ib_addr.h>
 #include <rdma/ib_cache.h>
 

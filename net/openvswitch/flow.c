@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/uaccess.h>
 #include <linux/netdevice.h>

@@ -8,6 +8,7 @@
  * Copyright 2021-2022  Intel Corporation
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/export.h>
 #include <linux/etherdevice.h>
 #include <net/mac80211.h>

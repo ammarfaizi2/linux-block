@@ -10,6 +10,7 @@
  *          Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2018 Mellanox Technologies. */
 
+#include <linux/etherdevice_api.h>
 #include <net/inet_ecn.h>
 #include <net/vxlan.h>
 #include <net/gre.h>

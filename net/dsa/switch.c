@@ -6,6 +6,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/if_bridge.h>
 #include <linux/netdevice.h>
 #include <linux/notifier.h>

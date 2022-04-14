@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Hisilicon Limited.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  * George McCollister <george.mccollister@gmail.com>
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <net/dsa.h>

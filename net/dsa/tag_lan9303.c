@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2017 Pengutronix, Juergen Borleis <jbe@pengutronix.de>
  */
+#include <linux/etherdevice_api.h>
 #include <linux/dsa/lan9303.h>
 #include <linux/etherdevice.h>
 #include <linux/list.h>

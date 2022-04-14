@@ -7,6 +7,7 @@
  * Page recycling code is mostly taken from gianfar driver.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/align.h>

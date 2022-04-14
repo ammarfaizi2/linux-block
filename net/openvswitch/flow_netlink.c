@@ -7,6 +7,7 @@
 
 #include "flow.h"
 #include "datapath.h"
+#include <linux/etherdevice_api.h>
 #include <linux/uaccess.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021 Mellanox Technologies. */
 
+#include <linux/etherdevice_api.h>
 #include <linux/list.h>
 #include <linux/notifier.h>
 #include <net/netevent.h>

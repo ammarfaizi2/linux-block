@@ -17,6 +17,8 @@
  * this warranty disclaimer.
  */
 
+#include <linux/etherdevice_api.h>
+
 #include "decl.h"
 #include "ioctl.h"
 #include "util.h"

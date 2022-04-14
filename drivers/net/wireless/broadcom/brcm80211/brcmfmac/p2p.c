@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012 Broadcom Corporation
  */
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/netdevice.h>

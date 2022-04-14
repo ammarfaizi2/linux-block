@@ -6,6 +6,7 @@
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
+#include <linux/etherdevice_api.h>
 #include <net/mac80211.h>
 #include <linux/etherdevice.h>
 #include <linux/skbuff.h>

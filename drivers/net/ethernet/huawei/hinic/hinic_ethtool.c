@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

@@ -16,6 +16,7 @@
 
 #define _HCI_INTF_C_
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/usb.h>

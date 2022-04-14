@@ -2,6 +2,8 @@
 /* Copyright(c) 2007 - 2011 Realtek Corporation. */
 
 #define _RTL8188E_XMIT_C_
+#include <linux/etherdevice_api.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/wifi.h"

@@ -13,6 +13,7 @@
  *
  * A special thanks goes to Realtek for their support !
  */
+#include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>

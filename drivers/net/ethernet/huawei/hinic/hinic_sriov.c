@@ -3,6 +3,7 @@
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/pci.h>
 #include <linux/if_vlan.h>
 #include <linux/interrupt.h>

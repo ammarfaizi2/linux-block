@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
+#include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 #include <linux/ip.h>
 #include <linux/udp.h>

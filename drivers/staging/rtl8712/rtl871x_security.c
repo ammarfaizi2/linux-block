@@ -16,6 +16,7 @@
 
 #define  _RTL871X_SECURITY_C_
 
+#include <linux/etherdevice_api.h>
 #include <linux/compiler.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

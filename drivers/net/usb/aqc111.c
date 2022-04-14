@@ -7,6 +7,7 @@
  * Copyright (C) 2018 Aquantia Corp.
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/pci.h>
 #include <linux/etherdevice.h>
 

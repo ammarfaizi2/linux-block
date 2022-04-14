@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>
 
 #include "netdev.h"
