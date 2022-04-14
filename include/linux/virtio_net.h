@@ -2,6 +2,7 @@
 #ifndef _LINUX_VIRTIO_NET_H
 #define _LINUX_VIRTIO_NET_H
 
+#include <uapi/linux/in.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>

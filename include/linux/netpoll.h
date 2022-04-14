@@ -8,6 +8,7 @@
 #ifndef _LINUX_NETPOLL_H
 #define _LINUX_NETPOLL_H
 
+#include <uapi/linux/in.h>
 #include <uapi/linux/in6.h>
 #include <linux/smp.h>
 #include <linux/smp_api.h>
