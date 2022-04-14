@@ -6,6 +6,7 @@
 #ifndef __I915_PERF_H__
 #define __I915_PERF_H__
 
+#include <linux/kref_api.h>
 #include <linux/kref.h>
 #include <linux/types.h>
 

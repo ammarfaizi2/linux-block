@@ -23,6 +23,7 @@
 #ifndef __DRM_FRAMEBUFFER_H__
 #define __DRM_FRAMEBUFFER_H__
 
+#include <linux/kref_api.h>
 #include <linux/ctype.h>
 #include <linux/list.h>
 #include <linux/sched.h>

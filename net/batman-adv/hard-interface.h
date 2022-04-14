@@ -9,6 +9,7 @@
 
 #include "main.h"
 
+#include <linux/kref_api.h>
 #include <linux/compiler.h>
 #include <linux/kref.h>
 #include <linux/netdevice.h>

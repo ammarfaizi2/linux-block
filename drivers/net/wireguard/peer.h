@@ -10,6 +10,7 @@
 #include "noise.h"
 #include "cookie.h"
 
+#include <linux/kref_api.h>
 #include <linux/types.h>
 #include <linux/netfilter.h>
 #include <linux/spinlock.h>

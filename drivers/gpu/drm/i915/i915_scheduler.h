@@ -7,6 +7,7 @@
 #ifndef _I915_SCHEDULER_H_
 #define _I915_SCHEDULER_H_
 
+#include <linux/kref_api.h>
 #include <linux/bitops.h>
 #include <linux/list.h>
 #include <linux/kernel.h>

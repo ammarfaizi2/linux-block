@@ -2,6 +2,7 @@
 #ifndef _FS_CEPH_STRING_TABLE_H
 #define _FS_CEPH_STRING_TABLE_H
 
+#include <linux/kref_api.h>
 #include <linux/types.h>
 #include <linux/kref.h>
 #include <linux/rbtree.h>

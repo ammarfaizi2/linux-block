@@ -10,6 +10,7 @@
 #ifndef __AA_LABEL_H
 #define __AA_LABEL_H
 
+#include <linux/kref_api.h>
 #include <linux/atomic.h>
 #include <linux/audit.h>
 #include <linux/rbtree.h>

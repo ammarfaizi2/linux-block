@@ -9,6 +9,7 @@
 #ifndef NET_9P_CLIENT_H
 #define NET_9P_CLIENT_H
 
+#include <linux/kref_api.h>
 #include <linux/utsname.h>
 #include <linux/idr.h>
 

@@ -14,6 +14,7 @@
 #ifndef	__LIBCXGBI_H__
 #define	__LIBCXGBI_H__
 
+#include <linux/kref_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/types.h>

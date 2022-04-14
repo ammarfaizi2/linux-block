@@ -24,6 +24,7 @@
 #ifndef __INTEL_FRONTBUFFER_H__
 #define __INTEL_FRONTBUFFER_H__
 
+#include <linux/kref_api.h>
 #include <linux/atomic.h>
 #include <linux/kref.h>
 

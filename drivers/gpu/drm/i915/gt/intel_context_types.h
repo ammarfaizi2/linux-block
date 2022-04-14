@@ -6,6 +6,7 @@
 #ifndef __INTEL_CONTEXT_TYPES__
 #define __INTEL_CONTEXT_TYPES__
 
+#include <linux/kref_api.h>
 #include <linux/average.h>
 #include <linux/kref.h>
 #include <linux/list.h>

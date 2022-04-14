@@ -9,6 +9,7 @@
 #ifndef _SAS_INTERNAL_H_
 #define _SAS_INTERNAL_H_
 
+#include <linux/kref_api.h>
 #include <scsi/scsi.h>
 #include <scsi/scsi_host.h>
 #include <scsi/scsi_transport_sas.h>

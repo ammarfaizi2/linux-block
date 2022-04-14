@@ -11,6 +11,7 @@
 #ifndef _LINUX_SUNRPC_CACHE_H_
 #define _LINUX_SUNRPC_CACHE_H_
 
+#include <linux/kref_api.h>
 #include <linux/bitops.h>
 #include <linux/kref.h>
 #include <linux/slab.h>

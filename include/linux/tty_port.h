@@ -2,6 +2,7 @@
 #ifndef _LINUX_TTY_PORT_H
 #define _LINUX_TTY_PORT_H
 
+#include <linux/kref_api.h>
 #include <linux/bitops.h>
 #include <linux/kfifo.h>
 #include <linux/kref.h>

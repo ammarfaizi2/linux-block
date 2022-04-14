@@ -6,6 +6,7 @@
 #ifndef _UVERBS_TYPES_
 #define _UVERBS_TYPES_
 
+#include <linux/kref_api.h>
 #include <linux/kernel.h>
 #include <rdma/ib_verbs.h>
 

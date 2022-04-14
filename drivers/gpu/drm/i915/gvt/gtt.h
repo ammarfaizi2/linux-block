@@ -34,6 +34,7 @@
 #ifndef _GVT_GTT_H_
 #define _GVT_GTT_H_
 
+#include <linux/kref_api.h>
 #include <linux/kernel.h>
 #include <linux/kref.h>
 #include <linux/mutex.h>

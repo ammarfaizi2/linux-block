@@ -2,6 +2,7 @@
 #ifndef _LINUX_TTY_DRIVER_H
 #define _LINUX_TTY_DRIVER_H
 
+#include <linux/kref_api.h>
 #include <linux/err.h>
 #include <linux/export.h>
 #include <linux/fs.h>

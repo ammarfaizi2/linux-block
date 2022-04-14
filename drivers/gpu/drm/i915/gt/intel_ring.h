@@ -6,6 +6,8 @@
 #ifndef INTEL_RING_H
 #define INTEL_RING_H
 
+#include <linux/kref_api.h>
+
 #include "i915_gem.h" /* GEM_BUG_ON */
 #include "i915_request.h"
 #include "intel_ring_types.h"

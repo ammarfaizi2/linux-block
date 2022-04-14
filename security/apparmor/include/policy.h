@@ -11,6 +11,7 @@
 #ifndef __AA_POLICY_H
 #define __AA_POLICY_H
 
+#include <linux/kref_api.h>
 #include <linux/capability.h>
 #include <linux/cred.h>
 #include <linux/kref.h>
