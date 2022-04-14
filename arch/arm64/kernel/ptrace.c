@@ -8,6 +8,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/sched/rseq_api.h>
 #include <linux/audit.h>
 #include <linux/compat.h>
 #include <linux/kernel.h>

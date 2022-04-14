@@ -9,6 +9,7 @@
  */
 
 #include <linux/sched/cond_resched.h>
+#include <linux/sched/rseq_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/capability.h>
 #include <linux/export.h>

@@ -3,6 +3,7 @@
 #ifndef LINUX_RESUME_USER_MODE_H
 #define LINUX_RESUME_USER_MODE_H
 
+#include <linux/sched/rseq_api.h>
 #include <linux/sched.h>
 #include <linux/task_work.h>
 #include <linux/memcontrol.h>
