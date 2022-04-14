@@ -7,6 +7,7 @@
  * Copyright (c) 2001 Patrick Mochel <mochel@osdl.org>
  */
 
+#include <asm/tsc.h>
 #include <asm/segment_api.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

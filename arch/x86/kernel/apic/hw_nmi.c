@@ -9,6 +9,7 @@
  *  Bits copied from original nmi.c file
  *
  */
+#include <asm/tsc.h>
 #include <linux/thread_info.h>
 #include <asm/apic.h>
 #include <asm/nmi.h>
