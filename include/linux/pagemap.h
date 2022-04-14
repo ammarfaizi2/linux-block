@@ -5,6 +5,7 @@
 /*
  * Copyright 1995 Linus Torvalds
  */
+#include <linux/xarray_types.h>
 #include <linux/xarray_api.h>
 #include <linux/page-flags-thp.h>
 #include <linux/mm_page_address.h>
