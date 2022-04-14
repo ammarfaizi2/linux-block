@@ -4,6 +4,7 @@
 
 #ifdef CONFIG_X86_CPU_RESCTRL
 
+#include <asm/msr.h>
 #include <linux/sched.h>
 #include <linux/jump_label.h>
 

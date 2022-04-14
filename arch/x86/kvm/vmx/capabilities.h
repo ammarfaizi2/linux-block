@@ -2,6 +2,7 @@
 #ifndef __KVM_X86_VMX_CAPS_H
 #define __KVM_X86_VMX_CAPS_H
 
+#include <asm/msr.h>
 #include <asm/vmx.h>
 
 #include "lapic.h"

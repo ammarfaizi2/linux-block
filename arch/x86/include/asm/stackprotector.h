@@ -29,6 +29,7 @@
 
 #ifdef CONFIG_STACKPROTECTOR
 
+#include <asm/msr.h>
 #include <asm/tsc.h>
 #include <asm/processor.h>
 #include <asm/percpu.h>

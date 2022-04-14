@@ -5,6 +5,7 @@
 #ifndef _ASM_X86_TSC_H
 #define _ASM_X86_TSC_H
 
+#include <asm/msr.h>
 #include <asm/processor.h>
 #include <asm/cpufeature.h>
 
