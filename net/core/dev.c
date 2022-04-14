@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <net/xdp_api.h>
 #include <net/sock_api.h>
 #include <net/sch_generic_api.h>
 #include <net/netprio_cgroup.h>

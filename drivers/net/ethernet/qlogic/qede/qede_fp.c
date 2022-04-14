@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
+#include <net/xdp_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Cavium, Inc.
  */
 
+#include <net/xdp_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/tasklet_api.h>
