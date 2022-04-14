@@ -21,6 +21,7 @@
  *  Copyright (C) 2016 Mellanox Technologies
  */
 
+#include <linux/sem.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/perf_event.h>
