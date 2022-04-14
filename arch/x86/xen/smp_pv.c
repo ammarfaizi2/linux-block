@@ -13,6 +13,7 @@
  * result, all CPUs are treated as if they're single-core and
  * single-threaded.
  */
+#include <asm/cpumask_arch.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>
 #include <linux/err.h>
