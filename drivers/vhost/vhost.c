@@ -10,6 +10,7 @@
  * Generic code for virtio server in host kernel.
  */
 
+#include <linux/eventpoll.h>
 #include <linux/cgroup_api.h>
 #include <linux/eventfd.h>
 #include <linux/vhost.h>

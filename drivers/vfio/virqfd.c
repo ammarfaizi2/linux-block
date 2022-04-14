@@ -7,6 +7,7 @@
  *     Author: Alex Williamson <alex.williamson@redhat.com>
  */
 
+#include <linux/eventpoll.h>
 #include <linux/vfio.h>
 #include <linux/eventfd.h>
 #include <linux/file.h>

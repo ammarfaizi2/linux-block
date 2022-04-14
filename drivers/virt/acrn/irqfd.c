@@ -9,6 +9,7 @@
  *	Yakui Zhao <yakui.zhao@intel.com>
  */
 
+#include <linux/eventpoll.h>
 #include <linux/eventfd.h>
 #include <linux/file.h>
 #include <linux/poll.h>

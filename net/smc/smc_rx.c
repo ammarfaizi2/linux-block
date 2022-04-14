@@ -10,6 +10,7 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/eventpoll.h>
 #include <linux/atomic_api.h>
 #include <linux/net.h>
 #include <linux/rcupdate.h>
