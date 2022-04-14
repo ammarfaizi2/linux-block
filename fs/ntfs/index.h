@@ -9,6 +9,7 @@
 #ifndef _LINUX_NTFS_INDEX_H
 #define _LINUX_NTFS_INDEX_H
 
+#include <linux/mm_page_address.h>
 #include <asm/cacheflush.h>
 #include <linux/fs.h>
 

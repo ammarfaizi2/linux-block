@@ -3,6 +3,7 @@
 #ifndef __NX_842_H__
 #define __NX_842_H__
 
+#include <linux/mm_page_address.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

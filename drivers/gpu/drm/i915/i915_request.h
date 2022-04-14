@@ -25,6 +25,7 @@
 #ifndef I915_REQUEST_H
 #define I915_REQUEST_H
 
+#include <linux/mm_page_address.h>
 #include <linux/mm.h>
 #include <linux/lockdep_api.h>
 #include <linux/dma-fence-api.h>

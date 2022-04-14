@@ -21,6 +21,7 @@
 #endif
 #define PAGE_MASK	(~(PAGE_SIZE-1))
 
+#include <linux/mm_page_address.h>
 #include <asm/setup.h>
 
 #ifndef __ASSEMBLY__
