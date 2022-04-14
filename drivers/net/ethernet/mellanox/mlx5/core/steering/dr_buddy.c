@@ -5,6 +5,8 @@
  * Copyright (c) 2020 NVIDIA CORPORATION. All rights reserved.
  */
 
+#include <linux/bitmap.h>
+
 #include "dr_types.h"
 
 int mlx5dr_buddy_init(struct mlx5dr_icm_buddy_mem *buddy,

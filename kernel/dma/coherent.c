@@ -3,6 +3,7 @@
  * Coherent per-device memory handling.
  * Borrowed from i386
  */
+#include <linux/bitmap.h>
 #include <linux/io.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

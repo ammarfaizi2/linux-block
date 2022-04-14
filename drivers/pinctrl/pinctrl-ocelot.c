@@ -7,6 +7,7 @@
  * Copyright (c) 2017 Microsemi Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

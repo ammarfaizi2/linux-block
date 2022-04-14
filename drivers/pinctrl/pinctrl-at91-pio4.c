@@ -6,6 +6,7 @@
  *               2015 Ludovic Desroches <ludovic.desroches@atmel.com>
  */
 
+#include <linux/bitmap.h>
 #include <dt-bindings/pinctrl/at91.h>
 #include <linux/clk.h>
 #include <linux/gpio/driver.h>

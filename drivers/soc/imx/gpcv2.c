@@ -8,6 +8,7 @@
  * Copyright 2015-2017 Pengutronix, Lucas Stach <kernel@pengutronix.de>
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>

@@ -7,6 +7,7 @@
  * Allwinner A31 APB0 clock gates driver
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk-provider.h>
 #include <linux/init.h>
 #include <linux/of.h>

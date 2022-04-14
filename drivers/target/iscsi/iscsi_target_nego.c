@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/ctype.h>
 #include <linux/kthread.h>

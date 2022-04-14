@@ -3,6 +3,7 @@
 // Copyright (C) 2017 Socionext Inc.
 //   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
 
+#include <linux/bitmap.h>
 #include <linux/bits.h>
 #include <linux/gpio/driver.h>
 #include <linux/irq.h>

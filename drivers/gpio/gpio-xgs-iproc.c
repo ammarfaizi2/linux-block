@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Broadcom
  */
 
+#include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

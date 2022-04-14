@@ -5,6 +5,7 @@
  * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/hwspinlock.h>

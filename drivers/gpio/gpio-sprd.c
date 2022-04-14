@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Linaro Ltd.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>
 #include <linux/kernel.h>

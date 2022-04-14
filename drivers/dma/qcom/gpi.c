@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Linaro Limited
  */
 
+#include <linux/bitmap.h>
 #include <dt-bindings/dma/qcom-gpi.h>
 #include <linux/bitfield.h>
 #include <linux/dma-mapping.h>

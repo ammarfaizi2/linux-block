@@ -9,6 +9,7 @@
  *	   Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

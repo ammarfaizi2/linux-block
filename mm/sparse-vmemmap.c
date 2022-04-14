@@ -18,6 +18,7 @@
  * The architecture is expected to provide a vmemmap_populate() function
  * to instantiate the mapping.
  */
+#include <linux/bitmap.h>
 #include <linux/mm.h>
 #include <linux/mmzone.h>
 #include <linux/memblock.h>

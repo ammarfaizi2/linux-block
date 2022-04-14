@@ -6,6 +6,7 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 #include "layer2.h"
+#include <linux/bitmap.h>
 #include <linux/random.h>
 #include <linux/slab.h>
 #include "core.h"

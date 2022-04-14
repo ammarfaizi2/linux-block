@@ -2,6 +2,7 @@
 /* Copyright (c) 2015, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/highmem.h>
 #include <linux/io.h>

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2020 NXP
  */
+#include <linux/bitmap.h>
+
 #include "sja1105.h"
 #include "sja1105_vl.h"
 

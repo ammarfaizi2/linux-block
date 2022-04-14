@@ -7,6 +7,7 @@
 
 #include "habanalabs.h"
 
+#include <linux/bitmap.h>
 #include <linux/slab.h>
 
 int hl_asid_init(struct hl_device *hdev)

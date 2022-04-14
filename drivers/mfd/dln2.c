@@ -9,6 +9,7 @@
  *  Copyright (c) 2010-2011 Ericsson AB
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>

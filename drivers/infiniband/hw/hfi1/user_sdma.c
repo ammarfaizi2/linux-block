@@ -4,6 +4,7 @@
  * Copyright(c) 2015 - 2018 Intel Corporation.
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/types.h>

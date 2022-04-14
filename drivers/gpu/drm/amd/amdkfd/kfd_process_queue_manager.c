@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <linux/list.h>
 #include "kfd_device_queue_manager.h"

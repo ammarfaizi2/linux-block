@@ -10,6 +10,7 @@
  * (c) 2011-12 liran <jli11@intersil.com> [Intersil|Techwell China]
  */
 
+#include <linux/bitmap.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

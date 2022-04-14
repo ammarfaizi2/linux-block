@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/bitmap.h>
 #include <linux/interrupt.h>
 #include <linux/list.h>
 #include <linux/init.h>

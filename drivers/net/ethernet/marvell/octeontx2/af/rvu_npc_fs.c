@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Marvell.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 
 #include "rvu_struct.h"

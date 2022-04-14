@@ -10,6 +10,7 @@
  * Copyright (C) 2007 Freescale Semiconductor, Inc. All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/shdma-base.h>
 #include <linux/dmaengine.h>

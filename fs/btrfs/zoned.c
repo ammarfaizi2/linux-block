@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/slab.h>

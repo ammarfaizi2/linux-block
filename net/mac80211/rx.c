@@ -9,6 +9,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>

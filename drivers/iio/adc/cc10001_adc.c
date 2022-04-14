@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Imagination Technologies Ltd.
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

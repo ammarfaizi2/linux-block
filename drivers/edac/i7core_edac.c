@@ -23,6 +23,7 @@
  * 	http://www.arrownac.com/manufacturers/intel/s/nehalem/5500-datasheet-v2.pdf
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/pci.h>

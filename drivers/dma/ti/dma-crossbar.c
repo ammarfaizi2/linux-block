@@ -3,6 +3,7 @@
  *  Copyright (C) 2015 Texas Instruments Incorporated - http://www.ti.com
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
+#include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <linux/err.h>
 #include <linux/init.h>

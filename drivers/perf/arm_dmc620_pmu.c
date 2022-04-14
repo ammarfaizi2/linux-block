@@ -9,6 +9,7 @@
 #define DMC620_DRVNAME		DMC620_PMUNAME "_pmu"
 #define pr_fmt(fmt)		DMC620_DRVNAME ": " fmt
 
+#include <linux/bitmap.h>
 #include <asm/local64_api.h>
 #include <linux/acpi.h>
 #include <linux/bitfield.h>

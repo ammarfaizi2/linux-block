@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_cache.h>
 

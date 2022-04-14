@@ -2,6 +2,7 @@
 /* Copyright(c) 2013 - 2019 Intel Corporation. */
 
 #include "fm10k.h"
+#include <linux/bitmap.h>
 #include <linux/vmalloc.h>
 #include <net/udp_tunnel.h>
 #include <linux/if_macvlan.h>

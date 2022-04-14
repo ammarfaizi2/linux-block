@@ -6,6 +6,7 @@
  *	Lokesh Vutla <lokeshvutla@ti.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/irq.h>

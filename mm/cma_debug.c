@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/bitmap.h>
 #include <linux/debugfs.h>
 #include <linux/cma.h>
 #include <linux/list.h>

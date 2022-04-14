@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Google, Inc
  */
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/iio/buffer.h>

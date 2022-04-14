@@ -7,6 +7,7 @@
  * Datasheet: http://www.ti.com/lit/ds/symlink/adc12138.pdf
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/completion.h>

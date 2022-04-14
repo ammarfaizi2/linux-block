@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2018 MediaTek Inc.
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

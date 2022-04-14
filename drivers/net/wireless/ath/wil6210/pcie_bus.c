@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/moduleparam.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2011-2013 Texas Instruments Inc.
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/firmware.h>
 #include <linux/etherdevice.h>

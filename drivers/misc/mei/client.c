@@ -4,6 +4,7 @@
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
+#include <linux/bitmap.h>
 #include <linux/sched/signal.h>
 #include <linux/wait.h>
 #include <linux/delay.h>

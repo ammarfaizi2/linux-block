@@ -6,6 +6,7 @@
  * Copyright (C) 2015 Cadence Design Systems Inc.
  */
 
+#include <linux/bitmap.h>
 #include <asm/local64_api.h>
 #include <linux/interrupt.h>
 #include <linux/irqdomain.h>

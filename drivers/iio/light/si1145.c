@@ -11,6 +11,7 @@
  * SI1145/6/6 (7-bit I2C slave address 0x60)
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/err.h>

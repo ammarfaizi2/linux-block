@@ -9,6 +9,7 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <linux/vmalloc.h>

@@ -39,6 +39,7 @@
  * set and not related to switch internal registers.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/module.h>
 #include <linux/of_irq.h>

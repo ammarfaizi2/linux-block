@@ -5,6 +5,7 @@
  * Copyright (C) 1997,1998 Jakub Jelinek    (jj@sunsite.mff.cuni.cz)
  */
  
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/slab.h>

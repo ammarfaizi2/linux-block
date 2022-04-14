@@ -5,6 +5,7 @@
  * Copyright (c) 2011,2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/io.h>

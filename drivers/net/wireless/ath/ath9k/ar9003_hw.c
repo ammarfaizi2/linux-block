@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/bitmap.h>
+
 #include "hw.h"
 #include "ar9003_mac.h"
 #include "ar9003_2p2_initvals.h"

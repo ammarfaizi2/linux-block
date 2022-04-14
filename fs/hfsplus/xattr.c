@@ -8,6 +8,7 @@
  */
 
 #include "hfsplus_fs.h"
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/nls.h>
 #include "xattr.h"

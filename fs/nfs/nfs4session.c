@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Trond Myklebust <Trond.Myklebust@netapp.com>
  *
  */
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/string.h>

@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/module.h>
 #include <linux/pci.h>

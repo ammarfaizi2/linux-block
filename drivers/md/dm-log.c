@@ -5,6 +5,7 @@
  * This file is released under the LGPL.
  */
 
+#include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

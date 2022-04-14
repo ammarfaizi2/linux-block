@@ -3,6 +3,7 @@
  * PCI detection and setup code
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/init.h>

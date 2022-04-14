@@ -16,6 +16,7 @@
  *   Ben-Ami Yassour <benami@il.ibm.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/ptrace.h>
 #include <linux/kvm_host.h>

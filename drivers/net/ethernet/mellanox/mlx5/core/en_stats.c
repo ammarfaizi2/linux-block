@@ -38,6 +38,7 @@
 #include "en/port.h"
 
 #ifdef CONFIG_PAGE_POOL_STATS
+#include <linux/bitmap.h>
 #include <net/page_pool.h>
 #endif
 

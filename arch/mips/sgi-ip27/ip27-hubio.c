@@ -6,6 +6,7 @@
  * Support functions for the HUB ASIC - mostly PIO mapping related.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/string.h>
 #include <linux/mmzone.h>

@@ -3,6 +3,7 @@
  * Copyright © 2008-2015 Intel Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 
 #include "i915_drv.h"

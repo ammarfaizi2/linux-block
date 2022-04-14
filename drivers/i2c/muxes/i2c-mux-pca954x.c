@@ -32,6 +32,7 @@
  *	pca9540.c from Jean Delvare <jdelvare@suse.de>.
  */
 
+#include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>

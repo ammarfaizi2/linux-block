@@ -9,6 +9,7 @@
  * Timberdale FPGA GPIO
  */
 
+#include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/gpio/driver.h>
 #include <linux/platform_device.h>

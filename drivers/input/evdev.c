@@ -12,6 +12,7 @@
 #define EVDEV_MIN_BUFFER_SIZE	64U
 #define EVDEV_BUF_PACKETS	8
 
+#include <linux/bitmap.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/poll.h>
 #include <linux/sched.h>

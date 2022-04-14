@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 HiSilicon Limited. */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <crypto/internal/acompress.h>
 #include <linux/bitfield.h>

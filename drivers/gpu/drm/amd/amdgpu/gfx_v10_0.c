@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

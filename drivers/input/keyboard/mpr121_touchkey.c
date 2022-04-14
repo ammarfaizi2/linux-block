@@ -8,6 +8,7 @@
  * Based on mcs_touchkey.c
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

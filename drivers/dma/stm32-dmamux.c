@@ -10,6 +10,7 @@
  * Based on TI DMA Crossbar driver
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

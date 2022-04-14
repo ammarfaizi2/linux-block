@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/bitmap.h>
 #include <linux/filter.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

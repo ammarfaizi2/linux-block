@@ -9,6 +9,7 @@
  * - Better memory allocation techniques?
  * - Alternative access techniques?
  */
+#include <linux/bitmap.h>
 #include <linux/anon_inodes.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

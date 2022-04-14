@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Hewlett-Packard Development Company, L.P.
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/acpi.h>
 #include <linux/pci.h>

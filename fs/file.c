@@ -7,6 +7,7 @@
  *  Manage the dynamic fd arrays in the process files_struct.
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/syscalls.h>

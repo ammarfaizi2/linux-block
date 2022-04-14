@@ -8,6 +8,7 @@
  * Datasheet: https://www.allsensors.com/cad/DS-0355_Rev_B.PDF
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

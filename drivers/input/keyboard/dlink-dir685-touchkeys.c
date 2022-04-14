@@ -8,6 +8,7 @@
  * board inside the router is named E119921
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

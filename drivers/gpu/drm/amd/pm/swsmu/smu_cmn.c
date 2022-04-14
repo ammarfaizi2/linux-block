@@ -22,6 +22,8 @@
 
 #define SWSMU_CODE_LAYER_L4
 
+#include <linux/bitmap.h>
+
 #include "amdgpu.h"
 #include "amdgpu_smu.h"
 #include "smu_cmn.h"

@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/bitmap.h>
 #include <linux/firmware.h>
 #include <linux/module.h>
 

@@ -23,6 +23,7 @@
  * THE SOFTWARE.
  */
 
+#include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>
 #include <linux/kvm_host.h>

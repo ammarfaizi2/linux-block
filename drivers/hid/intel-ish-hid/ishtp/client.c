@@ -5,6 +5,7 @@
  * Copyright (c) 2003-2016, Intel Corporation.
  */
 
+#include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/wait.h>

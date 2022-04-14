@@ -2,6 +2,7 @@
 // Copyright (c) 2016-2018 Nuvoton Technology corporation.
 // Copyright (c) 2016, Dell Inc
 
+#include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/gpio/driver.h>
 #include <linux/interrupt.h>

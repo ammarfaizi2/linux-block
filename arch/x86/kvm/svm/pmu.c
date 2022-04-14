@@ -9,6 +9,7 @@
  *
  * Implementation is based on pmu_intel.c file
  */
+#include <linux/bitmap.h>
 #include <linux/types.h>
 #include <linux/kvm_host.h>
 #include <linux/perf_event.h>

@@ -9,6 +9,7 @@
  */
 
 #include "cx231xx.h"
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/bitmap.h>
 #include <asm/unaligned.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

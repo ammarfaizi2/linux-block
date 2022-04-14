@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/bitmap.h>
 #include <linux/bpf.h>
 #include <linux/etherdevice.h>
 #include <linux/filter.h>

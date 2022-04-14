@@ -7,6 +7,7 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/iio/iio.h>
 #include <linux/iio/trigger.h>

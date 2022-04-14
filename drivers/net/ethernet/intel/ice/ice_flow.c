@@ -3,6 +3,7 @@
 
 #include "ice_common.h"
 #include "ice_flow.h"
+#include <linux/bitmap.h>
 #include <net/gre.h>
 
 /* Describe properties of a protocol header field */

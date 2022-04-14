@@ -3,6 +3,7 @@
 // Cadence PCIe endpoint controller driver.
 // Author: Cyrille Pitchen <cyrille.pitchen@free-electrons.com>
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/of.h>

@@ -10,6 +10,7 @@
  * and in January 2020 by Daniel Campello <campello@chromium.org>.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

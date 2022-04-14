@@ -8,6 +8,7 @@
  * Copyright (C) 2015 IBM Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/list.h>

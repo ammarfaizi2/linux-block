@@ -7,6 +7,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/gpio/driver.h>
 #include <linux/interrupt.h>

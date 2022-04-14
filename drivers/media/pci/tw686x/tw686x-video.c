@@ -7,6 +7,7 @@
  * and Measurements PIAP
  */
 
+#include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/list.h>

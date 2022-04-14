@@ -7,6 +7,7 @@
  * Cplds motherboard driver, supporting lubbock and mainstone SoC board.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/gpio.h>
 #include <linux/gpio/consumer.h>

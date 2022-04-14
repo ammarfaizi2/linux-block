@@ -6,6 +6,7 @@
  * Author: Alex Smith <alex@alex-smith.me.uk>
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/io.h>

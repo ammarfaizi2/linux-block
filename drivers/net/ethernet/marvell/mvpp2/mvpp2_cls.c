@@ -7,6 +7,8 @@
  * Marcin Wojtas <mw@semihalf.com>
  */
 
+#include <linux/bitmap.h>
+
 #include "mvpp2.h"
 #include "mvpp2_cls.h"
 #include "mvpp2_prs.h"

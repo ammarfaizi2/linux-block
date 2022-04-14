@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "llcp: %s: " fmt, __func__
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

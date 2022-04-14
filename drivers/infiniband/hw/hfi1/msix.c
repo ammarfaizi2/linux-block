@@ -3,6 +3,8 @@
  * Copyright(c) 2018 - 2020 Intel Corporation.
  */
 
+#include <linux/bitmap.h>
+
 #include "hfi.h"
 #include "affinity.h"
 #include "sdma.h"

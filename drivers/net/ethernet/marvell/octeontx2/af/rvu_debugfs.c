@@ -7,6 +7,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/bitmap.h>
 #include <linux/fs.h>
 #include <linux/debugfs.h>
 #include <linux/module.h>

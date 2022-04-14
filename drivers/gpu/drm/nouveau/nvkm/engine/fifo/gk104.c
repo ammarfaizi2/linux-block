@@ -25,6 +25,7 @@
 #include "cgrp.h"
 #include "changk104.h"
 
+#include <linux/bitmap.h>
 #include <core/client.h>
 #include <core/gpuobj.h>
 #include <subdev/bar.h>

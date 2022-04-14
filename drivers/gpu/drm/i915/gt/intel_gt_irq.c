@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/sched/clock.h>
 
 #include "i915_drv.h"

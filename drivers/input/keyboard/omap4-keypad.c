@@ -8,6 +8,7 @@
  * Initial Code: Syed Rafiuddin <rafiuddin.syed@ti.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>

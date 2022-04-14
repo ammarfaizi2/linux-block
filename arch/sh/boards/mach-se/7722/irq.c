@@ -8,6 +8,7 @@
 #define DRV_NAME "SE7722-FPGA"
 #define pr_fmt(fmt) DRV_NAME ": " fmt
 
+#include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>

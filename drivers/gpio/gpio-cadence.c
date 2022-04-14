@@ -8,6 +8,7 @@
  *  Boris Brezillon <boris.brezillon@free-electrons.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>

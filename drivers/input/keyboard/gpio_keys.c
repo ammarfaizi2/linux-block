@@ -6,6 +6,7 @@
  * Copyright 2010, 2011 David Jander <david@protonic.nl>
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 
 #include <linux/hrtimer.h>

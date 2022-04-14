@@ -3,6 +3,7 @@
  * Copyright 2019 Advanced Micro Devices, Inc.
  */
 
+#include <linux/bitmap.h>
 #include <linux/errno.h>
 #include <linux/io.h>
 #include <linux/module.h>

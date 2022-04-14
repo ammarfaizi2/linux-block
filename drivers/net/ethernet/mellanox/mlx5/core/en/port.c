@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <linux/bitmap.h>
+
 #include "port.h"
 
 /* speed in units of 1Mb */

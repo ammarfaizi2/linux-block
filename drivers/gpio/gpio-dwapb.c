@@ -4,6 +4,7 @@
  *
  * All enquiries to support@picochip.com
  */
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>
 #include <linux/err.h>

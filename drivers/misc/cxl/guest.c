@@ -3,6 +3,7 @@
  * Copyright 2015 IBM Corp.
  */
 
+#include <linux/bitmap.h>
 #include <linux/spinlock.h>
 #include <linux/uaccess.h>
 #include <linux/delay.h>

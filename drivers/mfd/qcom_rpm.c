@@ -5,6 +5,7 @@
  * Author: Bjorn Andersson <bjorn.andersson@sonymobile.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/of_platform.h>

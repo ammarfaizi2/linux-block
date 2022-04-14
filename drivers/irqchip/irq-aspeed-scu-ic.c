@@ -6,6 +6,7 @@
  * Eddie James <eajames@linux.ibm.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>

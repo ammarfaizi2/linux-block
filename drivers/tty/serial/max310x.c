@@ -9,6 +9,7 @@
  *  Based on max3107.c, by Aavamobile
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

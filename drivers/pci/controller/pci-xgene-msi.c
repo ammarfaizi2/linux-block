@@ -6,6 +6,7 @@
  * Author: Tanmay Inamdar <tinamdar@apm.com>
  *	   Duc Dang <dhdang@apm.com>
  */
+#include <linux/bitmap.h>
 #include <linux/cpu.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

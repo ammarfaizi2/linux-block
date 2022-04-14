@@ -4,6 +4,7 @@
  * Copyright (C) 2013 John Crispin <blogic@openwrt.org>
  */
 
+#include <linux/bitmap.h>
 #include <linux/err.h>
 #include <linux/gpio/driver.h>
 #include <linux/interrupt.h>

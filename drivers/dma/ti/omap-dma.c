@@ -2,6 +2,7 @@
 /*
  * OMAP DMAengine support
  */
+#include <linux/bitmap.h>
 #include <linux/cpu_pm.h>
 #include <linux/delay.h>
 #include <linux/dmaengine.h>

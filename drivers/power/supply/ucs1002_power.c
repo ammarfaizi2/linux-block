@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2019 Zodiac Inflight Innovations
  */
+#include <linux/bitmap.h>
 #include <linux/bits.h>
 #include <linux/freezer.h>
 #include <linux/gpio/consumer.h>

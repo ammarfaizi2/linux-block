@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com
  */
 
+#include <linux/bitmap.h>
 #include <linux/dma-mapping.h>
 #include <linux/io.h>
 #include <linux/init.h>

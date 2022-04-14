@@ -20,6 +20,7 @@
  * Configurable 7-bit I2C slave address from 0x40 to 0x4F
  */
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/iio/iio.h>

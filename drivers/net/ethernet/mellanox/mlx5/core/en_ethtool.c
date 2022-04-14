@@ -30,6 +30,8 @@
  * SOFTWARE.
  */
 
+#include <linux/bitmap.h>
+
 #include "en.h"
 #include "en/port.h"
 #include "en/params.h"

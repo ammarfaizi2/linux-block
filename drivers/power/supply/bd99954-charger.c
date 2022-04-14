@@ -55,6 +55,7 @@
  * device tree binding documentation.
  */
 
+#include <linux/bitmap.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/interrupt.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 
 #include "etnaviv_gem.h"

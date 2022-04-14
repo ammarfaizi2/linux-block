@@ -6,6 +6,7 @@
  *
  * Author: Stefan Agner <stefan@agner.ch>.
  */
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/err.h>

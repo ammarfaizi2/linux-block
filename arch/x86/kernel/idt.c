@@ -2,6 +2,7 @@
 /*
  * Interrupt descriptor table related code
  */
+#include <linux/bitmap.h>
 #include <asm/x86_irq.h>
 #include <asm/segment_api.h>
 #include <asm/processor_api.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/bitmap.h>
 #include <linux/highmem.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

@@ -8,6 +8,7 @@
  * This file may be distributed under the terms of the GNU GPL license.
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2012 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/mutex.h>

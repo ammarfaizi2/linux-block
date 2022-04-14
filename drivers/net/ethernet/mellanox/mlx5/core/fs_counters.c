@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/bitmap.h>
 #include <linux/mlx5/driver.h>
 #include <linux/mlx5/fs.h>
 #include <linux/rbtree.h>

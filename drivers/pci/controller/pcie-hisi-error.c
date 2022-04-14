@@ -6,6 +6,7 @@
  * Copyright (c) 2020 HiSilicon Limited.
  */
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <acpi/ghes.h>
 #include <linux/bitops.h>

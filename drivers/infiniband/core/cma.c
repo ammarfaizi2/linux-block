@@ -6,6 +6,7 @@
  * Copyright (c) 2005-2006 Intel Corporation.  All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/completion.h>
 #include <linux/in.h>
 #include <linux/in6.h>

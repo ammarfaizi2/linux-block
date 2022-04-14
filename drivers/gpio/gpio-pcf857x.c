@@ -5,6 +5,7 @@
  * Copyright (C) 2007 David Brownell
  */
 
+#include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/i2c.h>
 #include <linux/platform_data/pcf857x.h>

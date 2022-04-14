@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/prime_numbers.h>
 
 #include "i915_selftest.h"

@@ -4,6 +4,7 @@
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/dmaengine.h>

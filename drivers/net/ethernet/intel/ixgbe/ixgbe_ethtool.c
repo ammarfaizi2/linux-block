@@ -3,6 +3,7 @@
 
 /* ethtool support for ixgbe */
 
+#include <linux/bitmap.h>
 #include <linux/interrupt.h>
 #include <linux/types.h>
 #include <linux/module.h>

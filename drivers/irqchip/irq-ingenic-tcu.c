@@ -4,6 +4,7 @@
  * Copyright (C) 2019 Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/irqchip.h>

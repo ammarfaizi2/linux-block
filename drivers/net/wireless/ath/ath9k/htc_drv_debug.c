@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/bitmap.h>
+
 #include "htc.h"
 
 static ssize_t read_file_tgt_int_stats(struct file *file, char __user *user_buf,

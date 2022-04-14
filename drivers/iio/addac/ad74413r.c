@@ -4,6 +4,7 @@
  * Author: Cosmin Tanislav <cosmin.tanislav@analog.com>
  */
 
+#include <linux/bitmap.h>
 #include <asm/unaligned.h>
 #include <linux/bitfield.h>
 #include <linux/crc8.h>

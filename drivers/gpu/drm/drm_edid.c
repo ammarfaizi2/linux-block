@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/hdmi.h>
 #include <linux/i2c.h>

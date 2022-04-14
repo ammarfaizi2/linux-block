@@ -9,6 +9,7 @@
  *
  * Most of code borrowed from the Linux-3.7 EHCI driver
  */
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/device.h>

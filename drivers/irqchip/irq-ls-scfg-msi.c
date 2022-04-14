@@ -7,6 +7,7 @@
  * Author: Minghuan Lian <Minghuan.Lian@nxp.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/msi.h>

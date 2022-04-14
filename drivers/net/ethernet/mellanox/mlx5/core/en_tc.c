@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <net/flow_dissector.h>
 #include <net/flow_offload.h>

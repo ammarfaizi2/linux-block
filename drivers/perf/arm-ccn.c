@@ -4,6 +4,7 @@
  * Copyright (C) 2014 ARM Limited
  */
 
+#include <linux/bitmap.h>
 #include <asm/local64_api.h>
 #include <linux/ctype.h>
 #include <linux/hrtimer.h>

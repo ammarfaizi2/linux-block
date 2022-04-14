@@ -7,6 +7,7 @@
  * Author: Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/errno.h>

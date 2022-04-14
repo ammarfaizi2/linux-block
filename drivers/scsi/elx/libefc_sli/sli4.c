@@ -8,6 +8,8 @@
  * All common (i.e. transport-independent) SLI-4 functions are implemented
  * in this file.
  */
+#include <linux/bitmap.h>
+
 #include "sli4.h"
 
 static struct sli4_asic_entry_t sli4_asic_table[] = {

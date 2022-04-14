@@ -18,6 +18,7 @@
 #undef DEBUG_IRQ
 #undef DEBUG_LOW
 
+#include <linux/bitmap.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

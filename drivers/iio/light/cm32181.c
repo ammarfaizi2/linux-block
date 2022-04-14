@@ -4,6 +4,7 @@
  * Author: Kevin Tsai <ktsai@capellamicro.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/err.h>

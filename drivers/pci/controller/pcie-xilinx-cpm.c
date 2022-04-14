@@ -5,6 +5,7 @@
  * (C) Copyright 2019 - 2020, Xilinx, Inc.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

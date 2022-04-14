@@ -12,6 +12,7 @@
  * The communication with ADC chip is via the SPI bus (mode 3).
  */
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/iio/iio.h>
 #include <linux/iio/buffer.h>

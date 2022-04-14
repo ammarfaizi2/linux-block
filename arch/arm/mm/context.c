@@ -7,6 +7,7 @@
  *
  *  Author: Will Deacon <will.deacon@arm.com>
  */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/sched.h>

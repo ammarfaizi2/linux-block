@@ -10,6 +10,7 @@
  *          Remi Denis-Courmont
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/netlink.h>
 #include <linux/phonet.h>

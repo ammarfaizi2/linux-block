@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt) "mvebu-sei: " fmt
 
+#include <linux/bitmap.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>

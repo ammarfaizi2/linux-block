@@ -4,6 +4,8 @@
  * Copyright (c) 2015 Hisilicon Limited.
  */
 
+#include <linux/bitmap.h>
+
 #include "hisi_sas.h"
 #define DRV_NAME "hisi_sas"
 

@@ -3,6 +3,7 @@
 //
 // Copyright (c) 2006-2007 Mauro Carvalho Chehab <mchehab@kernel.org>
 
+#include <linux/bitmap.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/pci.h>

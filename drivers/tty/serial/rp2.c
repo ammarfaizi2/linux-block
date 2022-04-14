@@ -13,6 +13,7 @@
  *     Copyright (C) 2004-2011 Comtrol, Inc.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/compiler.h>
 #include <linux/completion.h>

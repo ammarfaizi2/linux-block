@@ -8,6 +8,7 @@
 #define KMSG_COMPONENT "sclp_cmd"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/bitmap.h>
 #include <linux/completion.h>
 #include <linux/init.h>
 #include <linux/errno.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2021 Intel Corporation. */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/etherdevice.h>
 #include <linux/of_net.h>

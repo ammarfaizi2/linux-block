@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
+#include <linux/bitmap.h>
 #include <linux/bits.h>
 #include <linux/gpio/driver.h>
 #include <linux/interrupt.h>

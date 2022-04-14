@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Emil Renner Berthing <kernel@esmil.dk>
  */
 
+#include <linux/bitmap.h>
 #include <linux/bits.h>
 #include <linux/clk.h>
 #include <linux/gpio/driver.h>

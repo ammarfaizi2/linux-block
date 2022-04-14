@@ -10,6 +10,7 @@
  * - ABC/target calibration
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/i2c.h>
 #include <linux/kernel.h>

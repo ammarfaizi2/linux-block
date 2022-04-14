@@ -5,6 +5,7 @@
  * Author: Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

@@ -8,6 +8,7 @@
  *         Simon Xue <xxm@rock-chips.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/configfs.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>

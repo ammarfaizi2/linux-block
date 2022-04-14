@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Facebook.  All rights reserved.
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/sched/mm.h>
 #include "ctree.h"

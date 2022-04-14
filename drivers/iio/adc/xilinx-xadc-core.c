@@ -11,6 +11,7 @@
  *  - AXI XADC interface: Xilinx PG019
  */
 
+#include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/err.h>

@@ -11,6 +11,7 @@
  *   David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/bitmap.h>
 #include <linux/kvm_host.h>
 #include <linux/kvm.h>
 #include <linux/highmem.h>

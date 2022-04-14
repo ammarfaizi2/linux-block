@@ -7,6 +7,7 @@
 #include "qla_gbl.h"
 #include "qla_target.h"
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/moduleparam.h>
 #include <linux/vmalloc.h>

@@ -8,6 +8,7 @@
  * Copyright 2003-2004 (C) MontaVista, Software, Inc.
  * Copyright (C) Deepak Saxena <dsaxena@plexity.net>
  */
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/gpio/driver.h>
 #include <linux/irq.h>

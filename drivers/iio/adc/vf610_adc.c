@@ -5,6 +5,7 @@
  * Copyright 2013 Freescale Semiconductor, Inc.
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Intel Corporation
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/virtio.h>

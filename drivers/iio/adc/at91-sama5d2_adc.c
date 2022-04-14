@@ -8,6 +8,7 @@
  *		 2021 Eugen Hristev <eugen.hristev@microchip.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

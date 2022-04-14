@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/crash_dump.h>

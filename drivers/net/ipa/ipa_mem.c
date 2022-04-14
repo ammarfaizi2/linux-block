@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2021 Linaro Ltd.
  */
 
+#include <linux/bitmap.h>
 #include <linux/types.h>
 #include <linux/bitfield.h>
 #include <linux/bug.h>

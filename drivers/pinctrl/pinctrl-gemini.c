@@ -5,6 +5,7 @@
  *
  * This is a group-only pin controller.
  */
+#include <linux/bitmap.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/io.h>

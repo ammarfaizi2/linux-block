@@ -4,6 +4,7 @@
  * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/bug.h>
 #include <linux/cpu_pm.h>

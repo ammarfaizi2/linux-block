@@ -3,6 +3,7 @@
  *  Implementation of operations over local quota file
  */
 
+#include <linux/bitmap.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/quota.h>

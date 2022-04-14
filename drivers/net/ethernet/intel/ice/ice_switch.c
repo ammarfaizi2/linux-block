@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018, Intel Corporation. */
 
+#include <linux/bitmap.h>
+
 #include "ice_lib.h"
 #include "ice_switch.h"
 

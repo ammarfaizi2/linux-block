@@ -6,6 +6,7 @@
  * Copyright 2020 Analog Devices Inc.
  */
 
+#include <linux/bitmap.h>
 #include <linux/bitfield.h>
 #include <linux/crc8.h>
 #include <linux/debugfs.h>

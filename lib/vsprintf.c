@@ -17,6 +17,7 @@
  * - scnprintf and vscnprintf
  */
 
+#include <linux/bitmap.h>
 #include <linux/stdarg.h>
 #include <linux/build_bug.h>
 #include <linux/clk.h>

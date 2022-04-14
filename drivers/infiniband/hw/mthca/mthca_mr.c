@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <linux/errno.h>
 

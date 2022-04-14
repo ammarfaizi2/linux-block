@@ -7,6 +7,7 @@
  * https://www.ti.com/lit/ds/symlink/adc084s021.pdf
  */
 
+#include <linux/bitmap.h>
 #include <linux/err.h>
 #include <linux/spi/spi.h>
 #include <linux/module.h>

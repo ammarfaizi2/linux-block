@@ -16,6 +16,7 @@
  *      Applied standard bit operations to improve bitmap scanning.
  */
 
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/errno.h>

@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/slab.h>

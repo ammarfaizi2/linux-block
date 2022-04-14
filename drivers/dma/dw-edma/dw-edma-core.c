@@ -6,6 +6,7 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

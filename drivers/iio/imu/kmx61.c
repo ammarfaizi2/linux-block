@@ -7,6 +7,7 @@
  * IIO driver for KMX61 (7-bit I2C slave address 0x0E or 0x0F).
  */
 
+#include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/acpi.h>

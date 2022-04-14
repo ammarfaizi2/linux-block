@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "%s " fmt, KBUILD_MODNAME
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/cpu_pm.h>

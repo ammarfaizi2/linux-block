@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/bitmap.h>
 #include <drm/drm_cache.h>
 
 #include "gt/intel_engine.h"

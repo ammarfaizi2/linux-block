@@ -5,6 +5,7 @@
  *
  * Copyright 2021 Analog Devices Inc.
  */
+#include <linux/bitmap.h>
 #include <asm/unaligned.h>
 #include <linux/device.h>
 #include <linux/iio/triggered_buffer.h>

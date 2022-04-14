@@ -6,6 +6,7 @@
 #include "qla_def.h"
 #include "qla_gbl.h"
 
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/delay.h>

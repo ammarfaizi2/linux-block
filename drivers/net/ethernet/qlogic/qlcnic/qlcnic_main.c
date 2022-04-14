@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/vmalloc.h>
 #include <linux/interrupt.h>
 #include <linux/swab.h>

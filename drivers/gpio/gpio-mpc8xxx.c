@@ -9,6 +9,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -24,6 +24,8 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+#include <linux/bitmap.h>
+
 #include "vmwgfx_drv.h"
 
 /*

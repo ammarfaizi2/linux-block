@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2021 VMware Inc, Steven Rostedt <rostedt@goodmis.org>
  */
+#include <linux/bitmap.h>
 #include <linux/spinlock.h>
 #include <linux/irq_work.h>
 #include <linux/slab.h>

@@ -4,6 +4,7 @@
  * Author: Shannon Zhao <shannon.zhao@linaro.org>
  */
 
+#include <linux/bitmap.h>
 #include <asm/local64_api.h>
 #include <linux/cpu.h>
 #include <linux/kvm.h>

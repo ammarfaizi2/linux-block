@@ -27,6 +27,7 @@
  * with a counter.  As they fall out of this transition they drop the count
  * and if they're the last, they fire off the decision.
  */
+#include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/workqueue.h>

@@ -3,6 +3,7 @@
 
 #include "enetc.h"
 
+#include <linux/bitmap.h>
 #include <net/pkt_sched.h>
 #include <linux/math64.h>
 #include <linux/refcount.h>

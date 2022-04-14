@@ -8,6 +8,8 @@
  * $Id: //depot/aic94xx/aic94xx_dev.c#21 $
  */
 
+#include <linux/bitmap.h>
+
 #include "aic94xx.h"
 #include "aic94xx_hwi.h"
 #include "aic94xx_reg.h"

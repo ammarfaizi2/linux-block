@@ -9,6 +9,7 @@
  * to not uglify the caller's code and allow to call (some) apic routines
  * like self-ipi, etc...
  */
+#include <linux/bitmap.h>
 #include <linux/cpumask.h>
 #include <linux/thread_info.h>
 

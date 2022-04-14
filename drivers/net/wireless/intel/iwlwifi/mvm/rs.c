@@ -5,6 +5,7 @@
  * Copyright(c) 2013 - 2015 Intel Mobile Communications GmbH
  * Copyright(c) 2016 - 2017 Intel Deutschland GmbH
  *****************************************************************************/
+#include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
