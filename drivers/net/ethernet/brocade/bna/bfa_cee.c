@@ -9,6 +9,8 @@
  * www.qlogic.com
  */
 
+#include <linux/string.h>
+
 #include "bfa_cee.h"
 #include "bfi_cna.h"
 #include "bfa_ioc.h"

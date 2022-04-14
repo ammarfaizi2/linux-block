@@ -5,6 +5,7 @@
  *  Copyright (c) 2008 by Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/export.h>
 #include <sound/core.h>

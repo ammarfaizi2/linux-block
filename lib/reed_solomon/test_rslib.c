@@ -5,6 +5,7 @@
  * Written by Ferdinand Blomqvist
  * Based on previous work by Phil Karn, KA9Q
  */
+#include <linux/string.h>
 #include <linux/rslib.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

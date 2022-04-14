@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/string.h>
+
 #include "opl4_local.h"
 
 int snd_yrw801_detect(struct snd_opl4 *opl4)

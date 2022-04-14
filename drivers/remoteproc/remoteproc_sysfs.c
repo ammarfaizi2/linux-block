@@ -3,6 +3,7 @@
  * Remote Processor Framework
  */
 
+#include <linux/string.h>
 #include <linux/device/class.h>
 #include <linux/device_api.h>
 #include <linux/remoteproc.h>

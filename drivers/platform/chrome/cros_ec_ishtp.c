@@ -7,6 +7,7 @@
 // on Intel Integrated Sensor Hub (ISH) using the ISH Transport protocol
 // (ISH-TP).
 
+#include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/device_api_lock.h>

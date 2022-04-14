@@ -16,6 +16,7 @@
  * .../0000:00:19.0/driver -> ../../../bus/pci/drivers/pci-stub
  */
 
+#include <linux/string.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>

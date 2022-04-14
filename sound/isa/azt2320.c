@@ -17,6 +17,7 @@
     activation method (full-duplex audio!).
 */
 
+#include <linux/string.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/delay.h>

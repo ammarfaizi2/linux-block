@@ -5,6 +5,7 @@
  * Copyright (C) 2002 Laurent Pinchart <laurent.pinchart@skynet.be>
  */
 
+#include <linux/string.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

@@ -12,6 +12,7 @@
 #include "persistent-data/dm-space-map-disk.h"
 #include "persistent-data/dm-transaction-manager.h"
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>

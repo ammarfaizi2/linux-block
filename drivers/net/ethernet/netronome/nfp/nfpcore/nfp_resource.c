@@ -6,6 +6,7 @@
  * Author: Jakub Kicinski <jakub.kicinski@netronome.com>
  *         Jason McMullan <jason.mcmullan@netronome.com>
  */
+#include <linux/string.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/crc32.h>

@@ -2,6 +2,7 @@
 //
 // Copyright 2018 Google LLC.
 
+#include <linux/string.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>

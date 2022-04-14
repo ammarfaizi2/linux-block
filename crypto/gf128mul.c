@@ -48,6 +48,7 @@
  cryptographic authentication modes
 */
 
+#include <linux/string.h>
 #include <crypto/gf128mul.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

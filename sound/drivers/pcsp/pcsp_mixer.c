@@ -6,6 +6,7 @@
  * Copyright (C) 2001-2008  Stas Sergeev
  */
 
+#include <linux/string.h>
 #include <sound/core.h>
 #include <sound/control.h>
 #include "pcsp.h"

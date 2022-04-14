@@ -12,6 +12,7 @@
 /*
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/hid.h>
 #include <linux/export.h>

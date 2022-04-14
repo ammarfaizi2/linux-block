@@ -7,6 +7,7 @@
  * Based on previous work by Lars Poeschel <poeschel@lemonage.de>
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

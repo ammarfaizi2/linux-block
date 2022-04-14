@@ -3,6 +3,7 @@
  *  Copyright (C) 2014, Samsung Electronics Co. Ltd. All Rights Reserved.
  */
 
+#include <linux/string.h>
 #include <linux/iio/common/ssp_sensors.h>
 #include <linux/iio/buffer.h>
 #include <linux/iio/kfifo_buf.h>

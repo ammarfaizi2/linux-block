@@ -8,6 +8,7 @@
  *   https://www.nxp.com/docs/en/reference-manual/IMX8MDQLQRM.pdf#page=834
  */
 
+#include <linux/string.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/export.h>

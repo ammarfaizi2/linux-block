@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Intel Corporation.
  */
 
+#include <linux/string.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

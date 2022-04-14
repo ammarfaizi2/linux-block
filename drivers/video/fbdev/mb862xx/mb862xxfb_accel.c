@@ -8,6 +8,7 @@
  * (C) 2009 Valentin Sitdikov <v.sitdikov@gmail.com>
  * (C) 2009 Siemens AG
  */
+#include <linux/string.h>
 #include <linux/fb.h>
 #include <linux/delay.h>
 #include <linux/init.h>

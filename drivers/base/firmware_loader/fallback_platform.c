@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/string.h>
 #include <linux/efi_embedded_fw.h>
 #include <linux/property.h>
 #include <linux/security.h>

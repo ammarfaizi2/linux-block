@@ -4,6 +4,7 @@
  * Copyright (c) 2015, Intel Corporation.
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

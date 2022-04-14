@@ -9,6 +9,7 @@
 #include "dm-space-map.h"
 #include "dm-transaction-manager.h"
 
+#include <linux/string.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/export.h>

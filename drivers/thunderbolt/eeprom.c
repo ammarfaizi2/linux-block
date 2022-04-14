@@ -6,6 +6,7 @@
  * Copyright (C) 2018, Intel Corporation
  */
 
+#include <linux/string.h>
 #include <linux/crc32.h>
 #include <linux/delay.h>
 #include <linux/property.h>

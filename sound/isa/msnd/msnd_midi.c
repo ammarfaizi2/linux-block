@@ -9,6 +9,7 @@
  *  input is done also via polling. Do not expect good performance.
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/capability.h>
 #include <linux/io.h>

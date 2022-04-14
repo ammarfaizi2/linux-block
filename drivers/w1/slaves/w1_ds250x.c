@@ -3,6 +3,7 @@
  * w1_ds250x.c - w1 family 09/0b/89/91 (DS250x) driver
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

@@ -57,6 +57,7 @@
  * This file contains the implementation of the SCIC_SDS_REMOTE_NODE_TABLE
  *    public, protected, and private methods.
  */
+#include <linux/string.h>
 #include <linux/bug.h>
 
 #include "remote_node_table.h"

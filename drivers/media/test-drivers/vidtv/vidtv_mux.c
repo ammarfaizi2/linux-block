@@ -12,6 +12,7 @@
  * Copyright (C) 2020 Daniel W. S. Almeida
  */
 
+#include <linux/string.h>
 #include <linux/hashtable_api.h>
 #include <linux/delay.h>
 #include <linux/dev_printk.h>

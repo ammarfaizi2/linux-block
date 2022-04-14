@@ -7,6 +7,8 @@
  * Author: Max Asböck <amax@us.ibm.com>
  */
 
+#include <linux/string.h>
+
 #include "ibmasm.h"
 #include "dot_command.h"
 

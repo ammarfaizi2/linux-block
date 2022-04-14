@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/uio.h> /* struct kvec */
 #include <target/iscsi/iscsi_target_core.h>

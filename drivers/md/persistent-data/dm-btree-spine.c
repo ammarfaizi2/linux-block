@@ -7,6 +7,7 @@
 #include "dm-btree-internal.h"
 #include "dm-transaction-manager.h"
 
+#include <linux/string.h>
 #include <linux/device-mapper.h>
 
 #define DM_MSG_PREFIX "btree spine"

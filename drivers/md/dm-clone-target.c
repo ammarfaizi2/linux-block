@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Arrikto, Inc. All Rights Reserved.
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

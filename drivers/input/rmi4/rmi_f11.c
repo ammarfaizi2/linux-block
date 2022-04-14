@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Unixphere
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

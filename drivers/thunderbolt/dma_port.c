@@ -7,6 +7,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/string.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

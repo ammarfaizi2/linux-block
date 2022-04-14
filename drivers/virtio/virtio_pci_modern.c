@@ -14,6 +14,7 @@
  *  Michael S. Tsirkin <mst@redhat.com>
  */
 
+#include <linux/string.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #define VIRTIO_PCI_NO_LEGACY

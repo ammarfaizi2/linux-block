@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/string.h>
 #include <asm/byteorder.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

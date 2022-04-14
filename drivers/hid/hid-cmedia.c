@@ -7,6 +7,7 @@
  * Copyright (C) 2021 Thomas Weißschuh <linux@weissschuh.net>
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/device.h>
 #include <linux/hid.h>

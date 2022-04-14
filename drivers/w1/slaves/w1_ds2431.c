@@ -7,6 +7,7 @@
  * Heavily inspired by w1_DS2433 driver from Ben Gardner <bgardner@wabtec.com>
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * gpio_backlight.c - Simple GPIO-controlled backlight
  */
 
+#include <linux/string.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>

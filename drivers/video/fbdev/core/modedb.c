@@ -11,6 +11,7 @@
  *  more details.
  */
 
+#include <linux/string.h>
 #include <linux/math.h>
 #include <linux/module.h>
 #include <linux/slab.h>

@@ -11,6 +11,7 @@
 */
 
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

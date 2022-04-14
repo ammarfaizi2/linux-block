@@ -8,6 +8,7 @@
  *	    Basavaraj Natikar <Basavaraj.Natikar@amd.com>
  */
 
+#include <linux/string.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

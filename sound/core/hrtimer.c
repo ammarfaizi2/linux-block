@@ -4,6 +4,7 @@
  * Copyright (C) 2008 Takashi Iwai
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

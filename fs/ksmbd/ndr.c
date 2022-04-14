@@ -4,6 +4,7 @@
  *   Author(s): Namjae Jeon <linkinjeon@kernel.org>
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

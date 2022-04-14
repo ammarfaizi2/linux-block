@@ -29,6 +29,7 @@
  *  full control over both mixers.
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/err.h>

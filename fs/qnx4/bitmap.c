@@ -14,6 +14,7 @@
  * 28-06-1998 by Frank Denis : qnx4_free_inode (to be fixed) .
  */
 
+#include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/buffer_head.h>
 #include <linux/bitops.h>

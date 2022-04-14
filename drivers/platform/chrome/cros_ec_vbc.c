@@ -4,6 +4,7 @@
 // Copyright (C) 2012 Google, Inc.
 // Copyright (C) 2015 Collabora Ltd.
 
+#include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

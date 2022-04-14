@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/string.h>
 #include <linux/device_api.h>
 #include <drm/drm_displayid.h>
 #include <drm/drm_edid.h>

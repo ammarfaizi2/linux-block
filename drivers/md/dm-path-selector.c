@@ -9,6 +9,7 @@
  * Path selector registration.
  */
 
+#include <linux/string.h>
 #include <linux/rwsem_api.h>
 #include <linux/kmod.h>
 #include <linux/device-mapper.h>

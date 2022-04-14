@@ -6,6 +6,7 @@
 
 #include "pvrusb2-std.h"
 #include "pvrusb2-debug.h"
+#include <linux/string.h>
 #include <asm/string.h>
 #include <linux/slab.h>
 

@@ -7,6 +7,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 //#define DEBUG
+#include <linux/string.h>
 #include <linux/math.h>
 #include <linux/rcupdate.h>
 #include <linux/slab.h>

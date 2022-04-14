@@ -2,6 +2,7 @@
  * Extracted fronm glob.c
  */
 
+#include <linux/string.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/glob.h>

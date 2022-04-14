@@ -6,6 +6,7 @@
  * STM console will send kernel messages over STM devices to a trace host.
  */
 
+#include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/console.h>

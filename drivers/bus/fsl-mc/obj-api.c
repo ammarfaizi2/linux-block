@@ -3,6 +3,7 @@
  * Copyright 2021 NXP
  *
  */
+#include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/fsl/mc.h>
 

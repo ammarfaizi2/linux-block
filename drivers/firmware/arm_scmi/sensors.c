@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "SCMI Notifications SENSOR - " fmt
 
+#include <linux/string.h>
 #include <linux/printk.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

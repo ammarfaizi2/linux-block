@@ -6,6 +6,7 @@
  * Copyright (C) 2006 Craig W. Nadler
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

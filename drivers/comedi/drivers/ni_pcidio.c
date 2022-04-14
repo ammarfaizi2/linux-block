@@ -38,6 +38,7 @@
 
 #define USE_DMA
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/io.h>

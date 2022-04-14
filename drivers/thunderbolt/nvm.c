@@ -6,6 +6,7 @@
  * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/string.h>
 #include <linux/idr_api.h>
 #include <linux/align.h>
 #include <linux/idr.h>

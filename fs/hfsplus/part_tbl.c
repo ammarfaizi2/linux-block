@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include "hfsplus_fs.h"
 

@@ -5,6 +5,7 @@
  *  Author: Eric Biederman <ebiederm@xmision.com>
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

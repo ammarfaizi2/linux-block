@@ -14,6 +14,7 @@
  *   (ie, in this example, ME 39 has been reserved by boardconfig.)
  */
 
+#include <linux/string.h>
 #include <linux/jiffies.h>
 #include <linux/crc32.h>
 #include <asm/byteorder.h>

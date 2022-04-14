@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Scott Lin <scott.lin@tw.synaptics.com>
  */
 
+#include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>

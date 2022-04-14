@@ -13,6 +13,7 @@
  * 04-07-1998 by Frank Denis : first step for rmdir/unlink.
  */
 
+#include <linux/string.h>
 #include <linux/dcache.h>
 #include <linux/buffer_head.h>
 #include "qnx4.h"

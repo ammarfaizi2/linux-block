@@ -7,6 +7,7 @@
  * Copyright 2017 Google Inc.
  */
 
+#include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/device.h>
 #include <linux/io.h>

@@ -7,6 +7,7 @@
  * addresses lists.
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>

@@ -5,6 +5,7 @@
  * Copyright 2020 Google LLC
  */
 
+#include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/blk-crypto.h>
 #include <linux/blk-crypto-profile.h>

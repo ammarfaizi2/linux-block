@@ -12,6 +12,7 @@
  *
  ******************************************************************************/
 
+#include <linux/string.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/rculist.h>
 #include <linux/slab.h>

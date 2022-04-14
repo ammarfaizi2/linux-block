@@ -8,6 +8,7 @@
  * This code is licenced under the GPL.
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/cpu.h>
 #include <linux/cpuidle.h>

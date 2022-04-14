@@ -7,6 +7,7 @@
  * Author: Xing Zheng <zhengxing@rock-chips.com>
  */
 
+#include <linux/string.h>
 #include <asm/div64.h>
 #include <linux/slab.h>
 #include <linux/io.h>

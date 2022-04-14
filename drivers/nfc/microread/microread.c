@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/string.h>
 #include <linux/skbuff_api.h>
 #include <linux/module.h>
 #include <linux/delay.h>

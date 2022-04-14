@@ -5,6 +5,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>

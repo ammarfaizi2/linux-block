@@ -5,6 +5,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/string.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

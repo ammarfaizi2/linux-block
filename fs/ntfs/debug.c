@@ -5,6 +5,7 @@
  * Copyright (c) 2001-2004 Anton Altaparmakov
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/string.h>
 #include <linux/fs_types_sb.h>
 
 #include "debug.h"

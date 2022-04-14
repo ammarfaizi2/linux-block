@@ -8,6 +8,7 @@
  * Nobuhiro Iwamatsu <nobuhiro1.iwamatsu@toshiba.co.jp>
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/bitfield.h>
 #include <linux/clk-provider.h>

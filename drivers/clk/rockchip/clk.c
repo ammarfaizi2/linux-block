@@ -14,6 +14,7 @@
  * Author: Thomas Abraham <thomas.ab@samsung.com>
  */
 
+#include <linux/string.h>
 #include <linux/notifier_api.h>
 #include <linux/slab.h>
 #include <linux/clk.h>

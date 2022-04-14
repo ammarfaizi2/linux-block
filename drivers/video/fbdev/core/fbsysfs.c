@@ -11,6 +11,7 @@
  * are converted to use it a sysfsification will open OOPSable races.
  */
 
+#include <linux/string.h>
 #include <linux/stat.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2001 Wolfgang Scherr <scherr@net4you.at>
  */
 
+#include <linux/string.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>

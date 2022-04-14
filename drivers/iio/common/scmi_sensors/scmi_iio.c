@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Google LLC
  */
 
+#include <linux/string.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_types.h>

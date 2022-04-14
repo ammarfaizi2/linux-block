@@ -29,6 +29,7 @@
  * provide a syndrome calculation over the received data + syndrome and can
  * call the second stage directly.
  */
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/errno.h>

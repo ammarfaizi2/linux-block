@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

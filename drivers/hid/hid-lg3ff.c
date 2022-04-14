@@ -9,6 +9,7 @@
  */
 
 
+#include <linux/string.h>
 #include <linux/input.h>
 #include <linux/hid.h>
 

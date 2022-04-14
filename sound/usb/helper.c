@@ -2,6 +2,7 @@
 /*
  */
 
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/usb.h>

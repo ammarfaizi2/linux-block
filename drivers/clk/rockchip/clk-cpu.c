@@ -29,6 +29,7 @@
  * down in order to keep the output clock rate within the previous OPP limits.
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/of.h>

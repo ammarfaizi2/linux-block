@@ -3,6 +3,7 @@
  *  hdac_i915.c - routines for sync between HD-A core and i915 display driver
  */
 
+#include <linux/string.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/init.h>

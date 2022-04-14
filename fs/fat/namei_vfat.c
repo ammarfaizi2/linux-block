@@ -16,6 +16,7 @@
  *				OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>
  */
 
+#include <linux/string.h>
 #include <linux/stringhash.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

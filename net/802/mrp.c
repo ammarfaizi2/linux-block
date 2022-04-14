@@ -7,6 +7,7 @@
  *	Adapted from code in net/802/garp.c
  *	Copyright (c) 2008 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/rbtree_api.h>

@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/string.h>
 #include <linux/log2.h>
 #include <linux/slab.h>
 

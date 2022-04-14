@@ -4,6 +4,7 @@
  *
  *  Copyright by Michał Mirosław, 2008-2009
  */
+#include <linux/string.h>
 #include <linux/io.h>
 #include <linux/cb710.h>
 #include <linux/kernel.h>

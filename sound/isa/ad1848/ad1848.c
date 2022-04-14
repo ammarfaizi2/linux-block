@@ -6,6 +6,7 @@
  *  Based on card-4232.c by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/isa.h>

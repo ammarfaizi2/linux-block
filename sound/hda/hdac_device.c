@@ -3,6 +3,7 @@
  * HD-audio codec core device
  */
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

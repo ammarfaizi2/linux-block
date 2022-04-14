@@ -5,6 +5,7 @@
  *  Author: Cedric Le Goater <clg@fr.ibm.com>
  */
 
+#include <linux/string.h>
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <linux/ipc_namespace.h>

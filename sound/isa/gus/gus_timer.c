@@ -6,6 +6,7 @@
  *  GUS have similar timers as AdLib (OPL2/OPL3 chips).
  */
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/time.h>
 #include <sound/core.h>

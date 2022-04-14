@@ -7,6 +7,7 @@
  *  Rewritten for constant inumbers 1999 by Al Viro
  */
 
+#include <linux/string.h>
 #include <linux/stringhash.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
