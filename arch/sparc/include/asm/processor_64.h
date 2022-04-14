@@ -47,6 +47,8 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/bitops.h>
+
 /* The Sparc processor specific thread struct. */
 /* XXX This should die, everything can go into thread_info now. */
 struct thread_struct {
