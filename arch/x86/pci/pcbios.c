@@ -3,6 +3,7 @@
  * BIOS32 and PCI BIOS handling.
  */
 
+#include <asm/segment_types.h>
 #include <linux/pci.h>
 #include <linux/init.h>
 #include <linux/slab.h>
