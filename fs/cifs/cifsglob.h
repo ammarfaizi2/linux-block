@@ -9,6 +9,7 @@
 #ifndef _CIFS_GLOB_H
 #define _CIFS_GLOB_H
 
+#include <linux/kref_types.h>
 #include <linux/jiffies.h>
 #include <linux/fs_types_sb.h>
 #include <linux/fs.h>
