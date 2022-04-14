@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "arm-pv: " fmt
 
+#include <asm/paravirt_api_clock.h>
 #include <linux/arm-smccc.h>
 #include <linux/cpuhotplug.h>
 #include <linux/export.h>
