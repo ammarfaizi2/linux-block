@@ -22,6 +22,7 @@
  *  distribution for more details.
  */
 
+#include <linux/cgroup_api.h>
 #include <linux/capability.h>
 #include <linux/sched/affinity.h>
 #include <linux/cpu.h>

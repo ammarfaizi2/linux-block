@@ -6,6 +6,7 @@
  * Author: Vipin Sharma <vipinsh@google.com>
  */
 
+#include <linux/cgroup_api.h>
 #include <linux/atomic_api.h>
 #include <linux/limits.h>
 #include <linux/cgroup.h>

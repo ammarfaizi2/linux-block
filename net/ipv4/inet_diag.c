@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/cgroup_api.h>
 #include <linux/capability.h>
 #include <asm/unaligned.h>
 #include <linux/sched/cond_resched.h>
