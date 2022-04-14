@@ -6,6 +6,8 @@
 
 #define pr_fmt(fmt) "digital: %s: " fmt, __func__
 
+#include <linux/random.h>
+
 #include "digital.h"
 
 #define DIGITAL_CMD_SENS_REQ    0x26

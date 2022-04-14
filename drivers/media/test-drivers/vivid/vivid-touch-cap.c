@@ -3,6 +3,7 @@
  * vivid-touch-cap.c - touch support functions.
  */
 
+#include <linux/random.h>
 #include <linux/fs.h>
 
 #include "vivid-core.h"

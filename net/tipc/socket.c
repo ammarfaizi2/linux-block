@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/random.h>
 #include <linux/poll.h>
 #include <linux/net.h>
 #include <linux/jiffies.h>

@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/random.h>
 #include <linux/percpu.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>

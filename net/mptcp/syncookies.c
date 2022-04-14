@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/random.h>
 #include <linux/skbuff.h>
 
 #include "protocol.h"

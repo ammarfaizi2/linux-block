@@ -17,6 +17,7 @@
  *      YOSHIFUJI Hideaki @USAGI:	convert /proc/net/udp6 to seq_file.
  */
 
+#include <linux/random.h>
 #include <linux/prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/filter_api.h>

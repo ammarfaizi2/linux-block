@@ -5,6 +5,7 @@
  * Copyright (C) 2008-2009 Nokia Corporation
  */
 
+#include <linux/random.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>

@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/random.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

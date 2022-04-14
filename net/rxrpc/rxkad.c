@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/random.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>

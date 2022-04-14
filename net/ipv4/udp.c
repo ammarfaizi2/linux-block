@@ -74,6 +74,7 @@
 
 #define pr_fmt(fmt) "UDP: " fmt
 
+#include <linux/random.h>
 #include <linux/prefetch.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

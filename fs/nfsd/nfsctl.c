@@ -5,6 +5,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/random.h>
 #include <linux/prandom.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

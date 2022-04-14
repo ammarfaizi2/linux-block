@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/random.h>
 #include <linux/math64.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

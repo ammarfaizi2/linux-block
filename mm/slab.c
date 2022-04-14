@@ -87,6 +87,7 @@
  *	All object allocations for a node occur from node specific slab lists.
  */
 
+#include <linux/random.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>

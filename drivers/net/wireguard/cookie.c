@@ -10,6 +10,7 @@
 #include "ratelimiter.h"
 #include "timers.h"
 
+#include <linux/random.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>

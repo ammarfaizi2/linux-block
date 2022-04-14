@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/random.h>
 #include <linux/kernel.h>
 #include <net/sock.h>
 #include <linux/in.h>
