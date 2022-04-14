@@ -8,6 +8,7 @@
 #ifndef _LINUX_PM_RUNTIME_H
 #define _LINUX_PM_RUNTIME_H
 
+#include <linux/atomic.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/notifier.h>
