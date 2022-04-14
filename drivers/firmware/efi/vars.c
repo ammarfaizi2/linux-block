@@ -6,6 +6,7 @@
  * Copyright (C) 2004 Intel Corporation <matthew.e.tolentino@intel.com>
  */
 
+#include <linux/semaphore.h>
 #include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/errno.h>
