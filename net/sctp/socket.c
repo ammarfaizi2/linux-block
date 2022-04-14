@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <uapi/linux/sockios.h>
 #include <net/sock_batch.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>

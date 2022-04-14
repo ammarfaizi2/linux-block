@@ -6,6 +6,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <uapi/linux/sockios.h>
 #include <linux/sysfs.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

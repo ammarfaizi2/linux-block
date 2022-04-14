@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <uapi/linux/sockios.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/ip_extra.h>

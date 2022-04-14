@@ -23,6 +23,7 @@
  *		Arnaldo C. Melo -	don't mangle rx packets
  */
 
+#include <uapi/linux/sockios.h>
 #include <net/net_namespace_types.h>
 #include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>

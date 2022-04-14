@@ -9,6 +9,7 @@
  * Maxim Gorbachyov <maxim.gorbachev@siemens.com>
  */
 
+#include <uapi/linux/sockios.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <linux/uaccess.h>
