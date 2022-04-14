@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/refcount_api.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <linux/types.h>

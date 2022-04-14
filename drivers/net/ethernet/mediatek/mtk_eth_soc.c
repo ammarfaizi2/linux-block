@@ -6,6 +6,7 @@
  *   Copyright (C) 2013-2016 Michael Lee <igvtee@gmail.com>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

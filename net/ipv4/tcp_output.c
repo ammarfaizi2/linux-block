@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/net.h>
 #include <linux/memcontrol.h>
 #include <linux/math64.h>

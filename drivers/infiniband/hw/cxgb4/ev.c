@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/refcount_api.h>
 #include <linux/slab.h>
 #include <linux/mman.h>
 #include <net/sock.h>

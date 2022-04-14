@@ -8,6 +8,7 @@
  * Tom Haynes <loghyr@primarydata.com>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

@@ -13,6 +13,7 @@
  * (c) Copyright Huw Davies <huw@codeweavers.com>, 2015
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/ipv6.h>
 #include <linux/atomic_api.h>

@@ -18,6 +18,7 @@
  * information about these ioctls.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

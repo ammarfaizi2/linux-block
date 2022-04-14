@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/property.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

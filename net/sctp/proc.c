@@ -12,6 +12,7 @@
  *    Sridhar Samudrala <sri@us.ibm.com>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

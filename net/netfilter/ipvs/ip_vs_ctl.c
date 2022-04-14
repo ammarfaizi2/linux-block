@@ -16,6 +16,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>

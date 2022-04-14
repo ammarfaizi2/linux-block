@@ -12,6 +12,7 @@
  *	Vitaly E. Lavrov		RTA_OK arithmetic was wrong.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

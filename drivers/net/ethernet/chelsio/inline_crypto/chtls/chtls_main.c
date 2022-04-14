@@ -4,6 +4,7 @@
  *
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
+#include <linux/refcount_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2018-2021 Linaro Ltd.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rcupdate.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>

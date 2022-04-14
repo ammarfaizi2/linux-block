@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>

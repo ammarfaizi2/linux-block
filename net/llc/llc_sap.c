@@ -12,6 +12,7 @@
  * See the GNU General Public License for more details.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/etherdevice_api.h>
 #include <net/llc.h>
 #include <net/llc_if.h>

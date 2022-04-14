@@ -32,6 +32,7 @@
  *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <linux/refcount_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

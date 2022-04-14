@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rcuwait_api.h>
 #include <linux/rculist.h>
 #include <linux/ptrace_api.h>

@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/llist_api.h>
 #include <linux/dma-fence-api.h>

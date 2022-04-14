@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/filter_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

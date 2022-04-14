@@ -48,6 +48,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

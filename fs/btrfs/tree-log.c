@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Oracle.  All rights reserved.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

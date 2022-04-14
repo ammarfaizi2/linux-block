@@ -7,6 +7,7 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

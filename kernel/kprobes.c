@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/perf_event_api.h>
 #include <linux/notifier_api.h>

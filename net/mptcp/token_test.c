@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/refcount_api.h>
 #include <kunit/test.h>
 
 #include "protocol.h"

@@ -34,6 +34,7 @@
  * SOFTWARE.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rcupdate.h>
 #include <linux/radix-tree-api.h>
 #include <linux/mm_api.h>

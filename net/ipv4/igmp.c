@@ -66,6 +66,7 @@
  *					Vinay Kulkarni
  */
 
+#include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/atomic_api.h>

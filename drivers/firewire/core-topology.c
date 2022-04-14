@@ -5,6 +5,7 @@
  * Copyright (C) 2004-2006 Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/bug.h>
 #include <linux/errno.h>
 #include <linux/firewire.h>

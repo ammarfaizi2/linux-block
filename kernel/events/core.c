@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/pgtable_api.h>

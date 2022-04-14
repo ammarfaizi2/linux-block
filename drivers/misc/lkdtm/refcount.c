@@ -4,6 +4,7 @@
  * underflow, reaching zero untested, etc).
  */
 #include "lkdtm.h"
+#include <linux/refcount_api.h>
 #include <linux/atomic_api.h>
 #include <linux/refcount.h>
 

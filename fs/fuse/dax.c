@@ -6,6 +6,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/refcount_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

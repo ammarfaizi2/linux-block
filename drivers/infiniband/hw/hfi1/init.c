@@ -4,6 +4,7 @@
  * Copyright(c) 2021 Cornelis Networks.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

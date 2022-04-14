@@ -5,6 +5,7 @@
  * Written 1998,1999 by Werner Almesberger, EPFL ICA
  */
 
+#include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/module.h>
 #include <linux/types.h>

@@ -3,6 +3,7 @@
  * (C) 2011 Pablo Neira Ayuso <pablo@netfilter.org>
  * (C) 2011 Intra2net AG <https://www.intra2net.com>
  */
+#include <linux/refcount_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Jens Axboe
  *
  */
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/hashtable_api.h>
 #include <linux/hash.h>

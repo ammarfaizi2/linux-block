@@ -6,6 +6,7 @@
  * dsa_8021q_netdev_ops is registered for API compliance and not used
  * directly by callers.
  */
+#include <linux/refcount_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_vlan.h>
 #include <linux/dsa/8021q.h>

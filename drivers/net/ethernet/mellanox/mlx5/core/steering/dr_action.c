@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies. */
 
+#include <linux/refcount_api.h>
+
 #include "dr_types.h"
 #include "dr_ste.h"
 

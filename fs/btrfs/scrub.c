@@ -3,6 +3,7 @@
  * Copyright (C) 2011, 2012 STRATO.  All rights reserved.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

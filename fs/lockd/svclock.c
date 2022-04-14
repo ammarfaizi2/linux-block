@@ -21,6 +21,7 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

@@ -12,6 +12,7 @@
  *   Vlad Yasevich     <vladislav.yasevich@hp.com>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/capability.h>
 #include <crypto/hash.h>
 #include <linux/slab.h>

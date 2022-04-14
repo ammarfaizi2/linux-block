@@ -6,6 +6,7 @@
  *	TCPv4 GSO/GRO support
  */
 
+#include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/indirect_call_wrapper.h>

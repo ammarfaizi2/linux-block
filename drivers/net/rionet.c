@@ -6,6 +6,7 @@
  * Matt Porter <mporter@kernel.crashing.org>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/gfp_api.h>
 #include <linux/etherdevice_api.h>

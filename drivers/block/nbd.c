@@ -11,6 +11,7 @@
  * (part of code stolen from loop.c)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

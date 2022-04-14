@@ -63,6 +63,7 @@
  * merged in the usual way.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

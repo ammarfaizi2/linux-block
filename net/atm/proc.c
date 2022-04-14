@@ -9,6 +9,7 @@
  * the reader.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

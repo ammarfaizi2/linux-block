@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>

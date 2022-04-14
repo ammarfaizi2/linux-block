@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/atomic_api.h>

@@ -10,6 +10,7 @@
  *  release for licensing terms and conditions.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/if_vlan_api.h>

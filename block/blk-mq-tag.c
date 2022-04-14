@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2013-2014 Jens Axboe
  */
+#include <linux/refcount_api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

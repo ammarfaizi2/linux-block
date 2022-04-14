@@ -6,6 +6,7 @@
  */
 
 #define FSCACHE_DEBUG_LEVEL CACHE
+#include <linux/refcount_api.h>
 #include <linux/kobject_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

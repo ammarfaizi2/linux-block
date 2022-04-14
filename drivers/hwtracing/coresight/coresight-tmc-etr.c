@@ -4,6 +4,7 @@
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>

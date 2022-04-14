@@ -7,6 +7,7 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

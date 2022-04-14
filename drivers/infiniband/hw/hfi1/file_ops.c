@@ -4,6 +4,7 @@
  * Copyright(c) 2015-2020 Intel Corporation.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

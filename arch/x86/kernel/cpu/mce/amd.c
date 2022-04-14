@@ -7,6 +7,7 @@
  *
  *  All MC4_MISCi registers are shared between cores on a node.
  */
+#include <linux/refcount_api.h>
 #include <linux/kobject_api.h>
 #include <linux/interrupt.h>
 #include <linux/notifier.h>

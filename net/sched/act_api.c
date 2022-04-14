@@ -5,6 +5,7 @@
  * Author:	Jamal Hadi Salim
  */
 
+#include <linux/refcount_api.h>
 #include <linux/percpu.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_pcpu_stats.h>

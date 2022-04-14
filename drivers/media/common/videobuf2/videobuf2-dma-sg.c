@@ -10,6 +10,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

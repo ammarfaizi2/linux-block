@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/atomic_api.h>
 #include <linux/completion.h>

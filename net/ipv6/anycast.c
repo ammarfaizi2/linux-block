@@ -9,6 +9,7 @@
  *	based heavily on net/ipv6/mcast.c
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

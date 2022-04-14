@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/refcount_api.h>
 #include <linux/ipv6.h>
 #include <net/netfilter/nf_tproxy.h>
 #include <linux/module.h>
