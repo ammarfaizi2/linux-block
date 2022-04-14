@@ -28,6 +28,7 @@
  * signal handlers!
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/sched.h>
 #include <linux/mm.h>
 #include <linux/kernel.h>

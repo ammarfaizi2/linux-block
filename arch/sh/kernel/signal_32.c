@@ -9,6 +9,7 @@
  *  SuperH version:  Copyright (C) 1999, 2000  Niibe Yutaka & Kaz Kojima
  *
  */
+#include <linux/restart_block_api.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>
 #include <linux/mm.h>

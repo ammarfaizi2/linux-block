@@ -9,6 +9,7 @@
  * for more details.
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/signal.h>
 #include <linux/errno.h>
 #include <linux/ptrace.h>

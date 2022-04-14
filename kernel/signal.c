@@ -11,6 +11,7 @@
  *		to allow signals to be sent reliably.
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/slab.h>
 #include <linux/export.h>
 #include <linux/init.h>

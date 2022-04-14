@@ -8,6 +8,7 @@
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 2014, Imagination Technologies Ltd.
  */
+#include <linux/restart_block_api.h>
 #include <linux/cache.h>
 #include <linux/context_tracking.h>
 #include <linux/irqflags.h>

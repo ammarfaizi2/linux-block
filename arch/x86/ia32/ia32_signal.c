@@ -9,6 +9,7 @@
  *  2000-12-*   x86-64 compatibility mode signal handling by Andi Kleen
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>
 #include <linux/mm.h>

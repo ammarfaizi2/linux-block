@@ -11,6 +11,7 @@
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/sched.h>
 #include <linux/mm.h>
 #include <linux/smp.h>

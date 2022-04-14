@@ -12,6 +12,7 @@
 
 #define DEBUG		/* Enable initcall_debug */
 
+#include <linux/restart_block_api.h>
 #include <linux/types.h>
 #include <linux/extable.h>
 #include <linux/module.h>

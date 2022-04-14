@@ -8,6 +8,7 @@
  *  Copyright (C) 1997,1998 Jakub Jelinek   (jj@sunsite.mff.cuni.cz)
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/signal.h>

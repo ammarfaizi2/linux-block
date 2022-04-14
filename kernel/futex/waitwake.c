@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/restart_block_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/sched/rseq_api.h>
 #include <linux/cache.h>
 #include <linux/compat.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Regents of the University of California
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/signal.h>
 #include <linux/uaccess.h>
 #include <linux/syscalls.h>

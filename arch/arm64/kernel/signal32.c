@@ -7,6 +7,7 @@
  * Modified by Will Deacon <will.deacon@arm.com>
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/compat.h>
 #include <linux/signal.h>
 #include <linux/syscalls.h>

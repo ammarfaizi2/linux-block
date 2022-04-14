@@ -22,6 +22,7 @@
  *	et. al.
  */
 
+#include <linux/restart_block_api.h>
 #include <linux/cpu.h>
 #include <linux/export.h>
 #include <linux/percpu.h>
