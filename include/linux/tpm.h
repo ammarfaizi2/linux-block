@@ -17,6 +17,7 @@
 #ifndef __LINUX_TPM_H__
 #define __LINUX_TPM_H__
 
+#include <linux/gfp_api.h>
 #include <linux/hw_random.h>
 #include <linux/acpi.h>
 #include <linux/cdev.h>

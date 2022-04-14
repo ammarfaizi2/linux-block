@@ -2,6 +2,7 @@
 #ifndef __ASM_GENERIC_PGALLOC_H
 #define __ASM_GENERIC_PGALLOC_H
 
+#include <linux/gfp_api.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_MMU

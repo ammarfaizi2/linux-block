@@ -2,6 +2,7 @@
 #ifndef _LINUX_SCHED_MM_H
 #define _LINUX_SCHED_MM_H
 
+#include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/atomic.h>
 #include <linux/sched/task_flags.h>
