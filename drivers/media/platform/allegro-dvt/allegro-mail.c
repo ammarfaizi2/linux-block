@@ -6,6 +6,7 @@
  * Allegro VCU firmware.
  */
 
+#include <linux/bits.h>
 #include <linux/bitfield.h>
 #include <linux/export.h>
 #include <linux/errno.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2013 Ideas On Board SPRL
  */
 
+#include <linux/bits.h>
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

@@ -7,6 +7,8 @@
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
+#include <linux/bits.h>
+
 #include "cxd2880_common.h"
 
 int cxd2880_convert2s_complement(u32 value, u32 bitlen)

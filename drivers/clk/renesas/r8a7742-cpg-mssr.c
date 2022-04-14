@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Renesas Electronics Corp.
  */
 
+#include <linux/bits.h>
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
