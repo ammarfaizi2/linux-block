@@ -2,6 +2,7 @@
 /*
  * ip30-irq.c: Highlevel interrupt handling for IP30 architecture.
  */
+#include <linux/sched/affinity.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/cpumask_api.h>

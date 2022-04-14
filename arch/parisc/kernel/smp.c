@@ -13,6 +13,7 @@
 ** -grant (1/12/2001)
 **
 */
+#include <linux/sched/affinity.h>
 #include <linux/profile.h>
 #include <linux/pgtable_api.h>
 #include <linux/cpumask_api.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2002 - 2010 Paul Mundt
  * Copyright (C) 2006 - 2007 Akio Idehara
  */
+#include <linux/sched/affinity.h>
 #include <linux/profile.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>

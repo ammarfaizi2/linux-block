@@ -12,6 +12,7 @@
  * Pete Delaney <piet@tensilica.com
  */
 
+#include <linux/sched/affinity.h>
 #include <linux/ptrace_api.h>
 #include <linux/profile.h>
 #include <linux/pgtable_api.h>

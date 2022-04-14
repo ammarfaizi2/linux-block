@@ -13,6 +13,7 @@
 
 #undef DEBUG
 
+#include <linux/sched/affinity.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
