@@ -9,6 +9,7 @@
  * Leonid Moiseichuk, Mel Gorman, Minchan Kim and Pekka Enberg.
  */
 
+#include <linux/memcontrol.h>
 #include <linux/jiffies.h>
 #include <linux/cgroup.h>
 #include <linux/fs.h>

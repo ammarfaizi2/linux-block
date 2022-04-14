@@ -9,6 +9,7 @@
  * Copyright (C) 2011-2012 Red Hat, Inc., Peter Zijlstra
  */
 
+#include <linux/memcontrol.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

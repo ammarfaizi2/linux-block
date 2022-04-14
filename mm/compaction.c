@@ -8,6 +8,7 @@
  *
  * Copyright IBM Corp. 2007-2010 Mel Gorman <mel@csn.ul.ie>
  */
+#include <linux/memcontrol.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
