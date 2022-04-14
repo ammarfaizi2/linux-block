@@ -15,6 +15,7 @@
  * the dcache entry is deleted or garbage collected.
  */
 
+#include <linux/list_bl_api.h>
 #include <linux/ioprio.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>
