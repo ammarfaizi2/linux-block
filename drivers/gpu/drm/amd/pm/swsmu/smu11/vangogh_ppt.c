@@ -34,6 +34,7 @@
 #include "soc15_common.h"
 #include "asic_reg/gc/gc_10_3_0_offset.h"
 #include "asic_reg/gc/gc_10_3_0_sh_mask.h"
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

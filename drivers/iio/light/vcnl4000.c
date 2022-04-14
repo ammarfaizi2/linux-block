@@ -17,6 +17,7 @@
  *   interrupts (VCNL4040, VCNL4200)
  */
 
+#include <linux/timekeeping.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

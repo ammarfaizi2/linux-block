@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/stat.h>
 #include <linux/property.h>

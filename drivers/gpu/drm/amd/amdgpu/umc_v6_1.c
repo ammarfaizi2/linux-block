@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 
 #include "umc_v6_1.h"

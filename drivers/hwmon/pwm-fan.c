@@ -7,6 +7,7 @@
  * Author: Kamil Debski <k.debski@samsung.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

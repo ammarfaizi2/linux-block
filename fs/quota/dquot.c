@@ -54,6 +54,7 @@
  * (C) Copyright 1994 - 1997 Marco van Wieringen
  */
 
+#include <linux/timekeeping.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

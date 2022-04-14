@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2011 Rafael J. Wysocki <rjw@sisk.pl>, Renesas Electronics Corp.
  */
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>

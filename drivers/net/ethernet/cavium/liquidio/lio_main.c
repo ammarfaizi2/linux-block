@@ -15,6 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
  * NONINFRINGEMENT.  See the GNU General Public License for more details.
  ***********************************************************************/
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

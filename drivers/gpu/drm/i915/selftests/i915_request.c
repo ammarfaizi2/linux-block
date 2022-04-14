@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>

@@ -4,6 +4,7 @@
  * consolidated here from m68k/ia64/parisc/arm.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/irq.h>

@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

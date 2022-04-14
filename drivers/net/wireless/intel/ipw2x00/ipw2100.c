@@ -119,6 +119,7 @@ that only one external action is invoked at a time.
 
 */
 
+#include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

@@ -9,6 +9,7 @@
  */
 
 #define BH_TRACE 0
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/gfp_api.h>
 #include <linux/module.h>

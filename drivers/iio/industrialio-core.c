@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "iio-core: " fmt
 
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/sysfs.h>
 #include <linux/of_api.h>

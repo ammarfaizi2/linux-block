@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/clock.h>
 #include <linux/math64.h>

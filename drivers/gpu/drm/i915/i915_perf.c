@@ -191,6 +191,7 @@
  *   with the rest of the i915 driver.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/sysctl.h>
 #include <linux/spinlock_api.h>

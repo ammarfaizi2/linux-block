@@ -5,6 +5,7 @@
  * Copyright (C) 1995-1997 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/mm_page_address.h>
 #include <linux/fs_api.h>

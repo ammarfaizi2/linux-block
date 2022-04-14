@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2011 Broadcom Corporation.  All rights reserved. */
 
+#include <linux/timekeeping.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

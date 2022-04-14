@@ -6,6 +6,7 @@
  * Enhanced Scheduler Traffic (EST - P802.1Qbv/D2.2)
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>

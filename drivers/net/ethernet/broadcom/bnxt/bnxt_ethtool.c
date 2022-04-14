@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/pci-dma-compat.h>

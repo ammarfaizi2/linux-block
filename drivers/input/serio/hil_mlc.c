@@ -52,6 +52,7 @@
  *	and to initiate probes of the loop for new devices.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

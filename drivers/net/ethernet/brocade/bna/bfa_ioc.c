@@ -9,6 +9,7 @@
  * www.qlogic.com
  */
 
+#include <linux/timekeeping.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

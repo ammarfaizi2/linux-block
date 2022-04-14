@@ -12,6 +12,7 @@
 
 #define DEBUG		/* Enable initcall_debug */
 
+#include <linux/timekeeping.h>
 #include <linux/sysctl.h>
 #include <linux/softirq.h>
 #include <linux/seq_file.h>

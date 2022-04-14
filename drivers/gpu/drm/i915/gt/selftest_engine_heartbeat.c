@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/llist_api.h>

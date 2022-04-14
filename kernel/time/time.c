@@ -24,6 +24,7 @@
  *	with nanosecond accuracy
  */
 
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/sched/task_stack.h>

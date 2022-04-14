@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/ktime_api.h>

@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/timekeeping.h>
 #include <linux/rwsem_api.h>
 #include <linux/ktime_api.h>
 #include <linux/delay.h>

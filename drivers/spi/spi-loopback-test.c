@@ -9,6 +9,7 @@
  *  this can also get used for regression testing
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mm.h>

@@ -11,6 +11,7 @@
  * Special thanks to Video BG4 project team.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/property.h>
 #include <linux/ktime_api.h>
 #include <linux/acpi.h>

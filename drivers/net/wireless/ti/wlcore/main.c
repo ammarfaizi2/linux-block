@@ -6,6 +6,7 @@
  * Copyright (C) 2011-2013 Texas Instruments Inc.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>

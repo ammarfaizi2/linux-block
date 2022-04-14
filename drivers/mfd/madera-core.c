@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2018 Cirrus Logic
  */
 
+#include <linux/timekeeping.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

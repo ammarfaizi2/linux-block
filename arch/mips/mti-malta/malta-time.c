@@ -5,6 +5,7 @@
  *
  * Setting up the clock on the MIPS boards.
  */
+#include <linux/timekeeping.h>
 #include <linux/of_api.h>
 #include <asm/cpu-type.h>
 #include <linux/types.h>

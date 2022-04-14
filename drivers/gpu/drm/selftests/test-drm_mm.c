@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "drm_mm: " fmt
 
+#include <linux/timekeeping.h>
 #include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/math64.h>

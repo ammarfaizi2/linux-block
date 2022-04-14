@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/timekeeping.h>
 #include <linux/syscalls_api.h>
 #include <linux/swap.h>
 #include <linux/spinlock_api.h>

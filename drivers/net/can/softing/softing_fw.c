@@ -5,6 +5,7 @@
  * - Kurt Van Dijck, EIA Electronics
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

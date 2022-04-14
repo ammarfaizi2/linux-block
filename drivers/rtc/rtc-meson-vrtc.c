@@ -4,6 +4,7 @@
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  * Copyright (C) 2015 Amlogic, Inc. All rights reserved.
  */
+#include <linux/timekeeping.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ktime_api.h>

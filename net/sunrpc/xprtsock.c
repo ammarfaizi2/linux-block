@@ -19,6 +19,7 @@
  *   <gilles.quillard@bull.net>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sysctl.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>

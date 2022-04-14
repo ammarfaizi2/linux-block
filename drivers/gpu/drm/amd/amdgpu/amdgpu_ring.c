@@ -26,6 +26,7 @@
  *          Jerome Glisse
  *          Christian König
  */
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>

@@ -24,6 +24,7 @@
  * counts the number of samples since. Time since last clock event is added.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/slab.h>

@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/timekeeping.h>
 #include <linux/seqlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_api_truncate.h>

@@ -18,6 +18,7 @@
 /*
  * @file octeon_console.c
  */
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>

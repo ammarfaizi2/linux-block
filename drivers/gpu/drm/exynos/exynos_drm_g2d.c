@@ -4,6 +4,7 @@
  * Authors: Joonyoung Shim <jy0922.shim@samsung.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>

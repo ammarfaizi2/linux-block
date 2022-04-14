@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/ktime_api.h>

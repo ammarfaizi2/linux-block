@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/timekeeping.h>
 #include <linux/seqlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/atomic_api.h>

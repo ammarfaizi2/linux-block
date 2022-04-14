@@ -6,6 +6,7 @@
  * Author: Daeho Jeong <daehojeong@google.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

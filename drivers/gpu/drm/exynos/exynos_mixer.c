@@ -9,6 +9,7 @@
  * Based on drivers/media/video/s5p-tv/mixer_reg.c
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/ioport.h>

@@ -2,6 +2,7 @@
 /*
  * RTC related functions
  */
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

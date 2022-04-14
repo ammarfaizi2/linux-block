@@ -3,6 +3,7 @@
  * Copyright (C) 2012 by Alan Stern
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>

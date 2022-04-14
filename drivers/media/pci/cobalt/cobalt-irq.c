@@ -6,6 +6,7 @@
  *  All rights reserved.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <media/i2c/adv7604.h>

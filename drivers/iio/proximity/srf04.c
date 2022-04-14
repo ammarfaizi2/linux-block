@@ -34,6 +34,7 @@
  *                              pulse time measured
  *                              --> one round trip of ultra sonic waves
  */
+#include <linux/timekeeping.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

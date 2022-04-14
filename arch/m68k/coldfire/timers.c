@@ -9,6 +9,7 @@
 
 /***************************************************************************/
 
+#include <linux/timekeeping.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

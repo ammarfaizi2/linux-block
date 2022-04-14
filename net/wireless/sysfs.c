@@ -8,6 +8,7 @@
  * Copyright (C) 2020-2021 Intel Corporation
  */
 
+#include <linux/timekeeping.h>
 #include <linux/device/class.h>
 #include <linux/device.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright 2017 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/seq_file.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>

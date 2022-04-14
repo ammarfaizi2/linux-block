@@ -9,6 +9,7 @@
  * Author: schuffelen@google.com
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

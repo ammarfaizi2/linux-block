@@ -8,6 +8,7 @@
 // Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/fs_api.h>

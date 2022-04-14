@@ -7,6 +7,7 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/string.h>
 #include <linux/stringhash.h>
 #include <linux/spinlock_api.h>

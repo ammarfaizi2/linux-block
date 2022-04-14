@@ -12,6 +12,7 @@
 /*
  * This handles all read/write requests to block devices
  */
+#include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/preempt.h>

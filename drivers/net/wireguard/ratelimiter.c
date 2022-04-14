@@ -4,6 +4,7 @@
  */
 
 #include "ratelimiter.h"
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/siphash_api.h>

@@ -17,6 +17,7 @@
  * Copyright (c) Copyright 2014 Cisco Systems, Inc.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>

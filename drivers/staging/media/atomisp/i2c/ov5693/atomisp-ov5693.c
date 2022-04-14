@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/timekeeping.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>

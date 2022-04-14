@@ -5,6 +5,7 @@
  * Copyright (C) Jay Lan,	<jlan@sgi.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>

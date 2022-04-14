@@ -7,6 +7,7 @@
  *   broadsheetfb.c, Copyright (C) 2008, Jaya Kumar
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

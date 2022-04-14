@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

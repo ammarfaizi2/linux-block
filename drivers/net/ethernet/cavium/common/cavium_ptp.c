@@ -3,6 +3,7 @@
  * Copyright (c) 2003-2015, 2017 Cavium, Inc.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/math64.h>

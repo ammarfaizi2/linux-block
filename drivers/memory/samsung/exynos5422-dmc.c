@@ -4,6 +4,7 @@
  * Author: Lukasz Luba <l.luba@partner.samsung.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

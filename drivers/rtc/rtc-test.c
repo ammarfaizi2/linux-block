@@ -5,6 +5,7 @@
  * Author: Alessandro Zummo <a.zummo@towertech.it>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

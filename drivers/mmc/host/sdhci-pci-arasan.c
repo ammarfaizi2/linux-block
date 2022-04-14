@@ -8,6 +8,7 @@
  * Author: Atul Garg <agarg@arasan.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

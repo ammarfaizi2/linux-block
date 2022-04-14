@@ -28,6 +28,7 @@
  * SUCH DAMAGES.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/highmem.h>
 #include <linux/atomic_api.h>

@@ -6,6 +6,7 @@
  * for more details.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

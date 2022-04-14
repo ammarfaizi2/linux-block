@@ -7,6 +7,7 @@
  * Copyright(C) 2005-2007, Red Hat, Inc., Ingo Molnar
  * Copyright(C) 2006-2007, Timesys Corp., Thomas Gleixner
  */
+#include <linux/timekeeping.h>
 #include <linux/hrtimer_api.h>
 #include <linux/cpu.h>
 #include <linux/err.h>

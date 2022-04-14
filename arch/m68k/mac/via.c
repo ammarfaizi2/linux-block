@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/timekeeping.h>
 #include <linux/irqdesc.h>
 #include <linux/interrupt.h>
 #include <linux/clocksource.h>

@@ -10,6 +10,7 @@
 
 #include "habanalabs.h"
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>

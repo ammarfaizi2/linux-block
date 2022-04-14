@@ -21,6 +21,7 @@
  *
  *
  */
+#include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/notifier_api.h>

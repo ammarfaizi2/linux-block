@@ -3,6 +3,7 @@
  * vivid-meta-cap.c - meta capture support functions.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/math64.h>
 #include <linux/fs.h>

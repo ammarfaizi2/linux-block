@@ -10,6 +10,7 @@
  * Copyright (c) 2020, 2021 Vincent Mailhol <mailhol.vincent@wanadoo.fr>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

@@ -56,6 +56,7 @@
 
 /*****************************************************************************/
 
+#include <linux/timekeeping.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/irq.h>

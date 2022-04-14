@@ -9,6 +9,7 @@
  * Authors: Yann Le Du <ledu@kymasys.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/ktime_api.h>
 #include <linux/cpumask_api.h>
