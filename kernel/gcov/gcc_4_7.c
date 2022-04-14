@@ -12,6 +12,7 @@
  *  Uses gcc-internal data definitions.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/string.h>

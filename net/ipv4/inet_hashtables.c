@@ -9,6 +9,7 @@
  * Authors:	Lotsa people, from code originally in tcp
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/ipv6.h>
 #include <linux/hash.h>
 #include <linux/filter_api.h>

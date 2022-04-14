@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/kernel.h>

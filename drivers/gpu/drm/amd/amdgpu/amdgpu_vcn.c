@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/io_extra.h>
 #include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>

@@ -9,6 +9,7 @@
  * Contact: Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <media/v4l2-dev.h>

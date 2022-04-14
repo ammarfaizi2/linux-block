@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright(c) 2020 Intel Corporation. All rights reserved. */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>

@@ -25,6 +25,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/list_sort.h>
 #include <linux/pci.h>
 #include <linux/uaccess.h>

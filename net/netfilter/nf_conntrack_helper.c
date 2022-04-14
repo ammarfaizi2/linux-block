@@ -7,6 +7,7 @@
  * (C) 2006-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
 #include <linux/kmod.h>
 #include <linux/types.h>

@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/kref_api.h>
 #include <linux/mm.h>
 

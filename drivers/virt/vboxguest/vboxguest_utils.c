@@ -6,6 +6,7 @@
  * Copyright (C) 2006-2016 Oracle Corporation
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>

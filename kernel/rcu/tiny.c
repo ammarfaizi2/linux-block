@@ -9,6 +9,7 @@
  * For detailed explanation of Read-Copy Update mechanism see -
  *		Documentation/RCU
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/completion.h>

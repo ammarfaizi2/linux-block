@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/llist_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

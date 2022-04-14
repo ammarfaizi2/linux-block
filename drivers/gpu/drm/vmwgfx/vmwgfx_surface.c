@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <linux/mm_api_kvmalloc.h>
 #include <drm/ttm/ttm_placement.h>
 
 #include "vmwgfx_drv.h"

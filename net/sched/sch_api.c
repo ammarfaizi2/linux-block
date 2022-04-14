@@ -11,6 +11,7 @@
  * Jamal Hadi Salim <hadi@nortelnetworks.com>: 990601: ingress support
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hashtable_api.h>

@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

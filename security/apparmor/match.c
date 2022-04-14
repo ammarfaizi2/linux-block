@@ -8,6 +8,7 @@
  * Copyright 2009-2012 Canonical Ltd.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/errno.h>

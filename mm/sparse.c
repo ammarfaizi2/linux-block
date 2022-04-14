@@ -2,6 +2,7 @@
 /*
  * sparse memory mappings.
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/bitmap.h>

@@ -4,6 +4,7 @@
  */
 
 #include "ratelimiter.h"
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/ipv6.h>
 #include <linux/atomic_api.h>

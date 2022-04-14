@@ -13,6 +13,7 @@
  * more details.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <math_support.h>
 #include <gdc_device.h>	/* HR_GDC_N */
 

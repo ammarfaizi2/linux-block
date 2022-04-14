@@ -22,6 +22,7 @@
 #include "lut.h"
 #include "disp.h"
 
+#include <linux/mm_api_kvmalloc.h>
 #include <drm/drm_color_mgmt.h>
 #include <drm/drm_mode.h>
 #include <drm/drm_property.h>

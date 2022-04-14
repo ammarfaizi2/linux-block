@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/bitmap.h>
 
 #include "xfs.h"

@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/memcontrol.h>
 #include <linux/highmem_extra.h>

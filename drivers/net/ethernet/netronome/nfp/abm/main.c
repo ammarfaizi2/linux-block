@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2018 Netronome Systems, Inc. */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/etherdevice_api.h>
 #include <linux/bitfield.h>
 #include <linux/bitmap.h>

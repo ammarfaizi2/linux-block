@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/bitmap.h>
 #include <net/tc_act/tc_gact.h>
 #include <net/tc_act/tc_mirred.h>

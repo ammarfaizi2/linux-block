@@ -4,6 +4,7 @@
  * Author: Dmitry Safonov <dima@arista.com>
  * Based on code and translator idea by: Florian Westphal <fw@strlen.de>
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/compat.h>
 #include <linux/xfrm.h>
 #include <net/xfrm.h>

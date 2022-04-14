@@ -15,6 +15,7 @@
 
 #include "hmm.h"
 
+#include <linux/mm_api_kvmalloc.h>
 #include <assert_support.h>
 #include "ia_css_debug.h"
 #include "ia_css_sdis2.host.h"

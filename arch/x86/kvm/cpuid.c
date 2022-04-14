@@ -9,6 +9,7 @@
  * Copyright IBM Corporation, 2008
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <asm/processor_api.h>
 #include <linux/kvm_host.h>
 #include <linux/export.h>

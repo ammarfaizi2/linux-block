@@ -5,6 +5,7 @@
  * Copyright (C) 2011-2013 Eric Dumazet (eric.dumazet@gmail.com)
  * Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/kallsyms.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>

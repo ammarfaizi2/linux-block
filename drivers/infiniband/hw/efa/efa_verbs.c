@@ -3,6 +3,7 @@
  * Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

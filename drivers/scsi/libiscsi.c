@@ -8,6 +8,7 @@
  * Copyright (C) 2004 - 2005 Alex Aizman
  * maintained by open-iscsi@googlegroups.com
  */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/types.h>

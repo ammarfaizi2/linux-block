@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/vmalloc.h>
 #include <linux/bitmap.h>
 #include "null_blk.h"

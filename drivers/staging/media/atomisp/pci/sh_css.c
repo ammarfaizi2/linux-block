@@ -14,6 +14,7 @@
  */
 
 /*! \file */
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/delay.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

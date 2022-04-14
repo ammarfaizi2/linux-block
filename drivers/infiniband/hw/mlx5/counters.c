@@ -4,6 +4,7 @@
  */
 
 #include "mlx5_ib.h"
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/atomic_api.h>
 #include <linux/mlx5/eswitch.h>
 #include "counters.h"

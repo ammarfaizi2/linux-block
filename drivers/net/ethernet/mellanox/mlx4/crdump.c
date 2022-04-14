@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/io.h>
 
 #include "mlx4.h"

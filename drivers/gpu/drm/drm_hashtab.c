@@ -32,6 +32,7 @@
  * Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/hash.h>
 #include <linux/mm.h>
 #include <linux/rculist.h>

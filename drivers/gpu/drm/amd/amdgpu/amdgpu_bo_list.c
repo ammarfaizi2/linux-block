@@ -28,6 +28,7 @@
  *    Christian König <deathsimple@vodafone.de>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/uaccess.h>

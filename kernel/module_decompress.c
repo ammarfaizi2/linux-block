@@ -3,6 +3,7 @@
  * Copyright 2021 Google LLC.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/kobject_api.h>
 #include <linux/gfp_api.h>
 #include <linux/init.h>

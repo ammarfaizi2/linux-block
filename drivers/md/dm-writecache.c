@@ -5,6 +5,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/highmem_extra.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018 Facebook */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/math64.h>
 #include <linux/kallsyms.h>
 #include <linux/idr_api.h>

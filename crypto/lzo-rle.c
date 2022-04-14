@@ -3,6 +3,7 @@
  * Cryptographic API.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/crypto.h>

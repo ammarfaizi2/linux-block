@@ -4,6 +4,7 @@
  * Authors: Joonyoung Shim <jy0922.shim@samsung.com>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

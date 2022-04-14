@@ -23,6 +23,7 @@
  *	nfmark match added by Catalin(ux aka Dino) BOIE <catab at umbrella.ro>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/idr_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>

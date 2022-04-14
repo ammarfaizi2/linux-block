@@ -34,6 +34,7 @@
 
 #include "core_priv.h"
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>
 #include <linux/slab.h>

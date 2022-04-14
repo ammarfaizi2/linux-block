@@ -47,6 +47,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/filter_api.h>

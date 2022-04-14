@@ -3,6 +3,7 @@
 
 #include "tir.h"
 #include "params.h"
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mlx5/transobj.h>
 
 #define MLX5E_PARAMS_DEFAULT_LRO_WQE_SZ (64 * 1024)

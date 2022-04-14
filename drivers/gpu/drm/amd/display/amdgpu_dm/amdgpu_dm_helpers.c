@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/string.h>
 #include <linux/acpi.h>
 #include <linux/i2c.h>

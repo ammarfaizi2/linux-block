@@ -3,6 +3,7 @@
  * Copyright © 2017-2018 Intel Corporation
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>

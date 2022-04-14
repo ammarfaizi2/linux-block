@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies. */
 
+#include <linux/mm_api_kvmalloc.h>
+
 #include "dr_types.h"
 
 int mlx5dr_cmd_query_esw_vport_context(struct mlx5_core_dev *mdev,

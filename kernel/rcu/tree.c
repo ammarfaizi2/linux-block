@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "rcu: " fmt
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/llist_api.h>

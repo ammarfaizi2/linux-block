@@ -13,6 +13,7 @@
  * more details.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>
 
 #include "hmm.h"

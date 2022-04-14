@@ -13,6 +13,8 @@
  * more details.
  */
 
+#include <linux/mm_api_kvmalloc.h>
+
 #include "hmm.h"
 
 #include "assert_support.h"

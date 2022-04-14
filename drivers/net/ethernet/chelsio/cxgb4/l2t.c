@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/io_extra.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>

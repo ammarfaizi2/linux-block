@@ -5,6 +5,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/highmem.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

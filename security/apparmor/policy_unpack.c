@@ -13,6 +13,7 @@
  * All policy is validated before it is used.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

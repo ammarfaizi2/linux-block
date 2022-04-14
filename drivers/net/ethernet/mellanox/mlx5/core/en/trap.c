@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/cpumask_api.h>
 #include <net/page_pool.h>
 #include "en/txrx.h"

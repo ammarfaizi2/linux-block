@@ -3,6 +3,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/slab.h>
 #include <linux/mm.h>
 

@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/capability.h>
 #include <linux/compat.h>
 #include <linux/crypto.h>

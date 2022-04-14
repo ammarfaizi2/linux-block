@@ -3,6 +3,7 @@
  * Copyright(c) 2016 Intel Corporation.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/kref_api.h>
 #include <linux/err.h>
 #include <linux/slab.h>
