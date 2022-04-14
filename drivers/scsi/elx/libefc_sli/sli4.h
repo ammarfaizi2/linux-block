@@ -12,6 +12,7 @@
 #ifndef _SLI4_H
 #define _SLI4_H
 
+#include <linux/sizes.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
