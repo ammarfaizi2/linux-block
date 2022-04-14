@@ -7,6 +7,7 @@
  * Copyright (C) 1996, 1997 Olaf Kirch
  */
 
+#include <linux/fs_entry_types.h>
 #include <linux/param.h>
 #include <linux/time.h>
 #include <linux/mm.h>

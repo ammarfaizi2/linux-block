@@ -6,6 +6,7 @@
  *
  *  E and F format directory handling
  */
+#include <linux/fs_entry_types.h>
 #include <linux/fs_api_dir_context.h>
 
 #include "adfs.h"

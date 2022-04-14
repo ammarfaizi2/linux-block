@@ -14,6 +14,7 @@
  *  Short name translation 1999, 2001 by Wolfram Pienkoss <wp@bszh.de>
  */
 
+#include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/slab.h>

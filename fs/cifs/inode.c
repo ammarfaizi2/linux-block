@@ -5,6 +5,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>

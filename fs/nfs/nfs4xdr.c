@@ -35,6 +35,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/fs_entry_types.h>
 #include <linux/param.h>
 #include <linux/time.h>
 #include <linux/mm.h>

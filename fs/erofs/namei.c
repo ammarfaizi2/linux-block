@@ -6,6 +6,7 @@
  */
 #include "xattr.h"
 
+#include <linux/fs_entry_types.h>
 #include <linux/dcache.h>
 #include <trace/events/erofs.h>
 
