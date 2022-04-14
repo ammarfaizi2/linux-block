@@ -6,6 +6,7 @@
  *
  *  Copyright (C) 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
+#include <linux/ptrace_api.h>
 #include <asm/processor_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/task_stack.h>

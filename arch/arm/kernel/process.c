@@ -5,6 +5,7 @@
  *  Copyright (C) 1996-2000 Russell King - Converted to ARM.
  *  Original Copyright (C) 1995  Linus Torvalds
  */
+#include <linux/ptrace_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

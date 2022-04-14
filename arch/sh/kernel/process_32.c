@@ -10,6 +10,7 @@
  *		     Copyright (C) 2006 Lineo Solutions Inc. support SH4A UBC
  *		     Copyright (C) 2002 - 2008  Paul Mundt
  */
+#include <linux/ptrace_api.h>
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/sched/debug.h>

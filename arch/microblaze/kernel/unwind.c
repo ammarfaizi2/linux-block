@@ -13,6 +13,7 @@
  */
 
 /* #define DEBUG 1 */
+#include <linux/ptrace_api.h>
 #include <linux/export.h>
 #include <linux/kallsyms.h>
 #include <linux/kernel.h>

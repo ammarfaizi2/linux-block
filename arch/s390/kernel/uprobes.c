@@ -6,6 +6,7 @@
  *    Author(s): Jan Willeke,
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/uaccess.h>
 #include <linux/uprobes.h>
 #include <linux/compat.h>

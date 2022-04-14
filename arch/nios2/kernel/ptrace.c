@@ -7,6 +7,7 @@
  * archive for more details.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/elf.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

@@ -24,6 +24,7 @@
  * signal handlers!
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/restart_block_api.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>

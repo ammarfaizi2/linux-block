@@ -31,6 +31,7 @@
  *  "The futexes are also cursed."
  *  "But they come in a choice of three flavours!"
  */
+#include <linux/ptrace_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>

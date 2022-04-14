@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/ptrace_api.h>
 #include <linux/net.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

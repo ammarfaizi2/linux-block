@@ -15,6 +15,7 @@
  * this archive for more details.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/regset.h>
 #include <linux/ptrace.h>
 #include <linux/audit.h>

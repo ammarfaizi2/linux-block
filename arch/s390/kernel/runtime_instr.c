@@ -4,6 +4,7 @@
  * Author(s): Jan Glauber <jang@linux.vnet.ibm.com>
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/syscalls.h>

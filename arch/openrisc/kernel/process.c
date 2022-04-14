@@ -14,6 +14,7 @@
  */
 
 #define __KERNEL_SYSCALLS__
+#include <linux/ptrace_api.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>

@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>

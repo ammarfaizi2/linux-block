@@ -77,6 +77,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ptrace_api.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

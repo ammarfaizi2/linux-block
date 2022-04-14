@@ -8,6 +8,7 @@
  * Copyright (C) 2005 BULL SA.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/netlink.h>
 #include <linux/ktime_api.h>
 #include <linux/cred.h>

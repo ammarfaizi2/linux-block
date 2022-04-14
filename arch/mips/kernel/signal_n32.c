@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2003 Broadcom Corporation
  */
+#include <linux/ptrace_api.h>
 #include <linux/cache.h>
 #include <linux/sched.h>
 #include <linux/mm.h>

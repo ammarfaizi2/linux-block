@@ -8,6 +8,7 @@
  *		 Denis Joseph Barrow,
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/mm_api.h>
 #include <linux/elf-randomize.h>
 #include <linux/compiler.h>

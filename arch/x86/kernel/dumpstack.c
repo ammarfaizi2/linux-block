@@ -2,6 +2,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *  Copyright (C) 2000, 2001, 2002 Andi Kleen, SuSE Labs
  */
+#include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/notifier_api.h>
 #include <linux/mm_api.h>

@@ -24,6 +24,7 @@
  *	with nanosecond accuracy
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>

@@ -11,6 +11,7 @@
  * to emulate SunOS).
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>

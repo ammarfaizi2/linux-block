@@ -13,6 +13,7 @@
  * result, all CPUs are treated as if they're single-core and
  * single-threaded.
  */
+#include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/hardirq.h>

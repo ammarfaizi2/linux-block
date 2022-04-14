@@ -9,6 +9,7 @@
  *  'linux/arch/arm/lib/traps.S'.  Mostly a debugging aid, but will probably
  *  kill the offending process.
  */
+#include <linux/ptrace_api.h>
 #include <linux/prefetch.h>
 #include <linux/preempt.h>
 #include <linux/signal.h>
