@@ -3,6 +3,7 @@
 #ifndef BTRFS_MISC_H
 #define BTRFS_MISC_H
 
+#include <linux/wait_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/sched.h>
 #include <linux/wait.h>

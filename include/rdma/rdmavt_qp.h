@@ -6,6 +6,7 @@
 #ifndef DEF_RDMAVT_INCQP_H
 #define DEF_RDMAVT_INCQP_H
 
+#include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>

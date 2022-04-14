@@ -7,6 +7,7 @@
 #ifndef __MM_INTERNAL_H
 #define __MM_INTERNAL_H
 
+#include <linux/wait_api.h>
 #include <linux/vmstat.h>
 #include <linux/sched.h>
 #include <linux/pagemap_api_readahead.h>

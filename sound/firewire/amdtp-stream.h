@@ -2,6 +2,7 @@
 #ifndef SOUND_FIREWIRE_AMDTP_H_INCLUDED
 #define SOUND_FIREWIRE_AMDTP_H_INCLUDED
 
+#include <linux/wait_api.h>
 #include <linux/jiffies.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>

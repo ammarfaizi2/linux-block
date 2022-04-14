@@ -7,6 +7,7 @@
  *  Copyright (c) 1994-2001 by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/wait_api.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/sched.h>		/* wake_up() */

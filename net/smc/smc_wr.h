@@ -12,6 +12,7 @@
 #ifndef SMC_WR_H
 #define SMC_WR_H
 
+#include <linux/wait_api.h>
 #include <linux/atomic.h>
 #include <rdma/ib_verbs.h>
 #include <asm/div64.h>

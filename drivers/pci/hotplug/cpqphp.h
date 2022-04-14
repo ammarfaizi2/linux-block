@@ -14,6 +14,7 @@
 #ifndef _CPQPHP_H
 #define _CPQPHP_H
 
+#include <linux/wait_api.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>		/* for read? and write? functions */
 #include <linux/delay.h>	/* for delays */

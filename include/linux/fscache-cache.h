@@ -14,6 +14,7 @@
 #ifndef _LINUX_FSCACHE_CACHE_H
 #define _LINUX_FSCACHE_CACHE_H
 
+#include <linux/wait_api.h>
 #include <linux/fscache.h>
 
 enum fscache_cache_trace;

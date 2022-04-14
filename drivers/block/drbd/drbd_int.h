@@ -14,6 +14,7 @@
 #ifndef _DRBD_INT_H
 #define _DRBD_INT_H
 
+#include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
