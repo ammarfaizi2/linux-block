@@ -21,6 +21,7 @@
  *  Heavily rewritten for 'one fs - one tree' dcache architecture. AV, Mar 2000
  */
 
+#include <linux/list_lru_api.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

@@ -5,6 +5,7 @@
  *
  * Generic LRU infrastructure
  */
+#include <linux/list_lru_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/mm.h>
