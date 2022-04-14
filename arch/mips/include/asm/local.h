@@ -2,6 +2,7 @@
 #ifndef _ARCH_MIPS_LOCAL_H
 #define _ARCH_MIPS_LOCAL_H
 
+#include <linux/atomic_api.h>
 #include <linux/percpu.h>
 #include <linux/bitops.h>
 #include <linux/atomic.h>

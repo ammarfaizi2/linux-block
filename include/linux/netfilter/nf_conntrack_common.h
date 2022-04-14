@@ -2,6 +2,7 @@
 #ifndef _NF_CONNTRACK_COMMON_H
 #define _NF_CONNTRACK_COMMON_H
 
+#include <linux/atomic_api.h>
 #include <linux/refcount.h>
 #include <uapi/linux/netfilter/nf_conntrack_common.h>
 

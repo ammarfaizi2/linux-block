@@ -7,6 +7,7 @@
 #ifndef INTEL_WAKEREF_H
 #define INTEL_WAKEREF_H
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>

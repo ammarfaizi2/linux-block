@@ -2,6 +2,7 @@
 #ifndef UBI_WL_H
 #define UBI_WL_H
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_MTD_UBI_FASTMAP

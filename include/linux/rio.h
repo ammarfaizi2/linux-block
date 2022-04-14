@@ -10,6 +10,7 @@
 #ifndef LINUX_RIO_H
 #define LINUX_RIO_H
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/ioport.h>
 #include <linux/list.h>

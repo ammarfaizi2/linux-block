@@ -10,6 +10,7 @@
 #ifndef __ASM_GENERIC_QSPINLOCK_H
 #define __ASM_GENERIC_QSPINLOCK_H
 
+#include <linux/atomic_api.h>
 #include <asm-generic/qspinlock_types.h>
 #include <linux/atomic.h>
 

@@ -5,6 +5,7 @@
 #ifndef __ASM_BITOPS_H
 #define __ASM_BITOPS_H
 
+#include <linux/atomic_api.h>
 #include <linux/compiler.h>
 
 #ifndef _LINUX_BITOPS_H

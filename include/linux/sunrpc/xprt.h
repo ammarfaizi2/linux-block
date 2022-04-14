@@ -10,6 +10,7 @@
 #ifndef _LINUX_SUNRPC_XPRT_H
 #define _LINUX_SUNRPC_XPRT_H
 
+#include <linux/atomic_api.h>
 #include <linux/uio.h>
 #include <linux/socket.h>
 #include <linux/in.h>

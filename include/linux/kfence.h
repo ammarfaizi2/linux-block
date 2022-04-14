@@ -9,6 +9,7 @@
 #ifndef _LINUX_KFENCE_H
 #define _LINUX_KFENCE_H
 
+#include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/types.h>
 

@@ -2,6 +2,7 @@
 #ifndef _LINUX_IVERSION_H
 #define _LINUX_IVERSION_H
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 
 /*

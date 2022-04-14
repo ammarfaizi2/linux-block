@@ -9,6 +9,7 @@
 #ifndef __LINUX_SCALE_BITMAP_H
 #define __LINUX_SCALE_BITMAP_H
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bitops.h>
 #include <linux/cache.h>

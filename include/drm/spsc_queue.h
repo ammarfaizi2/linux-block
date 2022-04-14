@@ -24,6 +24,7 @@
 #ifndef DRM_SCHEDULER_SPSC_QUEUE_H_
 #define DRM_SCHEDULER_SPSC_QUEUE_H_
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/preempt.h>
 

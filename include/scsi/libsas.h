@@ -10,6 +10,7 @@
 #define _LIBSAS_H_
 
 
+#include <linux/atomic_api.h>
 #include <linux/timer.h>
 #include <linux/pci.h>
 #include <scsi/sas.h>

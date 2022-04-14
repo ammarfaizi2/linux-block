@@ -2,6 +2,7 @@
 #ifndef _LINUX_IRQ_WORK_H
 #define _LINUX_IRQ_WORK_H
 
+#include <linux/atomic_api.h>
 #include <linux/smp_types.h>
 #include <linux/rcuwait.h>
 

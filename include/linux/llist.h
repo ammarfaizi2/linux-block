@@ -48,6 +48,7 @@
  *   Author: Huang Ying <ying.huang@intel.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/container_of.h>
 #include <linux/stddef.h>

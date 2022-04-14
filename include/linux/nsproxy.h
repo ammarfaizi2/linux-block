@@ -2,6 +2,7 @@
 #ifndef _LINUX_NSPROXY_H
 #define _LINUX_NSPROXY_H
 
+#include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <linux/sched.h>
 

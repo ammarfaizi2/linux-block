@@ -7,6 +7,7 @@
  * Authors: Paul E. McKenney <paulmck@linux.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/lockdep.h>
 
 static void rcu_exp_handler(void *unused);

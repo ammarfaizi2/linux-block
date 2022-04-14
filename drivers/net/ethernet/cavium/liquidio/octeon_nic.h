@@ -25,6 +25,7 @@
 #ifndef __OCTEON_NIC_H__
 #define  __OCTEON_NIC_H__
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 
 /* Maximum number of 8-byte words can be sent in a NIC control message.
