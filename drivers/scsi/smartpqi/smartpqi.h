@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/semaphore.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 
 #if !defined(_SMARTPQI_H)

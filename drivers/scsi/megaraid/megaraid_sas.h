@@ -18,6 +18,7 @@
 #ifndef LSI_MEGARAID_SAS_H
 #define LSI_MEGARAID_SAS_H
 
+#include <linux/semaphore.h>
 #include <scsi/scsi_cmnd.h>
 
 /*

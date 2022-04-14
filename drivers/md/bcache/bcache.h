@@ -179,6 +179,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) "bcache: %s() " fmt, __func__
 
+#include <linux/semaphore.h>
 #include <linux/refcount_api.h>
 #include <linux/bio.h>
 #include <linux/kobject.h>

@@ -7,6 +7,7 @@
 #ifndef _HISI_SAS_H_
 #define _HISI_SAS_H_
 
+#include <linux/semaphore.h>
 #include <linux/acpi.h>
 #include <linux/blk-mq.h>
 #include <linux/blk-mq-pci.h>

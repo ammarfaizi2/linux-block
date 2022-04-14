@@ -99,6 +99,7 @@
  * and fails if the sequence number doesn't match.
  */
 
+#include <linux/semaphore.h>
 #include <linux/rwsem_api.h>
 
 #include "bset.h"

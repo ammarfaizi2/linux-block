@@ -18,6 +18,7 @@
 #ifndef CORE_H
 #define CORE_H
 
+#include <linux/semaphore.h>
 #include <linux/etherdevice.h>
 #include <linux/rtnetlink.h>
 #include <linux/firmware.h>

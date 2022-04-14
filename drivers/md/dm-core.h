@@ -9,6 +9,7 @@
 #ifndef DM_CORE_INTERNAL_H
 #define DM_CORE_INTERNAL_H
 
+#include <linux/semaphore.h>
 #include <linux/kthread.h>
 #include <linux/ktime.h>
 #include <linux/blk-mq.h>

@@ -11,6 +11,7 @@
 #ifndef UDL_DRV_H
 #define UDL_DRV_H
 
+#include <linux/semaphore.h>
 #include <linux/mm_types.h>
 #include <linux/usb.h>
 
