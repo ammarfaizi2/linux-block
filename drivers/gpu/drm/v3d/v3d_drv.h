@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (C) 2015-2018 Broadcom */
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <asm/io.h>

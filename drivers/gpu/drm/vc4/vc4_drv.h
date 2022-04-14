@@ -5,6 +5,7 @@
 #ifndef _VC4_DRV_H_
 #define _VC4_DRV_H_
 
+#include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/debugfs.h>
 #include <asm/io.h>

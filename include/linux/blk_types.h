@@ -6,6 +6,7 @@
 #ifndef __LINUX_BLK_TYPES_H
 #define __LINUX_BLK_TYPES_H
 
+#include <linux/ktime_api.h>
 #include <linux/types.h>
 #include <linux/bvec.h>
 #include <linux/device.h>

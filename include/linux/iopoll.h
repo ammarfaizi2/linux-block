@@ -6,6 +6,7 @@
 #ifndef _LINUX_IOPOLL_H
 #define _LINUX_IOPOLL_H
 
+#include <linux/ktime_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/ktime.h>

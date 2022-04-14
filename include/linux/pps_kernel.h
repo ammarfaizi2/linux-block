@@ -8,6 +8,7 @@
 #ifndef LINUX_PPS_KERNEL_H
 #define LINUX_PPS_KERNEL_H
 
+#include <linux/ktime_api.h>
 #include <linux/pps.h>
 #include <linux/cdev.h>
 #include <linux/device.h>

@@ -8,6 +8,7 @@
 #include "messages.h"
 #include "peerlookup.h"
 
+#include <linux/ktime_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/spinlock.h>

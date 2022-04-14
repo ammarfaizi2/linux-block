@@ -25,6 +25,7 @@
 #ifndef __I915_UTILS_H
 #define __I915_UTILS_H
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/list.h>
 #include <linux/overflow.h>

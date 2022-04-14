@@ -8,6 +8,7 @@
 #ifndef _MEDIA_CEC_H
 #define _MEDIA_CEC_H
 
+#include <linux/ktime_api.h>
 #include <linux/poll.h>
 #include <linux/fs.h>
 #include <linux/debugfs.h>

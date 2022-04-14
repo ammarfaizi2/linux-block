@@ -4,6 +4,7 @@
 #ifndef __LIMA_DEVICE_H__
 #define __LIMA_DEVICE_H__
 
+#include <linux/ktime_api.h>
 #include <drm/drm_device.h>
 #include <linux/delay.h>
 #include <linux/list.h>

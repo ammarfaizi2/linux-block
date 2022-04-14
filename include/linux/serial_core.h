@@ -7,6 +7,7 @@
 #ifndef LINUX_SERIAL_CORE_H
 #define LINUX_SERIAL_CORE_H
 
+#include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitops.h>
 #include <linux/compiler.h>
