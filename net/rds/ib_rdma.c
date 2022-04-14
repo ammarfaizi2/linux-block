@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

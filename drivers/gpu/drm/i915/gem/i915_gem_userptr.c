@@ -34,6 +34,7 @@
  *    Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/pagemap.h>
 #include <linux/mmu_notifier.h>
 #include <linux/mm_page_address.h>

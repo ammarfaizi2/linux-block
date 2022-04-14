@@ -5,6 +5,7 @@
  * Antoine Tenart <antoine.tenart@free-electrons.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <asm/unaligned.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>

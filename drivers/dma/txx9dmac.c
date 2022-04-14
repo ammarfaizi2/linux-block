@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2009 Atsushi Nemoto
  */
+#include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/dma-mapping.h>

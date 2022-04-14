@@ -39,6 +39,7 @@
 
 /* =============== End of user configurable parameters ============== */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

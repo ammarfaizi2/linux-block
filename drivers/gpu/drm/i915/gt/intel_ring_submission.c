@@ -3,6 +3,7 @@
  * Copyright © 2008-2021 Intel Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <drm/drm_cache.h>
 
 #include "gem/i915_gem_internal.h"

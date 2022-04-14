@@ -122,6 +122,7 @@
 
 #include "aic7xxx_osm.h"
 #include "aic7xxx_inline.h"
+#include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

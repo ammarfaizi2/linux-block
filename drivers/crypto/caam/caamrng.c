@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/hw_random.h>

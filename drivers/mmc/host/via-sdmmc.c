@@ -4,6 +4,7 @@
  *  Copyright (c) 2008, VIA Technologies Inc. All Rights Reserved.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/jiffies.h>

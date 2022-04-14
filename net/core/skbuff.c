@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>

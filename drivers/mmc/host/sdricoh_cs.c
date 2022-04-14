@@ -10,6 +10,7 @@
 #define DEBUG
 #define VERBOSE_DEBUG
 */
+#include <linux/scatterlist_api.h>
 #include <linux/crc32.h>
 #include <asm/cacheflush.h>
 #include <linux/delay.h>

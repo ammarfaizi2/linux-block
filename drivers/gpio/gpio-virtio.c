@@ -9,6 +9,7 @@
  * Viresh Kumar <viresh.kumar@linaro.org>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>

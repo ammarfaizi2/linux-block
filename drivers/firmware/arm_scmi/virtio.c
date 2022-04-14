@@ -17,6 +17,7 @@
  * virtqueue. Access to each virtqueue is protected by spinlocks.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/completion.h>

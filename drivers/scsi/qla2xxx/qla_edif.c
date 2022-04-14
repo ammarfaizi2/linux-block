@@ -6,6 +6,7 @@
 #include "qla_def.h"
 #include "qla_edif.h"
 
+#include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>

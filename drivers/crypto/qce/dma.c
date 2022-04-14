@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/dmaengine.h>
 #include <crypto/scatterwalk.h>
 

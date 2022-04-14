@@ -11,6 +11,7 @@
 #include "messages.h"
 #include "cookie.h"
 
+#include <linux/scatterlist_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>

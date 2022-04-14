@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/prime_numbers.h>

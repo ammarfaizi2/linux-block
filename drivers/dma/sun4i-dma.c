@@ -4,6 +4,7 @@
  * Emilio López <emilio@elopez.com.ar>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

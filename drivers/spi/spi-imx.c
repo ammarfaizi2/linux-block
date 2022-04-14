@@ -2,6 +2,7 @@
 // Copyright 2004-2007 Freescale Semiconductor, Inc. All Rights Reserved.
 // Copyright (C) 2008 Juergen Beisert
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

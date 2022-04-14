@@ -5,6 +5,7 @@
  * Copyright (c) 2007 Nokia Siemens Networks - Mikko Herranen <mh1@iki.fi>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/minmax.h>
 #include <crypto/gf128mul.h>
 #include <crypto/internal/aead.h>

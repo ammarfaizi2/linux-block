@@ -3,6 +3,7 @@
  *  Copyright 2007-2008 Pierre Ossman
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -7,6 +7,7 @@
  * Rewrite: Copyright (C) 2013 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/err.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2015, NVIDIA Corporation.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/kref_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/err.h>

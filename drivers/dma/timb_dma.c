@@ -8,6 +8,7 @@
  * Timberdale FPGA DMA engine
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>

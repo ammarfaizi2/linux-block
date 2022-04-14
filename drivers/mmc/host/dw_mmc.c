@@ -7,6 +7,7 @@
  * Copyright (C) 2009, 2010 Imagination Technologies Ltd.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Red Hat, Inc.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>

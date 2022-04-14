@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Chelsio Communications, Inc.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mm_api.h>
 #include <linux/dma-mapping.h>
 

@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>

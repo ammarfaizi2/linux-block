@@ -10,6 +10,7 @@
  * (C) Copyright 2007, ATRON electronic GmbH,
  *		Jan Nikitenko <jan.nikitenko@gmail.com>
  */
+#include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <asm/cacheflush.h>

@@ -9,6 +9,7 @@
  *              future expansion to five letters.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

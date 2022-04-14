@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/interrupt.h>

@@ -11,6 +11,7 @@
 #include "cookie.h"
 #include "socket.h"
 
+#include <linux/scatterlist_api.h>
 #include <linux/random.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

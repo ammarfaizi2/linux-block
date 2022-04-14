@@ -5,6 +5,7 @@
  * (C) Copyright IBM Corp. 2007 - Joy Latten <latten@us.ibm.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/minmax.h>
 #include <crypto/internal/aead.h>
 #include <crypto/internal/cipher.h>

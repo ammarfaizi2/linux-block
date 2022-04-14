@@ -3,6 +3,7 @@
  *  Copyright (C) 2003 Russell King, All Rights Reserved.
  *  Copyright 2006-2007 Pierre Ossman
  */
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>

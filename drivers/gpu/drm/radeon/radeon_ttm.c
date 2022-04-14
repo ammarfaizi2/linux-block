@@ -30,6 +30,7 @@
  *    Dave Airlie
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/highmem.h>

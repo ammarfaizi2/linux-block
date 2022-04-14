@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-2.0
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

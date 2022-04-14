@@ -161,6 +161,7 @@
  * ioctlsize            - Initial size of the IOCTL buffer
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/notifier_api.h>
 #include <linux/io.h>
 #include <linux/highmem.h>

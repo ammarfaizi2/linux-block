@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/bsg-lib.h>

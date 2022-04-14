@@ -44,6 +44,7 @@
 
 #include "aic79xx_osm.h"
 #include "aic79xx_inline.h"
+#include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

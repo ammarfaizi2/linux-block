@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2018 Western Digital Corporation
  */
+#include <linux/scatterlist_api.h>
 #include <linux/device_api_lock.h>
 
 #include "ufs_bsg.h"

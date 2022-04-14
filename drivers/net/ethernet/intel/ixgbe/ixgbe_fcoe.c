@@ -2,6 +2,7 @@
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
 #include "ixgbe.h"
+#include <linux/scatterlist_api.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_ether_api.h>

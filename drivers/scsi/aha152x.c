@@ -224,6 +224,7 @@
 
  **************************************************************************/
 
+#include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <asm/irq.h>

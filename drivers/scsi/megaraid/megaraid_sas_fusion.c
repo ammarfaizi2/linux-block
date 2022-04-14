@@ -17,6 +17,7 @@
  *  Send feedback to: megaraidlinux.pdl@broadcom.com
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/ktime_api.h>

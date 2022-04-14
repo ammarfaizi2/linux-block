@@ -9,6 +9,7 @@
  *               2004 Jean-Luc Cooke <jlcooke@certainkey.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <crypto/scatterwalk.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

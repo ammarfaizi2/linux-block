@@ -5,6 +5,7 @@
  * Scatterlist splitting helpers.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/minmax.h>
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>

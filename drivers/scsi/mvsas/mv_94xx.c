@@ -7,6 +7,7 @@
  * Copyright 2009-2011 Marvell. <yuxiangl@marvell.com>
 */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/delay.h>

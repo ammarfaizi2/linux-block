@@ -27,6 +27,7 @@
 /*
  * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
+#include <linux/scatterlist_api.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

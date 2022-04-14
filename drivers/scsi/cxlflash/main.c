@@ -8,6 +8,7 @@
  * Copyright (C) 2015 IBM Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -5,6 +5,7 @@
  * Author: Jonas Aaberg <jonas.aberg@stericsson.com> for ST-Ericsson
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/kernel.h>
 #include <linux/platform_data/dma-ste-dma40.h>
 

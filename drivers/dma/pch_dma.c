@@ -5,6 +5,7 @@
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

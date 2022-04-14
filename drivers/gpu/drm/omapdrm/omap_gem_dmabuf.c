@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob.clark@linaro.org>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/dma-buf.h>
 #include <linux/highmem.h>
 

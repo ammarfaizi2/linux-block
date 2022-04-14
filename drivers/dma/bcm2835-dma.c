@@ -17,6 +17,7 @@
  *	MARVELL MMP Peripheral DMA Driver
  *	Copyright 2012 Marvell International Ltd.
  */
+#include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

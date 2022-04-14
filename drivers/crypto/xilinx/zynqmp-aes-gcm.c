@@ -4,6 +4,7 @@
  * Copyright (c) 2020 Xilinx Inc.
  */
 
+#include <linux/scatterlist_api.h>
 #include <crypto/aes.h>
 #include <crypto/engine.h>
 #include <crypto/gcm.h>

@@ -6,6 +6,7 @@
  * Author: Jonas Aaberg <jonas.aberg@stericsson.com> for ST-Ericsson
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

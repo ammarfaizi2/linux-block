@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Ilya Dryomov <idryomov@gmail.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -10,6 +10,7 @@
 #include "saa7134.h"
 #include "saa7134-reg.h"
 
+#include <linux/scatterlist_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

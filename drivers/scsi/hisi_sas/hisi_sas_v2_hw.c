@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Hisilicon Limited.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/property.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>

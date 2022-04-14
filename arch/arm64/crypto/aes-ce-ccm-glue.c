@@ -5,6 +5,7 @@
  * Copyright (C) 2013 - 2017 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/scatterlist_api.h>
 #include <asm/neon.h>
 #include <asm/unaligned.h>
 #include <crypto/aes.h>

@@ -6,6 +6,7 @@
  *  All rights reserved.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/string.h>
 #include <linux/io.h>

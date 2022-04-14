@@ -17,6 +17,7 @@
  * - On APIC systems the FIFO empty interrupt is sometimes lost.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/module.h>

@@ -75,6 +75,7 @@
  * (i.e. _enter_* function).
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>

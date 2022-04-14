@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2019 Spreadtrum Communications Inc.
 
+#include <linux/scatterlist_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/mm_api.h>
 #include <linux/device_api_lock.h>

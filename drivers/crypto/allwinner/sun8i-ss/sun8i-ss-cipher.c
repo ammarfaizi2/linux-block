@@ -11,6 +11,7 @@
  * You could find a link for the datasheet in Documentation/arm/sunxi.rst
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/device_api.h>
 #include <linux/bottom_half.h>
 #include <linux/crypto.h>

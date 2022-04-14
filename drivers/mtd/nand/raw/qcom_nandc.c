@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016, The Linux Foundation. All rights reserved.
  */
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

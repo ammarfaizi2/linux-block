@@ -5,6 +5,7 @@
  *  Copyright 2006-2007 Pierre Ossman
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/scatterlist.h>
 
 #include <linux/mmc/host.h>

@@ -9,6 +9,7 @@
  * Author: Andreas Westin <andreas.westin@stericsson.com> for ST-Ericsson.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

@@ -5,6 +5,7 @@
  * Authors: Salvator Benedetto <salvatore.benedetto@intel.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/minmax.h>
 #include <linux/module.h>
 #include <crypto/internal/ecc.h>

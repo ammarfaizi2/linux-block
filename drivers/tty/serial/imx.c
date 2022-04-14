@@ -8,6 +8,7 @@
  * Copyright (C) 2004 Pengutronix
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

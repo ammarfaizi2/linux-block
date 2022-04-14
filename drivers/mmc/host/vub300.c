@@ -32,6 +32,7 @@
  *             bits and driver data fields reflect that limit by using
  *             u8, u16, u32
  */
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

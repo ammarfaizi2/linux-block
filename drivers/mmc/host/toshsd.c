@@ -9,6 +9,7 @@
  *	sdhci.c, copyright (C) 2005-2006 Pierre Ossman
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/module.h>

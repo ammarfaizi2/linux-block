@@ -33,6 +33,7 @@
 
 #define pr_fmt(fmt) "xen-pvscsi: " fmt
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Russell King
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>

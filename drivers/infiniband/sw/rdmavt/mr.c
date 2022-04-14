@@ -3,6 +3,7 @@
  * Copyright(c) 2016 Intel Corporation.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/mm_page_address.h>

@@ -13,6 +13,7 @@
 #define prn(num) pr_debug(#num "=%d\n", num)
 #define prx(num) pr_debug(#num "=%x\n", num)
 
+#include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

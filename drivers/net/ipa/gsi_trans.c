@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

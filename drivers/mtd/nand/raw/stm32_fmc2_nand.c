@@ -4,6 +4,7 @@
  * Author: Christophe Kerello <christophe.kerello@st.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

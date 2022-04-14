@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Martin Willi
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/minmax.h>
 #include <crypto/internal/aead.h>
 #include <crypto/internal/hash.h>

@@ -5,6 +5,7 @@
  *  Copyright (c) 2012, Jeff Layton <jlayton@redhat.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/random.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

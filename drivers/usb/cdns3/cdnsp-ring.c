@@ -55,6 +55,7 @@
  *    for these.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/capability.h>
 #include <linux/scatterlist.h>

@@ -10,6 +10,7 @@
  */
 
 #include "rk3288_crypto.h"
+#include <linux/scatterlist_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

@@ -30,6 +30,7 @@
  * (the low to high transition will not occur).
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>

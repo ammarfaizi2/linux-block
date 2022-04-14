@@ -9,6 +9,7 @@
 //
 // Hash part based on omap-sham.c driver.
 
+#include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2016, Intel Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>

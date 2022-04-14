@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>
 #include <linux/dma-mapping.h>

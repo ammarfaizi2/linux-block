@@ -4,6 +4,7 @@
  * Copyright 2016, Qualcomm Atheros, Inc.
  */
 
+#include <linux/scatterlist_api.h>
 #include <asm/unaligned.h>
 #include <crypto/aes.h>
 #include <crypto/algapi.h>

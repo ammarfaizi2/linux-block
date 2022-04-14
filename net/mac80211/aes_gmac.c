@@ -4,6 +4,7 @@
  * Copyright 2015, Qualcomm Atheros, Inc.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/err.h>

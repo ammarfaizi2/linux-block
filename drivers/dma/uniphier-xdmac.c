@@ -5,6 +5,7 @@
  * Author: Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/io.h>

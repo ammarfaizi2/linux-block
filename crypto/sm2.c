@@ -8,6 +8,7 @@
  * Authors: Tianjia Zhang <tianjia.zhang@linux.alibaba.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/module.h>
 #include <linux/mpi.h>
 #include <crypto/internal/akcipher.h>

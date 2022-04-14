@@ -7,6 +7,7 @@
  * Copyright (C) 2013 Intel Corporation
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>

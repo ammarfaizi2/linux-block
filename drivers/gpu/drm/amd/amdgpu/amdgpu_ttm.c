@@ -30,6 +30,7 @@
  *    Dave Airlie
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mmap_lock.h>

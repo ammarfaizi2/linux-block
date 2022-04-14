@@ -4,6 +4,7 @@
  *
  * Scatterlist handling helpers.
  */
+#include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mm_api.h>

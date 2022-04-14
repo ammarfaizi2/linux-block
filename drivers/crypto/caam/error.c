@@ -11,6 +11,7 @@
 #include "error.h"
 
 #ifdef DEBUG
+#include <linux/scatterlist_api.h>
 #include <linux/highmem.h>
 
 void caam_dump_sg(const char *prefix_str, int prefix_type,

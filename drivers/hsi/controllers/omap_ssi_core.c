@@ -7,6 +7,7 @@
  * Contact: Carlos Chinea <carlos.chinea@nokia.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

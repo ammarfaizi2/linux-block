@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/scatterlist_api.h>
 #include <linux/module.h>
 #include <linux/scatterlist.h>
 #include <linux/mempool.h>

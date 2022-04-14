@@ -5,6 +5,7 @@
  *  Copyright 2006-2007 Pierre Ossman
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/export.h>

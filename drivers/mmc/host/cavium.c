@@ -13,6 +13,7 @@
  *   Steven J. Hill <steven.hill@cavium.com>
  *   Jan Glauber <jglauber@cavium.com>
  */
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/bitfield.h>

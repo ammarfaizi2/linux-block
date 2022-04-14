@@ -3,6 +3,7 @@
  * Copyright (c) 2008-2014, The Linux foundation. All rights reserved.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

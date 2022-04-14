@@ -81,6 +81,7 @@
  *	   the input with zeros to fill it up to the 8 byte boundary.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/module.h>
 #include <linux/crypto.h>
 #include <linux/scatterlist.h>

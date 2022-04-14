@@ -36,6 +36,7 @@
  * SOFTWARE.
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

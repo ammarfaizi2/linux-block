@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "vmwgfx_drv.h"
+#include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>

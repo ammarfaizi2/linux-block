@@ -30,6 +30,7 @@
 
 /* Include files */
 
+#include <linux/scatterlist_api.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/errno.h>

@@ -7,6 +7,7 @@
  * manually reworked for use in kernel space.
  */
 
+#include <linux/scatterlist_api.h>
 #include <asm/hwcap.h>
 #include <asm/neon.h>
 #include <asm/simd.h>

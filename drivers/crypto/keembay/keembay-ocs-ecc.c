@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/io_extra.h>

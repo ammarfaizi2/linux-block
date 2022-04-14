@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2004-2008 Atmel Corporation
  */
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/io_extra.h>
