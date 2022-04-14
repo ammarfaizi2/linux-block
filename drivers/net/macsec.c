@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Sabrina Dubroca <sd@queasysnail.net>
  */
 
+#include <net/sock_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/u64_stats_sync_api.h>

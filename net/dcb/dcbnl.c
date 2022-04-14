@@ -6,6 +6,7 @@
  * Author: Lucy Liu <lucy.liu@intel.com>
  */
 
+#include <net/sock_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <net/dcbnl.h>

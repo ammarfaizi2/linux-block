@@ -6,6 +6,7 @@
 /* Copyright (c) 2008-2019, IBM Corporation */
 /* Copyright (c) 2017, Open Grid Computing, Inc. */
 
+#include <net/sock_api.h>
 #include <net/ipv6_api_sock.h>
 #include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>

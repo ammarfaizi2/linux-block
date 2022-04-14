@@ -85,6 +85,7 @@
  *   TCP_LISTEN - listening
  */
 
+#include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

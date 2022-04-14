@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <net/sock_api.h>
 #include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/capability.h>

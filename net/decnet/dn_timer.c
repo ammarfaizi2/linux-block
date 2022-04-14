@@ -16,6 +16,7 @@
  *       David S. Miller       : New socket locking
  *       Steve Whitehouse      : Timer grabs socket ref.
  */
+#include <net/sock_api.h>
 #include <linux/net.h>
 #include <linux/socket.h>
 #include <linux/skbuff.h>

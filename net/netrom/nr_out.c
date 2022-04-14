@@ -4,6 +4,7 @@
  * Copyright Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  * Copyright Darryl Miles G7LED (dlm@g7led.demon.co.uk)
  */
+#include <net/sock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/errno.h>
 #include <linux/types.h>

@@ -17,6 +17,7 @@
  *
  * See the GNU General Public License for more details.
  */
+#include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/netdevice.h>

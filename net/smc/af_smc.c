@@ -19,6 +19,7 @@
 #define KMSG_COMPONENT "smc"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

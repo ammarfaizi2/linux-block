@@ -20,6 +20,7 @@
  *
  * See the GNU General Public License for more details.
  */
+#include <net/sock_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>

@@ -30,6 +30,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/sock_api.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>
 #include <linux/skbuff_api_extra.h>

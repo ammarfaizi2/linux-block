@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/sock_api.h>
 #include <linux/vmalloc.h>
 #include <linux/umh.h>
 #include <linux/sysfs.h>

@@ -5,6 +5,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sunrpc/debug.h>

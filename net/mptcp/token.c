@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) "MPTCP: " fmt
 
+#include <net/sock_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/random.h>

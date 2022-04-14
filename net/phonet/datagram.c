@@ -10,6 +10,7 @@
  *          Rémi Denis-Courmont
  */
 
+#include <net/sock_api.h>
 #include <linux/uaccess.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

@@ -5,6 +5,7 @@
  * virtio-net server in host kernel.
  */
 
+#include <net/sock_api.h>
 #include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>

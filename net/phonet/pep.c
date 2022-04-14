@@ -9,6 +9,7 @@
  * Author: Rémi Denis-Courmont
  */
 
+#include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

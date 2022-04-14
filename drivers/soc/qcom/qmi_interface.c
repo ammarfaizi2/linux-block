@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2017 Linaro Ltd.
  */
+#include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

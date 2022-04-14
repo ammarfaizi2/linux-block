@@ -7,6 +7,7 @@
 #include "netlink.h"
 #include "main.h"
 
+#include <net/sock_api.h>
 #include <net/netlink_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>

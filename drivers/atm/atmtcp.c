@@ -4,6 +4,7 @@
 /* Written 1997-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
+#include <net/sock_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

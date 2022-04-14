@@ -18,6 +18,7 @@
 
 #define pr_fmt(fmt) "X25: " fmt
 
+#include <net/sock_api.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/skbuff.h>

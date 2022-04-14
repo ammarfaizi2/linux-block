@@ -8,6 +8,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/sock_api.h>
 #include <net/sch_generic_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>

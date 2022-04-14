@@ -11,6 +11,7 @@
  * but are mostly correct. Before you modify the code could you read the SDL
  * diagrams as the code is not obvious and probably very easy to break.
  */
+#include <net/sock_api.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/socket.h>

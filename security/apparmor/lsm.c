@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

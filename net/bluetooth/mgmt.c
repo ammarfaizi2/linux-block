@@ -24,6 +24,7 @@
 
 /* Bluetooth HCI Management interface */
 
+#include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

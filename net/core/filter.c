@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/sch_generic_api.h>
 #include <net/route_api.h>

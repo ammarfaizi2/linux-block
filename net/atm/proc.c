@@ -9,6 +9,7 @@
  * the reader.
  */
 
+#include <net/sock_api.h>
 #include <net/neighbour_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>

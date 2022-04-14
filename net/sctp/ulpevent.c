@@ -21,6 +21,7 @@
  *    Sridhar Samudrala     <sri@us.ibm.com>
  */
 
+#include <net/sock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/types.h>

@@ -10,6 +10,7 @@
  *		Derek Atkins <derek@ihtfp.com>
  */
 
+#include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

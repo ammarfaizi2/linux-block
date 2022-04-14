@@ -15,6 +15,7 @@
 #define DEBUG
 #define VERBOSE_DEBUG
 
+#include <net/sock_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>

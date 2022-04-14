@@ -9,6 +9,7 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <net/sock_api.h>
 #include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kernel.h>

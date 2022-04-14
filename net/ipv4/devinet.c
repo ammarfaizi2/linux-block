@@ -22,6 +22,7 @@
  */
 
 
+#include <net/sock_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>

@@ -26,6 +26,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/sock_api.h>
 #include <net/dst_api.h>
 #include <linux/refcount_api.h>
 #include <linux/jiffies.h>

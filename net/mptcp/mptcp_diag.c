@@ -6,6 +6,7 @@
  * Author: Paolo Abeni <pabeni@redhat.com>
  */
 
+#include <net/sock_api.h>
 #include <net/netlink_api.h>
 #include <linux/module.h>
 #include <linux/capability.h>

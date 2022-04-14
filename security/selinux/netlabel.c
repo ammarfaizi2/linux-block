@@ -12,6 +12,7 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2007, 2008
  */
 
+#include <net/sock_api.h>
 #include <linux/spinlock.h>
 #include <linux/rcupdate.h>
 #include <linux/gfp.h>

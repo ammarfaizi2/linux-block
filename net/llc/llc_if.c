@@ -11,6 +11,7 @@
  *
  * See the GNU General Public License for more details.
  */
+#include <net/sock_api.h>
 #include <linux/gfp.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

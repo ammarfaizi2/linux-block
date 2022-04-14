@@ -5,6 +5,7 @@
  * Copyright (c) 2003 Stephen Hemminger <shemminger@osdl.org>
  */
 
+#include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

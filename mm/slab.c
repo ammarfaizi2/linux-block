@@ -87,6 +87,7 @@
  *	All object allocations for a node occur from node specific slab lists.
  */
 
+#include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
