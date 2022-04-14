@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/sock_batch.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/ipv6_api.h>
