@@ -5,6 +5,7 @@
  * Copyright (C) IBM Corporation, 2002, 2004, 2009
  */
 
+#include <linux/build_bug.h>
 #include <linux/kernel.h>
 #ifdef __KERNEL__
 #include <linux/string.h>

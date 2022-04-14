@@ -7,6 +7,7 @@
  * The Unicode to charset table has only exact mappings.
  */
 
+#include <linux/build_bug.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
