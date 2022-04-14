@@ -5,6 +5,7 @@
  *	Authors: Dmitry Kozlov <xeb@mail.ru>
  */
 
+#include <net/route_api.h>
 #include <net/ip_extra.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>

@@ -16,6 +16,7 @@
  *		Mike McLagan	:	Routing by source
  */
 
+#include <net/route_api.h>
 #include <net/l3mdev.h>
 #include <net/ipv6_api.h>
 #include <net/ip_fib_api.h>

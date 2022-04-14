@@ -22,6 +22,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>

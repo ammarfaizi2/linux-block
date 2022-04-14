@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) "IPsec: " fmt
 
+#include <net/route_api.h>
 #include <net/checksum.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>

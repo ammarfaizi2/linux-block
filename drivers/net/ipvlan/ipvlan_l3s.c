@@ -2,6 +2,7 @@
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <net/l3mdev.h>
 #include <net/ipv6_api.h>

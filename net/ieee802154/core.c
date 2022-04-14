@@ -3,6 +3,7 @@
  * Copyright (C) 2007, 2008, 2009 Siemens AG
  */
 
+#include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>

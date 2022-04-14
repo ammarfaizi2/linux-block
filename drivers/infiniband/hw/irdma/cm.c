@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0 or Linux-OpenIB
 /* Copyright (c) 2015 - 2021 Intel Corporation */
+#include <net/route_api.h>
 #include <net/neighbour_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>

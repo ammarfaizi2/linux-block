@@ -7,6 +7,7 @@
  *  eBPF support: Mathieu Xhonneux <m.xhonneux@gmail.com>
  */
 
+#include <net/route_api.h>
 #include <net/netlink_api.h>
 #include <net/l3mdev.h>
 #include <net/ipv6_api.h>

@@ -7,6 +7,7 @@
  * 	Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
  */
 
+#include <net/route_api.h>
 #include <net/l3mdev.h>
 #include <linux/types.h>
 #include <linux/module.h>

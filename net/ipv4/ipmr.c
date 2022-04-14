@@ -21,6 +21,7 @@
  *					Relax this requirement to work with older peers.
  */
 
+#include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/neighbour_api.h>

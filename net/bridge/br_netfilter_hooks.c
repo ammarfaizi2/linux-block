@@ -10,6 +10,7 @@
  *	Lennert dedicates this file to Kerstin Wurdinger.
  */
 
+#include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <net/neighbour_api_seqlock.h>
 #include <net/neighbour_api.h>

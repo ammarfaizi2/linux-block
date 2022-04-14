@@ -9,6 +9,7 @@
  * Authors:	See the TCP sources
  */
 
+#include <net/route_api.h>
 #include <net/ipv6_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

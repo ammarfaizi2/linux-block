@@ -5,6 +5,7 @@
  * Copyright (c) 2007 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <net/route_api.h>
 #include <net/ipv6_api.h>
 #include <net/ip_extra.h>
 #include <net/ip6_route_api_mtu.h>

@@ -5,6 +5,7 @@
  *
  * Extracted from xt_TEE.c
  */
+#include <net/route_api.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/ip.h>
