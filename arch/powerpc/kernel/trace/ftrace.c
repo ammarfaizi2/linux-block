@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "ftrace-powerpc: " fmt
 
+#include <linux/ftrace_pause.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <linux/hardirq.h>
