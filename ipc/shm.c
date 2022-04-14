@@ -25,6 +25,7 @@
  * Davidlohr Bueso <davidlohr.bueso@hp.com>, June 2013.
  */
 
+#include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/ptrace_api.h>

@@ -5,6 +5,7 @@
  * XScale DSP and iWMMXt coprocessor context switching and handling
  */
 
+#include <linux/sched/task.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/signal.h>

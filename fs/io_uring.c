@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/percpu-refcount-api.h>

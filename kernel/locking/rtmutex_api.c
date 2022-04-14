@@ -2,6 +2,7 @@
 /*
  * rtmutex API
  */
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>

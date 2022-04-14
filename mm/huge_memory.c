@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched/task.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>

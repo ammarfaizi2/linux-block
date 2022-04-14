@@ -3,6 +3,7 @@
  * Copyright 2017 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>
 #include <linux/kthread.h>

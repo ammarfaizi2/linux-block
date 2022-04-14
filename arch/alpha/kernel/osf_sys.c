@@ -11,6 +11,7 @@
  * special parameter blocks..
  */
 
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/ptrace_api.h>

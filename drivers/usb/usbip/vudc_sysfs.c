@@ -6,6 +6,7 @@
  *               Krzysztof Opasiak <k.opasiak@samsung.com>
  */
 
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>

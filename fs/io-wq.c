@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Jens Axboe
  *
  */
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>

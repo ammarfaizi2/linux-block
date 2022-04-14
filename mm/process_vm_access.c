@@ -5,6 +5,7 @@
  * Copyright (C) 2010-2011 Christopher Yeoh <cyeoh@au1.ibm.com>, IBM Corp.
  */
 
+#include <linux/sched/task.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/compat.h>

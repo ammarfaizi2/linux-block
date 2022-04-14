@@ -19,6 +19,7 @@
  * if syslogd is configured to eliminate duplicate messages.)
  */
 
+#include <linux/sched/task.h>
 #include <linux/ktime_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

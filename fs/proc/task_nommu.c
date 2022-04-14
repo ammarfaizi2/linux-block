@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/sched/task.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mmap_lock.h>

@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/sched/task.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/kthread.h>

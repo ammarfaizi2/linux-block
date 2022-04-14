@@ -5,6 +5,7 @@
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/sched/task.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/errno.h>

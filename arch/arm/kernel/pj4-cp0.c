@@ -7,6 +7,7 @@
  * Copyright (c) 2010 Marvell International Inc.
  */
 
+#include <linux/sched/task.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/signal.h>

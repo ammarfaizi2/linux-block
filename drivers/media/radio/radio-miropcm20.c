@@ -26,6 +26,7 @@
  * Hans Verkuil <hans.verkuil@cisco.com>
  */
 
+#include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/fs.h>

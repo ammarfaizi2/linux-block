@@ -9,6 +9,7 @@
  * Copyright (C) 2004 Thiemo Seufer
  * Copyright (C) 2013  Imagination Technologies Ltd.
  */
+#include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/preempt.h>
