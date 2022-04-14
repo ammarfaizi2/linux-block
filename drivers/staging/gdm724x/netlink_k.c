@@ -3,6 +3,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/netlink.h>
 #include <net/netlink_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
