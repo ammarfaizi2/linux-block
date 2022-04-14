@@ -1,6 +1,7 @@
 #ifndef _NET_FLOW_OFFLOAD_H
 #define _NET_FLOW_OFFLOAD_H
 
+#include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/netlink.h>

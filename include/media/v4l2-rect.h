@@ -8,6 +8,7 @@
 #ifndef _V4L2_RECT_H_
 #define _V4L2_RECT_H_
 
+#include <linux/minmax.h>
 #include <linux/videodev2.h>
 
 /**

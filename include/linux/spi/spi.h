@@ -6,6 +6,7 @@
 #ifndef __LINUX_SPI_H
 #define __LINUX_SPI_H
 
+#include <linux/minmax.h>
 #include <linux/device/driver.h>
 #include <linux/device_api_lock.h>
 #include <asm/byteorder.h>

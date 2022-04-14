@@ -16,6 +16,7 @@
 #ifndef _SS_CONTEXT_H_
 #define _SS_CONTEXT_H_
 
+#include <linux/minmax.h>
 #include <linux/types.h>
 
 #include "ebitmap.h"

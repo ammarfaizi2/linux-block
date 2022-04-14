@@ -11,6 +11,7 @@
 #ifndef _MEDIA_ENTITY_H
 #define _MEDIA_ENTITY_H
 
+#include <linux/minmax.h>
 #include <linux/bitmap.h>
 #include <linux/bug.h>
 #include <linux/container_of.h>

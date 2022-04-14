@@ -2,6 +2,7 @@
 #ifndef _LINUX_NAMEI_H
 #define _LINUX_NAMEI_H
 
+#include <linux/minmax.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
 #include <linux/path.h>

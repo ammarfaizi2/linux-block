@@ -8,6 +8,7 @@
 #ifndef _DMA_FIFO_H_
 #define _DMA_FIFO_H_
 
+#include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/types.h>
 
