@@ -1,6 +1,7 @@
 #ifndef __NVKM_VMM_H__
 #define __NVKM_VMM_H__
 #include "priv.h"
+#include <linux/scatterlist_api.h>
 #include <core/memory.h>
 enum nvkm_memory_target;
 

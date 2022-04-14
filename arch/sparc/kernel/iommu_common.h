@@ -7,6 +7,7 @@
 #ifndef _IOMMU_COMMON_H
 #define _IOMMU_COMMON_H
 
+#include <linux/scatterlist_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/sched.h>

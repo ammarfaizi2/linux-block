@@ -35,6 +35,7 @@
 #ifndef MTHCA_MEMFREE_H
 #define MTHCA_MEMFREE_H
 
+#include <linux/scatterlist_api.h>
 #include <linux/list.h>
 #include <linux/mutex.h>
 

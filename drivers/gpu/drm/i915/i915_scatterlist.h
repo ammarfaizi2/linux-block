@@ -7,6 +7,7 @@
 #ifndef I915_SCATTERLIST_H
 #define I915_SCATTERLIST_H
 
+#include <linux/scatterlist_api.h>
 #include <linux/kref_api.h>
 #include <linux/align.h>
 #include <linux/pfn.h>

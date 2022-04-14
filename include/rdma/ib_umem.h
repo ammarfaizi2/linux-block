@@ -7,6 +7,7 @@
 #ifndef IB_UMEM_H
 #define IB_UMEM_H
 
+#include <linux/scatterlist_api.h>
 #include <linux/list.h>
 #include <linux/scatterlist.h>
 #include <linux/workqueue.h>
