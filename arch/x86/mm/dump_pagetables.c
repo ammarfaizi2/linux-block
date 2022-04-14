@@ -8,6 +8,7 @@
  * Author: Arjan van de Ven <arjan@linux.intel.com>
  */
 
+#include <asm/vmalloc.h>
 #include <linux/debugfs.h>
 #include <linux/kasan.h>
 #include <linux/mm.h>
