@@ -4,6 +4,7 @@
  */
 
 #include "queueing.h"
+#include <linux/percpu.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/skb_array.h>

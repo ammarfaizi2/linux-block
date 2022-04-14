@@ -6,6 +6,7 @@
  *  Swap reorganised 29.12.95, Stephen Tweedie
  */
 
+#include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>

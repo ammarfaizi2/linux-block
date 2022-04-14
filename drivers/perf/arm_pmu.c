@@ -12,6 +12,7 @@
  */
 #define pr_fmt(fmt) "hw perfevents: " fmt
 
+#include <linux/percpu.h>
 #include <linux/notifier_api.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>

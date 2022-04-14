@@ -16,6 +16,7 @@
 #include "caamalg_desc.h"
 #include "caamhash_desc.h"
 #include "dpseci-debugfs.h"
+#include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/io_extra.h>
 #include <linux/dma-mapping.h>

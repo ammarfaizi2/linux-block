@@ -3,6 +3,7 @@
  * Copyright (c) 2013 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/percpu.h>
 #include <linux/netfilter/nf_conntrack_common_api.h>
 #include <linux/ipv6.h>
 #include <linux/cpumask_api.h>

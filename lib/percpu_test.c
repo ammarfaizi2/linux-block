@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/percpu.h>
 #include <linux/limits.h>
 #include <linux/irqflags.h>
 #include <linux/bug.h>

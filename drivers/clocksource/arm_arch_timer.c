@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) 	"arch_timer: " fmt
 
+#include <linux/percpu.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/ktime_api.h>

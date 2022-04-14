@@ -4,6 +4,7 @@
  * Copyright (C) 1997, 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/percpu.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/hardirq.h>

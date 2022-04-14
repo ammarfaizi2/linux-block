@@ -35,6 +35,7 @@
  *		Paul E. McKenney <paulmck@us.ibm.com>
  *		Patrick McHardy <kaber@trash.net>
  */
+#include <linux/percpu.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched/cond_resched.h>

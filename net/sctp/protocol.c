@@ -26,6 +26,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/percpu.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

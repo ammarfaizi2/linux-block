@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 Jens Axboe
  */
+#include <linux/percpu.h>
 #include <linux/math64.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

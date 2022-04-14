@@ -8,6 +8,7 @@
  * Kevin D. Kissell, kevink@mips.com and Carsten Langgaard, carstenl@mips.com
  * Copyright (C) 2000 MIPS Technologies, Inc.  All rights reserved.
  */
+#include <linux/percpu.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

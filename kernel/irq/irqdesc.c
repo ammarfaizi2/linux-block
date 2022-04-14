@@ -7,6 +7,7 @@
  * information is available in Documentation/core-api/genericirq.rst
  *
  */
+#include <linux/percpu.h>
 #include <linux/nodemask.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

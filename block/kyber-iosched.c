@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Facebook
  */
 
+#include <linux/percpu.h>
 #include <linux/math64.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

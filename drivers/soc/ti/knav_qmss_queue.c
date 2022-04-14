@@ -8,6 +8,7 @@
  *		Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/percpu.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

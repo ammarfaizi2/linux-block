@@ -3,6 +3,7 @@
  * Copyright (C) 2014 Sergey Senozhatsky.
  */
 
+#include <linux/percpu.h>
 #include <linux/lockdep.h>
 #include <linux/gfp_api.h>
 #include <linux/debug_locks.h>
