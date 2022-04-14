@@ -15,6 +15,7 @@
  *	and ima_file_check.
  */
 
+#include <linux/fs_api_mapping.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/cred.h>
