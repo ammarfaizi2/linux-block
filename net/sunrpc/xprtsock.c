@@ -1199,7 +1199,7 @@ static void xs_reset_transport(struct sock_xprt *transport)
 	 * to call __fput_sync(). In practice that means rpciod and the
 	 * system workqueue.
 	 */
-	if (!(current->flags & PF_WQ_WORKER)) {
+	if (!(task_flags(current) & PF_WQ_WORKER)) {
 		WARN_ON_ONCE(1);
 		set_bit(XPRT_CLOSE_WAIT, &xprt->state);
 		return;
@@ -2083,10 +2083,10 @@ static void xs_udp_setup_socket(struct work_struct *work)
 	struct rpc_xprt *xprt = &transport->xprt;
 	struct socket *sock;
 	int status = -EIO;
-	unsigned int pflags = current->flags;
+	unsigned int pflags = task_flags(current);
 
 	if (atomic_read(&xprt->swapper))
-		current->flags |= PF_MEMALLOC;
+		task_flags(current) |= PF_MEMALLOC;
 	sock = xs_create_sock(xprt, transport,
 			xs_addr(xprt)->sa_family, SOCK_DGRAM,
 			IPPROTO_UDP, false);
@@ -2265,10 +2265,10 @@ static void xs_tcp_setup_socket(struct work_struct *work)
 	struct socket *sock = transport->sock;
 	struct rpc_xprt *xprt = &transport->xprt;
 	int status;
-	unsigned int pflags = current->flags;
+	unsigned int pflags = task_flags(current);
 
 	if (atomic_read(&xprt->swapper))
-		current->flags |= PF_MEMALLOC;
+		task_flags(current) |= PF_MEMALLOC;
 
 	if (xprt_connected(xprt))
 		goto out;

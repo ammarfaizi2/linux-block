@@ -235,11 +235,11 @@ xprt_rdma_connect_worker(struct work_struct *work)
 	struct rpcrdma_xprt *r_xprt = container_of(work, struct rpcrdma_xprt,
 						   rx_connect_worker.work);
 	struct rpc_xprt *xprt = &r_xprt->rx_xprt;
-	unsigned int pflags = current->flags;
+	unsigned int pflags = task_flags(current);
 	int rc;
 
 	if (atomic_read(&xprt->swapper))
-		current->flags |= PF_MEMALLOC;
+		task_flags(current) |= PF_MEMALLOC;
 	rc = rpcrdma_xprt_connect(r_xprt);
 	xprt_clear_connecting(xprt);
 	if (!rc) {

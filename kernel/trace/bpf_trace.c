@@ -335,7 +335,7 @@ BPF_CALL_3(bpf_probe_write_user, void __user *, unsafe_ptr, const void *, src,
 	 */
 
 	if (unlikely(in_interrupt() ||
-		     current->flags & (PF_KTHREAD | PF_EXITING)))
+		     task_flags(current) & (PF_KTHREAD | PF_EXITING)))
 		return -EPERM;
 	if (unlikely(!nmi_uaccess_okay()))
 		return -EPERM;

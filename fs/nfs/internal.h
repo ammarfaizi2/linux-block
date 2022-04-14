@@ -599,7 +599,7 @@ nfs_write_match_verf(const struct nfs_writeverf *verf,
 
 static inline gfp_t nfs_io_gfp_mask(void)
 {
-	if (current->flags & PF_WQ_WORKER)
+	if (task_flags(current) & PF_WQ_WORKER)
 		return GFP_KERNEL | __GFP_NORETRY | __GFP_NOWARN;
 	return GFP_KERNEL;
 }

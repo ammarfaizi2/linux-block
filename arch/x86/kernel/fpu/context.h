@@ -58,7 +58,7 @@ static inline void fpregs_restore_userregs(void)
 	struct fpu *fpu = task_thread(current).fpu;
 	int cpu = smp_processor_id();
 
-	if (WARN_ON_ONCE(current->flags & PF_KTHREAD))
+	if (WARN_ON_ONCE(task_flags(current) & PF_KTHREAD))
 		return;
 
 	if (!fpregs_state_valid(fpu, cpu)) {

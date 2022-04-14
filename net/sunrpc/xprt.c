@@ -1497,7 +1497,7 @@ bool xprt_prepare_transmit(struct rpc_task *task)
 	}
 	if (atomic_read(&xprt->swapper))
 		/* This will be clear in __rpc_execute */
-		current->flags |= PF_MEMALLOC;
+		task_flags(current) |= PF_MEMALLOC;
 	return true;
 }
 

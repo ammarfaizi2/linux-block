@@ -60,7 +60,7 @@ EXPORT_SYMBOL_GPL(xprtiod_workqueue);
 
 gfp_t rpc_task_gfp_mask(void)
 {
-	if (current->flags & PF_WQ_WORKER)
+	if (task_flags(current) & PF_WQ_WORKER)
 		return GFP_KERNEL | __GFP_NORETRY | __GFP_NOWARN;
 	return GFP_KERNEL;
 }
@@ -894,7 +894,7 @@ static void __rpc_execute(struct rpc_task *task)
 	struct rpc_wait_queue *queue;
 	int task_is_async = RPC_IS_ASYNC(task);
 	int status = 0;
-	unsigned long pflags = current->flags;
+	unsigned long pflags = task_flags(current);
 
 	WARN_ON_ONCE(RPC_IS_QUEUED(task));
 	if (RPC_IS_QUEUED(task))
@@ -919,7 +919,7 @@ static void __rpc_execute(struct rpc_task *task)
 			break;
 		if (RPC_IS_SWAPPER(task) ||
 		    xprt_needs_memalloc(task->tk_xprt, task))
-			current->flags |= PF_MEMALLOC;
+			task_flags(current) |= PF_MEMALLOC;
 
 		trace_rpc_task_run_action(task, do_action);
 		do_action(task);
