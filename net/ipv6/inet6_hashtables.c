@@ -10,6 +10,7 @@
  *		by Arnaldo Carvalho de Melo <acme@mandriva.com>
  */
 
+#include <net/inet_timewait_sock_api.h>
 #include <net/inet_connection_sock_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
