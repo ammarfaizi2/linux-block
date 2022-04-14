@@ -6,6 +6,7 @@
  *
  * Authors:	Masahide NAKAMURA <nakam@linux-ipv6.org>
  */
+#include <net/ip_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>

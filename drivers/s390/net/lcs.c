@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT		"lcs"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <net/ip_extra.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/tasklet_api.h>

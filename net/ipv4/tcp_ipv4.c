@@ -47,6 +47,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <net/ip_extra.h>
 #include <net/inet_ecn.h>
 #include <net/dst_api.h>
 #include <linux/timekeeping.h>
