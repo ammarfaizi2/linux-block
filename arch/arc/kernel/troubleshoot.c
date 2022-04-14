@@ -3,6 +3,7 @@
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/mm_api_exe_file.h>
 #include <linux/fs_api.h>
 #include <linux/ptrace.h>
 #include <linux/module.h>
