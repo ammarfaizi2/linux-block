@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"SEV: " fmt
 
+#include <asm/ptrace.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>
 #include <asm/halt.h>

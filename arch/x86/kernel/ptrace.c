@@ -5,6 +5,7 @@
  *	Gareth Hughes <gareth@valinux.com>, May 2000
  */
 
+#include <asm/ptrace.h>
 #include <asm/processor_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/ptrace.h>
 #include <linux/compat.h>
 #include <linux/spinlock.h>
 #include <linux/hardirq.h>
