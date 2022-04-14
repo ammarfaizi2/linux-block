@@ -23,6 +23,7 @@
  *  Assorted race fixes, rewrite of ext2_get_block() by Al Viro, 2000
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/dcache.h>
 #include <linux/time.h>

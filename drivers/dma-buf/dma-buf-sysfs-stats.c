@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Google LLC.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dma-buf.h>
 #include <linux/dma-resv.h>
 #include <linux/kobject.h>

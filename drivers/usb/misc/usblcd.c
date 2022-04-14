@@ -13,6 +13,7 @@
  *          This new driver allows more than one USB-LCD to be connected     *
  *          and controlled, at once                                          *
  *****************************************************************************/
+#include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

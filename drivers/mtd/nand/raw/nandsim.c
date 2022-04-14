@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt)  "[nandsim]" fmt
 
+#include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/module.h>

@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/kernel.h>

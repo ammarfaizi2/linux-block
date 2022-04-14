@@ -52,6 +52,7 @@
  *	Based upon Swansea University Computer Society NET3.039
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/sched/cond_resched.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/export.h>

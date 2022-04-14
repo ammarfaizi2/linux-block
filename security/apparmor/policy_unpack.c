@@ -13,6 +13,7 @@
  * All policy is validated before it is used.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <asm/unaligned.h>
 #include <linux/ctype.h>

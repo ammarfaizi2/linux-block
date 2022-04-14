@@ -46,6 +46,8 @@
  * all the nodes.
  */
 
+#include <linux/fs_api.h>
+
 #include "ubifs.h"
 
 /**

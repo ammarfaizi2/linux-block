@@ -6,6 +6,7 @@
  *	Mikko Perttunen <mperttunen@nvidia.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/clk.h>

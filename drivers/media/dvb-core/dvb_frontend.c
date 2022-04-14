@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) "dvb_frontend: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/string.h>

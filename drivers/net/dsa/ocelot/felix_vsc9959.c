@@ -2,6 +2,7 @@
 /* Copyright 2017 Microsemi Corporation
  * Copyright 2018-2019 NXP
  */
+#include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

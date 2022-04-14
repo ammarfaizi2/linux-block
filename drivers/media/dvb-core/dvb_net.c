@@ -42,6 +42,7 @@
 
 #define pr_fmt(fmt) "dvb_net: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>

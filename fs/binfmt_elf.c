@@ -10,6 +10,7 @@
  * Copyright 1993, 1994: Eric Youngdale (ericy@cais.com).
  */
 
+#include <linux/fs_api.h>
 #include <asm/processor_api.h>
 #include <asm/elf_api.h>
 #include <linux/sched/task_flags.h>

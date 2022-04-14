@@ -18,6 +18,7 @@
  *  6 Jun 1999	Cache readdir lookups in the page cache. -DaveM
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>

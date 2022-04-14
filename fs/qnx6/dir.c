@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 
 #include "qnx6.h"

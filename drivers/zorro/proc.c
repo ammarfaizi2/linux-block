@@ -9,6 +9,7 @@
  *	Copyright (C) 1997, 1998 Martin Mares <mj@atrey.karlin.mff.cuni.cz>
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/zorro.h>
 #include <linux/proc_fs.h>

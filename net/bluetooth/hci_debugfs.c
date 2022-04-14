@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 
 #include <net/bluetooth/bluetooth.h>

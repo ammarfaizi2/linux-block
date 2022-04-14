@@ -4,6 +4,7 @@
  * Copyright 2012 Red Hat Inc
  */
 
+#include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dma-buf.h>
 #include <linux/highmem.h>

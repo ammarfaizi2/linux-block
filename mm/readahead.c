@@ -113,6 +113,7 @@
  * ->readpage() which may be less efficient.
  */
 
+#include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/kernel.h>
 #include <linux/dax.h>

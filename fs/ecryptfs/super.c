@@ -9,6 +9,7 @@
  *              Michael C. Thompson <mcthomps@us.ibm.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/mount.h>

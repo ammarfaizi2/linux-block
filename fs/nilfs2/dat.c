@@ -7,6 +7,7 @@
  * Written by Koji Sato.
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/buffer_head.h>
 #include <linux/string.h>

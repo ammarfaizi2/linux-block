@@ -7,6 +7,7 @@
  * Copyright (C) 2005, 06 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>

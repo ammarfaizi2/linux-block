@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/capability.h>

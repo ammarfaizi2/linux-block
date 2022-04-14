@@ -5,6 +5,7 @@
  * Copyright (C) 2001-2003 Andreas Gruenbacher, <agruen@suse.de>
  */
 
+#include <linux/fs_api.h>
 #include <linux/quotaops.h>
 #include "ext4_jbd2.h"
 #include "ext4.h"

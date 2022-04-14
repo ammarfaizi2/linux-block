@@ -7,6 +7,7 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/time.h>

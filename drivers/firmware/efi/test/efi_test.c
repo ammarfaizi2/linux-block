@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/miscdevice.h>
 #include <linux/module.h>

@@ -22,6 +22,7 @@
  * without an intermediate lookup for all operations except the export ops.
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/vfs.h>
 #include <linux/dcache.h>

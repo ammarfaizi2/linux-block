@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/module.h>
 

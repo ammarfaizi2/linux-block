@@ -2,6 +2,7 @@
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/vmalloc.h>
 

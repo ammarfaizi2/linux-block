@@ -19,6 +19,7 @@
  * journaling (ext2 can use a reserved inode for storing the log).
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/compat.h>
 #include <linux/if_arp.h>

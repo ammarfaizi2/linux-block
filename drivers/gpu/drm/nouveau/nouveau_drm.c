@@ -22,6 +22,7 @@
  * Authors: Ben Skeggs
  */
 
+#include <linux/fs_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/delay.h>
 #include <linux/module.h>

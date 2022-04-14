@@ -10,6 +10,7 @@
  * part of the ext2fs journaling system.
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/time.h>

@@ -3,6 +3,7 @@
  *   Copyright (C) International Business Machines  Corp., 2000-2004
 */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include <linux/quotaops.h>

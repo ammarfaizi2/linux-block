@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Chao Yu <chao@kernel.org>
  */
 
+#include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>

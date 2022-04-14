@@ -6,6 +6,7 @@
  * Copyright (c) 2006-2009, Intel Corporation
  */
 
+#include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>

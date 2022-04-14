@@ -6,6 +6,7 @@
  * Copyright (C) 2016-2017 Glider bvba
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/atomic.h>

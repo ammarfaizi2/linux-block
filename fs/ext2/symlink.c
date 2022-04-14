@@ -18,6 +18,8 @@
  *  ext2 symlink handling code
  */
 
+#include <linux/fs_api.h>
+
 #include "ext2.h"
 #include "xattr.h"
 

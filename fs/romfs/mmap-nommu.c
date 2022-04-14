@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/fs_api.h>
 #include <linux/mm.h>
 #include <linux/mtd/super.h>
 #include "internal.h"

@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/fs_api.h>
 #include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/cpumask_api.h>

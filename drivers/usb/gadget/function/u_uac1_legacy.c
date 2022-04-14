@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Analog Devices, Inc
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

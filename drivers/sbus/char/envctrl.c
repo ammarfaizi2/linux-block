@@ -19,6 +19,7 @@
  *              Daniele Bellucci <bellucda@tiscali.it>
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/kthread.h>
 #include <linux/delay.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2012 Red Hat, Inc.
  * All Rights Reserved.
  */
+#include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 
 #include "xfs.h"

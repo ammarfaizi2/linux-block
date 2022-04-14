@@ -10,6 +10,7 @@
 	Abstract: rt2x00 debugfs specific routines.
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

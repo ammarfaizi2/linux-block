@@ -4,6 +4,7 @@
 
 #include "smscoreapi.h"
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/init.h>

@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/capability.h>
 #include <drm/drm_debugfs.h>

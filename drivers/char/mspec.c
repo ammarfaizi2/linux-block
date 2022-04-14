@@ -24,6 +24,7 @@
  * processor from ever speculating a cache line from this page.
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

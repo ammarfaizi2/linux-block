@@ -8,6 +8,7 @@
  *    Copyright (C) 2009 Integrated Device Technology, Inc.
  */
 
+#include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

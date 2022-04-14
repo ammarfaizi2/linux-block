@@ -7,6 +7,7 @@
 
 #ifdef NTFS_RW
 
+#include <linux/fs_api.h>
 #include <asm/cacheflush.h>
 #include <linux/pagemap.h>
 

@@ -6,6 +6,7 @@
  * TODO: Merge attr_set_size/attr_data_get_block/attr_allocate_frame?
  */
 
+#include <linux/fs_api.h>
 #include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/slab.h>

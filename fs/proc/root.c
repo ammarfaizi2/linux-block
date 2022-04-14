@@ -7,6 +7,7 @@
  *  proc root directory handling functions
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/uaccess.h>
 

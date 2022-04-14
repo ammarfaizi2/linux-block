@@ -23,6 +23,7 @@
 */
 
 /* Bluetooth HCI sockets. */
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/compat.h>

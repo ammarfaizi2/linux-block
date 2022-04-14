@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2006 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/iversion.h>

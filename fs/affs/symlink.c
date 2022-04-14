@@ -9,6 +9,8 @@
  *  affs symlink handling code
  */
 
+#include <linux/fs_api.h>
+
 #include "affs.h"
 
 static int affs_symlink_readpage(struct file *file, struct page *page)

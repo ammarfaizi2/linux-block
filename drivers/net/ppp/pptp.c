@@ -5,6 +5,7 @@
  *	Authors: Dmitry Kozlov <xeb@mail.ru>
  */
 
+#include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/string.h>
 #include <linux/module.h>

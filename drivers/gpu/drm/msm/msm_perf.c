@@ -14,6 +14,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/uaccess.h>
 

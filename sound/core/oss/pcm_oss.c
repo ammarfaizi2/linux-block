@@ -11,6 +11,7 @@
 #define OSS_DEBUG
 #endif
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>

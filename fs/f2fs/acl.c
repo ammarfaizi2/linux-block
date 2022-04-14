@@ -9,6 +9,7 @@
  *
  * Copyright (C) 2001-2003 Andreas Gruenbacher, <agruen@suse.de>
  */
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

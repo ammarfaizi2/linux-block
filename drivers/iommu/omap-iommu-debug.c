@@ -7,6 +7,7 @@
  * Written by Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/slab.h>

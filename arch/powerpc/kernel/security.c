@@ -4,6 +4,7 @@
 //
 // Copyright 2018, Michael Ellerman, IBM Corporation.
 
+#include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/kernel.h>

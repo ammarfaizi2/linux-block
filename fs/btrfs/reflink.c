@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>

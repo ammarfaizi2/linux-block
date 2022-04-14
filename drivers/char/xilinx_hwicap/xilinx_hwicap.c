@@ -71,6 +71,7 @@
  * currently programmed in the FPGA.
  */
 
+#include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

@@ -8,6 +8,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/property.h>
 #include <linux/slab.h>

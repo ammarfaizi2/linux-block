@@ -29,6 +29,7 @@
  * or shader programs (if not emitted inline in cmdstream).
  */
 
+#include <linux/fs_api.h>
 #include <linux/circ_buf.h>
 #include <linux/debugfs.h>
 #include <linux/kfifo.h>

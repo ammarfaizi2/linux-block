@@ -6,6 +6,7 @@
  *   Author(s): Michael A. Halcrow <mahalcro@us.ibm.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>

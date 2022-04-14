@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/fs_context.h>

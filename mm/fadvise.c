@@ -8,6 +8,7 @@
  *		Initial version.
  */
 
+#include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/kernel.h>
 #include <linux/file.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* /proc routines for Host AP driver */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/proc_fs.h>
 #include <linux/export.h>

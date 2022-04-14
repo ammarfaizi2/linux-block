@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/nls.h>
 

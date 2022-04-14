@@ -18,6 +18,7 @@
  * See Documentation/fault-injection/provoke-crashes.rst for instructions
  */
 #include "lkdtm.h"
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/buffer_head.h>

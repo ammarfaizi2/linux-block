@@ -9,6 +9,7 @@
  * Handling of Extents both in catalog and extents overflow trees
  */
 
+#include <linux/fs_api.h>
 #include <linux/errno.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>

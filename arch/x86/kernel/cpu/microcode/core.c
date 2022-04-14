@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "microcode: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

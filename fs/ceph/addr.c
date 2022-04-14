@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

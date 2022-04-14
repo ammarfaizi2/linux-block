@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) "dvb_ca_en50221: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>

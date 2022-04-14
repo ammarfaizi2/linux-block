@@ -22,6 +22,7 @@
  * TODO:
  */
 
+#include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/time.h>

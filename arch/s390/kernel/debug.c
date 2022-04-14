@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT "s390dbf"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/fs_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

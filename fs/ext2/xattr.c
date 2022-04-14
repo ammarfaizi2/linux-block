@@ -54,6 +54,7 @@
  * to avoid deadlocks.
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/buffer_head.h>

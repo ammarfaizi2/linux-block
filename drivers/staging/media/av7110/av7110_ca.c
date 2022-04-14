@@ -11,6 +11,7 @@
  * the project's page is at https://linuxtv.org
  */
 
+#include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

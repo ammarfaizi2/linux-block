@@ -9,6 +9,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/init.h>
 #include <linux/module.h>

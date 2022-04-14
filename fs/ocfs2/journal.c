@@ -7,6 +7,7 @@
  * Copyright (C) 2003, 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>

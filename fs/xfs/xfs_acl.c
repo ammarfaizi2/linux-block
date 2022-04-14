@@ -18,6 +18,7 @@
 #include "xfs_da_btree.h"
 #include "xfs_trans.h"
 
+#include <linux/fs_api.h>
 #include <linux/posix_acl_xattr.h>
 
 /*

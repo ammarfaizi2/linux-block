@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Red Hat, Inc.
  * Copyright (c) 2018-2021 Christoph Hellwig.
  */
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/compiler.h>
 #include <linux/fs.h>

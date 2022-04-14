@@ -12,6 +12,7 @@
  *	James Morris <jmorris@redhat.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

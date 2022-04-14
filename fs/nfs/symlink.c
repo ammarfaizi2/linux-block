@@ -11,6 +11,7 @@
  *  nfs symlink handling code
  */
 
+#include <linux/fs_api.h>
 #include <linux/delayed_call.h>
 #include <linux/time.h>
 #include <linux/errno.h>

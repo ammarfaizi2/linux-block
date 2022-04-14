@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2015 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  */
+#include <linux/fs_api.h>
 #include <linux/filter_api.h>
 #include <linux/dcache.h>
 #include <linux/cpumask_api.h>

@@ -46,6 +46,7 @@
 #define TOSH_VERSION "1.11 26/9/2001"
 #define TOSH_DEBUG 0
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

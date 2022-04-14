@@ -3,6 +3,7 @@
  * Based on arch/arm/kernel/atags_proc.c
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/printk.h>

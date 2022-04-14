@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/stddef.h>
 #include <linux/types.h>
 #include <linux/fs.h>

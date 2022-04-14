@@ -11,6 +11,7 @@
  * Based on sa1100 driver, Copyright (C) 2000 Oleg Drokin <green@crimea.edu>
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/types.h>

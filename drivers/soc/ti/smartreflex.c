@@ -14,6 +14,7 @@
  * Lesly A M <x0080970@ti.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>

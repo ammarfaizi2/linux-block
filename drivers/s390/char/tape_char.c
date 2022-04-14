@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT "tape"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/proc_fs.h>

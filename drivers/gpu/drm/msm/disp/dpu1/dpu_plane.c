@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/dma-buf.h>
 

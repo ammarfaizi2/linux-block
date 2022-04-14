@@ -20,6 +20,7 @@
  *  This file contains code for allocating/freeing inodes.
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/stddef.h>
 #include <linux/sched.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Tomoki Sekiyama (tomoki.sekiyama@gmail.com)
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2019 Western Digital Corporation or its affiliates.
  */
+#include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>

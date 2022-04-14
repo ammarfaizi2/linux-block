@@ -13,6 +13,7 @@
 #include "protocol.h"
 #include "orangefs-kernel.h"
 #include "orangefs-bufmap.h"
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>
 

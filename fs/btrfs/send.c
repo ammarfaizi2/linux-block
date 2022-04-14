@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Alexander Block.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <asm/unaligned.h>
 #include <linux/sched/cond_resched.h>

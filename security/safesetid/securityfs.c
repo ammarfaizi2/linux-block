@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "SafeSetID: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/security.h>

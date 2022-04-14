@@ -15,6 +15,7 @@
  * xattr consolidation Copyright (c) 2004 James Morris <jmorris@redhat.com>,
  *  Red Hat Inc.
  */
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/rwsem.h>

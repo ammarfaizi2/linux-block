@@ -8,6 +8,7 @@
   Copyright (C) 2001 SGI - Silicon Graphics, Inc <linux-xfs@oss.sgi.com>
   Copyright (c) 2004 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/fs.h>

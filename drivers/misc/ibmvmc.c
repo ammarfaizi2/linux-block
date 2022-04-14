@@ -9,6 +9,7 @@
  *   Bryant G. Ly <bryantly@linux.vnet.ibm.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

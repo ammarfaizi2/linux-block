@@ -6,6 +6,7 @@
  *  changes by Thomas Schoebel-Theuer
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/export.h>

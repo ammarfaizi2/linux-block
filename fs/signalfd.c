@@ -18,6 +18,7 @@
  *      Attach to the sighand only during read() and poll().
  */
 
+#include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/poll.h>
 #include <linux/init.h>

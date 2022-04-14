@@ -4,6 +4,7 @@
  * Copyright (C) 2011 Novell Inc.
  */
 
+#include <linux/fs_api.h>
 #include <linux/delayed_call.h>
 #include <linux/dcache.h>
 #include <linux/module.h>

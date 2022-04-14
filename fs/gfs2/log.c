@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2007 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/sched.h>

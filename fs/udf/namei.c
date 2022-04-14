@@ -23,6 +23,7 @@
 
 #include "udf_i.h"
 #include "udf_sb.h"
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/string.h>
 #include <linux/errno.h>

@@ -18,6 +18,7 @@
  * 				   mandatory if CONFIG_NET=y these days
  */
 
+#include <linux/fs_api.h>
 #include <linux/filter_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

@@ -3,6 +3,7 @@
  *   Copyright (C) Christoph Hellwig, 2001-2002
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include "jfs_incore.h"
 #include "jfs_inode.h"

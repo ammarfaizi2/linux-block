@@ -3,6 +3,7 @@
  * custom_method.c - debugfs interface for customizing ACPI control method
  */
 
+#include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

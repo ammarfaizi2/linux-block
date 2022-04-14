@@ -4,6 +4,7 @@
  *
  * Author: Leo Yan <leo.yan@linaro.org>
  */
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/amba/bus.h>

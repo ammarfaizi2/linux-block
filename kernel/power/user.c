@@ -7,6 +7,7 @@
  * Copyright (C) 2006 Rafael J. Wysocki <rjw@sisk.pl>
  */
 
+#include <linux/fs_api.h>
 #include <linux/device/driver.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

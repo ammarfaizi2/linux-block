@@ -3,6 +3,7 @@
  *   Copyright (C) Tino Reichardt, 2012
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/blkdev.h>

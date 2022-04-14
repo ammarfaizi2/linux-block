@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014 Anna Schumaker <Anna.Schumaker@Netapp.com>
  */
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/sunrpc/addr.h>
 #include <linux/sunrpc/sched.h>

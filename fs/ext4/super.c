@@ -17,6 +17,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/backing-dev-api.h>

@@ -28,6 +28,7 @@
  *  incomplete struct).
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/types.h>
 #include <linux/param.h>

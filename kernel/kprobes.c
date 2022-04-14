@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kprobes.h>
 #include <linux/hash.h>

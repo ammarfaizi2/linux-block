@@ -14,6 +14,7 @@
  * If the operations succeed, the read returns "1\n".
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/debugfs.h>

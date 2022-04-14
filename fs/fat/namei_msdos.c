@@ -7,6 +7,7 @@
  *  Rewritten for constant inumbers 1999 by Al Viro
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/iversion.h>

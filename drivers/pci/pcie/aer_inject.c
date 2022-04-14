@@ -14,6 +14,7 @@
 
 #define dev_fmt(fmt) "aer_inject: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/init.h>

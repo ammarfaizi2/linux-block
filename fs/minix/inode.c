@@ -11,6 +11,7 @@
  *  Updated to filesystem version 3 by Daniel Aragones
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/blk_types.h>
 #include <linux/module.h>

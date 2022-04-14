@@ -8,6 +8,7 @@
  * This file contains functions for reading/writing the MDB.
  */
 
+#include <linux/fs_api.h>
 #include <linux/cdrom.h>
 #include <linux/blkdev.h>
 #include <linux/nls.h>

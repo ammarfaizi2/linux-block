@@ -16,6 +16,7 @@
  * flush after percent set rather than just time based. (maybe both).
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/atomic_api.h>
 #include <linux/blkdev.h>

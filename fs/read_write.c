@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/fs_api.h>
 #include <linux/slab.h>
 #include <linux/stat.h>
 #include <linux/sched/xacct.h>

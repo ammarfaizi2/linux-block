@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

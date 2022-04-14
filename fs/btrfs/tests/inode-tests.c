@@ -3,6 +3,7 @@
  * Copyright (C) 2013 Fusion IO.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include "btrfs-tests.h"
 #include "../ctree.h"

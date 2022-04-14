@@ -8,6 +8,7 @@
  * Copyright 2009-2017 Canonical Ltd.
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/mount.h>
 #include <linux/namei.h>

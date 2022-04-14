@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1992  Rick Sladkey
  */
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/file.h>

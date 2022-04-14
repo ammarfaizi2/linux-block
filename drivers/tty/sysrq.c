@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/fs_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/rt.h>
 #include <linux/sched/debug.h>

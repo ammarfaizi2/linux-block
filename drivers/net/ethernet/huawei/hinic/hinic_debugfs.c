@@ -3,6 +3,7 @@
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>

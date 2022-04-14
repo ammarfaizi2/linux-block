@@ -5,6 +5,7 @@
  * Copyright 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/delay.h>

@@ -7,6 +7,7 @@
  * Written by Amagai Yoshiji and Ryusuke Konishi.
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/writeback.h>

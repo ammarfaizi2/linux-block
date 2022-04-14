@@ -9,6 +9,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/types.h>

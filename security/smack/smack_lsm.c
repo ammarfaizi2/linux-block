@@ -15,6 +15,7 @@
  *  Copyright (C) 2011 Intel Corporation.
  */
 
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/sched/task_flags.h>

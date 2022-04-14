@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/cpumask_api.h>
 #include <linux/backing-dev-api.h>

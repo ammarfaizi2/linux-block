@@ -85,6 +85,7 @@
  *   TCP_LISTEN - listening
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/compat.h>
 #include <linux/types.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2001-2003 Andreas Gruenbacher, <agruen@suse.de>
  */
 
+#include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

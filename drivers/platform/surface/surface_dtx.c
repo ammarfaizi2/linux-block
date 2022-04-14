@@ -11,6 +11,7 @@
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/input.h>
 #include <linux/ioctl.h>

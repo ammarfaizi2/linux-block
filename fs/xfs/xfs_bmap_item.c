@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 
 #include "xfs.h"

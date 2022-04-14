@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2002 Russell King
  */
+#include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/mm.h>

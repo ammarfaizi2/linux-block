@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2014 Christoph Hellwig.
  */
+#include <linux/fs_api.h>
+
 #include "xfs.h"
 #include "xfs_shared.h"
 #include "xfs_format.h"

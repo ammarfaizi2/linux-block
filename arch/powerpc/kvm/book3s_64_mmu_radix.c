@@ -4,6 +4,7 @@
  * Copyright 2016 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/kvm.h>

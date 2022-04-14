@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include "mt76x02.h"
 

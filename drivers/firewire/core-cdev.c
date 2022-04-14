@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2007  Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/fs_api.h>
 #include <linux/bug.h>
 #include <linux/compat.h>
 #include <linux/delay.h>

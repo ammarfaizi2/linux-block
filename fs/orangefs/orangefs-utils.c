@@ -5,6 +5,7 @@
  *
  * See COPYING in top-level directory.
  */
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include "protocol.h"
 #include "orangefs-kernel.h"

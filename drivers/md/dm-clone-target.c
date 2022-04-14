@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Arrikto, Inc. All Rights Reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/bio.h>

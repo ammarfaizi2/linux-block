@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 
 #include "edac_module.h"

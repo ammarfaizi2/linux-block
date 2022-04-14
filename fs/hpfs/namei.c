@@ -6,6 +6,7 @@
  *
  *  adding & removing files & directories
  */
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/sched.h>
 #include "hpfs_fn.h"

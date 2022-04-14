@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  * Copyright (C) 2021, Alibaba Cloud
  */
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>

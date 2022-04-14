@@ -6,6 +6,7 @@
  */
 
 #include "common.h"
+#include <linux/fs_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/slab.h>
 

@@ -3,6 +3,7 @@
  * Copyright (c) 2001-2002 by David Brownell
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/types.h>
 

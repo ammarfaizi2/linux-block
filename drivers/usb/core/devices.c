@@ -36,6 +36,7 @@
  *   per device, not per bus
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <linux/fs.h>
 #include <linux/mm.h>

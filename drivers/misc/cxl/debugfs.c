@@ -3,6 +3,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

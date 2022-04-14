@@ -46,6 +46,7 @@
  * 32-bit lspn and page eor.
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/blkdev.h>
 #include <linux/interrupt.h>

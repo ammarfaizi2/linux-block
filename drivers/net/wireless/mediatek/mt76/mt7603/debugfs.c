@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 
 #include "mt7603.h"

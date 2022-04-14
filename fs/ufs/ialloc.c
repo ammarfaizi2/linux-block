@@ -24,6 +24,7 @@
  * Evgeniy Dushistov <dushistov@mail.ru>, 2007
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/time.h>
 #include <linux/stat.h>

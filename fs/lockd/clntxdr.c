@@ -10,6 +10,7 @@
  * Copyright (C) 2010, Oracle.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 #include <linux/sunrpc/xdr.h>
 #include <linux/sunrpc/clnt.h>

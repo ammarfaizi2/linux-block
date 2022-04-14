@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/isapnp.h>
 #include <linux/proc_fs.h>

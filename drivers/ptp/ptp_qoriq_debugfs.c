@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright 2019 NXP
  */
+#include <linux/fs_api.h>
 #include <linux/device.h>
 #include <linux/debugfs.h>
 #include <linux/fsl/ptp_qoriq.h>

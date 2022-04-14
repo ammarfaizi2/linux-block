@@ -24,6 +24,7 @@
 #include "amdgpu_ras_eeprom.h"
 #include "amdgpu.h"
 #include "amdgpu_ras.h"
+#include <linux/fs_api.h>
 #include <linux/bits.h>
 #include "atom.h"
 #include "amdgpu_eeprom.h"

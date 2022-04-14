@@ -23,6 +23,7 @@
  * since there can be a hole between i_size and the start of the Merkle tree.
  */
 
+#include <linux/fs_api.h>
 #include <linux/quotaops.h>
 
 #include "ext4.h"

@@ -7,6 +7,7 @@
  * This driver is highly inspired from the cpu5_wdt driver
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/types.h>

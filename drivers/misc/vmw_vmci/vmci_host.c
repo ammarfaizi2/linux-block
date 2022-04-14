@@ -5,6 +5,7 @@
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/vmw_vmci_defs.h>
 #include <linux/vmw_vmci_api.h>

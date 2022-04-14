@@ -6,6 +6,7 @@
  *          Haicheng Li <haicheng.li@intel.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <asm/cacheflush.h>
 #include <linux/fs.h>

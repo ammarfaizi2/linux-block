@@ -9,6 +9,7 @@
  *  Copyright (c) 2010-2011 Ericsson AB
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

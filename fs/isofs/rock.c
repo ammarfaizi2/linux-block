@@ -7,6 +7,7 @@
  *  Rock Ridge Extensions to iso9660
  */
 
+#include <linux/fs_api.h>
 #include <linux/slab.h>
 #include <linux/pagemap.h>
 

@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "bt1-ccu-pll: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/limits.h>

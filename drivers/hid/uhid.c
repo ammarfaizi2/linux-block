@@ -7,6 +7,7 @@
 /*
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic.h>
 #include <linux/compat.h>
 #include <linux/cred.h>

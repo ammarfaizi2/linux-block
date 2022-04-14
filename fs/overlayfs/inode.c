@@ -4,6 +4,7 @@
  * Copyright (C) 2011 Novell Inc.
  */
 
+#include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>

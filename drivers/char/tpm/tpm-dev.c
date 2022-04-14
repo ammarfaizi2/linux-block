@@ -12,6 +12,7 @@
  *
  * Device file system interface to the TPM
  */
+#include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <linux/slab.h>
 #include "tpm-dev.h"

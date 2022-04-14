@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/capability.h>

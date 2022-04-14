@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/bvec_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/bio.h>

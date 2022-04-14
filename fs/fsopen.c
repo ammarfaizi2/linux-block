@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>

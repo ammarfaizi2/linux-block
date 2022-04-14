@@ -5,6 +5,7 @@
 
 #include "ext4_jbd2.h"
 
+#include <linux/fs_api.h>
 #include <trace/events/ext4.h>
 
 int ext4_inode_journal_mode(struct inode *inode)

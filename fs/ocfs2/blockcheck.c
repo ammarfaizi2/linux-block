@@ -7,6 +7,7 @@
  * Copyright (C) 2006, 2008 Oracle.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/crc32.h>

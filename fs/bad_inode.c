@@ -9,6 +9,7 @@
  *  Fabian Frederick : August 2003 - All file operations assigned to EIO
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/stat.h>

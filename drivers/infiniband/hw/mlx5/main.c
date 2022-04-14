@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Intel Corporation. All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>

@@ -6,6 +6,7 @@
  * platform.
  */
 
+#include <linux/fs_api.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/sched/signal.h>

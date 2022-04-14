@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/bitmap.h>

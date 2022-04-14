@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/export.h>

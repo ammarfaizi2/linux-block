@@ -6,6 +6,7 @@
  * Copyright (C) 1994 - 2003, 06, 07 by Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2007 MIPS Technologies, Inc.
  */
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/fcntl.h>
 #include <linux/kernel.h>

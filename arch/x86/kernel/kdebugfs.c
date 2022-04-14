@@ -5,6 +5,7 @@
  * Copyright (C) 2007, Intel Corp.
  *	Huang Ying <ying.huang@intel.com>
  */
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/uaccess.h>
 #include <linux/export.h>

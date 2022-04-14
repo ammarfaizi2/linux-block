@@ -50,6 +50,7 @@
    3.26.02.000 - Initial driver release.
 */
 
+#include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/module.h>

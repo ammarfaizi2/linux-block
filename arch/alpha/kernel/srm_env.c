@@ -12,6 +12,7 @@
  * included a patch like this as well. Thanks for idea!
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/gfp.h>
 #include <linux/module.h>

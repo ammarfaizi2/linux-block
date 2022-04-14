@@ -44,6 +44,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/init.h>

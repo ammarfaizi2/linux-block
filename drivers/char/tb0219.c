@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2005  Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <linux/fs_api.h>
 #include <linux/platform_device.h>
 #include <linux/fs.h>
 #include <linux/init.h>

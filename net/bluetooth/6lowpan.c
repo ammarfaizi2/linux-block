@@ -4,6 +4,7 @@
 
 */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/if_arp.h>
 #include <linux/netdevice.h>

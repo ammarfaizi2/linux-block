@@ -8,6 +8,7 @@
  * This driver provides IOCTL interfaces to call Intel SCU IPC driver API.
  */
 
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/fcntl.h>

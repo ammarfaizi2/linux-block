@@ -16,6 +16,7 @@
  *			   Advanced Micro Devices Inc.
  */
 
+#include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

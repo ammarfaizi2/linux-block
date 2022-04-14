@@ -10,6 +10,7 @@
  *   Wu Hao <hao.wu@intel.com>
  *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
  */
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/dfl.h>

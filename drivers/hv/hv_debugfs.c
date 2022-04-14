@@ -4,6 +4,7 @@
  *   Branden Bonaby <brandonbonaby94@gmail.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/hyperv.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>

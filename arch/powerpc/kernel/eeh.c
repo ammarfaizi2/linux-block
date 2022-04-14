@@ -8,6 +8,7 @@
  * Please address comments and feedback to Linas Vepstas <linas@austin.ibm.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

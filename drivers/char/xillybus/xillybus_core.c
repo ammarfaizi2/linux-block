@@ -13,6 +13,7 @@
  * creates the device files accordingly.
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/list.h>
 #include <linux/device.h>

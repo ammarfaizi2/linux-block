@@ -7,6 +7,7 @@
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/fs_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

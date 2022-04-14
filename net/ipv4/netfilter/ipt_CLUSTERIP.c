@@ -6,6 +6,7 @@
  * Development of this code funded by SuSE Linux AG, https://www.suse.com/
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <linux/jhash.h>

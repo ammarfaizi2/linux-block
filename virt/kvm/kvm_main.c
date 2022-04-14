@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

@@ -8,6 +8,7 @@
  *		Initial version.
  */
 
+#include <linux/fs_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/backing-dev.h>

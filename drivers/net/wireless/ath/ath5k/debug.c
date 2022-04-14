@@ -60,6 +60,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/export.h>
 #include <linux/moduleparam.h>

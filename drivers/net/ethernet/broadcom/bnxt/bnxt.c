@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/fs_api.h>
 #include <linux/filter_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dim.h>

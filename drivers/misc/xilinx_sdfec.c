@@ -10,6 +10,7 @@
  * like  open(), close() and ioctl().
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/miscdevice.h>
 #include <linux/io.h>

@@ -9,6 +9,8 @@
  * Handle individual btree records
  */
 
+#include <linux/fs_api.h>
+
 #include "btree.h"
 
 static struct hfs_bnode *hfs_bnode_split(struct hfs_find_data *fd);

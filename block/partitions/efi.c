@@ -82,6 +82,7 @@
  * - Code works, detects all the partitions.
  *
  ************************************************************/
+#include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/crc32.h>

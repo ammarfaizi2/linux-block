@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/iversion.h>
 #include "affs.h"

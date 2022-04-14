@@ -7,6 +7,7 @@
  * Contact: Carlos Chinea <carlos.chinea@nokia.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/mod_devicetable.h>
 #include <linux/platform_device.h>

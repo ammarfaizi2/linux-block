@@ -8,6 +8,7 @@
  *          Chao Yu <chao2.yu@samsung.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>

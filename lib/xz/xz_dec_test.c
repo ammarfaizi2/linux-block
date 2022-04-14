@@ -7,6 +7,7 @@
  * You can do whatever you want with this file.
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/fs.h>

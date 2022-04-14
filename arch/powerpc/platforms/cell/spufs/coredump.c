@@ -7,6 +7,7 @@
  * Author: Dwayne Grant McConnell <decimal@us.ibm.com>
  */
 
+#include <linux/fs_api.h>
 #include <linux/elf.h>
 #include <linux/file.h>
 #include <linux/fdtable.h>

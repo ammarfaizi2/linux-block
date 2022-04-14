@@ -4,6 +4,7 @@
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 
 #include "core.h"

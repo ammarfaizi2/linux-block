@@ -5,6 +5,7 @@
  *  Copyright (C) 2016 - 2020 Christoph Hellwig
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/backing-dev-api.h>
 #include <linux/init.h>

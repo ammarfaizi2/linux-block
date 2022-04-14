@@ -10,6 +10,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/backing-dev-api.h>

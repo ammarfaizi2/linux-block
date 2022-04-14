@@ -10,6 +10,7 @@
  *  - s/cfam/chip (cfam_id -> chip_id etc...)
  */
 
+#include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

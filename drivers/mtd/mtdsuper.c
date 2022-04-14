@@ -8,6 +8,7 @@
  *              David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/backing-dev-api.h>
 #include <linux/mtd/super.h>

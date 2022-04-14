@@ -24,6 +24,7 @@
 
 /* Bluetooth address family and sockets. */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/debugfs.h>
 #include <linux/stringify.h>

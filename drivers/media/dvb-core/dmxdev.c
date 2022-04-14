@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "dmxdev: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/export.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>

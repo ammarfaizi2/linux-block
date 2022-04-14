@@ -6,6 +6,7 @@
  * Based on elements of hwmon and input subsystems.
  */
 
+#include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/anon_inodes.h>
 #include <linux/device.h>

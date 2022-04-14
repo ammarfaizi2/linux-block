@@ -29,6 +29,7 @@
  * and moved here. AV
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>
 #include <linux/dcache.h>
 #include <linux/pagemap.h>

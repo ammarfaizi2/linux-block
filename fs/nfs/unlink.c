@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/slab.h>
 #include <linux/string.h>

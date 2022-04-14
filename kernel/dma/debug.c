@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"DMA-API: " fmt
 
+#include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device/bus.h>
 #include <linux/device_api.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Microsemi Corporation
  */
 
+#include <linux/fs_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

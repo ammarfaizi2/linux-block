@@ -30,6 +30,7 @@
 
 #include "cgroup-internal.h"
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/bitmap.h>

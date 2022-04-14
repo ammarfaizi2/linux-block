@@ -7,6 +7,7 @@
  * Copyright 2020 Maxim Integrated
  */
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/debugfs.h>

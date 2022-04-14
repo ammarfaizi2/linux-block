@@ -10,6 +10,7 @@
  * Copyright (C) 2014 Texas Instruments Incorporated
  *    Aurelien Jacquiot <a-jacquiot@ti.com>
  */
+#include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

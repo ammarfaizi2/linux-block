@@ -7,6 +7,7 @@
  * Written by Ryusuke Konishi.
  */
 
+#include <linux/fs_api.h>
 #include <linux/buffer_head.h>
 #include <linux/blkdev.h>
 #include <linux/swap.h>

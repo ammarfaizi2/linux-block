@@ -18,6 +18,7 @@
  *  ext4 symlink handling code
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/namei.h>
 #include "ext4.h"

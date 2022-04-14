@@ -5,6 +5,7 @@
  * test virtio server in host kernel.
  */
 
+#include <linux/fs_api.h>
 #include <linux/compat.h>
 #include <linux/eventfd.h>
 #include <linux/vhost.h>

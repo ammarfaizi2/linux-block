@@ -3,6 +3,7 @@
  * Copyright 2012  Google, Inc.
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/compiler.h>
 #include <linux/irqflags.h>

@@ -5,6 +5,7 @@
  *	       Martin Schwidefsky <schwidefsky@de.ibm.com>,
  */
 
+#include <linux/fs_api.h>
 #include <linux/debugfs.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

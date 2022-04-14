@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/fs_api.h>
 #include <linux/delayed_call.h>
 #include <linux/dcache.h>
 #include <linux/cache.h>

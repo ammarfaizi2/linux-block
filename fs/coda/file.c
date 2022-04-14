@@ -8,6 +8,7 @@
  * to the Coda project. Contact Peter Braam <coda@cs.cmu.edu>.
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/atomic_api.h>
 #include <linux/refcount.h>

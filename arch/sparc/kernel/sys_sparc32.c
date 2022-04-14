@@ -8,6 +8,7 @@
  * environment.
  */
 
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

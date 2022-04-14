@@ -15,6 +15,7 @@
  * power to convert these machines into doorstops...
  */
 
+#include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/fs.h>

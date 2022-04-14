@@ -18,6 +18,7 @@
  * Copyright (C) 2006 Ingo Molnar <mingo@elte.hu>
  *
  */
+#include <linux/fs_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/bvec.h>
 #include <linux/fs.h>

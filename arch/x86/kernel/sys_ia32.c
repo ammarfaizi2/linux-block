@@ -21,6 +21,7 @@
  * hopefully all marked.  This should be fixed.
  */
 
+#include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

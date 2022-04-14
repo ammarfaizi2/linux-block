@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <asm/cacheflush.h>
 #include <linux/sched/task_flags.h>

@@ -11,6 +11,7 @@
  * Transparent decompression of files on an iso9660 filesystem
  */
 
+#include <linux/fs_api.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/init.h>

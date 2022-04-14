@@ -14,6 +14,7 @@
  * as unmount of the aggerate;
  */
 
+#include <linux/fs_api.h>
 #include <linux/fs.h>
 #include "jfs_incore.h"
 #include "jfs_filsys.h"

@@ -7,6 +7,7 @@
  * Copyright (C) 2005 Oracle.  All rights reserved.
  */
 
+#include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/kobject.h>
