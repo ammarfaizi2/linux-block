@@ -7,6 +7,7 @@
  * Author: Johan Hovold <jhovold@gmail.com>
  */
 
+#include <linux/printk.h>
 #include <linux/device.h>
 #include <linux/module.h>
 

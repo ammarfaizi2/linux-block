@@ -5,6 +5,7 @@
  * Copyright (c) 2015, Intel Corporation
  * Authors: Tadeusz Struk <tadeusz.struk@intel.com>
  */
+#include <linux/printk.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/err.h>

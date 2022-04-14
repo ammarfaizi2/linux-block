@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/printk.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_types.h>

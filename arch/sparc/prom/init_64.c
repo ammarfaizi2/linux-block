@@ -7,6 +7,7 @@
  * Copyright (C) 1996,1997 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
 
+#include <linux/printk.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/string.h>

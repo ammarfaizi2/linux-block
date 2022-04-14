@@ -8,6 +8,7 @@
  *	Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
  */
 
+#include <linux/printk.h>
 #include <linux/cache.h>
 #include <linux/bug.h>
 #include <asm/msr.h>

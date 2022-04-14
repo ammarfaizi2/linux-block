@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Measurement-Specialties
  */
 
+#include <linux/printk.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/iio/iio.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/printk.h>
 #include <linux/module.h>
 #include <linux/types.h>
 

@@ -5,6 +5,7 @@
  * Copyright 2018 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/printk.h>
 #include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/videodev2.h>

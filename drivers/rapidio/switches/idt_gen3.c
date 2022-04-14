@@ -5,6 +5,7 @@
  * Copyright 2016 Integrated Device Technology, Inc.
  */
 
+#include <linux/printk.h>
 #include <linux/stat.h>
 #include <linux/module.h>
 #include <linux/rio.h>

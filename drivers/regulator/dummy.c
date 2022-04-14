@@ -11,6 +11,7 @@
  * systems with no controllable regulators.
  */
 
+#include <linux/printk.h>
 #include <linux/err.h>
 #include <linux/export.h>
 #include <linux/platform_device.h>

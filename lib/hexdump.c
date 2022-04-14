@@ -3,6 +3,7 @@
  * lib/hexdump.c
  */
 
+#include <linux/printk.h>
 #include <linux/log2.h>
 #include <linux/types.h>
 #include <linux/ctype.h>

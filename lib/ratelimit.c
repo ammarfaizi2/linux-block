@@ -8,6 +8,7 @@
  * parameter. Now every user can use their own standalone ratelimit_state.
  */
 
+#include <linux/printk.h>
 #include <linux/ratelimit.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>
