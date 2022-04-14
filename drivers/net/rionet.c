@@ -6,6 +6,7 @@
  * Matt Porter <mporter@kernel.crashing.org>
  */
 
+#include <asm/page.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/dma-mapping.h>
