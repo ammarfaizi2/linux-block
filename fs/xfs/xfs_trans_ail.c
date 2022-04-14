@@ -4,6 +4,8 @@
  * Copyright (c) 2008 Dave Chinner
  * All Rights Reserved.
  */
+#include <linux/freezer.h>
+
 #include "xfs.h"
 #include "xfs_fs.h"
 #include "xfs_shared.h"
