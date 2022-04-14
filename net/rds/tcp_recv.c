@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/sched/clock.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

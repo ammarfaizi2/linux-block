@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/sched/clock.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>

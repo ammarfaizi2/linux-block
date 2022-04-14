@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/sched/clock.h>
 #include <linux/refcount_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
