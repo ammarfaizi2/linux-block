@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/filter_api.h>

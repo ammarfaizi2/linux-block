@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/hardirq.h>
 #include <linux/percpu.h>
 #include <linux/jump_label.h>
 #include <asm/interrupt.h>

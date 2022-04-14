@@ -7,6 +7,7 @@
  *          Christian Ehrhardt <ehrhardt@linux.vnet.ibm.com>
  */
 
+#include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

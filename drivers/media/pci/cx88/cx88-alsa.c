@@ -13,6 +13,7 @@
 #include "cx88.h"
 #include "cx88-reg.h"
 
+#include <linux/hardirq.h>
 #include <linux/export.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

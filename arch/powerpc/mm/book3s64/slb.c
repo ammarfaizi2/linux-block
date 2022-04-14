@@ -9,6 +9,7 @@
  * Copyright (C) 2002 Anton Blanchard <anton@au.ibm.com>, IBM
  */
 
+#include <linux/hardirq.h>
 #include <asm/interrupt.h>
 #include <asm/mmu.h>
 #include <asm/mmu_context.h>

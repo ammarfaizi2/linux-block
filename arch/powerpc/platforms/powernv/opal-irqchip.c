@@ -7,6 +7,7 @@
  *
  * Copyright Alistair Popple, IBM Corporation 2014.
  */
+#include <linux/hardirq.h>
 #include <linux/bitops.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>

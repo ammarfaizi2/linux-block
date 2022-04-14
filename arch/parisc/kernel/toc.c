@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/hardirq.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/kgdb.h>

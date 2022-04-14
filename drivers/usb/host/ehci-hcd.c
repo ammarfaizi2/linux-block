@@ -7,6 +7,7 @@
  * Copyright (c) 2000-2004 by David Brownell
  */
 
+#include <linux/hardirq.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/dmapool.h>

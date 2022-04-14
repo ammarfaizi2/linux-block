@@ -65,6 +65,7 @@
  *		- Re-add reset_bus support
  **************************************************************************/
 
+#include <linux/hardirq.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/delay.h>

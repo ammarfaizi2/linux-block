@@ -11,6 +11,7 @@
  * Derived from ca91c042.c by Michael Wyrick
  */
 
+#include <linux/hardirq.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/mm.h>

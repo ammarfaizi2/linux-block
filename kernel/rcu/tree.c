@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "rcu: " fmt
 
+#include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

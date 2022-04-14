@@ -5,6 +5,7 @@
  * This file contains power management functions related to interrupts.
  */
 
+#include <linux/hardirq.h>
 #include <linux/irq.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

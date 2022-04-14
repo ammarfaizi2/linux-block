@@ -5,6 +5,7 @@
  * Copyright 2007	Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/hardirq.h>
 #include <linux/sched.h>
 #include <linux/suspend.h>
 #include <asm/current.h>

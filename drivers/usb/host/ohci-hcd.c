@@ -21,6 +21,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/hardirq.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

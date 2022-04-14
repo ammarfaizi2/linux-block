@@ -6,6 +6,7 @@
  *  Heavily based on arch/sparc/kernel/irq.c.
  */
 
+#include <linux/hardirq.h>
 #include <linux/kernel_stat.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>

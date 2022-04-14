@@ -6,6 +6,7 @@
  *		Aaron.maoye <leafy.myeh@newbietech.com>
  */
 
+#include <linux/hardirq.h>
 #include <linux/module.h>
 #include <linux/serio.h>
 #include <linux/interrupt.h>

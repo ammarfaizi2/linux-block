@@ -7,6 +7,7 @@
 
 #include "dmaengine.h"
 
+#include <linux/hardirq.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/circ_buf.h>

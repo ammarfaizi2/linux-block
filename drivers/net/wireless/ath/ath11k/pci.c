@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/hardirq.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>

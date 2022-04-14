@@ -15,6 +15,7 @@
  * by Alexander Graf <agraf@suse.de>.
  */
 
+#include <linux/hardirq.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

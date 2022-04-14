@@ -7,6 +7,7 @@
  * Copyright (C) 2019 Intel Corporation
  */
 
+#include <linux/hardirq.h>
 #include <linux/clockchips.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

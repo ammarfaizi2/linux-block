@@ -8,6 +8,7 @@
  * Copyright (C) 2017 SiFive
  */
 
+#include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/cpu.h>

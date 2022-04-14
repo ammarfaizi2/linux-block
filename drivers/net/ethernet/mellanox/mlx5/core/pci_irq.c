@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies. */
 
+#include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/interrupt.h>
 #include <linux/notifier.h>

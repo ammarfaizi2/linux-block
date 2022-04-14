@@ -8,6 +8,7 @@
  *
  *  DMA support added by Chip Coldwell.
  */
+#include <linux/hardirq.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/circ_buf.h>

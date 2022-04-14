@@ -13,6 +13,7 @@
  * result, all CPUs are treated as if they're single-core and
  * single-threaded.
  */
+#include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
 #include <asm/cpumask_arch.h>

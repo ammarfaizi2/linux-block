@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "ACPI: OSL: " fmt
 
+#include <linux/hardirq.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

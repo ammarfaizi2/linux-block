@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2009 David S. Miller (davem@davemloft.net)
  */
+#include <linux/hardirq.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/init.h>

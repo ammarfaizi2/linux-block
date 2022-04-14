@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
 /* Copyright 2019 Collabora ltd. */
+#include <linux/hardirq.h>
 #include <linux/dma-fence-api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

@@ -3,6 +3,7 @@
    Copyright (C) 2001 Rusty Russell, 2002 Rusty Russell IBM.
 
 */
+#include <linux/hardirq.h>
 #include <linux/filter_api.h>
 #include <linux/elf.h>
 #include <linux/ftrace.h>

@@ -11,6 +11,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/hardirq.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>

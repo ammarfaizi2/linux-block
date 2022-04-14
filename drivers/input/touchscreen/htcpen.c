@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Pau Oliva Fora <pof@eslack.org>
  */
 
+#include <linux/hardirq.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

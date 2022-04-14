@@ -5,6 +5,7 @@
  * Copyright (c) 2021 HiSilicon Technologies Co., Ltd.
  */
 
+#include <linux/hardirq.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bits.h>

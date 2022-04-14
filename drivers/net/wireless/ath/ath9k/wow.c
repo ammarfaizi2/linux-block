@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/hardirq.h>
+
 #include "ath9k.h"
 
 static const struct wiphy_wowlan_support ath9k_wowlan_support_legacy = {

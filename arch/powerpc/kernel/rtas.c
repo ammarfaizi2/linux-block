@@ -7,6 +7,7 @@
  * Copyright (C) 2001 IBM.
  */
 
+#include <linux/hardirq.h>
 #include <linux/stdarg.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

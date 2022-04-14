@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2016 Synopsys Inc.
  */
+#include <linux/hardirq.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/errno.h>

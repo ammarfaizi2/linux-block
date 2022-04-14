@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES. All rights reserved. */
 
+#include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 
 #include "mlx5_core.h"
