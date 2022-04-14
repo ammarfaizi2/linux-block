@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/shm.h>
 #include <linux/vmalloc.h>
 #include <linux/mm.h>
 #include <linux/errno.h>
