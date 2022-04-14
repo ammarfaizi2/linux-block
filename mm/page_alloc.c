@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/debugfs.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>

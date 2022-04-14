@@ -3,6 +3,7 @@
  * Copyright (C) 2014 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/debugfs.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

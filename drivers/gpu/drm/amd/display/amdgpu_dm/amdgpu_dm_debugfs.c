@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/debugfs.h>
 #include <linux/capability.h>
 #include <linux/string_helpers.h>
 #include <linux/uaccess.h>

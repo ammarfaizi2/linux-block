@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/debugfs.h>
+
 #include "ath9k.h"
 
 static void ath9k_tx99_stop(struct ath_softc *sc)

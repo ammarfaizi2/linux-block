@@ -4,6 +4,7 @@
  * Copyright(c) 2005 - 2014 Intel Corporation. All rights reserved.
  * Copyright (C) 2019 - 2020 Intel Corporation
  *****************************************************************************/
+#include <linux/debugfs.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/skbuff.h>

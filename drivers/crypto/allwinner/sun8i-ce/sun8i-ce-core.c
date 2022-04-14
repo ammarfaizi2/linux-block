@@ -9,6 +9,7 @@
  *
  * You could find a link for the datasheet in Documentation/arm/sunxi.rst
  */
+#include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/crypto.h>

@@ -16,6 +16,7 @@
  * rank, bank, row and column using the appropriate "dunit_ops" functions/parameters.
  */
 
+#include <linux/debugfs.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/pci.h>

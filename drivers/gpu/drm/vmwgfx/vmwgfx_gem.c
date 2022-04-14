@@ -24,6 +24,8 @@
  *
  */
 
+#include <linux/debugfs.h>
+
 #include "vmwgfx_drv.h"
 
 #include "drm/drm_prime.h"

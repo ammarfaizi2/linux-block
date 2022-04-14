@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2017 Qualcomm Atheros, Inc.
  */
 
+#include <linux/debugfs.h>
 #include <linux/relay.h>
 #include "core.h"
 #include "debug.h"

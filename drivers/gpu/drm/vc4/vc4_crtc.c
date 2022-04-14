@@ -29,6 +29,7 @@
  * ones that set the clock.
  */
 
+#include <linux/debugfs.h>
 #include <asm/io.h>
 #include <linux/clk.h>
 #include <linux/component.h>

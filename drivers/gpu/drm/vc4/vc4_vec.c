@@ -13,6 +13,7 @@
  * PAL and PAL-M or NTSC and NTSC-J.
  */
 
+#include <linux/debugfs.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_panel.h>

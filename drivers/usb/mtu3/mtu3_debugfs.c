@@ -7,6 +7,7 @@
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/debugfs.h>
 #include <linux/uaccess.h>
 
 #include "mtu3.h"

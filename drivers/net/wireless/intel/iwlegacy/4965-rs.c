@@ -8,6 +8,7 @@
  * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  *
  *****************************************************************************/
+#include <linux/debugfs.h>
 #include <linux/kernel.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>

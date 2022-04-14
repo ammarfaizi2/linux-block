@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/debugfs.h>
 #include <linux/vmalloc.h>
 
 #include "debugfs_sta.h"

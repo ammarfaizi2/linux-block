@@ -7,6 +7,7 @@
 
 #include "debugfs.h"
 
+#include <linux/debugfs.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
 

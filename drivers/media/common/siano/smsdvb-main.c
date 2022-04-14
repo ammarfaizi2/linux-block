@@ -10,6 +10,7 @@ Copyright (C) 2006-2008, Uri Shkolnik
 
 #include "smscoreapi.h"
 
+#include <linux/debugfs.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/init.h>

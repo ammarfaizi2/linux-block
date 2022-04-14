@@ -6,6 +6,7 @@
  * Copyright (c)  2015 Nordic Semiconductor. All Rights Reserved.
  */
 
+#include <linux/debugfs.h>
 #include <net/6lowpan.h>
 
 #include "6lowpan_i.h"

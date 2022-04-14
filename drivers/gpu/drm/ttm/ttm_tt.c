@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
+#include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/shmem_fs.h>

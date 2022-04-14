@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/debugfs.h>
 #include <linux/ktime.h>
 #include <linux/module.h>
 #include <linux/pagemap.h>

@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/kthread.h>
 #include <linux/pci.h>

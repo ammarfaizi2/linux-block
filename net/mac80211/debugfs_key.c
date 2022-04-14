@@ -7,6 +7,7 @@
  * Copyright (C) 2021   Intel Corporation
  */
 
+#include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/kobject.h>
 #include <linux/slab.h>

@@ -7,6 +7,7 @@
  *         Loc Ho <lho@apm.com>
  */
 
+#include <linux/debugfs.h>
 #include <linux/ctype.h>
 #include <linux/edac.h>
 #include <linux/interrupt.h>

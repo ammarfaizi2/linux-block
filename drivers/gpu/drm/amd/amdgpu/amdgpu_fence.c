@@ -28,6 +28,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  *    Dave Airlie
  */
+#include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/seq_file.h>
 #include <linux/atomic.h>

@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "qeth"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/compat.h>
 #include <linux/module.h>

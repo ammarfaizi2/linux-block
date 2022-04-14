@@ -18,6 +18,7 @@
  * hopefully present.
  */
 
+#include <linux/debugfs.h>
 #include <linux/clk-provider.h>
 #include <linux/clk.h>
 #include <linux/completion.h>

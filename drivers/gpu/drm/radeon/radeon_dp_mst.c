@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+#include <linux/debugfs.h>
 #include <linux/capability.h>
 #include <drm/dp/drm_dp_mst_helper.h>
 #include <drm/drm_fb_helper.h>

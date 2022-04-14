@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
+#include <linux/debugfs.h>
 #include <linux/relay.h>
 #include "mt7915.h"
 #include "eeprom.h"

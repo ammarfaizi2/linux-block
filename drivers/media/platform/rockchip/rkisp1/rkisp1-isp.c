@@ -8,6 +8,7 @@
  * Copyright (C) 2017 Rockchip Electronics Co., Ltd.
  */
 
+#include <linux/debugfs.h>
 #include <linux/iopoll.h>
 #include <linux/phy/phy.h>
 #include <linux/phy/phy-mipi-dphy.h>
