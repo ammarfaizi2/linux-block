@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <net/ip_fib_api.h>
 #include <net/ip_extra.h>

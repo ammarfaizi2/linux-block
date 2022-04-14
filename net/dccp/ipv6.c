@@ -8,6 +8,7 @@
  *	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
  */
 
+#include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <net/inet_ecn.h>
 #include <net/dst_api.h>

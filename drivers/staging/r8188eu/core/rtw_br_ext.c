@@ -3,6 +3,7 @@
 
 #define _RTW_BR_EXT_C_
 
+#include <net/ndisc_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

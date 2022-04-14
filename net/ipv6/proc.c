@@ -11,6 +11,7 @@
  * Authors:	David S. Miller (davem@caip.rutgers.edu)
  *		YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
  */
+#include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <net/ip_extra.h>
 #include <net/inet_frag.h>

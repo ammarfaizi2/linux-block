@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
+#include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>

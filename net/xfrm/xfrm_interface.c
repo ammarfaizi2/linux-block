@@ -8,6 +8,7 @@
  *	Steffen Klassert <steffen.klassert@secunet.com>
  */
 
+#include <net/ndisc_api.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/percpu.h>

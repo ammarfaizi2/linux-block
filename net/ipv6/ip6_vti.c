@@ -11,6 +11,7 @@
  *	net/ipv6/ip6_tunnel.c
  */
 
+#include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>
 #include <linux/percpu.h>

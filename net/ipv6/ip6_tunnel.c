@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api_tunnel.h>
 #include <net/dst_api.h>
