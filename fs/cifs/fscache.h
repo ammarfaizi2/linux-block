@@ -9,6 +9,7 @@
 #ifndef _CIFS_FSCACHE_H
 #define _CIFS_FSCACHE_H
 
+#include <linux/sched/task_flags.h>
 #include <linux/swap.h>
 #include <linux/fscache.h>
 
