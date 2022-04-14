@@ -11,6 +11,7 @@
  *  Adapted for sparc64 by David S. Miller davem@davemloft.net
  */
 
+#include <asm/cpudata.h>
 #include <linux/memblock.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
