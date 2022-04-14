@@ -6,6 +6,7 @@
 #ifndef BTRFS_CTREE_H
 #define BTRFS_CTREE_H
 
+#include <linux/ioprio.h>
 #include <linux/mm.h>
 #include <linux/sched/signal.h>
 #include <linux/highmem.h>
