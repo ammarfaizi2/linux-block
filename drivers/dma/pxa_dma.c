@@ -3,6 +3,7 @@
  * Copyright 2015 Robert Jarzmik <robert.jarzmik@free.fr>
  */
 
+#include <linux/mmzone_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

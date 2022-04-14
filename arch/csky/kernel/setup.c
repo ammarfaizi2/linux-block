@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/console.h>
 #include <linux/memblock.h>

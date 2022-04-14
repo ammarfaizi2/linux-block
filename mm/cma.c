@@ -21,6 +21,7 @@
 #endif
 #define CREATE_TRACE_POINTS
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_api_kasan.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>

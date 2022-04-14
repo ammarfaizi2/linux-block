@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) "numa: " fmt
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/cpumask_api.h>

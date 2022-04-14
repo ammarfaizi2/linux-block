@@ -3,6 +3,7 @@
  * linux/mm/page_isolation.c
  */
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/gfp_api.h>

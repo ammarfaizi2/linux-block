@@ -15,6 +15,7 @@
  * Platform initialization for Discontig Memory
  */
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/io.h>

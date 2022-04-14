@@ -6,6 +6,7 @@
  * Author Mel Gorman <mel@csn.ul.ie>
  *
  */
+#include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/kobject_api.h>
 #include <linux/cpumask_api.h>

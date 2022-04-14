@@ -3,6 +3,7 @@
  * Basic Node interface support
  */
 
+#include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/huge_mm.h>
 #include <linux/device_api_lock.h>
