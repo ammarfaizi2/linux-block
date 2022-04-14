@@ -2,6 +2,7 @@
 #ifndef __LINUX_NET_XDP_PRIV_H__
 #define __LINUX_NET_XDP_PRIV_H__
 
+#include <net/xdp_types.h>
 #include <linux/rhashtable.h>
 
 /* Private to net/core/xdp.c, but used by trace/events/xdp.h */
