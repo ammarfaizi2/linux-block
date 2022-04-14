@@ -6,6 +6,7 @@
  *         Xia Jiang <xia.jiang@mediatek.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>

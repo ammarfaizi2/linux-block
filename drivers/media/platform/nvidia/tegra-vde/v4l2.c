@@ -12,6 +12,7 @@
  * Copyright (C) 2019 Boris Brezillon <boris.brezillon@collabora.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 

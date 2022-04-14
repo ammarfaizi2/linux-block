@@ -13,6 +13,7 @@
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/platform_device.h>
 #include <linux/of_reserved_mem.h>
 #include <linux/of_device.h>

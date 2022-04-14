@@ -8,6 +8,7 @@
  * Copyright (C) 2020 Linaro Ltd <loic.poulain@linaro.org>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/aer.h>
 #include <linux/delay.h>
 #include <linux/device.h>

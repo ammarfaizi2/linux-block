@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/workqueue_api.h>
+
 #include "amdgpu_reset.h"
 #include "aldebaran.h"
 

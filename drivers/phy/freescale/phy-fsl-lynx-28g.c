@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (c) 2021-2022 NXP. */
 
+#include <linux/workqueue_api.h>
 #include <linux/module.h>
 #include <linux/phy.h>
 #include <linux/phy/phy.h>

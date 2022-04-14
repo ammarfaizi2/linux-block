@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/workqueue_api.h>
 #include <linux/debugfs.h>
 
 #include "netdevsim.h"

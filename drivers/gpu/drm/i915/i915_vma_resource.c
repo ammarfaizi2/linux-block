@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/interval_tree_generic.h>
 #include <linux/sched/mm.h>
 

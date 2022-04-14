@@ -6,6 +6,7 @@
  * Kamil Debski, <k.debski@samsung.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

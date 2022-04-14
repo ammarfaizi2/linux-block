@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt)  "intel-hfi: " fmt
 
+#include <linux/workqueue_api.h>
 #include <linux/bitops.h>
 #include <linux/cpufeature.h>
 #include <linux/cpumask.h>

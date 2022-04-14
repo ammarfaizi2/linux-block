@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/workqueue_api.h>
 #include <linux/clk.h>
 #include <linux/gpio/consumer.h>
 #include <linux/regulator/consumer.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
+#include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

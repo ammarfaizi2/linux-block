@@ -5,6 +5,7 @@
 // Author: Cezary Rojewski <cezary.rojewski@intel.com>
 //
 
+#include <linux/workqueue_api.h>
 #include <linux/pci.h>
 #include <sound/hda_register.h>
 #include <sound/hdaudio_ext.h>

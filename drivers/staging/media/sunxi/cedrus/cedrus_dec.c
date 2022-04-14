@@ -13,6 +13,7 @@
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
 
+#include <linux/workqueue_api.h>
 #include <media/v4l2-device.h>
 #include <media/v4l2-ioctl.h>
 #include <media/v4l2-event.h>
