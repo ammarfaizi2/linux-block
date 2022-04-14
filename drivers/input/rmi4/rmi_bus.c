@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Unixphere
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/irq.h>

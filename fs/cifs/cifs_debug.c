@@ -5,6 +5,7 @@
  *
  *   Modified by Steve French (sfrench@us.ibm.com)
  */
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/string.h>
 #include <linux/ctype.h>

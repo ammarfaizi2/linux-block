@@ -2,6 +2,7 @@
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 
 #include "ipvlan.h"

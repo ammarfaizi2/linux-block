@@ -7,6 +7,7 @@
 
 #include "habanalabs.h"
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 
 void hl_encaps_handle_do_release(struct kref *ref)

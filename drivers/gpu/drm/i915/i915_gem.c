@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-fence-array.h>
 #include <linux/kthread.h>
 #include <linux/dma-resv.h>

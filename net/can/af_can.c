@@ -40,6 +40,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/stddef.h>
 #include <linux/init.h>

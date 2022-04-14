@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/cpu.h>
 #include <linux/etherdevice.h>

@@ -3,6 +3,8 @@
  * Copyright © 2016-2019 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
+
 #include "gt/intel_gt.h"
 #include "gt/intel_reset.h"
 #include "intel_guc.h"

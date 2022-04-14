@@ -10,6 +10,7 @@
  *     Robert Jennings <rcjenn@us.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/cpu.h>
 #include <linux/types.h>
 #include <linux/delay.h>

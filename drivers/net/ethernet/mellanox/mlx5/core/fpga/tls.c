@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mlx5/device.h>
 #include "fpga/tls.h"
 #include "fpga/cmd.h"

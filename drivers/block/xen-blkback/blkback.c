@@ -36,6 +36,7 @@
 
 #define pr_fmt(fmt) "xen-blkback: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/spinlock.h>
 #include <linux/kthread.h>

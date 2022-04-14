@@ -4,6 +4,8 @@
  * Copyright (c) 2016 Cavium Inc.
  */
 
+#include <linux/atomic_api.h>
+
 #include "qedi.h"
 #include "qedi_gbl.h"
 #include "qedi_iscsi.h"

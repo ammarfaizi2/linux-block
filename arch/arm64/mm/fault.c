@@ -7,6 +7,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/bitfield.h>
 #include <linux/extable.h>

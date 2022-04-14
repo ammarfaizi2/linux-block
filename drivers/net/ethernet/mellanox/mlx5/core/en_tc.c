@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <net/flow_dissector.h>
 #include <net/flow_offload.h>
 #include <net/sch_generic.h>

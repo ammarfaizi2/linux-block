@@ -5,6 +5,7 @@
  * Copyright (C) 2020-2021 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/if.h>

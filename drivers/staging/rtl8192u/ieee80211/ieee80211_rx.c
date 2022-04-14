@@ -17,6 +17,7 @@
 ******************************************************************************/
 
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>

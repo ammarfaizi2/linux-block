@@ -11,6 +11,7 @@
  *
  ******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/string.h>
 #include <linux/parser.h>
 #include <linux/timer.h>

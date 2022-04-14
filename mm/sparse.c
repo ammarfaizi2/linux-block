@@ -2,6 +2,7 @@
 /*
  * sparse memory mappings.
  */
+#include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/mmzone.h>

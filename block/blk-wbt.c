@@ -19,6 +19,7 @@
  * Copyright (C) 2016 Jens Axboe
  *
  */
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/blk_types.h>
 #include <linux/slab.h>

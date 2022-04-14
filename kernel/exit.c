@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/atomic_api.h>
 #include <linux/rcu_internal.h>
 #include <net/sock.h>
 #include <linux/mm.h>

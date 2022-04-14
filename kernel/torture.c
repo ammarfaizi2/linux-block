@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/sched/affinity.h>
 #include <linux/types.h>

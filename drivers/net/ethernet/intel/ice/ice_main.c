@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/atomic_api.h>
 #include <generated/utsrelease.h>
 #include "ice.h"
 #include "ice_base.h"

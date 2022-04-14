@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Stanislaw Gruszka <stf_xl@wp.pl>
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 
 #include "mt76x02.h"

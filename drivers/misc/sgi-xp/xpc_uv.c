@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/interrupt.h>

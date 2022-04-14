@@ -18,6 +18,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <linux/delay.h>
 #include <linux/pci.h>

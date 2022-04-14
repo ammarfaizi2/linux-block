@@ -4,6 +4,8 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
+
 #include "i915_selftest.h"
 
 #include "selftests/mock_gem_device.h"

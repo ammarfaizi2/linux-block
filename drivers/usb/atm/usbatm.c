@@ -50,6 +50,7 @@
 
 #include "usbatm.h"
 
+#include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 #include <linux/crc32.h>
 #include <linux/errno.h>

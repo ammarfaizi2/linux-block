@@ -11,6 +11,7 @@
 #include "../include/goya/asic_reg/goya_masks.h"
 #include "../include/goya/goya_reg_map.h"
 
+#include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/hwmon.h>
 #include <linux/iommu.h>

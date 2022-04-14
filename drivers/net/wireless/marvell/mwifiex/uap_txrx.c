@@ -17,6 +17,8 @@
  * this warranty disclaimer.
  */
 
+#include <linux/atomic_api.h>
+
 #include "decl.h"
 #include "ioctl.h"
 #include "main.h"

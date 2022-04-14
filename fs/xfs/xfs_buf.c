@@ -4,6 +4,7 @@
  * All Rights Reserved.
  */
 #include "xfs.h"
+#include <linux/atomic_api.h>
 #include <linux/backing-dev.h>
 
 #include "xfs_shared.h"

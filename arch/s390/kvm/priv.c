@@ -8,6 +8,7 @@
  *               Christian Borntraeger <borntraeger@de.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kvm.h>
 #include <linux/gfp.h>
 #include <linux/errno.h>

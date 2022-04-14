@@ -3,6 +3,7 @@
  * Copyright (C) 2007, 2008 Karsten Wiese <fzu@wemgehoertderstaat.de>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/usb.h>
 #include <linux/usb/audio.h>

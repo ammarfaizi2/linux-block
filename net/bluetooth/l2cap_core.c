@@ -28,6 +28,7 @@
 
 /* Bluetooth L2CAP core. */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>
 

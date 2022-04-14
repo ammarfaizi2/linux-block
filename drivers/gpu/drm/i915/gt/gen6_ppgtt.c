@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/log2.h>
 
 #include "gem/i915_gem_internal.h"

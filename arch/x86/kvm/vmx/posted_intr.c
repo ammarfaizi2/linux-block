@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/atomic_api.h>
 #include <linux/kvm_host.h>
 
 #include <asm/irq_remapping.h>

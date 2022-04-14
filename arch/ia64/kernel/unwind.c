@@ -27,6 +27,7 @@
  *	o if both the unw.lock spinlock and a script's read-write lock must be
  *	  acquired, then the read-write lock must be acquired first.
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/memblock.h>
 #include <linux/elf.h>

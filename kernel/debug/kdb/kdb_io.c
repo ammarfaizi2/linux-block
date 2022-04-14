@@ -9,6 +9,7 @@
  * Copyright (c) 2009 Wind River Systems, Inc.  All Rights Reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/ctype.h>

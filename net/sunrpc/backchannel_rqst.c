@@ -21,6 +21,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/tcp.h>
 #include <linux/slab.h>
 #include <linux/sunrpc/xprt.h>

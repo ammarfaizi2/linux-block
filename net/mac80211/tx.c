@@ -10,6 +10,7 @@
  * Transmit and frame generation functions.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/skbuff.h>

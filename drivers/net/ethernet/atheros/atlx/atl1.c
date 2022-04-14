@@ -28,6 +28,7 @@
  * SMP torture testing
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <asm/byteorder.h>
 

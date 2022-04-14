@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/fs.h>

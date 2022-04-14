@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-fence-array.h>
 #include <linux/dma-fence-chain.h>
 #include <linux/irq_work.h>

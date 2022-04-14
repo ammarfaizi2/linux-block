@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <rdma/ib_umem.h>

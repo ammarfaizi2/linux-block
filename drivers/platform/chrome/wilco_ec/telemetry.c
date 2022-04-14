@@ -27,6 +27,7 @@
  * returned.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/fs.h>

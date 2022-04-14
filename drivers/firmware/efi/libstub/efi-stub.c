@@ -9,6 +9,7 @@
  *     Mark Salter <msalter@redhat.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/efi.h>
 #include <linux/libfdt.h>
 #include <asm/efi.h>

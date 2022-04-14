@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dccp.h>
 #include <linux/module.h>
 #include <linux/types.h>

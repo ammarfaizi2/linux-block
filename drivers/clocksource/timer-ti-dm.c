@@ -18,6 +18,7 @@
  * Added OMAP4 support - Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/cpu_pm.h>

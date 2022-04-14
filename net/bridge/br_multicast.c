@@ -5,6 +5,7 @@
  * Copyright (c) 2010 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/export.h>
 #include <linux/if_ether.h>

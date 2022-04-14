@@ -38,6 +38,7 @@
  */
 
 #include "ubifs.h"
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/mount.h>
 #include <linux/slab.h>

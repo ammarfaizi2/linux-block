@@ -26,6 +26,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/virtio.h>
 #include <linux/virtio_config.h>

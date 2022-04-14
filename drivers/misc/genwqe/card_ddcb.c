@@ -18,6 +18,7 @@
  * functional code.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/sched.h>

@@ -3,6 +3,7 @@
  * ti-sysc.c - Texas Instruments sysc interconnect target driver
  */
 
+#include <linux/atomic_api.h>
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>

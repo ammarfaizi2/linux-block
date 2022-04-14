@@ -43,6 +43,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/inetdevice.h>
 #include <linux/init.h>

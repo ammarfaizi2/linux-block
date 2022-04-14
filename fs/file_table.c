@@ -6,6 +6,7 @@
  *  Copyright (C) 1997 David S. Miller (davem@caip.rutgers.edu)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/string.h>
 #include <linux/slab.h>

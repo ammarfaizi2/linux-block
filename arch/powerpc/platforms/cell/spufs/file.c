@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/atomic_api.h>
 #include <linux/coredump.h>
 #include <linux/fs.h>
 #include <linux/ioctl.h>

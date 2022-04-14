@@ -3,6 +3,8 @@
  * Copyright (c) 2000-2001,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/atomic_api.h>
+
 #include "xfs.h"
 #include "xfs_fs.h"
 #include "xfs_format.h"

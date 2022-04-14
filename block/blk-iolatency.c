@@ -64,6 +64,7 @@
  *
  * Copyright (C) 2018 Josef Bacik
  */
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/blk_types.h>
 #include <linux/backing-dev.h>

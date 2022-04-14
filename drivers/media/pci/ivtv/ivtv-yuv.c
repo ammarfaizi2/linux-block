@@ -6,6 +6,8 @@
 
  */
 
+#include <linux/atomic_api.h>
+
 #include "ivtv-driver.h"
 #include "ivtv-udma.h"
 #include "ivtv-yuv.h"

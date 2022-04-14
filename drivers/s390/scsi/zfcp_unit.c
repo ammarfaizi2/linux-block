@@ -8,6 +8,8 @@
  * Copyright IBM Corp. 2010
  */
 
+#include <linux/atomic_api.h>
+
 #include "zfcp_def.h"
 #include "zfcp_ext.h"
 

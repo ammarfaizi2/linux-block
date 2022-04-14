@@ -4,6 +4,7 @@
  */
 
 #include "queueing.h"
+#include <linux/atomic_api.h>
 #include <linux/skb_array.h>
 
 struct multicore_worker __percpu *

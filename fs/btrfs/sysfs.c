@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/sched/mm.h>
 #include <linux/slab.h>

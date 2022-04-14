@@ -4,6 +4,7 @@
  * Copyright (C) 2019 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>

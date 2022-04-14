@@ -16,6 +16,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/atomic_api.h>
+
 #include "htc.h"
 
 MODULE_AUTHOR("Atheros Communications");

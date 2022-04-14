@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

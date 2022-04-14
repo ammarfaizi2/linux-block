@@ -30,6 +30,7 @@
  *	Receive: the packet's reception time is converted to an appropriate
  *	timestamp.
  */
+#include <linux/atomic_api.h>
 #include <linux/ip.h>
 #include <linux/udp.h>
 #include <linux/time.h>

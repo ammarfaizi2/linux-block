@@ -13,6 +13,7 @@
  *
  * A special thanks goes to Realtek for their support !
  */
+#include <linux/atomic_api.h>
 #include <linux/compiler.h>
 #include <linux/errno.h>
 #include <linux/if_arp.h>

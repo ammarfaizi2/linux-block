@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pci.h>
 
 #include <drm/drm_drv.h>

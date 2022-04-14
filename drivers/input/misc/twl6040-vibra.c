@@ -11,6 +11,7 @@
  *				Felipe Balbi <felipe.balbi@nokia.com>
  *				Jari Vanhala <ext-javi.vanhala@nokia.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/of.h>

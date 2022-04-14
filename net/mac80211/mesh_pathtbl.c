@@ -4,6 +4,7 @@
  * Author:     Luis Carlos Cobo <luisca@cozybit.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/etherdevice.h>
 #include <linux/list.h>
 #include <linux/random.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2020 Microchip Technology Germany II GmbH & Co. KG
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/slab.h>

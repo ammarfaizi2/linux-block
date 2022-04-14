@@ -16,6 +16,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 
 #include "main.h"

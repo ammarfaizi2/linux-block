@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 
 #include "ipoib.h"

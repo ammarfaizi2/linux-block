@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Oracle.  All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/pagemap.h>
 #include <linux/spinlock.h>

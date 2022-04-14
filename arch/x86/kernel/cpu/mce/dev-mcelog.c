@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <linux/atomic_api.h>
 #include <asm/processor_types.h>
 #include <asm/cpufeature.h>
 #include <linux/miscdevice.h>

@@ -41,6 +41,8 @@
  * USA.
  */
 
+#include <linux/atomic_api.h>
+
 #include "esas2r.h"
 
 static bool esas2r_initmem_alloc(struct esas2r_adapter *a,

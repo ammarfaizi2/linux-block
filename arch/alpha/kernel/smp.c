@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

@@ -4,6 +4,7 @@
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include "dpu_encoder_phys.h"
 #include "dpu_hw_interrupts.h"

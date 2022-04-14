@@ -37,6 +37,7 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/usb.h>

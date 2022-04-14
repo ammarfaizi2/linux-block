@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "radix-mmu: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/sched/mm.h>

@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/list.h>
 #include <linux/gfp.h>

@@ -19,6 +19,7 @@
  *	(jj@sunsite.ms.mff.cuni.cz)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/time.h>
 #include <linux/fs.h>
 #include <linux/iomap.h>

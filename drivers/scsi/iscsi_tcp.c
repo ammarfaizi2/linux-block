@@ -17,6 +17,7 @@
  *	Zhenyu Wang
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/hash.h>
 #include <linux/types.h>
 #include <linux/inet.h>

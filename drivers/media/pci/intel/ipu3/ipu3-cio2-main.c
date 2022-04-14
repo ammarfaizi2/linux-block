@@ -11,6 +11,7 @@
  * et al.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

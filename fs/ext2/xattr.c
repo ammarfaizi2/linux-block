@@ -54,6 +54,7 @@
  * to avoid deadlocks.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/buffer_head.h>
 #include <linux/init.h>
 #include <linux/printk.h>

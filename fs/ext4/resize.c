@@ -12,6 +12,7 @@
 
 #define EXT4FS_DEBUG
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

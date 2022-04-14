@@ -8,6 +8,7 @@
  * Tom Haynes <loghyr@primarydata.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/nfs_fs.h>
 #include <linux/nfs_page.h>
 #include <linux/sunrpc/addr.h>

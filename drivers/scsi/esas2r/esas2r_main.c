@@ -41,6 +41,8 @@
  * USA.
  */
 
+#include <linux/atomic_api.h>
+
 #include "esas2r.h"
 
 MODULE_DESCRIPTION(ESAS2R_DRVR_NAME ": " ESAS2R_LONGNAME " driver");

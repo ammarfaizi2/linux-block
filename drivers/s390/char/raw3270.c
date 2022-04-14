@@ -8,6 +8,7 @@
  *     Copyright IBM Corp. 2003, 2009
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/init.h>

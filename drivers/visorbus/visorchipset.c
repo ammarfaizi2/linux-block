@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <linux/acpi.h>
 #include <linux/crash_dump.h>

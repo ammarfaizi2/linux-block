@@ -28,6 +28,7 @@
  *    Xiaoguang Chen <xiaoguang.chen@intel.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/mm.h>

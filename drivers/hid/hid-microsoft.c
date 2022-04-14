@@ -12,6 +12,7 @@
 /*
  */
 
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/input.h>
 #include <linux/hid.h>

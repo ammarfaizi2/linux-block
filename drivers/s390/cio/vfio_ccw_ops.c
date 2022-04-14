@@ -10,6 +10,7 @@
  *            Cornelia Huck <cohuck@redhat.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/vfio.h>
 #include <linux/mdev.h>
 #include <linux/nospec.h>

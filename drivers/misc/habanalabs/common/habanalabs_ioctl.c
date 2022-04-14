@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"habanalabs: " fmt
 
+#include <linux/atomic_api.h>
 #include <uapi/misc/habanalabs.h>
 #include "habanalabs.h"
 

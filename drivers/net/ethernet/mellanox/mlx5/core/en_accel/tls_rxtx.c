@@ -35,6 +35,7 @@
 #include "en_accel/tls_rxtx.h"
 #include "accel/accel.h"
 
+#include <linux/atomic_api.h>
 #include <net/inet6_hashtables.h>
 #include <linux/ipv6.h>
 

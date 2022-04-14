@@ -3,6 +3,8 @@
  * Legacy blkg rwstat helpers enabled by CONFIG_BLK_CGROUP_RWSTAT.
  * Do not use in new code.
  */
+#include <linux/atomic_api.h>
+
 #include "blk-cgroup-rwstat.h"
 
 int blkg_rwstat_init(struct blkg_rwstat *rwstat, gfp_t gfp)

@@ -5,6 +5,7 @@
  * Copyright (c) 2003-2007 Cavium Networks
  */
 
+#include <linux/atomic_api.h>
 #include <linux/platform_device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

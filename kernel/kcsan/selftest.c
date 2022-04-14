@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "kcsan: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bitops.h>
 #include <linux/init.h>

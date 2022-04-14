@@ -9,6 +9,7 @@
 
 #define KMSG_COMPONENT "dasd-eckd"
 
+#include <linux/atomic_api.h>
 #include <linux/timer.h>
 #include <asm/idals.h>
 

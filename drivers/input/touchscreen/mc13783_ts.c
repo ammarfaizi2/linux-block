@@ -8,6 +8,7 @@
  * Initial development of this code was funded by
  * Phytec Messtechnik GmbH, http://www.phytec.de/
  */
+#include <linux/atomic_api.h>
 #include <linux/platform_device.h>
 #include <linux/mfd/mc13783.h>
 #include <linux/kernel.h>

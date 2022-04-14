@@ -6,6 +6,7 @@
 
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/ioctl.h>
 #include <linux/module.h>

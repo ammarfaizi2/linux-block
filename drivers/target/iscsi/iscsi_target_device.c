@@ -9,6 +9,7 @@
  *
  ******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <target/target_core_base.h>
 #include <target/target_core_fabric.h>
 

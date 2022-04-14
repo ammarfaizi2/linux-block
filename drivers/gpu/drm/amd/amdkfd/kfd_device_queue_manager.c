@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/ratelimit.h>
 #include <linux/printk.h>
 #include <linux/slab.h>

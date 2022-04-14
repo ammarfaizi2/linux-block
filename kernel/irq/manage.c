@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "genirq: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/affinity.h>
 #include <linux/irq.h>

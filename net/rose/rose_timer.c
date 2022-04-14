@@ -4,6 +4,7 @@
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  * Copyright (C) 2002 Ralf Baechle DO1GRB (ralf@gnu.org)
  */
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/socket.h>

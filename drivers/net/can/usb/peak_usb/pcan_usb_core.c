@@ -8,6 +8,7 @@
  *
  * Many thanks to Klaus Hitschler <klaus.hitschler@gmx.de>
  */
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/signal.h>
 #include <linux/slab.h>

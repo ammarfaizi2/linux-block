@@ -7,6 +7,7 @@
  *
  * For more information, visit http://www.highpoint-tech.com
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/string.h>

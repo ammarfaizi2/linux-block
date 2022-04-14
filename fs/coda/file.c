@@ -8,6 +8,7 @@
  * to the Coda project. Contact Peter Braam <coda@cs.cmu.edu>.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/refcount.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

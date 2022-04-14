@@ -7,6 +7,7 @@
  * virtual HSR or PRP devices.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>

@@ -5,6 +5,7 @@
  *                         Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/atomic_api.h>
 #include <sound/core.h>
 #include <linux/slab.h>
 #include <linux/module.h>

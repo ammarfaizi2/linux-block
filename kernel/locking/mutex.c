@@ -18,6 +18,7 @@
  *
  * Also see Documentation/locking/mutex-design.rst.
  */
+#include <linux/atomic_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mutex.h>

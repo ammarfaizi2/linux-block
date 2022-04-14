@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/sched/signal.h>
 

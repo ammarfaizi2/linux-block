@@ -15,6 +15,7 @@
 #include "writeback.h"
 #include "features.h"
 
+#include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/pagemap.h>
 #include <linux/debugfs.h>

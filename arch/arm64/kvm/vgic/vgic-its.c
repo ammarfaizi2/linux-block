@@ -6,6 +6,7 @@
  * Author: Andre Przywara <andre.przywara@arm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/cpu.h>
 #include <linux/kvm.h>
 #include <linux/kvm_host.h>

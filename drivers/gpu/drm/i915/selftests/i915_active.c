@@ -4,6 +4,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kref.h>
 
 #include "gem/i915_gem_pm.h"

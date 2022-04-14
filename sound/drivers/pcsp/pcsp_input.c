@@ -7,6 +7,7 @@
  */
 
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/input.h>
 #include <linux/io.h>

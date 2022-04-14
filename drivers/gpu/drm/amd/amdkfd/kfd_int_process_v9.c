@@ -21,6 +21,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
+
 #include "kfd_priv.h"
 #include "kfd_events.h"
 #include "soc15_int.h"

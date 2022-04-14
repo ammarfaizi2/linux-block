@@ -37,6 +37,7 @@
  * and only accepts the connection if the higher numbered node is heartbeating.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/sched/mm.h>

@@ -6,6 +6,7 @@
  * This driver is inspired by the 4.6.2 version of net/can/usb/usb_8dev.c
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/can.h>
 #include <linux/can/dev.h>

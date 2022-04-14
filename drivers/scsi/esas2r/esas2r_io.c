@@ -41,6 +41,8 @@
  * USA.
  */
 
+#include <linux/atomic_api.h>
+
 #include "esas2r.h"
 
 void esas2r_start_request(struct esas2r_adapter *a, struct esas2r_request *rq)

@@ -7,6 +7,7 @@
 #include "glob.h"
 #include "oplock.h"
 #include "misc.h"
+#include <linux/atomic_api.h>
 #include <linux/sched/signal.h>
 #include <linux/workqueue.h>
 #include <linux/sysfs.h>

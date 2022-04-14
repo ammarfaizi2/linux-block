@@ -25,6 +25,7 @@
 
 /* Bluetooth HCI core. */
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/rfkill.h>
 #include <linux/debugfs.h>

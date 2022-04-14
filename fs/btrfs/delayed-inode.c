@@ -4,6 +4,7 @@
  * Written by Miao Xie <miaox@cn.fujitsu.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/iversion.h>
 #include "misc.h"

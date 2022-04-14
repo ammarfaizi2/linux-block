@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <linux/netdevice.h>
 #include <linux/moduleparam.h>

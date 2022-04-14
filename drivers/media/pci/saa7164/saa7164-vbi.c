@@ -5,6 +5,8 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/atomic_api.h>
+
 #include "saa7164.h"
 
 /* Take the encoder configuration from the port struct and

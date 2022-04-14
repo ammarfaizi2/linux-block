@@ -4,6 +4,7 @@
  * Copyright (C) 2018-2021 Linaro Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/if_arp.h>
 #include <linux/netdevice.h>

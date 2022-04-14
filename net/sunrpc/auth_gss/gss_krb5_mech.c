@@ -9,6 +9,7 @@
  *  J. Bruce Fields <bfields@umich.edu>
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/hash.h>
 #include <crypto/skcipher.h>
 #include <linux/err.h>

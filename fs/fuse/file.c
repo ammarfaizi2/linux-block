@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/pagemap.h>
 #include <linux/slab.h>

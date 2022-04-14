@@ -9,6 +9,7 @@
  * the reader.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h> /* for EXPORT_SYMBOL */
 #include <linux/string.h>
 #include <linux/types.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Red Hat.  All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pagemap.h>

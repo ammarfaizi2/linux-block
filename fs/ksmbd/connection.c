@@ -4,6 +4,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mutex.h>
 #include <linux/freezer.h>
 #include <linux/module.h>

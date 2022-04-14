@@ -5,6 +5,7 @@
  * Copyright (c) 2000 Eric Brower (ebrower@usa.net)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

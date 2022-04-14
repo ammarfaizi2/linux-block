@@ -11,6 +11,7 @@
  * derived from raid1.c.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/module.h>
 #include <linux/raid/md_u.h>

@@ -13,6 +13,7 @@
  * Pawel Osciak, <pawel@osciak.com>
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/fs.h>

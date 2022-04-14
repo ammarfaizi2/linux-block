@@ -6,6 +6,7 @@
  * Copyright (C) Joerg Reuter DL1BKE (jreuter@yaina.de)
  * Copyright (C) Hans-Joachim Hetscher DD8NE (dd8ne@bnv-bamberg.de)
  */
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/socket.h>

@@ -31,6 +31,8 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
+
 #include "iwpm_util.h"
 
 #define IWPM_MAPINFO_HASH_SIZE	512

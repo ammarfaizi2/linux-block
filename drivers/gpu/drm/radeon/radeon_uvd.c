@@ -28,6 +28,7 @@
  *    Christian König <deathsimple@vodafone.de>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/firmware.h>
 #include <linux/module.h>
 

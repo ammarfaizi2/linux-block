@@ -12,6 +12,7 @@
  * Copyright (c) 2011 Mircea Gherzan <mgherzan@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/math64.h>
 #include <linux/errno.h>
 #include <linux/filter.h>

@@ -33,6 +33,7 @@
  *	than the level indicated above to trigger output.	
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>

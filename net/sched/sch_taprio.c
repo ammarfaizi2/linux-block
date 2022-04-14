@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/ethtool.h>
 #include <linux/types.h>
 #include <linux/slab.h>

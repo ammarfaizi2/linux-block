@@ -5,6 +5,7 @@
  *	Copyright (C) 2016 Red Hat, Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

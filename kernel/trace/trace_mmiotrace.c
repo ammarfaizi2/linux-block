@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Pekka Paalanen <pq@iki.fi>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/mmiotrace.h>
 #include <linux/pci.h>

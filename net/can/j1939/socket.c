@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/can/can-ml.h>
 #include <linux/can/core.h>
 #include <linux/can/skb.h>

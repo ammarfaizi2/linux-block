@@ -3,6 +3,8 @@
  * Copyright(c) 2015 - 2020 Intel Corporation.
  */
 #define CREATE_TRACE_POINTS
+#include <linux/atomic_api.h>
+
 #include "trace.h"
 #include "exp_rcv.h"
 #include "ipoib.h"

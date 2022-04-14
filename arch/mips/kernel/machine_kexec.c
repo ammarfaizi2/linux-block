@@ -3,6 +3,7 @@
  * machine_kexec.c for kexec
  * Created by <nschichan@corp.free.fr> on Thu Oct 12 15:15:06 2006
  */
+#include <linux/atomic_api.h>
 #include <linux/compiler.h>
 #include <linux/kexec.h>
 #include <linux/mm.h>

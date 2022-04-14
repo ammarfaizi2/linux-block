@@ -18,6 +18,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/interrupt.h>

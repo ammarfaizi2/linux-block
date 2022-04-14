@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2006  Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bug.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>

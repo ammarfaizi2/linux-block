@@ -37,6 +37,7 @@
 
 *******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/filter.h>
 #include <linux/types.h>

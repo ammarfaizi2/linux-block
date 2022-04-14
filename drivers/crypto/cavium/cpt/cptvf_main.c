@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Cavium, Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 

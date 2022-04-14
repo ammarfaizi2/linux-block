@@ -6,6 +6,7 @@
  * Copyright (C) 2020-2021 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/netdevice.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>

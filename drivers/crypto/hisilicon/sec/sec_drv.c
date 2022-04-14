@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2016-2017 HiSilicon Limited.
  */
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/atomic.h>
 #include <linux/delay.h>

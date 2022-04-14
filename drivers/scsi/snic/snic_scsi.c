@@ -15,6 +15,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mempool.h>
 #include <linux/errno.h>
 #include <linux/init.h>

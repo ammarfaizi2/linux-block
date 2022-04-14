@@ -3,6 +3,7 @@
  * Copyright (c) 2019 Hammerspace Inc
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/kobject.h>
 #include <linux/sysfs.h>

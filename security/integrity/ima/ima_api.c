@@ -8,6 +8,7 @@
  *	Implements must_appraise_or_measure, collect_measurement,
  *	appraise_measurement, store_measurement and store_template.
  */
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/file.h>
 #include <linux/fs.h>

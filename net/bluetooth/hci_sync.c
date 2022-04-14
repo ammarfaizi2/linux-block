@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/property.h>
 
 #include <net/bluetooth/bluetooth.h>

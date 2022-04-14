@@ -5,6 +5,7 @@
  * Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/algapi.h>
 #include <crypto/internal/simd.h>
 #include <linux/err.h>

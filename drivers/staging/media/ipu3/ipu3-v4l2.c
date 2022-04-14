@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Intel Corporation
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/pm_runtime.h>
 

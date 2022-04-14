@@ -5,6 +5,7 @@
  * Description: CoreSight Embedded Trace Buffer driver
  */
 
+#include <linux/atomic_api.h>
 #include <asm/local_api.h>
 #include <linux/atomic.h>
 #include <linux/kernel.h>

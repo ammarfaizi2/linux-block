@@ -16,6 +16,7 @@
  * Abstract: Hardware miniport for Drawbridge specific hardware functions.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>

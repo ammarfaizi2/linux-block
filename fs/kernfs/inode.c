@@ -7,6 +7,7 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pagemap.h>
 #include <linux/backing-dev.h>
 #include <linux/capability.h>

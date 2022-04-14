@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/compat.h>
 #include <linux/device.h>

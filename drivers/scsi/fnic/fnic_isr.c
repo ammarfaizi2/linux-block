@@ -15,6 +15,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/atomic_api.h>
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/pci.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015 HGST, a Western Digital Company.
  */
+#include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <rdma/ib_verbs.h>

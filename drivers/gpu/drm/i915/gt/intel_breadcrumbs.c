@@ -3,6 +3,7 @@
  * Copyright © 2015-2021 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kthread.h>
 #include <trace/events/dma_fence.h>

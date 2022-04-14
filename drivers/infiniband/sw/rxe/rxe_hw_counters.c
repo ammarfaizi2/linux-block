@@ -3,6 +3,8 @@
  * Copyright (c) 2017 Mellanox Technologies Ltd. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
+
 #include "rxe.h"
 #include "rxe_hw_counters.h"
 

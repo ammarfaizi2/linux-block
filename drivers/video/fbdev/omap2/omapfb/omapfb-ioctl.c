@@ -9,6 +9,7 @@
  * by Imre Deak.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fb.h>
 #include <linux/device.h>
 #include <linux/uaccess.h>

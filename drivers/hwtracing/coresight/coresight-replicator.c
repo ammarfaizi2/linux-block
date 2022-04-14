@@ -5,6 +5,7 @@
  * Description: CoreSight Replicator driver
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/amba/bus.h>
 #include <linux/kernel.h>

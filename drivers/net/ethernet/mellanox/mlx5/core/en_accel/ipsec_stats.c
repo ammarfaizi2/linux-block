@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/ethtool.h>
 #include <net/sock.h>
 

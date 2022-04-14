@@ -7,6 +7,7 @@
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/ktime.h>
 #include <linux/errno.h>
 

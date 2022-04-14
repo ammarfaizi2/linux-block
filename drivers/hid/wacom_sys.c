@@ -10,6 +10,7 @@
 
 #include "wacom_wac.h"
 #include "wacom.h"
+#include <linux/atomic_api.h>
 #include <linux/input/mt.h>
 
 #define WAC_MSG_RETRIES		5

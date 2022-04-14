@@ -3,6 +3,7 @@
  *
  * This code is licenced under the GPL.
  */
+#include <linux/atomic_api.h>
 #include <linux/sched/mm.h>
 #include <linux/proc_fs.h>
 #include <linux/smp.h>

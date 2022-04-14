@@ -9,6 +9,7 @@
  * I like traps on v9, :))))
  */
 
+#include <linux/atomic_api.h>
 #include <asm/cpudata.h>
 #include <linux/extable.h>
 #include <linux/sched/mm.h>

@@ -3,6 +3,7 @@
  * Copyright © 2016-2019 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/circ_buf.h>
 #include <linux/ktime.h>
 #include <linux/time64.h>

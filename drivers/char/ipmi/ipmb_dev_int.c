@@ -8,6 +8,7 @@
  * This was inspired by Brendan Higgins' ipmi-bmc-bt-i2c driver.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/errno.h>
 #include <linux/i2c.h>

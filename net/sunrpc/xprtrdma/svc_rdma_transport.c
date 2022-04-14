@@ -42,6 +42,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

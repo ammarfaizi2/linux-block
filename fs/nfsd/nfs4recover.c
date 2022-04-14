@@ -32,6 +32,7 @@
 *
 */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <crypto/hash.h>
 #include <linux/file.h>

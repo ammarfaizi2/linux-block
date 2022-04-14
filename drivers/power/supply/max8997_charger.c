@@ -5,6 +5,7 @@
 //  Copyright (C) 2011 Samsung Electronics
 //  MyungJoo Ham <myungjoo.ham@samsung.com>
 
+#include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/extcon.h>
 #include <linux/module.h>

@@ -10,6 +10,7 @@
  * (C) 2003 - 2010	Dominik Brodowski
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

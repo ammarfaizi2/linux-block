@@ -7,6 +7,7 @@
  * Copyright (C) 2008, 2009 Wind River Systems
  *   written by Ralf Baechle <ralf@linux-mips.org>
  */
+#include <linux/atomic_api.h>
 #include <linux/compiler.h>
 #include <linux/vmalloc.h>
 #include <linux/init.h>

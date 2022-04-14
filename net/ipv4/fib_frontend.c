@@ -9,6 +9,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/uaccess.h>
 #include <linux/bitops.h>

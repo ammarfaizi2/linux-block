@@ -10,6 +10,7 @@
  * interrupts...)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/irqflags.h>
 #include <linux/cpumask.h>

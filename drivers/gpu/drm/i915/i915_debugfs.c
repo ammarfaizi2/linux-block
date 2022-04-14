@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/mm.h>
 #include <linux/sort.h>
 

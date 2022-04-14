@@ -12,6 +12,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/atomic_api.h>
 #include <linux/time.h>
 #include <linux/capability.h>
 #include <linux/fs.h>

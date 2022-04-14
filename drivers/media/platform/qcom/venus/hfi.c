@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>
 #include <linux/list.h>

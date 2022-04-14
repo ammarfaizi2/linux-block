@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#include <linux/atomic_api.h>
 #include <linux/vgaarb.h>
 #include <linux/vga_switcheroo.h>
 

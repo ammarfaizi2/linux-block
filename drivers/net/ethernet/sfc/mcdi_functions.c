@@ -8,6 +8,8 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/atomic_api.h>
+
 #include "net_driver.h"
 #include "efx.h"
 #include "nic.h"

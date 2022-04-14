@@ -4,6 +4,8 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
+
 #include "rxe.h"
 
 #define RXE_POOL_ALIGN		(16)

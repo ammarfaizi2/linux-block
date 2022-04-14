@@ -4,6 +4,7 @@
  *  Routines for control of YMF724/740/744/754 chips
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/init.h>

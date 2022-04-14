@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>

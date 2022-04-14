@@ -23,6 +23,7 @@
  * Pavel Emelianov <xemul@openvz.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/capability.h>
 #include <linux/msg.h>
 #include <linux/spinlock.h>

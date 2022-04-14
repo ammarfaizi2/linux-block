@@ -5,6 +5,7 @@
  * virtio-net server in host kernel.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/compat.h>
 #include <linux/eventfd.h>
 #include <linux/vhost.h>

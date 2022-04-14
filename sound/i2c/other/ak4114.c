@@ -5,6 +5,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/module.h>

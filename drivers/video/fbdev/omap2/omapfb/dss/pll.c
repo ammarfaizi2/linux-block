@@ -5,6 +5,7 @@
 
 #define DSS_SUBSYS_NAME "PLL"
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

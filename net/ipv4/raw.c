@@ -33,6 +33,7 @@
  *		David S. Miller	:	New socket lookup architecture.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/atomic.h>
 #include <asm/byteorder.h>

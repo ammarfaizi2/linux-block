@@ -6,6 +6,7 @@
 
 #include "mt7601u.h"
 #include "trace.h"
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/etherdevice.h>
 

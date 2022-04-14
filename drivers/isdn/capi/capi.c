@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/compiler.h>
 #include <linux/module.h>
 #include <linux/ethtool.h>

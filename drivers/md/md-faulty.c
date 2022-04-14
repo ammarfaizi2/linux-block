@@ -53,6 +53,7 @@
 #define	ModeShift	5
 
 #define MaxFault	50
+#include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/module.h>
 #include <linux/raid/md_u.h>

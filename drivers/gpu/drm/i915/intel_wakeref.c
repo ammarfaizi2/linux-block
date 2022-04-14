@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/wait_bit.h>
 
 #include "intel_runtime_pm.h"

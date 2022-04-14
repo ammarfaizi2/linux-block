@@ -33,6 +33,8 @@
  *
  */
 
+#include <linux/atomic_api.h>
+
 #include "device.h"
 #include "rxtx.h"
 #include "card.h"

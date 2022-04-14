@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/ethtool.h>
 #include <linux/stddef.h>

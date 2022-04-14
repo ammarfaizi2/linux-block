@@ -40,6 +40,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/fs.h>
 #include <linux/init.h>

@@ -9,6 +9,7 @@
  * or implied.
  *
  */
+#include <linux/atomic_api.h>
 #include <asm/page.h>
 #include <linux/uaccess.h>
 #include <linux/ctype.h>

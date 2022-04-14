@@ -31,6 +31,7 @@
  * cache.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/freezer.h>
 #include <linux/kthread.h>

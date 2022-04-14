@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2020, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/clk/tegra.h>

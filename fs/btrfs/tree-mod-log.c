@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/atomic_api.h>
+
 #include "tree-mod-log.h"
 #include "disk-io.h"
 

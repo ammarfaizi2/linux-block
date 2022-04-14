@@ -7,6 +7,7 @@
 
 #include "dm-core.h"
 #include "dm-ima.h"
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/vmalloc.h>
 #include <linux/miscdevice.h>

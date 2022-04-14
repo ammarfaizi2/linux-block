@@ -23,6 +23,8 @@
  * Authors: Christian König, Felix Kuehling
  */
 
+#include <linux/atomic_api.h>
+
 #include "amdgpu.h"
 
 /**

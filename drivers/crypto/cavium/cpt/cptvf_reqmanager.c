@@ -3,6 +3,8 @@
  * Copyright (C) 2016 Cavium, Inc.
  */
 
+#include <linux/atomic_api.h>
+
 #include "cptvf.h"
 #include "cptvf_algs.h"
 #include "request_manager.h"

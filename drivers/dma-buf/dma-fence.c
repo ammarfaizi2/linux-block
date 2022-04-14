@@ -10,6 +10,7 @@
  * Maarten Lankhorst <maarten.lankhorst@canonical.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/export.h>
 #include <linux/atomic.h>

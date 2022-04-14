@@ -3,6 +3,7 @@
  *  Copyright (c) 2014 Realtek Semiconductor Corp. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/signal.h>
 #include <linux/slab.h>
 #include <linux/module.h>

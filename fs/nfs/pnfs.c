@@ -27,6 +27,7 @@
  *  such damages.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/nfs_fs.h>
 #include <linux/nfs_page.h>

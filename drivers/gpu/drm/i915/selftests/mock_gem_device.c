@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pm_domain.h>
 #include <linux/pm_runtime.h>
 #include <linux/iommu.h>

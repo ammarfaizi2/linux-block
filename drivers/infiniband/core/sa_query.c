@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/random.h>

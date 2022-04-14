@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/atomic_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/atomic.h>
 #include <linux/bitops.h>

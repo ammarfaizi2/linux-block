@@ -8,6 +8,8 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/atomic_api.h>
+
 #include "mcdi_port_common.h"
 #include "efx_common.h"
 #include "nic.h"

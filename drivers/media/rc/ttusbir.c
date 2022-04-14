@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Sean Young <sean@mess.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/usb.h>
 #include <linux/usb/input.h>

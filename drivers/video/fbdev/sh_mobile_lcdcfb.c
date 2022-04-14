@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/backlight.h>
 #include <linux/clk.h>

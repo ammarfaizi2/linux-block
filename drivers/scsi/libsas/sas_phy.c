@@ -7,6 +7,7 @@
  */
 
 #include "sas_internal.h"
+#include <linux/atomic_api.h>
 #include <scsi/scsi_host.h>
 #include <scsi/scsi_transport.h>
 #include <scsi/scsi_transport_sas.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2004 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

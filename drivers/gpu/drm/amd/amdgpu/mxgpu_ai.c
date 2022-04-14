@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/atomic_api.h>
+
 #include "amdgpu.h"
 #include "nbio/nbio_6_1_offset.h"
 #include "nbio/nbio_6_1_sh_mask.h"

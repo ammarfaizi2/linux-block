@@ -5,6 +5,7 @@
  * Copyright 2008 Cavium Networks
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/clockchips.h>

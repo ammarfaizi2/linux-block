@@ -3,6 +3,7 @@
  * Copyright(c) 2016 Intel Corporation.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <rdma/ib_umem.h>

@@ -4,6 +4,7 @@
  *
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

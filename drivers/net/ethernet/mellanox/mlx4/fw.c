@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/etherdevice.h>
 #include <linux/mlx4/cmd.h>

@@ -9,6 +9,7 @@
  * Handle opening/closing btree
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/pagemap.h>
 #include <linux/log2.h>

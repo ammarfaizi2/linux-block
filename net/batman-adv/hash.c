@@ -7,6 +7,7 @@
 #include "hash.h"
 #include "main.h"
 
+#include <linux/atomic_api.h>
 #include <linux/gfp.h>
 #include <linux/lockdep.h>
 #include <linux/slab.h>

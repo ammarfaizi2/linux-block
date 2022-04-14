@@ -7,6 +7,7 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <media/v4l2-common.h>
 #include <linux/v4l2-mediabus.h>

@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2003, 2004, 2005  Paul Mundt
  */
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>

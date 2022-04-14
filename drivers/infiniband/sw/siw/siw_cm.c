@@ -6,6 +6,7 @@
 /* Copyright (c) 2008-2019, IBM Corporation */
 /* Copyright (c) 2017, Open Grid Computing, Inc. */
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/net.h>

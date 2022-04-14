@@ -8,6 +8,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/mm_types.h>
 

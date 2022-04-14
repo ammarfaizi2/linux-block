@@ -3,6 +3,8 @@
  * Copyright © 2014-2018 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
+
 #include "gem/i915_gem_internal.h"
 #include "gem/i915_gem_object.h"
 

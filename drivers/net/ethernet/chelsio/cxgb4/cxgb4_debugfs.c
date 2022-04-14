@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include <linux/string_helpers.h>

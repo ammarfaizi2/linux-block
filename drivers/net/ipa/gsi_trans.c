@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/bits.h>
 #include <linux/bitfield.h>

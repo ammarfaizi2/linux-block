@@ -7,6 +7,7 @@
  * Authors: Paul E. McKenney <paulmck@linux.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/cpu.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

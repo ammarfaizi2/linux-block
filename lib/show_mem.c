@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Johannes Weiner <hannes@saeurebad.de>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/cma.h>
 

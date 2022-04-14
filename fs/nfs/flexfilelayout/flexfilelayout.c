@@ -7,6 +7,7 @@
  * Tao Peng <bergwolf@primarydata.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/nfs_fs.h>
 #include <linux/nfs_mount.h>
 #include <linux/nfs_page.h>

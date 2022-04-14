@@ -1,3 +1,4 @@
+#include <linux/atomic_api.h>
 #include <linux/bpf.h>
 #include <linux/btf.h>
 #include <linux/err.h>

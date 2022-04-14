@@ -21,6 +21,7 @@
  *  Heavily rewritten for 'one fs - one tree' dcache architecture. AV, Mar 2000
  */
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/slab.h>
 #include <linux/blkdev.h>

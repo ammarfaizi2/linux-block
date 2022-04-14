@@ -9,6 +9,7 @@
  * Copyright (C) 2004 Thiemo Seufer
  * Copyright (C) 2013  Imagination Technologies Ltd.
  */
+#include <linux/atomic_api.h>
 #include <linux/cpu.h>
 #include <linux/errno.h>
 #include <linux/init.h>

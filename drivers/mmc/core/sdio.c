@@ -5,6 +5,7 @@
  *  Copyright 2006-2007 Pierre Ossman
  */
 
+#include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/pm_runtime.h>
 #include <linux/sysfs.h>

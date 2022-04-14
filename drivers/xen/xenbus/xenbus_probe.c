@@ -37,6 +37,7 @@
 	pr_debug("xenbus_probe (%s:%d) " fmt ".\n",	\
 		 __func__, __LINE__, ##args)
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/string.h>

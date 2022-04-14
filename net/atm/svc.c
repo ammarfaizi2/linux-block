@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/atomic_api.h>
 #include <linux/string.h>
 #include <linux/net.h>		/* struct socket, struct proto_ops */
 #include <linux/errno.h>	/* error codes */

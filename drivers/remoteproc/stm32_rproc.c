@@ -5,6 +5,7 @@
  *          Fabien Dessenne <fabien.dessenne@st.com> for STMicroelectronics.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/arm-smccc.h>
 #include <linux/dma-mapping.h>
 #include <linux/interrupt.h>

@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xive-kvm: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/kvm_host.h>
 #include <linux/err.h>

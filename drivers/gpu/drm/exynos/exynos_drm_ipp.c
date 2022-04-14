@@ -16,6 +16,7 @@
  * all copies or substantial portions of the Software.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/uaccess.h>
 
 #include <drm/drm_file.h>

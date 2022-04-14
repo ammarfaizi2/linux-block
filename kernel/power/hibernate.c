@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "PM: hibernation: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/suspend.h>
 #include <linux/reboot.h>

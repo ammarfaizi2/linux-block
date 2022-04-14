@@ -8,6 +8,7 @@
  * Written by Vyacheslav Dubeyko <Vyacheslav.Dubeyko@hgst.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kobject.h>
 
 #include "nilfs.h"

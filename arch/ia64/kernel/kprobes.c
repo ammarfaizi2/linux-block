@@ -10,6 +10,7 @@
  *              <anil.s.keshavamurthy@intel.com> adapted from i386
  */
 
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/kprobes.h>
 #include <linux/ptrace.h>

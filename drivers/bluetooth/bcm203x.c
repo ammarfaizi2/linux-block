@@ -7,6 +7,7 @@
  *  Copyright (C) 2003  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 
 #include <linux/kernel.h>

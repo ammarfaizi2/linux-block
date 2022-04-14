@@ -7,6 +7,7 @@
  * It reads bitstream buffers and feeds them to the VIFIFO
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/ioctl.h>
 #include <linux/list.h>

@@ -5,6 +5,7 @@
  * Author: Mike Rapoport <rppt@linux.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/fs.h>
 #include <linux/swap.h>

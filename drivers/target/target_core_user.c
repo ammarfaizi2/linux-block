@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Chinamobile, Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/spinlock.h>
 #include <linux/module.h>

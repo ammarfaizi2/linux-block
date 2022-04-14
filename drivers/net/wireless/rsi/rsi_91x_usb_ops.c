@@ -15,6 +15,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/firmware.h>
 #include "rsi_usb.h"
 

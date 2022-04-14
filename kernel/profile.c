@@ -15,6 +15,7 @@
  *	Oracle, 2004
  */
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/profile.h>
 #include <linux/memblock.h>

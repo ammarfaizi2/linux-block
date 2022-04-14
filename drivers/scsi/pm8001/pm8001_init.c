@@ -38,6 +38,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include "pm8001_sas.h"
 #include "pm8001_chips.h"

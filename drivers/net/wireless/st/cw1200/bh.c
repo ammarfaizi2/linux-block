@@ -11,6 +11,7 @@
  * Author: Ajitpal Singh <ajitpal.singh@stericsson.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <net/mac80211.h>
 #include <linux/kthread.h>

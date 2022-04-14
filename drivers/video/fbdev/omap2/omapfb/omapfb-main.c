@@ -9,6 +9,7 @@
  * by Imre Deak.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>

@@ -7,6 +7,7 @@
  *   Copyright (C) 2016 Sang Engineering, Wolfram Sang
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/firmware.h>
 #include <linux/jiffies.h>

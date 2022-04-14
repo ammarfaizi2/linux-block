@@ -5,6 +5,8 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/atomic_api.h>
+
 #include "internal.h"
 
 #define AFS_LOCK_GRANTED	0

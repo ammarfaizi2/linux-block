@@ -6,6 +6,7 @@
  *                             Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/export.h>
 #include <linux/slab.h>

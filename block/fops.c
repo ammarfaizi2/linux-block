@@ -4,6 +4,7 @@
  * Copyright (C) 2001  Andrea Arcangeli <andrea@suse.de> SuSE
  * Copyright (C) 2016 - 2020 Christoph Hellwig
  */
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/mm.h>
 #include <linux/blkdev.h>

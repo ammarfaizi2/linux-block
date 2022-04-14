@@ -7,6 +7,7 @@
  * Copyright (C) 2021   Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kobject.h>
 #include <linux/slab.h>
 #include "ieee80211_i.h"

@@ -7,6 +7,7 @@
  *	MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/kmod.h>
 #include <linux/sched.h>

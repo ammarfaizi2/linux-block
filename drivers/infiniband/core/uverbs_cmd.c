@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/file.h>
 #include <linux/fs.h>
 #include <linux/slab.h>

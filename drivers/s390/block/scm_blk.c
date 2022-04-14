@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT "scm_block"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
 #include <linux/mempool.h>

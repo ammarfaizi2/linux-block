@@ -3,6 +3,8 @@
 
 #define _RTW_CMD_C_
 
+#include <linux/atomic_api.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/recv_osdep.h"

@@ -3,6 +3,7 @@
  * Copyright (C) 2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

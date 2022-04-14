@@ -6,6 +6,7 @@
  * Copyright 2014 Linaro Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/workqueue.h>
 #include <linux/greybus.h>
 

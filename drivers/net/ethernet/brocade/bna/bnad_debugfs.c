@@ -9,6 +9,7 @@
  * www.qlogic.com
  */
 
+#include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/module.h>
 #include "bnad.h"

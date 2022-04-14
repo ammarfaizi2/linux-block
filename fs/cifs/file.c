@@ -8,6 +8,7 @@
  *              Jeremy Allison (jra@samba.org)
  *
  */
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/backing-dev.h>

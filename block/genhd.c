@@ -5,6 +5,7 @@
  * Portions Copyright (C) 2020 Christoph Hellwig
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/ctype.h>
 #include <linux/fs.h>

@@ -14,6 +14,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/kgdb.h>
 #include <linux/smp.h>

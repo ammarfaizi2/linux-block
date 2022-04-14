@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"arm-lpae io-pgtable: " fmt
 
+#include <linux/atomic_api.h>
 #include <asm/io.h>
 #include <linux/atomic.h>
 #include <linux/bitops.h>

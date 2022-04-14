@@ -3,6 +3,7 @@
  * VGICv2 MMIO handling functions
  */
 
+#include <linux/atomic_api.h>
 #include <linux/irqchip/arm-gic.h>
 #include <linux/kvm.h>
 #include <linux/kvm_host.h>

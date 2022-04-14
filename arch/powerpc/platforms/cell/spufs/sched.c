@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/atomic_api.h>
 #include <linux/errno.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/loadavg.h>

@@ -7,6 +7,7 @@
  * Author: Kent Yoder <yoder1@us.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/aes.h>
 #include <crypto/algapi.h>
 #include <linux/module.h>

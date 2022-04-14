@@ -6,6 +6,8 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
+
 #include "atl1c.h"
 
 char atl1c_driver_name[] = "atl1c";

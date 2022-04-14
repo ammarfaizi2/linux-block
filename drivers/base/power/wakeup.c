@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/slab.h>
 #include <linux/sched/signal.h>

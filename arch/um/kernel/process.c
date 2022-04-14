@@ -6,6 +6,7 @@
  * Copyright 2003 PathScale, Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/stddef.h>
 #include <linux/err.h>
 #include <linux/hardirq.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>

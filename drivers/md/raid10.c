@@ -9,6 +9,7 @@
  * Base on code in raid1.c.  See raid1.c for further copyright information.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

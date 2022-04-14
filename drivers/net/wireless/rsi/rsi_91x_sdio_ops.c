@@ -15,6 +15,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/firmware.h>
 #include <net/rsi_91x.h>
 #include "rsi_sdio.h"

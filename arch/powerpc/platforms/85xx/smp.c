@@ -6,6 +6,7 @@
  * Copyright 2006-2008, 2011-2012, 2015 Freescale Semiconductor Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/sched/hotplug.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  * Copyright (C) 2013-2014 Christoph Hellwig
  */
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

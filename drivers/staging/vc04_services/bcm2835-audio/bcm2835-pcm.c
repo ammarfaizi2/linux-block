@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2011 Broadcom Corporation.  All rights reserved. */
 
+#include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>
 

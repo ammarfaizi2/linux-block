@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/irq_work.h>
 #include <linux/rcupdate.h>
 #include <linux/rculist.h>

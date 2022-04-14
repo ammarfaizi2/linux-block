@@ -5,6 +5,7 @@
  * Portions of this code is derived from hyperv_fb.c
  */
 
+#include <linux/atomic_api.h>
 #include <linux/hyperv.h>
 
 #include <drm/drm_print.h>

@@ -11,6 +11,7 @@
 #include "peer.h"
 #include "messages.h"
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/rtnetlink.h>
 #include <linux/inet.h>

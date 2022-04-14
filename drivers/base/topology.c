@@ -8,6 +8,7 @@
  *
  * All rights reserved.
  */
+#include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/cpu.h>
 #include <linux/module.h>

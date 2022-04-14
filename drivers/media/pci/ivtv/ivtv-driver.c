@@ -54,6 +54,7 @@
 #include "ivtv-routing.h"
 #include "ivtv-controls.h"
 #include "ivtv-gpio.h"
+#include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <media/tveeprom.h>
 #include <media/i2c/saa7115.h>

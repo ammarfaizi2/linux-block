@@ -7,6 +7,7 @@
  *         Andy Gross <andy.gross@ti.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

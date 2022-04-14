@@ -6,6 +6,7 @@
  *   Jan Glauber <jang@linux.vnet.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/export.h>

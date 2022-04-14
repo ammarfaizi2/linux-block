@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/sort.h>

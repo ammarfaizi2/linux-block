@@ -8,6 +8,7 @@
  *          Seth Jennings <sjenning@linux.vnet.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <asm/vio.h>
 #include <asm/hvcall.h>
 #include <asm/vas.h>

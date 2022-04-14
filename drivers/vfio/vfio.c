@@ -10,6 +10,7 @@
  * Author: Tom Lyon, pugs@cisco.com
  */
 
+#include <linux/atomic_api.h>
 #include <linux/cdev.h>
 #include <linux/compat.h>
 #include <linux/device.h>

@@ -7,6 +7,7 @@
  *              - Ingress support
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/module.h>
 #include <linux/types.h>

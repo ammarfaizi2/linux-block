@@ -5,6 +5,7 @@
  *  Copyright (C) 2015  Red Hat, Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mm.h>
 #include <linux/sched/signal.h>

@@ -10,6 +10,7 @@
 #include "dm-cache-metadata.h"
 #include "dm-io-tracker.h"
 
+#include <linux/atomic_api.h>
 #include <linux/dm-io.h>
 #include <linux/dm-kcopyd.h>
 #include <linux/jiffies.h>

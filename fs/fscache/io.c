@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 #define FSCACHE_DEBUG_LEVEL OPERATION
+#include <linux/atomic_api.h>
 #include <linux/fscache-cache.h>
 #include <linux/uio.h>
 #include <linux/bvec.h>

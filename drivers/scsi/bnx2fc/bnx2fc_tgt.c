@@ -13,6 +13,8 @@
  * Written by: Bhanu Prakash Gollapudi (bprakash@broadcom.com)
  */
 
+#include <linux/atomic_api.h>
+
 #include "bnx2fc.h"
 static void bnx2fc_upld_timer(struct timer_list *t);
 static void bnx2fc_ofld_timer(struct timer_list *t);

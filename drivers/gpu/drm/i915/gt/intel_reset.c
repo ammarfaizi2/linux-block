@@ -3,6 +3,7 @@
  * Copyright © 2008-2018 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/mm.h>
 #include <linux/stop_machine.h>
 

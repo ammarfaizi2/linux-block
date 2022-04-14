@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Microsemi Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/switchtec.h>
 #include <linux/switchtec_ioctl.h>
 

@@ -3,6 +3,7 @@
  * Copyright 2017 Benjamin Herrenschmidt, IBM Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 
 /* File to be included by other .c files */

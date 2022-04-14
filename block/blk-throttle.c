@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Vivek Goyal <vgoyal@redhat.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/blkdev.h>

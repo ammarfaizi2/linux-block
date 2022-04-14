@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/namei.h>
 #include <linux/dns_resolver.h>

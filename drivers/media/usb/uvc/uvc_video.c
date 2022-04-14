@@ -6,6 +6,7 @@
  *          Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/highmem.h>
 #include <linux/kernel.h>

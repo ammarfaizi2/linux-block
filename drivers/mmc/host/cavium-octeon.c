@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2012-2017 Cavium Inc.
  */
+#include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/gpio/consumer.h>
 #include <linux/interrupt.h>

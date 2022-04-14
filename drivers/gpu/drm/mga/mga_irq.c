@@ -31,6 +31,8 @@
  *    Eric Anholt <anholt@FreeBSD.org>
  */
 
+#include <linux/atomic_api.h>
+
 #include "mga_drv.h"
 
 u32 mga_get_vblank_counter(struct drm_device *dev, unsigned int pipe)

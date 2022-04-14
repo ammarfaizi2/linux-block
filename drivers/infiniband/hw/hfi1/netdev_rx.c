@@ -13,6 +13,7 @@
 #include "netdev.h"
 #include "hfi.h"
 
+#include <linux/atomic_api.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <rdma/ib_verbs.h>

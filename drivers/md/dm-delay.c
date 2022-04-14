@@ -7,6 +7,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/blkdev.h>

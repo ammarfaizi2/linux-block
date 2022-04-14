@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/seq_file.h>
 #include "internal.h"

@@ -9,6 +9,7 @@
  *  ARM HDLCD Driver
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>
 #include <linux/clk.h>

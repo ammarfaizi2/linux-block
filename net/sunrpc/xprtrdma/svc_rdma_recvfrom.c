@@ -92,6 +92,7 @@
  * are transferred from the svc_rdma_recv_ctxt to the second svc_rqst.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <asm/unaligned.h>

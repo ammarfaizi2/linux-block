@@ -24,6 +24,7 @@
 #include "cx18-controls.h"
 #include "cx18-cards.h"
 #include "cx18-av-core.h"
+#include <linux/atomic_api.h>
 #include <media/tveeprom.h>
 #include <media/v4l2-event.h>
 

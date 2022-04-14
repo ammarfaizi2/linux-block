@@ -4,6 +4,7 @@
  *  Author(s): Holger Dengler <hd@linux.vnet.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/init.h>

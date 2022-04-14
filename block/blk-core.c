@@ -12,6 +12,7 @@
 /*
  * This handles all read/write requests to block devices
  */
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

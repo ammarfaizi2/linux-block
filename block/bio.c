@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2001 Jens Axboe <axboe@kernel.dk>
  */
+#include <linux/atomic_api.h>
 #include <linux/mm.h>
 #include <linux/swap.h>
 #include <linux/bio.h>

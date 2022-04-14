@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2014 Google, Inc.
 
+#include <linux/atomic_api.h>
 #include <linux/ctype.h>
 #include <linux/delay.h>
 #include <linux/device.h>

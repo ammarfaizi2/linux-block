@@ -68,6 +68,7 @@
  * FIXME: move profile lists to using rcu_lists
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/string.h>

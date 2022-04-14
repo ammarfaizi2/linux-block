@@ -4,6 +4,7 @@
  * Copyright © 2008-2015 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/oom.h>
 #include <linux/sched/mm.h>
 #include <linux/shmem_fs.h>

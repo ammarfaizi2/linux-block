@@ -33,6 +33,7 @@
  *	check resource allocation in sr_init and some cleanups
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>

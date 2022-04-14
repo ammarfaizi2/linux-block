@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mutex.h>
 #include <linux/log2.h>
 #include <linux/sched.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+#include <linux/atomic_api.h>
 #include <uapi/linux/sched/types.h>
 
 #include <drm/drm_print.h>

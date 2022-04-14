@@ -14,6 +14,7 @@
  * (c) Copyright Huw Davies <huw@codeweavers.com>, 2015
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/socket.h>
 #include <linux/string.h>

@@ -8,6 +8,7 @@
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/platform_device.h>
 
 #include <sound/core.h>

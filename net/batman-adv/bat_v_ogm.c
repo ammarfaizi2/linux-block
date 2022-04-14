@@ -7,6 +7,7 @@
 #include "bat_v_ogm.h"
 #include "main.h"
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/byteorder/generic.h>
 #include <linux/container_of.h>

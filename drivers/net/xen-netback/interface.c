@@ -30,6 +30,7 @@
 
 #include "common.h"
 
+#include <linux/atomic_api.h>
 #include <linux/kthread.h>
 #include <linux/sched/task.h>
 #include <linux/ethtool.h>

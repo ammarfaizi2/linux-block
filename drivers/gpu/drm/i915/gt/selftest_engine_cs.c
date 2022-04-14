@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sort.h>
 
 #include "intel_gpu_commands.h"

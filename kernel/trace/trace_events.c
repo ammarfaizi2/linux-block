@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/atomic_api.h>
 #include <linux/workqueue.h>
 #include <linux/security.h>
 #include <linux/spinlock.h>

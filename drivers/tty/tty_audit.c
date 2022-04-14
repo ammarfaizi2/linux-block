@@ -7,6 +7,7 @@
  * Authors: Miloslav Trmac <mitr@redhat.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/audit.h>
 #include <linux/slab.h>
 #include <linux/tty.h>

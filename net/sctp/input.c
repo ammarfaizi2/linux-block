@@ -26,6 +26,7 @@
  *    Ardelle Fan <ardelle.fan@intel.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/list.h> /* For struct list_head */
 #include <linux/socket.h>

@@ -15,6 +15,7 @@
 #include "hw_atl_llh.h"
 #include "hw_atl_llh_internal.h"
 
+#include <linux/atomic_api.h>
 #include <linux/random.h>
 
 #define HW_ATL_UCP_0X370_REG    0x0370U

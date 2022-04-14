@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/workqueue.h>
 
 #include "i915_drv.h" /* for_each_engine() */

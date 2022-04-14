@@ -8,6 +8,7 @@
  * EC for audio function.
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/sha2.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>

@@ -42,6 +42,8 @@
  */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
+#include <linux/atomic_api.h>
+
 #include "esas2r.h"
 
 /* Local function prototypes */

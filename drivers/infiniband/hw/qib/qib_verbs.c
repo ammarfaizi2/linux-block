@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <rdma/ib_mad.h>
 #include <rdma/ib_user_verbs.h>
 #include <linux/io.h>

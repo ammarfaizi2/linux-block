@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/etherdevice.h>
 #include <net/ip.h>
 #include <net/tso.h>

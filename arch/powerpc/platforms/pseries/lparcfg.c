@@ -14,6 +14,7 @@
  * keyword - value pairs that specify the configuration of the partition.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/errno.h>

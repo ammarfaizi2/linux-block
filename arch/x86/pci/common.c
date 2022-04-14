@@ -5,6 +5,7 @@
  *	(c) 1999--2000 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/pci.h>
 #include <linux/pci-acpi.h>

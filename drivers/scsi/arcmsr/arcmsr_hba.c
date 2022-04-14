@@ -44,6 +44,7 @@
 **     Firmware Specification, see Documentation/scsi/arcmsr_spec.rst
 *******************************************************************************
 */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/reboot.h>
 #include <linux/spinlock.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2021 ARM Ltd.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/sort.h>

@@ -5,6 +5,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/net.h>
 #include <linux/string.h>

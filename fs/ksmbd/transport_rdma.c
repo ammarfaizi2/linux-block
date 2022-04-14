@@ -19,6 +19,7 @@
 
 #define SUBMOD_NAME	"smb_direct"
 
+#include <linux/atomic_api.h>
 #include <linux/kthread.h>
 #include <linux/list.h>
 #include <linux/mempool.h>

@@ -30,6 +30,7 @@
  *    Eric Anholt <anholt@FreeBSD.org>
  */
 
+#include <linux/atomic_api.h>
 #include <drm/drm_device.h>
 #include <drm/drm_print.h>
 #include <drm/drm_vblank.h>

@@ -9,6 +9,7 @@
  * This driver is powered by bad coffee and bombay mix.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/acpi_iort.h>
 #include <linux/bitops.h>

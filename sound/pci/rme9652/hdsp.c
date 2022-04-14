@@ -7,6 +7,7 @@
  *                          Thomas Charbonnel
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

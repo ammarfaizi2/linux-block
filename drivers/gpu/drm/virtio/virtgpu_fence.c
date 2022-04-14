@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <trace/events/dma_fence.h>
 
 #include "virtgpu_drv.h"

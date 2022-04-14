@@ -5,6 +5,8 @@
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  */
 
+#include <linux/atomic_api.h>
+
 #include "mt7601u.h"
 #include "eeprom.h"
 #include "trace.h"

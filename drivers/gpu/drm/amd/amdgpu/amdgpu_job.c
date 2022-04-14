@@ -21,6 +21,7 @@
  *
  *
  */
+#include <linux/atomic_api.h>
 #include <linux/kthread.h>
 #include <linux/wait.h>
 #include <linux/sched.h>

@@ -7,6 +7,7 @@
 #include "send.h"
 #include "main.h"
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bug.h>
 #include <linux/byteorder/generic.h>

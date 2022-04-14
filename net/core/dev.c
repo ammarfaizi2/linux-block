@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/uaccess.h>
 #include <linux/bitops.h>

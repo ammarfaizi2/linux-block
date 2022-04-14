@@ -6,6 +6,7 @@
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 
 #include "cx18-driver.h"

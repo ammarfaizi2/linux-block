@@ -10,6 +10,7 @@
  * Self Test
  **************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/init.h>
 #include <linux/jhash.h>

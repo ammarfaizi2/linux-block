@@ -22,6 +22,7 @@
  *  Integrated into 2.2.5 kernel by Tigran Aivazian <tigran@sco.com>
  *  X86_64 changes from Andi Kleen's patch merged by Jim Houston
  */
+#include <linux/atomic_api.h>
 #include <asm/ptrace.h>
 #include <linux/spinlock.h>
 #include <linux/kdebug.h>

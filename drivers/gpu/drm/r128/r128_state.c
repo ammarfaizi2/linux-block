@@ -28,6 +28,7 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>

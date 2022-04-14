@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Stephan Gerhold <stephan@gerhold.net>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bitops.h>
 #include <linux/completion.h>

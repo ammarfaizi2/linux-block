@@ -25,6 +25,7 @@
 #include "xfs_ag.h"
 #include "xfs_log_priv.h"
 
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/iversion.h>
 

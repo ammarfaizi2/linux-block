@@ -6,6 +6,7 @@
  * Sean Paul <seanpaul@chromium.org>
  */
 
+#include <linux/atomic_api.h>
 #include <drm/dp/drm_dp_helper.h>
 #include <drm/dp/drm_dp_mst_helper.h>
 #include <drm/drm_hdcp.h>

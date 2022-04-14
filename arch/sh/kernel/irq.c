@@ -7,6 +7,7 @@
  *
  * SuperH version:  Copyright (C) 1999  Niibe Yutaka
  */
+#include <linux/atomic_api.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

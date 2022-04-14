@@ -5,6 +5,7 @@
  * Description: CoreSight Funnel driver
  */
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

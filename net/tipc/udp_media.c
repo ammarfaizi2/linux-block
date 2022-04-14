@@ -32,6 +32,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/socket.h>
 #include <linux/ip.h>
 #include <linux/udp.h>

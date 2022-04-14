@@ -17,6 +17,7 @@
  * - move bus probe to a kernel thread
  */
 
+#include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

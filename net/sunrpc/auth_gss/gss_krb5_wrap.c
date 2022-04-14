@@ -28,6 +28,7 @@
  * SUCH DAMAGES.
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/skcipher.h>
 #include <linux/types.h>
 #include <linux/jiffies.h>

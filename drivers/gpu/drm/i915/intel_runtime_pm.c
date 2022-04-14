@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pm_runtime.h>
 
 #include <drm/drm_print.h>

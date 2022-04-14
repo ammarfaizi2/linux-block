@@ -6,6 +6,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/dax.h>
 #include <linux/uio.h>

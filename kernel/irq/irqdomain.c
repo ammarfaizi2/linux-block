@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt)  "irq: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/acpi.h>
 #include <linux/debugfs.h>
 #include <linux/hardirq.h>

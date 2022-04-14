@@ -5,6 +5,7 @@
  * Copyright IBM Corp. 2019, 2020
  *    Author(s): Janosch Frank <frankja@linux.ibm.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/kvm.h>
 #include <linux/kvm_host.h>
 #include <linux/pagemap.h>

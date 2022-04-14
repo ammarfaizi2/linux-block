@@ -8,6 +8,7 @@
  *		Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

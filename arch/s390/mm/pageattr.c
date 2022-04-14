@@ -3,6 +3,7 @@
  * Copyright IBM Corp. 2011
  * Author(s): Jan Glauber <jang@linux.vnet.ibm.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/hugetlb.h>
 #include <linux/mm.h>
 #include <asm/cacheflush.h>

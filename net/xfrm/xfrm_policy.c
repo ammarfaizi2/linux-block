@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/kmod.h>

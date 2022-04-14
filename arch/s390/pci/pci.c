@@ -19,6 +19,7 @@
 #define KMSG_COMPONENT "zpci"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/err.h>

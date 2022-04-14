@@ -3,6 +3,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/bitops.h>

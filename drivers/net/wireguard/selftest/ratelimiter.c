@@ -5,6 +5,7 @@
 
 #ifdef DEBUG
 
+#include <linux/atomic_api.h>
 #include <linux/jiffies.h>
 
 static const struct {

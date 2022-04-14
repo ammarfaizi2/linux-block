@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
+#include <linux/atomic_api.h>
 #include <linux/ftrace.h>
 #include <linux/uaccess.h>
 #include <linux/stop_machine.h>

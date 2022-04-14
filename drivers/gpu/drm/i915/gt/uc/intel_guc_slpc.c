@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <drm/drm_cache.h>
 
 #include "i915_drv.h"

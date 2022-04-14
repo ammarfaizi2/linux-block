@@ -7,6 +7,7 @@
  *   Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/moduleloader.h>
 #include <linux/hardirq.h>
 #include <linux/uaccess.h>

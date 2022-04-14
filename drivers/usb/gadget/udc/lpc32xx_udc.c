@@ -15,6 +15,7 @@
  *       the LPC3180.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

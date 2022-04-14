@@ -6,6 +6,7 @@
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sysctl.h>
 #include <linux/slab.h>
 #include <linux/mm.h>

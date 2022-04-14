@@ -6,6 +6,7 @@
  * Copyright (C) 2005 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
+#include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/fs.h>
 #include <linux/err.h>

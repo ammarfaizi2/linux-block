@@ -8,6 +8,7 @@
  * Author: Max Asböck <amax@us.ibm.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include "ibmasm.h"

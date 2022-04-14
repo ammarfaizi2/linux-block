@@ -20,6 +20,7 @@
 #include "cx18-controls.h"
 #include "cx18-ioctl.h"
 #include "cx18-cards.h"
+#include <linux/atomic_api.h>
 #include <media/v4l2-event.h>
 
 /* This function tries to claim the stream for a specific file descriptor.

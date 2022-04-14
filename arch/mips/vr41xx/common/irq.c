@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2005-2007  Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

@@ -12,6 +12,7 @@
  * 19 Jan 2007
  */
 
+#include <linux/atomic_api.h>
 #include <asm/page.h>
 #include <linux/uaccess.h>
 #include <linux/ctype.h>

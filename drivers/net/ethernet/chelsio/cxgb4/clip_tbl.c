@@ -10,6 +10,7 @@
  *  release for licensing terms and conditions.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/jhash.h>

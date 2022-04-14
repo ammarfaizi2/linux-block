@@ -7,6 +7,8 @@
 
 /* File hw_atl_b0.c: Definition of Atlantic hardware specific functions. */
 
+#include <linux/atomic_api.h>
+
 #include "../aq_hw.h"
 #include "../aq_hw_utils.h"
 #include "../aq_ring.h"

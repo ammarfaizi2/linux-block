@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/etherdevice.h>
 #include <linux/idr.h>
 #include <linux/mlx5/driver.h>

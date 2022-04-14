@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/sched/mm.h>
 #include <drm/drm_gem.h>
 

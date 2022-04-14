@@ -6,6 +6,7 @@
  * Author: Tudor Ambarus <tudor.ambarus@microchip.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/err.h>

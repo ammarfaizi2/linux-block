@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) 	"arch_timer: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

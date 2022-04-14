@@ -8,6 +8,7 @@
  *  of DMA channels, and provides a unified interface to the machines
  *  DMA facilities.
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/spinlock.h>

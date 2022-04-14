@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/file.h>

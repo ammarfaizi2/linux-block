@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 
 #include "xfs.h"

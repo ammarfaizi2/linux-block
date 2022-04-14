@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <drm/drm_print.h>
 
 #include "gem/i915_gem_context.h"

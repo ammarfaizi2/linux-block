@@ -12,6 +12,7 @@
  *	current measurement list and IMA statistics
  */
 
+#include <linux/atomic_api.h>
 #include <linux/fcntl.h>
 #include <linux/kernel_read_file.h>
 #include <linux/slab.h>

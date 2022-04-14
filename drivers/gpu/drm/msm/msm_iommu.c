@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/adreno-smmu-priv.h>
 #include <linux/io-pgtable.h>
 #include "msm_drv.h"

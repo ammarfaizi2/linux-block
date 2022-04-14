@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/poll.h>
 #include <linux/wait.h>
 #include <linux/anon_inodes.h>

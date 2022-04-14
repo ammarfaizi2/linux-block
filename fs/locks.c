@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/capability.h>
 #include <linux/file.h>
 #include <linux/fdtable.h>

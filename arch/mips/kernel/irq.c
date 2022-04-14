@@ -8,6 +8,7 @@
  * Copyright (C) 1992 Linus Torvalds
  * Copyright (C) 1994 - 2000 Ralf Baechle
  */
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/init.h>

@@ -6,6 +6,7 @@
 // This code is based on code copyrighted by Freescale,
 // Liam Girdwood, Javier Martin and probably others.
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

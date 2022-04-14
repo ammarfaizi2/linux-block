@@ -14,6 +14,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/io.h>
 #include <linux/sched.h>
 #include <linux/module.h>

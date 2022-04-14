@@ -5,6 +5,7 @@
  * -------------------------------------------------------------------------
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/nfc.h>
 #include <linux/i2c.h>

@@ -9,6 +9,7 @@
  * Copyright (c) 2015 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/internal/aead.h>
 #include <crypto/internal/cipher.h>
 #include <crypto/internal/skcipher.h>

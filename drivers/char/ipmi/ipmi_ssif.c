@@ -25,6 +25,7 @@
 #define pr_fmt(fmt) "ipmi_ssif: " fmt
 #define dev_fmt(fmt) "ipmi_ssif: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/sched.h>

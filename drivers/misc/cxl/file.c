@@ -3,6 +3,7 @@
  * Copyright 2014 IBM Corp.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <linux/module.h>
 #include <linux/export.h>

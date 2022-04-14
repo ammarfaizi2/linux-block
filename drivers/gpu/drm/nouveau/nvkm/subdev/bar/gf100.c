@@ -23,6 +23,7 @@
  */
 #include "gf100.h"
 
+#include <linux/atomic_api.h>
 #include <core/memory.h>
 #include <core/option.h>
 #include <subdev/fb.h>

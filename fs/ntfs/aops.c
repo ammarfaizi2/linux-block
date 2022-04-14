@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <linux/atomic_api.h>
 #include <asm/cacheflush.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

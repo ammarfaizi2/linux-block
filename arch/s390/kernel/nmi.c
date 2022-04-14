@@ -8,6 +8,7 @@
  *		 Cornelia Huck <cornelia.huck@de.ibm.com>,
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel_stat.h>
 #include <linux/init.h>
 #include <linux/errno.h>

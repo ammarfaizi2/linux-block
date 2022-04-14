@@ -4,6 +4,8 @@
  * Copyright (c) 2014 Christoph Hellwig.
  * All Rights Reserved.
  */
+#include <linux/atomic_api.h>
+
 #include "xfs.h"
 #include "xfs_shared.h"
 #include "xfs_format.h"

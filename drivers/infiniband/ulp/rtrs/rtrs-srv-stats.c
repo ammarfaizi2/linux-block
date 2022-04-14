@@ -9,6 +9,8 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
+#include <linux/atomic_api.h>
+
 #include "rtrs-srv.h"
 
 int rtrs_srv_reset_rdma_stats(struct rtrs_srv_stats *stats, bool enable)

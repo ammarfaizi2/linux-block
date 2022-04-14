@@ -10,6 +10,7 @@
  
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

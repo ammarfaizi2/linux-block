@@ -12,6 +12,7 @@
  * See the GNU General Public License for more details.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <net/llc_sap.h>

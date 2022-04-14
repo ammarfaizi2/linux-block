@@ -21,6 +21,7 @@
  *  Copyright (C) 2016 Mellanox Technologies
  */
 
+#include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/kd.h>
 #include <linux/kernel.h>

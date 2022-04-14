@@ -6,6 +6,7 @@
  *  Copyright (C) 2013 Magnus Damm
  */
 
+#include <linux/atomic_api.h>
 #include <linux/err.h>
 #include <linux/gpio/driver.h>
 #include <linux/init.h>

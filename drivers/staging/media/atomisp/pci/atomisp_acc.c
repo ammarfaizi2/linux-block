@@ -21,6 +21,7 @@
  * including ioctls to map and unmap acceleration parameters and buffers.
  */
 
+#include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <linux/init.h>
 #include <media/v4l2-event.h>

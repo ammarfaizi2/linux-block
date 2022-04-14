@@ -3,6 +3,7 @@
  * Copyright(c) 1999 - 2004 Intel Corporation. All rights reserved.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/skbuff.h>
 #include <linux/if_ether.h>
 #include <linux/netdevice.h>

@@ -19,6 +19,7 @@
  *  Author: Manjunatha Halli <manjunatha_halli@ti.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/module.h>

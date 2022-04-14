@@ -26,6 +26,7 @@
  * Copyright 2005 (C) Jes Sorensen <jes@trained-monkey.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/export.h>
 #include <linux/bitmap.h>

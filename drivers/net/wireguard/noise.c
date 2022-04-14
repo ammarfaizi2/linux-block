@@ -10,6 +10,7 @@
 #include "queueing.h"
 #include "peerlookup.h"
 
+#include <linux/atomic_api.h>
 #include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/bitmap.h>

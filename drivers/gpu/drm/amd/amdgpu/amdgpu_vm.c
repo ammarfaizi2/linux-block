@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/atomic_api.h>
 #include <linux/dma-fence-array.h>
 #include <linux/interval_tree_generic.h>
 #include <linux/idr.h>

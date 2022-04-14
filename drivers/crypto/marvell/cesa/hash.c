@@ -9,6 +9,7 @@
  * Sebastian Andrzej Siewior < sebastian at breakpoint dot cc >
  */
 
+#include <linux/atomic_api.h>
 #include <crypto/hmac.h>
 #include <crypto/md5.h>
 #include <crypto/sha1.h>

@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

@@ -2,6 +2,7 @@
 /*
  * Common SMP CPU bringup/teardown functions
  */
+#include <linux/atomic_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/cpu.h>
 #include <linux/err.h>

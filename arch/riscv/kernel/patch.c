@@ -3,6 +3,7 @@
  * Copyright (C) 2020 SiFive
  */
 
+#include <linux/atomic_api.h>
 #include <linux/spinlock.h>
 #include <linux/mm.h>
 #include <linux/memory.h>

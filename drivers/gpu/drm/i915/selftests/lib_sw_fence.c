@@ -22,6 +22,8 @@
  *
  */
 
+#include <linux/atomic_api.h>
+
 #include "lib_sw_fence.h"
 
 /* Small library of different fence types useful for writing tests */

@@ -19,6 +19,7 @@
  * shutdown for not being used.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/completion.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

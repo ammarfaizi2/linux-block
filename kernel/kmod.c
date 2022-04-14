@@ -1,6 +1,7 @@
 /*
  * kmod - the kernel module loader
  */
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/sched/task.h>

@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/atomic_api.h>
 #include <linux/pci.h>
 #include <linux/pm_runtime.h>
 

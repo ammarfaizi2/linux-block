@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Cavium Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <scsi/scsi_tcq.h>
 #include <linux/delay.h>

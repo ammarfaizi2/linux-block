@@ -34,6 +34,7 @@
  *			    thanks to Chris Wright <chrisw@osdl.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

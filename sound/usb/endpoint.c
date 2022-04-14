@@ -2,6 +2,7 @@
 /*
  */
 
+#include <linux/atomic_api.h>
 #include <linux/gfp.h>
 #include <linux/init.h>
 #include <linux/ratelimit.h>

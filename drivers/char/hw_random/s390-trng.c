@@ -12,6 +12,7 @@
 #define KMSG_COMPONENT "trng"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/hw_random.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

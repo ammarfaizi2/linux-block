@@ -18,6 +18,7 @@
  *		- added multicast source filtering API for MLDv2
  */
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/capability.h>
 #include <linux/errno.h>

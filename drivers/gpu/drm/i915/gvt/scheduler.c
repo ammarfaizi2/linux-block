@@ -33,6 +33,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kthread.h>
 
 #include "gem/i915_gem_pm.h"

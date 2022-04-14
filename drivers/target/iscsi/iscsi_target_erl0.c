@@ -9,6 +9,7 @@
  *
  ******************************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/sched/signal.h>
 
 #include <scsi/iscsi_proto.h>

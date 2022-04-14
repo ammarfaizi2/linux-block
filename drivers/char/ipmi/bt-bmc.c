@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2016, IBM Corporation.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bt-bmc.h>
 #include <linux/errno.h>

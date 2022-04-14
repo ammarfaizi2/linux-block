@@ -9,6 +9,7 @@
  *		  Anton Vorontsov <anton.vorontsov@linaro.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/compiler.h>

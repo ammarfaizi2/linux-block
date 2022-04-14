@@ -5,6 +5,7 @@
  * Copyright (C) 2013 The IMS Company
  */
 
+#include <linux/atomic_api.h>
 #include <linux/completion.h>
 #include <linux/device.h>
 #include <linux/firmware.h>

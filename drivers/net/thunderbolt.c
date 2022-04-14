@@ -8,6 +8,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/highmem.h>
 #include <linux/if_vlan.h>

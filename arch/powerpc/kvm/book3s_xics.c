@@ -4,6 +4,7 @@
  * Copyright 2012 Benjamin Herrenschmidt, IBM Corporation.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/kvm_host.h>
 #include <linux/err.h>

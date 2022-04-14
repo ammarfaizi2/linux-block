@@ -29,6 +29,7 @@
 
 #undef DEBUG_DZ
 
+#include <linux/atomic_api.h>
 #include <linux/bitops.h>
 #include <linux/compiler.h>
 #include <linux/console.h>

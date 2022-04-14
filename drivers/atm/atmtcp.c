@@ -4,6 +4,7 @@
 /* Written 1997-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
+#include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/wait.h>
 #include <linux/atmdev.h>

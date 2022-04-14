@@ -20,6 +20,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/atomic_api.h>
 #include <asm/unaligned.h>
 #include <linux/debugfs.h>
 #include <linux/scatterlist.h>

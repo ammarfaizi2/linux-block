@@ -5,6 +5,8 @@
  * Copyright 2012 Google, Inc.
  */
 
+#include <linux/atomic_api.h>
+
 #include "bcache.h"
 #include "stats.h"
 #include "btree.h"

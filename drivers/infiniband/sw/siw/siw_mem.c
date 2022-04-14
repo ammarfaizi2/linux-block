@@ -3,6 +3,7 @@
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
+#include <linux/atomic_api.h>
 #include <linux/gfp.h>
 #include <rdma/ib_verbs.h>
 #include <linux/dma-mapping.h>

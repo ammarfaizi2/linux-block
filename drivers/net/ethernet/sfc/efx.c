@@ -5,6 +5,7 @@
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/filter.h>
 #include <linux/module.h>
 #include <linux/pci.h>

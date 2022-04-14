@@ -7,6 +7,7 @@
  * Copyright 2009, 2010, Christian Lamparter <chunkeey@googlemail.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/firmware.h>
 #include <linux/crc32.h>

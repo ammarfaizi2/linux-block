@@ -8,6 +8,7 @@
 
 /* #define DEBUG */
 
+#include <linux/atomic_api.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>
 #include <linux/fb.h>

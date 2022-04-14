@@ -3,6 +3,8 @@
  * Copyright(c) 2018 Intel Corporation.
  *
  */
+#include <linux/atomic_api.h>
+
 #include "iowait.h"
 #include "trace_iowait.h"
 

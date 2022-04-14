@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) "SMP alternatives: " fmt
 
+#include <linux/atomic_api.h>
 #include <asm/ptrace.h>
 #include <asm/processor_api.h>
 #include <asm/nospec-branch.h>

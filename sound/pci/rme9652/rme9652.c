@@ -6,6 +6,7 @@
  *      Copyright (c) 1999-2001  Paul Davis
  */
 
+#include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

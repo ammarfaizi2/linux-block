@@ -20,6 +20,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/atomic_api.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>
 #include <linux/module.h>
