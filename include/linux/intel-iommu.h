@@ -10,6 +10,7 @@
 #ifndef _INTEL_IOMMU_H_
 #define _INTEL_IOMMU_H_
 
+#include <linux/timex.h>
 #include <linux/types.h>
 #include <linux/iova.h>
 #include <linux/io.h>
