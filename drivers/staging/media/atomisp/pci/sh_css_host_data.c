@@ -13,6 +13,7 @@
  * more details.
  */
 
+#include <linux/mm.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/slab.h>
 #include <ia_css_host_data.h>

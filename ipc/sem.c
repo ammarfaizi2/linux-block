@@ -70,6 +70,7 @@
  *   The worst-case behavior is nevertheless O(N^2) for N wakeups.
  */
 
+#include <linux/mm.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

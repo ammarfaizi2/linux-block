@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/mm.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

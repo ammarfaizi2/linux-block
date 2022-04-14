@@ -9,6 +9,7 @@
  * io_apic.c.)
  */
 
+#include <linux/mm.h>
 #include <linux/mm_api.h>
 #include <asm/processor_api.h>
 #include <linux/kernel_stat.h>

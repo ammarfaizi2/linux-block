@@ -19,6 +19,7 @@
  * keep a count of how many are currently allocated from each page.
  */
 
+#include <linux/mm.h>
 #include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

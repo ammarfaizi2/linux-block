@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/mm.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/export.h>
 #include <linux/uaccess.h>

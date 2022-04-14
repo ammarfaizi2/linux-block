@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/mm.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
