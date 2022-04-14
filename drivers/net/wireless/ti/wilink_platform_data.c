@@ -5,6 +5,7 @@
  * Copyright (C) 2010-2011 Texas Instruments, Inc.
  */
 
+#include <linux/gfp.h>
 #include <linux/module.h>
 #include <linux/err.h>
 #include <linux/wl12xx.h>
