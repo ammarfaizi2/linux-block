@@ -7,6 +7,7 @@
 #ifndef __IWL_MVM_H__
 #define __IWL_MVM_H__
 
+#include <linux/lockdep_api.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
 #include <linux/leds.h>

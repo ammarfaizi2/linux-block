@@ -2,6 +2,7 @@
 #ifndef __NET_TC_CT_H
 #define __NET_TC_CT_H
 
+#include <linux/lockdep_api.h>
 #include <net/act_api.h>
 #include <uapi/linux/tc_act/tc_ct.h>
 

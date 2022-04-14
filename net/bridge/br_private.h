@@ -9,6 +9,7 @@
 #ifndef _BR_PRIVATE_H
 #define _BR_PRIVATE_H
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/if_vlan_api.h>
 #include <linux/netdevice.h>

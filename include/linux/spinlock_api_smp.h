@@ -1,6 +1,7 @@
 #ifndef __LINUX_SPINLOCK_API_SMP_H
 #define __LINUX_SPINLOCK_API_SMP_H
 
+#include <linux/lockdep_api.h>
 #include <linux/types.h>
 
 #ifndef __LINUX_SPINLOCK_H

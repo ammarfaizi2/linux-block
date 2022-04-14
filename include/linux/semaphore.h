@@ -8,6 +8,7 @@
 #ifndef __LINUX_SEMAPHORE_H
 #define __LINUX_SEMAPHORE_H
 
+#include <linux/lockdep_api.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
 

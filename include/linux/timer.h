@@ -2,6 +2,7 @@
 #ifndef _LINUX_TIMER_H
 #define _LINUX_TIMER_H
 
+#include <linux/lockdep_api.h>
 #include <linux/list.h>
 #include <linux/ktime.h>
 #include <linux/stddef.h>

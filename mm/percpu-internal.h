@@ -2,6 +2,7 @@
 #ifndef _MM_PERCPU_INTERNAL_H
 #define _MM_PERCPU_INTERNAL_H
 
+#include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/percpu.h>

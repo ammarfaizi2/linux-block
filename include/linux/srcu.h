@@ -16,6 +16,7 @@
 #ifndef _LINUX_SRCU_H
 #define _LINUX_SRCU_H
 
+#include <linux/lockdep_api.h>
 #include <linux/mutex.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue.h>

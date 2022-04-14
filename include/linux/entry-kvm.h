@@ -2,6 +2,7 @@
 #ifndef __LINUX_ENTRYKVM_H
 #define __LINUX_ENTRYKVM_H
 
+#include <linux/lockdep_api.h>
 #include <linux/static_call_types.h>
 #include <linux/resume_user_mode.h>
 #include <linux/syscalls.h>

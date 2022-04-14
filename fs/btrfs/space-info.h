@@ -3,6 +3,7 @@
 #ifndef BTRFS_SPACE_INFO_H
 #define BTRFS_SPACE_INFO_H
 
+#include <linux/lockdep_api.h>
 #include <linux/types.h>
 
 struct btrfs_space_info {

@@ -14,6 +14,7 @@
 #ifndef _LINUX_PERF_EVENT_H
 #define _LINUX_PERF_EVENT_H
 
+#include <linux/lockdep_api.h>
 #include <linux/cred.h>
 #include <linux/cgroup_api.h>
 #include <uapi/linux/perf_event.h>

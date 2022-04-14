@@ -12,6 +12,7 @@
 #ifndef _HYPERV_VMBUS_H
 #define _HYPERV_VMBUS_H
 
+#include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/list.h>
 #include <linux/bitops.h>

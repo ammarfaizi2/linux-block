@@ -18,6 +18,7 @@
 #ifndef _LINUX_RHASHTABLE_H
 #define _LINUX_RHASHTABLE_H
 
+#include <linux/lockdep_api.h>
 #include <linux/cache.h>
 #include <linux/atomic_api.h>
 #include <linux/err.h>

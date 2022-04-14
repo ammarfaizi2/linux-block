@@ -39,6 +39,7 @@
 #ifndef _LINUX_RESERVATION_H
 #define _LINUX_RESERVATION_H
 
+#include <linux/lockdep_api.h>
 #include <linux/ww_mutex.h>
 #include <linux/dma-fence.h>
 #include <linux/slab.h>

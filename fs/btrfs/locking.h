@@ -6,6 +6,7 @@
 #ifndef BTRFS_LOCKING_H
 #define BTRFS_LOCKING_H
 
+#include <linux/lockdep_api.h>
 #include <linux/atomic.h>
 #include <linux/wait.h>
 #include <linux/percpu_counter.h>

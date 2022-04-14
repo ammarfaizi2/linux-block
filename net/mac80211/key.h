@@ -8,6 +8,7 @@
 #ifndef IEEE80211_KEY_H
 #define IEEE80211_KEY_H
 
+#include <linux/lockdep_api.h>
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/crypto.h>
