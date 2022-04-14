@@ -35,6 +35,7 @@
 #ifndef _LINUX_RDS_H
 #define _LINUX_RDS_H
 
+#include <uapi/linux/sockios.h>
 #include <linux/types.h>
 #include <linux/socket.h>		/* For __kernel_sockaddr_storage. */
 #include <linux/in6.h>			/* For struct in6_addr. */

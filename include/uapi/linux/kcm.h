@@ -15,6 +15,7 @@
 #ifndef KCM_KERNEL_H
 #define KCM_KERNEL_H
 
+#include <uapi/linux/sockios.h>
 #include <linux/types.h>
 
 struct kcm_attach {

@@ -9,6 +9,7 @@
 #ifndef LINUX_PHONET_H
 #define LINUX_PHONET_H
 
+#include <uapi/linux/sockios.h>
 #include <uapi/linux/phonet.h>
 
 #define SIOCPNGAUTOCONF		(SIOCDEVPRIVATE + 0)
