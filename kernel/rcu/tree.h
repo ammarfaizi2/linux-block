@@ -9,6 +9,7 @@
  *	   Paul E. McKenney <paulmck@linux.ibm.com>
  */
 
+#include <linux/irq_work.h>
 #include <linux/cache.h>
 #include <linux/spinlock.h>
 #include <linux/rtmutex.h>
