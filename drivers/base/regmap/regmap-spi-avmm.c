@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2018-2020 Intel Corporation. All rights reserved.
 
+#include <linux/align.h>
 #include <linux/module.h>
 #include <linux/regmap.h>
 #include <linux/spi/spi.h>

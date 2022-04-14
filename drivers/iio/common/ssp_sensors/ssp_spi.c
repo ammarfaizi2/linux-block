@@ -3,6 +3,8 @@
  *  Copyright (C) 2014, Samsung Electronics Co. Ltd. All Rights Reserved.
  */
 
+#include <linux/align.h>
+
 #include "ssp.h"
 
 #define SSP_DEV (&data->spi->dev)

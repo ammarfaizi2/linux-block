@@ -17,6 +17,7 @@
  * separate file or part of the same file.
  */
 
+#include <linux/align.h>
 #include <linux/earlycpio.h>
 #include <linux/kernel.h>
 #include <linux/string.h>

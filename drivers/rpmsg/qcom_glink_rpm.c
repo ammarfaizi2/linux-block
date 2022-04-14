@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2017, Linaro Ltd
  */
 
+#include <linux/align.h>
 #include <linux/idr.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

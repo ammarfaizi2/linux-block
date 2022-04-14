@@ -9,6 +9,7 @@
  */
 
 #include "lkdtm.h"
+#include <linux/align.h>
 #include <linux/stackleak.h>
 
 void lkdtm_STACKLEAK_ERASING(void)

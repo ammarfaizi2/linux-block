@@ -5,6 +5,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/align.h>
 #include <linux/device.h>
 #include <linux/firewire.h>
 #include <linux/firewire-constants.h>

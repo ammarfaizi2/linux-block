@@ -16,6 +16,7 @@
  *   Henry Mitchel <henry.mitchel@intel.com>
  */
 
+#include <linux/align.h>
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/vmalloc.h>

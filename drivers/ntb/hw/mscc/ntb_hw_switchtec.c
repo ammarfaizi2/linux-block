@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Microsemi Corporation
  */
 
+#include <linux/align.h>
 #include <linux/interrupt.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 #include <linux/delay.h>

@@ -6,6 +6,7 @@
  * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/align.h>
 #include <linux/idr.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>

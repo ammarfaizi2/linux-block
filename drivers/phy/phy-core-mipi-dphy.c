@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Cadence Design Systems Inc.
  */
 
+#include <linux/align.h>
 #include <linux/errno.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

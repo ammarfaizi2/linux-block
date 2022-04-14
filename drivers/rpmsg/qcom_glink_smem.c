@@ -3,6 +3,7 @@
  * Copyright (c) 2016, Linaro Ltd
  */
 
+#include <linux/align.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/of.h>

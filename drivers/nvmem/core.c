@@ -6,6 +6,7 @@
  * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/align.h>
 #include <linux/device.h>
 #include <linux/export.h>
 #include <linux/fs.h>

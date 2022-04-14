@@ -24,6 +24,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/align.h>
 #include <crypto/padlock.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

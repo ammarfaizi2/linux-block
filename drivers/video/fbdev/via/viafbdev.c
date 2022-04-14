@@ -5,6 +5,7 @@
 
  */
 
+#include <linux/align.h>
 #include <linux/compiler.h>
 #include <linux/module.h>
 #include <linux/seq_file.h>
