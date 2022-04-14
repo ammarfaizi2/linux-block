@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/string.h>
 #include <linux/skbuff.h>

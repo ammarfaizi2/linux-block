@@ -28,6 +28,7 @@
  * ==FILEVERSION 20040616==
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/refcount_api.h>
 #include <linux/jiffies.h>

@@ -6,6 +6,7 @@
  * Phoebe Buckheister <phoebe.buckheister@itwm.fraunhofer.de>
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/ieee802154.h>
 
 #include <net/mac802154.h>

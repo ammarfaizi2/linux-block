@@ -7,6 +7,7 @@
  *		Merged in additions from Greg Page's psnap.c.
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/module.h>

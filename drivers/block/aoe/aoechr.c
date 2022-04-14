@@ -4,6 +4,7 @@
  * AoE character device driver
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

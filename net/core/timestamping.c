@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
+#include <linux/skbuff_api.h>
 #include <linux/errqueue.h>
 #include <linux/phy.h>
 #include <linux/ptp_classify.h>

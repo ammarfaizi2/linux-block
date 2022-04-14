@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2021, Linaro Ltd <loic.poulain@linaro.org> */
+#include <linux/skbuff_api.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/mhi.h>

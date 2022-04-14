@@ -4,6 +4,7 @@
  * (C) 2002 by Harald Welte <laforge@netfilter.org>
 */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/skbuff_api.h>
 #include <linux/ratelimit.h>
 #include <linux/in.h>
 #include <linux/module.h>

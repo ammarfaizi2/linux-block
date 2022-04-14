@@ -4,6 +4,7 @@
  * Copyright (c) 2013, Intel Corporation.
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2020-2021 Intel Corporation.
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>

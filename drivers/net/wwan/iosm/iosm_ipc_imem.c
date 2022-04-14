@@ -3,6 +3,7 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/delay.h>

@@ -12,6 +12,7 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/skbuff_api.h>
 #include <linux/dma-mapping.h>
 
 #include "stmmac.h"

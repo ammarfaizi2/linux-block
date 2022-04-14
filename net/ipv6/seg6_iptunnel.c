@@ -6,6 +6,7 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>

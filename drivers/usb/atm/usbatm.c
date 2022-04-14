@@ -50,6 +50,7 @@
 
 #include "usbatm.h"
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>

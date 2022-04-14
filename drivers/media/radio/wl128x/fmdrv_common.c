@@ -19,6 +19,7 @@
  *  Author: Manjunatha Halli <manjunatha_halli@ti.com>
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/poll.h>

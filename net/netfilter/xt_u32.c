@@ -6,6 +6,7 @@
  *	(C) CC Computer Consultants GmbH, 2007
  */
 
+#include <linux/skbuff_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/spinlock.h>

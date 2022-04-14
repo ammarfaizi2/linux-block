@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/skbuff_api.h>
 #include <linux/rcupdate.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>
