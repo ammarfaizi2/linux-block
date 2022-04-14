@@ -6,6 +6,7 @@
 #ifndef	BRCMFMAC_SDIO_H
 #define	BRCMFMAC_SDIO_H
 
+#include <linux/jiffies.h>
 #include <linux/skbuff.h>
 #include <linux/firmware.h>
 #include "firmware.h"

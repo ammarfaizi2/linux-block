@@ -25,6 +25,7 @@
 #ifndef __HCI_CORE_H
 #define __HCI_CORE_H
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/idr.h>
 #include <linux/leds.h>

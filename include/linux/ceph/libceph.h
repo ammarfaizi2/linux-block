@@ -2,6 +2,7 @@
 #ifndef _FS_CEPH_LIBCEPH_H
 #define _FS_CEPH_LIBCEPH_H
 
+#include <linux/jiffies.h>
 #include <linux/ceph/ceph_debug.h>
 
 #include <asm/unaligned.h>

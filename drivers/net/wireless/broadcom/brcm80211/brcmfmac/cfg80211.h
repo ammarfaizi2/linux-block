@@ -7,6 +7,7 @@
 #define BRCMFMAC_CFG80211_H
 
 /* for brcmu_d11inf */
+#include <linux/jiffies.h>
 #include <brcmu_d11.h>
 
 #include "core.h"

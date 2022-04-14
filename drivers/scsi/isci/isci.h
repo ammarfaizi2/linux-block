@@ -56,6 +56,7 @@
 #ifndef __ISCI_H__
 #define __ISCI_H__
 
+#include <linux/jiffies.h>
 #include <linux/interrupt.h>
 #include <linux/types.h>
 

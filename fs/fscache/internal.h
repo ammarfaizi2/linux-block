@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "FS-Cache: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/slab.h>
 #include <linux/fscache-cache.h>
 #include <trace/events/fscache.h>

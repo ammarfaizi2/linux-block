@@ -32,6 +32,7 @@
 	
 #define PS_VERSION	"1.02"
 
+#include <linux/jiffies.h>
 #include <linux/sched.h>
 #include <linux/workqueue.h>
 

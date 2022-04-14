@@ -2,6 +2,7 @@
 #ifndef _I8042_H
 #define _I8042_H
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 /*

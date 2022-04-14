@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Paul E. McKenney
  */
 
+#include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched/cond_resched.h>
 

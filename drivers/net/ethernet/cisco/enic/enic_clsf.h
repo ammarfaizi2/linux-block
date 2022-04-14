@@ -2,6 +2,8 @@
 #ifndef _ENIC_CLSF_H_
 #define _ENIC_CLSF_H_
 
+#include <linux/jiffies.h>
+
 #include "vnic_dev.h"
 #include "enic.h"
 

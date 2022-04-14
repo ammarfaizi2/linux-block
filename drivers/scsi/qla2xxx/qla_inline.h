@@ -4,6 +4,8 @@
  * Copyright (c)  2003-2014 QLogic Corporation
  */
 
+#include <linux/jiffies.h>
+
 #include "qla_target.h"
 /**
  * qla24xx_calc_iocbs() - Determine number of Command Type 3 and

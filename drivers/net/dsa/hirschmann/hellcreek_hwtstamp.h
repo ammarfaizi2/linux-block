@@ -12,6 +12,7 @@
 #ifndef _HELLCREEK_HWTSTAMP_H_
 #define _HELLCREEK_HWTSTAMP_H_
 
+#include <linux/jiffies.h>
 #include <net/dsa.h>
 #include "hellcreek.h"
 

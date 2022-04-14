@@ -23,6 +23,7 @@
 #ifndef _OCTEON_MAIN_H_
 #define  _OCTEON_MAIN_H_
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dev_printk.h>
 #include <linux/sched/signal.h>

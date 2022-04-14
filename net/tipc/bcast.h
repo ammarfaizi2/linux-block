@@ -37,6 +37,8 @@
 #ifndef _TIPC_BCAST_H
 #define _TIPC_BCAST_H
 
+#include <linux/jiffies.h>
+
 #include "core.h"
 
 struct tipc_node;

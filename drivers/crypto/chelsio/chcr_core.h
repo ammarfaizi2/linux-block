@@ -36,6 +36,7 @@
 #ifndef __CHCR_CORE_H__
 #define __CHCR_CORE_H__
 
+#include <linux/jiffies.h>
 #include <crypto/algapi.h>
 #include <net/tls.h>
 #include "t4_hw.h"

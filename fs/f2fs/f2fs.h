@@ -8,6 +8,7 @@
 #ifndef _LINUX_F2FS_H
 #define _LINUX_F2FS_H
 
+#include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/sched/cond_resched.h>

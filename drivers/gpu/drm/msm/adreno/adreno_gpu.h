@@ -9,6 +9,7 @@
 #ifndef __ADRENO_GPU_H__
 #define __ADRENO_GPU_H__
 
+#include <linux/jiffies.h>
 #include <linux/firmware.h>
 #include <linux/iopoll.h>
 

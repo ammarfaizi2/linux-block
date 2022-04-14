@@ -24,6 +24,7 @@
 #ifndef __AMDGPU_VCN_H__
 #define __AMDGPU_VCN_H__
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 #define AMDGPU_VCN_STACK_SIZE		(128*1024)

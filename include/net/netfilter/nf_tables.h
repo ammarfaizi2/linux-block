@@ -2,6 +2,7 @@
 #ifndef _NET_NF_TABLES_H
 #define _NET_NF_TABLES_H
 
+#include <linux/jiffies.h>
 #include <asm/unaligned.h>
 #include <linux/list.h>
 #include <linux/netfilter.h>

@@ -5,6 +5,7 @@
 #ifndef __RTW_FW_H_
 #define __RTW_FW_H_
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 #define H2C_PKT_SIZE		32

@@ -5,6 +5,7 @@
 #ifndef IOATDMA_H
 #define IOATDMA_H
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dev_printk.h>
 #include <linux/dmaengine.h>

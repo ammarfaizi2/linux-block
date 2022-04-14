@@ -2,6 +2,7 @@
 #ifndef BLK_STAT_H
 #define BLK_STAT_H
 
+#include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/blkdev.h>
 #include <linux/ktime.h>

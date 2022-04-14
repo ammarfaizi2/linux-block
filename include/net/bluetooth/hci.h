@@ -25,6 +25,7 @@
 #ifndef __HCI_H
 #define __HCI_H
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 #define HCI_MAX_ACL_SIZE	1024

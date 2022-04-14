@@ -19,6 +19,7 @@
 #define JBD2_DEBUG
 #else
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 #include <linux/buffer_head.h>
 #include <linux/journal-head.h>

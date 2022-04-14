@@ -8,6 +8,7 @@
 #ifndef _ISHTP_DEV_H_
 #define _ISHTP_DEV_H_
 
+#include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/types.h>
 #include <linux/spinlock.h>

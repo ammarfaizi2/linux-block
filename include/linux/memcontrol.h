@@ -10,6 +10,7 @@
 
 #ifndef _LINUX_MEMCONTROL_H
 #define _LINUX_MEMCONTROL_H
+#include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
 #include <linux/cgroup_api.h>
 #include <linux/backing-dev-types.h>

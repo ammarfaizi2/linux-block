@@ -9,6 +9,7 @@
 #ifndef _IP6_FIB_H
 #define _IP6_FIB_H
 
+#include <linux/jiffies.h>
 #include <linux/ipv6_route.h>
 #include <linux/rtnetlink.h>
 #include <linux/spinlock.h>

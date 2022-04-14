@@ -7,6 +7,7 @@
  */
 #ifndef __NET_WIRELESS_CORE_H
 #define __NET_WIRELESS_CORE_H
+#include <linux/jiffies.h>
 #include <linux/list.h>
 #include <linux/netdevice.h>
 #include <linux/rbtree.h>

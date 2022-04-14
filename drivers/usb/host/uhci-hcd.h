@@ -2,6 +2,7 @@
 #ifndef __LINUX_UHCI_HCD_H
 #define __LINUX_UHCI_HCD_H
 
+#include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/list.h>
 #include <linux/usb.h>

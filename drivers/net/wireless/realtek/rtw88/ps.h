@@ -5,6 +5,7 @@
 #ifndef __RTW_PS_H_
 #define __RTW_PS_H_
 
+#include <linux/jiffies.h>
 #include <linux/types.h>
 
 #define RTW_LPS_THRESHOLD	50

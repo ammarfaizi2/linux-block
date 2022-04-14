@@ -20,6 +20,7 @@
 #ifndef _MWIFIEX_MAIN_H_
 #define _MWIFIEX_MAIN_H_
 
+#include <linux/jiffies.h>
 #include <linux/completion.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
