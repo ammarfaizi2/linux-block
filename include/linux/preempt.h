@@ -7,6 +7,7 @@
  * preempt_count (used for kernel preemption, interrupt count, etc.)
  */
 
+#include <asm/current.h>
 #include <linux/linkage.h>
 #include <linux/list.h>
 
