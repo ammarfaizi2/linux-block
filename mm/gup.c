@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/pgtable_api_access.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_ptlock.h>
