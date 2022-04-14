@@ -2,6 +2,7 @@
 #ifndef _LINUX_STOP_MACHINE
 #define _LINUX_STOP_MACHINE
 
+#include <linux/preempt.h>
 #include <linux/atomic_api.h>
 #include <linux/cpu.h>
 #include <linux/cpumask.h>

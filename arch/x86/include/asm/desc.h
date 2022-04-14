@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_DESC_H
 #define _ASM_X86_DESC_H
 
+#include <linux/preempt.h>
 #include <asm/processor.h>
 #include <asm/processor_api.h>
 #include <linux/sched/thread_info_api.h>
