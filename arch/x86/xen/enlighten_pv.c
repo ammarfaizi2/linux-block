@@ -12,6 +12,7 @@
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
 
+#include <asm/msr.h>
 #include <linux/cpu.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

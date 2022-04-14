@@ -7,6 +7,7 @@
  * Author : K. Y. Srinivasan <kys@microsoft.com>
  */
 
+#include <asm/msr.h>
 #include <linux/efi.h>
 #include <linux/types.h>
 #include <linux/bitfield.h>

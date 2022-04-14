@@ -6,6 +6,7 @@
  *
  * Author: Pu Wen <puwen@hygon.cn>
  */
+#include <asm/msr.h>
 #include <linux/io.h>
 
 #include <asm/cpu.h>

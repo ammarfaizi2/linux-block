@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <asm/msr.h>
 #include <linux/clockchips.h>
 #include <linux/interrupt.h>
 #include <linux/export.h>

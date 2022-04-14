@@ -6,6 +6,7 @@
  *  Copyright (C) 2001-2003 Pavel Machek <pavel@ucw.cz>
  */
 
+#include <asm/msr.h>
 #include <linux/acpi.h>
 #include <linux/memblock.h>
 #include <linux/dmi.h>

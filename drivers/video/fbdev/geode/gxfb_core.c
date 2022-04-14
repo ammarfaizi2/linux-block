@@ -15,6 +15,7 @@
  *
  * 16 MiB of framebuffer memory is assumed to be available.
  */
+#include <asm/msr.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

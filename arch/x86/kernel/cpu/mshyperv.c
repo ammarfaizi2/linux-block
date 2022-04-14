@@ -6,6 +6,7 @@
  * Author : K. Y. Srinivasan <ksrinivasan@novell.com>
  */
 
+#include <asm/msr.h>
 #include <linux/types.h>
 #include <linux/time.h>
 #include <linux/clocksource.h>

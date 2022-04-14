@@ -3,6 +3,7 @@
  *
  * Copyright (C) Intel Corporation 2017
  */
+#include <asm/msr.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/ratelimit.h>

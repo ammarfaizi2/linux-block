@@ -9,6 +9,7 @@
  * The MFGPTs are documented in AMD Geode CS5536 Companion Device Data Book.
  */
 
+#include <asm/msr.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
 #include <linux/interrupt.h>

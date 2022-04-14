@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "kvm-guest: " fmt
 
+#include <asm/msr.h>
 #include <asm/halt.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/context_tracking.h>

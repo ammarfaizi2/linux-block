@@ -16,6 +16,7 @@
  *   Author: Huang Ying <ying.huang@intel.com>
  */
 
+#include <asm/msr.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/acpi.h>

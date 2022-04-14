@@ -4,6 +4,7 @@
  * to work in 2.5 by Dave Jones.
  */
 
+#include <asm/msr.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/init.h>

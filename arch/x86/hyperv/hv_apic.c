@@ -19,6 +19,7 @@
  *
  */
 
+#include <asm/msr.h>
 #include <linux/types.h>
 #include <linux/vmalloc.h>
 #include <linux/mm.h>

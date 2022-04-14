@@ -8,6 +8,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/msr.h>
 #include <linux/cpufeature.h>
 #include <linux/cpuhotplug.h>
 #include <linux/init.h>

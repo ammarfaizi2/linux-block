@@ -11,6 +11,7 @@
  * themselves.
  */
 
+#include <asm/msr.h>
 #include <linux/acpi.h>
 #include <linux/pci.h>
 #include <linux/init.h>
