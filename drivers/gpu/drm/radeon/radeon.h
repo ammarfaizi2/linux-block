@@ -60,6 +60,7 @@
  *                          are considered as fatal)
  */
 
+#include <linux/io.h>
 #include <linux/agp_backend.h>
 #include <linux/atomic.h>
 #include <linux/wait.h>

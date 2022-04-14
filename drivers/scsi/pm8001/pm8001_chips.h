@@ -41,6 +41,7 @@
 #ifndef _PM8001_CHIPS_H_
 #define _PM8001_CHIPS_H_
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 static inline u32 pm8001_read_32(void *virt_addr)

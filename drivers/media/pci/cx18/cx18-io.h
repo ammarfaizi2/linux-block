@@ -9,6 +9,8 @@
 #ifndef CX18_IO_H
 #define CX18_IO_H
 
+#include <linux/io.h>
+
 #include "cx18-driver.h"
 
 /*

@@ -16,6 +16,7 @@
 #ifndef VELOCITY_H
 #define VELOCITY_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define VELOCITY_TX_CSUM_SUPPORT

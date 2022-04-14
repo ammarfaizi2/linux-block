@@ -8,6 +8,7 @@
 #ifndef _HASH_ALG_H
 #define _HASH_ALG_H
 
+#include <linux/io.h>
 #include <linux/bitops.h>
 
 #define HASH_BLOCK_SIZE			64

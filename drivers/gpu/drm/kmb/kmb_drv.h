@@ -6,6 +6,7 @@
 #ifndef __KMB_DRV_H__
 #define __KMB_DRV_H__
 
+#include <linux/io.h>
 #include <asm/io.h>
 #include <drm/drm_device.h>
 

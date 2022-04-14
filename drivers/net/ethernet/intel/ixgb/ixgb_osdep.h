@@ -8,6 +8,7 @@
 #ifndef _IXGB_OSDEP_H_
 #define _IXGB_OSDEP_H_
 
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/delay.h>
 #include <asm/io.h>

@@ -96,6 +96,7 @@ struct cavium_mdiobus {
 
 #ifdef CONFIG_CAVIUM_OCTEON_SOC
 
+#include <linux/io.h>
 #include <asm/octeon/octeon.h>
 
 static inline void oct_mdio_writeq(u64 val, void __iomem *addr)

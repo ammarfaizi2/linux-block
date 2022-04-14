@@ -4,6 +4,7 @@
 #ifndef _PRESTERA_H_
 #define _PRESTERA_H_
 
+#include <linux/io.h>
 #include <asm/io.h>
 #include <linux/notifier.h>
 #include <linux/skbuff.h>

@@ -2,6 +2,7 @@
 #ifndef _I8042_SNIRM_H
 #define _I8042_SNIRM_H
 
+#include <linux/io.h>
 #include <asm/sni.h>
 
 

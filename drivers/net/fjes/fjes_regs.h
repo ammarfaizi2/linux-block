@@ -7,6 +7,7 @@
 #ifndef FJES_REGS_H_
 #define FJES_REGS_H_
 
+#include <linux/io.h>
 #include <linux/bitops.h>
 
 #define XSCT_DEVICE_REGISTER_SIZE 0x1000

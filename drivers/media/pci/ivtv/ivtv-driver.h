@@ -38,6 +38,7 @@
  *                using information provided by Jiun-Kuei Jung @ AVerMedia.
  */
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/delay.h>

@@ -13,6 +13,7 @@
   * Matt Thomas (matt@3am-software.com).
   */
 
+#include <linux/io.h>
 #include <linux/timer.h>
 
 /*

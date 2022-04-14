@@ -35,6 +35,7 @@
 #ifndef __CSIO_DEFS_H__
 #define __CSIO_DEFS_H__
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/stddef.h>
 #include <linux/timer.h>

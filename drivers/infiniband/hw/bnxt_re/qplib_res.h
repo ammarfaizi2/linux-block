@@ -39,6 +39,7 @@
 #ifndef __BNXT_QPLIB_RES_H__
 #define __BNXT_QPLIB_RES_H__
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 extern const struct bnxt_qplib_gid bnxt_qplib_gid_zero;

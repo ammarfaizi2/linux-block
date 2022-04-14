@@ -7,6 +7,7 @@
 #ifndef __KIRIN_ADE_REG_H__
 #define __KIRIN_ADE_REG_H__
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /*

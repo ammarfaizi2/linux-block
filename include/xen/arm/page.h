@@ -2,6 +2,7 @@
 #ifndef _ASM_ARM_XEN_PAGE_H
 #define _ASM_ARM_XEN_PAGE_H
 
+#include <linux/io.h>
 #include <asm/page.h>
 
 #include <linux/pfn.h>

@@ -2,6 +2,7 @@
 #ifndef _I8042_SPARCIO_H
 #define _I8042_SPARCIO_H
 
+#include <linux/io.h>
 #include <linux/of_device.h>
 
 #include <asm/io.h>

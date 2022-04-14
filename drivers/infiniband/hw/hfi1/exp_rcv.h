@@ -5,6 +5,8 @@
 
 #ifndef _HFI1_EXP_RCV_H
 #define _HFI1_EXP_RCV_H
+#include <linux/io.h>
+
 #include "hfi.h"
 
 #define EXP_TID_SET_EMPTY(set) (set.count == 0 && list_empty(&set.list))

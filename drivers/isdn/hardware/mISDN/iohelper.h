@@ -13,6 +13,7 @@
 #ifndef _IOHELPER_H
 #define _IOHELPER_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 typedef u8 (read_reg_func)(void *hwp, u8 offset);

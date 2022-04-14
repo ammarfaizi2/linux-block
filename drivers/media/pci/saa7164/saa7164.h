@@ -30,6 +30,7 @@
 	<- ----------------- PCIe address space -------------------- ->
 */
 
+#include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/pci.h>
 #include <linux/i2c.h>

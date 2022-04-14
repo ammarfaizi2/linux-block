@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_MSHYPER_H
 #define _ASM_X86_MSHYPER_H
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/msr.h>
 #include <linux/types.h>

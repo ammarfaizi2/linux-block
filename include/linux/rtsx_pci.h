@@ -10,6 +10,7 @@
 #ifndef __RTSX_PCI_H
 #define __RTSX_PCI_H
 
+#include <linux/io.h>
 #include <linux/dev_printk.h>
 #include <linux/sched.h>
 #include <linux/pci.h>

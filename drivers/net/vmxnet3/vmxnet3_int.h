@@ -27,6 +27,7 @@
 #ifndef _VMXNET3_INT_H
 #define _VMXNET3_INT_H
 
+#include <linux/io.h>
 #include <linux/bitops.h>
 #include <linux/ethtool.h>
 #include <linux/delay.h>

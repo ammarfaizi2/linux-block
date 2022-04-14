@@ -34,6 +34,7 @@
 
 #ifndef ALX_HW_H_
 #define ALX_HW_H_
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/mdio.h>
 #include <linux/pci.h>

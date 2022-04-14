@@ -34,6 +34,7 @@
 #define MLX5_IB_CMD_H
 
 #include "mlx5_ib.h"
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/mlx5/driver.h>
 

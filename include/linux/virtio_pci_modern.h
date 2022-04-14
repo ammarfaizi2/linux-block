@@ -2,6 +2,7 @@
 #ifndef _LINUX_VIRTIO_PCI_MODERN_H
 #define _LINUX_VIRTIO_PCI_MODERN_H
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/virtio_pci.h>
 

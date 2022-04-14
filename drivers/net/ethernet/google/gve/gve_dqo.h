@@ -7,6 +7,8 @@
 #ifndef _GVE_DQO_H_
 #define _GVE_DQO_H_
 
+#include <linux/io.h>
+
 #include "gve_adminq.h"
 
 #define GVE_ITR_ENABLE_BIT_DQO BIT(0)

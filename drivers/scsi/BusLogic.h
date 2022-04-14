@@ -21,6 +21,7 @@
 #ifndef _BUSLOGIC_H
 #define _BUSLOGIC_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 

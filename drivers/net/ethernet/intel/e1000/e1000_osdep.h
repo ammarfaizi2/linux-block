@@ -8,6 +8,7 @@
 #ifndef _E1000_OSDEP_H_
 #define _E1000_OSDEP_H_
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/io.h>
 

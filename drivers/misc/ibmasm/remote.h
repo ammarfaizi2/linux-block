@@ -13,6 +13,7 @@
 #ifndef _IBMASM_REMOTE_H_
 #define _IBMASM_REMOTE_H_
 
+#include <linux/io.h>
 #include <asm/io.h>
 
 /* pci offsets */

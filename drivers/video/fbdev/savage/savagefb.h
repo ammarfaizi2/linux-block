@@ -12,6 +12,7 @@
 #ifndef __SAVAGEFB_H__
 #define __SAVAGEFB_H__
 
+#include <linux/io.h>
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
 #include <linux/mutex.h>

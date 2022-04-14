@@ -18,6 +18,8 @@
 #ifndef _VNIC_DEV_H_
 #define _VNIC_DEV_H_
 
+#include <linux/io.h>
+
 #include "vnic_resource.h"
 #include "vnic_devcmd.h"
 

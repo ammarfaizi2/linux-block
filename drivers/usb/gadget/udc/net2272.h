@@ -9,6 +9,7 @@
 #ifndef __NET2272_H__
 #define __NET2272_H__
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* Main Registers */

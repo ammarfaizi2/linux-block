@@ -9,6 +9,7 @@
 #ifndef _NSP32_IO_H
 #define _NSP32_IO_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 static inline void nsp32_write1(unsigned int  base,

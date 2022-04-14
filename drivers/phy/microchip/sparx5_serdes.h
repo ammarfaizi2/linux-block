@@ -7,6 +7,8 @@
 #ifndef _SPARX5_SERDES_H_
 #define _SPARX5_SERDES_H_
 
+#include <linux/io.h>
+
 #include "sparx5_serdes_regs.h"
 
 #define SPX5_SERDES_MAX       33

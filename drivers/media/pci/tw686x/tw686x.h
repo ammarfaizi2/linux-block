@@ -7,6 +7,7 @@
  * Written by Krzysztof Ha?asa
  */
 
+#include <linux/io.h>
 #include <linux/mutex.h>
 #include <linux/pci.h>
 #include <linux/timer.h>

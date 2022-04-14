@@ -8,6 +8,7 @@
 #ifndef _SMI_PCIE_H_
 #define _SMI_PCIE_H_
 
+#include <linux/io.h>
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
 #include <linux/init.h>

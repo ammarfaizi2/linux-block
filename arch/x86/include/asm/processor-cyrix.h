@@ -5,6 +5,7 @@
  * Access order is always 0x22 (=offset), 0x23 (=value)
  */
 
+#include <linux/io.h>
 #include <asm/pc-conf-reg.h>
 
 static inline u8 getCx86(u8 reg)

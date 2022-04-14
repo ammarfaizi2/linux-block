@@ -7,6 +7,7 @@
 #ifndef __QLCNIC_HW_H
 #define __QLCNIC_HW_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* Common registers in 83xx and 82xx */

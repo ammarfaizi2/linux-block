@@ -43,6 +43,7 @@
 #ifndef IPHASE_H  
 #define IPHASE_H  
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /************************ IADBG DEFINE *********************************/

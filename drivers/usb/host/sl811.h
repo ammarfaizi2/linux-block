@@ -7,6 +7,7 @@
  * Copyright (C) 2001 Cypress Semiconductor Inc. 
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /*

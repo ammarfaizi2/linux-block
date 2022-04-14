@@ -49,6 +49,7 @@
 #ifndef _LINUX_3780I_H
 #define _LINUX_3780I_H
 
+#include <linux/io.h>
 #include <asm/io.h>
 
 /* DSP I/O port offsets and definitions */

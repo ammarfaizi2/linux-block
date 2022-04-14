@@ -9,6 +9,7 @@
 #ifndef _GEMINI_ETHERNET_H
 #define _GEMINI_ETHERNET_H
 
+#include <linux/io.h>
 #include <linux/bitops.h>
 
 /* Base Registers */

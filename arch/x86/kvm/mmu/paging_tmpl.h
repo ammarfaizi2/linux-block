@@ -14,6 +14,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  *   Avi Kivity   <avi@qumranet.com>
  */
+#include <linux/io.h>
 #include <asm/pgtable_api_access.h>
 #include <linux/types.h>
 

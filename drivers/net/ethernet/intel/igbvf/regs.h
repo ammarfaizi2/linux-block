@@ -4,6 +4,7 @@
 #ifndef _E1000_REGS_H_
 #define _E1000_REGS_H_
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define E1000_CTRL	0x00000 /* Device Control - RW */

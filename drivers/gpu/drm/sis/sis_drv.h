@@ -28,6 +28,7 @@
 #ifndef _SIS_DRV_H_
 #define _SIS_DRV_H_
 
+#include <linux/io.h>
 #include <drm/drm_ioctl.h>
 #include <drm/drm_legacy.h>
 #include <drm/drm_mm.h>

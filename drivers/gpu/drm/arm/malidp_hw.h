@@ -9,6 +9,7 @@
 #ifndef __MALIDP_HW_H__
 #define __MALIDP_HW_H__
 
+#include <linux/io.h>
 #include <asm/io.h>
 #include <linux/bitops.h>
 #include "malidp_regs.h"

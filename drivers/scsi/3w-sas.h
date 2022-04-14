@@ -45,6 +45,7 @@
 #ifndef _3W_SAS_H
 #define _3W_SAS_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* AEN severity table */

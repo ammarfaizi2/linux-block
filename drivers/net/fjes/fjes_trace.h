@@ -7,6 +7,7 @@
 #if !defined(FJES_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
 #define FJES_TRACE_H_
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <asm/io.h>
 #include <linux/types.h>

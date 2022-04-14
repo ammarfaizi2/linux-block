@@ -22,6 +22,7 @@
 #ifndef _SMC91X_H_
 #define _SMC91X_H_
 
+#include <linux/io.h>
 #include <linux/dev_printk.h>
 #include <linux/dmaengine.h>
 #include <linux/smc91x.h>

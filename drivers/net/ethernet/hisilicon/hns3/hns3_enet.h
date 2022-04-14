@@ -4,6 +4,7 @@
 #ifndef __HNS3_ENET_H
 #define __HNS3_ENET_H
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/dim.h>
 #include <linux/if_vlan.h>

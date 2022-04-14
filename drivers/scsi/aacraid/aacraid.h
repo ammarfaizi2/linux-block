@@ -25,6 +25,7 @@
 #define _nblank(x) #x
 #define nblank(x) _nblank(x)[0]
 
+#include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/completion.h>
 #include <linux/pci.h>

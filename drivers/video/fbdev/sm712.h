@@ -13,6 +13,7 @@
  *  more details.
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define FB_ACCEL_SMI_LYNX 88

@@ -7,6 +7,7 @@
 #ifndef _KERNEL_DMA_DIRECT_H
 #define _KERNEL_DMA_DIRECT_H
 
+#include <linux/io.h>
 #include <linux/dev_printk.h>
 #include <linux/dma-direct.h>
 

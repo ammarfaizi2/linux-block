@@ -10,6 +10,7 @@
 #ifndef __MTU3_H__
 #define __MTU3_H__
 
+#include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/dmapool.h>

@@ -6,6 +6,7 @@
 #ifndef __TEGRA_CLK_H
 #define __TEGRA_CLK_H
 
+#include <linux/io.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>
 #include <linux/delay.h>

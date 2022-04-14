@@ -12,6 +12,7 @@
 #ifndef __LINUX_CDNSP_GADGET_H
 #define __LINUX_CDNSP_GADGET_H
 
+#include <linux/io.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 #include <linux/usb/gadget.h>
 #include <linux/irq.h>

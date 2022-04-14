@@ -3,6 +3,7 @@
 #ifndef _SLIC_H
 #define _SLIC_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 #include <linux/netdevice.h>
 #include <linux/spinlock_types.h>

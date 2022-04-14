@@ -6,6 +6,7 @@
 #ifndef _LINUX_QCOM_GENI_SE
 #define _LINUX_QCOM_GENI_SE
 
+#include <linux/io.h>
 #include <linux/interconnect.h>
 
 /**

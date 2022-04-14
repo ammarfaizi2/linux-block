@@ -2,6 +2,7 @@
 #ifndef __SOUND_CS5535AUDIO_H
 #define __SOUND_CS5535AUDIO_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define cs_writel(cs5535au, reg, val)	outl(val, (cs5535au)->port + reg)

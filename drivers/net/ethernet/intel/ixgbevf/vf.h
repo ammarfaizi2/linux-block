@@ -4,6 +4,7 @@
 #ifndef __IXGBE_VF_H__
 #define __IXGBE_VF_H__
 
+#include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

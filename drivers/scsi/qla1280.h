@@ -11,6 +11,7 @@
 #ifndef	_QLA1280_H
 #define	_QLA1280_H
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /*

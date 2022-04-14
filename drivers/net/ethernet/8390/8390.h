@@ -9,6 +9,7 @@
 #ifndef _8390_h
 #define _8390_h
 
+#include <linux/io.h>
 #include <linux/if_ether.h>
 #include <linux/ioport.h>
 #include <linux/irqreturn.h>

@@ -5,6 +5,7 @@
  * COPYRIGHT (C) by L. Wassmann <LW@KARO-electronics.de>
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* ------------------------------------------------------------------------- */

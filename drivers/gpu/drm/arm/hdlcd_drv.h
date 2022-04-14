@@ -6,6 +6,7 @@
 #ifndef __HDLCD_DRV_H__
 #define __HDLCD_DRV_H__
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 struct hdlcd_drm_private {

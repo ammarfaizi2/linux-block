@@ -25,6 +25,7 @@
 #ifndef _SMC9194_H_
 #define _SMC9194_H_
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /* I want some simple types */

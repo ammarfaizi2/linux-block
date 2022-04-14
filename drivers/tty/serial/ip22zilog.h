@@ -2,6 +2,7 @@
 #ifndef _IP22_ZILOG_H
 #define _IP22_ZILOG_H
 
+#include <linux/io.h>
 #include <asm/byteorder.h>
 
 struct zilog_channel {

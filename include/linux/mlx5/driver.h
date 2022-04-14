@@ -33,6 +33,7 @@
 #ifndef MLX5_DRIVER_H
 #define MLX5_DRIVER_H
 
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/completion.h>
 #include <linux/pci.h>

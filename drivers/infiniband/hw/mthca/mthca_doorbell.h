@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 #define MTHCA_RD_DOORBELL      0x00

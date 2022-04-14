@@ -20,6 +20,7 @@
 #define DRV_VER_MIN	10
 #define DRV_VER_UPD	2
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/ethtool.h>
 #include <linux/interrupt.h>

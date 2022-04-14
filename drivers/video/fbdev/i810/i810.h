@@ -13,6 +13,7 @@
 #ifndef __I810_H__
 #define __I810_H__
 
+#include <linux/io.h>
 #include <linux/list.h>
 #include <linux/agp_backend.h>
 #include <linux/fb.h>

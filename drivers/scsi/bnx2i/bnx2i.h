@@ -17,6 +17,7 @@
 #ifndef _BNX2I_H_
 #define _BNX2I_H_
 
+#include <linux/io.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 

@@ -9,6 +9,7 @@
 #ifndef _UFS_EXYNOS_H_
 #define _UFS_EXYNOS_H_
 
+#include <linux/io.h>
 #include <linux/types.h>
 
 /*
