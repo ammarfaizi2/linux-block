@@ -7,6 +7,7 @@
  * Jiang Liu <jiang.liu@linux.intel.com>
  *	Enable support of hierarchical irqdomains
  */
+#include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

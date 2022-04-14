@@ -5,6 +5,7 @@
  * Copyright 2014-2015 Yoshinori Sato <ysato@users.sourceforge.jp>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

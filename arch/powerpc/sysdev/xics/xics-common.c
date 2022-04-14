@@ -2,6 +2,7 @@
 /*
  * Copyright 2011 IBM Corporation.
  */
+#include <linux/irqdesc.h>
 #include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/threads.h>

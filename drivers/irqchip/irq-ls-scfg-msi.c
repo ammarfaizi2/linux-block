@@ -7,6 +7,7 @@
  * Author: Minghuan Lian <Minghuan.Lian@nxp.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

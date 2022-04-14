@@ -13,6 +13,7 @@
  * Copyright (C) 2004 Nokia Corporation by Tony Lindrgen <tony@atomide.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/interrupt.h>
 #include <linux/types.h>
 #include <linux/gpio.h>

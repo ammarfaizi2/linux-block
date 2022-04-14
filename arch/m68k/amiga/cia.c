@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

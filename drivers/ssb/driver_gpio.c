@@ -10,6 +10,7 @@
 
 #include "ssb_private.h"
 
+#include <linux/irqdesc.h>
 #include <linux/bitmap.h>
 #include <linux/gpio/driver.h>
 #include <linux/irq.h>

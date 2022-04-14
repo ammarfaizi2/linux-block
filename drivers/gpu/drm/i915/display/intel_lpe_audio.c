@@ -60,6 +60,7 @@
  *
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>
 #include <linux/acpi.h>

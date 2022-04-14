@@ -35,6 +35,7 @@
  * otherwise both handlers will fire at the same time!
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/slab.h>
 #include <linux/of_address.h>

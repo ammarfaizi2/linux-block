@@ -3,6 +3,7 @@
  * Copyright (c) 2016, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/irqdomain.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Nicolas Schichan <nschichan@freebox.fr>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

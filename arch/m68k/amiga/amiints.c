@@ -6,6 +6,7 @@
  * for more details.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/errno.h>

@@ -8,6 +8,7 @@
  * Author: Jingoo Han <jg1.han@samsung.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

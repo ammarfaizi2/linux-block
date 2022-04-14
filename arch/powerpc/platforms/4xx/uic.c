@@ -6,6 +6,7 @@
  *
  * Copyright 2007 David Gibson <dwg@au1.ibm.com>, IBM Corporation.
  */
+#include <linux/irqdesc.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/errno.h>

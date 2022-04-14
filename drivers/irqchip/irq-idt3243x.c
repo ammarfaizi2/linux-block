@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/irqdesc.h>
 #include <linux/irq_api_io.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

@@ -10,6 +10,7 @@
  *			Shyam Sundar S K <Shyam-sundar.S-k@amd.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

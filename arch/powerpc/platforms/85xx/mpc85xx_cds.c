@@ -7,6 +7,7 @@
  * Copyright 2005, 2011-2012 Freescale Semiconductor Inc.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

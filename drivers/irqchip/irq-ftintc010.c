@@ -7,6 +7,7 @@
  * Copyright (C) 2001-2006 Storlink, Corp.
  * Copyright (C) 2008-2009 Paulius Zaleckas <paulius.zaleckas@gmail.com>
  */
+#include <linux/irqdesc.h>
 #include <linux/bitops.h>
 #include <linux/irq.h>
 #include <linux/io.h>

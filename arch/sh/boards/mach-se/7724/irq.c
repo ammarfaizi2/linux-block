@@ -11,6 +11,7 @@
  *
  * Hitachi UL SolutionEngine 7724 Support.
  */
+#include <linux/irqdesc.h>
 #include <linux/init.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>

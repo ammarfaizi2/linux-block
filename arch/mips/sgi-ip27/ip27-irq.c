@@ -7,6 +7,7 @@
  * Copyright (C) 1999 - 2001 Kanoj Sarcar
  */
 
+#include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

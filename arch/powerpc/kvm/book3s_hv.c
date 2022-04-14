@@ -15,6 +15,7 @@
  * by Alexander Graf <agraf@suse.de>.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hardirq.h>
 #include <linux/fs_api.h>

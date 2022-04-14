@@ -5,6 +5,7 @@
  * Author: Varun Sethi <varun.sethi@freescale.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/irq.h>
 #include <linux/smp.h>

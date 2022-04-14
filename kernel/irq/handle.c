@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>

@@ -5,6 +5,7 @@
  *
  * Combiner irqchip for EXYNOS
  */
+#include <linux/irqdesc.h>
 #include <linux/err.h>
 #include <linux/export.h>
 #include <linux/init.h>

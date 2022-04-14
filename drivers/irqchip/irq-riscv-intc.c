@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) "riscv-intc: " fmt
+#include <linux/irqdesc.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic.h>
 #include <linux/bits.h>

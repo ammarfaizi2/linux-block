@@ -12,6 +12,7 @@
  * Copyright (C) 2019 David Lechner <david@lechnology.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>

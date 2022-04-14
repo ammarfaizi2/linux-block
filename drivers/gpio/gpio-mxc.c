@@ -7,6 +7,7 @@
 // Authors: Daniel Mack, Juergen Beisert.
 // Copyright (C) 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
 
+#include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/err.h>

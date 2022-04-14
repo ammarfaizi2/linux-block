@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/irqdesc.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>
 #include <linux/seq_file.h>

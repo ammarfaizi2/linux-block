@@ -56,6 +56,7 @@
  *
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/init.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2012 Heiko Stuebner <heiko@sntech.de>
 */
 
+#include <linux/irqdesc.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

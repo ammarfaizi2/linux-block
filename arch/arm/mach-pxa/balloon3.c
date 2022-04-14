@@ -10,6 +10,7 @@
  *  Derived from mainstone.c, by Nico Pitre
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/export.h>
 #include <linux/init.h>

@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/init.h>
 #include <linux/ftrace.h>
 #include <linux/kernel.h>

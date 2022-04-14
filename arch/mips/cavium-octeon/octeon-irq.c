@@ -6,6 +6,7 @@
  * Copyright (C) 2004-2016 Cavium, Inc.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io_extra.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

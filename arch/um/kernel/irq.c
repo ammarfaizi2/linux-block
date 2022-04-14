@@ -7,6 +7,7 @@
  *	Copyright (C) 1992, 1998 Linus Torvalds, Ingo Molnar
  */
 
+#include <linux/irqdesc.h>
 #include <linux/atomic_api.h>
 #include <linux/cpumask.h>
 #include <linux/hardirq.h>

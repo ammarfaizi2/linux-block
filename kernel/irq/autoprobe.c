@@ -5,6 +5,7 @@
  * This file contains the interrupt probing code and driver APIs.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/irq.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

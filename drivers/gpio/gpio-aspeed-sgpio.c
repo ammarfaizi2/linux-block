@@ -5,6 +5,7 @@
  * Author: Karthikeyan Mani <karthikeyanm@amiindia.co.in>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>

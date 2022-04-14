@@ -22,6 +22,7 @@
  * irq levels 10 and 11.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/ioport.h>

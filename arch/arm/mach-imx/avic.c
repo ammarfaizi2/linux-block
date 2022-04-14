@@ -4,6 +4,7 @@
  * Copyright 2008 Juergen Beisert, kernel@pengutronix.de
  */
 
+#include <linux/irqdesc.h>
 #include <linux/module.h>
 #include <linux/irq.h>
 #include <linux/irqdomain.h>

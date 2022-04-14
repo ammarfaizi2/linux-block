@@ -7,6 +7,7 @@
  * Copyright (c) 2018 Manivannan Sadhasivam
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

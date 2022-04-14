@@ -8,6 +8,7 @@
  * Copyright 2007 Freescale Semiconductor Inc.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

@@ -15,6 +15,7 @@
  * Copyright (C) 2011-2012 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/irq_api_io.h>
 #include <linux/irq_api_gc_lock.h>
 #include <linux/ioport.h>

@@ -6,6 +6,7 @@
 // Based on code from Freescale,
 // Copyright (C) 2004-2010 Freescale Semiconductor, Inc. All Rights Reserved.
 
+#include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/init.h>

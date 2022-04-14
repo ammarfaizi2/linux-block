@@ -4,6 +4,7 @@
  *	Hitachi HD64461 companion chip support
  */
 
+#include <linux/irqdesc.h>
 #include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

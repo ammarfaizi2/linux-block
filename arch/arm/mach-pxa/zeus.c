@@ -8,6 +8,7 @@
  *  Maintained by Marc Zyngier <maz@misterjones.org>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/cpufreq.h>

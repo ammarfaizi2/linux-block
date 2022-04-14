@@ -11,6 +11,7 @@
  * Alexey Charkov. Minor changes have been made for Device Tree Support.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/irq.h>

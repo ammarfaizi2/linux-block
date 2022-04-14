@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "irq-mips-gic: " fmt
 
+#include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

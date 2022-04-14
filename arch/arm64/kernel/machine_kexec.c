@@ -6,6 +6,7 @@
  * Copyright (C) Huawei Futurewei Technologies.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/cpumask_api.h>

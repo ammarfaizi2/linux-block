@@ -14,6 +14,7 @@
  * they aren't actually interrupt lines but data lines (to the DSP?)
  */
 
+#include <linux/irqdesc.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

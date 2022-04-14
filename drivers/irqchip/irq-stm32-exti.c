@@ -5,6 +5,7 @@
  * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
  */
 
+#include <linux/irqdesc.h>
 #include <linux/irq_api_io.h>
 #include <linux/irq_api_gc_lock.h>
 #include <linux/device_api_lock.h>

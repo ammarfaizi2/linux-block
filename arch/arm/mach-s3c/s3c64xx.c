@@ -14,6 +14,7 @@
  * NOTE: Code in this file is not used when booting with Device Tree support.
  */
 
+#include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

@@ -10,6 +10,7 @@
  * Parts of this code are taken from linux/arch/arm/mach-omap/irq.c
  * in the MontaVista 2.4 kernel (and the Amstrad changes therein)
  */
+#include <linux/irqdesc.h>
 #include <linux/gpio/consumer.h>
 #include <linux/gpio/machine.h>
 #include <linux/gpio/driver.h>
