@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2011, Thomas Gleixner
  */
+#include <linux/irq_api_gc_lock.h>
 #include <linux/io.h>
 #include <linux/irq.h>
 #include <linux/slab.h>

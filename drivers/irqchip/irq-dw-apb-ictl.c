@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/irq_api_gc_lock.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/irq.h>

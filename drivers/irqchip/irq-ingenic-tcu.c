@@ -4,6 +4,7 @@
  * Copyright (C) 2019 Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <linux/irq_api_gc_lock.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>

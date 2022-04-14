@@ -3,6 +3,7 @@
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  */
 
+#include <linux/irq_api_gc_lock.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>
 #include <linux/bitfield.h>
