@@ -29,6 +29,7 @@
  * Functions for RGMII/GMII/MII initialization, configuration,
  * and monitoring.
  */
+#include <linux/string.h>
 #include <asm/octeon/octeon.h>
 
 #include <asm/octeon/cvmx-config.h>

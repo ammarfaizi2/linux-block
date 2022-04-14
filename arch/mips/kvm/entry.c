@@ -11,6 +11,7 @@
  * Copyright (C) 2016 Imagination Technologies Ltd.
  */
 
+#include <linux/string.h>
 #include <linux/preempt.h>
 #include <asm/cpu-type.h>
 #include <linux/kvm_host.h>

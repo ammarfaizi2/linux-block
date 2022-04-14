@@ -25,6 +25,7 @@
  * Contact Cavium Networks for more information
  ***********************license end**************************************/
 
+#include <linux/string.h>
 #include <asm/octeon/octeon.h>
 
 enum octeon_feature_bits __octeon_feature_bits __read_mostly;

@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/string.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>

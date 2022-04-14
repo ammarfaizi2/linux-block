@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/string.h>
 #include <linux/ioport.h>
 #include <linux/etherdevice_api.h>
 #include <linux/clk.h>

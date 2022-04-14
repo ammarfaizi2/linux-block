@@ -9,6 +9,7 @@
  * Copyright (C) 2001, 2002, 2003 by Liam Davies (ldavies@agile.tv)
  *
  */
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

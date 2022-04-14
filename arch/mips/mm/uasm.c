@@ -13,6 +13,7 @@
  * Copyright (C) 2012, 2013  MIPS Technologies, Inc.  All rights reserved.
  */
 
+#include <linux/string.h>
 #include <linux/types.h>
 
 enum fields {

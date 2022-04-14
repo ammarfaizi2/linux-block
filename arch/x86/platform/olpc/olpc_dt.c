@@ -12,6 +12,7 @@
  *  Adapted for x86/OLPC by Andres Salomon <dilinger@queued.net>
  */
 
+#include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/cache.h>
 #include <linux/kernel.h>

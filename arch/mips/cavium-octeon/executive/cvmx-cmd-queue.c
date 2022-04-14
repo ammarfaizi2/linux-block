@@ -30,6 +30,7 @@
  * various hardware blocks.
  */
 
+#include <linux/string.h>
 #include <linux/kernel.h>
 
 #include <asm/octeon/octeon.h>

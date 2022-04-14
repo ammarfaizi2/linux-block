@@ -8,6 +8,7 @@
  * Copyright (C) 2008  Thiemo Seufer
  * Copyright (C) 2012  MIPS Technologies, Inc.
  */
+#include <linux/string.h>
 #include <linux/prefetch.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

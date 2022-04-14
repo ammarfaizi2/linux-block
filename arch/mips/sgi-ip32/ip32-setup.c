@@ -9,6 +9,7 @@
  * Copyright (C) 2002, 2003, 2005 Ilya A. Volynets
  * Copyright (C) 2006 Ralf Baechle <ralf@linux-mips.org>
  */
+#include <linux/string.h>
 #include <linux/console.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Cisco Systems Inc. <dediao@cisco.com>
  */
 
+#include <linux/string.h>
 #include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/export.h>

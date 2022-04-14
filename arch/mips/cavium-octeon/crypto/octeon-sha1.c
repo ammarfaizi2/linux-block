@@ -13,6 +13,7 @@
  * Copyright (c) Jean-Francois Dive <jef@linuxbe.org>
  */
 
+#include <linux/string.h>
 #include <linux/mm.h>
 #include <crypto/sha1.h>
 #include <crypto/sha1_base.h>

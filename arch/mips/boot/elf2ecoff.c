@@ -33,6 +33,7 @@
    net-bootable kernels for machines (e.g., DECstation and Alpha) which
    only support the ECOFF object file format. */
 
+#include <linux/string.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>

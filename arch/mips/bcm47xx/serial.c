@@ -9,6 +9,7 @@
  * Copyright (C) 2007 Aurelien Jarno <aurelien@aurel32.net>
  */
 
+#include <linux/string.h>
 #include <linux/init.h>
 #include <linux/serial.h>
 #include <linux/serial_8250.h>

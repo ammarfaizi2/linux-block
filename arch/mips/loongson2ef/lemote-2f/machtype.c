@@ -3,6 +3,7 @@
  * Copyright (C) 2009 Lemote Inc.
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
+#include <linux/string.h>
 #include <asm/bootinfo.h>
 
 #include <loongson.h>

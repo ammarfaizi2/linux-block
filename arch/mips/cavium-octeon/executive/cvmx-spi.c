@@ -29,6 +29,7 @@
  *
  * Support library for the SPI
  */
+#include <linux/string.h>
 #include <asm/octeon/octeon.h>
 
 #include <asm/octeon/cvmx-config.h>

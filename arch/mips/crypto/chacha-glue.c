@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Linaro, Ltd. <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/string.h>
 #include <asm/byteorder.h>
 #include <crypto/algapi.h>
 #include <crypto/internal/chacha.h>

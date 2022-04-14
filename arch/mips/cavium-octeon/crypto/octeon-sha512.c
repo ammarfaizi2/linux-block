@@ -13,6 +13,7 @@
  * Copyright (c) 2003 Kyle McMartin <kyle@debian.org>
  */
 
+#include <linux/string.h>
 #include <linux/mm.h>
 #include <crypto/sha2.h>
 #include <crypto/sha512_base.h>

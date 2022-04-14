@@ -12,6 +12,7 @@
  * Copyright (C) 2000, 2001, 2012 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2014, Imagination Technologies Ltd.
  */
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/static_call.h>

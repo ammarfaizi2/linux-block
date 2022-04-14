@@ -11,6 +11,7 @@
  * Copyright (C) 2004 by Ralf Baechle (ralf@linux-mips.org)
  * (C) Copyright TOSHIBA CORPORATION 2000-2001, 2004-2007
  */
+#include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

@@ -22,6 +22,7 @@
  *  kind, whether express or implied.
  */
 
+#include <linux/string.h>
 #include <linux/sched/thread.h>
 #include <linux/atomic_api.h>
 #include <linux/ptrace.h>		/* for linux pt_regs struct */
