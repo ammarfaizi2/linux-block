@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright (c) 2010-2012 Broadcom. All rights reserved. */
 
+#include <linux/numa_types.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>

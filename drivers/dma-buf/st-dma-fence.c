@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/numa_types.h>
 #include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>
 #include <linux/delay.h>
