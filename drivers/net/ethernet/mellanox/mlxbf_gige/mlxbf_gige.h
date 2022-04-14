@@ -10,6 +10,7 @@
 #ifndef __MLXBF_GIGE_H__
 #define __MLXBF_GIGE_H__
 
+#include <linux/dma-direction.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 #include <linux/irqreturn.h>
 #include <linux/netdevice.h>
