@@ -3,6 +3,7 @@
 
 #ifdef CONFIG_MLX5_ACCEL
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
 

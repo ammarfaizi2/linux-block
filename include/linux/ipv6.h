@@ -2,6 +2,7 @@
 #ifndef _IPV6_H
 #define _IPV6_H
 
+#include <linux/skbuff_api.h>
 #include <uapi/linux/ipv6.h>
 
 #define ipv6_optlen(p)  (((p)->hdrlen+1) << 3)

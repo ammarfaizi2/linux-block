@@ -6,6 +6,7 @@
 #ifndef _NET_MPLS_H
 #define _NET_MPLS_H 1
 
+#include <linux/skbuff_api.h>
 #include <linux/if_ether.h>
 #include <linux/netdevice.h>
 #include <linux/mpls.h>

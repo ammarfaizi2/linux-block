@@ -1,6 +1,7 @@
 #ifndef _NF_TPROXY_H_
 #define _NF_TPROXY_H_
 
+#include <linux/skbuff_api.h>
 #include <net/tcp.h>
 
 enum nf_tproxy_lookup_t {

@@ -4,6 +4,7 @@
 #ifndef _LAN743X_H
 #define _LAN743X_H
 
+#include <linux/skbuff_api.h>
 #include <linux/phy.h>
 #include "lan743x_ptp.h"
 

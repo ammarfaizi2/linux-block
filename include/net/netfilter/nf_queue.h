@@ -2,6 +2,7 @@
 #ifndef _NF_QUEUE_H
 #define _NF_QUEUE_H
 
+#include <linux/skbuff_api.h>
 #include <linux/prandom.h>
 #include <linux/if_ether_api.h>
 #include <linux/ip.h>

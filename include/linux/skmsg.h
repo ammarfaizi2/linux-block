@@ -4,6 +4,7 @@
 #ifndef _LINUX_SKMSG_H
 #define _LINUX_SKMSG_H
 
+#include <linux/skbuff_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/bpf.h>
 #include <linux/filter.h>

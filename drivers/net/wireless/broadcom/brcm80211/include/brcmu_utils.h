@@ -6,6 +6,7 @@
 #ifndef	_BRCMU_UTILS_H_
 #define	_BRCMU_UTILS_H_
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff.h>
 
 /*

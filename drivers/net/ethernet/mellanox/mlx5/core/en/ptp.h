@@ -6,6 +6,7 @@
 
 #include "en.h"
 #include "en_stats.h"
+#include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/ptp_classify.h>
 

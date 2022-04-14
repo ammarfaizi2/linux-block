@@ -2,6 +2,7 @@
 #ifndef __LINUX_BRIDGE_NETFILTER_H
 #define __LINUX_BRIDGE_NETFILTER_H
 
+#include <linux/skbuff_api.h>
 #include <uapi/linux/netfilter_bridge.h>
 #include <linux/skbuff.h>
 

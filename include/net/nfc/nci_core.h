@@ -17,6 +17,7 @@
 #ifndef __NCI_CORE_H
 #define __NCI_CORE_H
 
+#include <linux/skbuff_api.h>
 #include <linux/interrupt.h>
 #include <linux/skbuff.h>
 #include <linux/tty.h>

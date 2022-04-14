@@ -3,6 +3,7 @@
 #define _LINUX_DCCP_H
 
 
+#include <linux/skbuff_api.h>
 #include <linux/in.h>
 #include <linux/interrupt.h>
 #include <linux/ktime.h>

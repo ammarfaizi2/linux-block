@@ -7,6 +7,7 @@
 #ifndef __MT7601U_DMA_H
 #define __MT7601U_DMA_H
 
+#include <linux/skbuff_api.h>
 #include <asm/unaligned.h>
 #include <linux/skbuff.h>
 

@@ -20,6 +20,7 @@
 #ifndef _MWIFIEX_WMM_H_
 #define _MWIFIEX_WMM_H_
 
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 
 enum ieee_types_wmm_aciaifsn_bitmasks {

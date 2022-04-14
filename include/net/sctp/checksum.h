@@ -23,6 +23,7 @@
 #ifndef __sctp_checksum_h__
 #define __sctp_checksum_h__
 
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 #include <net/sctp/sctp.h>
 #include <linux/crc32c.h>

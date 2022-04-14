@@ -8,6 +8,7 @@
 #ifndef __NET_MPTCP_H
 #define __NET_MPTCP_H
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff.h>
 #include <linux/tcp.h>
 #include <linux/types.h>

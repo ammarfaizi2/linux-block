@@ -8,6 +8,7 @@
 #ifndef _SUNBMAC_H
 #define _SUNBMAC_H
 
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 
 /* QEC global registers. */

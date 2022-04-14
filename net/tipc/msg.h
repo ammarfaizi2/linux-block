@@ -37,6 +37,7 @@
 #ifndef _TIPC_MSG_H
 #define _TIPC_MSG_H
 
+#include <linux/skbuff_api.h>
 #include <linux/tipc.h>
 #include "core.h"
 

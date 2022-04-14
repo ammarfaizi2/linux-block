@@ -13,6 +13,7 @@
 #ifndef _LINUX_IP_H
 #define _LINUX_IP_H
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff.h>
 #include <uapi/linux/ip.h>
 

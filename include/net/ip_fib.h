@@ -12,6 +12,7 @@
 #ifndef _NET_IP_FIB_H
 #define _NET_IP_FIB_H
 
+#include <linux/skbuff_api.h>
 #include <net/flow.h>
 #include <linux/seq_file.h>
 #include <linux/rcupdate.h>

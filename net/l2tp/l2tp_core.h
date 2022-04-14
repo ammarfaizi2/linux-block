@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2008,2009 Katalix Systems Ltd
  */
+#include <linux/skbuff_api.h>
 #include <linux/refcount.h>
 
 #ifndef _L2TP_CORE_H_

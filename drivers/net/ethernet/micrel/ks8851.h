@@ -10,6 +10,7 @@
 #ifndef __KS8851_H__
 #define __KS8851_H__
 
+#include <linux/skbuff_api.h>
 #include <linux/eeprom_93cx6.h>
 
 #define KS_CCR					0x08

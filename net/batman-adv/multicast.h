@@ -9,6 +9,7 @@
 
 #include "main.h"
 
+#include <linux/skbuff_api.h>
 #include <linux/netlink.h>
 #include <linux/skbuff.h>
 

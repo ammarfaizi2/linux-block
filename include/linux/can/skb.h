@@ -11,6 +11,7 @@
 #ifndef _CAN_SKB_H
 #define _CAN_SKB_H
 
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>
 #include <linux/can.h>

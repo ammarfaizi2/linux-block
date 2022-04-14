@@ -3,6 +3,7 @@
 #define __LINUX_NETLINK_H
 
 
+#include <linux/skbuff_api.h>
 #include <linux/capability.h>
 #include <linux/skbuff.h>
 #include <linux/export.h>

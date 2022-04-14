@@ -5,6 +5,7 @@
 #if !defined(_TRACE_NET_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_NET_H
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
 #include <linux/if_vlan.h>

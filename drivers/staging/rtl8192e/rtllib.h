@@ -19,6 +19,7 @@
  */
 #ifndef RTLLIB_H
 #define RTLLIB_H
+#include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/if_ether.h> /* ETH_ALEN */

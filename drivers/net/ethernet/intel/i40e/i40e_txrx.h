@@ -4,6 +4,7 @@
 #ifndef _I40E_TXRX_H_
 #define _I40E_TXRX_H_
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>

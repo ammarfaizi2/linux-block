@@ -2,6 +2,7 @@
 #ifndef _NET_XFRM_H
 #define _NET_XFRM_H
 
+#include <linux/skbuff_api.h>
 #include <linux/compiler.h>
 #include <linux/xfrm.h>
 #include <linux/spinlock.h>

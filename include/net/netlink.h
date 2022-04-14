@@ -2,6 +2,7 @@
 #ifndef __NET_NETLINK_H
 #define __NET_NETLINK_H
 
+#include <linux/skbuff_api.h>
 #include <linux/types.h>
 #include <linux/netlink.h>
 #include <linux/jiffies.h>

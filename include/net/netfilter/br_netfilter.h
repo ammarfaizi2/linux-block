@@ -2,6 +2,7 @@
 #ifndef _BR_NETFILTER_H_
 #define _BR_NETFILTER_H_
 
+#include <linux/skbuff_api.h>
 #include <linux/netfilter.h>
 
 #include "../../../net/bridge/br_private.h"

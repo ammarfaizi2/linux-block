@@ -2,6 +2,7 @@
 #ifndef _X25DEVICE_H
 #define _X25DEVICE_H
 
+#include <linux/skbuff_api.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
 #include <linux/if_x25.h>

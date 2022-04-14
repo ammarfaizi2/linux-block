@@ -34,6 +34,7 @@
 #define __LIBCXGB_CM_H__
 
 
+#include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <net/tcp.h>
 

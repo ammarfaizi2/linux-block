@@ -13,6 +13,7 @@
 #ifndef CW1200_WSM_H_INCLUDED
 #define CW1200_WSM_H_INCLUDED
 
+#include <linux/skbuff_api.h>
 #include <linux/spinlock.h>
 
 struct cw1200_common;
