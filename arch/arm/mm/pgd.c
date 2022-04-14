@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1998-2005 Russell King
  */
+#include <linux/mm_api_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/mm.h>
 #include <linux/gfp.h>

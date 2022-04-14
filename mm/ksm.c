@@ -13,6 +13,7 @@
  *	Hugh Dickins
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/memcontrol.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

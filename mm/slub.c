@@ -10,6 +10,7 @@
  * (C) 2011 Linux Foundation, Christoph Lameter
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

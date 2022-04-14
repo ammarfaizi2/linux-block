@@ -17,6 +17,7 @@
  * your bootloader for now.
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

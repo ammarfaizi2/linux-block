@@ -9,6 +9,7 @@
  * Feb, 2004: dynamic hugetlb page size via boot parameter
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/mm.h>

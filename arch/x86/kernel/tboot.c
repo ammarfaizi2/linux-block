@@ -6,6 +6,7 @@
  * Copyright (c) 2006-2009, Intel Corporation
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>

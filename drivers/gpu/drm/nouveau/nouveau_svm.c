@@ -24,6 +24,7 @@
 #include "nouveau_chan.h"
 #include "nouveau_dmem.h"
 
+#include <linux/mm_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

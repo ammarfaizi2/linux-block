@@ -4,6 +4,7 @@
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched.h>

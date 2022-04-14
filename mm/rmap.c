@@ -52,6 +52,7 @@
  *             page->flags PG_locked (lock_page)
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

@@ -14,6 +14,7 @@
  * Buffermem limits added 12.3.98, Rik van Riel.
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>

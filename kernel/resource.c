@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api_extra.h>
 #include <linux/memory_hotplug.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>

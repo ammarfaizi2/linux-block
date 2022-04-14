@@ -6,6 +6,7 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/kernel.h>
 #include <linux/iopoll.h>
 #include <linux/module.h>

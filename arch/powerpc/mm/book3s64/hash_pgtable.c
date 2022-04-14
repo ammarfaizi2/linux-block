@@ -5,6 +5,7 @@
  * Copyright 2015-2016, Aneesh Kumar K.V, IBM Corporation.
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

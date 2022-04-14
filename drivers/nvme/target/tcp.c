@@ -4,6 +4,7 @@
  * Copyright (c) 2018 Lightbits Labs. All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/mm_api_extra.h>
 #include <linux/llist_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

@@ -8,6 +8,7 @@
  * Based on code by Dmitry Chernenkov.
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/gfp.h>

@@ -30,6 +30,7 @@
  *
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/fs.h>

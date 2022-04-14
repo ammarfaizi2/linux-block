@@ -4,6 +4,7 @@
  * Author: Alex Smith <alex.smith@imgtec.com>
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/binfmts.h>

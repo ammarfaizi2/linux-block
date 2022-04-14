@@ -6,6 +6,7 @@
  * Author: Ross Zwisler <ross.zwisler@linux.intel.com>
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/lockdep_api.h>
 #include <linux/io.h>
 #include <linux/highmem_extra.h>

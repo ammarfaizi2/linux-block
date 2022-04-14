@@ -7,6 +7,7 @@
  * Marcin Wojtas <mw@semihalf.com>
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/ipv6.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

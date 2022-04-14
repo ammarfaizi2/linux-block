@@ -3,6 +3,7 @@
  * Copyright 2018-2020 Broadcom.
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
