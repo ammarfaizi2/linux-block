@@ -1189,6 +1189,13 @@ static int pci_dev_wait(struct pci_dev *dev, char *reset_type, int timeout)
 /**
  * pci_power_up - Put the given device into D0
  * @dev: PCI device to power up
+ *
+ * Use the platform firmware and the PCI_PM_CTRL register to put @dev into D0.
+ *
+ * Return 0 if invoking the platform firmware was sufficient to put @dev
+ * into D0 (and so the PCI_PM_CTRL register was not updated), or 1 if it
+ * was necessary to update the PCI_PM_CTRL register, or -ENODEV if the
+ * device was not accessible.
  */
 int pci_power_up(struct pci_dev *dev)
 {
@@ -1244,7 +1251,7 @@ int pci_power_up(struct pci_dev *dev)
 		udelay(PCI_PM_D2_DELAY);
 
 	dev->current_state = PCI_D0;
-	return 0;
+	return 1;
 
 fail:
 	pci_err(dev, "Unable to change power state to D0, device inaccessible\n");
@@ -1294,7 +1301,7 @@ static int pci_set_full_power_state(struct pci_dev *dev)
 	int ret;
 
 	ret = pci_power_up(dev);
-	if (ret)
+	if (ret < 0)
 		return ret;
 
 	if (!dev->pm_cap)
