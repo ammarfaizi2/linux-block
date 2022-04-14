@@ -11,6 +11,7 @@
 #define pr_fmt(fmt) "acpi/hmat: " fmt
 #define dev_fmt(fmt) "acpi/hmat: " fmt
 
+#include <linux/nodemask.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/bitmap.h>
