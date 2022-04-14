@@ -37,6 +37,7 @@
 #ifndef UVERBS_H
 #define UVERBS_H
 
+#include <linux/srcu_types.h>
 #include <linux/kref.h>
 #include <linux/idr.h>
 #include <linux/mutex.h>
