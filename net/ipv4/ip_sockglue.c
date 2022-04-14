@@ -16,6 +16,7 @@
  *		Mike McLagan	:	Routing by source
  */
 
+#include <net/inet_connection_sock_api.h>
 #include <net/dst_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
