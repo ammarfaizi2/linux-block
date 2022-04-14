@@ -7,6 +7,7 @@
 
 struct task_struct;
 
+DECLARE_PER_TASK(cpumask_t, cpus_mask);
 DECLARE_PER_TASK(const cpumask_t *, cpus_ptr);
 DECLARE_PER_TASK(cpumask_t *, user_cpus_ptr);
 
