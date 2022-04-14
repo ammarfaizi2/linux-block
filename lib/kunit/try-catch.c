@@ -7,6 +7,7 @@
  * Author: Brendan Higgins <brendanhiggins@google.com>
  */
 
+#include <linux/numa.h>
 #include <kunit/test.h>
 #include <linux/completion.h>
 #include <linux/kernel.h>
