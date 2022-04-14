@@ -2,6 +2,7 @@
 #ifndef _INTEL_RINGBUFFER_H_
 #define _INTEL_RINGBUFFER_H_
 
+#include <linux/tasklet_api.h>
 #include <asm/cacheflush.h>
 #include <drm/drm_util.h>
 

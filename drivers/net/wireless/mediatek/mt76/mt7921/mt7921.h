@@ -4,6 +4,7 @@
 #ifndef __MT7921_H
 #define __MT7921_H
 
+#include <linux/tasklet_api.h>
 #include <linux/interrupt.h>
 #include <linux/ktime.h>
 #include "../mt76_connac_mcu.h"
