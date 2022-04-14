@@ -8,6 +8,7 @@
 #ifndef _LINUX_EVENTPOLL_H
 #define _LINUX_EVENTPOLL_H
 
+#include <linux/uaccess.h>
 #include <linux/fs.h>
 
 #include <uapi/linux/eventpoll.h>
