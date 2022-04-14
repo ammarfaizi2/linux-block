@@ -13,6 +13,7 @@
  *		Pavel Kankovsky (IPv4 implementation, for Linux 2.4.32)
  */
 
+#include <net/dst_api.h>
 #include <linux/seq_file.h>
 #include <linux/ipv6.h>
 #include <linux/icmpv6.h>

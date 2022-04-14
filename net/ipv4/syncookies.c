@@ -6,6 +6,7 @@
  *  Based on ideas by D.J.Bernstein and Eric Schenk.
  */
 
+#include <net/dst_api.h>
 #include <linux/siphash_api.h>
 #include <linux/refcount_api.h>
 #include <linux/random.h>

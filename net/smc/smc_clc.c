@@ -10,6 +10,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <net/dst_api.h>
 #include <linux/uio_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

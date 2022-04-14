@@ -3,6 +3,7 @@
  * Copyright (c) 2013 Patrick McHardy <kaber@trash.net>
  */
 
+#include <net/dst_api.h>
 #include <net/checksum.h>
 #include <linux/seq_file_net.h>
 #include <linux/seq_file.h>

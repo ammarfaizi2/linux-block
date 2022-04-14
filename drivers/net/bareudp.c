@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/dst_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/percpu.h>
 #include <linux/net.h>

@@ -24,6 +24,7 @@
  *		Alexey Kuznetsov:	Potential hang under some extreme
  *					cases removed.
  */
+#include <net/dst_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/net.h>

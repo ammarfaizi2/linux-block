@@ -6,6 +6,7 @@
  *  (C) 2007 Laszlo Attila Toth <panther@balabit.hu>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <net/dst_api.h>
 #include <linux/ipv6.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  *  Justin Iurman <justin.iurman@uliege.be>
  */
 
+#include <net/dst_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/ipv6.h>

@@ -22,6 +22,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <net/dst_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

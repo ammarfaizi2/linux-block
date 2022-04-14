@@ -3,6 +3,7 @@
  * IPv6 library code, needed by static components when full IPv6 support is
  * not configured or static.  These functions are needed by GSO/GRO implementation.
  */
+#include <net/dst_api.h>
 #include <linux/random.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>

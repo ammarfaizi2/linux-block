@@ -7,6 +7,7 @@
 
 #include "flow.h"
 #include "datapath.h"
+#include <net/dst_api.h>
 #include <linux/slab.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

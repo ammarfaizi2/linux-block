@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <net/dst_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/u64_stats_sync_api.h>

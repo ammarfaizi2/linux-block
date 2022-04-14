@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2019-2021, Intel Corporation. */
 
+#include <net/dst_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

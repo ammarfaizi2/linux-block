@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "6LoWPAN: " fmt
 
+#include <net/dst_api.h>
 #include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>

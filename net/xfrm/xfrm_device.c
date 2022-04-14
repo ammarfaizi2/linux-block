@@ -8,6 +8,7 @@
  * Steffen Klassert <steffen.klassert@secunet.com>
  */
 
+#include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/softirq.h>
 #include <linux/netdevice_api_lock.h>

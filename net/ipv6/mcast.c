@@ -22,6 +22,7 @@
  *		- MLDv2 support
  */
 
+#include <net/dst_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

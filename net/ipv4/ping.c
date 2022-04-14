@@ -15,6 +15,7 @@
  * none of the bugs are Pavel's now.
  */
 
+#include <net/dst_api.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
