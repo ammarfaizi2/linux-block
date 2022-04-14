@@ -6,7 +6,8 @@
 #include <linux/types.h>
 #include <linux/mm.h>
 #include <linux/fs.h>
-#include <asm/siginfo.h>
+
+struct kernel_siginfo;
 
 #ifdef CONFIG_COREDUMP
 struct core_vma_metadata {
@@ -18,7 +19,7 @@ struct core_vma_metadata {
 };
 
 struct coredump_params {
-	const kernel_siginfo_t *siginfo;
+	const struct kernel_siginfo *siginfo;
 	struct pt_regs *regs;
 	struct file *file;
 	unsigned long limit;
@@ -41,9 +42,9 @@ extern int dump_emit(struct coredump_params *cprm, const void *addr, int nr);
 extern int dump_align(struct coredump_params *cprm, int align);
 int dump_user_range(struct coredump_params *cprm, unsigned long start,
 		    unsigned long len);
-extern void do_coredump(const kernel_siginfo_t *siginfo);
+extern void do_coredump(const struct kernel_siginfo *siginfo);
 #else
-static inline void do_coredump(const kernel_siginfo_t *siginfo) {}
+static inline void do_coredump(const struct kernel_siginfo *siginfo) {}
 #endif
 
 #if defined(CONFIG_COREDUMP) && defined(CONFIG_SYSCTL)
