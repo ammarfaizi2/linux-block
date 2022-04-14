@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/siphash.h>
 #include <linux/siphash_api.h>
 #include <linux/random.h>
 #include <linux/net.h>
