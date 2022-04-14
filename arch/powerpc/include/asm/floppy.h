@@ -11,6 +11,7 @@
 #define __ASM_POWERPC_FLOPPY_H
 #ifdef __KERNEL__
 
+#include <linux/pci-dma-compat.h>
 #include <asm/machdep.h>
 
 #define fd_inb(base, reg)		inb_p((base) + (reg))

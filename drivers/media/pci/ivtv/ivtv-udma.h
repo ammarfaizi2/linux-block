@@ -9,6 +9,7 @@
 #ifndef IVTV_UDMA_H
 #define IVTV_UDMA_H
 
+#include <linux/pci-dma-compat.h>
 #include <linux/types.h>
 
 /* User DMA functions */

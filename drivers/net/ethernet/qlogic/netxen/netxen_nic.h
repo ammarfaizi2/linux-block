@@ -8,6 +8,7 @@
 #ifndef _NETXEN_NIC_H_
 #define _NETXEN_NIC_H_
 
+#include <linux/pci-dma-compat.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
