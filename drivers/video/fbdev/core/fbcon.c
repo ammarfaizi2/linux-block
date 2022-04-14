@@ -56,6 +56,7 @@
  *  more details.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/jiffies.h>
 #include <linux/device.h>
 #include <linux/device_api_lock.h>

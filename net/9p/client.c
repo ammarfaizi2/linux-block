@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/idr_api.h>
 #include <linux/module.h>
 #include <linux/errno.h>

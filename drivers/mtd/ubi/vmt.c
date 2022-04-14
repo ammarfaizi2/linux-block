@@ -10,6 +10,7 @@
  * resizing.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/math64.h>

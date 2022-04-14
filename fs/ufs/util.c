@@ -7,6 +7,7 @@
  * Charles University, Faculty of Mathematics and Physics
  */
  
+#include <linux/kdev_t.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/buffer_head.h>

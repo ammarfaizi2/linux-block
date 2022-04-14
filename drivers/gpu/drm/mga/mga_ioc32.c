@@ -31,6 +31,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs.h>
 #include <linux/compat.h>
 

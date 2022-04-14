@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Werner Fink, Jiri Slaby
  */
 
+#include <linux/kdev_t.h>
 #include <linux/init.h>
 #include <linux/console.h>
 #include <linux/kernel.h>
