@@ -41,6 +41,7 @@
 #ifndef _PM8001_SAS_H_
 #define _PM8001_SAS_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

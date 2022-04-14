@@ -6,6 +6,7 @@
 #ifndef NIC_H
 #define	NIC_H
 
+#include <linux/tasklet_types.h>
 #include <linux/netdevice.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>

@@ -9,6 +9,7 @@
 #ifndef __MANTIS_COMMON_H
 #define __MANTIS_COMMON_H
 
+#include <linux/tasklet_types.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/i2c.h>

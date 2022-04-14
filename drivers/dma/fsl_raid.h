@@ -40,6 +40,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #define FSL_RE_MAX_CHANS		4

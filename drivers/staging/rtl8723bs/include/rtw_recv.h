@@ -7,6 +7,7 @@
 #ifndef _RTW_RECV_H_
 #define _RTW_RECV_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #define NR_RECVBUFF (8)

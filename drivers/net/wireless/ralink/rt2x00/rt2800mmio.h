@@ -17,6 +17,7 @@
 #ifndef RT2800MMIO_H
 #define RT2800MMIO_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 /*

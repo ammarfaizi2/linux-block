@@ -18,6 +18,7 @@
 #ifndef _DDBRIDGE_H_
 #define _DDBRIDGE_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

@@ -11,6 +11,7 @@
 #ifndef _PPC440SPE_ADMA_H
 #define _PPC440SPE_ADMA_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 #include "dma.h"
 #include "xor.h"

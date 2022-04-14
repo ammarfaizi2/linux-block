@@ -7,6 +7,7 @@
 #ifndef RXE_VERBS_H
 #define RXE_VERBS_H
 
+#include <linux/tasklet_types.h>
 #include <linux/interrupt.h>
 #include <linux/workqueue.h>
 #include <rdma/rdma_user_rxe.h>

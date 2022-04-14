@@ -25,6 +25,7 @@
 #ifndef __I915_GEM_H__
 #define __I915_GEM_H__
 
+#include <linux/tasklet_types.h>
 #include <linux/tasklet_api.h>
 #include <linux/string.h>
 #include <linux/kernel.h>

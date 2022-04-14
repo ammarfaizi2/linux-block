@@ -11,6 +11,7 @@
 #ifndef __CCP_DEV_H__
 #define __CCP_DEV_H__
 
+#include <linux/tasklet_types.h>
 #include <linux/device.h>
 #include <linux/spinlock.h>
 #include <linux/mutex.h>

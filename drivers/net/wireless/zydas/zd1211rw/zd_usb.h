@@ -8,6 +8,7 @@
 #ifndef _ZD_USB_H
 #define _ZD_USB_H
 
+#include <linux/tasklet_types.h>
 #include <linux/completion.h>
 #include <linux/netdevice.h>
 #include <linux/spinlock.h>

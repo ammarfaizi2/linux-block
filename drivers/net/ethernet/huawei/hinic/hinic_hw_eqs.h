@@ -7,6 +7,7 @@
 #ifndef HINIC_HW_EQS_H
 #define HINIC_HW_EQS_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 #include <linux/workqueue.h>
 #include <linux/pci.h>

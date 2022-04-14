@@ -10,6 +10,7 @@
 #ifndef _RTL_CORE_H
 #define _RTL_CORE_H
 
+#include <linux/tasklet_types.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/ioport.h>

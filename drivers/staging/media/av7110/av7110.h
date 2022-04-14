@@ -2,6 +2,7 @@
 #ifndef _AV7110_H_
 #define _AV7110_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/interrupt.h>
 #include <linux/socket.h>
 #include <linux/netdevice.h>

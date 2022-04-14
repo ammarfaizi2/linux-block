@@ -3,6 +3,7 @@
 #ifndef __MT7603_H
 #define __MT7603_H
 
+#include <linux/tasklet_types.h>
 #include <linux/interrupt.h>
 #include <linux/ktime.h>
 #include "../mt76.h"

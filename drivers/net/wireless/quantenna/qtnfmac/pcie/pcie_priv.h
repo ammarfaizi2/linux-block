@@ -4,6 +4,7 @@
 #ifndef _QTN_FMAC_PCIE_H_
 #define _QTN_FMAC_PCIE_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/pci.h>
 #include <linux/spinlock.h>
 #include <linux/io.h>

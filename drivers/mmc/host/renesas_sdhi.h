@@ -9,6 +9,7 @@
 #ifndef RENESAS_SDHI_H
 #define RENESAS_SDHI_H
 
+#include <linux/tasklet_types.h>
 #include <linux/platform_device.h>
 #include "tmio_mmc.h"
 

@@ -7,6 +7,7 @@
 #ifndef DRIVER_ATM_ENI_H
 #define DRIVER_ATM_ENI_H
 
+#include <linux/tasklet_types.h>
 #include <linux/atm.h>
 #include <linux/atmdev.h>
 #include <linux/interrupt.h>

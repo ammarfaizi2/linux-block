@@ -4,6 +4,7 @@
  */
 #ifndef IOP_ADMA_H
 #define IOP_ADMA_H
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 #include <linux/dmaengine.h>
 #include <linux/interrupt.h>

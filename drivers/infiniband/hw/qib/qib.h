@@ -39,6 +39,7 @@
  * qib_user.h serves a similar purpose for user code.
  */
 
+#include <linux/tasklet_types.h>
 #include <linux/jiffies.h>
 #include <linux/dev_printk.h>
 #include <linux/interrupt.h>

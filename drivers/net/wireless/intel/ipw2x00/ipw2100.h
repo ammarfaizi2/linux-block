@@ -12,6 +12,7 @@
 #ifndef _IPW2100_H
 #define _IPW2100_H
 
+#include <linux/tasklet_types.h>
 #include <linux/sched.h>
 #include <linux/interrupt.h>
 #include <linux/netdevice.h>

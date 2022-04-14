@@ -14,6 +14,7 @@
 #ifndef __FSL_QE_UDC_H
 #define __FSL_QE_UDC_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 /* SoC type */

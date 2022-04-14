@@ -17,6 +17,7 @@
 #ifndef _BRCM_MAC80211_IF_H_
 #define _BRCM_MAC80211_IF_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/timer.h>
 #include <linux/interrupt.h>
 #include <linux/workqueue.h>

@@ -6,6 +6,7 @@
 #ifndef MV_XOR_H
 #define MV_XOR_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 #include <linux/io.h>
 #include <linux/dmaengine.h>

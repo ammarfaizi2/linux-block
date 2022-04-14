@@ -15,6 +15,7 @@
  */
 #ifndef IBMVSCSI_H
 #define IBMVSCSI_H
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/completion.h>

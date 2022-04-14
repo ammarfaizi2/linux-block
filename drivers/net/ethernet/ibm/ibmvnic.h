@@ -15,6 +15,7 @@
 /*                                                                        */
 /**************************************************************************/
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #define IBMVNIC_NAME		"ibmvnic"

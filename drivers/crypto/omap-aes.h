@@ -9,6 +9,7 @@
 #ifndef __OMAP_AES_H__
 #define __OMAP_AES_H__
 
+#include <linux/tasklet_types.h>
 #include <crypto/aes.h>
 #include <crypto/engine.h>
 

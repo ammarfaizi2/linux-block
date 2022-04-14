@@ -4,6 +4,7 @@
 #ifndef __MT7615_H
 #define __MT7615_H
 
+#include <linux/tasklet_types.h>
 #include <linux/tasklet_api.h>
 #include <linux/completion.h>
 #include <linux/interrupt.h>

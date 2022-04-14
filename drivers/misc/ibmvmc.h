@@ -13,6 +13,7 @@
 #ifndef IBMVMC_H
 #define IBMVMC_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 #include <linux/cdev.h>
 

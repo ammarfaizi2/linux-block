@@ -39,6 +39,7 @@
 #ifndef __BNXT_QPLIB_FP_H__
 #define __BNXT_QPLIB_FP_H__
 
+#include <linux/tasklet_types.h>
 #include <rdma/bnxt_re-abi.h>
 
 /* Few helper structures temporarily defined here

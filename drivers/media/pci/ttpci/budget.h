@@ -3,6 +3,7 @@
 #ifndef __BUDGET_DVB__
 #define __BUDGET_DVB__
 
+#include <linux/tasklet_types.h>
 #include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 #include <media/dvbdev.h>

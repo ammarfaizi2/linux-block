@@ -10,6 +10,7 @@
 #ifndef _MV_SAS_H_
 #define _MV_SAS_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>

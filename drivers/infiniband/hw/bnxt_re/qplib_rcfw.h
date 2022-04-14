@@ -39,6 +39,7 @@
 #ifndef __BNXT_QPLIB_RCFW_H__
 #define __BNXT_QPLIB_RCFW_H__
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #define RCFW_CMDQ_TRIG_VAL		1

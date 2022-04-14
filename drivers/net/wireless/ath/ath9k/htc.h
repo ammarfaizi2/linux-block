@@ -17,6 +17,7 @@
 #ifndef HTC_H
 #define HTC_H
 
+#include <linux/tasklet_types.h>
 #include <linux/module.h>
 #include <linux/usb.h>
 #include <linux/firmware.h>

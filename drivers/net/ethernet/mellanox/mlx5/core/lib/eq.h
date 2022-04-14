@@ -3,6 +3,7 @@
 
 #ifndef __LIB_MLX5_EQ_H__
 #define __LIB_MLX5_EQ_H__
+#include <linux/tasklet_types.h>
 #include <linux/mlx5/driver.h>
 #include <linux/mlx5/eq.h>
 #include <linux/mlx5/cq.h>

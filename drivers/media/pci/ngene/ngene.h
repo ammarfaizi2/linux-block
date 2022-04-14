@@ -8,6 +8,7 @@
 #ifndef _NGENE_H_
 #define _NGENE_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/semaphore.h>
 #include <linux/types.h>
 #include <linux/sched.h>

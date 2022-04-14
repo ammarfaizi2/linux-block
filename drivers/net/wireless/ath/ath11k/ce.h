@@ -6,6 +6,7 @@
 #ifndef ATH11K_CE_H
 #define ATH11K_CE_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 #define CE_COUNT_MAX 12

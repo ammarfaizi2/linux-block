@@ -15,6 +15,7 @@
 #ifndef RT2X00_H
 #define RT2X00_H
 
+#include <linux/tasklet_types.h>
 #include <linux/bitops.h>
 #include <linux/interrupt.h>
 #include <linux/skbuff.h>

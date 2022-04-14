@@ -37,6 +37,7 @@
 
 #include "t4_hw.h"
 
+#include <linux/tasklet_types.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

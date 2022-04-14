@@ -3,6 +3,7 @@
 #ifndef IRDMA_MAIN_H
 #define IRDMA_MAIN_H
 
+#include <linux/tasklet_types.h>
 #include <linux/spinlock_api.h>
 #include <linux/bitmap.h>
 #include <linux/ip.h>

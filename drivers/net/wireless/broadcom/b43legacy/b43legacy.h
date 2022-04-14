@@ -2,6 +2,7 @@
 #ifndef B43legacy_H_
 #define B43legacy_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/hw_random.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>

@@ -22,6 +22,7 @@
 
 #ifdef __KERNEL__
 
+#include <linux/tasklet_types.h>
 #include <linux/rwsem.h>
 #include <linux/interrupt.h>
 #include <linux/idr.h>

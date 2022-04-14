@@ -10,6 +10,7 @@
 #ifndef _DW_MMC_H_
 #define _DW_MMC_H_
 
+#include <linux/tasklet_types.h>
 #include <linux/scatterlist.h>
 #include <linux/mmc/core.h>
 #include <linux/dmaengine.h>

@@ -4,6 +4,7 @@
 #ifndef __OTX2_CPTLF_H
 #define __OTX2_CPTLF_H
 
+#include <linux/tasklet_types.h>
 #include <linux/dev_printk.h>
 #include <linux/cpumask_types.h>
 #include <linux/atomic_api.h>

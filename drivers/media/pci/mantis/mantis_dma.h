@@ -9,6 +9,7 @@
 #ifndef __MANTIS_DMA_H
 #define __MANTIS_DMA_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 
 extern int mantis_dma_init(struct mantis_pci *mantis);

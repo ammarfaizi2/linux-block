@@ -16,6 +16,7 @@
 #ifndef _SF_PDMA_H
 #define _SF_PDMA_H
 
+#include <linux/tasklet_types.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-direction.h>
 

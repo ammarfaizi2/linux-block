@@ -6,6 +6,7 @@
 #ifndef __MT76x02_DFS_H
 #define __MT76x02_DFS_H
 
+#include <linux/tasklet_types.h>
 #include <linux/types.h>
 #include <linux/nl80211.h>
 

@@ -6,6 +6,7 @@
 #ifndef __UM_VECTOR_KERN_H
 #define __UM_VECTOR_KERN_H
 
+#include <linux/tasklet_types.h>
 #include <linux/netdevice.h>
 #include <linux/platform_device.h>
 #include <linux/skbuff.h>
