@@ -5,6 +5,7 @@
 #ifndef __ASM_MMU_H
 #define __ASM_MMU_H
 
+#include <asm/pgtable_types.h>
 #include <asm/page.h>
 #include <asm/cputype.h>
 
