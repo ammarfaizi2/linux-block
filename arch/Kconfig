@@ -1380,7 +1380,6 @@ config HAVE_ARCH_NODE_DEV_GROUP
 
 config ARCH_HAS_NONLEAF_PMD_YOUNG
 	bool
-	depends on PGTABLE_LEVELS > 2
 	help
 	  Architectures that select this option are capable of setting the
 	  accessed bit in non-leaf PMD entries when using them as part of linear
