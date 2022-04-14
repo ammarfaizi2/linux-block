@@ -3,6 +3,7 @@
 #define __LINUX_ATALK_H__
 
 
+#include <linux/netdevice_types.h>
 #include <net/sock.h>
 #include <uapi/linux/atalk.h>
 

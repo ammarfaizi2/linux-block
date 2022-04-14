@@ -6,6 +6,7 @@
 
 #include "tsnep_hw.h"
 
+#include <linux/netdevice_types.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
 #include <linux/etherdevice.h>
