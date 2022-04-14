@@ -9,6 +9,7 @@
 #ifndef _LINUX_BACKING_DEV_H
 #define _LINUX_BACKING_DEV_H
 
+#include <linux/radix-tree-api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
