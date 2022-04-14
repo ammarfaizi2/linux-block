@@ -14,6 +14,4 @@ struct timerqueue_head {
 	struct rb_root_cached rb_root;
 };
 
-#include <linux/timerqueue_api.h>
-
 #endif /* _LINUX_TIMERQUEUE_H */

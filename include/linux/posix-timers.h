@@ -6,7 +6,7 @@
 #include <linux/spinlock.h>
 #include <linux/list.h>
 #include <linux/alarmtimer.h>
-#include <linux/timerqueue.h>
+#include <linux/timerqueue_api.h>
 #include <linux/sched/per_task.h>
 
 struct kernel_siginfo;
