@@ -3,6 +3,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/checksum.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

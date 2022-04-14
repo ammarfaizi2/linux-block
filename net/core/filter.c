@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <net/checksum.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/scatterlist_api.h>

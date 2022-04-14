@@ -31,6 +31,7 @@
  *
  */
 
+#include <net/checksum.h>
 #include <linux/topology.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/pci-dma-compat.h>

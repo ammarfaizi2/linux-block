@@ -12,6 +12,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <net/checksum.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/ipv6.h>

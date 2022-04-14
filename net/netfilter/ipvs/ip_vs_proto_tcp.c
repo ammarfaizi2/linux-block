@@ -16,6 +16,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <net/checksum.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>

@@ -8,6 +8,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <net/checksum.h>
 #include <linux/workqueue_api.h>
 #include <linux/uuid_api.h>
 #include <linux/skbuff_api_frag.h>

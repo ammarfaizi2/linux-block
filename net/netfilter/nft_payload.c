@@ -6,6 +6,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <net/checksum.h>
 #include <linux/if_vlan_api.h>
 #include <linux/kernel.h>
 #include <linux/if_vlan.h>

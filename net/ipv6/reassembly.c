@@ -25,6 +25,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <net/checksum.h>
 #include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

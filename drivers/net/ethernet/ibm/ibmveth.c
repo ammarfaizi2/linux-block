@@ -11,6 +11,7 @@
  *	    Anton Blanchard <anton@au.ibm.com>
  */
 
+#include <net/checksum.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>

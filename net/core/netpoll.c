@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/checksum.h>
 #include <linux/workqueue_api.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>

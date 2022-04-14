@@ -14,6 +14,7 @@
  *	Kazunori MIYAZAWA @USAGI:	change process style to use ip6_append_data
  */
 
+#include <net/checksum.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/skbuff_api_extra.h>

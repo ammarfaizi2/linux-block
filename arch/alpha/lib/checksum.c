@@ -10,6 +10,7 @@
  *	Rick Gorton	<rick.gorton@alpha-processor.com>
  */
  
+#include <net/checksum.h>
 #include <linux/module.h>
 #include <linux/string.h>
 

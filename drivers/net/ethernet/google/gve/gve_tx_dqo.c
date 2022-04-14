@@ -8,6 +8,7 @@
 #include "gve_adminq.h"
 #include "gve_utils.h"
 #include "gve_dqo.h"
+#include <net/checksum.h>
 #include <linux/vmalloc.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/skbuff_api.h>
