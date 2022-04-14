@@ -34,6 +34,7 @@
 #ifndef _MLX4_EN_H_
 #define _MLX4_EN_H_
 
+#include <linux/notifier_types.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api.h>
 #include <linux/bitops.h>

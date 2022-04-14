@@ -33,6 +33,7 @@
 #ifndef _HNS_ROCE_DEVICE_H
 #define _HNS_ROCE_DEVICE_H
 
+#include <linux/notifier_types.h>
 #include <linux/io.h>
 #include <asm/io.h>
 #include <rdma/ib_verbs.h>

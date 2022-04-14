@@ -7,6 +7,7 @@
 #ifndef __WIL6210_H__
 #define __WIL6210_H__
 
+#include <linux/notifier_types.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
