@@ -11,6 +11,7 @@
 #ifndef _LINUX_IRQCHIP_H
 #define _LINUX_IRQCHIP_H
 
+#include <linux/of_api.h>
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <linux/of.h>

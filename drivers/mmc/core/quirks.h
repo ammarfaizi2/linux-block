@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/of_api.h>
 #include <linux/dev_printk.h>
 #include <linux/of.h>
 #include <linux/mmc/sdio_ids.h>

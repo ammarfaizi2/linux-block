@@ -9,6 +9,7 @@
 #ifndef _LINUX_CLOCKSOURCE_H
 #define _LINUX_CLOCKSOURCE_H
 
+#include <linux/of_api.h>
 #include <linux/types.h>
 #include <linux/timex.h>
 #include <linux/time.h>

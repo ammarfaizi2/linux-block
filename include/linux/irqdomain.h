@@ -30,6 +30,7 @@
 #ifndef _LINUX_IRQDOMAIN_H
 #define _LINUX_IRQDOMAIN_H
 
+#include <linux/of_api.h>
 #include <linux/types.h>
 #include <linux/irqhandler.h>
 #include <linux/of.h>
