@@ -6,6 +6,7 @@
 
 #include "dm-core.h"
 
+#include <linux/rwsem_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kmod.h>

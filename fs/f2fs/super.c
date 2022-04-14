@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/rwsem_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>

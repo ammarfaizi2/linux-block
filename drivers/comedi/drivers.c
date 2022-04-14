@@ -8,6 +8,7 @@
  *  Copyright (C) 2002 Frank Mori Hess <fmhess@users.sourceforge.net>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

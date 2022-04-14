@@ -33,6 +33,7 @@
  *   20050816 henk	Merge 2.6.13-rc6
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>

@@ -10,6 +10,7 @@
  * most "normal" filesystems (but you don't /have/ to use this:
  * the NFS filesystem used to do this differently, for example)
  */
+#include <linux/rwsem_api.h>
 #include <linux/ratelimit.h>
 #include <linux/pgtable_api.h>
 #include <linux/page_ref_api_extra.h>

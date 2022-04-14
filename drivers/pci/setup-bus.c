@@ -14,6 +14,7 @@
  *	     tighter packing. Prefetchable range support.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/math64.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

@@ -24,6 +24,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>

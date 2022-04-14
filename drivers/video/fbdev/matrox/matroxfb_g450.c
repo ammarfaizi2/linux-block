@@ -17,6 +17,7 @@
 #include "matroxfb_misc.h"
 #include "matroxfb_DAC1064.h"
 #include "g450_pll.h"
+#include <linux/rwsem_api.h>
 #include <linux/matroxfb.h>
 #include <asm/div64.h>
 

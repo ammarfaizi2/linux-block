@@ -5,6 +5,7 @@
  *  Copyright 2008 Wolfson Microelectronics
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/bitops.h>
 #include <linux/input.h>

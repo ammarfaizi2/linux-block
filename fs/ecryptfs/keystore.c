@@ -11,6 +11,7 @@
  *              Trevor S. Highland <trevor.highland@gmail.com>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <crypto/hash.h>

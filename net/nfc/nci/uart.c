@@ -9,6 +9,7 @@
  *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/module.h>
 
 #include <linux/kernel.h>

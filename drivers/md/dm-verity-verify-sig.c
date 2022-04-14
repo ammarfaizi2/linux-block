@@ -5,6 +5,7 @@
  * Author:  Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
  *
  */
+#include <linux/rwsem_api.h>
 #include <linux/device-mapper.h>
 #include <linux/verification.h>
 #include <keys/user-type.h>

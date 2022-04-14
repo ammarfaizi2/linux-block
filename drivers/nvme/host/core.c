@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

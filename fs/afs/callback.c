@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

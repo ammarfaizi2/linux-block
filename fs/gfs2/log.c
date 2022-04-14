@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2007 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

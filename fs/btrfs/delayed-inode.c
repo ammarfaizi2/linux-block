@@ -4,6 +4,7 @@
  * Written by Miao Xie <miaox@cn.fujitsu.com>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/radix-tree-api.h>

@@ -19,6 +19,7 @@
  * The valid range of num_buffers is: num >= 2 && num <= 4.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>

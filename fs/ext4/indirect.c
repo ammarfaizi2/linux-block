@@ -23,6 +23,7 @@
 
 #include "ext4_jbd2.h"
 #include "truncate.h"
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/dax.h>
 #include <linux/uio.h>

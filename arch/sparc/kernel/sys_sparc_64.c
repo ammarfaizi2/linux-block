@@ -6,6 +6,7 @@
  * platform.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>

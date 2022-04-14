@@ -16,6 +16,7 @@
  *   Ben-Ami Yassour <benami@il.ibm.com>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/profile.h>
 #include <linux/preempt.h>
 #include <linux/perf_event_api.h>

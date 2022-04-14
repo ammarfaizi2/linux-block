@@ -9,6 +9,7 @@
 #undef DEBUG
 #define pr_fmt(fmt) "mce: " fmt
 
+#include <linux/rwsem_api.h>
 #include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

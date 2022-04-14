@@ -54,6 +54,7 @@
  * to avoid deadlocks.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/list_bl_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

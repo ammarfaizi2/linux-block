@@ -8,6 +8,7 @@
  * Copyright (C) 2017 Zodiac Inflight Innovations
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

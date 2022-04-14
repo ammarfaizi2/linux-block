@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <linux/radix-tree-api.h>

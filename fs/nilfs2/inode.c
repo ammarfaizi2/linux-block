@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>

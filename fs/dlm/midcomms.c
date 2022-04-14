@@ -132,6 +132,7 @@
  */
 #define DLM_DEBUG_FENCE_TERMINATION	0
 
+#include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2019 Western Digital Corporation or its affiliates.
  */
+#include <linux/rwsem_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mutex_api.h>

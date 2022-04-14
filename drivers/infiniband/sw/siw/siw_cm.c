@@ -6,6 +6,7 @@
 /* Copyright (c) 2008-2019, IBM Corporation */
 /* Copyright (c) 2017, Open Grid Computing, Inc. */
 
+#include <linux/rwsem_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>

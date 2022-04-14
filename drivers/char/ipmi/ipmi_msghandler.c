@@ -14,6 +14,7 @@
 #define pr_fmt(fmt) "%s" fmt, "IPMI message handler: "
 #define dev_fmt pr_fmt
 
+#include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

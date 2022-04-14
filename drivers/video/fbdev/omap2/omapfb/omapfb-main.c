@@ -9,6 +9,7 @@
  * by Imre Deak.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/rwsem_api.h>
 #include <linux/ratelimit.h>
 #include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>

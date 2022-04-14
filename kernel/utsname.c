@@ -5,6 +5,7 @@
  *  Author: Serge Hallyn <serue@us.ibm.com>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/log2.h>
 #include <linux/capability.h>

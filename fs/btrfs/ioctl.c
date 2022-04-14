@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rculist.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mutex_api.h>

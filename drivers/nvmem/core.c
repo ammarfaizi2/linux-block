@@ -6,6 +6,7 @@
  * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

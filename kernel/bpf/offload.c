@@ -13,6 +13,7 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/nsproxy.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

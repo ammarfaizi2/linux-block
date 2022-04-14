@@ -6,6 +6,7 @@
  * Copyright (C) 2011 Steffen Klassert <steffen.klassert@secunet.com>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/capability.h>

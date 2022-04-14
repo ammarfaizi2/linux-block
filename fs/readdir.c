@@ -5,6 +5,7 @@
  *  Copyright (C) 1995  Linus Torvalds
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/align.h>
 #include <linux/stddef.h>

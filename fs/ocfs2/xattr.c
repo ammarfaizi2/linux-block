@@ -9,6 +9,7 @@
  * Copyright (C) 2001-2003 Andreas Gruenbacher, <agruen@suse.de>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>

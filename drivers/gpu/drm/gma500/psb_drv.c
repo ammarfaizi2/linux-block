@@ -7,6 +7,7 @@
  *
  **************************************************************************/
 
+#include <linux/rwsem_api.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/fs.h>

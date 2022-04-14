@@ -9,6 +9,7 @@
  *
  * Most of code borrowed from the Linux-3.7 EHCI driver
  */
+#include <linux/rwsem_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/of_api.h>

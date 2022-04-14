@@ -25,6 +25,7 @@
 #include "xfs_ag.h"
 #include "xfs_log_priv.h"
 
+#include <linux/rwsem_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/pagemap_api_readahead.h>

@@ -9,6 +9,7 @@
  * notified via SCI, mainly the corrected errors.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

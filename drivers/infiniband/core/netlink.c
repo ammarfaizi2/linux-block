@@ -33,6 +33,7 @@
 
 #define pr_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
 
+#include <linux/rwsem_api.h>
 #include <linux/net.h>
 #include <linux/kmod.h>
 #include <linux/capability.h>

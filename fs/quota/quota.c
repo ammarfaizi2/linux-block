@@ -6,6 +6,7 @@
  * variables, etc - things needed even when quota support disabled.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/cred.h>

@@ -8,6 +8,7 @@
  *               Christian Borntraeger <borntraeger@de.ibm.com>
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/preempt.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

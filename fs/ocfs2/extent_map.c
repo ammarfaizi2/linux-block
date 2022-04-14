@@ -7,6 +7,7 @@
  * Copyright (C) 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/init.h>

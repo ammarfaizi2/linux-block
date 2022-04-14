@@ -7,6 +7,7 @@
  * Written by Koji Sato.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs_api.h>

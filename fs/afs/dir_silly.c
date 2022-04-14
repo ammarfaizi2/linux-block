@@ -6,6 +6,7 @@
  * - Derived from NFS's sillyrename.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/kernel.h>

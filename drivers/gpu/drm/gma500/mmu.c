@@ -4,6 +4,7 @@
  *
  **************************************************************************/
 
+#include <linux/rwsem_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <asm/processor_api.h>

@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>
 #include <linux/slab.h>

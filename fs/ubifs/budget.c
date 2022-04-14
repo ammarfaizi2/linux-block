@@ -19,6 +19,7 @@
  */
 
 #include "ubifs.h"
+#include <linux/rwsem_api.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/sched/cond_resched.h>

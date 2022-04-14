@@ -15,6 +15,7 @@
  * TPM chip management routines.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kdev_t.h>
 #include <linux/idr_api.h>

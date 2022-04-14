@@ -6,6 +6,7 @@
  * TODO: try to use extents tree (instead of array)
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/blkdev.h>
 #include <linux/fs.h>

@@ -14,6 +14,7 @@
  * Copyright 2021 Linaro, Rui Miguel Silva <rui.silva@linaro.org>
  *
  */
+#include <linux/rwsem_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

@@ -85,6 +85,7 @@
  * room for future re-works of the WL sub-system.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/sched/cond_resched.h>

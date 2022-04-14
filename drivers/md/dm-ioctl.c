@@ -7,6 +7,7 @@
 
 #include "dm-core.h"
 #include "dm-ima.h"
+#include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

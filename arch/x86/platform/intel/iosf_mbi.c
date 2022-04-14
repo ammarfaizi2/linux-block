@@ -9,6 +9,7 @@
  * enumerate the device using PCI.
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
