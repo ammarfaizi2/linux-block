@@ -2,6 +2,7 @@
 /*
  * bsg.c - block layer implementation of the sg v4 interface
  */
+#include <linux/lockdep_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

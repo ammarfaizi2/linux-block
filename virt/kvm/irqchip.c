@@ -12,6 +12,7 @@
  *   Alexander Graf <agraf@suse.de>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kvm_host.h>
 #include <linux/slab.h>
 #include <linux/srcu.h>

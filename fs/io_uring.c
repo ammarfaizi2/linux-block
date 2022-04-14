@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/lockdep_api.h>
 #include <linux/llist_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

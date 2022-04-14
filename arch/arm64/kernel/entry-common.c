@@ -5,6 +5,7 @@
  * Copyright (C) 2019 ARM Ltd.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/hardirq.h>
 #include <asm/mte.h>
 #include <linux/context_tracking.h>

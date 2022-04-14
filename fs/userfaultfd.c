@@ -10,6 +10,7 @@
  *  mm/ksm.c (mm hashing).
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

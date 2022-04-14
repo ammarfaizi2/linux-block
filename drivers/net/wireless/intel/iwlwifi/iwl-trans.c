@@ -4,6 +4,7 @@
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  * Copyright (C) 2019-2021 Intel Corporation
  */
+#include <linux/lockdep_api.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>

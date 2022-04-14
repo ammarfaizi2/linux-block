@@ -6,6 +6,7 @@
  * context. The enqueueing is NMI-safe.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/llist_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

@@ -7,6 +7,7 @@
  */
 
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/bug.h>
 #include <linux/delay.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

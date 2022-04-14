@@ -7,6 +7,7 @@
  * Copyright 2017 Canonical Ltd.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/audit.h>
 #include <linux/seq_file.h>

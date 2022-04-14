@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "zfcp"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>

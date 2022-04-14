@@ -9,6 +9,7 @@
  * if consumers didn't apply their constraints yet.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/bitops.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

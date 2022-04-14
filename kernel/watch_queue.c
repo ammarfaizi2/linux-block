@@ -8,6 +8,7 @@
  */
 
 #define pr_fmt(fmt) "watchq: " fmt
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>

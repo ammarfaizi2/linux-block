@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) "prime numbers: " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>

@@ -172,6 +172,7 @@
  * - usages	: Usage history
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>

@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/hashtable_api.h>
 #include <linux/fs_api_rw_access.h>

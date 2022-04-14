@@ -5,6 +5,7 @@
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>

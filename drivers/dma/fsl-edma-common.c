@@ -3,6 +3,7 @@
 // Copyright (c) 2013-2014 Freescale Semiconductor, Inc
 // Copyright (c) 2017 Sysam, Angelo Dureghello  <angelo@sysam.it>
 
+#include <linux/lockdep_api.h>
 #include <linux/io.h>
 #include <linux/dmapool.h>
 #include <linux/module.h>

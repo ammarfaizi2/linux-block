@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

@@ -3,6 +3,8 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
+
 #include "i915_drv.h"
 #include "i915_vma.h"
 #include "intel_context.h"

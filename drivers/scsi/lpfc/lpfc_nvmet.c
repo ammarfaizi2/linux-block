@@ -20,6 +20,7 @@
  * more details, a copy of which can be found in the file COPYING  *
  * included with this package.                                     *
  ********************************************************************/
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

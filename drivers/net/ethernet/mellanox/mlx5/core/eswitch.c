@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/idr_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/etherdevice_api.h>

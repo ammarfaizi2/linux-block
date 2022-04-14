@@ -22,6 +22,7 @@
  *		- MLDv2 support
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ipv6.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

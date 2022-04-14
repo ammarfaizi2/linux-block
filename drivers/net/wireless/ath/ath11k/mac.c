@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/etherdevice_api.h>

@@ -15,6 +15,7 @@
  * Peter Zijlstra <peterz@infradead.org>.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/debug_locks.h>

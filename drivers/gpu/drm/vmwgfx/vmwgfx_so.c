@@ -24,6 +24,7 @@
  *
  **************************************************************************/
 
+#include <linux/lockdep_api.h>
 #include <linux/capability.h>
 
 #include "vmwgfx_drv.h"

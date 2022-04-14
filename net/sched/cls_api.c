@@ -9,6 +9,7 @@
  * Eduardo J. Blanco <ejbs@netlabs.com.uy> :990222: kmod support
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/idr_api.h>
 #include <linux/hashtable_api.h>

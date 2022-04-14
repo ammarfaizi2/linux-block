@@ -7,6 +7,7 @@
  * Copyright 2017	Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/lockdep_api.h>
 #include <linux/ipv6.h>
 #include <linux/if_vlan_api.h>
 #include <linux/etherdevice_api.h>

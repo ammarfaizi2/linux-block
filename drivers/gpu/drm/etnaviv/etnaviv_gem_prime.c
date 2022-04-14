@@ -3,6 +3,7 @@
  * Copyright (C) 2014-2018 Etnaviv Project
  */
 
+#include <linux/lockdep_api.h>
 #include <drm/drm_prime.h>
 #include <linux/dma-buf.h>
 #include <linux/module.h>

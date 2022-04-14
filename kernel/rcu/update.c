@@ -17,6 +17,7 @@
  *		http://lse.sourceforge.net/locking/rcupdate.html
  *
  */
+#include <linux/lockdep_api.h>
 #include <linux/debugobjects.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

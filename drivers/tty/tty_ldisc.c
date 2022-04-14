@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/lockdep_api.h>
 #include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/errno.h>

@@ -12,6 +12,7 @@
  * Copyright(c) 2018-2021 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>

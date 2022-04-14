@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>
 #include <linux/cred.h>

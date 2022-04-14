@@ -6,6 +6,7 @@
 
 #include "main.h"
 
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/byteorder/generic.h>

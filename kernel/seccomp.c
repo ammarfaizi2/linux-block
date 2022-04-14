@@ -15,6 +15,7 @@
  */
 #define pr_fmt(fmt) "seccomp: " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/filter_api.h>
 #include <linux/cred.h>
 #include <linux/bitmap.h>

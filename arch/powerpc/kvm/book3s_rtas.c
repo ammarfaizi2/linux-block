@@ -3,6 +3,7 @@
  * Copyright 2012 Michael Ellerman, IBM Corporation.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kernel.h>
 #include <linux/kvm_host.h>
 #include <linux/kvm.h>

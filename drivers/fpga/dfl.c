@@ -10,6 +10,7 @@
  *   Wu Hao <hao.wu@intel.com>
  *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
  */
+#include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

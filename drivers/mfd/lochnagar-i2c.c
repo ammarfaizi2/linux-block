@@ -8,6 +8,7 @@
  * Author: Charles Keepax <ckeepax@opensource.cirrus.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/device.h>

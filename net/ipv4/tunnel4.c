@@ -4,6 +4,7 @@
  * Copyright (C) 2003 David S. Miller (davem@redhat.com)
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

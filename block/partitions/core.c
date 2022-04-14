@@ -4,6 +4,7 @@
  * Re-organised Feb 1998 Russell King
  * Copyright (C) 2020 Christoph Hellwig
  */
+#include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

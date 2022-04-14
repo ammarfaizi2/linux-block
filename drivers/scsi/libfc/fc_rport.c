@@ -45,6 +45,7 @@
  * - an rport is removed
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

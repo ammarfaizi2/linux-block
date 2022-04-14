@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/lockdep_api.h>
 #include <linux/interrupt.h>
 #include <linux/sched/task_flags.h>
 #include <linux/cgroup.h>

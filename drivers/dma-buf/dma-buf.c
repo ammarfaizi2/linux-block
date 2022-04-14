@@ -11,6 +11,7 @@
  * refining of this idea.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/file.h>

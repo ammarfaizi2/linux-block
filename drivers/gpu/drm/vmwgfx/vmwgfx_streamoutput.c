@@ -26,6 +26,7 @@
  *
  **************************************************************************/
 
+#include <linux/lockdep_api.h>
 #include <drm/ttm/ttm_placement.h>
 
 #include "vmwgfx_drv.h"

@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

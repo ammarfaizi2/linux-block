@@ -4,6 +4,7 @@
  * Copyright (c) 2017 Yotam Gigi <yotamg@mellanox.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

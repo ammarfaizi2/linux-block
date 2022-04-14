@@ -9,6 +9,7 @@
  * This file will soon be removed in favor of an uinput userspace tool.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/init.h>
 #include <linux/proc_fs.h>
 #include <linux/sysctl.h>

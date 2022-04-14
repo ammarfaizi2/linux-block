@@ -5,6 +5,7 @@
  * Copyright (C) 2010-2021  Hans Verkuil <hverkuil-cisco@xs4all.nl>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/export.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

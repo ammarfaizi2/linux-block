@@ -9,6 +9,7 @@
  * Please see Documentation/filesystems/sysfs.rst for more information.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

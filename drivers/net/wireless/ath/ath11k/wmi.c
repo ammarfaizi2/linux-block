@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
+#include <linux/lockdep_api.h>
 #include <linux/idr_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

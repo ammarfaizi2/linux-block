@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/lockdep_api.h>
 #include <linux/bug.h>
 #include <linux/errno.h>
 #include <linux/spinlock.h>

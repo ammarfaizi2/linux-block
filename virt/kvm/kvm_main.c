@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kobject_api.h>
 #include <linux/io_extra.h>

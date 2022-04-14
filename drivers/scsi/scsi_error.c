@@ -15,6 +15,7 @@
  *	September 30, 2002 Mike Anderson (andmike@us.ibm.com)
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/sched.h>

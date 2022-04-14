@@ -8,6 +8,7 @@
  * Modified by: Shaun Tancheff <shaun.tancheff@seagate.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/blkdev.h>
 #include <linux/vmalloc.h>
 #include <linux/sched/mm.h>

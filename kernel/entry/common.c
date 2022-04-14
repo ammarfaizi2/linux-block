@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/lockdep_api.h>
 #include <linux/hardirq.h>
 #include <linux/sched/rseq_api.h>
 #include <linux/context_tracking.h>

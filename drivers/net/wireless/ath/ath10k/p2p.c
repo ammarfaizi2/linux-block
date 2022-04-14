@@ -3,6 +3,8 @@
  * Copyright (c) 2015 Qualcomm Atheros, Inc.
  */
 
+#include <linux/lockdep_api.h>
+
 #include "core.h"
 #include "wmi.h"
 #include "mac.h"

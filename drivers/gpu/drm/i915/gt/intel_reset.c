@@ -3,6 +3,7 @@
  * Copyright © 2008-2018 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

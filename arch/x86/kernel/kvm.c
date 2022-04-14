@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "kvm-guest: " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2014 Intel Mobile Communications GmbH
  * Copyright (C) 2015-2017 Intel Deutschland GmbH
  */
+#include <linux/lockdep_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

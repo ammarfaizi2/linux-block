@@ -23,6 +23,7 @@
  * - completely modularize elevator setup and teardown
  *
  */
+#include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kmod.h>
 #include <linux/iocontext.h>

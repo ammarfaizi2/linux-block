@@ -13,6 +13,7 @@
  * copyright Jamal Hadi Salim (2015)
 */
 
+#include <linux/lockdep_api.h>
 #include <linux/kmod.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>

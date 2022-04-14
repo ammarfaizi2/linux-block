@@ -37,6 +37,7 @@
  * Copyright (C) 2003 - 2004, 2006 Tresys Technology, LLC
  * Copyright (C) 2003 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
+#include <linux/lockdep_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/string.h>

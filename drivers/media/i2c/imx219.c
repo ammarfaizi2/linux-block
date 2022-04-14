@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

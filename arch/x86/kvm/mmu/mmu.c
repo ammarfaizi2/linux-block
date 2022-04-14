@@ -26,6 +26,7 @@
 #include "cpuid.h"
 #include "spte.h"
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>
 #include <linux/capability.h>

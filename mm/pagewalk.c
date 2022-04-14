@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/lockdep_api.h>
 #include <linux/huge_mm.h>
 #include <linux/pagewalk.h>
 #include <linux/highmem.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

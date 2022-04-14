@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "rcu: " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/llist_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hardirq.h>

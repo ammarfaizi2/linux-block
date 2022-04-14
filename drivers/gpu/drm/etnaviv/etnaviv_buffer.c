@@ -3,6 +3,7 @@
  * Copyright (C) 2014-2018 Etnaviv Project
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/device_api.h>
 #include <drm/drm_drv.h>
 

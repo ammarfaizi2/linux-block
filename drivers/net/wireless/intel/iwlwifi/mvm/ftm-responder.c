@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2017 Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/lockdep_api.h>
 #include <net/cfg80211.h>
 #include <linux/etherdevice.h>
 #include "mvm.h"

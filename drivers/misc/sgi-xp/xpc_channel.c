@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>
 #include "xpc.h"

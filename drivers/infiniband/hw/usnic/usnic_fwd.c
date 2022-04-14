@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/lockdep_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/netdevice.h>
 #include <linux/pci.h>

@@ -3,6 +3,8 @@
  * Copyright (C) 2020 - 2021 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
+
 #include "mvm.h"
 #include "fw/api/commands.h"
 #include "fw/api/phy-ctxt.h"

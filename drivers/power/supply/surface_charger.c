@@ -6,6 +6,7 @@
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 #include <linux/kernel.h>

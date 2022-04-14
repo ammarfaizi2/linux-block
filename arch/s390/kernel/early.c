@@ -7,6 +7,7 @@
 #define KMSG_COMPONENT "setup"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/compiler.h>
 #include <linux/init.h>
 #include <linux/errno.h>

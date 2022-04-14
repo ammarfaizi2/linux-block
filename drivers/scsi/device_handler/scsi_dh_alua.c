@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2010 Hannes Reinecke, SUSE Linux Products GmbH.
  * All rights reserved.
  */
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>
 #include <linux/hashtable_api.h>

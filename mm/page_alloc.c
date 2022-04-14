@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

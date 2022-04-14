@@ -10,6 +10,7 @@
 #include "queueing.h"
 #include "peerlookup.h"
 
+#include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/rcupdate.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Intel Corporation
  *****************************************************************************/
 
+#include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

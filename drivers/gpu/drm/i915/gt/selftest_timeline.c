@@ -3,6 +3,7 @@
  * Copyright © 2017-2018 Intel Corporation
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

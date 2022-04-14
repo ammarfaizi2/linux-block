@@ -3,6 +3,7 @@
  * Fast batching percpu counters.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/percpu_counter.h>

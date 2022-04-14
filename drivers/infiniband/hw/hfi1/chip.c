@@ -8,6 +8,7 @@
  * This file contains all of the code that is specific to the HFI chip
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

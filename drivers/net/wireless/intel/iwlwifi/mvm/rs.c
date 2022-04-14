@@ -5,6 +5,7 @@
  * Copyright(c) 2013 - 2015 Intel Mobile Communications GmbH
  * Copyright(c) 2016 - 2017 Intel Deutschland GmbH
  *****************************************************************************/
+#include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>

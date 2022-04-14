@@ -51,6 +51,7 @@
  * by the buffer lock.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/list_bl_api.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

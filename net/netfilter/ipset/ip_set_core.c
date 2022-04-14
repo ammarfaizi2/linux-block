@@ -6,6 +6,7 @@
 
 /* Kernel module for IP set management */
 
+#include <linux/lockdep_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>

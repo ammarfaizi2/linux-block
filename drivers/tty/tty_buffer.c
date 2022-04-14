@@ -3,6 +3,7 @@
  * Tty buffer allocation management
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/llist_api.h>
 #include <linux/atomic_api.h>
 #include <linux/align.h>

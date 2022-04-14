@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Intel Corporation. All rights reserved.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

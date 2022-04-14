@@ -3,6 +3,7 @@
  *
  * Copyright(c) 2008 - 2014 Intel Corporation. All rights reserved.
  *****************************************************************************/
+#include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/etherdevice.h>
 #include <linux/kernel.h>

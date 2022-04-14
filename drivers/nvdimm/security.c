@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2018 Intel Corporation. All rights reserved. */
 
+#include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

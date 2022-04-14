@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 Steven Rostedt <srostedt@redhat.com>
  */
+#include <linux/lockdep_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

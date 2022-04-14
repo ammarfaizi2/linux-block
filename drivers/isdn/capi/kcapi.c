@@ -11,6 +11,7 @@
  */
 
 #include "kcapi.h"
+#include <linux/lockdep_api.h>
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/interrupt.h>

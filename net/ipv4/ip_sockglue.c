@@ -16,6 +16,7 @@
  *		Mike McLagan	:	Routing by source
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/ipv6.h>
 #include <linux/capability.h>
 #include <linux/module.h>

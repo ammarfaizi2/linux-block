@@ -25,6 +25,7 @@
  * Copyright (C) 2013 Peter Hurley <peter@hurleysoftware.com>
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>

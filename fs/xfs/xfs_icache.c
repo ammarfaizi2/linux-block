@@ -25,6 +25,7 @@
 #include "xfs_ag.h"
 #include "xfs_log_priv.h"
 
+#include <linux/lockdep_api.h>
 #include <linux/llist_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

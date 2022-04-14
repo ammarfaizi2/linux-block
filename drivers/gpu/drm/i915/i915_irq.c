@@ -28,6 +28,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>

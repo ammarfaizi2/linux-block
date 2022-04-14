@@ -6,6 +6,7 @@
 
 #include "coredump.h"
 
+#include <linux/lockdep_api.h>
 #include <linux/devcoredump.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

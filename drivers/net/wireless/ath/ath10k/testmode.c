@@ -5,6 +5,7 @@
 
 #include "testmode.h"
 
+#include <linux/lockdep_api.h>
 #include <net/netlink.h>
 #include <linux/firmware.h>
 

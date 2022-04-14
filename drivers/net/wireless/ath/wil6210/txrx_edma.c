@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/lockdep_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/etherdevice.h>
 #include <linux/moduleparam.h>
