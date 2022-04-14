@@ -1272,6 +1272,7 @@ rcu_torture_writer(void *arg)
 				if (cur_ops->get_gp_state && cur_ops->poll_gp_state)
 					cookie = cur_ops->get_gp_state();
 				cur_ops->exp_sync();
+				cur_ops->exp_sync();
 				if (cur_ops->get_gp_state && cur_ops->poll_gp_state)
 					WARN_ON_ONCE(!cur_ops->poll_gp_state(cookie));
 				rcu_torture_pipe_update(old_rp);
@@ -1297,6 +1298,7 @@ rcu_torture_writer(void *arg)
 				rcu_torture_writer_state = RTWS_SYNC;
 				if (cur_ops->get_gp_state && cur_ops->poll_gp_state)
 					cookie = cur_ops->get_gp_state();
+				cur_ops->sync();
 				cur_ops->sync();
 				if (cur_ops->get_gp_state && cur_ops->poll_gp_state)
 					WARN_ON_ONCE(!cur_ops->poll_gp_state(cookie));
