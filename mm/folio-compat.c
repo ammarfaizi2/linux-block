@@ -4,6 +4,7 @@
  * eventually.
  */
 
+#include <linux/writeback.h>
 #include <linux/writeback_api.h>
 #include <linux/mm_api.h>
 #include <linux/migrate.h>
