@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGES.
  *
  */
+#include <linux/highmem.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

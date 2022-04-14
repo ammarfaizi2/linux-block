@@ -6,6 +6,7 @@
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

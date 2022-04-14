@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/highmem.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/scatterlist.h>

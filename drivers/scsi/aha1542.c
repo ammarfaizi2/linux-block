@@ -7,6 +7,7 @@
  *  Copyright (C) 2015 Ondrej Zary
  */
 
+#include <linux/highmem.h>
 #include <linux/dma-mapping.h>
 #include <linux/bvec_api.h>
 #include <linux/module.h>

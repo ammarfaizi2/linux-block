@@ -3,6 +3,7 @@
  * Copyright © 2010-2015 Broadcom Corporation
  */
 
+#include <linux/highmem.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Oracle.  All rights reserved.
  */
 
+#include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

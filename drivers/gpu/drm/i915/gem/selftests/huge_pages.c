@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/file.h>
 #include <linux/bitmap.h>

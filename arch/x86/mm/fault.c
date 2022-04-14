@@ -4,6 +4,7 @@
  *  Copyright (C) 2001, 2002 Andi Kleen, SuSE Labs.
  *  Copyright (C) 2008-2009, Red Hat Inc., Ingo Molnar
  */
+#include <linux/highmem.h>
 #include <asm/unwind.h>
 #include <asm/sections.h>
 #include <asm/ptrace.h>

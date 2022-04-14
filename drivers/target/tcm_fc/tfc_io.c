@@ -14,6 +14,7 @@
 
 /* XXX TBD some includes may be extraneous */
 
+#include <linux/highmem.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/utsname.h>

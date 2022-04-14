@@ -7,6 +7,7 @@
  * Written by Theodore Ts'o, 2010.
  */
 
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>

@@ -9,6 +9,7 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
+#include <linux/highmem.h>
 #include <linux/dma-mapping.h>
 #include <linux/blkdev.h>
 #include <linux/kthread.h>

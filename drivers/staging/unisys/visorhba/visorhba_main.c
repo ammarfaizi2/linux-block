@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/highmem.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/kthread.h>

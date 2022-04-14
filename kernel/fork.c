@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api_mapping.h>

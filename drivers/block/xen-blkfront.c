@@ -35,6 +35,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/interrupt.h>

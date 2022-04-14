@@ -8,6 +8,7 @@
  * Copyright (c) 2008 Loc Ho <lho@amcc.com>
  */
 
+#include <linux/highmem.h>
 #include <crypto/internal/hash.h>
 #include <crypto/scatterwalk.h>
 #include <linux/err.h>

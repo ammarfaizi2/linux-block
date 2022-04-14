@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2016-20 Intel Corporation. */
 
+#include <linux/highmem.h>
 #include <linux/file.h>
 #include <linux/bitmap.h>
 #include <linux/sched/cond_resched.h>

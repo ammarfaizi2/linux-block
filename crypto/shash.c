@@ -5,6 +5,7 @@
  * Copyright (c) 2008 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/highmem.h>
 #include <crypto/scatterwalk.h>
 #include <crypto/internal/hash.h>
 #include <linux/err.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2001 Ming Lei <ming.lei@canonical.com>
  */
+#include <linux/highmem.h>
 #include <linux/bvec_api.h>
 #include <linux/bvec.h>
 #include <linux/mm.h>

@@ -13,6 +13,7 @@
  *	Hugh Dickins
  */
 
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/hashtable_api.h>
 #include <linux/gfp_api.h>

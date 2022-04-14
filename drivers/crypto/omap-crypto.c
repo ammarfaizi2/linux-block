@@ -6,6 +6,7 @@
  *   Tero Kristo <t-kristo@ti.com>
  */
 
+#include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>

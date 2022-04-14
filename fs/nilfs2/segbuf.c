@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/highmem.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/buffer_head.h>

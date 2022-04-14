@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/highmem.h>
 #include <linux/highmem_extra.h>
 #include <linux/bitops.h>
 #include <linux/mm.h>

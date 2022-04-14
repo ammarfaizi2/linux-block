@@ -7,6 +7,7 @@
  *	Original code comment copied from the i386 version of this file
  */
 
+#include <linux/highmem.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/crash_dump.h>

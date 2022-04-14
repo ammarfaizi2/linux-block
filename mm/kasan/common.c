@@ -9,6 +9,7 @@
  *        Andrey Konovalov <andreyknvl@gmail.com>
  */
 
+#include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/export.h>
 #include <linux/init.h>

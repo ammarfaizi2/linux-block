@@ -5,6 +5,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/highmem.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

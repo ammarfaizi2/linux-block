@@ -28,6 +28,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/highmem.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/time.h>

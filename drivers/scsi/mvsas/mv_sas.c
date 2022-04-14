@@ -7,6 +7,7 @@
  * Copyright 2009-2011 Marvell. <yuxiangl@marvell.com>
 */
 
+#include <linux/highmem.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>

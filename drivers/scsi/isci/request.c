@@ -53,6 +53,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/highmem.h>
 #include <linux/dma-mapping.h>
 #include <scsi/scsi_cmnd.h>
 #include "isci.h"

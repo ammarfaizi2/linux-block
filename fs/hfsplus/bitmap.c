@@ -9,6 +9,7 @@
  * Handling of allocation file
  */
 
+#include <linux/highmem.h>
 #include <linux/pagemap.h>
 
 #include "hfsplus_fs.h"
