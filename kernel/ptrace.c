@@ -8,6 +8,7 @@
  * to continually duplicate across every architecture.
  */
 
+#include <linux/wait_bit.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/ptrace_api.h>

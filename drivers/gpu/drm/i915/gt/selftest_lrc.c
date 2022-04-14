@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/wait_bit.h>
 #include <linux/tasklet_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>

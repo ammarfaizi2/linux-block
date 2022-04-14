@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/wait_bit.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/ktime_api.h>

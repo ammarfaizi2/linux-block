@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>
 #include <linux/uuid_api.h>

@@ -3,6 +3,7 @@
  * (C) 1997 Linus Torvalds
  * (C) 1999 Andrea Arcangeli <andrea@suse.de> (dynamic inode allocation)
  */
+#include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>
 #include <linux/vmalloc.h>

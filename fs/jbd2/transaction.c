@@ -14,6 +14,7 @@
  * filesystem).
  */
 
+#include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

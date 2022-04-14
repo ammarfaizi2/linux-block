@@ -10,6 +10,7 @@
  * (C) 1999 Dave Airlie, University of Limerick, Ireland <airlied@linux.ie>
  */
 
+#include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

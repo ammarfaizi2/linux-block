@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/wait_bit.h>
 #include <linux/uuid_api.h>
 #include <linux/sysfs.h>
 #include <linux/syscalls_api.h>

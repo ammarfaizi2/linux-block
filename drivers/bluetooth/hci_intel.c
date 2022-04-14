@@ -6,6 +6,7 @@
  *  Copyright (C) 2015  Intel Corporation
  */
 
+#include <linux/wait_bit.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>

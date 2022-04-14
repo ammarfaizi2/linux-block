@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Oracle.  All rights reserved.
  */
 
+#include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>

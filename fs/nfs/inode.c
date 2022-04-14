@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/wait_bit.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

@@ -38,6 +38,7 @@
  *  Transport switch API copyright (C) 2005, Chuck Lever <cel@netapp.com>
  */
 
+#include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sunrpc/debug.h>
