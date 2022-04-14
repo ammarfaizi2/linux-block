@@ -25,6 +25,7 @@
  * - the nport is removed
  */
 
+#include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/lockdep_api.h>

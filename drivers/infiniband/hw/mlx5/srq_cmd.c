@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2018, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

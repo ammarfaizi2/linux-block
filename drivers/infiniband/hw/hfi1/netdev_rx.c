@@ -13,6 +13,7 @@
 #include "netdev.h"
 #include "hfi.h"
 
+#include <linux/xarray_api.h>
 #include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

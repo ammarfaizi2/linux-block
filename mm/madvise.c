@@ -6,6 +6,7 @@
  * Copyright (C) 2002  Christoph Hellwig
  */
 
+#include <linux/xarray_api.h>
 #include <linux/uio_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>

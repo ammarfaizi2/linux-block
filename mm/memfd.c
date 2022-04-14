@@ -7,6 +7,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

@@ -8,6 +8,7 @@
  *  Improving global KVA allocator, Uladzislau Rezki, Sony, May 2019
  */
 
+#include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

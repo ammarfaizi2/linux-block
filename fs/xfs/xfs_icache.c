@@ -25,6 +25,7 @@
 #include "xfs_ag.h"
 #include "xfs_log_priv.h"
 
+#include <linux/xarray_api.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>

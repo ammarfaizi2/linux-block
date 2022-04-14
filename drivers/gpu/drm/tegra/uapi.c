@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020 NVIDIA Corporation */
 
+#include <linux/xarray_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/property.h>

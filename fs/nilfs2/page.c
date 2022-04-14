@@ -7,6 +7,7 @@
  * Written by Ryusuke Konishi and Seiji Kihara.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/mm_api.h>
 #include <linux/highmem_extra.h>
 #include <linux/atomic_api.h>

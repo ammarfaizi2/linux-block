@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>

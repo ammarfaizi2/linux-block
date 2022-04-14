@@ -8,6 +8,7 @@
  * Author: "David E. Box" <david.e.box@linux.intel.com>
  */
 
+#include <linux/xarray_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/auxiliary_bus.h>

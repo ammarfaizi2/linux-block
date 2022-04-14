@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>

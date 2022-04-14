@@ -3,6 +3,7 @@
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

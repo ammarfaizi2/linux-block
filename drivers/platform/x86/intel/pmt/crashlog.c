@@ -8,6 +8,7 @@
  * Author: "Alexander Duyck" <alexander.h.duyck@linux.intel.com>
  */
 
+#include <linux/xarray_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

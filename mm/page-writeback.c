@@ -12,6 +12,7 @@
  *		Initial version
  */
 
+#include <linux/xarray_api.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmstat.h>

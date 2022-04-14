@@ -4,6 +4,7 @@
  * (c) 2015 - Jeff Layton <jeff.layton@primarydata.com>
  */
 
+#include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/spinlock_api.h>

@@ -14,6 +14,7 @@
  * Buffermem limits added 12.3.98, Rik van Riel.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmstat.h>
 #include <linux/spinlock_api.h>

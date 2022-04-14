@@ -30,6 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/xarray_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>

@@ -6,6 +6,7 @@
  * Author: Matthew Wilcox <willy@infradead.org>
  */
 
+#include <linux/xarray_api.h>
 #include <linux/limits.h>
 #include <linux/atomic_api.h>
 #include <linux/xarray.h>

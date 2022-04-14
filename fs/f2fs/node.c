@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/xarray_api.h>
 #include <linux/writeback_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

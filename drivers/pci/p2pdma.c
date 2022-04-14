@@ -9,6 +9,7 @@
  */
 
 #define pr_fmt(fmt) "pci-p2pdma: " fmt
+#include <linux/xarray_api.h>
 #include <linux/sysfs.h>
 #include <linux/scatterlist_api.h>
 #include <linux/percpu-refcount-api.h>

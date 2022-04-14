@@ -4,6 +4,7 @@
  * subsets. Users create a subset with DECLARE_IOASID_SET, then allocate and
  * free IOASIDs with ioasid_alloc() and ioasid_free().
  */
+#include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/ioasid.h>

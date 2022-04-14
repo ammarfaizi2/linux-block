@@ -2,6 +2,7 @@
 /*
  * Functions related to setting various queue properties from drivers
  */
+#include <linux/xarray_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/backing-dev-api.h>
 #include <linux/kernel.h>
