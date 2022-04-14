@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/rcu_internal.h>
 #include <linux/ptrace_api.h>
 #include <linux/pid.h>
 #include <linux/pgtable_api.h>
