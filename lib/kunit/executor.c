@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/slab.h>
 #include <linux/reboot.h>
 #include <kunit/test.h>
 #include <linux/glob.h>

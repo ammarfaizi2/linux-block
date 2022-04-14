@@ -12,6 +12,7 @@
  * bootup setup stuff..
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/cpumask_api.h>

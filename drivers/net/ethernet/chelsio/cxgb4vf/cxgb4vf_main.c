@@ -35,6 +35,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api.h>

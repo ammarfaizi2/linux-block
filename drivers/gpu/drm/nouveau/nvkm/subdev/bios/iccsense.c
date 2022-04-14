@@ -21,6 +21,7 @@
  *
  * Authors: Martin Peres
  */
+#include <linux/slab.h>
 #include <subdev/bios.h>
 #include <subdev/bios/bit.h>
 #include <subdev/bios/extdev.h>

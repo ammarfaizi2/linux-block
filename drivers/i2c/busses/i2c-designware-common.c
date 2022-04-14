@@ -8,6 +8,7 @@
  * Copyright (C) 2007 MontaVista Software Inc.
  * Copyright (C) 2009 Provigent Ltd.
  */
+#include <linux/slab.h>
 #include <linux/bitmap.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>

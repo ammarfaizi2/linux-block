@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Intel Corporation. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/export.h>
 #include <linux/acpi.h>
 #include <acpi/acpi_lpat.h>

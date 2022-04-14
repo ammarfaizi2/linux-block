@@ -3,6 +3,7 @@
 /* Copyright 2019 Linaro, Ltd., Rob Herring <robh@kernel.org> */
 /* Copyright 2019 Collabora ltd. */
 
+#include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

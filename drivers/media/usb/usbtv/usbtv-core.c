@@ -42,6 +42,7 @@
  * reverse-engineering activity
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 
 #include "usbtv.h"

@@ -8,6 +8,7 @@
  * Copyright (c) 2021 Intel Corporation. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

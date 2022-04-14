@@ -1,3 +1,4 @@
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/notifier_api.h>
 #include <linux/rtnetlink.h>

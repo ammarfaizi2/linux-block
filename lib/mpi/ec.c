@@ -18,6 +18,8 @@
  * License along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <linux/slab.h>
+
 #include "mpi-internal.h"
 #include "longlong.h"
 

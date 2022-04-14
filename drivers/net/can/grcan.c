@@ -22,6 +22,7 @@
  * Contributors: Andreas Larsson <andreas@gaisler.com>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

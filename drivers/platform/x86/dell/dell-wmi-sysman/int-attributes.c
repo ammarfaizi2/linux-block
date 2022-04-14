@@ -6,6 +6,8 @@
  *  Copyright (c) 2020 Dell Inc.
  */
 
+#include <linux/slab.h>
+
 #include "dell-wmi-sysman.h"
 
 enum int_properties {MIN_VALUE = 6, MAX_VALUE, SCALAR_INCR};

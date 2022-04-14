@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/capability.h>
 #include <unistd.h>
 #include <errno.h>

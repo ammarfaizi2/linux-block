@@ -8,6 +8,8 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/slab.h>
+
 #include "include/apparmor.h"
 #include "include/cred.h"
 #include "include/policy.h"

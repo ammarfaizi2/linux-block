@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/siphash_api.h>
 #include <linux/rculist.h>
 #include <linux/random.h>

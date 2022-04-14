@@ -4,6 +4,7 @@
  * Copyright (c) 2019, Tessares SA.
  */
 
+#include <linux/slab.h>
 #include <linux/capability.h>
 #include <linux/types.h>
 

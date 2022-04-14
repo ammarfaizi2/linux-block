@@ -5,6 +5,7 @@
  * Author: Richard Weinberger <richard@nod.at>
  */
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/math64.h>

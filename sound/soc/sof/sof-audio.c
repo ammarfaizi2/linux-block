@@ -8,6 +8,7 @@
 // Author: Ranjani Sridharan <ranjani.sridharan@linux.intel.com>
 //
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include "sof-audio.h"

@@ -23,6 +23,7 @@
  */
 #include "ramnv40.h"
 
+#include <linux/slab.h>
 #include <subdev/bios.h>
 #include <subdev/bios/bit.h>
 #include <subdev/bios/init.h>

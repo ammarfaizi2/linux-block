@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "dmub_psr.h"
 #include "dc.h"
 #include "dc_dmub_srv.h"

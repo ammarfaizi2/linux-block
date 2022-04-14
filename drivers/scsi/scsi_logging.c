@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Hannes Reinecke <hare@suse.de>
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/atomic.h>

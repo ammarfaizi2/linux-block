@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/math64.h>
 #include <linux/pci.h>
 #include <linux/seq_file.h>

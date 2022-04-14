@@ -9,6 +9,7 @@
  * Copyright:	(C) Torsten Schenk
  */
 
+#include <linux/slab.h>
 #include <linux/device_api.h>
 
 #include "comm.h"

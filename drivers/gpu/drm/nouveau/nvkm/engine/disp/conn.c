@@ -25,6 +25,7 @@
 #include "outp.h"
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <subdev/gpio.h>
 
 #include <nvif/event.h>

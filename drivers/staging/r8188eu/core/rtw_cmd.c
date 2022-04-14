@@ -3,6 +3,7 @@
 
 #define _RTW_CMD_C_
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

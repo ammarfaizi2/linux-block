@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/slab.h>
 #include <linux/prefetch.h>
 #include <linux/mutex_api.h>
 #include <linux/capability.h>

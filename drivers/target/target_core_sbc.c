@@ -7,6 +7,7 @@
  * Nicholas A. Bellinger <nab@kernel.org>
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/highmem.h>
 #include <linux/kernel.h>

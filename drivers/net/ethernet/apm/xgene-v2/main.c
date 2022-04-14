@@ -7,6 +7,7 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/property.h>
 #include <linux/netdevice_api.h>

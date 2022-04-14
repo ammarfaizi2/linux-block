@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 

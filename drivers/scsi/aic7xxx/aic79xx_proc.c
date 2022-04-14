@@ -39,6 +39,7 @@
  *
  * $Id: //depot/aic7xxx/linux/drivers/scsi/aic7xxx/aic79xx_proc.c#19 $
  */
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 
 #include "aic79xx_osm.h"

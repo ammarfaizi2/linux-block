@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/slab.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>
 #include <linux/platform_device.h>

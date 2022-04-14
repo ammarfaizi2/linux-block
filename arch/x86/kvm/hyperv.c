@@ -25,6 +25,7 @@
 #include "hyperv.h"
 #include "xen.h"
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

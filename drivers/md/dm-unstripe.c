@@ -6,6 +6,7 @@
 
 #include "dm.h"
 
+#include <linux/slab.h>
 #include <linux/module.h>
 
 struct unstripe_c {

@@ -7,6 +7,7 @@
  *
  * Some code borrowed from drivers/usb/typec/ucsi/ucsi_acpi.c
  */
+#include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "smumgr.h"
 #include "vega20_inc.h"
 #include "soc15_common.h"

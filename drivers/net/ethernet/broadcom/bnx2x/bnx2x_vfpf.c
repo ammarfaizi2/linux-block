@@ -21,6 +21,7 @@
 
 #include "bnx2x.h"
 #include "bnx2x_cmn.h"
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

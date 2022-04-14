@@ -5,6 +5,7 @@
  * Author: Gaurav K Singh <gaurav.k.singh@intel.com>
  *         Manasi Navare <manasi.d.navare@intel.com>
  */
+#include <linux/slab.h>
 #include <linux/limits.h>
 
 #include "i915_drv.h"

@@ -109,6 +109,8 @@
 #define CP_LOAD_MAGIC_NV44TCL    0x00800029 /* per-vs state (0x4497) */
 #define CP_LOAD_MAGIC_NV40TCL    0x00800041 /* per-vs state (0x4097) */
 
+#include <linux/slab.h>
+
 #include "ctxnv40.h"
 #include "nv40.h"
 

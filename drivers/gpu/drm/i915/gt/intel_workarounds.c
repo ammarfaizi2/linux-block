@@ -3,6 +3,7 @@
  * Copyright © 2014-2018 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/bitmap.h>
 
 #include "i915_drv.h"

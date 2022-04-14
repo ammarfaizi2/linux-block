@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>

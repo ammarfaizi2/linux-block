@@ -24,6 +24,7 @@
 #include "nouveau_chan.h"
 #include "nouveau_dmem.h"
 
+#include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>

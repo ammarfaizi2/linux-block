@@ -6,6 +6,7 @@
  *  USB/RS232 I-Force joysticks and wheels.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/bitops.h>
 #include <linux/serio.h>

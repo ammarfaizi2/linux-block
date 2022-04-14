@@ -24,6 +24,7 @@
 #define nv04_dmaobj(p) container_of((p), struct nv04_dmaobj, base)
 #include "user.h"
 
+#include <linux/slab.h>
 #include <core/gpuobj.h>
 #include <subdev/fb.h>
 #include <subdev/mmu/vmm.h>

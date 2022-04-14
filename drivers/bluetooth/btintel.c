@@ -6,6 +6,7 @@
  *  Copyright (C) 2015  Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

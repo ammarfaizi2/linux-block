@@ -3,6 +3,7 @@
  * Copyright 2018-2020 Broadcom.
  */
 
+#include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/pid.h>

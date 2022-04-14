@@ -2,6 +2,7 @@
 /*
  * Functions related to mapping data to requests
  */
+#include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_kvmalloc.h>

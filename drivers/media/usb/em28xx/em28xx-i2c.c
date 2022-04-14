@@ -20,6 +20,7 @@
 
 #include "em28xx.h"
 
+#include <linux/slab.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/capability.h>

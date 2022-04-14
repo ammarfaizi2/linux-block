@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/random.h>
 #include <linux/of_api.h>

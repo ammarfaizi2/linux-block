@@ -6,6 +6,7 @@
  *
  * Author: Claudiu Beznea <claudiu.beznea@microchip.com>
  */
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

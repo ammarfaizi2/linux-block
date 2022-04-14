@@ -13,6 +13,7 @@
  * endpoints that exist primarily to expose them.
  */
 
+#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

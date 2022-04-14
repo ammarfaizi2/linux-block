@@ -4,6 +4,7 @@
  * (C) 2011 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc.
  * Copyright (C) 2016-2019 Christoph Hellwig.
  */
+#include <linux/slab.h>
 #include <linux/ratelimit.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_page_address.h>

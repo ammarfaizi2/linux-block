@@ -9,6 +9,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

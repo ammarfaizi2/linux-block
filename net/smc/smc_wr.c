@@ -22,6 +22,7 @@
  * Author(s):  Steffen Maier <maier@linux.vnet.ibm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/hashtable_api.h>

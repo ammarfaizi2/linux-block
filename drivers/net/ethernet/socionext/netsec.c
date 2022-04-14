@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>

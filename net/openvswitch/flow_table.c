@@ -6,6 +6,7 @@
 #include "flow.h"
 #include "datapath.h"
 #include "flow_netlink.h"
+#include <linux/slab.h>
 #include <linux/random.h>
 #include <linux/percpu.h>
 #include <linux/nodemask.h>

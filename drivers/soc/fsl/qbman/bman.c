@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/security.h>

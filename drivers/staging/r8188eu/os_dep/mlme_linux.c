@@ -3,6 +3,7 @@
 
 #define _MLME_OSDEP_C_
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 
 #include "../include/osdep_service.h"

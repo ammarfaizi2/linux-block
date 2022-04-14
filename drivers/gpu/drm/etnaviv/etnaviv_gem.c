@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

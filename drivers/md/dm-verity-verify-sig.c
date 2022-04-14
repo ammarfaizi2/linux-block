@@ -5,6 +5,7 @@
  * Author:  Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
  *
  */
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/device-mapper.h>
 #include <linux/verification.h>

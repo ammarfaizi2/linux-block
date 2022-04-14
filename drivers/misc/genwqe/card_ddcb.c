@@ -18,6 +18,7 @@
  * functional code.
  */
 
+#include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

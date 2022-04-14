@@ -5,6 +5,7 @@
  * Copyright 2001-2006 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

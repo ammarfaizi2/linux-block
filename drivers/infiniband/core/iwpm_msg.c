@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/semaphore.h>
 #include <linux/netdevice_api.h>
 #include <linux/kref_api.h>

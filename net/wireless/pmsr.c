@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2018 - 2021 Intel Corporation
  */
+#include <linux/slab.h>
 #include <linux/lockdep_api.h>
 #include <linux/etherdevice_api.h>
 #include <net/cfg80211.h>

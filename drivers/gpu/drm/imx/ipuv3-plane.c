@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Philipp Zabel, Pengutronix
  */
 
+#include <linux/slab.h>
 #include <linux/device_api.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>

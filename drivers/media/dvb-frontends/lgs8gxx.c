@@ -9,6 +9,7 @@
  *    Timothy Lee <timothy.lee@siriushk.com> (for initial work on LGS8GL5)
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>

@@ -6,6 +6,7 @@
  * Phoebe Buckheister <phoebe.buckheister@itwm.fraunhofer.de>
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/kref_api.h>
 #include <linux/hashtable_api.h>

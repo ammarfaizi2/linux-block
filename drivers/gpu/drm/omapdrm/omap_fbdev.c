@@ -4,6 +4,7 @@
  * Author: Rob Clark <rob@ti.com>
  */
 
+#include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_util.h>

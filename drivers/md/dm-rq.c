@@ -7,6 +7,7 @@
 #include "dm-core.h"
 #include "dm-rq.h"
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/blk-mq.h>
 

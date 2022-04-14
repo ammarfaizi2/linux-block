@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

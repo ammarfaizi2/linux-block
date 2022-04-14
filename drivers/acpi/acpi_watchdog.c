@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ACPI: watchdog: " fmt
 
+#include <linux/slab.h>
 #include <linux/resource_ext_api.h>
 #include <linux/acpi.h>
 #include <linux/ioport.h>

@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "dmub_abm.h"
 #include "dce_abm.h"
 #include "dc.h"

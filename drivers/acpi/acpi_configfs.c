@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "ACPI configfs: " fmt
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

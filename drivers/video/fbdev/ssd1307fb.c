@@ -5,6 +5,7 @@
  * Copyright 2012 Free Electrons
  */
 
+#include <linux/slab.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>

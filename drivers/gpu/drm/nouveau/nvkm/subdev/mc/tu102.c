@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #define tu102_mc(p) container_of((p), struct tu102_mc, base)
+#include <linux/slab.h>
+
 #include "priv.h"
 
 struct tu102_mc {

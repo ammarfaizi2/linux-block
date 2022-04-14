@@ -4,6 +4,7 @@
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
+#include <linux/slab.h>
 #include <linux/if_ether_api.h>
 #include <drv_types.h>
 #include <rtw_debug.h>

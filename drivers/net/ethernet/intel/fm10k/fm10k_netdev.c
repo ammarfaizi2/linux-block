@@ -2,6 +2,7 @@
 /* Copyright(c) 2013 - 2019 Intel Corporation. */
 
 #include "fm10k.h"
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api.h>
 #include <linux/if_vlan_api.h>

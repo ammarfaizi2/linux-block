@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <inc/core_status.h>
 #include <dc_link.h>
 #include <inc/link_hwss.h>

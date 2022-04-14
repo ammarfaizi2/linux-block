@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2020-2022 Intel Corporation
  */
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>
 #include <linux/mm_page_address.h>

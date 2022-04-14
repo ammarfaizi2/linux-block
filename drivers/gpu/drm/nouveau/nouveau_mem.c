@@ -23,6 +23,7 @@
 #include "nouveau_drv.h"
 #include "nouveau_bo.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <drm/ttm/ttm_bo_driver.h>
 

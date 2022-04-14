@@ -4,6 +4,7 @@
  *
  * Copyright 2016 Red Hat, Inc. and/or its affiliates.
  */
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

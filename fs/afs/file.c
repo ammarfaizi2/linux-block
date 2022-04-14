@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/slab.h>
 #include <linux/sched/task_flags.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>

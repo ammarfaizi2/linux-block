@@ -3,6 +3,7 @@
  * Copyright 2016 Broadcom
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

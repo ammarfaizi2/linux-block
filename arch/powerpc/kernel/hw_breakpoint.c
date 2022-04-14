@@ -8,6 +8,7 @@
  * Author: K.Prasad <prasad@linux.vnet.ibm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/perf_event_api.h>

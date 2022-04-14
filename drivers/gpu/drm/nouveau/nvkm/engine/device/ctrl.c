@@ -23,6 +23,7 @@
  */
 #include "ctrl.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 #include <subdev/clk.h>
 

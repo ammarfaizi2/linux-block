@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/mm_api.h>

@@ -6,6 +6,7 @@
  * Based on clk-programmable & clk-peripheral drivers by Boris BREZILLON.
  */
 
+#include <linux/slab.h>
 #include <linux/bitfield.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>

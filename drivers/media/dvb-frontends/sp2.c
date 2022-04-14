@@ -12,6 +12,7 @@
  *  Copyright (C) 2009 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/i2c.h>

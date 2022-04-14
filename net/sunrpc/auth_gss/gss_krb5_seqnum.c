@@ -31,6 +31,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <crypto/skcipher.h>
 #include <linux/types.h>
 #include <linux/sunrpc/gss_krb5.h>

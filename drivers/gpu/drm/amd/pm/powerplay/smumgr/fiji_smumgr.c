@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "pp_debug.h"
 #include "smumgr.h"
 #include "smu7_dyn_defaults.h"

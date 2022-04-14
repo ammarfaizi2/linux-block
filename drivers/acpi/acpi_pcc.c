@@ -15,6 +15,7 @@
  * handling of PCC OpRegion in the firmware.
  *
  */
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/acpi.h>
 #include <linux/completion.h>

@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 

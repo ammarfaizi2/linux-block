@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <drm/drm_mipi_dsi.h>
 
 #include "i915_drv.h"

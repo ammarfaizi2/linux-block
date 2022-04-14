@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2020, Mellanox Technologies Ltd. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/prefetch.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>

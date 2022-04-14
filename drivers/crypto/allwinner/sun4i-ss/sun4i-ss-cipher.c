@@ -10,6 +10,7 @@
  *
  * You could find the datasheet in Documentation/arm/sunxi.rst
  */
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/device_api.h>

@@ -14,6 +14,7 @@
  *   Copyright (C) 2008 Analog Devices, Inc
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/atomic_api.h>

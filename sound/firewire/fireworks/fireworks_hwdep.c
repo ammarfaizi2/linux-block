@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 

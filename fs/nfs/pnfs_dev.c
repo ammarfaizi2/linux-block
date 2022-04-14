@@ -28,6 +28,7 @@
  *  such damages.
  */
 
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

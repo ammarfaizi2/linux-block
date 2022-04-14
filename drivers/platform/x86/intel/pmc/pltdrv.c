@@ -11,6 +11,7 @@
  * should all have the ACPI device, which is the preferred way of enumeration.
  */
 
+#include <linux/slab.h>
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

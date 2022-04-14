@@ -9,6 +9,7 @@
  * Copyright (C) 2020 Intel Corp.
  */
 
+#include <linux/slab.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

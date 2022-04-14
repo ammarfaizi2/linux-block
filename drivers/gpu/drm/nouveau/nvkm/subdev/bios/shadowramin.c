@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/slab.h>
+
 #include "priv.h"
 
 struct priv {

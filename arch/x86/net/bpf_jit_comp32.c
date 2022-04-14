@@ -9,6 +9,7 @@
  * Shubham Bansal <illusionist.neo@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/filter_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/netdevice.h>

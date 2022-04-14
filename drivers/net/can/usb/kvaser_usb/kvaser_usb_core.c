@@ -11,6 +11,7 @@
  * Copyright (C) 2015 Valeo S.A.
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/completion.h>

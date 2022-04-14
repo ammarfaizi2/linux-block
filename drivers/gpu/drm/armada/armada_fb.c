@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Russell King
  */
 
+#include <linux/slab.h>
 #include <drm/drm_modeset_helper.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_fourcc.h>

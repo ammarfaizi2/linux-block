@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <linux/math64.h>
 #include <subdev/bios.h>
 #include <subdev/bios/vmap.h>

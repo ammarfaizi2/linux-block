@@ -25,6 +25,7 @@
 #include "priv.h"
 #include "gk20a.h"
 
+#include <linux/slab.h>
 #include <core/tegra.h>
 #include <subdev/timer.h>
 

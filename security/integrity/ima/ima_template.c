@@ -9,6 +9,7 @@
  *      Helpers to manage template descriptors.
  */
 
+#include <linux/slab.h>
 #include <linux/bitmap.h>
 #include <linux/rculist.h>
 #include "ima.h"

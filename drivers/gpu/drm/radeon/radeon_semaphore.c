@@ -28,6 +28,8 @@
  *    Christian König <deathsimple@vodafone.de>
  */
 
+#include <linux/slab.h>
+
 #include "radeon.h"
 #include "radeon_trace.h"
 

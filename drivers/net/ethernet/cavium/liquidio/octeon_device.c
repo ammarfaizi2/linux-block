@@ -15,6 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
  * NONINFRINGEMENT.  See the GNU General Public License for more details.
  ***********************************************************************/
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

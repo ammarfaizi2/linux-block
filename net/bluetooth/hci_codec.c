@@ -2,6 +2,7 @@
 
 /* Copyright (C) 2021 Intel Corporation */
 
+#include <linux/slab.h>
 #include <net/bluetooth/bluetooth.h>
 #include <net/bluetooth/hci_core.h>
 #include "hci_codec.h"

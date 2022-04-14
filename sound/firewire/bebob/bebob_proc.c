@@ -5,6 +5,8 @@
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
 
+#include <linux/slab.h>
+
 #include "./bebob.h"
 
 /* contents of information register */

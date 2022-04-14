@@ -3,6 +3,7 @@
  * Copyright(c) 2015-2018 Intel Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2018 IBM Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

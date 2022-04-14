@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Microsemi Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/device/class.h>

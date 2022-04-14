@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <drm/drm_color_mgmt.h>
 #include <drm/drm_drv.h>

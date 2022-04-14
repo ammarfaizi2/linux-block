@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2021 Intel Corporation. */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>

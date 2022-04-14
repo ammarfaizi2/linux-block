@@ -4,6 +4,7 @@
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>

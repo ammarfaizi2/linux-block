@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

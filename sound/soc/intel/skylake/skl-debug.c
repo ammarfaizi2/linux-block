@@ -5,6 +5,7 @@
  *  Copyright (C) 2016-17 Intel Corp
  */
 
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/pci.h>

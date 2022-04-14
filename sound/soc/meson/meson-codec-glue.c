@@ -3,6 +3,7 @@
 // Copyright (c) 2019 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>

@@ -9,6 +9,8 @@
  * Can be used for DVB-only and also, that's the plan, for
  * Hybrid USB devices (analog and DVB).
  */
+#include <linux/slab.h>
+
 #include "dvb_usb_common.h"
 
 /* URB stuff for streaming */

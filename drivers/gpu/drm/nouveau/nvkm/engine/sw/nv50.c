@@ -23,6 +23,7 @@
  */
 #include "nv50.h"
 
+#include <linux/slab.h>
 #include <core/gpuobj.h>
 #include <engine/disp.h>
 #include <engine/fifo/chan.h>

@@ -11,6 +11,7 @@
 // for firmware debugging.
 //
 
+#include <linux/slab.h>
 #include <linux/ktime_api.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>

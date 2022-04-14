@@ -25,6 +25,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 
+#include <linux/slab.h>
 #include <linux/pci.h>
 
 #include <drm/drm_device.h>

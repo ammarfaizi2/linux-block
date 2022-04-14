@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Raspberry Pi
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>

@@ -56,6 +56,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/property.h>
 #include <linux/io.h>

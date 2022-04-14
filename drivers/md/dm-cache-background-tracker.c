@@ -4,6 +4,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/atomic_api.h>
 

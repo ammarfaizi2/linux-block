@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>

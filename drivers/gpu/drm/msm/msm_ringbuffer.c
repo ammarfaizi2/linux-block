@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/dma-fence-api.h>
 

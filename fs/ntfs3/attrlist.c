@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/fs.h>
 
 #include "debug.h"

@@ -15,6 +15,7 @@
  * Hardware interface for generic Intel audio DSP HDA IP
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

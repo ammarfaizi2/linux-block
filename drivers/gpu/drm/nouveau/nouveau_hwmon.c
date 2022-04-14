@@ -23,6 +23,7 @@
  */
 
 #ifdef CONFIG_ACPI
+#include <linux/slab.h>
 #include <linux/acpi.h>
 #endif
 #include <linux/power_supply.h>

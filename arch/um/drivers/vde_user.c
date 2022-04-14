@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Luca Bigliardi (shammash@artha.org).
  */
 
+#include <linux/slab.h>
 #include <stddef.h>
 #include <errno.h>
 #include <libvdeplug.h>

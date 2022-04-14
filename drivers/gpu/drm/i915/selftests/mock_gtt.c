@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/ioport.h>
 
 #include "mock_gtt.h"

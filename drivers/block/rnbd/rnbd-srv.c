@@ -9,6 +9,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/module.h>

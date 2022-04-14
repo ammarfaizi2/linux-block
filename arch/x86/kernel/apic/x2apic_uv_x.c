@@ -8,6 +8,7 @@
  * (C) Copyright 2020 Hewlett Packard Enterprise Development LP
  * Copyright (C) 2007-2014 Silicon Graphics, Inc. All rights reserved.
  */
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/cpumask_api.h>
 #include <asm/tsc.h>

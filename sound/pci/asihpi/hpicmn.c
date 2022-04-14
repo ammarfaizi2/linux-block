@@ -13,6 +13,8 @@
 *******************************************************************************/
 #define SOURCEFILE_NAME "hpicmn.c"
 
+#include <linux/slab.h>
+
 #include "hpi_internal.h"
 #include "hpidebug.h"
 #include "hpimsginit.h"

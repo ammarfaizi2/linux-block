@@ -28,6 +28,7 @@
  * write it, but just marks it as dirty.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>

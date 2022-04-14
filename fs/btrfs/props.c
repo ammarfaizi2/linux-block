@@ -3,6 +3,7 @@
  * Copyright (C) 2014 Filipe David Borba Manana <fdmanana@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/hashtable_api.h>
 #include <linux/fs_api.h>
 #include <linux/hashtable.h>

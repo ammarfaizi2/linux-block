@@ -12,6 +12,7 @@
  * Copyright(c) 2020-2021 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/mutex_api.h>
 #include <linux/ieee80211.h>

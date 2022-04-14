@@ -24,6 +24,7 @@
 #define nv40_instmem(p) container_of((p), struct nv40_instmem, base)
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

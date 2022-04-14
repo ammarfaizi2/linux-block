@@ -7,6 +7,8 @@
  *  handling extended attributes
  */
 
+#include <linux/slab.h>
+
 #include "hpfs_fn.h"
 
 /* Remove external extended attributes. ano specifies whether a is a 

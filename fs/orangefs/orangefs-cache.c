@@ -5,6 +5,8 @@
  * See COPYING in top-level directory.
  */
 
+#include <linux/slab.h>
+
 #include "protocol.h"
 #include "orangefs-kernel.h"
 

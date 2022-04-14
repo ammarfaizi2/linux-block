@@ -2,6 +2,7 @@
 /*
  * Copyright © 2020 Intel Corporation
  */
+#include <linux/slab.h>
 #include <linux/kernel.h>
 
 #include <drm/drm_atomic_helper.h>

@@ -3,6 +3,7 @@
  * Copyright 2020 Noralf Trønnes
  */
 
+#include <linux/slab.h>
 #include <linux/backlight.h>
 #include <linux/workqueue.h>
 

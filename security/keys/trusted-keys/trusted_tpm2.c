@@ -4,6 +4,7 @@
  * Copyright (C) 2014 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/asn1_encoder.h>
 #include <linux/oid_registry.h>
 #include <linux/string.h>

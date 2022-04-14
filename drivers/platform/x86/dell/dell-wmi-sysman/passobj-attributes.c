@@ -6,6 +6,8 @@
  *  Copyright (c) 2020 Dell Inc.
  */
 
+#include <linux/slab.h>
+
 #include "dell-wmi-sysman.h"
 
 enum po_properties {IS_PASS_SET = 1, MIN_PASS_LEN, MAX_PASS_LEN};

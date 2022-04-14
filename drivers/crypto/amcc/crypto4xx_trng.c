@@ -5,6 +5,7 @@
  * Copyright 2011 IBM Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

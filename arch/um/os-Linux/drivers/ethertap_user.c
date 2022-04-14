@@ -6,6 +6,7 @@
  * Copyright (C) 2001 by various other people who didn't put their name here.
  */
 
+#include <linux/slab.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>

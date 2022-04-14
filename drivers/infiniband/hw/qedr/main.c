@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/interrupt.h>
 #include <linux/hardirq.h>

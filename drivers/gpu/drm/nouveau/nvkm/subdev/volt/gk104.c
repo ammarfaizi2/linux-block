@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <subdev/volt.h>
 #include <subdev/gpio.h>
 #include <subdev/bios.h>

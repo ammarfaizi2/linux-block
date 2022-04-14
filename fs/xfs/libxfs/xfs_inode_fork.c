@@ -4,6 +4,7 @@
  * All Rights Reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 
 #include "xfs.h"

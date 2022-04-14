@@ -82,6 +82,7 @@
 
 #define SCSI_NCR_DEBUG_FLAGS	(0)
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/prefetch.h>
 #include <linux/jiffies.h>

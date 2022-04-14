@@ -12,6 +12,7 @@
 // Copyright (c) 2019 Martin Sperl <kernel@martin.sperl.org>
 //
 
+#include <linux/slab.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/interrupt.h>

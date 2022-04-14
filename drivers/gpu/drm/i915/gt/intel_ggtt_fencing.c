@@ -3,6 +3,7 @@
  * Copyright © 2008-2015 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

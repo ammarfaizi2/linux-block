@@ -25,6 +25,7 @@
  *   o Limit shadow window to 2 * cwnd, or to cwnd when application limited.
  *   o More accurate e^-x.
  */
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/random.h>
 #include <linux/module.h>

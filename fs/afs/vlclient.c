@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/slab.h>
 #include <linux/gfp.h>
 #include <linux/init.h>
 #include <linux/sched.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/slab.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/seq_file.h>

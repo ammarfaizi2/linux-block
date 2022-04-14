@@ -11,6 +11,7 @@
  * Portions Copyright 2002 by Mylex (An IBM Business Unit)
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

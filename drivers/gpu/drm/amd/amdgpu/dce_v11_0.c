@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/math64.h>
 #include <drm/drm_fourcc.h>
 #include <drm/drm_vblank.h>

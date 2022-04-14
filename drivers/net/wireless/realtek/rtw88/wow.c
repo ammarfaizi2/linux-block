@@ -2,6 +2,7 @@
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 

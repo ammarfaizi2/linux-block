@@ -10,6 +10,7 @@
 */
 
 #ifdef CONFIG_BCM47XX_BCMA
+#include <linux/slab.h>
 #include <asm/mach-bcm47xx/bcm47xx.h>
 #endif
 

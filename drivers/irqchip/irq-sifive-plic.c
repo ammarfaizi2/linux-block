@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Christoph Hellwig
  */
 #define pr_fmt(fmt) "plic: " fmt
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>

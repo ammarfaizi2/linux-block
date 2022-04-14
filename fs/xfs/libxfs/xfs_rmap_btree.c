@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Red Hat, Inc.
  * All Rights Reserved.
  */
+#include <linux/slab.h>
 #include <linux/atomic_api.h>
 
 #include "xfs.h"

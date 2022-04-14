@@ -3,6 +3,7 @@
  * Driver for Solarflare network controllers and boards
  * Copyright 2015 Solarflare Communications Inc.
  */
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

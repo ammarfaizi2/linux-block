@@ -6,6 +6,7 @@
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
+#include <linux/slab.h>
 #include <linux/cpumask_api.h>
 #include <net/mac80211.h>
 #include <linux/sched.h>

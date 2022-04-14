@@ -13,6 +13,7 @@
 #include "trace.h"
 #include "mac.h"
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

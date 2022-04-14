@@ -5,6 +5,7 @@
  * Copyright 2008-2011 Freescale Semiconductor, Inc.
  *
  */
+#include <linux/slab.h>
 #include <linux/dma-mapping.h>
 
 #include "compat.h"

@@ -8,6 +8,7 @@
  * This file contains all of the code that is specific to the HFI chip
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/percpu.h>

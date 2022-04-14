@@ -23,6 +23,7 @@
 #include "umem.h"
 #include "ummu.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <core/client.h>
 #include <core/memory.h>

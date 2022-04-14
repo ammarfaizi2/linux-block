@@ -14,6 +14,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
+
 #include "compr.h"
 
 static DEFINE_SPINLOCK(jffs2_compressor_list_lock);

@@ -10,6 +10,7 @@
  */
 
 /* #define DEBUG */
+#include <linux/slab.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

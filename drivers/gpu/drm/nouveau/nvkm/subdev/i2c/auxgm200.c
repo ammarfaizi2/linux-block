@@ -22,6 +22,8 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #define gm200_i2c_aux(p) container_of((p), struct gm200_i2c_aux, base)
+#include <linux/slab.h>
+
 #include "aux.h"
 
 struct gm200_i2c_aux {

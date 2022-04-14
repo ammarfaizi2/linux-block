@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES. */
 
+#include <linux/slab.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/bitmap.h>
 #include <linux/netdevice.h>

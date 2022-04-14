@@ -4,6 +4,7 @@
  *  Rewritten from the dovefb driver, and Armada510 manuals.
  */
 
+#include <linux/slab.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_fourcc.h>

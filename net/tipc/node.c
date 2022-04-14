@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>
 #include <linux/random.h>

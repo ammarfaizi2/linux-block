@@ -22,6 +22,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "kfd_mqd_manager.h"
 #include "amdgpu_amdkfd.h"
 #include "kfd_device_queue_manager.h"

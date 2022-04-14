@@ -8,6 +8,7 @@
  *	https://cdrdv2.intel.com/v1/dl/getContent/603354
  */
 
+#include <linux/slab.h>
 #include <linux/acpi.h>
 #include <linux/adxl.h>
 

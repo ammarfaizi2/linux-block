@@ -11,6 +11,7 @@
  * USB peripheral controller (at91_udc.c).
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

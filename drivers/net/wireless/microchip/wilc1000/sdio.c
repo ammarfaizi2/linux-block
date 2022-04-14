@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/device_api.h>
 #include <linux/clk.h>

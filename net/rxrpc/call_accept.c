@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/ktime_api.h>
 #include <linux/atomic_api.h>

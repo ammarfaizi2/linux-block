@@ -25,6 +25,7 @@
  * - the nport is removed
  */
 
+#include <linux/slab.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 

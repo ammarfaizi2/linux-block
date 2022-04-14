@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <rdma/ib_mad.h>

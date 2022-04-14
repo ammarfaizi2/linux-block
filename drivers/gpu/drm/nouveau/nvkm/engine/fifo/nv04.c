@@ -25,6 +25,7 @@
 #include "channv04.h"
 #include "regsnv04.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 #include <core/ramht.h>
 #include <subdev/instmem.h>

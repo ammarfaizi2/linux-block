@@ -2,6 +2,7 @@
 #include "nv20.h"
 #include "regs.h"
 
+#include <linux/slab.h>
 #include <core/gpuobj.h>
 #include <engine/fifo.h>
 #include <engine/fifo/chan.h>

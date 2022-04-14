@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2020 Intel Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched.h>
 #include <linux/lockdep_api.h>

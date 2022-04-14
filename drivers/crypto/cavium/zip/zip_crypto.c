@@ -43,6 +43,8 @@
  * WITH YOU.
  ***********************license end**************************************/
 
+#include <linux/slab.h>
+
 #include "zip_crypto.h"
 
 static void zip_static_init_zip_ops(struct zip_operation *zip_ops,

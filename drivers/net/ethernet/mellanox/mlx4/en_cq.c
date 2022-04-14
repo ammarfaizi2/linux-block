@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/cpumask_api.h>

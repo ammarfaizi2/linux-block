@@ -12,6 +12,7 @@
  * file, where their drivers can use them.
  */
 
+#include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/mm_api.h>
 #include <linux/ktime_api.h>

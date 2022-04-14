@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pid.h>

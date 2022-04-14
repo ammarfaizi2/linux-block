@@ -5,6 +5,7 @@
  */
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/rculist.h>
 #include <linux/jiffies.h>

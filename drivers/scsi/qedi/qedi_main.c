@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Cavium Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/prefetch.h>

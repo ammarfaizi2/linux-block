@@ -3,6 +3,7 @@
  * Copyright (c) 2019 Microsemi Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/bitmap.h>
 #include <linux/iopoll.h>
 #include <linux/proc_fs.h>

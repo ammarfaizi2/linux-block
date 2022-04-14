@@ -23,6 +23,7 @@
  * Authors: Michel Dänzer
  */
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 #include <drm/radeon_drm.h>
 #include "radeon_reg.h"

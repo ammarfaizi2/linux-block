@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/uaccess.h>
 
 #include <drm/drm_atomic.h>

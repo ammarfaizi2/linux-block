@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "reg_helper.h"
 #include "fixed31_32.h"
 #include "resource.h"

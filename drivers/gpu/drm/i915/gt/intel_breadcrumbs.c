@@ -3,6 +3,7 @@
  * Copyright © 2015-2021 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/lockdep_api.h>
 #include <linux/llist_api.h>

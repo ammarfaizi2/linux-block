@@ -3,6 +3,7 @@
  * KVM L1 hypervisor optimizations on Hyper-V for SVM.
  */
 
+#include <linux/slab.h>
 #include <linux/kvm_host.h>
 
 #include <asm/mshyperv.h>

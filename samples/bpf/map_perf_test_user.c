@@ -2,6 +2,7 @@
 /* Copyright (c) 2016 Facebook
  */
 #define _GNU_SOURCE
+#include <linux/slab.h>
 #include <sched.h>
 #include <stdio.h>
 #include <sys/types.h>

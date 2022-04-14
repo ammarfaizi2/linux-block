@@ -23,6 +23,7 @@
  */
 #include "ctxgf100.h"
 
+#include <linux/slab.h>
 #include <subdev/fb.h>
 #include <subdev/mc.h>
 #include <subdev/timer.h>

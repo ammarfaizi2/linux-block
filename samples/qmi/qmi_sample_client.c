@@ -5,6 +5,7 @@
  * Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

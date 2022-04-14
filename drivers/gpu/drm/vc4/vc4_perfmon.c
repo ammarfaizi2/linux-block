@@ -9,6 +9,7 @@
  * The V3D block provides 16 hardware counters which can count various events.
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>

@@ -23,6 +23,7 @@
 #include "wimm.h"
 #include "handles.h"
 
+#include <linux/slab.h>
 #include <nvif/class.h>
 #include <nvif/cl0002.h>
 

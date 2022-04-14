@@ -8,6 +8,7 @@
  *	Mikko Perttunen <mperttunen@nvidia.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/clk.h>

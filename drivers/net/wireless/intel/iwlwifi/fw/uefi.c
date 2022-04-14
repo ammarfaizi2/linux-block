@@ -10,6 +10,7 @@
 
 #include "fw/uefi.h"
 #include "fw/api/alive.h"
+#include <linux/slab.h>
 #include <linux/efi.h>
 #include "fw/runtime.h"
 

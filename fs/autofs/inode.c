@@ -4,6 +4,7 @@
  * Copyright 2005-2006 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/slab.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

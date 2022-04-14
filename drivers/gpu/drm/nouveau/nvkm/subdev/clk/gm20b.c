@@ -20,6 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <subdev/clk.h>
 #include <subdev/volt.h>
 #include <subdev/timer.h>

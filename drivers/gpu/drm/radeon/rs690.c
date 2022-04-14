@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/slab.h>
 #include <linux/pci.h>
 
 #include "atom.h"

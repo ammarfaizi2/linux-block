@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/kmod.h>
 #include <linux/capability.h>

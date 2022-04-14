@@ -25,6 +25,7 @@
 #include "cgrp.h"
 #include "changk104.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <core/client.h>

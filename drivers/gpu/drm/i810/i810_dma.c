@@ -30,6 +30,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

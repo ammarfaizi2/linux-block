@@ -3,6 +3,7 @@
  * Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -8,6 +8,7 @@
  *
  * Copyright (c) 2017, Microsoft Corporation.
  */
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/vmalloc.h>
 #include <linux/hyperv.h>

@@ -28,6 +28,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_api.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2004 Li Shaohua <shaohua.li@intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>

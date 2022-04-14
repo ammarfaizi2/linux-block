@@ -5,6 +5,7 @@
  * Copyright (C) 2019, Google LLC.
  * Author: David Gow <davidgow@google.com>
  */
+#include <linux/slab.h>
 #include <kunit/test.h>
 
 #include <linux/list.h>

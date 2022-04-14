@@ -22,6 +22,7 @@
 #include "umem.h"
 #include "ummu.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 #include <core/memory.h>
 #include <subdev/bar.h>

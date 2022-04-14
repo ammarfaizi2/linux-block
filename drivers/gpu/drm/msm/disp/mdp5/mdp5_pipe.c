@@ -4,6 +4,8 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/slab.h>
+
 #include "mdp5_kms.h"
 
 int mdp5_pipe_assign(struct drm_atomic_state *s, struct drm_plane *plane,

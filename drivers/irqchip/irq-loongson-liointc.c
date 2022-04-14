@@ -4,6 +4,7 @@
  *  Loongson Local IO Interrupt Controller support
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_gc_lock.h>

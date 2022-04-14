@@ -11,6 +11,7 @@
  * it should be.
  */
 
+#include <linux/slab.h>
 #include <crypto/hash.h>
 
 #include "include/apparmor.h"

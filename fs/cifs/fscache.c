@@ -6,6 +6,7 @@
  *   Author(s): Suresh Jayaraman <sjayaraman@suse.de>
  *
  */
+#include <linux/slab.h>
 #include <linux/pagemap.h>
 
 #include "fscache.h"

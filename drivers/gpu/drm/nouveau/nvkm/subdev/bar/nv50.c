@@ -23,6 +23,7 @@
  */
 #include "nv50.h"
 
+#include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/atomic_api.h>
 #include <core/gpuobj.h>

@@ -23,6 +23,7 @@
 
 #define SWSMU_CODE_LAYER_L2
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/firmware.h>

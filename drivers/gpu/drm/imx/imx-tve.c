@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Philipp Zabel, Pengutronix
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

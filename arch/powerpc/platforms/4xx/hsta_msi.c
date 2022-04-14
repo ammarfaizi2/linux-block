@@ -6,6 +6,7 @@
  * Copyright © 2013 Alistair Popple <alistair@popple.id.au> IBM Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/preempt.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

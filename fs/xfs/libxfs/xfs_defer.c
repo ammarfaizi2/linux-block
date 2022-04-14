@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 
 #include "xfs.h"

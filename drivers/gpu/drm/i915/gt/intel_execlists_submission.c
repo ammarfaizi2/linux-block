@@ -106,6 +106,7 @@
  * preemption, but just sampling the new tail pointer).
  *
  */
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/notifier_api.h>

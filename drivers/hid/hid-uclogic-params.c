@@ -17,6 +17,7 @@
 #include "hid-uclogic-rdesc.h"
 #include "usbhid/usbhid.h"
 #include "hid-ids.h"
+#include <linux/slab.h>
 #include <linux/ctype.h>
 #include <asm/unaligned.h>
 

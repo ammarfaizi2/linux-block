@@ -6,6 +6,7 @@
  * Copyright (C) 2006 Craig W. Nadler
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <asm/byteorder.h>

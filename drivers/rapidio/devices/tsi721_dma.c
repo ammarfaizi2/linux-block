@@ -6,6 +6,7 @@
  * Alexandre Bounine <alexandre.bounine@idt.com>
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/hardirq.h>
 #include <linux/io.h>

@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/seq_file_net.h>
 #include <linux/semaphore.h>
 #include <linux/refcount_api.h>

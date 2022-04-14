@@ -26,6 +26,7 @@
 #include "ovly.h"
 #include "crc.h"
 
+#include <linux/slab.h>
 #include <nvif/class.h>
 #include <nvif/event.h>
 #include <nvif/cl0046.h>

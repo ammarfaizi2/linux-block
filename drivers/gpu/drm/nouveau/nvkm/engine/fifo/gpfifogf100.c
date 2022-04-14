@@ -23,6 +23,7 @@
  */
 #include "changf100.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <core/client.h>
 #include <core/gpuobj.h>

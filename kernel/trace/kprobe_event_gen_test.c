@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Tom Zanussi <zanussi@kernel.org>
  */
 
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/trace_events.h>

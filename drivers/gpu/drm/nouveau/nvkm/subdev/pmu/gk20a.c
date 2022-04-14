@@ -22,6 +22,7 @@
 #define gk20a_pmu(p) container_of((p), struct gk20a_pmu, base)
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <linux/math64.h>
 #include <subdev/clk.h>
 #include <subdev/timer.h>

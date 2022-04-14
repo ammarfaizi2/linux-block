@@ -2,6 +2,7 @@
 /* Copyright (c) 2015 - 2021 Intel Corporation */
 #include "main.h"
 #include "i40iw_hw.h"
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/net/intel/i40e_client.h>
 

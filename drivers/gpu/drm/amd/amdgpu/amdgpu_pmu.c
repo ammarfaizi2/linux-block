@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/perf_event_api.h>
 #include <asm/local64_api.h>
 #include <linux/perf_event.h>

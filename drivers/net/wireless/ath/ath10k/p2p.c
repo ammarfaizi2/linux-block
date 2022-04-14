@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Qualcomm Atheros, Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/lockdep_api.h>
 
 #include "core.h"

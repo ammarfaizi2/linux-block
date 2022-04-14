@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/configfs.h>
 #include <rdma/ib_verbs.h>

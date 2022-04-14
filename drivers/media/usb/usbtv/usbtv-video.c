@@ -42,6 +42,7 @@
  * reverse-engineering activity
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>

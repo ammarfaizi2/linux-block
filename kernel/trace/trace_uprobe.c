@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt)	"trace_uprobe: " fmt
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/sched/task_flags.h>
 #include <linux/percpu.h>

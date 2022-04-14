@@ -13,6 +13,7 @@
 #include "aq_hw_utils.h"
 #include "aq_ptp.h"
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>

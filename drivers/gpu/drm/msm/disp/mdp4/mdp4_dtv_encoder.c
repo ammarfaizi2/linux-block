@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_probe_helper.h>
 

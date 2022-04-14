@@ -5,6 +5,7 @@
  * All Rights Reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/ktime_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/vmalloc.h>

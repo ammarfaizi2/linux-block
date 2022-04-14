@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2019-2022 Intel Corporation
  */
+#include <linux/slab.h>
 #include <linux/uuid.h>
 #include <linux/dmi.h>
 #include "iwl-drv.h"

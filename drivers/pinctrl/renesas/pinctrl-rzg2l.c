@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Renesas Electronics Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

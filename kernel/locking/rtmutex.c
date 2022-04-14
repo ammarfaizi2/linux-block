@@ -16,6 +16,7 @@
  *
  *  See Documentation/locking/rt-mutex-design.rst for details.
  */
+#include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/task.h>
 #include <linux/rbtree_api.h>

@@ -6,6 +6,8 @@
  *  Copyright (c) 2020 Dell Inc.
  */
 
+#include <linux/slab.h>
+
 #include "dell-wmi-sysman.h"
 
 get_instance_id(enumeration);

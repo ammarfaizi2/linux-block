@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2016 Christoph Hellwig.
  */
 
+#include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

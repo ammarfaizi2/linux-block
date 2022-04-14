@@ -24,6 +24,7 @@
 #define nv50_i2c_bus(p) container_of((p), struct nv50_i2c_bus, base)
 #include "bus.h"
 
+#include <linux/slab.h>
 #include <subdev/vga.h>
 
 struct nv50_i2c_bus {

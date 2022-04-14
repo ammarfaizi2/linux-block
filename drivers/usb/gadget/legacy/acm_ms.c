@@ -10,6 +10,7 @@
  * Heavily based on multi.c and cdc2.c
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 

@@ -3,6 +3,7 @@
  * virtio-snd: Virtio sound device
  * Copyright (C) 2021 OpenSynergy GmbH
  */
+#include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/moduleparam.h>

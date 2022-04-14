@@ -7,6 +7,7 @@
  */
 
 #include "it913x.h"
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
 #include <linux/jiffies.h>

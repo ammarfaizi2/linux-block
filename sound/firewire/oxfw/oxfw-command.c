@@ -5,6 +5,8 @@
  * Copyright (c) 2014 Takashi Sakamoto
  */
 
+#include <linux/slab.h>
+
 #include "oxfw.h"
 
 int avc_stream_set_format(struct fw_unit *unit, enum avc_general_plug_dir dir,

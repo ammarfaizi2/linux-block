@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014-2016 Christoph Hellwig.
  */
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/sunrpc/svc.h>
 #include <linux/exportfs.h>

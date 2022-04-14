@@ -6,6 +6,7 @@
  * 				Alexey Kuznetsov <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>

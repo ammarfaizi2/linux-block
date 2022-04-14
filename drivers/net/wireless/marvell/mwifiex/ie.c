@@ -18,6 +18,8 @@
  * this warranty disclaimer.
  */
 
+#include <linux/slab.h>
+
 #include "main.h"
 
 /* This function checks if current IE index is used by any on other interface.

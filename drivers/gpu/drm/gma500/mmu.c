@@ -4,6 +4,7 @@
  *
  **************************************************************************/
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>

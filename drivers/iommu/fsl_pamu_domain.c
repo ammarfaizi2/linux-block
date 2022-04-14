@@ -9,6 +9,7 @@
 
 #include "fsl_pamu_domain.h"
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/capability.h>
 #include <sysdev/fsl_pci.h>

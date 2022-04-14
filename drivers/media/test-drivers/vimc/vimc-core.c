@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2017 Helen Koike <helen.fornazier@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/dma-mapping.h>
 #include <linux/font.h>
 #include <linux/init.h>

@@ -22,6 +22,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <drm/drm_print.h>
 

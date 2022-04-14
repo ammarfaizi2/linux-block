@@ -46,6 +46,7 @@
  * all the nodes.
  */
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_entry_types.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2020, Google LLC.
  */
 
+#include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/stdarg.h>

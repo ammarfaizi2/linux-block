@@ -12,6 +12,7 @@
 
 #define dev_fmt(fmt) DRV_NAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/moduleparam.h>
 #include <linux/pci.h>

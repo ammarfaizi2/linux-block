@@ -9,6 +9,7 @@
  */
 
 
+#include <linux/slab.h>
 #include <linux/hid.h>
 #include <linux/input.h>
 #include <linux/module.h>

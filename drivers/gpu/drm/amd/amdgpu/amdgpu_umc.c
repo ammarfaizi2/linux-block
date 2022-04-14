@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "amdgpu.h"
 
 static int amdgpu_umc_do_page_retirement(struct amdgpu_device *adev,

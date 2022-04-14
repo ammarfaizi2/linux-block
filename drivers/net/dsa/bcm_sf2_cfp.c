@@ -5,6 +5,7 @@
  * Copyright (C) 2016, Broadcom
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/list.h>
 #include <linux/ethtool.h>

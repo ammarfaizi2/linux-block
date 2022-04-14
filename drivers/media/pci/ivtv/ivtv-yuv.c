@@ -6,6 +6,7 @@
 
  */
 
+#include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/pci-dma-compat.h>

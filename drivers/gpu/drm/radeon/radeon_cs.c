@@ -25,6 +25,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>

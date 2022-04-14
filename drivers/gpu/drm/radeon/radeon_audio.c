@@ -22,6 +22,7 @@
  * Authors: Slava Grigorev <slava.grigorev@amd.com>
  */
 
+#include <linux/slab.h>
 #include <linux/gcd.h>
 
 #include <drm/drm_crtc.h>

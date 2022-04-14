@@ -6,6 +6,7 @@
 //
 // Author: Nicolin Chen <nicoleotsuka@gmail.com>
 
+#include <linux/slab.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/platform_data/dma-imx.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2017-2020, Mellanox Technologies inc. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/io.h>
 
 #include "cmd.h"

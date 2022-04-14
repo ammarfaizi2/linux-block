@@ -17,6 +17,7 @@
  *    Xin Long <lucien.xin@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/list.h>
 #include <net/sctp/sctp.h>
 #include <net/sctp/sm.h>

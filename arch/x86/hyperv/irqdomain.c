@@ -8,6 +8,7 @@
  *  Wei Liu <wei.liu@kernel.org>
  */
 
+#include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/interrupt.h>

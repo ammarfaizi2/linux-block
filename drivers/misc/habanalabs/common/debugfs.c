@@ -8,6 +8,7 @@
 #include "habanalabs.h"
 #include "../include/hw_ip/mmu/mmu_general.h"
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>

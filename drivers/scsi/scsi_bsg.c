@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/slab.h>
 #include <linux/bsg.h>
 #include <scsi/scsi.h>
 #include <scsi/scsi_ioctl.h>

@@ -2,6 +2,8 @@
 /*
  * Copyright 2021 NXP
  */
+#include <linux/slab.h>
+
 #include "netlink.h"
 #include "common.h"
 

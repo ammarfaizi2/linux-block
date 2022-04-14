@@ -10,6 +10,7 @@
  */
 
 #include "dm.h"
+#include <linux/slab.h>
 #include <linux/mm_page_address.h>
 #include <linux/fs_api.h>
 #include <linux/bvec_api.h>

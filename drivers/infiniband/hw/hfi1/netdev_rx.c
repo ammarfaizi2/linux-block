@@ -13,6 +13,7 @@
 #include "netdev.h"
 #include "hfi.h"
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>

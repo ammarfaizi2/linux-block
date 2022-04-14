@@ -56,6 +56,7 @@
 #include "sg_sw_sec4.h"
 #include "key_gen.h"
 #include "caamalg_desc.h"
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 #include <crypto/engine.h>

@@ -7,6 +7,7 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>

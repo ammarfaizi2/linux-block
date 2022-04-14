@@ -29,6 +29,7 @@
  */
 
 #include "vmwgfx_drv.h"
+#include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/idr_api.h>
 #include <drm/ttm/ttm_bo_driver.h>

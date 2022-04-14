@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/slab.h>
 #include <core/gpuobj.h>
 #include <core/engine.h>
 

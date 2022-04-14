@@ -25,6 +25,7 @@
 #include "dp.h"
 #include "ior.h"
 
+#include <linux/slab.h>
 #include <subdev/bios.h>
 #include <subdev/bios/dcb.h>
 #include <subdev/i2c.h>

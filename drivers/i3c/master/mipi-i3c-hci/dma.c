@@ -8,6 +8,7 @@
  * v1.x of the spec and v2.0 will likely be split out.
  */
 
+#include <linux/slab.h>
 #include <linux/bitfield.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>

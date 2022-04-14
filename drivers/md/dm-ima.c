@@ -11,6 +11,7 @@
 #include "dm-core.h"
 #include "dm-ima.h"
 
+#include <linux/slab.h>
 #include <linux/ima.h>
 #include <linux/sched/mm.h>
 #include <crypto/hash.h>

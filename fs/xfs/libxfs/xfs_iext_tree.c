@@ -3,6 +3,8 @@
  * Copyright (c) 2017 Christoph Hellwig.
  */
 
+#include <linux/slab.h>
+
 #include "xfs.h"
 #include "xfs_shared.h"
 #include "xfs_format.h"

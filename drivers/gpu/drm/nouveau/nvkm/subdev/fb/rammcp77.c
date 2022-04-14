@@ -22,6 +22,8 @@
  * Authors: Ben Skeggs
  */
 #define mcp77_ram(p) container_of((p), struct mcp77_ram, base)
+#include <linux/slab.h>
+
 #include "ram.h"
 
 struct mcp77_ram {

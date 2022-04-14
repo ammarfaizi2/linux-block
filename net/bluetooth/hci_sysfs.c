@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Bluetooth HCI driver model support. */
 
+#include <linux/slab.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

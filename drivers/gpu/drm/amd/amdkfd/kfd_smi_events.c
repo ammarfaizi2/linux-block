@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/hashtable_api.h>
 #include <linux/atomic_api.h>

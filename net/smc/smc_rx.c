@@ -10,6 +10,7 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/eventpoll.h>

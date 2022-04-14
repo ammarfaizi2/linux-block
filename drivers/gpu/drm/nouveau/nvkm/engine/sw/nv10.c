@@ -25,6 +25,7 @@
 #include "chan.h"
 #include "nvsw.h"
 
+#include <linux/slab.h>
 #include <nvif/class.h>
 
 /*******************************************************************************

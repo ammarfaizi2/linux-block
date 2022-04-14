@@ -7,6 +7,7 @@
  * Copyright (c) 2020 Microsemi Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>
 #include <linux/phy.h>

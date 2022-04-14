@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "htvec: " fmt
 
+#include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

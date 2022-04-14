@@ -5,6 +5,7 @@
  * Copyright (C) 2014  STMicroelectronics SAS. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

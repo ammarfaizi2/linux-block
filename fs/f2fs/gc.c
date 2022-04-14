@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>

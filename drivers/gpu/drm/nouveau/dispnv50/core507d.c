@@ -22,6 +22,7 @@
 #include "core.h"
 #include "head.h"
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 #include <nvif/cl507d.h>
 #include <nvif/push507c.h>

@@ -30,6 +30,7 @@
  * Register locations derived from NVClock by Roderick Colenbrander
  */
 
+#include <linux/slab.h>
 #include <linux/idr_api.h>
 #include <linux/apple-gmux.h>
 #include <linux/backlight.h>

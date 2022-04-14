@@ -31,6 +31,7 @@
  * cause they are rather slow compared to alloc_pages+map.
  */
 
+#include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

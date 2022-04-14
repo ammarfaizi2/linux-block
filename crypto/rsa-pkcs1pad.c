@@ -5,6 +5,7 @@
  * Copyright (c) 2015  Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <crypto/algapi.h>
 #include <crypto/akcipher.h>

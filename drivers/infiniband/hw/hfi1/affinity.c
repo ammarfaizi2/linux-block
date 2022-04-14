@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2020 Intel Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

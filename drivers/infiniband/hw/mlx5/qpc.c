@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2020, Mellanox Technologies inc. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/gfp.h>

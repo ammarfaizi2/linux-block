@@ -3,6 +3,7 @@
  * Copyright (C) 2015, 2016 ARM Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/irqdesc.h>

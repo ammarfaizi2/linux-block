@@ -3,6 +3,7 @@
  * Copyright (c) 2020, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <rdma/uverbs_ioctl.h>
 #include <rdma/mlx5_user_ioctl_cmds.h>
 #include <rdma/mlx5_user_ioctl_verbs.h>

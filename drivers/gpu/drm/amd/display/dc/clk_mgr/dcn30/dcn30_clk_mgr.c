@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "dccg.h"
 #include "clk_mgr_internal.h"
 #include "dcn30_clk_mgr_smu_msg.h"

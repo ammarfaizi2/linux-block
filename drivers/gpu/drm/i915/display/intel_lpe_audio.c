@@ -60,6 +60,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>

@@ -22,6 +22,8 @@
  * Authors: Ben Skeggs
  */
 #define gp100_mc(p) container_of((p), struct gp100_mc, base)
+#include <linux/slab.h>
+
 #include "priv.h"
 
 struct gp100_mc {

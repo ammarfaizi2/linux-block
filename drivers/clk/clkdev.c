@@ -6,6 +6,7 @@
  *
  * Helper for the clk API to assist looking up a struct clk.
  */
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/device_api_lock.h>

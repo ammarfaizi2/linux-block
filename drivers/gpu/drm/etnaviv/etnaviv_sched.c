@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Etnaviv Project
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

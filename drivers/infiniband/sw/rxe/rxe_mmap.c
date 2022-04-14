@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>
 #include <linux/shm.h>

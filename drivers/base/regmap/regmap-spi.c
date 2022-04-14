@@ -6,6 +6,7 @@
 //
 // Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
 
+#include <linux/slab.h>
 #include <linux/regmap.h>
 #include <linux/spi/spi.h>
 #include <linux/module.h>

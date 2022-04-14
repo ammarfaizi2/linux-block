@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  * Copyright (c) 2017-2021 Christoph Hellwig.
  */
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/pgtable_api.h>

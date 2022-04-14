@@ -18,6 +18,7 @@
  * Thus some part of the code might be dependent on PT3 specific config.
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/export.h>

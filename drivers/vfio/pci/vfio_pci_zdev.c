@@ -6,6 +6,7 @@
  *	Author(s): Pierre Morel <pmorel@linux.ibm.com>
  *                 Matthew Rosato <mjrosato@linux.ibm.com>
  */
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/uaccess.h>

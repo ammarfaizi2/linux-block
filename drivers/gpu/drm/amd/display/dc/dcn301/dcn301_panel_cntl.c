@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/math64.h>
 
 #include "reg_helper.h"

@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  */
 
+#include <linux/slab.h>
 #include <linux/percpu.h>
 #include <linux/math.h>
 #include <linux/irqflags.h>

@@ -191,6 +191,7 @@
  *   with the rest of the i915 driver.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>

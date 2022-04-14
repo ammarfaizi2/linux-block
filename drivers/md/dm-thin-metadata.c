@@ -10,6 +10,7 @@
 #include "persistent-data/dm-space-map-disk.h"
 #include "persistent-data/dm-transaction-manager.h"
 
+#include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/math64.h>
 #include <linux/fs_api.h>

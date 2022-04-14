@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/etherdevice_api.h>
 #include <linux/crc32.h>

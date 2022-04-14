@@ -8,6 +8,7 @@
  *               Christian Borntraeger <borntraeger@de.ibm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

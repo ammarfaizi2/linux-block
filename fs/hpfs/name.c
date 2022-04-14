@@ -7,6 +7,8 @@
  *  operations with filenames
  */
 
+#include <linux/slab.h>
+
 #include "hpfs_fn.h"
 
 static inline int not_allowed_char(unsigned char c)

@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/firmware.h>
 #include <linux/greybus.h>
 #include "firmware.h"

@@ -11,6 +11,7 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/pci.h>
 #include <linux/firmware.h>

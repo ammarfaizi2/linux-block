@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* $Date: 2005/10/24 23:18:13 $ $RCSfile: mv88e1xxx.c,v $ $Revision: 1.49 $ */
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 
 #include "common.h"

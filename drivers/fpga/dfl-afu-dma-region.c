@@ -9,6 +9,7 @@
  *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>

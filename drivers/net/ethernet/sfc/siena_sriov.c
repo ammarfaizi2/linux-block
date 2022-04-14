@@ -3,6 +3,7 @@
  * Driver for Solarflare network controllers and boards
  * Copyright 2010-2012 Solarflare Communications Inc.
  */
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/net.h>

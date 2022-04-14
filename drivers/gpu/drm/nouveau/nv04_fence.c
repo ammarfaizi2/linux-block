@@ -25,6 +25,7 @@
 #include "nouveau_dma.h"
 #include "nouveau_fence.h"
 
+#include <linux/slab.h>
 #include <nvif/if0004.h>
 #include <nvif/push006c.h>
 

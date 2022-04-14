@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <subdev/bios.h>
 #include <subdev/bios/extdev.h>
 #include <subdev/bios/iccsense.h>

@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 
 #include "i915_drv.h"

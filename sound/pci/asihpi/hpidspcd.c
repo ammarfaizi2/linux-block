@@ -9,6 +9,8 @@
 
 ***********************************************************************/
 #define SOURCEFILE_NAME "hpidspcd.c"
+#include <linux/slab.h>
+
 #include "hpidspcd.h"
 #include "hpidebug.h"
 #include "hpi_version.h"

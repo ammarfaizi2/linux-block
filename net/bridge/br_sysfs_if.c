@@ -7,6 +7,7 @@
  *	Stephen Hemminger		<shemminger@osdl.org>
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

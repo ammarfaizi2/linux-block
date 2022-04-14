@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include <linux/slab.h>
 #include <linux/highmem.h>
 
 #include "vmwgfx_drv.h"

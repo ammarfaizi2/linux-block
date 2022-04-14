@@ -25,6 +25,7 @@
  *
  *  Send feedback to: megaraidlinux.pdl@broadcom.com
  */
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

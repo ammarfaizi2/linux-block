@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <linux/slab.h>
 #include <linux/etherdevice_api.h>
 #include <net/switchdev.h>
 #include "lan966x_main.h"

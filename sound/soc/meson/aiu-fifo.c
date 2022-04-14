@@ -3,6 +3,7 @@
 // Copyright (c) 2020 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
+#include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

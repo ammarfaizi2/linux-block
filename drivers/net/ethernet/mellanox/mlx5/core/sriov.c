@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/pci.h>
 #include <linux/mlx5/driver.h>

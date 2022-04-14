@@ -8,6 +8,7 @@
  * Rockchip version from rockchip/dw-mipi-dsi.c with phy & bridge APIs.
  */
 
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

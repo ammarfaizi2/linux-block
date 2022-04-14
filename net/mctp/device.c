@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/notifier_api.h>

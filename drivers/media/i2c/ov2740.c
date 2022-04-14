@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2020 Intel Corporation.
 
+#include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/export.h>

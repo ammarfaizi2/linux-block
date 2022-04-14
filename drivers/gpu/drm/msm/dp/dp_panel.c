@@ -5,6 +5,7 @@
 
 #include "dp_panel.h"
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <drm/drm_connector.h>

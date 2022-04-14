@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

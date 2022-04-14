@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "pch-pic: " fmt
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>

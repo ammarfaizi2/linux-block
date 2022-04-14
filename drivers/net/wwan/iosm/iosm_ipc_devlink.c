@@ -3,6 +3,7 @@
  * Copyright (C) 2020-2021 Intel Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api.h>
 
 #include "iosm_ipc_chnl_cfg.h"

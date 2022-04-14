@@ -9,6 +9,7 @@
  * Copyright (C) 2004, 2013 Intel Corp.
  * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
+#include <linux/slab.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

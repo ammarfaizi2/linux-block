@@ -7,6 +7,7 @@
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/slab.h>
 #include <linux/hardirq.h>
 #include <linux/delay.h>
 

@@ -5,6 +5,7 @@
  * Copyright (c) 2020 NVIDIA CORPORATION. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/bitmap.h>
 
 #include "dr_types.h"

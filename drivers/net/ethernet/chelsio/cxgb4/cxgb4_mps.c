@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 Chelsio Communications, Inc. All rights reserved. */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/etherdevice_api.h>
 

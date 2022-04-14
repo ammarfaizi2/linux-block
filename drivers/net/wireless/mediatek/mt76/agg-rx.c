@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2018 Felix Fietkau <nbd@nbd.name>
  */
+#include <linux/slab.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>
 

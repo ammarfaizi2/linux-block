@@ -3,6 +3,7 @@
  * Copyright (C) 2013 Fusion IO.  All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/radix-tree-api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

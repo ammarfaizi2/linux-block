@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/slab.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/dp/drm_dp_helper.h>

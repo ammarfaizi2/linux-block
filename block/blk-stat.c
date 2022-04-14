@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 Jens Axboe
  */
+#include <linux/slab.h>
 #include <linux/percpu.h>
 #include <linux/math64.h>
 #include <linux/cpumask_api.h>

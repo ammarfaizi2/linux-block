@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2020 Intel Corporation. All rights rsvd. */
 
+#include <linux/slab.h>
 #include <linux/perf_event_api.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

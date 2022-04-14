@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>
 #include <drm/drm_atomic_helper.h>

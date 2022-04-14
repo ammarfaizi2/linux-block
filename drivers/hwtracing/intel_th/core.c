@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/kmod.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

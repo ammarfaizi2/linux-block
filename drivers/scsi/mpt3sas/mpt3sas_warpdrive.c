@@ -38,6 +38,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.
  */
+#include <linux/slab.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

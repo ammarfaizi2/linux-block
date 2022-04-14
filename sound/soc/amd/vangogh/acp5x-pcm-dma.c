@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2021 Advanced Micro Devices, Inc. All rights reserved.
 
+#include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

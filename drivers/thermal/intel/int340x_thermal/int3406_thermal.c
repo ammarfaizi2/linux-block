@@ -6,6 +6,7 @@
  * Authors: Aaron Lu <aaron.lu@intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

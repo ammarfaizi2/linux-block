@@ -5,6 +5,8 @@
  *  Copyright (C) 2012-2013 Philippe De Muyter <phdm@macqel.be>
  */
 
+#include <linux/slab.h>
+
 #include "check.h"
 
 struct lvm_rec {

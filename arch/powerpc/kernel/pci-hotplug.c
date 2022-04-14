@@ -10,6 +10,7 @@
  * Updates, 2013, Gavin Shan <shangw@linux.vnet.ibm.com>
  */
 
+#include <linux/slab.h>
 #include <linux/pci.h>
 #include <linux/export.h>
 #include <asm/pci-bridge.h>

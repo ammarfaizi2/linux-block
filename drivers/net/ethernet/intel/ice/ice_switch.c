@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018, Intel Corporation. */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>

@@ -22,6 +22,7 @@
  * Authors: Christian König
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/huge_mm.h>

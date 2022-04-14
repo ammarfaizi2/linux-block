@@ -21,6 +21,8 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
+#include <linux/slab.h>
+
 #include "priv.h"
 
 struct nvkm_top_device *

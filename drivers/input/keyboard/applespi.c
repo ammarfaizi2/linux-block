@@ -41,6 +41,7 @@
  * consecutive packets.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ktime_api.h>

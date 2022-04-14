@@ -8,6 +8,7 @@
 #include "pch_gbe.h"
 #include "pch_gbe_phy.h"
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/types.h>

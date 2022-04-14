@@ -5,6 +5,7 @@
  * Authers: Jesse Barnes <jesse.barnes@intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/i2c.h>
 
 #include "psb_intel_drv.h"

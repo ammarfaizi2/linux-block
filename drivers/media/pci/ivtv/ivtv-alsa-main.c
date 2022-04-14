@@ -13,6 +13,7 @@
 #include "ivtv-alsa.h"
 #include "ivtv-alsa-pcm.h"
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/export.h>
 #include <sound/core.h>

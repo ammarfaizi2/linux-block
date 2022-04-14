@@ -3,6 +3,7 @@
  * Copyright (c) 2021, Mellanox Technologies inc. All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/capability.h>

@@ -10,6 +10,7 @@
  * You could find a link for the datasheet in Documentation/arm/sunxi.rst
  */
 #include "sun8i-ss.h"
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

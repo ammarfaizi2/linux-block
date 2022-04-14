@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/clk.h>

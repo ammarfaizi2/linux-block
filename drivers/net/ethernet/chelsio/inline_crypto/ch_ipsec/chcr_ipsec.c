@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) "ch_ipsec: " fmt
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ipv6.h>

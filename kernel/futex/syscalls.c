@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/slab.h>
 #include <linux/ptrace_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

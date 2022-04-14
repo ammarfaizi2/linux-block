@@ -5,6 +5,7 @@
  *  Copyright (C) 2010 Stefan Ringel <stefan.ringel@arcor.de>
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

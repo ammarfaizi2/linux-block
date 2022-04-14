@@ -5,6 +5,7 @@
  * Copyright (c) 2019, Intel Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

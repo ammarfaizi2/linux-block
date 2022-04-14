@@ -4,6 +4,7 @@
 /* ethtool support for e1000 */
 
 #include "e1000.h"
+#include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

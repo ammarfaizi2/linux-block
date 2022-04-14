@@ -12,6 +12,7 @@
  * for more details.
  *
  */
+#include <linux/slab.h>
 #include <linux/netlink.h>
 #include <net/devlink.h>
 #include <linux/firmware.h>

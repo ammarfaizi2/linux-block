@@ -12,6 +12,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

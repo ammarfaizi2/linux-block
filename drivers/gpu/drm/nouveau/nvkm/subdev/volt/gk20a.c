@@ -22,6 +22,7 @@
 #define gk20a_volt(p) container_of((p), struct gk20a_volt, base)
 #include "priv.h"
 
+#include <linux/slab.h>
 #include <core/tegra.h>
 
 #include "gk20a.h"

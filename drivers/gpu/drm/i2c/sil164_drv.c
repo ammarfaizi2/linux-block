@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/device_api.h>
 #include <linux/bug.h>
 #include <linux/module.h>

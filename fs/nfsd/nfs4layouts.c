@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014 Christoph Hellwig.
  */
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>

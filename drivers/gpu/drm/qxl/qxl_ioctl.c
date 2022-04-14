@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/slab.h>
 #include <linux/pci.h>
 #include <linux/uaccess.h>
 

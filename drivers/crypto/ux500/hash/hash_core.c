@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "hashX hashX: " fmt
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

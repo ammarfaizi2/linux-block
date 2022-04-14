@@ -4,6 +4,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>

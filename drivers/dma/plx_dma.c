@@ -7,6 +7,7 @@
 
 #include "dmaengine.h"
 
+#include <linux/slab.h>
 #include <linux/rcupdate.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/jiffies.h>

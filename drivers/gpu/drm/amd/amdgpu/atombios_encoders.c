@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
 

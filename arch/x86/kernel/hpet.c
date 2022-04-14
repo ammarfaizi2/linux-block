@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/slab.h>
 #include <linux/preempt.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

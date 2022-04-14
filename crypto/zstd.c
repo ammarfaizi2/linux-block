@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2017-present, Facebook, Inc.
  */
+#include <linux/slab.h>
 #include <linux/crypto.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

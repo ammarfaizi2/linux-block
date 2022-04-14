@@ -11,6 +11,7 @@
  *	Jianhua Li <lijianhua@huawei.com>
  */
 
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/device_api.h>
 #include <drm/drm_atomic_helper.h>

@@ -1,5 +1,6 @@
 /* License: GPL */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/filter_api.h>
 #include <linux/capability.h>

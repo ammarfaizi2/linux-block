@@ -7,6 +7,7 @@
 #define pr_fmt(fmt) "%s" fmt, "ipmi:dmi: "
 #define dev_fmt pr_fmt
 
+#include <linux/slab.h>
 #include <linux/ipmi.h>
 #include <linux/init.h>
 #include <linux/dmi.h>

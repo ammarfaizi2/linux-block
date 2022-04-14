@@ -5,6 +5,7 @@
  *  Copyright (c) 2005-7 Ian McDonald <ian.mcdonald@jandi.co.nz>
  *  Copyright (c) 2005 Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
+#include <linux/slab.h>
 #include <net/sock.h>
 #include "tfrc.h"
 

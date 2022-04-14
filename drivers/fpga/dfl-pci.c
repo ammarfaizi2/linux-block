@@ -14,6 +14,7 @@
  *   Henry Mitchel <henry.mitchel@intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

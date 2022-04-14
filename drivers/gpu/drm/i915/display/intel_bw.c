@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <drm/drm_atomic_state_helper.h>
 
 #include "i915_reg.h"

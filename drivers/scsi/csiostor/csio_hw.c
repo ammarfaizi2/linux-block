@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/prefetch.h>
 #include <linux/capability.h>
 #include <linux/pci.h>

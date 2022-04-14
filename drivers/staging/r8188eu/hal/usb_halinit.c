@@ -3,6 +3,7 @@
 
 #define _HCI_HAL_INIT_C_
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 

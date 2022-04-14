@@ -7,6 +7,7 @@
  * Copyright (C) 2010 Fitipower Integrated Technology Inc
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>

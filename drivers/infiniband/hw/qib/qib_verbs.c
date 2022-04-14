@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>

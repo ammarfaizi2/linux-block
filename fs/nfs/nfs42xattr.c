@@ -7,6 +7,7 @@
  *
  * Author: Frank van der Linden <fllinden@amazon.com>
  */
+#include <linux/slab.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/list_lru_api.h>
 #include <linux/kref_api.h>

@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/gfp_api.h>
 #include <linux/bitmap.h>

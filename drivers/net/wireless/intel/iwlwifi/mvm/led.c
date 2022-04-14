@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2014, 2018-2019 Intel Corporation
  * Copyright (C) 2017 Intel Deutschland GmbH
  */
+#include <linux/slab.h>
 #include <linux/leds.h>
 #include "iwl-io.h"
 #include "iwl-csr.h"

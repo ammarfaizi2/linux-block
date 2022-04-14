@@ -29,6 +29,7 @@
  * Lorenzo Bianconi <lorenzo.bianconi@st.com>
  * Denis Ciocca <denis.ciocca@st.com>
  */
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/align.h>

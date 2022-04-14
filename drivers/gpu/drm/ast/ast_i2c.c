@@ -21,6 +21,7 @@
  * of the Software.
  */
 
+#include <linux/slab.h>
 #include <drm/drm_managed.h>
 #include <drm/drm_print.h>
 

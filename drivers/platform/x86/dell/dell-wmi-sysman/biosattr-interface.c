@@ -6,6 +6,7 @@
  *  Copyright (c) 2020 Dell Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/wmi.h>

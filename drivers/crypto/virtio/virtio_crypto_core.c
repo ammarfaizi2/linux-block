@@ -4,6 +4,7 @@
   * Copyright 2016 HUAWEI TECHNOLOGIES CO., LTD.
   */
 
+#include <linux/slab.h>
 #include <linux/cpumask_api.h>
 #include <linux/err.h>
 #include <linux/module.h>

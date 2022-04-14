@@ -3,6 +3,7 @@
  * VGICv3 MMIO handling functions
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bitfield.h>

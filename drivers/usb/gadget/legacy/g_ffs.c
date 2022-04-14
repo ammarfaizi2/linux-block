@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "g_ffs: " fmt
 
+#include <linux/slab.h>
 #include <linux/module.h>
 
 #if defined CONFIG_USB_FUNCTIONFS_ETH || defined CONFIG_USB_FUNCTIONFS_RNDIS

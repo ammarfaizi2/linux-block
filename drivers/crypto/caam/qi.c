@@ -7,6 +7,7 @@
  * Copyright 2016-2017, 2019-2020 NXP
  */
 
+#include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io_extra.h>

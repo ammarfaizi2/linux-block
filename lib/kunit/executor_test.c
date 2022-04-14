@@ -6,6 +6,7 @@
  * Author: Daniel Latypov <dlatypov@google.com>
  */
 
+#include <linux/slab.h>
 #include <kunit/test.h>
 
 static void kfree_at_end(struct kunit *test, const void *to_free);

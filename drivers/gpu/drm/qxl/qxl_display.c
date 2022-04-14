@@ -23,6 +23,7 @@
  *          Alon Levy
  */
 
+#include <linux/slab.h>
 #include <linux/io_extra.h>
 #include <linux/crc32.h>
 #include <linux/delay.h>

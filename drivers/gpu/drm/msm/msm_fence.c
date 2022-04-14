@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/dma-fence-api.h>
 #include <linux/dma-fence.h>
 

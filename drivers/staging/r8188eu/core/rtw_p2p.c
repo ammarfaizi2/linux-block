@@ -3,6 +3,7 @@
 
 #define _RTW_P2P_C_
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 
 #include "../include/drv_types.h"

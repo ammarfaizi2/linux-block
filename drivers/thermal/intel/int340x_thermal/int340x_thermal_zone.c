@@ -3,6 +3,7 @@
  * int340x_thermal_zone.c
  * Copyright (c) 2015, Intel Corporation.
  */
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

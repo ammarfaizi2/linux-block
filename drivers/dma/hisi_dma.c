@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright(c) 2019 HiSilicon Limited. */
+#include <linux/slab.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

@@ -2,6 +2,7 @@
 /*
  * /proc/sys support
  */
+#include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <linux/mm_api_kvmalloc.h>

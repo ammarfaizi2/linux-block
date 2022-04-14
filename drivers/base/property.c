@@ -7,6 +7,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/fwnode.h>
 #include <linux/etherdevice_api.h>

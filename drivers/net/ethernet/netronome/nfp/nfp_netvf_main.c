@@ -8,6 +8,7 @@
  *         Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
+#include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

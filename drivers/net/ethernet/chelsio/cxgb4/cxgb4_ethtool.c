@@ -3,6 +3,7 @@
  *  Copyright (C) 2013-2015 Chelsio Communications.  All rights reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_api.h>

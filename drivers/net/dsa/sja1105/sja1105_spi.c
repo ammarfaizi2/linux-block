@@ -3,6 +3,7 @@
  * Copyright (c) 2018, Sensor-Technik Wiedemann GmbH
  * Copyright (c) 2018-2019, Vladimir Oltean <olteanv@gmail.com>
  */
+#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/capability.h>
 #include <linux/spi/spi.h>

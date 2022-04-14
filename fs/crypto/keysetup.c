@@ -8,6 +8,7 @@
  * Heavily modified since then.
  */
 
+#include <linux/slab.h>
 #include <linux/siphash_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>

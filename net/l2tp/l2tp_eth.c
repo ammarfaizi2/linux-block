@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/seq_file.h>
 #include <linux/rtnetlink.h>

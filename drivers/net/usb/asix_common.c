@@ -7,6 +7,7 @@
  * Copyright (c) 2002-2003 TiVo Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

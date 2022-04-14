@@ -23,6 +23,7 @@
 #include "priv.h"
 #include "gk20a.h"
 
+#include <linux/slab.h>
 #include <core/tegra.h>
 
 static const struct cvb_coef gm20b_cvb_coef[] = {

@@ -4,6 +4,7 @@
  * Copyright © 2008-2012 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <asm/byteorder.h>
 #include <linux/kthread.h>

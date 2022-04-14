@@ -21,6 +21,8 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/slab.h>
+
 #include "gf100.h"
 
 const struct nvkm_specsrc

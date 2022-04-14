@@ -5,6 +5,7 @@
  * Copyright 2015-2016 Google Inc.
  */
 
+#include <linux/slab.h>
 #include <linux/greybus.h>
 #include "audio_codec.h"
 

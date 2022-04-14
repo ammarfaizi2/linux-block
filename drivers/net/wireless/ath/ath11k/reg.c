@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
+#include <linux/slab.h>
 #include <linux/rtnetlink.h>
 
 #include "core.h"

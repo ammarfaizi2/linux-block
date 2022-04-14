@@ -4,6 +4,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/xattr.h>
 #include <linux/fs.h>

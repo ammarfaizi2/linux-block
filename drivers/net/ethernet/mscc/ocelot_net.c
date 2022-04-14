@@ -8,6 +8,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

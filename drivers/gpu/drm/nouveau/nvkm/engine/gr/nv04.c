@@ -24,6 +24,7 @@
 #include "priv.h"
 #include "regs.h"
 
+#include <linux/slab.h>
 #include <core/client.h>
 #include <core/gpuobj.h>
 #include <engine/fifo.h>

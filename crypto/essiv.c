@@ -28,6 +28,7 @@
  * Copyright 2018 Google LLC
  */
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <crypto/authenc.h>
 #include <crypto/internal/aead.h>

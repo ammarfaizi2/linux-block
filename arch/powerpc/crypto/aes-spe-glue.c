@@ -8,6 +8,7 @@
  * Copyright (c) 2015 Markus Stockhausen <stockhausen@collogia.de>
  */
 
+#include <linux/slab.h>
 #include <linux/preempt.h>
 #include <crypto/aes.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "blk-crypto-fallback: " fmt
 
+#include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>

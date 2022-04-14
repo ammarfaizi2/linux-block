@@ -3,6 +3,7 @@
  *
  * Copyright(c) 2008 - 2014 Intel Corporation. All rights reserved.
  *****************************************************************************/
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>

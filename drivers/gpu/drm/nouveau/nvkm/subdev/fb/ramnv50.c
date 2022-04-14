@@ -26,6 +26,7 @@
 #include "ramseq.h"
 #include "nv50.h"
 
+#include <linux/slab.h>
 #include <core/option.h>
 #include <subdev/bios.h>
 #include <subdev/bios/perf.h>

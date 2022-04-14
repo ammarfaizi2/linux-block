@@ -2,6 +2,8 @@
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
 
+#include <linux/slab.h>
+
 #include "debug.h"
 #include "efuse.h"
 #include "mac.h"

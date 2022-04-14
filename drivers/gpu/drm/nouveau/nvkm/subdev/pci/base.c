@@ -24,6 +24,7 @@
 #include "priv.h"
 #include "agp.h"
 
+#include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <core/option.h>
 #include <core/pci.h>

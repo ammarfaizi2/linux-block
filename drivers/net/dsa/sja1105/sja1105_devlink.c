@@ -2,6 +2,8 @@
 /* Copyright (c) 2018-2019, Vladimir Oltean <olteanv@gmail.com>
  * Copyright 2020 NXP
  */
+#include <linux/slab.h>
+
 #include "sja1105.h"
 
 /* Since devlink regions have a fixed size and the static config has a variable

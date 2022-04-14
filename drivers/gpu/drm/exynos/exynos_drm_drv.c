@@ -7,6 +7,7 @@
  *	Seung-Woo Kim <sw0312.kim@samsung.com>
  */
 
+#include <linux/slab.h>
 #include <linux/fs.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/highmem.h>

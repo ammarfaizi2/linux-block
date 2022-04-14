@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Christoph Hellwig.
  */
 
+#include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

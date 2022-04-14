@@ -3,6 +3,7 @@
  * Copyright(c) 2016 - 2018 Intel Corporation.
  */
 
+#include <linux/slab.h>
 #include <linux/seqlock_api.h>
 
 #include "hfi.h"

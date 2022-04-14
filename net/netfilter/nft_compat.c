@@ -5,6 +5,7 @@
  * This software has been sponsored by Sophos Astaro <http://www.sophos.com>
  */
 
+#include <linux/slab.h>
 #include <linux/kmod.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #define gv100_disp_caps(p) container_of((p), struct gv100_disp_caps, object)
+#include <linux/slab.h>
+
 #include "rootnv50.h"
 
 struct gv100_disp_caps {

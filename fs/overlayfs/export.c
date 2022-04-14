@@ -7,6 +7,7 @@
  * Copyright (C) 2017-2018 CTERA Networks. All Rights Reserved.
  */
 
+#include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/fs.h>

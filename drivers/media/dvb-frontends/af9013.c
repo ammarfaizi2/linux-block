@@ -8,6 +8,7 @@
  * Thanks to Afatech who kindly provided information.
  */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

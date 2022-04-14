@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/slab.h>
 #include <linux/dma-resv.h>
 
 #include <drm/drm_atomic_state_helper.h>

@@ -3,6 +3,7 @@
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
+#include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>

@@ -15,6 +15,7 @@
  * into the region of the HVS that it has allocated for us.
  */
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

@@ -5,6 +5,7 @@
  * Queued image conversion support, with tiling and rotation.
  */
 
+#include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

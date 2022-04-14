@@ -4,6 +4,7 @@
  * Copyright (C) 2001  Andrea Arcangeli <andrea@suse.de> SuSE
  * Copyright (C) 2016 - 2020 Christoph Hellwig
  */
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>

@@ -27,6 +27,7 @@
  *	Chris Wilson <chris@chris-wilson.co.uk>
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/delay.h>

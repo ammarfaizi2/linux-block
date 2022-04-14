@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/slab.h>
 #include <linux/filter_api.h>
 #include <linux/moduleloader.h>
 #include <linux/workqueue.h>

@@ -8,6 +8,7 @@
  * Nadi Sarrar <nadi@beronet.com>
  */
 
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/mISDNdsp.h>

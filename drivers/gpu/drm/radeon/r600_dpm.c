@@ -22,6 +22,8 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/slab.h>
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "r600d.h"

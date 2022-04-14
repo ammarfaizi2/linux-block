@@ -10,6 +10,7 @@
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/kref_api.h>
 #include <linux/device_api.h>
