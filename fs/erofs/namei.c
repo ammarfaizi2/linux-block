@@ -6,6 +6,7 @@
  */
 #include "xattr.h"
 
+#include <linux/pagemap.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_entry_types.h>

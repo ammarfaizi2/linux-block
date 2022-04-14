@@ -15,6 +15,7 @@
 #define KMSG_COMPONENT "zram"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/mm_api.h>

@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  * Copyright (C) 2021-2022, Alibaba Cloud
  */
+#include <linux/pagemap.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/dcache.h>

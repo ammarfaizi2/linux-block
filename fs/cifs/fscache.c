@@ -6,6 +6,8 @@
  *   Author(s): Suresh Jayaraman <sjayaraman@suse.de>
  *
  */
+#include <linux/pagemap.h>
+
 #include "fscache.h"
 #include "cifsglob.h"
 #include "cifs_debug.h"

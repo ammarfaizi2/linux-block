@@ -5,6 +5,7 @@
  *  Copyright (C) 1995  Linus Torvalds
  *  Modifications for ARM processor (c) 1995-2004 Russell King
  */
+#include <linux/pagemap.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

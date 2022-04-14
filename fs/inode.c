@@ -3,6 +3,7 @@
  * (C) 1997 Linus Torvalds
  * (C) 1999 Andrea Arcangeli <andrea@suse.de> (dynamic inode allocation)
  */
+#include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/lockdep_api.h>

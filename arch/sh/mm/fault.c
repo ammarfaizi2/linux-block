@@ -11,6 +11,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/pagemap.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

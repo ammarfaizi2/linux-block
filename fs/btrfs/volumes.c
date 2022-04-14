@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

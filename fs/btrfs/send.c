@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Alexander Block.  All rights reserved.
  */
 
+#include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_kvmalloc.h>
