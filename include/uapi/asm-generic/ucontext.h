@@ -2,6 +2,7 @@
 #ifndef __ASM_GENERIC_UCONTEXT_H
 #define __ASM_GENERIC_UCONTEXT_H
 
+#include <asm/signal.h>
 #include <linux/types.h>
 
 struct ucontext {
