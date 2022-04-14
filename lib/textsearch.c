@@ -97,6 +97,7 @@
  */
 /* ========================================================================== */
 
+#include <linux/spinlock.h>
 #include <linux/spinlock_api.h>
 #include <linux/kmod.h>
 #include <linux/module.h>
