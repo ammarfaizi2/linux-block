@@ -4,6 +4,7 @@
 #if !defined(_TRACE_NEIGH_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_NEIGH_H
 
+#include <net/neighbour_api.h>
 #include <net/ipv6_api.h>
 #include <linux/refcount_api.h>
 #include <linux/skbuff.h>

@@ -33,6 +33,7 @@
 #ifndef __MLX5E_REP_H__
 #define __MLX5E_REP_H__
 
+#include <net/neighbour_api.h>
 #include <net/ip_tunnels.h>
 #include <linux/rhashtable.h>
 #include <linux/mutex.h>

@@ -2,6 +2,7 @@
 #ifndef _NET_DN_NEIGH_H
 #define _NET_DN_NEIGH_H
 
+#include <net/neighbour_api.h>
 #include <linux/types.h>
 
 /*
