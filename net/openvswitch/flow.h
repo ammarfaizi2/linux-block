@@ -6,6 +6,7 @@
 #ifndef FLOW_H
 #define FLOW_H 1
 
+#include <net/ndisc_api.h>
 #include <linux/cache.h>
 #include <linux/kernel.h>
 #include <linux/netlink.h>
