@@ -4,6 +4,7 @@
 #ifndef __CXL_H__
 #define __CXL_H__
 
+#include <linux/range.h>
 #include <linux/idr_types.h>
 #include <linux/libnvdimm.h>
 #include <linux/bitfield.h>
