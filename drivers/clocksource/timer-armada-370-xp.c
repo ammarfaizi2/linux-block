@@ -28,6 +28,7 @@
  * See Documentation/devicetree/bindings/timer/marvell,armada-370-xp-timer.txt
  */
 
+#include <linux/timex.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

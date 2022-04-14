@@ -7,6 +7,7 @@
  *  Copyright (c) 2008 Silicon Graphics, Inc.  All Rights Reserved.
  */
 
+#include <linux/timex.h>
 #include <linux/smp_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
  * Based on code from Amlogic, Inc
  */
 
+#include <linux/timex.h>
 #include <linux/io.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>

@@ -10,6 +10,7 @@
  * interrupts...)
  */
 
+#include <linux/timex.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/irqflags.h>

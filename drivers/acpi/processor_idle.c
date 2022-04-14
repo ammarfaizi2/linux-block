@@ -12,6 +12,7 @@
  */
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/timex.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/thread_info_api.h>

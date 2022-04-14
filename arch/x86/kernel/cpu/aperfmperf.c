@@ -7,6 +7,7 @@
  * Author: Len Brown <len.brown@intel.com>
  */
 
+#include <linux/timex.h>
 #include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

@@ -11,6 +11,7 @@
  *
  *    Initial PA-RISC Version: 04-23-1999 by Helge Deller
  */
+#include <linux/timex.h>
 #include <linux/cpumask_api.h>
 #include <linux/delay.h>
 #include <linux/init.h>

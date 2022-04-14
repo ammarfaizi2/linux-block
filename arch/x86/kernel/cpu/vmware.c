@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/timex.h>
 #include <linux/smp_api.h>
 #include <linux/notifier_api.h>
 #include <linux/math64.h>

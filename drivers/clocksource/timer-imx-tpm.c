@@ -3,6 +3,7 @@
 // Copyright 2016 Freescale Semiconductor, Inc.
 // Copyright 2017 NXP
 
+#include <linux/timex.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/clk.h>

@@ -15,6 +15,7 @@
  * Software Developer Manual June 2016, volume 3, section 17.17.
  */
 
+#include <linux/timex.h>
 #include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>

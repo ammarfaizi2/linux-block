@@ -23,6 +23,7 @@
  * actual ministack invocation is in entry_64.S.
  */
 
+#include <linux/timex.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

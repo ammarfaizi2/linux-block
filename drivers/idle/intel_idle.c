@@ -41,6 +41,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timex.h>
 #include <linux/percpu.h>
 #include <linux/math64.h>
 #include <linux/cpumask_api.h>

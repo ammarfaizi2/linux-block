@@ -5,6 +5,7 @@
  *  Copyright (C) 2011 ARM Ltd.
  *  All Rights Reserved
  */
+#include <linux/timex.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/errno.h>

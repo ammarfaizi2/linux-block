@@ -2,6 +2,7 @@
 /* Copyright Altera Corporation (C) 2014. All rights reserved.
  */
 
+#include <linux/timex.h>
 #include <linux/module.h>
 #include <asm/delay.h>
 #include <asm/param.h>

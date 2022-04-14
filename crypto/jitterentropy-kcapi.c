@@ -37,6 +37,7 @@
  * DAMAGE.
  */
 
+#include <linux/timex.h>
 #include <linux/timekeeping.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

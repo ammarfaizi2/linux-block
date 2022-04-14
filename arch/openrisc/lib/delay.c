@@ -12,6 +12,7 @@
  * Precise Delay Loops
  */
 
+#include <linux/timex.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <linux/init.h>

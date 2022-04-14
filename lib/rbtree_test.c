@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/timex.h>
 #include <linux/rbtree_api.h>
 #include <linux/math64.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  *  Bits copied from original nmi.c file
  *
  */
+#include <linux/timex.h>
 #include <asm/tsc.h>
 #include <linux/thread_info.h>
 #include <asm/apic.h>
