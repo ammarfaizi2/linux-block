@@ -7,6 +7,7 @@
  *
  * Highly modified by Steven Rostedt (VMware).
  */
+#include <linux/kallsyms.h>
 #include <linux/ftrace_pause.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
