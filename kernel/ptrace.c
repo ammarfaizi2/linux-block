@@ -387,7 +387,7 @@ static int check_ptrace_options(unsigned long data)
 		if (!capable(CAP_SYS_ADMIN))
 			return -EPERM;
 
-		if (seccomp_mode(&current->seccomp) != SECCOMP_MODE_DISABLED ||
+		if (seccomp_mode(&per_task(current, seccomp)) != SECCOMP_MODE_DISABLED ||
 		    current->ptrace & PT_SUSPEND_SECCOMP)
 			return -EPERM;
 	}
