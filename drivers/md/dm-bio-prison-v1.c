@@ -8,6 +8,7 @@
 #include "dm-bio-prison-v1.h"
 #include "dm-bio-prison-v2.h"
 
+#include <linux/rbtree_api.h>
 #include <linux/spinlock.h>
 #include <linux/mempool.h>
 #include <linux/module.h>

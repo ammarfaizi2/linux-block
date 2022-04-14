@@ -10,6 +10,7 @@
  * Transmit and frame generation functions.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>

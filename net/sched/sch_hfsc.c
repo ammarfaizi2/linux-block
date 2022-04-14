@@ -49,6 +49,7 @@
  * a class whose fit-time exceeds the current time.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>

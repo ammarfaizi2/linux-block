@@ -5,6 +5,7 @@
  * Copyright (c) 2017-19 David Ahern <dsa@cumulusnetworks.com>
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

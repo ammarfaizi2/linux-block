@@ -7,6 +7,7 @@
  * Author: Adrian Hunter
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/sched/cond_resched.h>
 
 #include "ubifs.h"

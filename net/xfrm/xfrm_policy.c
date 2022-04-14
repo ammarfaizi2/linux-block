@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/pagemap.h>
 #include <linux/fs_api_rw_access.h>
 #include <linux/fs_api.h>

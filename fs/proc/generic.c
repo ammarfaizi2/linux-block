@@ -9,6 +9,7 @@
  * Copyright (C) 1997 Theodore Ts'o
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dir_context.h>

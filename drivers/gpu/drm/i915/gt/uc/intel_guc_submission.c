@@ -3,6 +3,7 @@
  * Copyright © 2014 Intel Corporation
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>

@@ -15,6 +15,7 @@
  * various local functions of those subsystems.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api_sb.h>

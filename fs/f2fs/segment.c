@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/rbtree_api.h>
 #include <linux/ratelimit.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>

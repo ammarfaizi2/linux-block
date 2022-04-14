@@ -9,6 +9,7 @@
  *  to avoid races. No locking is done by this library code.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/bug.h>
 #include <linux/timerqueue.h>
 #include <linux/rbtree.h>

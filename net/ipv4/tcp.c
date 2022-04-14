@@ -243,6 +243,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/rbtree_api.h>
 #include <linux/prefetch.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/mutex_api.h>

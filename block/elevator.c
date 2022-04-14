@@ -23,6 +23,7 @@
  * - completely modularize elevator setup and teardown
  *
  */
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>

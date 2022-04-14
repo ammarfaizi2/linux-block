@@ -7,6 +7,7 @@
  * Copyright 2016	Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/rbtree_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

@@ -5,6 +5,7 @@
  * Author: Richard Weinberger <richard@nod.at>
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/types.h>
 
 /**

@@ -6,6 +6,7 @@
 //
 // Author: Dimitris Papastamos <dp@opensource.wolfsonmicro.com>
 
+#include <linux/rbtree_api.h>
 #include <linux/minmax.h>
 #include <linux/bitmap.h>
 #include <linux/debugfs.h>

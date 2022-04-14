@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/rbtree_api.h>
 #include <rdma/ib_mad.h>
 
 #include <linux/mlx4/cmd.h>

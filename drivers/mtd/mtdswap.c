@@ -11,6 +11,7 @@
  * support and lock-less operation written by Adrian Hunter.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

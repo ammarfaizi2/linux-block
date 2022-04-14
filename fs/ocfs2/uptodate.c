@@ -31,6 +31,7 @@
  * buffer_head_io.c and ocfs2_journal_access in journal.c
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/fs.h>
 #include <linux/types.h>
 #include <linux/slab.h>

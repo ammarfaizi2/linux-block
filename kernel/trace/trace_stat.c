@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/security.h>
 #include <linux/list.h>

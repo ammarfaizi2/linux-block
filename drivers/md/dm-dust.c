@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/fs_api.h>
 #include <linux/device-mapper.h>
 #include <linux/module.h>

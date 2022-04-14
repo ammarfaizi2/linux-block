@@ -4,6 +4,7 @@
  * Copyright(c) 2016 - 2017 Intel Corporation.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mm_api.h>
 #include <linux/list.h>
 #include <linux/rculist.h>

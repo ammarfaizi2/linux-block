@@ -4,6 +4,7 @@
  * written by Arne Jansen <sensille@gmx.net>
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/slab.h>
 #include "ulist.h"
 #include "ctree.h"

@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

@@ -5,6 +5,8 @@
  * Copyright (c) 2011 Christoph Hellwig.
  * All Rights Reserved.
  */
+#include <linux/rbtree_api.h>
+
 #include "xfs.h"
 #include "xfs_fs.h"
 #include "xfs_format.h"

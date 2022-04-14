@@ -35,6 +35,7 @@
  * refuses to mount.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/sched/cond_resched.h>

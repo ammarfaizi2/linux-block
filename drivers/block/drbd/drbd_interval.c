@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rbtree_api.h>
 #include <linux/align.h>
 #include <asm/bug.h>
 #include <linux/rbtree_augmented.h>

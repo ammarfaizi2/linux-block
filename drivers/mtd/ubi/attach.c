@@ -69,6 +69,7 @@
  *   o Otherwise this is corruption type 2.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/err.h>

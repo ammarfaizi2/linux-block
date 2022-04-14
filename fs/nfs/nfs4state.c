@@ -38,6 +38,7 @@
  * subsequent patch.
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>

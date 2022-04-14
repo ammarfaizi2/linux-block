@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/ratelimit.h>
 #include <linux/mutex_api.h>
 #include <linux/memcontrol.h>

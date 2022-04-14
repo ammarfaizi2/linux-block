@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rbtree_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/net.h>
 #include <linux/netfilter/nf_conntrack_common_api.h>

@@ -12,6 +12,7 @@
  */
 
 /* #define DEBUG */
+#include <linux/rbtree_api.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/list.h>
