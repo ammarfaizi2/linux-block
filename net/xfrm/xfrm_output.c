@@ -5,6 +5,7 @@
  * Copyright (c) 2007 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <net/ip6_route_api_mtu.h>
 #include <net/dst_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
