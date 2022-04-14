@@ -10,6 +10,7 @@
  */
 
 #include "affs.h"
+#include <linux/stringhash.h>
 #include <linux/spinlock_api.h>
 #include <linux/minmax.h>
 #include <linux/fs_api.h>

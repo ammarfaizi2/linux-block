@@ -7,6 +7,7 @@
  *  dcache operations
  */
 
+#include <linux/stringhash.h>
 #include <linux/dcache.h>
 
 #include "hpfs_fn.h"

@@ -9,6 +9,7 @@
  * Handler routines for unicode strings
  */
 
+#include <linux/stringhash.h>
 #include <linux/types.h>
 #include <linux/nls.h>
 #include "hfsplus_fs.h"

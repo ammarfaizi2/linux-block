@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
+#include <linux/stringhash.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>

@@ -15,6 +15,7 @@
 /* [Feb-Apr 2000, AV] Rewrite to the new namespace architecture.
  */
 
+#include <linux/stringhash.h>
 #include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/mutex_api.h>

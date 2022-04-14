@@ -4,6 +4,7 @@
  * Copyright (C) 2012 Jeremy Kerr <jeremy.kerr@canonical.com>
  */
 
+#include <linux/stringhash.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

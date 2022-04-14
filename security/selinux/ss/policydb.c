@@ -28,6 +28,7 @@
  * Copyright (C) 2003 - 2004 Tresys Technology, LLC
  */
 
+#include <linux/stringhash.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/kernel.h>

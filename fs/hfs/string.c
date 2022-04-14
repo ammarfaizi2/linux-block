@@ -14,6 +14,7 @@
  */
 
 #include "hfs_fs.h"
+#include <linux/stringhash.h>
 #include <linux/dcache.h>
 
 /*================ File-local variables ================*/

@@ -6,6 +6,7 @@
  *
  *  Common directory handling for ADFS
  */
+#include <linux/stringhash.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>
