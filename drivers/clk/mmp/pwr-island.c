@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Lubomir Rintel <lkundrak@v3.sk>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_domain.h>
 #include <linux/slab.h>
 #include <linux/io.h>

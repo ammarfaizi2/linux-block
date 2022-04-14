@@ -13,6 +13,7 @@
  * Copyright (C) 1995, 1996, 1997 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>

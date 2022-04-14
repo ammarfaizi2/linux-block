@@ -5,6 +5,7 @@
  *  Copyright (C) 2008 Alex Dubov <oakad@yahoo.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pgtable_api.h>

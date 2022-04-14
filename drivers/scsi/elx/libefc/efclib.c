@@ -16,6 +16,7 @@
  * lock. So all the state machine transitions are protected.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include "efc.h"

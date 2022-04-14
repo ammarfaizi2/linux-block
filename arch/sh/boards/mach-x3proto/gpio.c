@@ -8,6 +8,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/bitmap.h>

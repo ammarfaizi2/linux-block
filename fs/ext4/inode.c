@@ -19,6 +19,7 @@
  *  Assorted race fixes, rewrite of ext4_get_block() by Al Viro, 2000
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/percpu_rwsem_api.h>

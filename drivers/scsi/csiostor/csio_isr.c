@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/interrupt.h>

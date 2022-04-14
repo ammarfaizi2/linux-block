@@ -4,6 +4,7 @@
  *   Copyright (C) 2011 John Crispin <blogic@openwrt.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>

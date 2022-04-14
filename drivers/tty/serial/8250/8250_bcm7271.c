@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/math64.h>

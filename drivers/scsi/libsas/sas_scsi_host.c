@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/kref_api.h>
 #include <linux/device_api_lock.h>

@@ -6,6 +6,7 @@
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

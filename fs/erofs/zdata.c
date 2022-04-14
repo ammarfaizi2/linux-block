@@ -5,6 +5,7 @@
  */
 #include "zdata.h"
 #include "compress.h"
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/pagemap.h>

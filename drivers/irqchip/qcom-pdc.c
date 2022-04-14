@@ -3,6 +3,7 @@
  * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/init.h>

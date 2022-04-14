@@ -6,6 +6,7 @@
  * 		J Hadi Salim (action changes)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

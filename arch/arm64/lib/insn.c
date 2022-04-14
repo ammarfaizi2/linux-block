@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2014-2016 Zi Shen Lim <zlim.lnx@gmail.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>

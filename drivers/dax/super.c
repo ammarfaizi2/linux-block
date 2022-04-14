@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2017 Intel Corporation. All rights reserved.
  */
+#include <linux/spinlock_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/memremap.h>
 #include <linux/lockdep_api.h>

@@ -9,6 +9,7 @@
  * Authors:	Lotsa people, from code originally in tcp
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/percpu_counter_api.h>

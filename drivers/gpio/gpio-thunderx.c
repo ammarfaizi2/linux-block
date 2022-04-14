@@ -6,6 +6,7 @@
  * Copyright (C) 2016, 2017 Cavium Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>

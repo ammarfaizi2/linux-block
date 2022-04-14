@@ -8,6 +8,7 @@
  *   of ALSA ICH sound driver intel8x0.c .
  */      
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/jiffies.h>

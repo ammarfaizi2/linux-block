@@ -5,6 +5,7 @@
  * Copyright(C) 2007, 2008 Wolfson Microelectronics PLC.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

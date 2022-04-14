@@ -5,6 +5,7 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/lockdep_api.h>
 #include <linux/idr_api.h>

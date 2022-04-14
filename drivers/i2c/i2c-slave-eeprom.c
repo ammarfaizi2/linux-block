@@ -16,6 +16,7 @@
  * EEPROMs, though. We currently use the 8 bit as a valid address.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

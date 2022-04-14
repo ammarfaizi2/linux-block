@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT "s390dbf"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

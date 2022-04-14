@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 #include "virtgpu_drv.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

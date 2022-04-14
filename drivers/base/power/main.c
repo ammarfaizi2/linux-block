@@ -18,6 +18,7 @@
 #define pr_fmt(fmt) "PM: " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

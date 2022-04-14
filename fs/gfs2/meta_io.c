@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched.h>

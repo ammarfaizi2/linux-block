@@ -6,6 +6,7 @@
  * Author: Brendan Higgins <brendanhiggins@google.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <kunit/test.h>
 #include <linux/list.h>
 #include <linux/slab.h>

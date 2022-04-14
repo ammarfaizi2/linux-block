@@ -63,6 +63,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>

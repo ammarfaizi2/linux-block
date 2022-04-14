@@ -41,6 +41,8 @@
  * USA.
  */
 
+#include <linux/spinlock_api.h>
+
 #include "esas2r.h"
 
 /*

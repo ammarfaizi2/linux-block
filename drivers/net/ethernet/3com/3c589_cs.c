@@ -24,6 +24,7 @@
 
 #define DRV_NAME	"3c589_cs"
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>

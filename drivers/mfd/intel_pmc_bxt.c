@@ -13,6 +13,7 @@
  * turn sends messages between the IA and the PMC.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

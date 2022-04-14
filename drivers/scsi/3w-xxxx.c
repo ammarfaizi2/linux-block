@@ -196,6 +196,7 @@
    1.26.02.003 - Force 60 second timeout default.
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

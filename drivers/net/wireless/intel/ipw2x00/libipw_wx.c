@@ -16,6 +16,7 @@
 
 ******************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/hardirq.h>
 #include <linux/kmod.h>
 #include <linux/slab.h>

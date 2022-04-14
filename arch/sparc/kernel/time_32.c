@@ -15,6 +15,7 @@
  * 1997-09-10	Updated NTP code according to technical memorandum Jan '96
  *		"A Kernel Model for Precision Timekeeping" by Dave Mills
  */
+#include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

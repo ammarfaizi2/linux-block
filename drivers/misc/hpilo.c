@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Hewlett-Packard Development Company, L.P.
  *	David Altobelli <david.altobelli@hpe.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/io_extra.h>
 #include <linux/fs_api.h>
 #include <linux/dma-mapping.h>

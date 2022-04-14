@@ -8,6 +8,7 @@
  * Copyright 2021-2022  Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

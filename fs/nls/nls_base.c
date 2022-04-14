@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/nls.h>

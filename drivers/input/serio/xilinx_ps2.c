@@ -7,6 +7,7 @@
  */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/serio.h>

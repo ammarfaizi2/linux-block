@@ -26,6 +26,7 @@
  * 		or a LUN is seen that cannot have a device attached to it.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

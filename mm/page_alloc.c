@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>

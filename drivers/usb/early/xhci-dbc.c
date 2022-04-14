@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/console.h>
 #include <linux/pci_regs.h>

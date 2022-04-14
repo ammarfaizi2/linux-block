@@ -4,6 +4,7 @@
  * Copyright (C) 2004 David S. Miller <davem@redhat.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_ptlock.h>

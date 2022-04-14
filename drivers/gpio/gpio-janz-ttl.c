@@ -5,6 +5,7 @@
  * Copyright (c) 2010 Ira W. Snyder <iws@ovro.caltech.edu>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

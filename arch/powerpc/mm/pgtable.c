@@ -17,6 +17,7 @@
  *      Rework for PPC64 port.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>

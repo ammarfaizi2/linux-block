@@ -10,6 +10,7 @@
  * Copyright (C) 2015 Valeo S.A.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/completion.h>

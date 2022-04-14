@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>

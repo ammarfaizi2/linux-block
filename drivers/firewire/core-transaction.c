@@ -5,6 +5,7 @@
  * Copyright (C) 2004-2006 Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

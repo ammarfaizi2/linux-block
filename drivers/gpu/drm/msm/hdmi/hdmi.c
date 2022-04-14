@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

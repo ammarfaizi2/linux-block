@@ -5,6 +5,7 @@
  * Copyright (C) 1997,1998 Jakub Jelinek    (jj@sunsite.mff.cuni.cz)
  */
  
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

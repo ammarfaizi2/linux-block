@@ -3,6 +3,7 @@
  * Copyright © 2014-2019 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 
 #include "gem/i915_gem_lmem.h"

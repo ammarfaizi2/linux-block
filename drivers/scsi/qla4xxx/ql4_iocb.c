@@ -9,6 +9,7 @@
 #include "ql4_dbg.h"
 #include "ql4_inline.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>

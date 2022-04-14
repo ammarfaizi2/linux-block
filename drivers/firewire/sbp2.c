@@ -15,6 +15,7 @@
  * and many others.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/kref_api.h>
 #include <linux/device_api.h>

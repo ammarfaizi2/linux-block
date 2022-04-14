@@ -9,6 +9,7 @@
  * Copyright (C) 2007-2008 Finn Thain
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/module.h>

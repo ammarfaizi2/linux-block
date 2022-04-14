@@ -5,6 +5,7 @@
  *	 JZ4740 SoC RTC driver
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

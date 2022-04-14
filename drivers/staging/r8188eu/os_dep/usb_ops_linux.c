@@ -3,6 +3,7 @@
 
 #define _USB_OPS_LINUX_C_
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 
 #include "../include/drv_types.h"

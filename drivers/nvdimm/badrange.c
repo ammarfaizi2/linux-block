@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2017 Intel Corporation. All rights reserved.
  */
+#include <linux/spinlock_api.h>
 #include <linux/range.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>

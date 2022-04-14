@@ -26,6 +26,7 @@
 #include "nouveau_usif.h"
 #include "nouveau_abi16.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>

@@ -6,6 +6,7 @@
  * This driver supports the following ACCES devices: 104-IDI-48A,
  * 104-IDI-48AC, 104-IDI-48B, and 104-IDI-48BC.
  */
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>

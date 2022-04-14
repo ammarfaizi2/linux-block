@@ -9,6 +9,7 @@
  * Based on sunxi_wdt.c
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/reset/mt2712-resets.h>

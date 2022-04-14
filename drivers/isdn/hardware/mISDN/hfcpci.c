@@ -30,6 +30,7 @@
  *	If the kernel uses 300 Hz, steps of about 26 samples are possible.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

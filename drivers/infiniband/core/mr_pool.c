@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2016 HGST, a Western Digital Company.
  */
+#include <linux/spinlock_api.h>
 #include <rdma/ib_verbs.h>
 #include <rdma/mr_pool.h>
 

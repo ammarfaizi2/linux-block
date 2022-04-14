@@ -10,6 +10,7 @@
 #undef	VERBOSE_DEBUG
 #undef	PACKET_TRACE
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

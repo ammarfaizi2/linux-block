@@ -8,6 +8,7 @@
  */
 
 #include "cx231xx.h"
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/list.h>
 #include <linux/module.h>

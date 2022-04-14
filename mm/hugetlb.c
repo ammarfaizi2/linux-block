@@ -3,6 +3,7 @@
  * Generic hugetlb support.
  * (C) Nadia Yvette Chambers, April 2004
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/ratelimit.h>
 #include <linux/pgtable_api.h>

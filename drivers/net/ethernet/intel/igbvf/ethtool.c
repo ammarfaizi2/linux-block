@@ -3,6 +3,7 @@
 
 /* ethtool support for igbvf */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/netdevice.h>

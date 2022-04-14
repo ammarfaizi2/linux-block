@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "IPv6-nf: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/string.h>

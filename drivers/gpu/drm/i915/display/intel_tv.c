@@ -30,6 +30,7 @@
  * Integrated TV-out support for the 915GM and 945GM.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>

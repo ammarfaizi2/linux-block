@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <drv_types.h>
 #include <rtw_debug.h>

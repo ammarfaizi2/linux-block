@@ -3,6 +3,7 @@
  * HD-audio stream operations
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/export.h>

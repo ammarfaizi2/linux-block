@@ -15,6 +15,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>	/* For udelay */
 #include <linux/io.h>		/* For read[bwl]/write[bwl] */

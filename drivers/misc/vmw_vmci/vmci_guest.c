@@ -5,6 +5,7 @@
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

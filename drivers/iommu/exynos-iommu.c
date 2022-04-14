@@ -8,6 +8,7 @@
 #define DEBUG
 #endif
 
+#include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

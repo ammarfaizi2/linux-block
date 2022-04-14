@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/pid.h>
 #include <linux/pagemap.h>
 #include <linux/mm_api_truncate.h>

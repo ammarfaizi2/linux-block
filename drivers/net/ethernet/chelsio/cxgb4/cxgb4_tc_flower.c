@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

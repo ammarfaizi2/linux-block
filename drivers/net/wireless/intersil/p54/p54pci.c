@@ -10,6 +10,7 @@
  * Copyright 2004-2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>, et al.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>

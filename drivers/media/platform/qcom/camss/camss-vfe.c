@@ -7,6 +7,7 @@
  * Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

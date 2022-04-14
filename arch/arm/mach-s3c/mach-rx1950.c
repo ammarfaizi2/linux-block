@@ -5,6 +5,7 @@
 //
 // based on smdk2440 written by Ben Dooks
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>

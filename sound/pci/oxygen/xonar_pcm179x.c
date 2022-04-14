@@ -167,6 +167,7 @@
  *   GPO 1 -> route mic-in from input jack (0) or front panel header (1)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

@@ -3,6 +3,7 @@
  * Copyright © 2014-2018 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/mm_api.h>

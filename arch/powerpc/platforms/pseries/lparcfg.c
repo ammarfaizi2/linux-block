@@ -14,6 +14,7 @@
  * keyword - value pairs that specify the configuration of the partition.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

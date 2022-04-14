@@ -4,6 +4,7 @@
  * This file is released under the LGPL.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/bio.h>

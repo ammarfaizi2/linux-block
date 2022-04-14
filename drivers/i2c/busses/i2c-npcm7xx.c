@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2020 Nuvoton Technologies tali.perry@nuvoton.com
  */
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

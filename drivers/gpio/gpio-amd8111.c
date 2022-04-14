@@ -22,6 +22,7 @@
  * Copyright 2000,2001 Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2000,2001 Philipp Rumpf <prumpf@mandrakesoft.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/ioport.h>
 #include <linux/module.h>

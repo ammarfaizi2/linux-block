@@ -50,6 +50,7 @@
  *    comedi_do_insn(cf,&insn); //executing configuration
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

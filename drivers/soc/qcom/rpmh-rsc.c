@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "%s " fmt, KBUILD_MODNAME
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

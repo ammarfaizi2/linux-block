@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2002 Russell King
  */
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/input.h>

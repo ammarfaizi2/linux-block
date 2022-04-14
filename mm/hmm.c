@@ -8,6 +8,7 @@
  * Refer to include/linux/hmm.h for information about heterogeneous memory
  * management or HMM for short.
  */
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mmap_lock.h>

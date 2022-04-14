@@ -4,6 +4,7 @@
  *  Routines for control of YMF724/740/744/754 chips
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

@@ -10,6 +10,7 @@
  * Author: Dan Magenheimer
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/capability.h>

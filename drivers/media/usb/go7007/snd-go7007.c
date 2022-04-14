@@ -3,6 +3,7 @@
  * Copyright (C) 2005-2006 Micronas USA Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

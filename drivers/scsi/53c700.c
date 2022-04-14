@@ -101,6 +101,7 @@
  * */
 #define NCR_700_VERSION "2.8"
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

@@ -6,6 +6,7 @@
 // Author: Jaswinder Singh <jassisinghbrar@gmail.com>
 // based upon I2S drivers by Ben Dooks.
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/clk.h>
 #include <linux/io.h>

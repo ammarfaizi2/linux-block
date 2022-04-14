@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api.h>

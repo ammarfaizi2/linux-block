@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2014 Takashi Sakamoto
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 
 #include "dice.h"

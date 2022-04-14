@@ -29,6 +29,7 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/io_extra.h>
 #include <linux/dma-fence-api.h>

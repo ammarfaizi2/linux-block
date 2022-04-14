@@ -7,6 +7,7 @@
  * Author: Damien Horsley <Damien.Horsley@imgtec.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

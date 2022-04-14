@@ -2,6 +2,7 @@
 /* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/atomic_api.h>
 #include <linux/bitops.h>

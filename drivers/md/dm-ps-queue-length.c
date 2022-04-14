@@ -16,6 +16,7 @@
 #include "dm.h"
 #include "dm-path-selector.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/ctype.h>

@@ -31,6 +31,7 @@
  * support could be added to this driver.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/task.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

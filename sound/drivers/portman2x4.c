@@ -24,6 +24,7 @@
  *      - ported from alsa 0.5 to 1.0
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/parport.h>

@@ -5,6 +5,7 @@
  *		      Md.Jamal Mohiuddin <mjmohiuddin@cdac.in>
  *		      P Sowjanya <sowjanyap@cdac.in>
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

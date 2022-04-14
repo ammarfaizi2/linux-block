@@ -2,6 +2,7 @@
 /*
  * Marvell Dove PMU support
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_gc_lock.h>

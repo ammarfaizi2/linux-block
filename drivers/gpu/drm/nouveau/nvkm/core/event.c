@@ -19,6 +19,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <core/event.h>
 #include <core/notify.h>

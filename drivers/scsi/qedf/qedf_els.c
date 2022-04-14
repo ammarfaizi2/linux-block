@@ -3,6 +3,7 @@
  *  QLogic FCoE Offload Driver
  *  Copyright (c) 2016-2018 Cavium Inc.
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

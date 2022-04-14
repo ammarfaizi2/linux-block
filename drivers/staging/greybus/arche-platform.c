@@ -6,6 +6,7 @@
  * Copyright 2014-2015 Linaro Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

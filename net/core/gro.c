@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/net.h>

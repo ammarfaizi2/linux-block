@@ -5,6 +5,7 @@
  *  Copyright © 2016 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

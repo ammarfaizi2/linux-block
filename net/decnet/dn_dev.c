@@ -25,6 +25,7 @@
  *                             devices. All mtu based now.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/notifier_api.h>

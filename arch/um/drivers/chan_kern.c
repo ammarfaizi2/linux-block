@@ -3,6 +3,7 @@
  * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{linux.intel,addtoit}.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>
 #include <linux/tty.h>

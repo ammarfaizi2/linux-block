@@ -23,6 +23,7 @@
  *    Copyright © 2005-2009 Analog Devices Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

@@ -79,6 +79,7 @@
 #	endif
 #endif
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/io.h>

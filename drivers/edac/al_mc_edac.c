@@ -2,6 +2,7 @@
 /*
  * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  */
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

@@ -14,6 +14,7 @@
  *          COPYRIGHT (C) 2005  SYNOPSYS, INC.  ALL RIGHTS RESERVED
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

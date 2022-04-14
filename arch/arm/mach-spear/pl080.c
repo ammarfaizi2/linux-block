@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/amba/pl08x.h>
 #include <linux/amba/bus.h>
 #include <linux/bug.h>

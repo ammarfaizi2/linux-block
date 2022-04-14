@@ -6,6 +6,7 @@
  * Author(s): Michael Holzheu <holzheu@linux.vnet.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/init.h>
 #include <linux/export.h>

@@ -6,6 +6,8 @@
  */
 
 
+#include <linux/spinlock_api.h>
+
 #include "motu.h"
 
 #define SND_MOTU_ADDR_BASE	0xfffff0000000ULL

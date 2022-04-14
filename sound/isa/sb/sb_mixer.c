@@ -4,6 +4,7 @@
  *  Routines for Sound Blaster mixer control
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 #include <linux/time.h>

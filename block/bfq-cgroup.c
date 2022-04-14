@@ -2,6 +2,7 @@
 /*
  * cgroups support for the BFQ I/O scheduler.
  */
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/rbtree_api.h>
 #include <linux/percpu_counter_api.h>

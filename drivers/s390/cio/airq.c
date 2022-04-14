@@ -9,6 +9,7 @@
  *		 Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/irq.h>

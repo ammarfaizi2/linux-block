@@ -16,6 +16,7 @@
  * netstack, and assigning dedicated CPUs for this stage.  This
  * basically allows for 10G wirespeed pre-filtering via bpf.
  */
+#include <linux/spinlock_api.h>
 #include <linux/softirq.h>
 #include <linux/slab.h>
 #include <linux/prefetch.h>

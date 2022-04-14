@@ -5,6 +5,7 @@
  * Copyright 2016 Integrated Device Technology, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/printk.h>
 #include <linux/stat.h>
 #include <linux/module.h>

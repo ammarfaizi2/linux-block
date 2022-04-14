@@ -13,6 +13,8 @@
 
 */
 
+#include <linux/spinlock_api.h>
+
 #include "b43legacy.h"
 #include "leds.h"
 #include "rfkill.h"

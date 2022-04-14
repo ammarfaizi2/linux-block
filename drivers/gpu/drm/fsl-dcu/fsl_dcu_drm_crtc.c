@@ -5,6 +5,7 @@
  * Freescale DCU drm device driver
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/clk.h>
 #include <linux/regmap.h>
 

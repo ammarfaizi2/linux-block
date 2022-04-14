@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Western Digital Corporation or its affiliates.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>

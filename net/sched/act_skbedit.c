@@ -5,6 +5,7 @@
  * Author: Alexander Duyck <alexander.h.duyck@intel.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/lockdep_api.h>

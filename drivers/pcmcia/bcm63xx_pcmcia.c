@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

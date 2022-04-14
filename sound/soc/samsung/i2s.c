@@ -5,6 +5,7 @@
 // Copyright (c) 2010 Samsung Electronics Co. Ltd.
 //	Jaswinder Singh <jassisinghbrar@gmail.com>
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -25,6 +25,7 @@
  *   - Read/write EEPROM
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>

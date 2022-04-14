@@ -5,6 +5,7 @@
  * Common Clock Framework support for s3c24xx external clock output.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clkdev.h>
 #include <linux/slab.h>

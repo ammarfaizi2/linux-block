@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Oracle. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>

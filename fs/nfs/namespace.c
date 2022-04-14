@@ -8,6 +8,7 @@
  * NFS namespace
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seqlock_api.h>
 #include <linux/rwsem_api.h>

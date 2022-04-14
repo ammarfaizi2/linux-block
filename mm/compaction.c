@@ -8,6 +8,7 @@
  *
  * Copyright IBM Corp. 2007-2010 Mel Gorman <mel@csn.ul.ie>
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/pagemap.h>

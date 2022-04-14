@@ -23,6 +23,7 @@
  * Note: The emulation does not include isochronous transfers!
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/hardirq.h>

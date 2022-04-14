@@ -12,6 +12,7 @@
  * Released under the GPL version 2 only.
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/kobject_api.h>
 #include <linux/slab.h>		/* For kmalloc. */
 #include <linux/kernel.h>

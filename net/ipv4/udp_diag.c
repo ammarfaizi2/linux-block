@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
  */
 #undef DEBUG
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2005 Stephen Street / StreetFire Sound Labs
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

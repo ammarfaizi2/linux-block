@@ -9,6 +9,7 @@
  * Copyright (C) 2000 Serguei Miridonov <mirsev@cicese.mx>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

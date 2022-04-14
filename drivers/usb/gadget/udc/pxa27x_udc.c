@@ -5,6 +5,7 @@
  * Inspired by original driver by Frank Becker, David Brownell, and others.
  * Copyright (C) 2008 Robert Jarzmik
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

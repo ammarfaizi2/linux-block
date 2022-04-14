@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2002 - 2009  Paul Mundt
  */
+#include <linux/spinlock_api.h>
 #include <linux/pci.h>
 #include <linux/io.h>
 #include <linux/spinlock.h>

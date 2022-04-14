@@ -8,6 +8,7 @@
  * in an attempt to provide to the rest of the driver code a unified view
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sizes.h>
 #include <linux/interrupt.h>
 #include <linux/atomic_api.h>

@@ -8,6 +8,7 @@
  * Atsushi Nemoto <anemo@mba.ocn.ne.jp>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/init.h>

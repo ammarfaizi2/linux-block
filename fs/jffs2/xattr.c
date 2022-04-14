@@ -13,6 +13,7 @@
 
 #define JFFS2_XATTR_IS_CORRUPTED	1
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/dcache.h>
 #include <linux/atomic_api.h>

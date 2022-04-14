@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Beniamino Galvani <b.galvani@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

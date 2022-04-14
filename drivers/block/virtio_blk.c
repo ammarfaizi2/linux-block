@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //#define DEBUG
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>

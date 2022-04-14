@@ -4,6 +4,7 @@
  * AoE device utility functions; maintains device list.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

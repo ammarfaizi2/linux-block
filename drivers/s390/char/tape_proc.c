@@ -14,6 +14,7 @@
 #define KMSG_COMPONENT "tape"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/vmalloc.h>
 #include <linux/seq_file.h>

@@ -36,6 +36,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

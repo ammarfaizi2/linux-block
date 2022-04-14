@@ -7,6 +7,7 @@
 
 #include "cx23885.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

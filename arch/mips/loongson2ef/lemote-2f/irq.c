@@ -4,6 +4,7 @@
  * Author: Fuxin Zhang, zhangfx@lemote.com
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/export.h>
 #include <linux/init.h>

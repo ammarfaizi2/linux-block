@@ -27,6 +27,7 @@
 
 /* Bluetooth L2CAP sockets. */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched.h>
 #include <linux/pid.h>

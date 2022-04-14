@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include "aic94xx_reg.h"

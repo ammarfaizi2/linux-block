@@ -7,6 +7,7 @@
  *   the OSS/Free SoundScape driver, written by Hannu Savolainen.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

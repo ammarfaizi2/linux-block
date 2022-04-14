@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "IPMI Watchdog: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

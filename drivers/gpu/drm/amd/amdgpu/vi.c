@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/pci.h>

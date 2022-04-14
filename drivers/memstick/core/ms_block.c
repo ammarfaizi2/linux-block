@@ -10,6 +10,7 @@
 #define DRIVER_NAME "ms_block"
 #define pr_fmt(fmt) DRIVER_NAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

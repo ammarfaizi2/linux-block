@@ -15,6 +15,7 @@
  * user-space applications to communicate with the card.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pid.h>
 #include <linux/mm_api.h>

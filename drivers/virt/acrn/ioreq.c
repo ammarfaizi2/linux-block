@@ -9,6 +9,7 @@
  *	Fengwei Yin <fengwei.yin@intel.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

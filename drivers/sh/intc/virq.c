@@ -9,6 +9,7 @@
  */
 #define pr_fmt(fmt) "intc: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/radix-tree-api.h>
 #include <linux/irqdesc.h>
 #include <linux/slab.h>

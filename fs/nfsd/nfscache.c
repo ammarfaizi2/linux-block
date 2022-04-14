@@ -9,6 +9,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/rbtree_api.h>
 #include <linux/percpu_counter_api.h>

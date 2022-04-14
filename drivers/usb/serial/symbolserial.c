@@ -7,6 +7,7 @@
  * Copyright (C) 2009 Novell Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/tty.h>
 #include <linux/slab.h>

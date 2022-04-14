@@ -4,6 +4,7 @@
 
 /* Qualcomm Technologies, Inc. EMAC Gigabit Ethernet Driver */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

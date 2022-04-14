@@ -3,6 +3,7 @@
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/module.h>
 #include <linux/device_api_lock.h>

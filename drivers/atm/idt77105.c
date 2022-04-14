@@ -4,6 +4,7 @@
 /* Written 1999 by Greg Banks, NEC Australia <gnb@linuxfan.com>. Based on suni.c */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

@@ -12,6 +12,7 @@
  * This driver only supports the asynchronous serial interface.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

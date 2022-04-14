@@ -4,6 +4,7 @@
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

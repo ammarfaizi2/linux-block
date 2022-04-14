@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

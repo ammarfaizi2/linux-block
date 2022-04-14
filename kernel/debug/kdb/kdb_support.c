@@ -10,6 +10,7 @@
  * 03/02/13    added new 2.5 kallsyms <xavier.bru@bull.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched/task.h>
 #include <linux/mmzone.h>

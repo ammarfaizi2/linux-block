@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/net.h>
 #include <linux/atomic_api.h>

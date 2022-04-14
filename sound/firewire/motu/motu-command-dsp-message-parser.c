@@ -14,6 +14,7 @@
 //
 // Isochronous packets from the above models includes messages to report state of hardware meter.
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 
 #include "motu.h"

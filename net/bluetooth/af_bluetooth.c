@@ -24,6 +24,7 @@
 
 /* Bluetooth address family and sockets. */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

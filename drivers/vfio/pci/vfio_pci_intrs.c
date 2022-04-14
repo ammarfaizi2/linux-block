@@ -10,6 +10,7 @@
  * Author: Tom Lyon, pugs@cisco.com
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/eventfd.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/skbuff.h>

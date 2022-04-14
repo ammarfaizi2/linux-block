@@ -11,6 +11,7 @@
  * 01/19/06:	changed jsm_input routine to use the dynamically allocated
  *		tty_buffer changes. Contributors: Scott Kilau and Ananda V.
  ***********************************************************************/
+#include <linux/spinlock_api.h>
 #include <linux/bitmap.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>

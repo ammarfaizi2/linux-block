@@ -5,6 +5,7 @@
  * 	Copyright(c) Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>

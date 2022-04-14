@@ -25,6 +25,7 @@
  * - the nport is removed
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>

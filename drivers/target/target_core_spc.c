@@ -7,6 +7,7 @@
  * Nicholas A. Bellinger <nab@kernel.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/hashtable_api.h>

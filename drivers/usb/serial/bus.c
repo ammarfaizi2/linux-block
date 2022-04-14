@@ -5,6 +5,7 @@
  * Copyright (C) 2002 Greg Kroah-Hartman (greg@kroah.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/tty.h>

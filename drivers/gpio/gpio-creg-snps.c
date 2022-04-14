@@ -5,6 +5,7 @@
 // Copyright (C) 2018 Synopsys
 // Author: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>

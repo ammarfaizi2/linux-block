@@ -9,6 +9,7 @@
  * Definition of functions for Linux PTP support.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

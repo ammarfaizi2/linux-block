@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2013 VMware, Inc. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/capability.h>
 #include <linux/types.h>

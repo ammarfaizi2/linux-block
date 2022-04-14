@@ -7,6 +7,7 @@
  * This file is part of the Audiowerk2 ALSA driver
  *
  *****************************************************************************/
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/pci.h>

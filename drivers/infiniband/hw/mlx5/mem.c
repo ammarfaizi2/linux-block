@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <rdma/ib_umem.h>
 #include <rdma/ib_umem_odp.h>

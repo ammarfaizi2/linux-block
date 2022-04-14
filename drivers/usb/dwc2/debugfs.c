@@ -6,6 +6,7 @@
  * Mian Yousaf Kaukab <yousaf.kaukab@intel.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/spinlock.h>

@@ -7,6 +7,7 @@
  * Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

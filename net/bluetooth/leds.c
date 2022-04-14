@@ -3,6 +3,7 @@
  * Copyright 2015, Heiner Kallweit <hkallweit1@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <net/bluetooth/bluetooth.h>
 #include <net/bluetooth/hci_core.h>

@@ -30,6 +30,7 @@
  *                        & Marcus Metzler (mocm@thp.uni-koeln.de)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -10,6 +10,7 @@
  *  Ksenija Stanojevic <ksenija.stanojevic@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>

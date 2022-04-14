@@ -14,6 +14,7 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2006, 2008
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/types.h>
 #include <linux/rculist.h>

@@ -5,6 +5,7 @@
  * Adjustable factor-based clock implementation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>

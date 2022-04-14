@@ -21,6 +21,7 @@
  * tx_ring_buffers * HDLC_MAX_MRU     = logical channel #0 TX buffers (if used)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

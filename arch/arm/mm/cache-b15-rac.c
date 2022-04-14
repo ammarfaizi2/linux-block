@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2016 Broadcom
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/cpumask_api.h>

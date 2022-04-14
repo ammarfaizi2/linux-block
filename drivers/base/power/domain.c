@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

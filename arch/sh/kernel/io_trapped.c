@@ -6,6 +6,7 @@
  *
  * Intercept io operations by trapping.
  */
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>

@@ -8,6 +8,7 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

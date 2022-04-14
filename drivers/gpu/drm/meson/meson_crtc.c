@@ -9,6 +9,7 @@
  *     Jasper St. Pierre <jstpierre@mecheye.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

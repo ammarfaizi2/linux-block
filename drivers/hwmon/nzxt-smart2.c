@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Aleksandr Mezin
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

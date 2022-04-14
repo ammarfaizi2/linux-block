@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>

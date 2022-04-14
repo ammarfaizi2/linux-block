@@ -8,6 +8,7 @@
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>

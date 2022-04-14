@@ -21,6 +21,7 @@
 #include "osdep_intf.h"
 #include "usb_ops.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>

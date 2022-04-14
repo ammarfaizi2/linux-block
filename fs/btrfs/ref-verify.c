@@ -3,6 +3,7 @@
  * Copyright (C) 2014 Facebook.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rbtree_api.h>
 #include <linux/sched/cond_resched.h>

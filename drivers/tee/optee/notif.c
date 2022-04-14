@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/bitmap.h>
 #include <linux/arm-smccc.h>
 #include <linux/errno.h>

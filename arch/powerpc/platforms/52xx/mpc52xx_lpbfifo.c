@@ -8,6 +8,7 @@
  * - Add support for multiple requests to be queued.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

@@ -9,6 +9,7 @@
  * Based on uio_pdrv_genirq.c by Magnus Damm
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

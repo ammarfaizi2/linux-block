@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>

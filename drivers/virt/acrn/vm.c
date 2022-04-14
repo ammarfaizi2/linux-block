@@ -8,6 +8,7 @@
  *	Jason Chen CJ <jason.cj.chen@intel.com>
  *	Yakui Zhao <yakui.zhao@intel.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>

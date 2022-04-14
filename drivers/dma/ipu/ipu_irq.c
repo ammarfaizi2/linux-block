@@ -4,6 +4,7 @@
  * Guennadi Liakhovetski, DENX Software Engineering, <lg@denx.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/init.h>

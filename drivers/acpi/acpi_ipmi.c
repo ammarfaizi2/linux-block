@@ -7,6 +7,7 @@
  *            Lv Zheng <lv.zheng@intel.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

@@ -27,6 +27,7 @@
 
 
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

@@ -19,6 +19,7 @@
  *  Copyright (C) 2004 MontaVista Software, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/highmem.h>
 #include <linux/dma-mapping.h>

@@ -47,6 +47,7 @@
  * Intel PCIe NTB Linux driver
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT "ap"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>

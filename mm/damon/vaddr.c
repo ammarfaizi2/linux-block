@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "damon-va: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/task.h>
 #include <linux/rbtree_api.h>
 #include <linux/pid.h>

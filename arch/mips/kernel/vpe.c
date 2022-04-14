@@ -13,6 +13,7 @@
  * up the execution to resume from there. To load and run, simply do
  * a cat SP 'binary' to the /dev/vpe1 device.
  */
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

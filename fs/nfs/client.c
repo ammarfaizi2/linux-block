@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>

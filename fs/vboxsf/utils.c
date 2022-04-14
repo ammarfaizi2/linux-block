@@ -6,6 +6,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>

@@ -9,6 +9,7 @@
  * Please see Documentation/filesystems/sysfs.rst for more information.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/kobject.h>

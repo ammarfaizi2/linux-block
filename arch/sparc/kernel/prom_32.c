@@ -11,6 +11,7 @@
  *  Adapted for sparc32 by David S. Miller davem@davemloft.net
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

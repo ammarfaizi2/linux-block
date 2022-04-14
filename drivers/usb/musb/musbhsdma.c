@@ -5,6 +5,7 @@
  * Copyright 2005 Mentor Graphics Corporation
  * Copyright (C) 2005-2007 by Texas Instruments
  */
+#include <linux/spinlock_api.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>

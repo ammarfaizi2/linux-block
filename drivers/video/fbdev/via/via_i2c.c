@@ -5,6 +5,7 @@
 
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
 #include <linux/spinlock.h>

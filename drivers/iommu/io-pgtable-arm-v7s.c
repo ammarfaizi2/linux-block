@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt)	"arm-v7s io-pgtable: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/gfp_api.h>

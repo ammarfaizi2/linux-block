@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/device.h>

@@ -8,6 +8,7 @@
  * UX500 common part of Power domain regulators
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/regulator/driver.h>

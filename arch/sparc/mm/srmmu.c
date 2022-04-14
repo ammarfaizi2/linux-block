@@ -9,6 +9,7 @@
  * Copyright (C) 1999,2000 Anton Blanchard (anton@samba.org)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>

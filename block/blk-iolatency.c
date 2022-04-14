@@ -64,6 +64,7 @@
  *
  * Copyright (C) 2018 Josef Bacik
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/percpu.h>

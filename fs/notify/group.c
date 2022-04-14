@@ -3,6 +3,7 @@
  *  Copyright (C) 2008 Red Hat, Inc., Eric Paris <eparis@redhat.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

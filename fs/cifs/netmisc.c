@@ -8,6 +8,7 @@
  *   Copyright (C) Andrew Tridgell 2001
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/net.h>
 #include <linux/string.h>
 #include <linux/in.h>

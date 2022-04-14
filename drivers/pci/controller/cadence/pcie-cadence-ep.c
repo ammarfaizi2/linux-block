@@ -3,6 +3,7 @@
 // Cadence PCIe endpoint controller driver.
 // Author: Cyrille Pitchen <cyrille.pitchen@free-electrons.com>
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

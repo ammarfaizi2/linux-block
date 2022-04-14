@@ -11,6 +11,7 @@
  * driver
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

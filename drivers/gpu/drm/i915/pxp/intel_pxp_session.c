@@ -3,6 +3,7 @@
  * Copyright(c) 2020, Intel Corporation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <drm/i915_drm.h>
 
 #include "i915_drv.h"

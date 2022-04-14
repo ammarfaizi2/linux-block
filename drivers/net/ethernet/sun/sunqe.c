@@ -7,6 +7,7 @@
  * Copyright (C) 1996, 1999, 2003, 2006, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

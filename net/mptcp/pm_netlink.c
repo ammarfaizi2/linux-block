@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "MPTCP: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/net.h>

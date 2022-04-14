@@ -20,6 +20,7 @@
  * byte channel used for the console is designated as the default tty.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>

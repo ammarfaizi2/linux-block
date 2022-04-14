@@ -8,6 +8,7 @@
  * $Id: //depot/aic94xx/aic94xx_dev.c#21 $
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/bitmap.h>
 
 #include "aic94xx.h"

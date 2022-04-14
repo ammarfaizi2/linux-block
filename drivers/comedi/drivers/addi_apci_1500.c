@@ -12,6 +12,7 @@
  *	info@addi-data.com
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

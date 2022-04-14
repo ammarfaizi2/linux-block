@@ -3,6 +3,7 @@
  * Copyright (C) 2001-2004 by David Brownell
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/types.h>

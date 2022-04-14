@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Western Digital Corporation
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/semaphore.h>
 #include <linux/math64.h>

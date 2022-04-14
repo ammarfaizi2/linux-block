@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Device wakeirq helper functions */
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

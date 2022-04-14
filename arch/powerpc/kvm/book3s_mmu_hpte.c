@@ -6,6 +6,7 @@
  *     Alexander Graf <agraf@suse.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kvm_host.h>
 #include <linux/hash.h>
 #include <linux/slab.h>

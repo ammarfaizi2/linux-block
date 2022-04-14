@@ -5,6 +5,7 @@
  * Joel Stanley <joel@jms.id.au>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

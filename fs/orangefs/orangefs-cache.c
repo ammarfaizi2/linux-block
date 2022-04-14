@@ -5,6 +5,7 @@
  * See COPYING in top-level directory.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 
 #include "protocol.h"

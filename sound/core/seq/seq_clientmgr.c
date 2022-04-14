@@ -6,6 +6,7 @@
  *                             Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pid.h>

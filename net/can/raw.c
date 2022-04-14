@@ -39,6 +39,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/percpu.h>

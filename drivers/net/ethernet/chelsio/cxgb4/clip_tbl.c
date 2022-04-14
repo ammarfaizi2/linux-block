@@ -10,6 +10,7 @@
  *  release for licensing terms and conditions.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

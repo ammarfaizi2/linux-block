@@ -7,6 +7,7 @@
  * Copyright (c) 2015, RapidIO Trade Association
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

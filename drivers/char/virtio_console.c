@@ -4,6 +4,7 @@
  * Copyright (C) 2009, 2010, 2011 Red Hat, Inc.
  * Copyright (C) 2009, 2010, 2011 Amit Shah <amit.shah@redhat.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/signal.h>
 #include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>

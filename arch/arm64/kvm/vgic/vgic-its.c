@@ -6,6 +6,7 @@
  * Author: Andre Przywara <andre.przywara@arm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>

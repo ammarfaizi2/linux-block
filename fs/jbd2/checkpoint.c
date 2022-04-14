@@ -14,6 +14,7 @@
  * reused.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/mutex_api.h>

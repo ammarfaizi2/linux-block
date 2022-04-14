@@ -4,6 +4,7 @@
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  */
+#include <linux/spinlock_api.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
 #include <linux/version.h>

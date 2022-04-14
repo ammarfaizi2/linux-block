@@ -5,6 +5,7 @@
  *  Copyright (C) 2003 Deep Blue Solutions, Ltd, All Rights Reserved.
  *  Copyright (C) 2010 ST-Ericsson SA
  */
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>

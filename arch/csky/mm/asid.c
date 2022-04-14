@@ -8,6 +8,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/cpumask_api.h>

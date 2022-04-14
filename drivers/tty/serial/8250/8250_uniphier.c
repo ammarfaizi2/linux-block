@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

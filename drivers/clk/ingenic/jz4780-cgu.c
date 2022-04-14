@@ -7,6 +7,7 @@
  * Copyright (c) 2020 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>

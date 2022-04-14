@@ -9,6 +9,7 @@
  * package and is not a general device driver.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/unistd.h>

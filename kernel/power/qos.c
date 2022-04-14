@@ -20,6 +20,7 @@
 
 /*#define DEBUG*/
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>

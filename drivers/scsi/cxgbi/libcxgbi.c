@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/scatterlist_api.h>

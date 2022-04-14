@@ -6,6 +6,7 @@
  *  Author: liujl <liujl@lemote.com>, 2008-04-20
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/export.h>
 #include <linux/spinlock.h>

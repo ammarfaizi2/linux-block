@@ -5,6 +5,7 @@
  *	Authors: Dmitry Kozlov <xeb@mail.ru>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>

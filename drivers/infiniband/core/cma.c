@@ -6,6 +6,7 @@
  * Copyright (c) 2005-2006 Intel Corporation.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/nsproxy.h>

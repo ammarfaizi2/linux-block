@@ -8,6 +8,7 @@
  * Authors: Huacai Chen <chenhc@lemote.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kvm_host.h>
 

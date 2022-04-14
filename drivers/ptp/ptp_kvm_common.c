@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2017 Red Hat Inc.
  */
+#include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/device.h>
 #include <linux/err.h>

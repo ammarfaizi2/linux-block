@@ -10,6 +10,7 @@
  * This driver has been derived from v2.1 of the visor driver.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

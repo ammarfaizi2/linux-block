@@ -121,6 +121,7 @@
  *  This code was initially based on code from ALSA's emu10k1x.c which is:
  *  Copyright (c) by Francisco Moraes <fmoraes@nc.rr.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>

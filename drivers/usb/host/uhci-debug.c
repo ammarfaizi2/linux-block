@@ -10,6 +10,7 @@
  * (C) Copyright 1999-2001 Johannes Erdfelt
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

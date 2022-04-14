@@ -2,6 +2,7 @@
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

@@ -11,6 +11,7 @@
  */
 #undef DEBUG
 
+#include <linux/spinlock_api.h>
 #include <linux/cpu_pm.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

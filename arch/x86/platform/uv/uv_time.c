@@ -6,6 +6,7 @@
  *  Copyright (c) 2009-2013 Silicon Graphics, Inc.  All Rights Reserved.
  *  Copyright (c) Dimitri Sivanich
  */
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/clockchips.h>

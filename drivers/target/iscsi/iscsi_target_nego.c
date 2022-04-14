@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>
 #include <linux/net.h>

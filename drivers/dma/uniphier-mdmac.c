@@ -3,6 +3,7 @@
 // Copyright (C) 2018 Socionext Inc.
 //   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/io.h>

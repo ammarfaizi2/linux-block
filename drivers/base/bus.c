@@ -8,6 +8,7 @@
  * Copyright (c) 2007 Novell Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

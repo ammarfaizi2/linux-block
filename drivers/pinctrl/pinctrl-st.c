@@ -5,6 +5,7 @@
  *	Srinivas Kandagatla <srinivas.kandagatla@st.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

@@ -7,6 +7,7 @@
  * The notifier and event handling code is based on netvsc driver.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2008-2009 MontaVista Software, Inc. <source@mvista.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/timer.h>

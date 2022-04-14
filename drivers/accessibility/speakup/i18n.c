@@ -3,6 +3,7 @@
  * string arrays, and the i18n pointer.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>		/* For kmalloc. */
 #include <linux/ctype.h>
 #include <linux/module.h>

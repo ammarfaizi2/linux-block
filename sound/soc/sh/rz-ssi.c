@@ -6,6 +6,7 @@
 // Copyright (C) 2019 Chris Brandt.
 //
 
+#include <linux/spinlock_api.h>
 #include <linux/sizes.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

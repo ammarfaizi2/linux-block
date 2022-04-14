@@ -92,6 +92,7 @@
 
 #define DRV_NAME	"i801_smbus"
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

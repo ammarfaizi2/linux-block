@@ -9,6 +9,7 @@
  * able to have per-user limits for system resources. 
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/init.h>

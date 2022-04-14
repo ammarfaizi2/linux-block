@@ -35,6 +35,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

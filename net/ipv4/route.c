@@ -60,6 +60,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/siphash_api.h>
 #include <linux/seq_file.h>

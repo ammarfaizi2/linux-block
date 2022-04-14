@@ -5,6 +5,7 @@
  * (C) Copyright 2019 - 2020, Xilinx, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/resource_ext_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

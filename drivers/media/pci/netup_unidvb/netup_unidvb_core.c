@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

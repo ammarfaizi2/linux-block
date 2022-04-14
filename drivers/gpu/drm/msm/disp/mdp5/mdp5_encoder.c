@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_probe_helper.h>

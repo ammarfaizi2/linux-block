@@ -2,6 +2,7 @@
 /*
  *Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

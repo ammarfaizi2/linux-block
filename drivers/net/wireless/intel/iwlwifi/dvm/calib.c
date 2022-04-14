@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2005-2014 Intel Corporation
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <net/mac80211.h>
 

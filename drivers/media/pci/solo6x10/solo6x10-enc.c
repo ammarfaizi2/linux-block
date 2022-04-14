@@ -9,6 +9,7 @@
  * John Brooks <john.brooks@bluecherry.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/font.h>
 #include <linux/bitrev.h>

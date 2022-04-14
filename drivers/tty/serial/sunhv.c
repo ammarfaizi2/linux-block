@@ -4,6 +4,7 @@
  * Copyright (C) 2006, 2007 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>

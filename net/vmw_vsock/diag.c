@@ -6,6 +6,7 @@
  * Author: Stefan Hajnoczi <stefanha@redhat.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/sock_diag.h>
 #include <linux/vm_sockets_diag.h>

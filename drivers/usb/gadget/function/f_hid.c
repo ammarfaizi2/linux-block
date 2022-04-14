@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Fabien Chouteau <fabien.chouteau@barco.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>

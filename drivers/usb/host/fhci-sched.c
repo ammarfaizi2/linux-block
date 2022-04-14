@@ -11,6 +11,7 @@
  *               Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

@@ -6,6 +6,7 @@
  * based on the patches by Rockchip Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>

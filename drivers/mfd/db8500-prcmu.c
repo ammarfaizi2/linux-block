@@ -11,6 +11,7 @@
  *
  * U8500 PRCM Unit interface driver
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>

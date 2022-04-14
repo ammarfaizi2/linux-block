@@ -7,6 +7,7 @@
 
 #include "habanalabs.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/kref_api.h>
 #include <linux/idr_api.h>

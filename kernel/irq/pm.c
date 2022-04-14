@@ -5,6 +5,7 @@
  * This file contains power management functions related to interrupts.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/irq.h>

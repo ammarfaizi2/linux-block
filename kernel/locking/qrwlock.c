@@ -6,6 +6,7 @@
  *
  * Authors: Waiman Long <waiman.long@hp.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/smp.h>
 #include <linux/bug.h>

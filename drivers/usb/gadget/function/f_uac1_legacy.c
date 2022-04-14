@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Analog Devices, Inc
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

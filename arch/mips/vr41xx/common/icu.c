@@ -15,6 +15,7 @@
  *  Yoichi Yuasa <yuasa@linux-mips.org>
  *  - Coped with INTASSIGN of NEC VR4133.
  */
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/atomic_api.h>

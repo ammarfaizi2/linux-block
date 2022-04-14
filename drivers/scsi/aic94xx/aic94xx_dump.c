@@ -11,6 +11,7 @@
  * Print all cseq and lseq mip and mdp.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pci.h>
 #include "aic94xx.h"
 #include "aic94xx_reg.h"

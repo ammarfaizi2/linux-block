@@ -6,6 +6,7 @@
  * Author(s): Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

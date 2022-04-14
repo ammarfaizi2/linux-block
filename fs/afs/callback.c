@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_api.h>

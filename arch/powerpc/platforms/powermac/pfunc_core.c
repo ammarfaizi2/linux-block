@@ -6,6 +6,7 @@
  * FIXME: LOCKING !!!
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

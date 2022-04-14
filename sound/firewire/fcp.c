@@ -5,6 +5,7 @@
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/device.h>
 #include <linux/firewire.h>

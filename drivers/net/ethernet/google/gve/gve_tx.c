@@ -7,6 +7,7 @@
 #include "gve.h"
 #include "gve_adminq.h"
 #include "gve_utils.h"
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>

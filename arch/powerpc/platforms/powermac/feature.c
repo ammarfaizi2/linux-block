@@ -11,6 +11,7 @@
  *   - Refcount some clocks (see darwin)
  *   - Split split split...
  */
+#include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

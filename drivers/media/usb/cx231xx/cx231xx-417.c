@@ -13,6 +13,7 @@
 
 #include "cx231xx.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>
 #include <linux/module.h>

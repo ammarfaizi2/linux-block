@@ -25,6 +25,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>

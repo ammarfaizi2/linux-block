@@ -6,6 +6,7 @@
  * Authors: Sebastian Ott <sebott@linux.vnet.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/spinlock.h>
 #include <linux/module.h>
 #include <asm/isc.h>

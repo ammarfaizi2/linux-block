@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/rwsem_api.h>

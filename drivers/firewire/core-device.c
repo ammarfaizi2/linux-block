@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2006  Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>

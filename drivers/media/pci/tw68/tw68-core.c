@@ -17,6 +17,7 @@
  *  Copyright (C) 2014 Hans Verkuil <hverkuil@xs4all.nl>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

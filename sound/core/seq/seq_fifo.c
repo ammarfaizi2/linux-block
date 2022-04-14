@@ -4,6 +4,7 @@
  *   Copyright (c) 1998 by Frank van de Pol <fvdpol@coil.demon.nl>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/atomic_api.h>
 #include <sound/core.h>

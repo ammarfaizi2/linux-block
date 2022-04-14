@@ -3,6 +3,7 @@
  * Copyright 2019 Advanced Micro Devices, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>

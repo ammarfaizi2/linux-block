@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"opal: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mm_page_address.h>

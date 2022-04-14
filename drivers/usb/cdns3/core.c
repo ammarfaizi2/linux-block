@@ -11,6 +11,7 @@
  *         Roger Quadros <rogerq@ti.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

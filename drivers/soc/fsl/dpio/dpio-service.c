@@ -4,6 +4,7 @@
  * Copyright 2016-2019 NXP
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/prefetch.h>
 #include <linux/device_api.h>

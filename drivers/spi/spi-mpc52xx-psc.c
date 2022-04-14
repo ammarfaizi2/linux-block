@@ -7,6 +7,7 @@
  * Copyright (C) 2006 TOPTICA Photonics AG.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

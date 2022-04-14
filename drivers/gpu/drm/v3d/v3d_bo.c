@@ -19,6 +19,7 @@
  * that's not a high priority since our systems tend to not have swap.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

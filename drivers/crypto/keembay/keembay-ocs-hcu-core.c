@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2020 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

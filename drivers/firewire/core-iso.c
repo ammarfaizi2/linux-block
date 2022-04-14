@@ -7,6 +7,7 @@
  * Copyright (C) 2006 Kristian Hoegsberg <krh@bitplanet.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

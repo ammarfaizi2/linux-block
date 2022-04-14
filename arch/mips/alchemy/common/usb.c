@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/clk.h>
 #include <linux/export.h>

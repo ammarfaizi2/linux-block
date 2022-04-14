@@ -5,6 +5,7 @@
  * Copyright (c) by Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <asm/irq.h>
 #include <linux/init.h>

@@ -13,6 +13,7 @@
 /* bitmap.c contains the code that handles the inode and block bitmaps */
 
 #include "minix.h"
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/buffer_head.h>
 #include <linux/bitops.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2005 Pete Zaitcev (zaitcev@redhat.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

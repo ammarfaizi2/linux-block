@@ -4,6 +4,7 @@
  * Re-organised Feb 1998 Russell King
  * Copyright (C) 2020 Christoph Hellwig
  */
+#include <linux/spinlock_api.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -9,6 +9,7 @@
 #include "../rtl8192ce/reg.h"
 #include "../rtl8192ce/def.h"
 #include "fw_common.h"
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/delay.h>
 #include <linux/export.h>

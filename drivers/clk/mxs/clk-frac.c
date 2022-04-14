@@ -3,6 +3,7 @@
  * Copyright 2012 Freescale Semiconductor, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>
 #include <linux/io.h>

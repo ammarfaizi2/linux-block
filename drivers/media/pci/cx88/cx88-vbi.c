@@ -4,6 +4,7 @@
 
 #include "cx88.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/fs.h>
 #include <linux/dma-mapping.h>

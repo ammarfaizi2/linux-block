@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

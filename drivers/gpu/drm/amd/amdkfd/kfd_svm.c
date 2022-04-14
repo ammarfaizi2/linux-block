@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/mm.h>
 #include <linux/sched.h>

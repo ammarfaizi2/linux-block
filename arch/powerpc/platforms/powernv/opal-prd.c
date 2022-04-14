@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "opal-prd: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

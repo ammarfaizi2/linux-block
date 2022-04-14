@@ -30,6 +30,7 @@
  *	       1= 1MHz clock for 8254
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/gfp.h>
 #include <linux/delay.h>

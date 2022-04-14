@@ -20,6 +20,7 @@
  *  sent through the legacy interface.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/hardirq.h>

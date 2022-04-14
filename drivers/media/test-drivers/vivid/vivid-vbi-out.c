@@ -5,6 +5,7 @@
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  * PPC64 virtual I/O console server support.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>

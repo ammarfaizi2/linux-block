@@ -3,6 +3,7 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 
 #include "iosm_ipc_imem.h"

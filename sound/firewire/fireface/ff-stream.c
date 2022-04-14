@@ -5,6 +5,8 @@
  * Copyright (c) 2015-2017 Takashi Sakamoto
  */
 
+#include <linux/spinlock_api.h>
+
 #include "ff.h"
 
 #define READY_TIMEOUT_MS	200

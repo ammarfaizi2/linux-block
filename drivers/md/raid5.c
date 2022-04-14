@@ -35,6 +35,7 @@
  * miss any bits.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched.h>

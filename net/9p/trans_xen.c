@@ -7,6 +7,7 @@
  * Copyright (C) 2017 by Stefano Stabellini <stefano@aporeto.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/gfp_api.h>

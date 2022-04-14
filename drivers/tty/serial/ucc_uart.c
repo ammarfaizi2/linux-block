@@ -16,6 +16,7 @@
  * (e.g. "11" for 1.1).
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

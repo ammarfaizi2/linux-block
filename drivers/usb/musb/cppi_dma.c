@@ -7,6 +7,7 @@
  * The TUSB6020, using VLYNQ, has CPPI that looks much like DaVinci.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

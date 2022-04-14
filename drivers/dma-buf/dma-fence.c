@@ -10,6 +10,7 @@
  * Maarten Lankhorst <maarten.lankhorst@canonical.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>

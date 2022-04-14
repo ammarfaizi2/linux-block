@@ -113,6 +113,7 @@
  *
  * http://www.cs.berkeley.edu/~istoica/papers/eevdf-tr-95.pdf
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/math64.h>

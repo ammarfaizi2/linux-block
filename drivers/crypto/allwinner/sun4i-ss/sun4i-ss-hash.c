@@ -9,6 +9,7 @@
  * You could find the datasheet in Documentation/arm/sunxi.rst
  */
 #include "sun4i-ss.h"
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/device_api.h>

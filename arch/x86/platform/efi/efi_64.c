@@ -18,6 +18,7 @@
 
 #define pr_fmt(fmt) "efi: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/mm.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

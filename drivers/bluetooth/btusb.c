@@ -6,6 +6,7 @@
  *  Copyright (C) 2005-2008  Marcel Holtmann <marcel@holtmann.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/pm_wakeup.h>

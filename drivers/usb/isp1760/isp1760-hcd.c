@@ -14,6 +14,7 @@
  * Copyright 2021 Linaro, Rui Miguel Silva <rui.silva@linaro.org>
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pm_wakeup.h>

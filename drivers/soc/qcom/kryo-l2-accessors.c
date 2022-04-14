@@ -3,6 +3,7 @@
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/spinlock.h>
 #include <asm/barrier.h>
 #include <asm/sysreg.h>

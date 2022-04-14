@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2015-2018 Mellanox Technologies. All rights reserved */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/rculist.h>
 #include <linux/if_ether_api.h>

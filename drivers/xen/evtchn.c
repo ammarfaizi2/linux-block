@@ -33,6 +33,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>

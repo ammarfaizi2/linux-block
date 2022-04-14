@@ -27,6 +27,7 @@
  * we can possibly sleep.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/page-flags-thp.h>
 #include <linux/mutex_api.h>

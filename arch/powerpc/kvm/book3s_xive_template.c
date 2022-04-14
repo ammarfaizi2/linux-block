@@ -3,6 +3,7 @@
  * Copyright 2017 Benjamin Herrenschmidt, IBM Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 

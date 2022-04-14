@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>

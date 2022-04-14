@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Dave S.r.l. <www.dave.eu>
  * Copyright (C) 2009 Ilya Yanok, Emcraft Systems Ltd, <yanok@emcraft.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>

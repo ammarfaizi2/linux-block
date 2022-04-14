@@ -6,6 +6,7 @@
  * Copyright (C) 2015-2017 Glider bvba
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/clk/renesas.h>
 #include <linux/delay.h>

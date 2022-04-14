@@ -7,6 +7,7 @@
  * Copyright (C) 2019 Renesas Electronics Corp.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

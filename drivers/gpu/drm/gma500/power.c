@@ -33,6 +33,7 @@
 #include "psb_reg.h"
 #include "psb_intel_reg.h"
 #include "psb_irq.h"
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api.h>
 #include <linux/mutex.h>

@@ -2,6 +2,7 @@
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/time.h>

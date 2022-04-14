@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Cavium, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>

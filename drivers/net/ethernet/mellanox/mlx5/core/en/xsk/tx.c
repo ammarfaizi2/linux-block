@@ -5,6 +5,7 @@
 #include "pool.h"
 #include "en/xdp.h"
 #include "en/params.h"
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 #include <net/xdp_sock_drv.h>

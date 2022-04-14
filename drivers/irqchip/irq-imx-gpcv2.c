@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Freescale Semiconductor, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

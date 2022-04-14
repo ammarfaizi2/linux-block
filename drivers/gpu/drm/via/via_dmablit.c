@@ -34,6 +34,7 @@
  * the same DMA mappings?
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

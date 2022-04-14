@@ -16,6 +16,7 @@
 
 #define _RTL871X_STA_MGT_C_
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 
 #include "osdep_service.h"

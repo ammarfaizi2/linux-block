@@ -3,6 +3,7 @@
  * Fast batching percpu counters.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/percpu.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/minmax.h>

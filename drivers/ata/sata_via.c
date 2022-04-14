@@ -15,6 +15,7 @@
  *  Hardware documentation available under NDA.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/gfp_api.h>

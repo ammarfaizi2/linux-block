@@ -12,6 +12,7 @@
  * Hardware interface for audio DSP on Atom devices
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/module.h>

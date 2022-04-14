@@ -8,6 +8,7 @@
  *         Fenghua Yu <fenghua.yu@intel.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/math64.h>
 #include <linux/spinlock.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2008-2009 Marvell Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

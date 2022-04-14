@@ -19,6 +19,7 @@
  * reprogramming the FPGA and re-enabled after the FPGA has been programmed.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/fpga/fpga-bridge.h>

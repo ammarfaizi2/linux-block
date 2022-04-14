@@ -10,6 +10,7 @@
  * (c) 2006 Ted Walther and John Sokol
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>

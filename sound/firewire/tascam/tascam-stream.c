@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include "tascam.h"
 

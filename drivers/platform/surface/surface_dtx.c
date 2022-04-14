@@ -11,6 +11,7 @@
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

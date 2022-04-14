@@ -24,6 +24,7 @@
 /*
  * RFCOMM sockets.
  */
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/refcount_api.h>
 #include <linux/fs_api.h>

@@ -5,6 +5,7 @@
  * This file contains the interrupt probing code and driver APIs.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq.h>

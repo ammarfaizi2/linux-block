@@ -7,6 +7,7 @@
  *             Christoph Lameter <cl@linux.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

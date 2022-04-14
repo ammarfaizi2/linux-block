@@ -9,6 +9,7 @@
  * Authors: 	Shlomi Gridish <gridish@freescale.com>
  * 		Li Yang <leoli@freescale.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/stddef.h>

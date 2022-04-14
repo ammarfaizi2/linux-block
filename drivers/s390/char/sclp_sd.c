@@ -8,6 +8,7 @@
 #define KMSG_COMPONENT "sclp_sd"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/gfp_api.h>

@@ -8,6 +8,7 @@
  * Based on code by Dmitry Chernenkov.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

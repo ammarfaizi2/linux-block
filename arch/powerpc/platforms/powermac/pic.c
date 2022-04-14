@@ -10,6 +10,7 @@
  *                     IBM, Corp.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>

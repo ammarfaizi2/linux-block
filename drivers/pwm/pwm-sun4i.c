@@ -9,6 +9,7 @@
  *   and the currently running period is not guaranteed to be completed
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

@@ -16,6 +16,7 @@
  * all copies or substantial portions of the Software.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>

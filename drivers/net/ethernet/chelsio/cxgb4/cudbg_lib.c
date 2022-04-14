@@ -3,6 +3,7 @@
  *  Copyright (C) 2017 Chelsio Communications.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

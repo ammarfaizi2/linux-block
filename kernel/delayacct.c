@@ -4,6 +4,7 @@
  * Copyright (C) Shailabh Nagar, IBM Corp. 2006
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/sched.h>

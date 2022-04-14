@@ -18,6 +18,7 @@
  *		 2001-2004 Juergen Stuber <starblue@users.sourceforge.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

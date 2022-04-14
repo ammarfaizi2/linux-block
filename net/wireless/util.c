@@ -7,6 +7,7 @@
  * Copyright 2017	Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

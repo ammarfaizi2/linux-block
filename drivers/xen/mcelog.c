@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) "xen_mcelog: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>

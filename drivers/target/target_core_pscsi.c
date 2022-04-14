@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/string.h>
 #include <linux/parser.h>

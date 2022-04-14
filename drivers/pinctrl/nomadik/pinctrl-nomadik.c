@@ -7,6 +7,7 @@
  *   Rewritten based on work by Prafulla WADASKAR <prafulla.wadaskar@st.com>
  * Copyright (C) 2011-2013 Linus Walleij <linus.walleij@linaro.org>
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

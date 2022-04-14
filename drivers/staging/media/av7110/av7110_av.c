@@ -11,6 +11,7 @@
  * the project's page is at https://linuxtv.org
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>

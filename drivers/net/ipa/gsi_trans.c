@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/scatterlist_api.h>

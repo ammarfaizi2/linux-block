@@ -5,6 +5,7 @@
  *          Fabien Dessenne <fabien.dessenne@st.com> for STMicroelectronics.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

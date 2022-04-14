@@ -7,6 +7,7 @@
  *  Copyright 1999 ARM Limited
  *  Copyright (C) 2000-2001 Deep Blue Solutions Ltd.
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/property.h>

@@ -22,6 +22,7 @@
 #define blogic_drvr_version		"2.1.17"
 #define blogic_drvr_date		"12 September 2013"
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io_extra.h>

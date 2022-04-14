@@ -28,6 +28,7 @@
 /* (can be determined by looking at its status register).              */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/kdev_t.h>
 #include <linux/sched.h>

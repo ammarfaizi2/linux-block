@@ -30,6 +30,7 @@
  * --- End of notes from Thoamas's original driver ---
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

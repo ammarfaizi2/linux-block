@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1997-2002 Russell King
  */
+#include <linux/spinlock_api.h>
 #include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <linux/statfs.h>

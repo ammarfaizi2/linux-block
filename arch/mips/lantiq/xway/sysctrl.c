@@ -5,6 +5,7 @@
  *  Copyright (C) 2013-2015 Lantiq Beteiligungs-GmbH & Co.KG
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

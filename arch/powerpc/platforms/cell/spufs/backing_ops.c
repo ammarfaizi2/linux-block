@@ -8,6 +8,7 @@
  * SPU contexts rather than hardware.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

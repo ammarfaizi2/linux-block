@@ -5,6 +5,7 @@
  * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_io.h>

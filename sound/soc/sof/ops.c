@@ -8,6 +8,7 @@
 // Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 
+#include <linux/spinlock_api.h>
 #include <linux/pci.h>
 #include "ops.h"
 

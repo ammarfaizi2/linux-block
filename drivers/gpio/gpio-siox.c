@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Pengutronix, Uwe Kleine-König <kernel@pengutronix.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

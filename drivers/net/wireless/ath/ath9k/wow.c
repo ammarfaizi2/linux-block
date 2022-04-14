@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/hardirq.h>

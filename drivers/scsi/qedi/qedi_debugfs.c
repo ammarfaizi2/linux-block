@@ -7,6 +7,7 @@
 #include "qedi.h"
 #include "qedi_dbg.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/jiffies.h>
 #include <linux/uaccess.h>

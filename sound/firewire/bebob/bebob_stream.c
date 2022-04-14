@@ -5,6 +5,7 @@
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
 

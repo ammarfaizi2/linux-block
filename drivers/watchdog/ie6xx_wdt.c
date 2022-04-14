@@ -6,6 +6,7 @@
  *                <alexander.stein@systec-electronic.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

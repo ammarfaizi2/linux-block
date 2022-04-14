@@ -9,6 +9,7 @@
  * Copyright (C) 1996 Thomas K. Dyas (tdyas@eden.rutgers.edu)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

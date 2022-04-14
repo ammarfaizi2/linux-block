@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Endless Mobile
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

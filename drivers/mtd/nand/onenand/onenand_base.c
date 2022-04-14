@@ -15,6 +15,7 @@
  *	OTP support
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/sched/cond_resched.h>

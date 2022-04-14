@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2000, 2001, 2002, 2003 Broadcom Corporation
  */
+#include <linux/spinlock_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

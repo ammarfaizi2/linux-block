@@ -5,6 +5,7 @@
  * Copyright(C) 2009 Wolfson Microelectronics PLC.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

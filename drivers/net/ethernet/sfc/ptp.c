@@ -30,6 +30,7 @@
  *	Receive: the packet's reception time is converted to an appropriate
  *	timestamp.
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>

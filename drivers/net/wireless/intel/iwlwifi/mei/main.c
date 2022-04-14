@@ -3,6 +3,7 @@
  * Copyright (C) 2021-2022 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

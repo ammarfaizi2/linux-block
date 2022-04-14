@@ -19,6 +19,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/kref_api.h>
 #include <linux/hashtable_api.h>

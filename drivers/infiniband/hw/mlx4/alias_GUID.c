@@ -32,6 +32,7 @@
  /***********************************************************/
 /*This file support the handling of the Alias GUID feature. */
 /***********************************************************/
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

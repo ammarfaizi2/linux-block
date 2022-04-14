@@ -11,6 +11,7 @@
 #define KMSG_COMPONENT "cio"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mutex_api.h>

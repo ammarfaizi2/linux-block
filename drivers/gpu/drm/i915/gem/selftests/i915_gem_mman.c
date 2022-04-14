@@ -4,6 +4,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

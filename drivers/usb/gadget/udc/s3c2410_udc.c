@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "s3c2410_udc: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

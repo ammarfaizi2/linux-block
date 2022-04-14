@@ -6,6 +6,7 @@
  * Copyright 2019-2021, IBM Corporation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

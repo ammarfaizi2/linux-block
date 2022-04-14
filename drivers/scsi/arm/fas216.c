@@ -31,6 +31,7 @@
  *			automatically request sense data upon check
  *			condition status from targets.
  */
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

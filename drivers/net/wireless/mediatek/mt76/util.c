@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/kthread.h>
 #include <linux/delay.h>

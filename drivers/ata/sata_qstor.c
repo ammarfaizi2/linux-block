@@ -11,6 +11,7 @@
  *  as Documentation/driver-api/libata.rst
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

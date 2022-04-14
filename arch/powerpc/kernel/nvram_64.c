@@ -5,6 +5,7 @@
  * /dev/nvram driver for PPC64
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

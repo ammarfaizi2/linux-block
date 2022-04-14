@@ -5,6 +5,7 @@
  *  Copyright (C) 2020 Mark Hills <mark@xwax.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

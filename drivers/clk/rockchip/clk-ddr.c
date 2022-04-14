@@ -4,6 +4,7 @@
  * Author: Lin Huang <hl@rock-chips.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/arm-smccc.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

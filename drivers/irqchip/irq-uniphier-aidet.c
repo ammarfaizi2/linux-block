@@ -6,6 +6,7 @@
  *   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

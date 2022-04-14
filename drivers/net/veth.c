@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/pgtable_api.h>
 #include <linux/percpu.h>

@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2003-2008  Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/compat.h>
 #include <linux/err.h>

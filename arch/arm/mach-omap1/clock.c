@@ -8,6 +8,7 @@
  *  Modified to use omap shared clock framework by
  *  Tony Lindgren <tony@atomide.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

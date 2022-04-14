@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Chao Yu <chao@kernel.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/rwsem_api.h>

@@ -15,6 +15,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

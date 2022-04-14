@@ -13,6 +13,7 @@
 
 #undef DEBUG
 
+#include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

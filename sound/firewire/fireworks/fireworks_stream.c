@@ -4,6 +4,8 @@
  *
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
+#include <linux/spinlock_api.h>
+
 #include "./fireworks.h"
 
 #define READY_TIMEOUT_MS	1000

@@ -8,6 +8,7 @@
  * NAT funded by Astaro.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/if.h>
 #include <linux/inetdevice.h>
 #include <linux/ip.h>

@@ -10,6 +10,7 @@
  * Copyright (C) 2007 Freescale Semiconductor, Inc. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/bitmap.h>

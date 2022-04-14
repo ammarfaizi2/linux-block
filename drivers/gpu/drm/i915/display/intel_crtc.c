@@ -2,6 +2,7 @@
 /*
  * Copyright © 2020 Intel Corporation
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

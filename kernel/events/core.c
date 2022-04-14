@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/user.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/task.h>

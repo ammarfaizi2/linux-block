@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <drm/drm_file.h>
 #include <drm/drm_fourcc.h>

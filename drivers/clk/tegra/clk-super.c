@@ -3,6 +3,7 @@
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/delay.h>

@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT "kvm-s390"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>

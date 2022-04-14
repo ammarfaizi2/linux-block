@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "software IO TLB: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/page-flags.h>
 #include <linux/of_api.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2021-2021 Hisilicon Limited.
 
+#include <linux/spinlock_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 

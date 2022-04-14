@@ -5,6 +5,7 @@
  * Copyright 2009 Jonathan Corbet <corbet@lwn.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/spinlock.h>
 #include <linux/gpio/driver.h>
 #include <linux/platform_device.h>

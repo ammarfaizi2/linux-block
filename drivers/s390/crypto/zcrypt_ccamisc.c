@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "zcrypt"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/gfp_api.h>
 #include <linux/init.h>

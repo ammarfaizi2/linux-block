@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/bits.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>

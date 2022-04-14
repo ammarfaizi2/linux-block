@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>
 

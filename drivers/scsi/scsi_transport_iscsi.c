@@ -7,6 +7,7 @@
  * Copyright (C) Dmitry Yusupov, 2004 - 2005
  * Copyright (C) Alex Aizman, 2004 - 2005
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/device/class.h>

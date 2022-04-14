@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/acpi.h>
 #include <linux/device.h>

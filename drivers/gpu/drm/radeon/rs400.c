@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <linux/slab.h>

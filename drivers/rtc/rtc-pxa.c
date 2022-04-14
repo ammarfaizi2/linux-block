@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Robert Jarzmik
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

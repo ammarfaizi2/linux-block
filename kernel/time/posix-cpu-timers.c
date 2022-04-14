@@ -3,6 +3,7 @@
  * Implement CPU time clocks for the POSIX clock interface.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/pid.h>

@@ -11,6 +11,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/etherdevice_api.h>

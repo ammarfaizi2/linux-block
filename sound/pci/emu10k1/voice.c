@@ -14,6 +14,7 @@
  *    --
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/time.h>
 #include <linux/export.h>
 #include <sound/core.h>

@@ -15,6 +15,7 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

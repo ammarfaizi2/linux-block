@@ -5,6 +5,7 @@
  * Author: Gabriel Fernandez <gabriel.fernandez@st.com> for STMicroelectronics.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

@@ -8,6 +8,7 @@
  * This code was derived from the IXP46X driver.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>
 #include <linux/device.h>

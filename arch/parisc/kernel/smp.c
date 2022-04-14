@@ -13,6 +13,7 @@
 ** -grant (1/12/2001)
 **
 */
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/profile.h>

@@ -20,6 +20,7 @@
  * bits 5 -> 31	- physical descriptor address
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>

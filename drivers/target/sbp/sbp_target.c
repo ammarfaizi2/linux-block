@@ -8,6 +8,7 @@
 #define KMSG_COMPONENT "sbp_target"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rculist.h>

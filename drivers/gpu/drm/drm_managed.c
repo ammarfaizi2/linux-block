@@ -5,6 +5,7 @@
  * Based on drivers/base/devres.c
  */
 
+#include <linux/spinlock_api.h>
 #include <drm/drm_managed.h>
 
 #include <linux/list.h>

@@ -6,6 +6,7 @@
  * Alexandre Bounine <alexandre.bounine@idt.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/printk.h>
 #include <linux/device_api_lock.h>
 #include <linux/stat.h>

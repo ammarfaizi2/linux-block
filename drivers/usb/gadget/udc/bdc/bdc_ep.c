@@ -8,6 +8,7 @@
  *
  * Based on drivers under drivers/usb/
  */
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/dma-mapping.h>

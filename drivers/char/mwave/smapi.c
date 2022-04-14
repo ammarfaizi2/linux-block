@@ -46,6 +46,7 @@
 *	First release to the public
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/mc146818rtc.h>	/* CMOS defines */

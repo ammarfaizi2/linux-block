@@ -10,6 +10,7 @@
  */
 
 #include "bcma_private.h"
+#include <linux/spinlock_api.h>
 #include <linux/device_api.h>
 #include <linux/bcm47xx_wdt.h>
 #include <linux/export.h>

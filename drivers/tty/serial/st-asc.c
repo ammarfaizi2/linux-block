@@ -5,6 +5,7 @@
  * Copyright (C) 2003-2013 STMicroelectronics (R&D) Limited
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

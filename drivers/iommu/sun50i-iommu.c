@@ -2,6 +2,7 @@
 // Copyright (C) 2016-2018, Allwinner Technology CO., LTD.
 // Copyright (C) 2019-2020, Cerno
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/io.h>

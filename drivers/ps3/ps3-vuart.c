@@ -6,6 +6,7 @@
  *  Copyright 2006 Sony Corp.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

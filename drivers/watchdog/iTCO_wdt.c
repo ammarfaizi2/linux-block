@@ -45,6 +45,7 @@
 #define DRV_VERSION	"1.11"
 
 /* Includes */
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>			/* For ACPI support */
 #include <linux/bits.h>			/* For BIT() */

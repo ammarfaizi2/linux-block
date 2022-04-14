@@ -13,6 +13,7 @@
  * Code supporting the DP264 (EV6+TSUNAMI).
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/cpumask_api.h>

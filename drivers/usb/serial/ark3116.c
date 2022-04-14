@@ -18,6 +18,7 @@
  * bottom of this file.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/ioctl.h>

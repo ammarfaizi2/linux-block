@@ -10,6 +10,7 @@
  * based on TSC2301 driver by Klaus K. Pedersen <klaus.k.pedersen@nokia.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -3,6 +3,7 @@
  * Copyright © 2008-2021 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <drm/drm_cache.h>
 

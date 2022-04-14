@@ -5,6 +5,7 @@
  * Transplanted from lockd code
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <net/net_namespace.h>

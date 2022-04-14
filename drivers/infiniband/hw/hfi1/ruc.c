@@ -3,6 +3,7 @@
  * Copyright(c) 2015 - 2018 Intel Corporation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

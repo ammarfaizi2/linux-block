@@ -14,6 +14,7 @@
  * pin should provide pulses even when the LCD is blanked, otherwise
  * a pen touch needed to unblank the LCD will never be read.
  */
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

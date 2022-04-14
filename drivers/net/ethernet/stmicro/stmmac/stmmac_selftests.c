@@ -6,6 +6,7 @@
  * Author: Jose Abreu <joabreu@synopsys.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/prefetch.h>
 #include <linux/netdevice_api.h>

@@ -4,6 +4,7 @@
  *  Rewritten from the dovefb driver, and Armada510 manuals.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

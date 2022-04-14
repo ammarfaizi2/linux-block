@@ -10,6 +10,7 @@
  * Based on the original driver written by Stuart Menefy.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

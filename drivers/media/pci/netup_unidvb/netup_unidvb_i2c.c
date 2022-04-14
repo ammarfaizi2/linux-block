@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

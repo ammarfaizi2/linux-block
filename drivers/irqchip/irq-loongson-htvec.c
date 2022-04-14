@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "htvec: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>

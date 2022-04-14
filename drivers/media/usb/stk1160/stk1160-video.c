@@ -10,6 +10,7 @@
  *	<rmthomas--a.t--sciolus.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/usb.h>
 #include <linux/slab.h>

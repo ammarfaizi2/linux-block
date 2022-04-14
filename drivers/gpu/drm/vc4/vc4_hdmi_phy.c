@@ -6,6 +6,8 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
+
 #include "vc4_hdmi.h"
 #include "vc4_regs.h"
 #include "vc4_hdmi_regs.h"

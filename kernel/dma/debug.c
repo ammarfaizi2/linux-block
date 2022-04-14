@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"DMA-API: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/radix-tree-api.h>

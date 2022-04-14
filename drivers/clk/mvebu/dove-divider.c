@@ -5,6 +5,7 @@
  * Cleaned up by substantially rewriting, and converted to DT by
  * Russell King.  Origin is not known.
  */
+#include <linux/spinlock_api.h>
 #include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/io.h>

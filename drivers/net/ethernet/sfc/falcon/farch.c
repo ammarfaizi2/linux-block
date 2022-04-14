@@ -5,6 +5,7 @@
  * Copyright 2006-2013 Solarflare Communications Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/net.h>

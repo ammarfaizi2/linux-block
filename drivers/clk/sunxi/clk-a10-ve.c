@@ -5,6 +5,7 @@
  * Chen-Yu Tsai <wens@csie.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

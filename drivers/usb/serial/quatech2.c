@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <asm/unaligned.h>
 #include <linux/errno.h>
 #include <linux/slab.h>

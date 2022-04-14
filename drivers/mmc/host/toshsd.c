@@ -9,6 +9,7 @@
  *	sdhci.c, copyright (C) 2005-2006 Pierre Ossman
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>

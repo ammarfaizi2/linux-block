@@ -10,6 +10,7 @@
  * counter which decrements on every clock cycle.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

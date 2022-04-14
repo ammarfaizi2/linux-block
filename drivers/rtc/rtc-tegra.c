@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2019, NVIDIA Corporation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/pm_wakeup.h>
 #include <linux/interrupt.h>

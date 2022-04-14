@@ -2,6 +2,7 @@
 /*
  * Copyright 2011 IBM Corporation.
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/cpumask_api.h>

@@ -5,6 +5,7 @@
  * /dev/nvram driver for PPC
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

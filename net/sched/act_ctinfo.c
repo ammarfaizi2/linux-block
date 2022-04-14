@@ -4,6 +4,7 @@
  * Copyright (c) 2019 Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/lockdep_api.h>

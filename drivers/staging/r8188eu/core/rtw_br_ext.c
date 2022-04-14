@@ -3,6 +3,7 @@
 
 #define _RTW_BR_EXT_C_
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

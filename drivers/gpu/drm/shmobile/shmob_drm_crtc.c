@@ -7,6 +7,7 @@
  * Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/backlight.h>
 #include <linux/clk.h>
 

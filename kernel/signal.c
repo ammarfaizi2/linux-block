@@ -11,6 +11,7 @@
  *		to allow signals to be sent reliably.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

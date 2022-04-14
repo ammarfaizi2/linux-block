@@ -37,6 +37,7 @@
 
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>

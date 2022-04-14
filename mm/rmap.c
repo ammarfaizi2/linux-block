@@ -52,6 +52,7 @@
  *             page->flags PG_locked (lock_page)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched/per_task.h>
 #include <linux/rwsem_api.h>

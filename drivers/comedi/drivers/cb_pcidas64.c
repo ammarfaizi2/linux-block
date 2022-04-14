@@ -70,6 +70,7 @@
  * make ao fifo size adjustable like ai fifo
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

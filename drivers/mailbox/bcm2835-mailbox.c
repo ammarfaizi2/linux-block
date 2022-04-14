@@ -15,6 +15,7 @@
  *    https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

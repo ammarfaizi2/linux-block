@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt) "mvebu-sei: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

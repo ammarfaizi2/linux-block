@@ -8,6 +8,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/irq.h>
 #include <linux/spinlock.h>

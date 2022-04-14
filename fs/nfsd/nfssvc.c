@@ -7,6 +7,7 @@
  * Copyright (C) 1995, 1996, 1997 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/siphash_api.h>
 #include <linux/seqlock_api.h>

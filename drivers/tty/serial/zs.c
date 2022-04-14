@@ -44,6 +44,7 @@
  * complicated and prevents the use of some automatic modes of operation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/bug.h>
 #include <linux/console.h>

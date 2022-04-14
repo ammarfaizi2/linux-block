@@ -7,6 +7,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/pagemap.h>

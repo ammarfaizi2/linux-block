@@ -7,6 +7,7 @@
  *	      Jan Glauber <jang@linux.vnet.ibm.com>
  * 2.6 cio integration by Cornelia Huck <cornelia.huck@de.ibm.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

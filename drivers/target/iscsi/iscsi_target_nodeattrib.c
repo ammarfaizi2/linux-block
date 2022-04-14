@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <target/target_core_base.h>
 
 #include <target/iscsi/iscsi_target_core.h>

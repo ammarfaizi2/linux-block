@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Nokia Corporation
  * Tony Lindgren <tony@atomide.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/io_extra.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

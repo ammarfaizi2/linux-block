@@ -18,6 +18,7 @@
 
 #define pr_fmt(fmt) "X25: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

@@ -4,6 +4,7 @@
 // Copyright (C) 2005 David Brownell
 // Copyright (C) 2008 Secret Lab Technologies Ltd.
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

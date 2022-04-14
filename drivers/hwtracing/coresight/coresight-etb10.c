@@ -5,6 +5,7 @@
  * Description: CoreSight Embedded Trace Buffer driver
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/perf_event_api.h>
 #include <linux/module.h>

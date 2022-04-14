@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Broadcom Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 #include <linux/netdevice.h>
 

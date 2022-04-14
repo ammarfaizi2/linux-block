@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2021 Corigine, Inc. */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 

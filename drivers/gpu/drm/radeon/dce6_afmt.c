@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/hdmi.h>
 
 #include "dce6_afmt.h"

@@ -2,6 +2,7 @@
 /*
  *	Implement 'Simple Boot Flag Specification 2.0'
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

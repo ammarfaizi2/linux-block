@@ -3,6 +3,7 @@
  * Copyright(c) 2016 - 2019 Intel Corporation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include "ah.h"
 #include "vt.h" /* for prints */

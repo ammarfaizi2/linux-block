@@ -12,6 +12,7 @@
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/task_stack.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

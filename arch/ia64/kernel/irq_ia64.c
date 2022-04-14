@@ -15,6 +15,7 @@
  *						Added CPU Hotplug handling for IPF.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>

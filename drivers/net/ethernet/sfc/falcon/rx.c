@@ -5,6 +5,7 @@
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/net.h>

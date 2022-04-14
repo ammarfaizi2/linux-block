@@ -9,6 +9,7 @@
  *	Jinyoung Choi <j-young.choi@samsung.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_kvmalloc.h>

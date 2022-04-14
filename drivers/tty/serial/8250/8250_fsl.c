@@ -17,6 +17,7 @@
  * IRQ event to the next one.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

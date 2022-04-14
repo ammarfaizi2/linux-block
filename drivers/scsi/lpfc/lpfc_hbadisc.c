@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/percpu.h>

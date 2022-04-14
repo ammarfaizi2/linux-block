@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>

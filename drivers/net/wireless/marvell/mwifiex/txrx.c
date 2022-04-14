@@ -17,6 +17,7 @@
  * this warranty disclaimer.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/idr_api.h>
 #include <linux/atomic_api.h>

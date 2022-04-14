@@ -6,6 +6,7 @@
 //
 // Hardware interface for audio DSP on i.MX8
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

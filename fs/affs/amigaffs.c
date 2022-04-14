@@ -9,6 +9,7 @@
  *  Please send bug reports to: hjw@zvw.de
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/minmax.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

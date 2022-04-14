@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2017-2019 Samuel Holland <samuel@sholland.org>
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

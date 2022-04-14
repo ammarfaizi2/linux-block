@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

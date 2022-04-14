@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2014 Mentor Graphics Inc.
  * Copyright (C) 2005-2009 Freescale Semiconductor, Inc.
  */
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/module.h>

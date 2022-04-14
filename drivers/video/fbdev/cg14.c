@@ -8,6 +8,7 @@
  * Driver layout based loosely on tgafb.c, see that file for credits.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

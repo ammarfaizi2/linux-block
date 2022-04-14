@@ -5,6 +5,7 @@
  * Copyright (C) 1996,1997 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/smp.h>

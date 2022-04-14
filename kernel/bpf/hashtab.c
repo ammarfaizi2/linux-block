@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/percpu.h>

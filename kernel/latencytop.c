@@ -43,6 +43,7 @@
  * of times)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/kallsyms.h>
 #include <linux/seq_file.h>

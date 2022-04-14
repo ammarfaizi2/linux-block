@@ -24,6 +24,7 @@
 #define nv44_mpeg(p) container_of((p), struct nv44_mpeg, engine)
 #include "priv.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <core/client.h>
 #include <core/gpuobj.h>

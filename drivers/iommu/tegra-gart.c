@@ -9,6 +9,7 @@
 
 #define dev_fmt(fmt)	"gart: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/capability.h>
 #include <linux/io.h>

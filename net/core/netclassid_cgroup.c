@@ -5,6 +5,7 @@
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/net.h>
 #include <linux/interrupt.h>

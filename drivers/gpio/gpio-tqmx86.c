@@ -6,6 +6,7 @@
  *   Vadim V.Vlasov <vvlasov@dev.rtsoft.ru>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

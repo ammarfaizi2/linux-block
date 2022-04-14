@@ -11,6 +11,7 @@
  *	- cache integrity information associated with an inode
  *	  using a rbtree tree.
  */
+#include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_types_sb.h>

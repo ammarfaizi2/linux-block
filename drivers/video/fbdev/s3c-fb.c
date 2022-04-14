@@ -9,6 +9,7 @@
  * Samsung SoC Framebuffer driver
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mod_devicetable.h>
 #include <linux/mm_api.h>

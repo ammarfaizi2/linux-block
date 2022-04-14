@@ -11,6 +11,7 @@
  * bit, but not a full watchdog driver.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/init.h>

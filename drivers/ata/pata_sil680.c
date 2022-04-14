@@ -22,6 +22,7 @@
  *	the command fifo mode.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

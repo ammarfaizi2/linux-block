@@ -16,6 +16,7 @@
  *
  * All rights reserved.
  */
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/jiffies.h>
 #include <linux/sched.h>

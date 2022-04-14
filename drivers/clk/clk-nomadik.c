@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "Nomadik SRC clocks: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/bitops.h>
 #include <linux/slab.h>

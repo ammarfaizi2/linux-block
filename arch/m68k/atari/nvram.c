@@ -8,6 +8,7 @@
  * Wim Van Sebroeck.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/errno.h>
 #include <linux/init.h>

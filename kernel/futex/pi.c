@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/sched/task_flags.h>

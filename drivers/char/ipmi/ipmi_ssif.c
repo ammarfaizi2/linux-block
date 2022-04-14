@@ -25,6 +25,7 @@
 #define pr_fmt(fmt) "ipmi_ssif: " fmt
 #define dev_fmt(fmt) "ipmi_ssif: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

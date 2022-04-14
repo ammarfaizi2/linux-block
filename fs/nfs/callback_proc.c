@@ -7,6 +7,7 @@
  * NFSv4 callback procedures
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/fs_api.h>
 #include <linux/errno.h>

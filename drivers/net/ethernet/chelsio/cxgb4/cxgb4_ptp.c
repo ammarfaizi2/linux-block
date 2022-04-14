@@ -34,6 +34,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/module.h>

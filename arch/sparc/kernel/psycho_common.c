@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2008 David S. Miller <davem@davemloft.net>
  */
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/numa.h>

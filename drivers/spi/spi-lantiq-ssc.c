@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>

@@ -11,6 +11,7 @@
  * Based on the minix file system code, (C) 1991, 1992 by Linus Torvalds
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Renesas Electronics Corporation
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt) "ipmi_si: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>

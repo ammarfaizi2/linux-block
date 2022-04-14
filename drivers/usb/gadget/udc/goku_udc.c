@@ -20,6 +20,7 @@
 // #define	VERBOSE		/* extra debug messages (success too) */
 // #define	USB_TRACE	/* packet-level success messages */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

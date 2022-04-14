@@ -67,6 +67,7 @@
  * root@self# cat $DBG_DIR/count
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/device_api_lock.h>

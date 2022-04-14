@@ -11,6 +11,7 @@
  * Based on the minix file system code, (C) 1991, 1992 by Linus Torvalds
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>

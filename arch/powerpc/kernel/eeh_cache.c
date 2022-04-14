@@ -6,6 +6,7 @@
  * Copyright Linas Vepstas <linas@austin.ibm.com> 2004
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/rbtree_api.h>
 #include <linux/ioport.h>

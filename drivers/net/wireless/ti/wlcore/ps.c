@@ -7,6 +7,8 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
+#include <linux/spinlock_api.h>
+
 #include "ps.h"
 #include "io.h"
 #include "tx.h"

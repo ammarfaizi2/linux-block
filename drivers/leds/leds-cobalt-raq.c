@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2007  Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/ioport.h>

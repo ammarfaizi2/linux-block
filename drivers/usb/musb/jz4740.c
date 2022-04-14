@@ -5,6 +5,7 @@
  * Copyright (C) 2013, Apelete Seketeli <apelete@seketeli.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>

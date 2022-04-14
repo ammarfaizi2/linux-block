@@ -3,6 +3,7 @@
  * Copyright 2006-2008, Michael Ellerman, IBM Corporation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/slab.h>

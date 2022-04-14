@@ -10,6 +10,7 @@
  */
 
 #include "bcma_private.h"
+#include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

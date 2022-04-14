@@ -15,6 +15,8 @@
  * Hardware interface for generic Intel audio DSP HDA IP
  */
 
+#include <linux/spinlock_api.h>
+
 #include "../ops.h"
 #include "hda.h"
 

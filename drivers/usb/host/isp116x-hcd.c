@@ -56,6 +56,7 @@
 /* enqueuing/finishing log of urbs */
 //#define URB_TRACE
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>

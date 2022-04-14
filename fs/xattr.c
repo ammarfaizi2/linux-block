@@ -8,6 +8,7 @@
   Copyright (C) 2001 SGI - Silicon Graphics, Inc <linux-xfs@oss.sgi.com>
   Copyright (c) 2004 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

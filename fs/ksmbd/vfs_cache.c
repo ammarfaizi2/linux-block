@@ -4,6 +4,7 @@
  * Copyright (C) 2019 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/idr_api.h>
 #include <linux/hash.h>
 #include <linux/fs_api.h>

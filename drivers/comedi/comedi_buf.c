@@ -7,6 +7,7 @@
  * Copyright (C) 2002 Frank Mori Hess <fmhess@users.sourceforge.net>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

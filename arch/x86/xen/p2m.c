@@ -61,6 +61,7 @@
  * IDENTITY_FRAME_BIT on all identity mapped PFNs.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>

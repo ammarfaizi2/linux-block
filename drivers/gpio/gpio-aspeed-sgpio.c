@@ -5,6 +5,7 @@
  * Author: Karthikeyan Mani <karthikeyanm@amiindia.co.in>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>

@@ -16,6 +16,7 @@
 
 #define _HCI_OPS_OS_C_
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/usb.h>

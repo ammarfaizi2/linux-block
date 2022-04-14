@@ -3,6 +3,7 @@
  * Copyright 2015-2016, Aneesh Kumar K.V, IBM Corporation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/pgtable_api.h>

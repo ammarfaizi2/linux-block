@@ -7,6 +7,7 @@
  *              - Ingress support
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/percpu.h>
 #include <linux/net.h>

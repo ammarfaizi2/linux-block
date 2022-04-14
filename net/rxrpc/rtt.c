@@ -8,6 +8,7 @@
  * http://ccr.sigcomm.org/archive/1995/jan95/ccr-9501-partridge87.pdf
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/net.h>

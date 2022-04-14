@@ -14,6 +14,7 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/notifier_api.h>

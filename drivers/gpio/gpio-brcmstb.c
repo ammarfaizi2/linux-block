@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

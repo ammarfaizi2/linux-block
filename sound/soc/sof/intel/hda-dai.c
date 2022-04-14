@@ -8,6 +8,7 @@
 // Authors: Keyon Jie <yang.jie@linux.intel.com>
 //
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <sound/pcm_params.h>
 #include <sound/hdaudio_ext.h>

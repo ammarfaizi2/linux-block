@@ -18,6 +18,7 @@
 #undef DEBUG_LOW
 
 #define pr_fmt(fmt) "hash-mmu: " fmt
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/preempt.h>

@@ -41,6 +41,8 @@
  * USA.
  */
 
+#include <linux/spinlock_api.h>
+
 #include "esas2r.h"
 
 void esas2r_targ_db_initialize(struct esas2r_adapter *a)

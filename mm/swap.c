@@ -14,6 +14,7 @@
  * Buffermem limits added 12.3.98, Rik van Riel.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

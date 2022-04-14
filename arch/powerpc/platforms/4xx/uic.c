@@ -6,6 +6,7 @@
  *
  * Copyright 2007 David Gibson <dwg@au1.ibm.com>, IBM Corporation.
  */
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/kernel.h>

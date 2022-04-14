@@ -43,6 +43,7 @@
  * WITH YOU.
  ***********************license end**************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 
 #include "common.h"

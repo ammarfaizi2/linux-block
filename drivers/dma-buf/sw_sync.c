@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Google, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/kref_api.h>

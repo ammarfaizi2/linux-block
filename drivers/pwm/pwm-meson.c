@@ -27,6 +27,7 @@
  * Copyright (C) 2014 Amlogic, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>

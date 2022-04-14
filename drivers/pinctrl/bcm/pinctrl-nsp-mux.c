@@ -25,6 +25,7 @@
  *					+----------
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ioport.h>

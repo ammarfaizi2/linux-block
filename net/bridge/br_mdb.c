@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>

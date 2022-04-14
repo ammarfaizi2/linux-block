@@ -27,6 +27,7 @@
 #include "nouveau_bo.h"
 #include "nouveau_svm.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pagemap.h>
 #include <linux/mutex_api.h>

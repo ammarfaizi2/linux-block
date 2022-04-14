@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/mm_page_address.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Robert Jarzmik
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/io.h>

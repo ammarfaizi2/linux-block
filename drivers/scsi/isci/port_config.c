@@ -53,6 +53,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/spinlock_api.h>
+
 #include "host.h"
 
 #define SCIC_SDS_MPC_RECONFIGURATION_TIMEOUT    (10)

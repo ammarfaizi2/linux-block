@@ -19,6 +19,8 @@
  * mcast packets in the rxe receive path.
  */
 
+#include <linux/spinlock_api.h>
+
 #include "rxe.h"
 
 /**

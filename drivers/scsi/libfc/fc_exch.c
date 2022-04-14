@@ -11,6 +11,7 @@
  * Fibre Channel exchange and sequence handling.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/percpu.h>
 #include <linux/kref_api.h>

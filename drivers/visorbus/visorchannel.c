@@ -9,6 +9,7 @@
  *  independent of the mechanism used to access the channel data.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/uuid.h>
 #include <linux/io.h>

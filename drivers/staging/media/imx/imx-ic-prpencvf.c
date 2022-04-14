@@ -8,6 +8,7 @@
  *
  * Copyright (c) 2012-2017 Mentor Graphics Inc.
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

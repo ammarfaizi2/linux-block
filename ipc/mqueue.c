@@ -13,6 +13,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>

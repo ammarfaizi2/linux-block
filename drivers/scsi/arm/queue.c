@@ -11,6 +11,7 @@
  *			(was causing commands to go missing).
  *   30-Aug-2000 RMK	Use Linux list handling and spinlocks
  */
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>
 #include <linux/kernel.h>

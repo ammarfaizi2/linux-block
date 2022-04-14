@@ -8,6 +8,7 @@
  *               Christian Borntraeger <borntraeger@de.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread.h>
 #include <linux/gfp_api.h>
 #include <linux/kvm_host.h>

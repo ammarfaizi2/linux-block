@@ -4,6 +4,8 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/spinlock_api.h>
+
 #include "glob.h"
 #include "nterr.h"
 #include "smb_common.h"

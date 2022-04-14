@@ -28,6 +28,7 @@
  *   if it receives <Vendor Specific Command> [0x03 0x00] from an LG TV.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/completion.h>
 #include <linux/init.h>

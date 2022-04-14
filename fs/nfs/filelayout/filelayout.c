@@ -29,6 +29,7 @@
  *  such damages.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/math64.h>

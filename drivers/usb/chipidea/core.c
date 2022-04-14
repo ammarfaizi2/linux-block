@@ -14,6 +14,7 @@
  * - Low power mode
  * - USB wakeup
  */
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

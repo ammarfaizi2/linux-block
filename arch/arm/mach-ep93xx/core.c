@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "ep93xx " KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

@@ -10,6 +10,7 @@
  * by Sylvain Munaut for the Bestcomm SRAM allocator.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

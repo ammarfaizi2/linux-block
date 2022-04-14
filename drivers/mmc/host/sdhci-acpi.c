@@ -5,6 +5,7 @@
  * Copyright (c) 2012, Intel Corporation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/init.h>

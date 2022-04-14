@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

@@ -14,6 +14,7 @@
  * USE printk; if you need, deploy -p.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kernel.h>
 #include <linux/compiler.h>
 #include <linux/spinlock.h>

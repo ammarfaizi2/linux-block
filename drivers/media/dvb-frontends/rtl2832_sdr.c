@@ -11,6 +11,7 @@
 #include "rtl2832_sdr.h"
 #include "dvb_usb.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

@@ -10,6 +10,7 @@
  * i8259 parts ripped out of arch/mips/kernel/i8259.c
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>

@@ -7,6 +7,7 @@
  * Author: Daire McNamara <daire.mcnamara@microchip.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/resource_ext_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

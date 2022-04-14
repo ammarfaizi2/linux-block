@@ -6,6 +6,7 @@
  * Author : Alessandro Gardich <gremlin@gremlin.it>
  * Author : Linus Walleij <linus.walleij@linaro.org>
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

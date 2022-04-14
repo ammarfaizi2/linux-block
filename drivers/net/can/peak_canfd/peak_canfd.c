@@ -5,6 +5,7 @@
  * Copyright (C) 2016  PEAK System-Technik GmbH
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/can.h>

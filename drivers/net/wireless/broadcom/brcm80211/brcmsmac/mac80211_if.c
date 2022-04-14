@@ -18,6 +18,7 @@
 #define __UNDEF_NO_VERSION__
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>

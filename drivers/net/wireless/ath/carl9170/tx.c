@@ -37,6 +37,7 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

@@ -9,6 +9,7 @@
  *         Pierre-Yves Mordret <pierre-yves.mordret@st.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

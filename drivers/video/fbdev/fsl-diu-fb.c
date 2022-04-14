@@ -12,6 +12,7 @@
  *   Based on imxfb.c Copyright (C) 2004 S.Hauer, Pengutronix
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

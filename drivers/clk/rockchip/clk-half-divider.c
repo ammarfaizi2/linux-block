@@ -3,6 +3,7 @@
  * Copyright (c) 2018 Fuzhou Rockchip Electronics Co., Ltd
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/minmax.h>
 #include <linux/math.h>
 #include <linux/clk-provider.h>

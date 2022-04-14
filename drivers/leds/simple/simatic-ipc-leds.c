@@ -10,6 +10,7 @@
  *  Gerd Haeussler <gerd.haeussler.ext@siemens.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/ioport.h>

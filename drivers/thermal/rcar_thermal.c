@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Renesas Solutions Corp.
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

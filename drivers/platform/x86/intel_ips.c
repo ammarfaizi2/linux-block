@@ -45,6 +45,7 @@
  *   - ref 26921 - Ibex Peak BIOS Specification
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

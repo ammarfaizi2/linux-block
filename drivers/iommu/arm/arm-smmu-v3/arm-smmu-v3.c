@@ -9,6 +9,7 @@
  * This driver is powered by bad coffee and bombay mix.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/rbtree_api.h>

@@ -38,6 +38,7 @@
  *	zspage->lock
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/seq_file.h>
 #include <linux/pagefault_ctrl.h>

@@ -8,6 +8,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

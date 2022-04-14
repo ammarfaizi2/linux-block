@@ -41,6 +41,7 @@
  * interrupts because we have no back-pressure to the hardware.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/device.h>
 #include <linux/kfifo.h>

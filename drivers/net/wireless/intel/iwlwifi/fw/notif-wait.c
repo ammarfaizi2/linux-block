@@ -3,6 +3,7 @@
  * Copyright (C) 2005-2014, 2021 Intel Corporation
  * Copyright (C) 2015-2017 Intel Deutschland GmbH
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/export.h>
 

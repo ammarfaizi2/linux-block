@@ -8,6 +8,7 @@
  * Copyright (C) 2007, 2009 Oracle.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/list.h>

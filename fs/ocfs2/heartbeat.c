@@ -8,6 +8,7 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/fs.h>
 #include <linux/types.h>
 #include <linux/highmem.h>

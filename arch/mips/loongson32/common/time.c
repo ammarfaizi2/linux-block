@@ -3,6 +3,7 @@
  * Copyright (c) 2014 Zhang, Keguang <keguang.zhang@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>

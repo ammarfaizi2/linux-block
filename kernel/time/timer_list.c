@@ -5,6 +5,7 @@
  * Copyright(C) 2006, Red Hat, Inc., Ingo Molnar
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>

@@ -11,6 +11,7 @@
  *	Xinwei Kong <kong.kongxinwei@hisilicon.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

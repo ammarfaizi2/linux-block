@@ -6,6 +6,7 @@
  *	Colin Cross <ccross@android.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/rcupdate.h>
 #include <linux/notifier_api.h>
 #include <linux/kernel.h>

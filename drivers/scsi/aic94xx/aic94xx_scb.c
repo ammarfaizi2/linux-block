@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/gfp.h>
 #include <scsi/scsi_host.h>
 

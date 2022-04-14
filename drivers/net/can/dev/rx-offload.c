@@ -5,6 +5,7 @@
  *                         Marc Kleine-Budde <kernel@pengutronix.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/can/dev.h>
 #include <linux/can/rx-offload.h>

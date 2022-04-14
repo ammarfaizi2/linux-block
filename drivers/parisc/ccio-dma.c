@@ -28,6 +28,7 @@
 **        the coherency design originally worked out. Only PCX-W does.
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/prefetch.h>
 #include <linux/pci-dma-compat.h>

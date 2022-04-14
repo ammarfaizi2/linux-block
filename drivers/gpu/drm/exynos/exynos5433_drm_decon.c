@@ -7,6 +7,7 @@
  *	Hyungwon Hwang <human.hwang@samsung.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

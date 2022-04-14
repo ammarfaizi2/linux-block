@@ -9,6 +9,7 @@
 // Copyright 2008 SigmaTel, Inc
 // Copyright 2008 Embedded Alley Solutions, Inc
 
+#include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitrev.h>

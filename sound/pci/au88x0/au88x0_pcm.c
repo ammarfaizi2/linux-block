@@ -8,6 +8,7 @@
  * Supports ADB and WT DMA. Unfortunately, WT channels do not run yet.
  * It remains stuck,and DMA transfers do not happen. 
  */
+#include <linux/spinlock_api.h>
 #include <sound/asoundef.h>
 #include <linux/time.h>
 #include <sound/core.h>

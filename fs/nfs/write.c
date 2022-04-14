@@ -7,6 +7,7 @@
  * Copyright (C) 1996, 1997, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

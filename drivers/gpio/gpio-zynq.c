@@ -5,6 +5,7 @@
  * Copyright (C) 2009 - 2014 Xilinx, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

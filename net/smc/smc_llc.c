@@ -10,6 +10,7 @@
  *              Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

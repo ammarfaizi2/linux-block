@@ -49,6 +49,7 @@
  * This file contains OPA VNIC ethtool functions
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ethtool.h>
 
 #include "opa_vnic_internal.h"

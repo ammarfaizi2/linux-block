@@ -7,6 +7,7 @@
  * Based on the x86 specific implementation.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/capability.h>
 #include <linux/hrtimer.h>

@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

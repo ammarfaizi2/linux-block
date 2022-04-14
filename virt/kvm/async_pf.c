@@ -8,6 +8,7 @@
  *      Gleb Natapov <gleb@redhat.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rcuwait_api.h>
 #include <linux/mmap_lock.h>

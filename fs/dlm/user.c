@@ -3,6 +3,7 @@
  * Copyright (C) 2006-2010 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

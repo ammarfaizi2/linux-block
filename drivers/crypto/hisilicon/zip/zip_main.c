@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 HiSilicon Limited. */
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/prefetch.h>
 #include <linux/fs_api.h>

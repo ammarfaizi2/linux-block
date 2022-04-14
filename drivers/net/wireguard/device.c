@@ -11,6 +11,7 @@
 #include "peer.h"
 #include "messages.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/percpu.h>
 #include <linux/net.h>

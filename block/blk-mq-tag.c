@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2013-2014 Jens Axboe
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

@@ -7,6 +7,7 @@
 
 #include "dm-zoned.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/radix-tree-api.h>

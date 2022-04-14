@@ -7,6 +7,7 @@
  *         Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/delay.h>

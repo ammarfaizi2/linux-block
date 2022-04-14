@@ -8,6 +8,7 @@
  * Author: Max Asböck <amax@us.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/minmax.h>
 #include <linux/io_extra.h>
 #include <linux/sched.h>

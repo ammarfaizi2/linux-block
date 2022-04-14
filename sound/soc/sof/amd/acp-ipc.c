@@ -10,6 +10,7 @@
 
 /* ACP-specific SOF IPC code */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include "../ops.h"
 #include "acp.h"

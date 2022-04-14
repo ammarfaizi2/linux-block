@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Manivannan Sadhasivam
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>

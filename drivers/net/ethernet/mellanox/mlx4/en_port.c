@@ -32,6 +32,7 @@
  */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_vlan.h>
 

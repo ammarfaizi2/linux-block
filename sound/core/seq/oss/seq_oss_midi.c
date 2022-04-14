@@ -7,6 +7,7 @@
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <sound/asoundef.h>
 #include "seq_oss_midi.h"

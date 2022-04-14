@@ -4,6 +4,7 @@
  * Copyright (c) 2019, Guenter Roeck
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/hwmon.h>

@@ -11,6 +11,7 @@
  * f(N2_integer, SDM_IN ) = 2.0G/(N2_integer + SDM_IN/16384)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>

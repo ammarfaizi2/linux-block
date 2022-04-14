@@ -10,6 +10,7 @@
  *
  * Derived from the x86 and Alpha versions.
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>

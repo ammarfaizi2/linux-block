@@ -12,6 +12,7 @@
 
 #define KMSG_COMPONENT "dasd"
 
+#include <linux/spinlock_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/interrupt.h>

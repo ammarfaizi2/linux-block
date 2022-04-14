@@ -13,6 +13,7 @@
 #include "../rtl8723com/dm_common.h"
 #include "table.h"
 #include "trx.h"
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

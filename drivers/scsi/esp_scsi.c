@@ -4,6 +4,7 @@
  * Copyright (C) 2007 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

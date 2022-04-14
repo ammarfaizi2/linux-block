@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

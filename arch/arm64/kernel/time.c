@@ -7,6 +7,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/clockchips.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

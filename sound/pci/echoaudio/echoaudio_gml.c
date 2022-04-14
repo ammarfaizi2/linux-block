@@ -28,6 +28,7 @@
 
 ****************************************************************************/
 
+#include <linux/spinlock_api.h>
 #include <linux/types.h>
 
 /* These functions are common for Gina24, Layla24 and Mona cards */

@@ -3,6 +3,7 @@
  * Copyright (C) 2001 Dave Engebretsen IBM Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/fs_api.h>
 #include <linux/sched.h>

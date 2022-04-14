@@ -9,6 +9,7 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/highmem.h>

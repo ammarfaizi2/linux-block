@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Intel Corporation, Inc.
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/bitfield.h>

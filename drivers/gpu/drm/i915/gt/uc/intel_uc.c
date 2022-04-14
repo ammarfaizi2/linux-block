@@ -3,6 +3,7 @@
  * Copyright © 2016-2019 Intel Corporation
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 
 #include "gt/intel_gt.h"

@@ -4,6 +4,7 @@
  * Copyright (C) 2018-2021 Linaro Ltd.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>

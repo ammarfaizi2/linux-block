@@ -32,6 +32,7 @@
 
 /*#include "core_priv.h"*/
 #include "mlx4_ib.h"
+#include <linux/spinlock_api.h>
 #include <linux/kobject_api.h>
 #include <linux/slab.h>
 #include <linux/string.h>

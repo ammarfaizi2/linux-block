@@ -8,6 +8,7 @@
  *  This file contains the ARM-specific time handling details:
  *  reading the RTC at bootup, etc...
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/clockchips.h>
 #include <linux/clocksource.h>

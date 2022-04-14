@@ -5,6 +5,7 @@
  *  Copyright (c) 2020 Sony Interactive Entertainment
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

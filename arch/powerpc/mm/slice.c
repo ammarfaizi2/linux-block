@@ -11,6 +11,7 @@
 
 #undef DEBUG
 
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

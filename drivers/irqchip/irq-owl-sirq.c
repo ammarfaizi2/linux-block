@@ -10,6 +10,7 @@
  * Author: Cristian Ciocaltea <cristian.ciocaltea@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2010 OKI SEMICONDUCTOR Co., LTD.
  */
+#include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/module.h>

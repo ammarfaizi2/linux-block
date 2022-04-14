@@ -21,6 +21,7 @@
  *     also clear mm->cpu_vm_mask bits when processes are migrated
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

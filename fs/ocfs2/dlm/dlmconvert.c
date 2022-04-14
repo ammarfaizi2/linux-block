@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/types.h>

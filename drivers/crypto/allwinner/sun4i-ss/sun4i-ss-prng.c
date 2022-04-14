@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 
 #include "sun4i-ss.h"

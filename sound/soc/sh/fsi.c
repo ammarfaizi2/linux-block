@@ -8,6 +8,7 @@
 // Based on ssi.c
 // Copyright (c) 2007 Manuel Lauss <mano@roarinelk.homelinux.net>
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

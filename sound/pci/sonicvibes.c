@@ -8,6 +8,7 @@
  *    Driver sometimes hangs... Nobody knows why at this moment...
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/init.h>

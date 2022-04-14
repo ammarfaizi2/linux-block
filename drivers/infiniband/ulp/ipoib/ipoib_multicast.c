@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/netdevice_api_lock.h>

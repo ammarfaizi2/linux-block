@@ -15,6 +15,7 @@
  * ADMA driver written by D.Williams.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/mm_page_address.h>

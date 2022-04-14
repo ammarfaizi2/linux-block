@@ -27,6 +27,7 @@
  * TODO:
  * - Allocate more than order 0 pages to avoid too much linear map splitting.
  */
+#include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api_kvmalloc.h>

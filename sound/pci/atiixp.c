@@ -5,6 +5,7 @@
  *	Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

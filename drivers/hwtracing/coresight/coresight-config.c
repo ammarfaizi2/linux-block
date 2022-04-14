@@ -4,6 +4,7 @@
  * Author: Mike Leach <mike.leach@linaro.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sysfs.h>
 #include "coresight-config.h"
 #include "coresight-priv.h"

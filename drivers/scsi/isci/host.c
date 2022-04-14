@@ -52,6 +52,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/circ_buf.h>

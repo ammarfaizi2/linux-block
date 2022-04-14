@@ -12,6 +12,7 @@
 /*
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

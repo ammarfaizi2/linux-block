@@ -3,6 +3,8 @@
  * Copyright(c) 2018 Intel Corporation.
  *
  */
+#include <linux/spinlock_api.h>
+
 #include "hfi.h"
 #include "trace.h"
 #include "qp.h"

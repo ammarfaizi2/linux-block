@@ -46,6 +46,7 @@
 #define DRIVER_NAME "orinoco_usb"
 #define PFX DRIVER_NAME ": "
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>

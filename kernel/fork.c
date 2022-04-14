@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/topology.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>

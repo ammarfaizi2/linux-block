@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>

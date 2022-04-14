@@ -44,6 +44,7 @@
 **     Firmware Specification, see Documentation/scsi/arcmsr_spec.rst
 *******************************************************************************
 */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>

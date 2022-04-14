@@ -4,6 +4,7 @@
  * Ethernet portion of AoE driver
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

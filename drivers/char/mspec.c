@@ -24,6 +24,7 @@
  * processor from ever speculating a cache line from this page.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api_kvmalloc.h>

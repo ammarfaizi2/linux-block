@@ -9,6 +9,7 @@
  * The MFGPTs are documented in AMD Geode CS5536 Companion Device Data Book.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api.h>

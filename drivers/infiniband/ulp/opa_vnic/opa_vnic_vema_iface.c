@@ -49,6 +49,7 @@
  * This file contains OPA VNIC EMA Interface functions.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_extra.h>
 

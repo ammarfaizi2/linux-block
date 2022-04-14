@@ -8,6 +8,7 @@
 
 #define KMSG_COMPONENT "dasd-eckd"
 
+#include <linux/spinlock_api.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <asm/ebcdic.h>

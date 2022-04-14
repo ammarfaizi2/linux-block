@@ -6,6 +6,7 @@
  *    Author(s): Jan Glauber <jan.glauber@de.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched/thread.h>
 #include <linux/preempt.h>
 #include <linux/jiffies.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2018 Lubomir Rintel <lkundrak@v3.sk>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>

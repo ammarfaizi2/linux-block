@@ -5,6 +5,7 @@
  *  Copyright (C) 2013-2016 Altera Corporation, All Rights Reserved.
  *  Copyright (C) 2017 Intel Corporation
  */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/device/class.h>

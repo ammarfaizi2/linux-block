@@ -7,6 +7,7 @@
  * Copyright(C) 2005-2007, Red Hat, Inc., Ingo Molnar
  * Copyright(C) 2006-2007, Timesys Corp., Thomas Gleixner
  */
+#include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

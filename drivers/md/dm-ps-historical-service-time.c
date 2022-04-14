@@ -24,6 +24,7 @@
 #include "dm.h"
 #include "dm-path-selector.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/blkdev.h>
 #include <linux/slab.h>

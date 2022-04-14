@@ -9,6 +9,7 @@
  * Inode handling routines
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>

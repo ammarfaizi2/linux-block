@@ -31,6 +31,7 @@
 
 #define NVRAM_VERSION	"1.3"
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/capability.h>

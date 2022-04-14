@@ -11,6 +11,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/spinlock_api.h>
 #include <linux/minmax.h>
 #include <linux/capability.h>
 #include <linux/slab.h>

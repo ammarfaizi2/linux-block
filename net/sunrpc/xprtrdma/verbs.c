@@ -49,6 +49,7 @@
  *  o buffer memory
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/llist_api.h>

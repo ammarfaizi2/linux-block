@@ -3,6 +3,7 @@
    Copyright (C) 2001 Rusty Russell.
 
 */
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/kernel.h>

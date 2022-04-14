@@ -118,6 +118,7 @@
  * :8421.8421:8421.8421:8421.8421:8421.8421: hex digit
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

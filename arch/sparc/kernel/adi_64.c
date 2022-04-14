@@ -6,6 +6,7 @@
  * Copyright (C) 2016 Oracle and/or its affiliates. All rights reserved.
  * Author: Khalid Aziz (khalid.aziz@oracle.com)
  */
+#include <linux/spinlock_api.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/mm_types.h>

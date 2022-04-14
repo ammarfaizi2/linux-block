@@ -6,6 +6,7 @@
 
 #include "pvrusb2-io.h"
 #include "pvrusb2-debug.h"
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/errno.h>
 #include <linux/string.h>

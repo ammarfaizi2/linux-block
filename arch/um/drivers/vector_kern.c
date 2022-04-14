@@ -8,6 +8,7 @@
  * Copyright (C) 2001 by various other people who didn't put their name here.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/net.h>
 #include <linux/netdevice_api_lock.h>

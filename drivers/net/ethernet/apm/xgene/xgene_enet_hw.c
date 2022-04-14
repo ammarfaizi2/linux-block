@@ -7,6 +7,7 @@
  *	    Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

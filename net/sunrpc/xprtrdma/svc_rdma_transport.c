@@ -42,6 +42,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/interrupt.h>
 #include <linux/sched.h>

@@ -4,6 +4,8 @@
  * As this function is mainly ported from Windows driver, so leave the name
  * little changed. If any confusion caused, tell me. Created by WB. 2008.05.08
  */
+#include <linux/spinlock_api.h>
+
 #include "ieee80211.h"
 
 u8 MCS_FILTER_ALL[16] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};

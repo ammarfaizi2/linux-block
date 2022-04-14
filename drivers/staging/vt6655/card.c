@@ -24,6 +24,8 @@
  *
  */
 
+#include <linux/spinlock_api.h>
+
 #include "tmacro.h"
 #include "card.h"
 #include "baseband.h"

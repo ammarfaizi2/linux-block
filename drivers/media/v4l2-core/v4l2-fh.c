@@ -9,6 +9,7 @@
  * Contact: Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/bitops.h>

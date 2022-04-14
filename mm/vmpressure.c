@@ -9,6 +9,7 @@
  * Leonid Moiseichuk, Mel Gorman, Minchan Kim and Pekka Enberg.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/memcontrol.h>
 #include <linux/jiffies.h>

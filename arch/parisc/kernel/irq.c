@@ -8,6 +8,7 @@
  * Copyright (C) 1999-2000 Grant Grundler
  * Copyright (c) 2005 Matthew Wilcox
  */
+#include <linux/spinlock_api.h>
 #include <linux/softirq.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/irqdesc.h>

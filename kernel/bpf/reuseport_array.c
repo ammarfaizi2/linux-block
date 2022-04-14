@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018 Facebook
  */
+#include <linux/spinlock_api.h>
 #include <linux/net.h>
 #include <linux/lockdep_api.h>
 #include <linux/file.h>

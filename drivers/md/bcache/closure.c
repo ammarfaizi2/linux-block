@@ -6,6 +6,7 @@
  * Copyright 2012 Google, Inc.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rcupdate.h>
 #include <linux/llist_api.h>

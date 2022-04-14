@@ -16,6 +16,7 @@
  *  This requires careful attention to a number of quirks of the chip.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -26,6 +26,7 @@
 #include "debug.h"
 #include "extents.h"
 
+#include <linux/spinlock_api.h>
 #include <linux/semaphore.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>

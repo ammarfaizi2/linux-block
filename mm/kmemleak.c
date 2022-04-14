@@ -57,6 +57,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>

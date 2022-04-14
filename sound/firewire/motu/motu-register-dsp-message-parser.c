@@ -19,6 +19,7 @@
 // operates hardware components such as dial and switch, corresponding messages are transferred.
 // The messages include Hardware metering and MIDI messages as well.
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 
 #include "motu.h"

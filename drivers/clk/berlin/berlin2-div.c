@@ -5,6 +5,7 @@
  * Alexandre Belloni <alexandre.belloni@free-electrons.com>
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  */
+#include <linux/spinlock_api.h>
 #include <linux/bitops.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

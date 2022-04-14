@@ -21,6 +21,7 @@
  *					Relax this requirement to work with older peers.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/seq_file_net.h>

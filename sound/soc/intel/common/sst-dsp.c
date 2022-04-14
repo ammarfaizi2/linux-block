@@ -5,6 +5,7 @@
  * Copyright (C) 2013, Intel Corporation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

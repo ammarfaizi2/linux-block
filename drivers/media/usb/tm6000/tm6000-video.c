@@ -6,6 +6,7 @@
 // Copyright (c) 2007 Michel Ludwig <michel.ludwig@gmail.com>
 //	- Fixed module load/unload
 
+#include <linux/spinlock_api.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

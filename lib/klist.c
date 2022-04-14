@@ -33,6 +33,7 @@
  * all accessors have finished).
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/klist.h>
 #include <linux/export.h>

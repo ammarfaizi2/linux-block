@@ -41,6 +41,7 @@
 #define DPRINTK(fmt, args...)
 #endif
 
+#include <linux/spinlock_api.h>
 #include <linux/kobject_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
