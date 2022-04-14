@@ -2,6 +2,7 @@
 #ifndef GHES_H
 #define GHES_H
 
+#include <linux/llist.h>
 #include <acpi/apei.h>
 #include <acpi/hed.h>
 

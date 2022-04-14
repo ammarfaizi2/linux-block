@@ -2,6 +2,7 @@
 #ifndef __NET_FRAG_H__
 #define __NET_FRAG_H__
 
+#include <linux/llist.h>
 #include <linux/cache.h>
 #include <linux/bits.h>
 #include <linux/rhashtable-types.h>
