@@ -5,6 +5,7 @@
 #if !defined(_TRACE_PAGEMAP_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_PAGEMAP_H
 
+#include <linux/mm_api_extra.h>
 #include <linux/tracepoint.h>
 #include <linux/mm.h>
 
