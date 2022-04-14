@@ -7,6 +7,7 @@
  *            Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
  */
 
+#include <linux/netfilter/nf_conntrack_common_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

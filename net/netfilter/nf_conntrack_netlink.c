@@ -15,6 +15,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/netfilter/nf_conntrack_common_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

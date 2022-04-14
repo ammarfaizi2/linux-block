@@ -6,6 +6,7 @@
  *
  * This code is GPL.
  */
+#include <linux/netfilter/nf_conntrack_common_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
