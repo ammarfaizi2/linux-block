@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/skbuff_api_nf.h>
 #include <linux/netdevice_api.h>
 #include <linux/fs_api.h>
 #include <linux/dccp.h>

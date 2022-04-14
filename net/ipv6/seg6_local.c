@@ -7,6 +7,7 @@
  *  eBPF support: Mathieu Xhonneux <m.xhonneux@gmail.com>
  */
 
+#include <linux/skbuff_api_nf.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/percpu.h>

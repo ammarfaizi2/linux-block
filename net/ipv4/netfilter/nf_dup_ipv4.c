@@ -5,6 +5,7 @@
  *
  * Extracted from xt_TEE.c
  */
+#include <linux/skbuff_api_nf.h>
 #include <linux/ip.h>
 #include <linux/module.h>
 #include <linux/percpu.h>
