@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "kvm-guest: " fmt
 
+#include <linux/swait_api.h>
 #include <linux/static_call.h>
 #include <linux/spinlock_api.h>
 #include <linux/preempt.h>

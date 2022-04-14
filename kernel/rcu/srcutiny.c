@@ -8,6 +8,7 @@
  * Author: Paul McKenney <paulmck@linux.ibm.com>
  */
 
+#include <linux/swait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/init.h>
