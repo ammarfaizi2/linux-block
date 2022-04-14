@@ -37,6 +37,7 @@
 
 *******************************************************************************/
 
+#include <linux/signal_types.h>
 #include <linux/filter_api.h>
 #include <linux/atomic_api.h>
 #include <linux/errno.h>
