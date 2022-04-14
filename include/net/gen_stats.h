@@ -2,6 +2,7 @@
 #ifndef __NET_GEN_STATS_H
 #define __NET_GEN_STATS_H
 
+#include <linux/u64_stats_sync.h>
 #include <linux/gen_stats.h>
 #include <linux/socket.h>
 #include <linux/rtnetlink.h>
