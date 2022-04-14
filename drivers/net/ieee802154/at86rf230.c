@@ -9,6 +9,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  * Alexander Aring <aar@pengutronix.de>
  */
+#include <linux/dcache.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/hrtimer.h>

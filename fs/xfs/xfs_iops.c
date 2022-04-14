@@ -23,6 +23,7 @@
 #include "xfs_error.h"
 #include "xfs_ioctl.h"
 
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/posix_acl.h>
 #include <linux/security.h>

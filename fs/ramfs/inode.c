@@ -23,6 +23,7 @@
  * caches is sufficient.
  */
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>
 #include <linux/highmem.h>

@@ -5,6 +5,8 @@
  * Copyright 2001-2006 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/dcache.h>
+
 #include "autofs_i.h"
 
 /* Check if a dentry can be expired */

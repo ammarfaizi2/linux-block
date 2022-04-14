@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/dcache.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>

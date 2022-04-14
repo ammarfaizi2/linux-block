@@ -7,6 +7,7 @@
  *              Pavel Shilovsky (pshilovsky@samba.org) 2012
  *
  */
+#include <linux/dcache.h>
 #include <linux/ctype.h>
 #include "cifsglob.h"
 #include "cifsproto.h"

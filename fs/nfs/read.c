@@ -8,6 +8,7 @@
  * modified for async RPC by okir@monad.swb.de
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/time.h>
 #include <linux/kernel.h>

@@ -26,6 +26,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/dcache.h>
 #include <linux/uaccess.h>
 
 #include <linux/errno.h>

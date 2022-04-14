@@ -11,6 +11,7 @@
  * refining of this idea.
  */
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/dma-buf.h>

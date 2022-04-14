@@ -10,6 +10,7 @@
  *  Linux VFS inode operations.
  */
 
+#include <linux/dcache.h>
 #include <asm/cacheflush.h>
 #include <linux/blkdev.h>
 #include <linux/fileattr.h>

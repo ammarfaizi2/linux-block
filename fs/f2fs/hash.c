@@ -9,6 +9,7 @@
  *
  * Copyright (C) 2002 by Theodore Ts'o
  */
+#include <linux/dcache.h>
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/f2fs_fs.h>

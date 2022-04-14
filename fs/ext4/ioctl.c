@@ -8,6 +8,7 @@
  * Universite Pierre et Marie Curie (Paris VI)
  */
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/capability.h>
 #include <linux/time.h>

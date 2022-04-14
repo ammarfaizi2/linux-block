@@ -5,6 +5,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>
 #include <linux/namei.h>

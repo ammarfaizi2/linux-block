@@ -14,6 +14,8 @@
  *     fs/exportfs/expfs.c.
  */
 
+#include <linux/dcache.h>
+
 #include "isofs.h"
 
 static struct dentry *

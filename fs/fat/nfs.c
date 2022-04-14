@@ -2,6 +2,7 @@
 /* fs/fat/nfs.c
  */
 
+#include <linux/dcache.h>
 #include <linux/exportfs.h>
 #include "fat.h"
 

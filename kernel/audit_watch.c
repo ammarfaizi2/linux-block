@@ -6,6 +6,7 @@
  * Copyright 2005 IBM Corporation
  */
 
+#include <linux/dcache.h>
 #include <linux/file.h>
 #include <linux/kernel.h>
 #include <linux/audit.h>

@@ -7,6 +7,7 @@
  *  directory VFS functions
  */
 
+#include <linux/dcache.h>
 #include <linux/slab.h>
 #include "hpfs_fn.h"
 

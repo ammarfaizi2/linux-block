@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/dcache.h>
 #include <linux/magic.h>
 #include <linux/mount.h>
 #include <linux/namei.h>

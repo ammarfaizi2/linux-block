@@ -4,6 +4,7 @@
  * Copyright (C) 2012 Jeremy Kerr <jeremy.kerr@canonical.com>
  */
 
+#include <linux/dcache.h>
 #include <linux/efi.h>
 #include <linux/fs.h>
 #include <linux/ctype.h>

@@ -12,6 +12,7 @@
  * Based on the minix file system code, (C) 1991, 1992 by Linus Torvalds
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>

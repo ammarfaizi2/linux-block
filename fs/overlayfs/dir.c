@@ -4,6 +4,7 @@
  * Copyright (C) 2011 Novell Inc.
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/fs.h>
 #include <linux/namei.h>

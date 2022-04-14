@@ -26,6 +26,7 @@
  * possibility of such damages.
  */
 
+#include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>
 

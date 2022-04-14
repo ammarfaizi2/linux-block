@@ -5,6 +5,7 @@
  * Copyright (C) 2002 by Theodore Ts'o
  */
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/unicode.h>
 #include <linux/compiler.h>

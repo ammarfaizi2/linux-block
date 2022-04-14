@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/dcache.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/ceph/ceph_debug.h>

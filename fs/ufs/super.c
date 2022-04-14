@@ -66,6 +66,7 @@
  * Evgeniy Dushistov <dushistov@mail.ru>, 2007
  */
 
+#include <linux/dcache.h>
 #include <linux/exportfs.h>
 #include <linux/module.h>
 #include <linux/bitops.h>

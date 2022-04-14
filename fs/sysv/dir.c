@@ -14,6 +14,7 @@
  *  SystemV/Coherent directory handling functions
  */
 
+#include <linux/dcache.h>
 #include <linux/pagemap.h>
 #include <linux/highmem.h>
 #include <linux/swap.h>

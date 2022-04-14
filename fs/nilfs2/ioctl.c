@@ -7,6 +7,7 @@
  * Written by Koji Sato.
  */
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/wait.h>
 #include <linux/slab.h>

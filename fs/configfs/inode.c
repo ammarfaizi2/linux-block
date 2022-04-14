@@ -13,6 +13,7 @@
 
 #undef DEBUG
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/pagemap.h>
 #include <linux/namei.h>

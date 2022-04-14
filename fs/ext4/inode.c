@@ -19,6 +19,7 @@
  *  Assorted race fixes, rewrite of ext4_get_block() by Al Viro, 2000
  */
 
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>

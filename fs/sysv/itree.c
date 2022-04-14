@@ -6,6 +6,7 @@
  *  AV, Sep--Dec 2000
  */
 
+#include <linux/dcache.h>
 #include <linux/buffer_head.h>
 #include <linux/mount.h>
 #include <linux/string.h>

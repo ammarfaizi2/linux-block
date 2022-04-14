@@ -11,6 +11,7 @@
  *  (C) 1991  Linus Torvalds - minix filesystem
  */
 
+#include <linux/dcache.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/statfs.h>

@@ -3,6 +3,7 @@
  *  Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/dcache.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>
 #include <linux/module.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  */
+#include <linux/dcache.h>
 #include <linux/debugfs.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>

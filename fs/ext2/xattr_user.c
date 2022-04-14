@@ -6,6 +6,7 @@
  * Copyright (C) 2001 by Andreas Gruenbacher, <a.gruenbacher@computer.org>
  */
 
+#include <linux/dcache.h>
 #include <linux/init.h>
 #include <linux/string.h>
 #include "ext2.h"

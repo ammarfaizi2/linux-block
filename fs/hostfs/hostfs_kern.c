@@ -6,6 +6,7 @@
  * 2003-02-10 Petr Baudis <pasky@ucw.cz>
  */
 
+#include <linux/dcache.h>
 #include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/magic.h>

@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/file.h>
 #include <linux/poll.h>

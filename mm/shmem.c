@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

@@ -34,6 +34,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/posix_acl.h>

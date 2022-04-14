@@ -8,6 +8,7 @@
  *	Daniel Borkmann <daniel@iogearbox.net>
  */
 
+#include <linux/dcache.h>
 #include <linux/init.h>
 #include <linux/magic.h>
 #include <linux/major.h>

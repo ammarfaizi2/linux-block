@@ -29,6 +29,7 @@
  * and moved here. AV
  */
 
+#include <linux/dcache.h>
 #include <linux/pagemap.h>
 #include "nilfs.h"
 #include "page.h"

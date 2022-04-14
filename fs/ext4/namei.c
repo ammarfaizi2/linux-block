@@ -25,6 +25,7 @@
  *	Theodore Ts'o, 2002
  */
 
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/fs.h>

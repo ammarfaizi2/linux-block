@@ -9,6 +9,7 @@
  */
 
 #include "ext2.h"
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/time.h>
 #include <linux/sched.h>

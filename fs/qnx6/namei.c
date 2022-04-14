@@ -11,6 +11,8 @@
  *
  */
 
+#include <linux/dcache.h>
+
 #include "qnx6.h"
 
 struct dentry *qnx6_lookup(struct inode *dir, struct dentry *dentry,

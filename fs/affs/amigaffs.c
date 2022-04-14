@@ -9,6 +9,7 @@
  *  Please send bug reports to: hjw@zvw.de
  */
 
+#include <linux/dcache.h>
 #include <linux/math64.h>
 #include <linux/iversion.h>
 #include "affs.h"

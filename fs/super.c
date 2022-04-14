@@ -21,6 +21,7 @@
  *  Heavily rewritten for 'one fs - one tree' dcache architecture. AV, Mar 2000
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
 #include <linux/backing-dev-api.h>

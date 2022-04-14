@@ -18,6 +18,7 @@
  * information about these ioctls.
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
 #include <crypto/skcipher.h>

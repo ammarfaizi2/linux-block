@@ -59,6 +59,7 @@
  *	read: read value
  */
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/fs_context.h>
 #include <linux/pagemap.h>

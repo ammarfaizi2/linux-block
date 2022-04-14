@@ -31,6 +31,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/dcache.h>
 #include <linux/pagemap.h>
 #include <linux/quotaops.h>
 #include "ext2.h"

@@ -48,6 +48,7 @@
  *  Overall revision about smaps.
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <asm/processor_api.h>
 #include <linux/sched/cond_resched.h>

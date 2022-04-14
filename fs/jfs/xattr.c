@@ -4,6 +4,7 @@
  *   Copyright (C) Christoph Hellwig, 2002
  */
 
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/fs.h>
 #include <linux/xattr.h>

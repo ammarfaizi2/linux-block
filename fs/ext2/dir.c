@@ -23,6 +23,7 @@
  */
 
 #include "ext2.h"
+#include <linux/dcache.h>
 #include <linux/buffer_head.h>
 #include <linux/pagemap.h>
 #include <linux/swap.h>

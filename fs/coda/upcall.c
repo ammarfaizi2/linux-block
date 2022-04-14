@@ -15,6 +15,7 @@
  * improvements to the Coda project. Contact Peter Braam <coda@cs.cmu.edu>.
  */
 
+#include <linux/dcache.h>
 #include <linux/signal.h>
 #include <linux/sched/signal.h>
 #include <linux/types.h>

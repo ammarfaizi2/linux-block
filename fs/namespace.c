@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/dcache.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>

@@ -13,6 +13,7 @@
  *  Copyright (C) 1997, 1998  Krzysztof G. Baranowski
  */
 
+#include <linux/dcache.h>
 #include <linux/pagemap.h>
 #include "sysv.h"
 

@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Red Hat, Inc.
  */
 
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/fs.h>
 #include <linux/mount.h>

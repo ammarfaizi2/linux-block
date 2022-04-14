@@ -14,6 +14,8 @@
  *  SystemV/Coherent regular file handling primitives
  */
 
+#include <linux/dcache.h>
+
 #include "sysv.h"
 
 /*

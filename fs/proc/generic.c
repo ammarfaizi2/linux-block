@@ -9,6 +9,7 @@
  * Copyright (C) 1997 Theodore Ts'o
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/cache.h>
 #include <linux/errno.h>

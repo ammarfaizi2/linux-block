@@ -7,6 +7,7 @@
  * https://www.analog.com/ADF7242
  */
 
+#include <linux/dcache.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

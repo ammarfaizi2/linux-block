@@ -3,6 +3,8 @@
  * Copyright 1997-1998 Transmeta Corporation -- All Rights Reserved
  */
 
+#include <linux/dcache.h>
+
 #include "autofs_i.h"
 
 static const char *autofs_get_link(struct dentry *dentry,

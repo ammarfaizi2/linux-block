@@ -10,6 +10,7 @@
  */
 
 #include "affs.h"
+#include <linux/dcache.h>
 #include <linux/exportfs.h>
 
 typedef int (*toupper_t)(int);

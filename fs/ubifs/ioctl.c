@@ -12,6 +12,7 @@
 
 /* This file implements EXT2-compatible extended attribute ioctl() calls */
 
+#include <linux/dcache.h>
 #include <linux/compat.h>
 #include <linux/mount.h>
 #include <linux/fileattr.h>

@@ -7,6 +7,7 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/mount.h>
 #include <linux/init.h>

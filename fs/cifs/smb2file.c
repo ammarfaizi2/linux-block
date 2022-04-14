@@ -6,6 +6,7 @@
  *              Pavel Shilovsky ((pshilovsky@samba.org) 2012
  *
  */
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/stat.h>
 #include <linux/slab.h>

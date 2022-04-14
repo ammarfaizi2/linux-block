@@ -5,6 +5,8 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/dcache.h>
+
 #include "vfs.h"
 #include "xdr.h"
 #include "auth.h"

@@ -8,6 +8,7 @@
  * to the Coda project http://www.coda.cs.cmu.edu/ <coda@cs.cmu.edu>.
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

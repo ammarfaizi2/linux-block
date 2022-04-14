@@ -8,6 +8,7 @@
 
 
 #include "fuse_i.h"
+#include <linux/dcache.h>
 #include <linux/iversion.h>
 #include <linux/posix_acl.h>
 #include <linux/pagemap.h>

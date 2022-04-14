@@ -33,6 +33,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/dcache.h>
 #include <linux/file.h>
 #include <linux/slab.h>
 #include <linux/namei.h>

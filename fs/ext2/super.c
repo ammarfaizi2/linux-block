@@ -17,6 +17,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

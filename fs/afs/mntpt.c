@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/dcache.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

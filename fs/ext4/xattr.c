@@ -51,6 +51,7 @@
  * by the buffer lock.
  */
 
+#include <linux/dcache.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/init.h>

@@ -13,6 +13,7 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
+#include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/bpf.h>
 #include <linux/bpf_verifier.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Red Hat, Inc.
  */
 
+#include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/file.h>
 #include <linux/mount.h>

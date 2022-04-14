@@ -5,6 +5,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/dcache.h>
 #include <linux/uio.h>
 #include <linux/compat.h>
 #include <linux/fileattr.h>
