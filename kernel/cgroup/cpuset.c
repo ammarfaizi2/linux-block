@@ -22,6 +22,7 @@
  *  distribution for more details.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/lockdep_api.h>

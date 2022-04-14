@@ -17,6 +17,7 @@
  * w83793	10	12	8	6	0x7b	0x5ca3	yes	no
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs_api.h>

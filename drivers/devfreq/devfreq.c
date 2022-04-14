@@ -7,6 +7,7 @@
  *	MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

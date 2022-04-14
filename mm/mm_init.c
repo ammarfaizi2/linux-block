@@ -6,6 +6,7 @@
  * Author Mel Gorman <mel@csn.ul.ie>
  *
  */
+#include <linux/notifier_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/kobject_api.h>

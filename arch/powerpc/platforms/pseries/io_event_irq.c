@@ -3,6 +3,7 @@
  * Copyright 2010 2011 Mark Nelson and Tseng-Hui (Frank) Lin, IBM Corporation
  */
 
+#include <linux/notifier_api.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/export.h>

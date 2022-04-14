@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/notifier_api.h>
 #include <linux/io.h>
 #include <linux/backlight.h>
 #include <linux/acpi.h>

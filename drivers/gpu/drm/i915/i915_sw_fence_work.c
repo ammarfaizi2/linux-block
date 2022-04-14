@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/notifier_api.h>
 #include <linux/dma-fence-api.h>
 
 #include "i915_sw_fence_work.h"

@@ -10,6 +10,7 @@
 
 /****************************************************************************/
 
+#include <linux/notifier_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/init.h>

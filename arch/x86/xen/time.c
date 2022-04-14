@@ -8,6 +8,7 @@
  *
  * Jeremy Fitzhardinge <jeremy@xensource.com>, XenSource Inc, 2007
  */
+#include <linux/notifier_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/capability.h>

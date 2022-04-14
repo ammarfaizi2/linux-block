@@ -7,6 +7,7 @@
  * Michael Turquette <mturquette@baylibre.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/init.h>

@@ -11,6 +11,7 @@
  * This file handles the architecture-dependent parts of hardware exceptions
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

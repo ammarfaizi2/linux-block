@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Linaro Ltd.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/completion.h>

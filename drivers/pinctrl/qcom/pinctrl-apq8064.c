@@ -3,6 +3,7 @@
  * Copyright (c) 2014, Sony Mobile Communications AB.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/of.h>

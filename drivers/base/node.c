@@ -3,6 +3,7 @@
  * Basic Node interface support
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/huge_mm.h>

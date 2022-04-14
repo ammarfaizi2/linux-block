@@ -3,6 +3,7 @@
  * Userspace indexing of printk formats
  */
 
+#include <linux/notifier_api.h>
 #include <linux/debugfs.h>
 #include <linux/module.h>
 #include <linux/printk.h>

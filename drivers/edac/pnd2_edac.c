@@ -16,6 +16,7 @@
  * rank, bank, row and column using the appropriate "dunit_ops" functions/parameters.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/io.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>

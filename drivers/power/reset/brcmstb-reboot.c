@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/errno.h>

@@ -8,6 +8,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

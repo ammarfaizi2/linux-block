@@ -3,6 +3,7 @@
  *  power_supply_hwmon.c - power supply hwmon support.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>
 #include <linux/err.h>

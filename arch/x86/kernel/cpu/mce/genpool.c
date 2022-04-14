@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Intel Corp.
  * Author: Chen, Gong <gong.chen@linux.intel.com>
  */
+#include <linux/notifier_api.h>
 #include <linux/mm_api.h>
 #include <linux/log2.h>
 #include <linux/llist_api.h>

@@ -4,6 +4,7 @@
  * Lei Chuanhua <Chuanhua.lei@intel.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/init.h>

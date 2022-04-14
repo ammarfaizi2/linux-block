@@ -6,6 +6,7 @@
  *
  *  Copyright (C) 2009 Magnus Damm
  */
+#include <linux/notifier_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/io.h>

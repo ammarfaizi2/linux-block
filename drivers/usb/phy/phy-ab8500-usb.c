@@ -8,6 +8,7 @@
  * Thirupathi Chippakurthy <thirupathi.chippakurthy@stericsson.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

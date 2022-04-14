@@ -5,6 +5,7 @@
  *
  * Copyright (C) 1997, 1998, 2001, 03, 05, 06 by Ralf Baechle
  */
+#include <linux/notifier_api.h>
 #include <linux/jiffies.h>
 #include <linux/linkage.h>
 #include <linux/init.h>

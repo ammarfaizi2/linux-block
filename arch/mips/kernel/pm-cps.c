@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/cpu-type.h>

@@ -14,6 +14,7 @@
  * Copyright (c) 2018, Intel Corporation.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/io.h>
 #include <linux/acpi.h>
 #include <linux/dmi.h>

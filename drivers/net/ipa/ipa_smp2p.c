@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2020 Linaro Ltd.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/device.h>

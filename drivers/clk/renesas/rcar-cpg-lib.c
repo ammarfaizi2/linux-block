@@ -10,6 +10,7 @@
  * Copyright (C) 2015 Renesas Electronics Corp.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/math64.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

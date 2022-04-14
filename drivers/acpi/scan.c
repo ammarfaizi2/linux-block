@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/memory_hotplug.h>
 #include <linux/kobject_api.h>

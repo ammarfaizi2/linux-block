@@ -5,6 +5,7 @@
  * Author: Weidong Han <weidong.han@intel.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/device_api.h>
 #include <linux/pci.h>
 #include <linux/acpi.h>

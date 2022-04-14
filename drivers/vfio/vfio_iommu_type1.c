@@ -21,6 +21,7 @@
  * device/bus interface rather than a group interface.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_ptlock.h>

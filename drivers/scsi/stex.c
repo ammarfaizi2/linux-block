@@ -8,6 +8,7 @@
  *		Ed Lin <promise_linux@promise.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

@@ -34,6 +34,7 @@
  *  runtime through the "/proc/sys/kernel/power" procfs entry.
  */ 
 
+#include <linux/notifier_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/init.h>

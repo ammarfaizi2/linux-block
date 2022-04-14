@@ -9,6 +9,7 @@
  *	Eric Saint Etienne <eric.saint.etienne@oracle.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/kernel.h>
 #include <linux/highmem.h>
 #include <linux/uprobes.h>

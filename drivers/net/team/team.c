@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

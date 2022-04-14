@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2017-2019 Borislav Petkov, SUSE Labs.
  */
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>

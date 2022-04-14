@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2020 Maxime Ripard <maxime@cerno.tech> */
 
+#include <linux/notifier_api.h>
 #include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/dma-map-ops.h>

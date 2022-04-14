@@ -5,6 +5,7 @@
  * Copyright 2021 Google LLC.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ktime_api.h>

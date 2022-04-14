@@ -20,6 +20,7 @@
 
 /*#define DEBUG*/
 
+#include <linux/notifier_api.h>
 #include <linux/fs_api.h>
 #include <linux/pm_qos.h>
 #include <linux/sched.h>

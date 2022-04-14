@@ -10,6 +10,7 @@
  * and Nettle, by Niels Möller.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/err.h>
 #include <linux/errno.h>
 #include <linux/jump_label.h>

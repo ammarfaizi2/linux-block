@@ -7,6 +7,7 @@
  * Copyright (c) 2015, RapidIO Trade Association
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

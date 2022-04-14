@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2017, Linaro Ltd.
  */
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

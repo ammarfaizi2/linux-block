@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/kernel.h>
 #include <linux/notifier.h>
 #include <linux/panic_notifier.h>

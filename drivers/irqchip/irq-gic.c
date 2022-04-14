@@ -17,6 +17,7 @@
  * As such, the enable set/clear, pending set/clear and active bit
  * registers are banked per-cpu for these sources.
  */
+#include <linux/notifier_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>
 #include <linux/ioport.h>

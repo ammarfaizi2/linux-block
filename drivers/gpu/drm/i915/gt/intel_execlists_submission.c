@@ -106,6 +106,7 @@
  * preemption, but just sampling the new tail pointer).
  *
  */
+#include <linux/notifier_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kref_api.h>
 #include <linux/io.h>

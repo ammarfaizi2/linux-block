@@ -5,6 +5,7 @@
  * Author: John Fastabend <john.r.fastabend@intel.com>
  */
 
+#include <linux/notifier_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/notifier.h>
 #include <linux/export.h>

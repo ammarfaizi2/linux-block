@@ -13,6 +13,7 @@
  * any later version.
  */
 
+#include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/acpi.h>
 #include <linux/hid.h>
