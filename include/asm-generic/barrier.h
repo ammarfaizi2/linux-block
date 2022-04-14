@@ -13,6 +13,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <asm/vdso/processor.h>
 #include <linux/compiler.h>
 #include <linux/kcsan-checks.h>
 #include <asm/rwonce.h>
