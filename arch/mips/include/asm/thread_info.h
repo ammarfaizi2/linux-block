@@ -74,6 +74,8 @@ static inline struct thread_info *current_thread_info(void)
 register unsigned long current_stack_pointer __asm__("sp");
 #endif
 
+#define current_thread_info current_thread_info
+
 #endif /* !__ASSEMBLY__ */
 
 /* thread information allocation */
