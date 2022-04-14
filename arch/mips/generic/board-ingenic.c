@@ -7,6 +7,7 @@
  * Copyright (C) 2020 Paul Cercueil <paul@crapouillou.net>
  */
 
+#include <asm/cpu-type.h>
 #include <linux/clk.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

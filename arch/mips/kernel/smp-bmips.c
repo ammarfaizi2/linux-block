@@ -8,6 +8,7 @@
  * SMP support for BMIPS
  */
 
+#include <asm/cpu-type.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/sched/hotplug.h>

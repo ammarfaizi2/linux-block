@@ -9,6 +9,7 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
+#include <asm/cpu-type.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>
 #include <linux/err.h>

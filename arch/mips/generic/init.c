@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <asm/cpu-type.h>
 #include <linux/clk.h>
 #include <linux/clocksource.h>
 #include <linux/init.h>

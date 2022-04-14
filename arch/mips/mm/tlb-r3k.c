@@ -11,6 +11,7 @@
  * Copyright (C) 2002  Ralf Baechle
  * Copyright (C) 2002  Maciej W. Rozycki
  */
+#include <asm/cpu-type.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/smp.h>
