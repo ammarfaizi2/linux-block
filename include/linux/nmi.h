@@ -5,6 +5,7 @@
 #ifndef LINUX_NMI_H
 #define LINUX_NMI_H
 
+#include <linux/cpumask.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched.h>
 #include <asm/irq.h>

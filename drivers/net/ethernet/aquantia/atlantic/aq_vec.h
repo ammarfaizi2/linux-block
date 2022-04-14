@@ -13,6 +13,7 @@
 #define AQ_VEC_H
 
 #include "aq_common.h"
+#include <linux/cpumask.h>
 #include <linux/irqreturn.h>
 
 struct aq_hw_s;

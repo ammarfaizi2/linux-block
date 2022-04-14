@@ -29,6 +29,7 @@
 
 #ifndef	CONFIG_NUMA
 
+#include <linux/cpumask.h>
 #include <linux/types.h>
 
 /* Other architectures wishing to use this simple topology API should fill

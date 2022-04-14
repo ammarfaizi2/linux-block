@@ -5,6 +5,7 @@
 #ifndef _LINUX_ARCH_TOPOLOGY_H_
 #define _LINUX_ARCH_TOPOLOGY_H_
 
+#include <linux/cpumask.h>
 #include <linux/types.h>
 #include <linux/percpu.h>
 
