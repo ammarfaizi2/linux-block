@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <clocksource/arm_arch_timer.h>
 #include <linux/bug.h>
 #include <linux/context_tracking.h>
 #include <linux/signal.h>
