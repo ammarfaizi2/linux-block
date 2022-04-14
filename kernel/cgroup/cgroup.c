@@ -30,6 +30,7 @@
 
 #include "cgroup-internal.h"
 
+#include <linux/rcu_sync_api.h>
 #include <linux/rculist.h>
 #include <linux/ptrace_api.h>
 #include <linux/percpu_rwsem_api.h>
