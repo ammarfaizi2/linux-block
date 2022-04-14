@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "rcu: " fmt
 
+#include <linux/llist_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hardirq.h>
 #include <linux/gfp_api.h>

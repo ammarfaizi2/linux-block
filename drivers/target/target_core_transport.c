@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/llist_api.h>
 #include <linux/kref_api.h>
 #include <linux/kmod.h>
 #include <linux/highmem.h>

@@ -6,6 +6,7 @@
  * Copyright 2012 Google, Inc.
  */
 
+#include <linux/llist_api.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/module.h>

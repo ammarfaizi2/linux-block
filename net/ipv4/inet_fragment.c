@@ -7,6 +7,7 @@
  *				ipv6/reassembly. and ipv6 nf conntrack reassembly
  */
 
+#include <linux/llist_api.h>
 #include <linux/jiffies.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>

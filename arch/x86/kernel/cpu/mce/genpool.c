@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Intel Corp.
  * Author: Chen, Gong <gong.chen@linux.intel.com>
  */
+#include <linux/llist_api.h>
 #include <linux/smp.h>
 #include <linux/mm.h>
 #include <linux/genalloc.h>

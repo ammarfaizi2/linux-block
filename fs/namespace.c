@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/llist_api.h>
 #include <linux/ktime_api.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>

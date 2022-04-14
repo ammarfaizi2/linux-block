@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2019 Intel Corporation. All rights rsvd. */
+#include <linux/llist_api.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

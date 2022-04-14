@@ -10,6 +10,7 @@
  * Copyright 2010,2011 Intel Corp.
  *   Author: Huang Ying <ying.huang@intel.com>
  */
+#include <linux/llist_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
