@@ -22,6 +22,7 @@
  */
 
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

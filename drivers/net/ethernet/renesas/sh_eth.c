@@ -8,6 +8,7 @@
  *  Copyright (C) 2014 Codethink Limited
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

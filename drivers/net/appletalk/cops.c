@@ -48,6 +48,7 @@ static const char *version =
  *	  the driver figure it out.
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/module.h>

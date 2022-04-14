@@ -44,6 +44,7 @@ double __extendsfdf2(float a)
 
 #define CONFIG_RTL8192_IO_MAP
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2004-2009 EMS Dr. Thomas Wuensche
  */
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/signal.h>

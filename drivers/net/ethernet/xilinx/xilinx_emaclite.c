@@ -8,6 +8,7 @@
  * 2007 - 2013 (c) Xilinx, Inc.
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>
 #include <linux/etherdevice_api.h>

@@ -45,6 +45,7 @@
 static const char version[] = "atarilance.c: v1.3 04/04/96 "
 			      "Roman.Hodek@informatik.uni-erlangen.de\n";
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/netdevice.h>

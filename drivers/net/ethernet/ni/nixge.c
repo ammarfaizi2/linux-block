@@ -4,6 +4,7 @@
  * Author: Moritz Fischer <mdf@kernel.org>
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

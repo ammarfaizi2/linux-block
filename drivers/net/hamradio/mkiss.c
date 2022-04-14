@@ -5,6 +5,7 @@
  * Copyright (C) 2004, 05 Ralf Baechle DL5RB <ralf@linux-mips.org>
  * Copyright (C) 2004, 05 Thomas Osterried DL9SAU <thomas@x-berg.in-berlin.de>
  */
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
 #include "pch_gbe.h"
 #include "pch_gbe_phy.h"
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

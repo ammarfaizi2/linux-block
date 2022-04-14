@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/io_extra.h>
 #include <linux/if_vlan_api.h>
