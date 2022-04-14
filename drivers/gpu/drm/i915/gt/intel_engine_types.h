@@ -6,6 +6,7 @@
 #ifndef __INTEL_ENGINE_TYPES__
 #define __INTEL_ENGINE_TYPES__
 
+#include <linux/completion.h>
 #include <linux/average.h>
 #include <linux/hashtable.h>
 #include <linux/irq_work.h>

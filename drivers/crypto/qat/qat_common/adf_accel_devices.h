@@ -2,6 +2,7 @@
 /* Copyright(c) 2014 - 2020 Intel Corporation */
 #ifndef ADF_ACCEL_DEVICES_H_
 #define ADF_ACCEL_DEVICES_H_
+#include <linux/completion.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/list.h>
