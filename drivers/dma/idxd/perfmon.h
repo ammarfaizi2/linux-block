@@ -4,6 +4,7 @@
 #ifndef _PERFMON_H_
 #define _PERFMON_H_
 
+#include <linux/perf_event_api.h>
 #include <linux/slab.h>
 #include <linux/pci.h>
 #include <linux/sbitmap.h>
