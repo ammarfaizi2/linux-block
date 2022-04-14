@@ -8,6 +8,7 @@
 #include <linux/types.h>
 #include <linux/blk_types.h>
 #include <linux/device.h>
+#include <linux/major.h>
 #include <linux/list.h>
 #include <linux/llist.h>
 #include <linux/minmax.h>
@@ -20,7 +21,6 @@
 #include <linux/rcupdate.h>
 #include <linux/percpu-refcount.h>
 #include <linux/blkzoned.h>
-#include <linux/sched.h>
 #include <linux/sbitmap.h>
 #include <linux/srcu.h>
 #include <linux/uuid.h>
