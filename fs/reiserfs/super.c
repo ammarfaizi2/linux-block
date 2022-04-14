@@ -11,6 +11,7 @@
  * NO WARRANTY
  */
 
+#include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

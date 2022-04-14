@@ -19,6 +19,7 @@
  */
 
 #include "ubifs.h"
+#include <linux/writeback_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/cred.h>

@@ -12,6 +12,7 @@
 /*
  * This handles all read/write requests to block devices
  */
+#include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>

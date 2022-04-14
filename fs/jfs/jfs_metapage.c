@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
+#include <linux/writeback_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/pagemap.h>

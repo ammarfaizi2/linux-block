@@ -7,6 +7,7 @@
  * Copyright (C) 1996, 1997, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/writeback_api.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>

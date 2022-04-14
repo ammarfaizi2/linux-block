@@ -13,6 +13,7 @@
  *		use bio_add_page() to build bio's just the right size
  */
 
+#include <linux/writeback_api.h>
 #include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_api.h>

@@ -19,6 +19,7 @@
  * async buffer flushing, 1999 Andrea Arcangeli <andrea@suse.de>
  */
 
+#include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/swap.h>
