@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/rtnetlink_api.h>
 #include <net/route_api.h>
 #include <net/neighbour_api.h>
 #include <net/ipv6_api.h>

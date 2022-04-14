@@ -6,6 +6,7 @@
  *
  */
 
+#include <net/rtnetlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>

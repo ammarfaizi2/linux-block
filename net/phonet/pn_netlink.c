@@ -10,6 +10,7 @@
  *          Remi Denis-Courmont
  */
 
+#include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

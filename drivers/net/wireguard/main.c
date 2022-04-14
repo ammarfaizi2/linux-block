@@ -10,6 +10,7 @@
 #include "ratelimiter.h"
 #include "netlink.h"
 
+#include <net/rtnetlink_api.h>
 #include <uapi/linux/wireguard.h>
 
 #include <linux/init.h>
