@@ -10,6 +10,7 @@
 #ifndef __LINUX_LOCKDEP_H
 #define __LINUX_LOCKDEP_H
 
+#include <linux/instruction_pointer.h>
 #include <linux/bug.h>
 #include <linux/lockdep_types.h>
 
