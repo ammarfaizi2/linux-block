@@ -14,6 +14,7 @@
  *     argument : macaddr=0x00,0x10,0x20,0x30,0x40,0x50
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/of_api.h>

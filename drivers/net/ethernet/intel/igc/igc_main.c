@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c)  2018 Intel Corporation */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>
 #include <linux/prefetch.h>

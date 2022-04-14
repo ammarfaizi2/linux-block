@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "MPTCP: " fmt
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rbtree_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/netdevice_api.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2019-2021 Linaro Ltd.
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

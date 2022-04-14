@@ -5,6 +5,7 @@
  * Copyright (C) 2016-2017 Oracle. All rights reserved.
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

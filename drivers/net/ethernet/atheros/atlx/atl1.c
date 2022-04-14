@@ -28,6 +28,7 @@
  * SMP torture testing
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pgtable_api.h>
 #include <linux/netdevice_api.h>

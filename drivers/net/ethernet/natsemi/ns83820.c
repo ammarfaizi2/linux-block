@@ -81,6 +81,7 @@
 //#define dprintk		printk
 #define dprintk(x...)		do { } while (0)
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>

@@ -19,6 +19,7 @@
  * 	Johnnie Peters <jpeters@mvista.com>
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/of_api.h>
 #include <linux/net.h>

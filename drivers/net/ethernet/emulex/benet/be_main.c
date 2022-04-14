@@ -11,6 +11,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

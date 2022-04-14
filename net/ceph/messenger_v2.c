@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Ilya Dryomov <idryomov@gmail.com>
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/scatterlist_api.h>
 #include <linux/random.h>
 #include <linux/mutex_api.h>

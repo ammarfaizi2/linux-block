@@ -22,6 +22,7 @@
  *  - Add support for extended VLAN support.
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/of_api.h>
 #include <linux/net.h>

@@ -85,6 +85,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/seq_file_net.h>
 #include <linux/sched/task_stack.h>
 #include <linux/sched/signal.h>

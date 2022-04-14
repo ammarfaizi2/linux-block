@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

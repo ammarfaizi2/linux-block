@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rwsem_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api_lock.h>

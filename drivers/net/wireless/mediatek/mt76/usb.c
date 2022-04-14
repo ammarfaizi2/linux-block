@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

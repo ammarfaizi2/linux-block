@@ -5,6 +5,7 @@
 /* Qualcomm Technologies, Inc. EMAC Ethernet Controller MAC layer support
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/pgtable_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_page_address.h>

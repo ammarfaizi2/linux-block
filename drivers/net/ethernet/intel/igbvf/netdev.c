@@ -3,6 +3,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>

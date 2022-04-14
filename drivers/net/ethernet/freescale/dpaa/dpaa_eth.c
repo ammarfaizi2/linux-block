@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/refcount_api.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>

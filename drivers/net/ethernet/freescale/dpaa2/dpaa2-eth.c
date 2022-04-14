@@ -2,6 +2,7 @@
 /* Copyright 2014-2016 Freescale Semiconductor Inc.
  * Copyright 2016-2020 NXP
  */
+#include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rtnetlink.h>

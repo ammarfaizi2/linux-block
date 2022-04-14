@@ -7,6 +7,7 @@
  * Marcin Wojtas <mw@semihalf.com>
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/property.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>

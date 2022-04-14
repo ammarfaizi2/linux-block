@@ -22,6 +22,7 @@
  * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

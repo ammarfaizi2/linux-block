@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/scatterlist_api.h>
 #include <linux/prefetch.h>

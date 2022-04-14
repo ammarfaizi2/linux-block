@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>
