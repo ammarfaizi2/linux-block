@@ -16,6 +16,7 @@
 #ifndef __SST_H__
 #define __SST_H__
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/firmware.h>
 
 /* driver names */

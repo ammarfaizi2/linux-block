@@ -3,6 +3,7 @@
 #ifndef _LINUX_BPFPTR_H
 #define _LINUX_BPFPTR_H
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/mm.h>
 #include <linux/sockptr.h>
 

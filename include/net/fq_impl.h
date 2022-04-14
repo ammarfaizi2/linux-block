@@ -7,6 +7,7 @@
 #ifndef __NET_SCHED_FQ_IMPL_H
 #define __NET_SCHED_FQ_IMPL_H
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/lockdep_api.h>
 #include <net/fq.h>
 
