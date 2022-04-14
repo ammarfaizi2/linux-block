@@ -2,6 +2,7 @@
 /* Copyright(c) 2020-2021 Intel Corporation. */
 #ifndef __CXL_MEM_H__
 #define __CXL_MEM_H__
+#include <linux/fs_types.h>
 #include <uapi/linux/cxl_mem.h>
 #include <linux/cdev.h>
 #include "cxl.h"
