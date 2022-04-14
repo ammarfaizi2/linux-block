@@ -12,6 +12,7 @@
  * See the GNU General Public License for more details.
  */
 
+#include <linux/refcount.h>
 #include <linux/refcount_api.h>
 #include <linux/if.h>
 #include <linux/if_ether.h>

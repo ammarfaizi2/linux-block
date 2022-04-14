@@ -14,6 +14,7 @@
 #ifndef _LINUX_NETFS_H
 #define _LINUX_NETFS_H
 
+#include <linux/refcount.h>
 #include <linux/workqueue.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>
