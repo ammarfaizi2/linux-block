@@ -13,6 +13,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/irq_api_eff_affinity.h>
 #include <linux/ioport.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

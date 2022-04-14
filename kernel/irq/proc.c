@@ -5,6 +5,7 @@
  * This file contains the /proc/irq/ handling code.
  */
 
+#include <linux/irq_api_eff_affinity.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/irq.h>
