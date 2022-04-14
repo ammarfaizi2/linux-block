@@ -6,6 +6,7 @@
  * Written Doug Thompson <norsk5@xmission.com>
  *
  */
+#include <linux/irqflags.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/edac.h>

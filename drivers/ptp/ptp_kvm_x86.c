@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Red Hat Inc.
  */
 
+#include <linux/irqflags.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <asm/pvclock.h>

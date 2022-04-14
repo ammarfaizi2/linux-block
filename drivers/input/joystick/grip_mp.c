@@ -10,6 +10,7 @@
  *  Copyright (c) 1998-2000 Vojtech Pavlik
  */
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>

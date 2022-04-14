@@ -3,6 +3,7 @@
  * Copyright 2019 NXP
  */
 
+#include <linux/irqflags.h>
 #include <linux/device_api_lock.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>

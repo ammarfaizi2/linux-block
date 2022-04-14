@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010 the Speakup Team
  */
+#include <linux/irqflags.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/preempt.h>

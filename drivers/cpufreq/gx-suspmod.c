@@ -69,6 +69,7 @@
  *			Suspend Modulation - Definitions		*
  ************************************************************************/
 
+#include <linux/irqflags.h>
 #include <asm/processor-flags.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
