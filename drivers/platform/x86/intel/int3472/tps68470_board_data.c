@@ -9,6 +9,7 @@
  * Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/kernel.h>
 #include <linux/dmi.h>
 #include <linux/gpio/machine.h>
 #include <linux/platform_data/tps68470.h>

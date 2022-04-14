@@ -3,6 +3,7 @@
  * poll_state.c - Polling idle state
  */
 
+#include <linux/kernel.h>
 #include <asm/vdso/processor.h>
 #include <linux/cpuidle.h>
 #include <linux/sched.h>

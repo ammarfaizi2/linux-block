@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2019 - 2021 Intel Corporation
  */
+#include <linux/kernel.h>
 #include <fw/api/commands.h>
 #include "img.h"
 

@@ -2,6 +2,7 @@
 /*
  * Generic MMIO clocksource support
  */
+#include <linux/kernel.h>
 #include <linux/clocksource.h>
 #include <linux/errno.h>
 #include <linux/init.h>

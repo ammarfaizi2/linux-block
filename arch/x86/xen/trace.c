@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
 #include <linux/ftrace.h>
 #include <xen/interface/xen.h>
 #include <xen/interface/xen-mca.h>

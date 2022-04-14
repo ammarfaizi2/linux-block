@@ -3,6 +3,7 @@
  *   Copyright (C) 2007 Advanced Micro Devices, Inc.
  *   Copyright (C) 2008 Andres Salomon <dilinger@debian.org>
  */
+#include <linux/kernel.h>
 #include <linux/fb.h>
 #include <asm/io.h>
 #include <asm/msr.h>
