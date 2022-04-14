@@ -3,6 +3,7 @@
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <linux/ip.h>

@@ -44,6 +44,7 @@
 #include "node.h"
 #include "crypto.h"
 
+#include <net/net_namespace_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/random.h>
 #include <linux/atomic_api.h>

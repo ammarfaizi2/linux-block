@@ -7,6 +7,7 @@
  * Based on: net/wireless/nl80211.c
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

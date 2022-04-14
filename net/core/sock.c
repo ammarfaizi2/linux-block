@@ -85,6 +85,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/net_namespace_api.h>
 #include <net/l3mdev.h>
 #include <net/dst_api.h>
 #include <linux/wait_api.h>

@@ -7,6 +7,7 @@
  *				Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>

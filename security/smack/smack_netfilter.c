@@ -11,6 +11,7 @@
  *  Copyright (C) 2014 Intel Corporation.
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/netfilter_ipv4.h>
 #include <linux/netfilter_ipv6.h>
 #include <linux/netdevice.h>

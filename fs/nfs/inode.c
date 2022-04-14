@@ -14,6 +14,7 @@
  *
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/time64_api.h>

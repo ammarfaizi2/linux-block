@@ -6,6 +6,7 @@
  *
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/module.h>
 #include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_arp/arp_tables.h>

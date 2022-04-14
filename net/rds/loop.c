@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <net/net_namespace_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

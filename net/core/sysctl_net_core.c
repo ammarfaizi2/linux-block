@@ -6,6 +6,7 @@
  * Added /proc/sys/net/core directory entry (empty =) ). [MS]
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>

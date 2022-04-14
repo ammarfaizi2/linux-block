@@ -7,6 +7,7 @@
  *	based on ipt_ROUTE.c from Cédric de Launois
  *	<delaunois@info.ucl.be>
  */
+#include <net/net_namespace_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

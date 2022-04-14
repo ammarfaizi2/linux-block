@@ -37,6 +37,7 @@
 #include "trace.h"
 #include "crypto.h"
 #include "bcast.h"
+#include <net/net_namespace_api.h>
 #include <linux/filter_api.h>
 #include <linux/sysctl.h>
 

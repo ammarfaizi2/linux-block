@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@mandriva.com>
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/mm.h>
 #include <linux/sysctl.h>
 #include "dccp.h"

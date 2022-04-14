@@ -1,3 +1,4 @@
+#include <net/net_namespace_api.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>

@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/jiffies.h>
 #include <linux/sysctl.h>
 #include <net/sock.h>

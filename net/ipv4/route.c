@@ -60,6 +60,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/neighbour_api.h>
 #include <net/ndisc_api.h>

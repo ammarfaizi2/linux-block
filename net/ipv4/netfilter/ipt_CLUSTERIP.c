@@ -6,6 +6,7 @@
  * Development of this code funded by SuSE Linux AG, https://www.suse.com/
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <net/net_namespace_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>

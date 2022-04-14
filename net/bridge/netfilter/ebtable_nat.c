@@ -9,6 +9,7 @@
  *
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/netfilter_bridge/ebtables.h>
 #include <uapi/linux/netfilter_bridge.h>
 #include <linux/module.h>

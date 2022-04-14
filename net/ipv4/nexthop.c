@@ -5,6 +5,7 @@
  * Copyright (c) 2017-19 David Ahern <dsa@cumulusnetworks.com>
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/ndisc_api.h>
 #include <net/l3mdev.h>

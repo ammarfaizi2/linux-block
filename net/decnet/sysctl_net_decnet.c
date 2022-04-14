@@ -14,6 +14,7 @@
  * Steve Whitehouse - Memory buffer settings, like the tcp ones
  *
  */
+#include <net/net_namespace_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm.h>
 #include <linux/sysctl.h>

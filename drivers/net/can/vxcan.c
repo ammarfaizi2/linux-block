@@ -9,6 +9,7 @@
  * Copyright (c) 2017 Oliver Hartkopp <socketcan@hartkopp.net>
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

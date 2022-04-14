@@ -6,6 +6,7 @@
  *  Justin Iurman <justin.iurman@uliege.be>
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/dst_types.h>
 #include <linux/slab.h>

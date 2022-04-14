@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/neighbour_api_seqlock.h>
 #include <net/neighbour_api.h>

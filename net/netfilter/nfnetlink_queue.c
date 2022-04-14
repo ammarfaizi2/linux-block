@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

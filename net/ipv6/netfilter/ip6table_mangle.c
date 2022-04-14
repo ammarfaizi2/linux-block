@@ -5,6 +5,7 @@
  * Copyright (C) 2000-2001 by Harald Welte <laforge@gnumonks.org>
  * Copyright (C) 2000-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
+#include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>
 #include <linux/ipv6.h>
 #include <linux/module.h>

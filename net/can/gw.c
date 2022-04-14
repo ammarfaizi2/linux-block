@@ -39,6 +39,7 @@
  *
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>

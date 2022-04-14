@@ -66,6 +66,7 @@
  *					Vinay Kulkarni
  */
 
+#include <net/net_namespace_api.h>
 #include <net/ip_extra.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

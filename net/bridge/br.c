@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/notifier_api.h>

@@ -19,6 +19,7 @@
  *		Jorge Cwik, <jorge@laser.satlink.net>
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/net.h>
 #include <linux/jiffies.h>
 #include <linux/hrtimer_api.h>

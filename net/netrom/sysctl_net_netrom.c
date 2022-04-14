@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1996 Mike Shaver (shaver@zeroknowledge.com)
  */
+#include <net/net_namespace_api.h>
 #include <linux/mm.h>
 #include <linux/sysctl.h>
 #include <linux/init.h>

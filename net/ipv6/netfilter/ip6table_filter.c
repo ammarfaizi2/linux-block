@@ -6,6 +6,7 @@
  * Copyright (C) 2000-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/netfilter_ipv6/ip6_tables.h>

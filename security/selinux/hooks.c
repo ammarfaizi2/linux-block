@@ -21,6 +21,7 @@
  *  Copyright (C) 2016 Mellanox Technologies
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <linux/syscalls_api.h>

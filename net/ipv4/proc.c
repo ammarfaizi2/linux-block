@@ -27,6 +27,7 @@
  *	Andi Kleen		:	Add support for /proc/net/netstat
  *	Arnaldo C. Melo		:	Convert to seq_file
  */
+#include <net/net_namespace_api.h>
 #include <net/ip_extra.h>
 #include <net/inet_frag.h>
 #include <linux/slab.h>

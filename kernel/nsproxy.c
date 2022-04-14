@@ -9,6 +9,7 @@
  *             Pavel Emelianov <xemul@openvz.org>
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/sem.h>
 #include <linux/sched/task.h>
 #include <linux/ptrace_api.h>

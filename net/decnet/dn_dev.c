@@ -25,6 +25,7 @@
  *                             devices. All mtu based now.
  */
 
+#include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/neighbour_api.h>
 #include <linux/spinlock_api.h>
