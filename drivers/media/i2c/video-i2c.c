@@ -9,6 +9,7 @@
  * - Melexis MLX90640 Thermal Cameras
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/freezer.h>

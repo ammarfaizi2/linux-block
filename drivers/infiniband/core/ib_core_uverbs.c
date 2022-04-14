@@ -4,6 +4,7 @@
  * Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All rights reserved.
  * Copyright 2019 Marvell. All rights reserved.
  */
+#include <linux/fs.h>
 #include <linux/xarray.h>
 #include "uverbs.h"
 #include "core_priv.h"

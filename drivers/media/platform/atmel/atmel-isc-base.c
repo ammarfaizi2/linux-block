@@ -8,6 +8,7 @@
  * Author: Eugen Hristev <eugen.hristev@microchip.com>
  *
  */
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

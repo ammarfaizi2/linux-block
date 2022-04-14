@@ -5,6 +5,7 @@
  * Author: Yong Deng <yong.deng@magewell.com>
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/of.h>
 

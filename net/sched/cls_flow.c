@@ -5,6 +5,7 @@
  * Copyright (c) 2007, 2008 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/fs.h>
 #include <linux/cred.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

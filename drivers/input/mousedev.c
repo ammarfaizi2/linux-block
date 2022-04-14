@@ -12,6 +12,7 @@
 #define MOUSEDEV_MINORS		31
 #define MOUSEDEV_MIX		63
 
+#include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>

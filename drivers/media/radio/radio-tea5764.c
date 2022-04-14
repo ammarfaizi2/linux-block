@@ -18,6 +18,7 @@
  *  add platform_data support for IRQs platform dependencies
  *  add RDS support
  */
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

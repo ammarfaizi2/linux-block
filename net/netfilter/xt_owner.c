@@ -7,6 +7,7 @@
  *
  * Copyright © CC Computer Consultants GmbH, 2007 - 2008
  */
+#include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/file.h>

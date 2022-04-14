@@ -21,6 +21,7 @@
 #define DRIVER_VERSION "1.0.10"
 
 /* kernel includes */
+#include <linux/fs.h>
 #include <asm/unaligned.h>
 #include <linux/usb.h>
 #include <linux/hid.h>

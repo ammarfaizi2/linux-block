@@ -30,6 +30,7 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
+#include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>

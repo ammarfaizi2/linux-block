@@ -6,6 +6,7 @@
  * Javier Martin <javier.martin@vista-silicon.com>
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>

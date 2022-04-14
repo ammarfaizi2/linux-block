@@ -14,6 +14,7 @@
  * ioctls.
  */
 
+#include <linux/fs.h>
 #include <linux/compat.h>
 #include <linux/module.h>
 #include <linux/videodev2.h>

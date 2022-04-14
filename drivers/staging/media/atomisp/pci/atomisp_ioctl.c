@@ -18,6 +18,7 @@
  *
  */
 
+#include <linux/fs.h>
 #include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <linux/delay.h>

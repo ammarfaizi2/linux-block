@@ -21,6 +21,7 @@
 //  * VBI support,
 //  * controls support
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/bitops.h>
 #include <linux/device.h>

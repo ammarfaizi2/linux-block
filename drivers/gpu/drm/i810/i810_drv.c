@@ -32,6 +32,7 @@
 
 #include "i810_drv.h"
 
+#include <linux/fs.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>

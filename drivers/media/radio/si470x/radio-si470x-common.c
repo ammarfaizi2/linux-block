@@ -99,6 +99,7 @@
 
 
 /* kernel includes */
+#include <linux/fs.h>
 #include <linux/export.h>
 
 #include "radio-si470x.h"

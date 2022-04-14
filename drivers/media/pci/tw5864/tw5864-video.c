@@ -5,6 +5,7 @@
  *  Copyright (C) 2016 Bluecherry, LLC <maintainers@bluecherrydvr.com>
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/fs.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>

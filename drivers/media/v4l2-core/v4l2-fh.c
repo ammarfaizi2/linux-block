@@ -9,6 +9,7 @@
  * Contact: Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/fs.h>
 #include <linux/bitops.h>
 #include <linux/slab.h>
 #include <linux/export.h>

@@ -9,6 +9,7 @@
  * John Brooks <john.brooks@bluecherry.net>
  */
 
+#include <linux/fs.h>
 #include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>

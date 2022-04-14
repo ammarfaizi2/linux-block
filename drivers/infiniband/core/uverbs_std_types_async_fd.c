@@ -3,6 +3,7 @@
  * Copyright (c) 2019, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/fs.h>
 #include <rdma/uverbs_std_types.h>
 #include <rdma/uverbs_ioctl.h>
 #include "rdma_core.h"

@@ -8,6 +8,7 @@
  * Copyright (C) 2017 Rockchip Electronics Co., Ltd.
  */
 
+#include <linux/fs.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/pm_runtime.h>
