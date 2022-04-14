@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "bcm63xx_nvram: " fmt
 
+#include <asm/processor.h>
 #include <linux/bcm963xx_nvram.h>
 #include <linux/init.h>
 #include <linux/crc32.h>
