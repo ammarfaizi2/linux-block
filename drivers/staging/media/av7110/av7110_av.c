@@ -11,6 +11,7 @@
  * the project's page is at https://linuxtv.org
  */
 
+#include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/export.h>

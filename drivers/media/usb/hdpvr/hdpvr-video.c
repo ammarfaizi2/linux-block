@@ -5,6 +5,7 @@
  * Copyright (C) 2008      Janne Grunau (j@jannau.net)
  */
 
+#include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs.h>

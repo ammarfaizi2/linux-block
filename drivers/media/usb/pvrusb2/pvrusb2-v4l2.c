@@ -5,6 +5,7 @@
  *  Copyright (C) 2004 Aurelien Alleaume <slts@free.fr>
  */
 
+#include <linux/poll.h>
 #include <linux/io.h>
 #include <linux/fs.h>
 #include <linux/export.h>

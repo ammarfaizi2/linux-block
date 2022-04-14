@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/poll.h>
 #include <linux/net.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

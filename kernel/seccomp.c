@@ -15,6 +15,7 @@
  */
 #define pr_fmt(fmt) "seccomp: " fmt
 
+#include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/filter_api.h>

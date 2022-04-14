@@ -4,6 +4,7 @@
 
 #include "smscoreapi.h"
 
+#include <linux/poll.h>
 #include <linux/kref_api.h>
 #include <linux/fs.h>
 #include <linux/fs_api.h>

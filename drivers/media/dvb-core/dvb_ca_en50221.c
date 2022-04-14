@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) "dvb_ca_en50221: " fmt
 
+#include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

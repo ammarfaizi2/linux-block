@@ -15,6 +15,7 @@
  *  Author: Manjunatha Halli <manjunatha_halli@ti.com>
  */
 
+#include <linux/poll.h>
 #include <linux/mutex_api.h>
 #include <linux/fs.h>
 #include <linux/export.h>
