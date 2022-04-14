@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Intel Corporation
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
+#include <linux/interrupt.h>
 #include <linux/platform_device.h>
 #include <linux/time-internal.h>
 #include <linux/suspend.h>

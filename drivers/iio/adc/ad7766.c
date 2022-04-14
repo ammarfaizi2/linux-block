@@ -5,6 +5,7 @@
  * Copyright 2016 Analog Devices Inc.
  */
 
+#include <linux/interrupt.h>
 #include <linux/align.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

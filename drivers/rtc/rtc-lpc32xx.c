@@ -3,6 +3,7 @@
  * Copyright (C) 2010 NXP Semiconductors
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

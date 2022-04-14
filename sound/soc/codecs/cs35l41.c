@@ -6,6 +6,7 @@
 //
 // Author: David Rhodes <david.rhodes@cirrus.com>
 
+#include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/init.h>

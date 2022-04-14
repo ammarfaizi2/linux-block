@@ -5,6 +5,7 @@
 // Copyright (c) 2018 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/module.h>

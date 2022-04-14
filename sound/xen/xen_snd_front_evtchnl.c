@@ -8,6 +8,7 @@
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/gfp_api.h>
 #include <xen/events.h>
 #include <xen/grant_table.h>

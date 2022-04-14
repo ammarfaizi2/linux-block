@@ -4,6 +4,7 @@
  *
  * Copyright 1995-2002, Russell King
  */
+#include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/ioport.h>
 #include <linux/blkdev.h>

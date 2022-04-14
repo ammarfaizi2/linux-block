@@ -16,6 +16,7 @@
  * #define RSND_DEBUG_NO_IRQ_STATUS 1
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <sound/simple_card_utils.h>
 #include <linux/delay.h>

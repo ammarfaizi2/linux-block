@@ -35,6 +35,7 @@
  *
  */
 
+#include <linux/interrupt.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/kernel_stat.h>

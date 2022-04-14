@@ -3,6 +3,7 @@
  * Alpha specific irq code.
  */
 
+#include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/irq.h>

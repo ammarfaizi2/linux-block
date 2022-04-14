@@ -2,6 +2,7 @@
 /* Copyright(c) 1999 - 2006 Intel Corporation. */
 
 #include "e1000.h"
+#include <linux/interrupt.h>
 #include <linux/if_vlan_api.h>
 #include <linux/highmem.h>
 #include <linux/hardirq.h>

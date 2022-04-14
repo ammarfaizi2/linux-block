@@ -18,6 +18,7 @@
  * machines for me to debug the driver on.
  */
 
+#include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

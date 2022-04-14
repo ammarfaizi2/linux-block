@@ -21,6 +21,7 @@
  * This file is licenced under the GPL.
  */
 
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

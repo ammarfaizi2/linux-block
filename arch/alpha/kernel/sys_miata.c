@@ -9,6 +9,7 @@
  * Code supporting the MIATA (EV56+PYXIS).
  */
 
+#include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

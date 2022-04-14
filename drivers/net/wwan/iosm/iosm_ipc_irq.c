@@ -3,6 +3,8 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/interrupt.h>
+
 #include "iosm_ipc_pcie.h"
 #include "iosm_ipc_protocol.h"
 

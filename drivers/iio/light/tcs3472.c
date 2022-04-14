@@ -13,6 +13,7 @@
  * TODO: wait time
  */
 
+#include <linux/interrupt.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

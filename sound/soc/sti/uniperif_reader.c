@@ -5,6 +5,7 @@
  *          for STMicroelectronics.
  */
 
+#include <linux/interrupt.h>
 #include <sound/soc.h>
 
 #include "uniperif.h"

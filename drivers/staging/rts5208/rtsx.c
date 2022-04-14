@@ -9,6 +9,7 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>

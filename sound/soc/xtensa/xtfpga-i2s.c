@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Cadence Design Systems Inc.
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/clk.h>

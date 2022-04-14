@@ -6,6 +6,7 @@
  * Author: Jonas Aaberg <jonas.aberg@stericsson.com> for ST-Ericsson
  */
 
+#include <linux/interrupt.h>
 #include <linux/gfp_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>

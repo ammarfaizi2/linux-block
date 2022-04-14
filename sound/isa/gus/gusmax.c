@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/isa.h>

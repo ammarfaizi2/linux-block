@@ -27,6 +27,7 @@
 #undef DEBUG_HARD
 #undef USE_CTRL_O_SYSRQ
 
+#include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/tty.h>
 

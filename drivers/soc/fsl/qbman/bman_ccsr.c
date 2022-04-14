@@ -28,6 +28,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/interrupt.h>
+
 #include "bman_priv.h"
 
 u16 bman_ip_rev;

@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Johan Hovold <johan@kernel.org>
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/capability.h>
 #include <linux/bcd.h>

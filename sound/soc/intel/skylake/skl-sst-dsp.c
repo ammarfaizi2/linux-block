@@ -7,6 +7,7 @@
  *	Jeeja KP <jeeja.kp@intel.com>
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <sound/pcm.h>
 

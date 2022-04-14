@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/interrupt.h>
 #include <linux/init.h>
 #include <linux/of_device.h>
 #include <linux/kernel.h>

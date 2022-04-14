@@ -8,6 +8,7 @@
  *  Based on Motorola's rtc.c Copyright (c) 2003-2005 Motorola
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

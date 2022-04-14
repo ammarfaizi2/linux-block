@@ -8,6 +8,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/interrupt.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpumask.h>
 #include <linux/bsearch.h>

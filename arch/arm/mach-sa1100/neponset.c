@@ -2,6 +2,7 @@
 /*
  * linux/arch/arm/mach-sa1100/neponset.c
  */
+#include <linux/interrupt.h>
 #include <linux/err.h>
 #include <linux/gpio/driver.h>
 #include <linux/gpio/gpio-reg.h>

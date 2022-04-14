@@ -7,6 +7,7 @@
  * Authors: Roger Quadros <rogerq@ti.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/extcon.h>
 #include <linux/of_graph.h>
 #include <linux/of_platform.h>

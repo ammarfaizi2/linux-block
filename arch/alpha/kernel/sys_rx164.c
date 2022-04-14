@@ -9,6 +9,7 @@
  * Code supporting the RX164 (PCA56+POLARIS).
  */
 
+#include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

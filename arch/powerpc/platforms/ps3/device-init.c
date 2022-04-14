@@ -6,6 +6,7 @@
  *  Copyright 2007 Sony Corp.
  */
 
+#include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/freezer.h>
 #include <linux/kernel.h>

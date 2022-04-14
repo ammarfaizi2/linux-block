@@ -9,6 +9,7 @@
  * - Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_connector.h>

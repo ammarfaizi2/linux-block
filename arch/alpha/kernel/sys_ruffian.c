@@ -9,6 +9,7 @@
  * Code supporting the RUFFIAN.
  */
 
+#include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/mm.h>

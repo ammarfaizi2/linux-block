@@ -17,6 +17,7 @@
  *	Copyright (C) 2000 Inside Out Networks, All rights reserved.
  *	Copyright (C) 2001-2002 Greg Kroah-Hartman <greg@kroah.com>
  */
+#include <linux/interrupt.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

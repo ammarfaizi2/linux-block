@@ -13,6 +13,7 @@
 #include "../include/gaudi/gaudi_reg_map.h"
 #include "../include/gaudi/gaudi_async_ids_map_extended.h"
 
+#include <linux/interrupt.h>
 #include <linux/hashtable_api.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>

@@ -17,6 +17,7 @@
  * However, when used with the E3 mailboard that producecs non-standard
  * scancodes, a custom key table must be prepared and loaded from userspace.
  */
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/irq.h>
 #include <linux/platform_data/ams-delta-fiq.h>

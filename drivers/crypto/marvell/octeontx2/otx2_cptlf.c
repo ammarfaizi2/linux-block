@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Marvell. */
 
+#include <linux/interrupt.h>
 #include <linux/cpumask_api.h>
 
 #include "otx2_cpt_common.h"

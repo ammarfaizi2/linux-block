@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "tegra-pmc: " fmt
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/arm-smccc.h>
 #include <linux/clk.h>

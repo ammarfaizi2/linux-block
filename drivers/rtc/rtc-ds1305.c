@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 David Brownell
  */
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

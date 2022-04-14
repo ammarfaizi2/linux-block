@@ -8,6 +8,7 @@
 */
 
 
+#include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 
 #include "mv_sas.h"

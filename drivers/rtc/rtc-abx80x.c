@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/i2c.h>

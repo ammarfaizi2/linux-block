@@ -5,6 +5,7 @@
  * Copyright Gavin Shan, IBM Corporation 2016.
  */
 
+#include <linux/interrupt.h>
 #include <linux/libfdt.h>
 #include <linux/module.h>
 #include <linux/pci.h>

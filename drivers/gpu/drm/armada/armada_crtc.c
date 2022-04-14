@@ -4,6 +4,7 @@
  *  Rewritten from the dovefb driver, and Armada510 manuals.
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/clk.h>

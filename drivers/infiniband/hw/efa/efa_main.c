@@ -3,6 +3,7 @@
  * Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api.h>

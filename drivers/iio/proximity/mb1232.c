@@ -10,6 +10,7 @@
  * https://www.maxbotix.com/documents/I2CXL-MaxSonar-EZ_Datasheet.pdf
  */
 
+#include <linux/interrupt.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/of_irq.h>

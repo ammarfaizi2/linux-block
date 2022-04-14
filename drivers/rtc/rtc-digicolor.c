@@ -7,6 +7,7 @@
  * Author: Baruch Siach <baruch@tkos.co.il>
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>

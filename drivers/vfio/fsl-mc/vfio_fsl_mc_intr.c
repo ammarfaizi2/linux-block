@@ -4,6 +4,7 @@
  * Copyright 2019 NXP
  */
 
+#include <linux/interrupt.h>
 #include <linux/vfio.h>
 #include <linux/slab.h>
 #include <linux/types.h>

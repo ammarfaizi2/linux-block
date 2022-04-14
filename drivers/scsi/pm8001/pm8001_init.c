@@ -38,6 +38,7 @@
  *
  */
 
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api.h>
 #include <linux/of_device.h>
 #include <linux/of_address.h>

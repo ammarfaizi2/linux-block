@@ -6,6 +6,7 @@
 // Author: Minkyu Kang <mk7.kang@samsung.com>
 // Author: Joonyoung Shim <jy0922.shim@samsung.com>
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

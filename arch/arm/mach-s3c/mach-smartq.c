@@ -2,6 +2,7 @@
 //
 // Copyright (C) 2010 Maurus Cuelenaere
 
+#include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/fb.h>
 #include <linux/gpio.h>

@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt) "irq-ls-extirq: " fmt
 
+#include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>
 #include <linux/irqdomain.h>

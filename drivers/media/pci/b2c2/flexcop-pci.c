@@ -6,6 +6,7 @@
  */
 
 #define FC_LOG_PREFIX "flexcop-pci"
+#include <linux/interrupt.h>
 #include <linux/export.h>
 
 #include "flexcop-common.h"

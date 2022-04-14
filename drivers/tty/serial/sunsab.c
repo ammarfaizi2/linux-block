@@ -16,6 +16,7 @@
  *   David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

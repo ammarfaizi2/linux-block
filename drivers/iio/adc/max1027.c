@@ -12,6 +12,7 @@
   * Partial support for max1027 and similar chips.
   */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>

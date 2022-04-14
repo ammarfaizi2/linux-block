@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>

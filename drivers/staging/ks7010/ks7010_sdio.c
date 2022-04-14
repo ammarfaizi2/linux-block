@@ -7,6 +7,7 @@
  *   Copyright (C) 2016 Sang Engineering, Wolfram Sang
  */
 
+#include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api.h>
 #include <linux/delay.h>

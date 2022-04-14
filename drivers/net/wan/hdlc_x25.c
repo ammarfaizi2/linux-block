@@ -6,6 +6,7 @@
  * Copyright (C) 1999 - 2006 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
+#include <linux/interrupt.h>
 #include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/gfp.h>

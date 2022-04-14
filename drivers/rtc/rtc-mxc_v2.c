@@ -5,6 +5,7 @@
  * Copyright (c) 2017 Beckhoff Automation GmbH & Co. KG
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/io.h>

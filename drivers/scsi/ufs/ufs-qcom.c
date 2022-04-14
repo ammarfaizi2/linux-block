@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2016, Linux Foundation. All rights reserved.
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/acpi.h>

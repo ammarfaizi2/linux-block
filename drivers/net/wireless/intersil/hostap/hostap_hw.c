@@ -27,6 +27,7 @@
 
 
 
+#include <linux/interrupt.h>
 #include <linux/etherdevice_api.h>
 #include <asm/delay.h>
 #include <linux/uaccess.h>

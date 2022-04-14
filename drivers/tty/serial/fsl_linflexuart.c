@@ -6,6 +6,7 @@
  * Copyright 2017-2019 NXP
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/console.h>
 #include <linux/io.h>

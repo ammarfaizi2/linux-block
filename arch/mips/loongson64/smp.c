@@ -4,6 +4,7 @@
  * Author: Chen Huacai, chenhc@lemote.com
  */
 
+#include <linux/interrupt.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

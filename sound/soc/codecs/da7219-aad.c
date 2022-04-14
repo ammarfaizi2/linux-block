@@ -7,6 +7,7 @@
  * Author: Adam Thomson <Adam.Thomson.Opensource@diasemi.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

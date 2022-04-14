@@ -19,6 +19,7 @@
  * not supported by the hardware.
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/clk.h>

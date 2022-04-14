@@ -4,6 +4,7 @@
 //
 // Copyright 2012-2015 Freescale Semiconductor, Inc.
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

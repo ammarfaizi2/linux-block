@@ -6,6 +6,7 @@
  * Copyright (C) 2003-2014 STMicroelectronics (R&D) Limited
  */
 
+#include <linux/interrupt.h>
 #include <linux/of.h>
 #include <linux/module.h>
 

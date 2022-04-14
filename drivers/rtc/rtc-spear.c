@@ -6,6 +6,7 @@
  * Rajeev Kumar<rajeev-dlh.kumar@st.com>
  */
 
+#include <linux/interrupt.h>
 #include <linux/device_api_lock.h>
 #include <linux/bcd.h>
 #include <linux/clk.h>

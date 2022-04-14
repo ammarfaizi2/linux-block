@@ -4,6 +4,7 @@
 // Copyright (c) 2020 Broadcom Corporation
 // Author: Kevin-Ke Li <kevin-ke.li@broadcom.com>
 
+#include <linux/interrupt.h>
 #include <linux/dma-mapping.h>
 #include <linux/io.h>
 #include <linux/irq.h>

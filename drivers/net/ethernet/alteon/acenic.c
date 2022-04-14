@@ -46,6 +46,7 @@
  *   Grant Grundler <grundler@cup.hp.com>: PCI write posting fixes.
  */
 
+#include <linux/interrupt.h>
 #include <linux/if_vlan_api.h>
 #include <linux/hardirq.h>
 #include <linux/etherdevice_api.h>
