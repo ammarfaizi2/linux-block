@@ -8,6 +8,7 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

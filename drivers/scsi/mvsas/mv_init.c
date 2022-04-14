@@ -8,6 +8,7 @@
 */
 
 
+#include <linux/tasklet_api.h>
 #include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

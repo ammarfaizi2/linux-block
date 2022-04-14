@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

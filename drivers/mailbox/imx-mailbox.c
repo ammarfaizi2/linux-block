@@ -4,6 +4,7 @@
  * Copyright 2022 NXP, Peng Fan <peng.fan@nxp.com>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>

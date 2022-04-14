@@ -3,6 +3,7 @@
  * Copyright (C) 2020-21 Intel Corporation.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

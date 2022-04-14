@@ -58,6 +58,7 @@
  *	clears the interrupt and leave the post interrupt processing to the irq
  *	thread.
  */
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

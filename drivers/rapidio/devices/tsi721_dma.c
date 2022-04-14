@@ -6,6 +6,7 @@
  * Alexandre Bounine <alexandre.bounine@idt.com>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>

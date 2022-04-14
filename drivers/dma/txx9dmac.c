@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2009 Atsushi Nemoto
  */
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>

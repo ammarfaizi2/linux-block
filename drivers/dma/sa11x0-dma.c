@@ -6,6 +6,7 @@
  *   Derived in part from arch/arm/mach-sa1100/dma.c,
  *   Copyright (C) 2000, 2001 by Nicolas Pitre
  */
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>

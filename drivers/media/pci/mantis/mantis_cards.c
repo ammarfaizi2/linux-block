@@ -6,6 +6,7 @@
 
 */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/module.h>

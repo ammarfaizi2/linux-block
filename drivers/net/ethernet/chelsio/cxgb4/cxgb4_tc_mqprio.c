@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2019 Chelsio Communications.  All rights reserved. */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>

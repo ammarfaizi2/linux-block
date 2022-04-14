@@ -4,6 +4,7 @@
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
  
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>

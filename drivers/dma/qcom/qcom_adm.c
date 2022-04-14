@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>

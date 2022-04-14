@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 
 #include "mt7603.h"

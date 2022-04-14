@@ -7,6 +7,7 @@
  *         Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
 #include "mt7615.h"

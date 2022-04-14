@@ -11,6 +11,7 @@
 	Supported chipsets: RT2560.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>

@@ -13,6 +13,7 @@
  *
  * A special thanks goes to Realtek for their support !
  */
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/net.h>

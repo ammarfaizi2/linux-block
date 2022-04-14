@@ -19,6 +19,7 @@
  *  Author: Manjunatha Halli <manjunatha_halli@ti.com>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api.h>

@@ -7,6 +7,7 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api_lock.h>

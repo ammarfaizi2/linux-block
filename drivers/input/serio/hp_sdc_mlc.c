@@ -33,6 +33,7 @@
  *
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/hil_mlc.h>

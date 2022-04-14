@@ -7,6 +7,7 @@
  * Contact: Carlos Chinea <carlos.chinea@nokia.com>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>

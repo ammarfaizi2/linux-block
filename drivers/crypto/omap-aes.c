@@ -13,6 +13,7 @@
 #define prn(num) pr_debug(#num "=%d\n", num)
 #define prx(num) pr_debug(#num "=%x\n", num)
 
+#include <linux/tasklet_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

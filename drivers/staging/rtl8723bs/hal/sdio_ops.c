@@ -4,6 +4,7 @@
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  *******************************************************************************/
+#include <linux/tasklet_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
+#include <linux/tasklet_api.h>
 #include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

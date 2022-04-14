@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/tasklet_api.h>
 #include <linux/softirq.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>

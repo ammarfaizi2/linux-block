@@ -7,6 +7,7 @@
  * Copyright 2019 NXP
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

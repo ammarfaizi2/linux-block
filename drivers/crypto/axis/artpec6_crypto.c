@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt)     KBUILD_MODNAME ": " fmt
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

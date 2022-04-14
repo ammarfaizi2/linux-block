@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/tasklet_api.h>
 #include <linux/mm_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

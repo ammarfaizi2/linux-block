@@ -23,6 +23,7 @@
  * matching, so you need to enable IFF_PROMISC when using it.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api_lock.h>

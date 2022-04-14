@@ -3,6 +3,7 @@
  * Copyright (c) 2013 - 2015 Linaro Ltd.
  * Copyright (c) 2013 HiSilicon Limited.
  */
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/property.h>

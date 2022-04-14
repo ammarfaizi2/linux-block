@@ -7,6 +7,7 @@
  * Copyright (C) 2018-19 Sang Engineering, Wolfram Sang
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>

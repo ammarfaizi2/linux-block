@@ -25,6 +25,7 @@
  * descriptors from the tx and rx ring, thus processing one response at a time.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

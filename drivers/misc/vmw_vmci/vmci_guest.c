@@ -5,6 +5,7 @@
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/dma-mapping.h>
