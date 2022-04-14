@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/dax.h>
 #include <linux/cpuhotplug.h>
 #include <linux/capability.h>
 #include <linux/backing-dev-api.h>

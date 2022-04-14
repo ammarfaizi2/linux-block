@@ -39,6 +39,7 @@
 #include "xfs_ag.h"
 #include "xfs_defer.h"
 
+#include <linux/dax.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
