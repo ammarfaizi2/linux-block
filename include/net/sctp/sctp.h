@@ -40,6 +40,7 @@
  *   and will continue to evolve.
  */
 
+#include <net/dst_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>
