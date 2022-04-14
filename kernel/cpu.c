@@ -3,6 +3,7 @@
  *
  * This code is licenced under the GPL.
  */
+#include <linux/percpu_rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>

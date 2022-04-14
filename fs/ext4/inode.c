@@ -19,6 +19,7 @@
  *  Assorted race fixes, rewrite of ext4_get_block() by Al Viro, 2000
  */
 
+#include <linux/percpu_rwsem_api.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_api_truncate.h>

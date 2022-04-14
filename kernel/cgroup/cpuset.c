@@ -22,6 +22,7 @@
  *  distribution for more details.
  */
 
+#include <linux/percpu_rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>

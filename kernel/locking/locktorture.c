@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/percpu_rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
