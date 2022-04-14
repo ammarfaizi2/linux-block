@@ -8,6 +8,7 @@
 #ifndef __LINUX_IHEX_H__
 #define __LINUX_IHEX_H__
 
+#include <linux/align.h>
 #include <asm/byteorder.h>
 #include <linux/types.h>
 #include <linux/firmware.h>

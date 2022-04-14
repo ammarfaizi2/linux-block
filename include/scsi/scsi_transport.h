@@ -7,6 +7,7 @@
 #ifndef SCSI_TRANSPORT_H
 #define SCSI_TRANSPORT_H
 
+#include <linux/align.h>
 #include <linux/transport_class.h>
 #include <linux/blkdev.h>
 #include <linux/bug.h>
