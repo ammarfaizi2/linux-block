@@ -8,6 +8,7 @@
 #ifndef MADERA_MFD_H
 #define MADERA_MFD_H
 
+#include <linux/mod_devicetable.h>
 #include <linux/of.h>
 #include <linux/pm.h>
 

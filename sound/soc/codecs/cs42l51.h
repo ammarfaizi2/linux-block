@@ -9,6 +9,7 @@
 #ifndef _CS42L51_H
 #define _CS42L51_H
 
+#include <linux/mod_devicetable.h>
 #include <linux/types.h>
 
 struct device;

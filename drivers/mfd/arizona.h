@@ -10,6 +10,7 @@
 #ifndef _WM5102_H
 #define _WM5102_H
 
+#include <linux/mod_devicetable.h>
 #include <linux/of.h>
 #include <linux/regmap.h>
 #include <linux/pm.h>
