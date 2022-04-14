@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <asm/special_insns.h>
 #include <linux/smp.h>
 #include <linux/export.h>
 
