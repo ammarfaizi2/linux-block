@@ -7,6 +7,7 @@
  * Copyright (C) 2017-2018 Red Hat, Inc. All rights reserved.
  */
 
+#include <asm/cpufeature.h>
 #include <crypto/internal/aead.h>
 #include <crypto/internal/simd.h>
 #include <crypto/internal/skcipher.h>
