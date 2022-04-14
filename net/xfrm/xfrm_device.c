@@ -8,6 +8,7 @@
  * Steffen Klassert <steffen.klassert@secunet.com>
  */
 
+#include <linux/softirq.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>

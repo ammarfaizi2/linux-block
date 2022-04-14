@@ -7,6 +7,7 @@
  *
  * SuperH version:  Copyright (C) 1999  Niibe Yutaka
  */
+#include <linux/softirq.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>

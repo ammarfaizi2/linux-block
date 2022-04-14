@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  * Copyright (C) 2013-2014 Christoph Hellwig
  */
+#include <linux/softirq.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/refcount_api.h>

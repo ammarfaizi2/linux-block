@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "rcu: " fmt
 
+#include <linux/softirq.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>

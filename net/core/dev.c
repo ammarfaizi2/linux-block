@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/softirq.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>

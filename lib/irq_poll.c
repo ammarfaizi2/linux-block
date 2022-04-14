@@ -3,6 +3,7 @@
  * Functions related to interrupt-poll handling in the block layer. This
  * is similar to NAPI for network devices.
  */
+#include <linux/softirq.h>
 #include <linux/smp_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>
