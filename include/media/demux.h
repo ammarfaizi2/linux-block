@@ -26,6 +26,7 @@
 #ifndef __DEMUX_H
 #define __DEMUX_H
 
+#include <linux/ktime.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/list.h>
