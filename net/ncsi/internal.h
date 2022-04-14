@@ -6,6 +6,7 @@
 #ifndef __NCSI_INTERNAL_H__
 #define __NCSI_INTERNAL_H__
 
+#include <linux/rculist.h>
 #include <linux/types.h>
 
 enum {

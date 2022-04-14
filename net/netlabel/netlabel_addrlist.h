@@ -17,6 +17,7 @@
 #ifndef _NETLABEL_ADDRLIST_H
 #define _NETLABEL_ADDRLIST_H
 
+#include <linux/rculist.h>
 #include <linux/types.h>
 #include <linux/rcupdate.h>
 #include <linux/list.h>
