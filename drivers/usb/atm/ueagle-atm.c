@@ -12,6 +12,7 @@
  * The rest of the code was was rewritten from scratch.
  */
 
+#include <uapi/linux/if_ether.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/mutex_api.h>
