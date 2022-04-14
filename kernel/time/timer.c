@@ -18,6 +18,7 @@
  *              Designed by David S. Miller, Alexey Kuznetsov and Ingo Molnar
  */
 
+#include <linux/debugobjects.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
