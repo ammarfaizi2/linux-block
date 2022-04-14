@@ -6,6 +6,7 @@
  *  Hacked together by Andi Kleen
  */
 
+#include <asm/segment_api.h>
 #include <asm/elf_api.h>
 #include <linux/module.h>
 

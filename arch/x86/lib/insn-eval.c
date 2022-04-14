@@ -3,6 +3,7 @@
  *
  * Copyright (C) Intel Corporation 2017
  */
+#include <asm/segment_api.h>
 #include <asm/ptrace.h>
 #include <asm/msr.h>
 #include <linux/kernel.h>

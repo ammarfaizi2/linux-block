@@ -18,6 +18,7 @@
  |    other processes using the emulator while swapping is in progress.      |
  +---------------------------------------------------------------------------*/
 
+#include <asm/segment_api.h>
 #include <linux/stddef.h>
 
 #include <linux/uaccess.h>

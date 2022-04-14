@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/segment_api.h>
 #include <linux/capability.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>
