@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/prandom.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/module.h>
 #include <linux/types.h>
