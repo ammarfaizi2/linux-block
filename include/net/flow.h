@@ -8,6 +8,7 @@
 #ifndef _NET_FLOW_H
 #define _NET_FLOW_H
 
+#include <linux/build_bug.h>
 #include <linux/socket.h>
 #include <linux/in6.h>
 #include <linux/atomic.h>

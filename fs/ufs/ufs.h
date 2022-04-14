@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/build_bug.h>
 #include <linux/types.h>
 
 #define UFS_MAX_GROUP_LOADED 8
