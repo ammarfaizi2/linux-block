@@ -19,6 +19,7 @@
  *   <gilles.quillard@bull.net>
  */
 
+#include <net/ipv6_api_sock.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/uio_api.h>
