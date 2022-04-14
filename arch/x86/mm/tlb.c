@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/preempt.h>

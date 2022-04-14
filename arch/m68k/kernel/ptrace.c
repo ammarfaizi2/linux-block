@@ -10,6 +10,7 @@
  * this archive for more details.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>
 #include <linux/jiffies.h>

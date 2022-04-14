@@ -28,6 +28,7 @@
  *		EAGAIN
  */
 
+#include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/pid.h>
 #include <linux/mutex_api.h>

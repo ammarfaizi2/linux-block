@@ -15,6 +15,7 @@
  *  things.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>

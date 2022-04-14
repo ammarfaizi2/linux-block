@@ -15,6 +15,7 @@
  *	   Rn  = address
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/perf_event_api.h>
 #include <linux/mmap_lock.h>

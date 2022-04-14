@@ -12,6 +12,7 @@
  * Marc Gauthier<marc@tensilica.com> <marc@alumni.uwaterloo.ca>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/audit.h>
 #include <linux/errno.h>

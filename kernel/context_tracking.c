@@ -15,6 +15,7 @@
  *
  */
 
+#include <linux/sched/signal.h>
 #include <linux/cpumask_api.h>
 #include <linux/context_tracking.h>
 #include <linux/rcupdate.h>

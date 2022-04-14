@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"SEV: " fmt
 
+#include <linux/sched/signal.h>
 #include <linux/ratelimit.h>
 #include <linux/pgtable_api.h>
 #include <linux/io.h>

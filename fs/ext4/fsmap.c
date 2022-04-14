@@ -5,6 +5,7 @@
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
 #include "ext4.h"
+#include <linux/sched/signal.h>
 #include <linux/fsmap.h>
 #include "fsmap.h"
 #include "mballoc.h"

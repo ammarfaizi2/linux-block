@@ -48,6 +48,7 @@
  *  Overall revision about smaps.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/rculist.h>

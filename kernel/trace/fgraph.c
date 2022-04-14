@@ -7,6 +7,7 @@
  *
  * Highly modified by Steven Rostedt (VMware).
  */
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/notifier.h>
 #include <linux/notifier_api.h>

@@ -3,6 +3,7 @@
  * Copyright © 2014 Intel Corporation
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/mm_api.h>

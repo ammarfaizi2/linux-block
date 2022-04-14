@@ -6,6 +6,7 @@
  * Copyright (c) 2013 Guenter Roeck
  */
 
+#include <linux/sched/signal.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/math.h>

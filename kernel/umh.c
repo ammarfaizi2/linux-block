@@ -2,6 +2,7 @@
 /*
  * umh - the kernel usermode helper
  */
+#include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/freezer.h>
 #include <linux/capability.h>

@@ -10,6 +10,7 @@
  *  Based on the ia64, i386, and alpha versions.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/restart_block_api.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>

@@ -4,6 +4,7 @@
  * Copyright © 2008,2010 Intel Corporation
  */
 
+#include <linux/sched/signal.h>
 #include <linux/random.h>
 #include <linux/radix-tree-api.h>
 #include <linux/pagefault_ctrl.h>

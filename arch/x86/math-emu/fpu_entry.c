@@ -25,6 +25,7 @@
  | entry points for wm-FPU-emu.                                              |
  +---------------------------------------------------------------------------*/
 
+#include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/signal.h>
 #include <linux/regset.h>

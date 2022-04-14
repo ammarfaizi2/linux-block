@@ -9,6 +9,7 @@
  *    Copyright (C) 1995  Linus Torvalds
  */
 
+#include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>

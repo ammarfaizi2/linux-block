@@ -7,6 +7,8 @@
  *  HPFS bitmap operations
  */
 
+#include <linux/sched/signal.h>
+
 #include "hpfs_fn.h"
 
 static void hpfs_claim_alloc(struct super_block *s, secno sec)

@@ -21,6 +21,7 @@
 #include "ivtv-ioctl.h"
 #include "ivtv-cards.h"
 #include "ivtv-firmware.h"
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>

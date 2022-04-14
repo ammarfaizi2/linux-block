@@ -6,6 +6,7 @@
  * Copyright (C) 2002  Christoph Hellwig
  */
 
+#include <linux/sched/signal.h>
 #include <linux/ptrace_types.h>
 #include <linux/pid.h>
 #include <linux/pgtable_api.h>

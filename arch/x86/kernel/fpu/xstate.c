@@ -4,6 +4,7 @@
  *
  * Author: Suresh Siddha <suresh.b.siddha@intel.com>
  */
+#include <linux/sched/signal.h>
 #include <linux/jiffies.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

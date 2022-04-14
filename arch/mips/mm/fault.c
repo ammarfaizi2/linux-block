@@ -5,6 +5,7 @@
  *
  * Copyright (C) 1995 - 2000 by Ralf Baechle
  */
+#include <linux/sched/signal.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/pagemap.h>

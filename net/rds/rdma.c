@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/sched/signal.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/mm_page_address.h>

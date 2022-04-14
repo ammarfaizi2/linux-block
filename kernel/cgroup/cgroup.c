@@ -30,6 +30,7 @@
 
 #include "cgroup-internal.h"
 
+#include <linux/sched/signal.h>
 #include <linux/refcount_api.h>
 #include <linux/rcu_sync_api.h>
 #include <linux/rculist.h>

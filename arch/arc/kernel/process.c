@@ -5,6 +5,7 @@
  * Amit Bhor, Kanika Nema: Codito Technologies 2004
  */
 
+#include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/mmap_lock.h>

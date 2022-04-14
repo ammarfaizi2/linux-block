@@ -9,6 +9,7 @@
  *  Shared /dev/zero mmapping support, Feb 2000, Kanoj Sarcar <kanoj@sgi.com>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

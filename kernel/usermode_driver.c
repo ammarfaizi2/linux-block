@@ -2,6 +2,7 @@
 /*
  * umd - User mode driver support
  */
+#include <linux/sched/signal.h>
 #include <linux/pid.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com/
  *	Andrew F. Davis <afd@ti.com>
  */
+#include <linux/sched/signal.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

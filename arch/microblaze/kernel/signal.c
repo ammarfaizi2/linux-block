@@ -18,6 +18,7 @@
  * archive for more details.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

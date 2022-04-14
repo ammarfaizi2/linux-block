@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/sched/signal.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_truncate.h>

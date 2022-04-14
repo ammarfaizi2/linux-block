@@ -10,6 +10,7 @@
  * Copyright (C) 2014 Imagination Technologies Ltd.
  */
 
+#include <linux/sched/signal.h>
 #include <linux/preempt.h>
 #include <linux/perf_event_api.h>
 #include <linux/types.h>

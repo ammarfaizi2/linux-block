@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>

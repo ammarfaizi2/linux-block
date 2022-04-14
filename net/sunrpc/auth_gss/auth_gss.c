@@ -11,6 +11,7 @@
  *  Andy Adamson   <andros@umich.edu>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/refcount_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/kref_api.h>

@@ -11,6 +11,7 @@
  *   I don't want/intend to extend unwinding code to understand raw asm
  */
 
+#include <linux/sched/signal.h>
 #include <asm/asm-offsets.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>

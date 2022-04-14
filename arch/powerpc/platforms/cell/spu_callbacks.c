@@ -5,6 +5,7 @@
 
 #undef DEBUG
 
+#include <linux/sched/signal.h>
 #include <linux/kallsyms.h>
 #include <linux/export.h>
 #include <linux/syscalls.h>

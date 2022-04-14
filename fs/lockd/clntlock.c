@@ -7,6 +7,7 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/jiffies.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2008-2016 Helge Deller <deller@gmx.de>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

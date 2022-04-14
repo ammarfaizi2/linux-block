@@ -14,6 +14,7 @@
  * 4.get asynchronous messaging
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 
 #include "digi00x.h"

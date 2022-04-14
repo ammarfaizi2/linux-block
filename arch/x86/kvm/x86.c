@@ -16,6 +16,7 @@
  *   Ben-Ami Yassour <benami@il.ibm.com>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/profile.h>

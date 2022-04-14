@@ -2,6 +2,7 @@
 /* Copyright(c) 2020 Intel Corporation. */
 
 #define _GNU_SOURCE
+#include <linux/sched/signal.h>
 #include <poll.h>
 #include <pthread.h>
 #include <signal.h>

@@ -16,6 +16,7 @@
  *
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched.h>
 
 #include "fireworks.h"

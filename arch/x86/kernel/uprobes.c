@@ -7,6 +7,7 @@
  *	Srikar Dronamraju
  *	Jim Keniston
  */
+#include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/prefetch.h>
 #include <linux/notifier_api.h>

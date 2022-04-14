@@ -4,6 +4,7 @@
  * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
+#include <linux/sched/signal.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/rcuwait_api.h>
 #include <linux/preempt.h>

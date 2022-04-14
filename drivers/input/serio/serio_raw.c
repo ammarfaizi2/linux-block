@@ -6,6 +6,7 @@
  * Copyright (c) 2004 Dmitry Torokhov
  */
 
+#include <linux/sched/signal.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs.h>
