@@ -5,6 +5,7 @@
  * Copyright 2018 Analog Devices Inc.
  */
 
+#include <linux/sysfs.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/delay.h>

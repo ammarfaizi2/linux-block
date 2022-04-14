@@ -8,6 +8,7 @@
  * and adt7410.c from iio-staging by Sonic Zhang <sonic.zhang@analog.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>

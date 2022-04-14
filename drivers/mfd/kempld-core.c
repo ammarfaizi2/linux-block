@@ -6,6 +6,7 @@
  * Author: Michael Brunner <michael.brunner@kontron.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

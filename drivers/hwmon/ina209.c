@@ -17,6 +17,7 @@
  * https://www.ti.com/lit/gpn/ina209
  */
 
+#include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

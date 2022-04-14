@@ -6,6 +6,7 @@
 #define KMSG_COMPONENT "cpu"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/jiffies.h>

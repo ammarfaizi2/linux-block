@@ -3,6 +3,7 @@
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/prefetch.h>
 #include <linux/pm_wakeup.h>

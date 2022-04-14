@@ -6,6 +6,7 @@
  * Copyright 2014-2015 Linaro Ltd.
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

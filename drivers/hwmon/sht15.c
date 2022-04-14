@@ -13,6 +13,7 @@
  * For further information, see the Documentation/hwmon/sht15.rst file.
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

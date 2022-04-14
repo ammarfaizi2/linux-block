@@ -68,6 +68,7 @@
  * Copyright (c) 2006-2011 Michael Hennerich <michael.hennerich@analog.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/bitops.h>

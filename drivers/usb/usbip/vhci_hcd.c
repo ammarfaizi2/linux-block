@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2016 Nobuo Iwata
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/net.h>
 #include <linux/mutex_api.h>

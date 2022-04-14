@@ -8,6 +8,7 @@
  *          Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>

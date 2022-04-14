@@ -11,6 +11,7 @@
  * SPARSEMEM should be contained here, or in mm/memory_hotplug.c.
  */
 
+#include <linux/sysfs.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mmzone_api.h>

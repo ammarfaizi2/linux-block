@@ -16,6 +16,7 @@
  * Copyright 2011 Google, Inc.
  */
 
+#include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

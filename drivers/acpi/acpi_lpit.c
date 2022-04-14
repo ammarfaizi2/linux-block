@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Intel Corporation. All rights reserved.
  */
 
+#include <linux/sysfs.h>
 #include <linux/math64.h>
 #include <linux/io.h>
 #include <linux/device_api.h>

@@ -4,6 +4,7 @@
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
+#include <linux/sysfs.h>
 #include <linux/perf_event_api.h>
 #include <linux/percpu.h>
 #include <linux/device_api_lock.h>

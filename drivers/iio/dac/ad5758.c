@@ -6,6 +6,7 @@
  *
  * TODO: Currently CRC is not supported in this driver
  */
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/bsearch.h>
 #include <linux/delay.h>

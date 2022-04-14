@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/sysfs.h>
 #include <linux/kobject_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

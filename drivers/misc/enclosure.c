@@ -9,6 +9,7 @@
 **
 **-----------------------------------------------------------------------------
 */
+#include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/device/class.h>

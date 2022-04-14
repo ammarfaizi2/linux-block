@@ -9,6 +9,7 @@
  * (C) 1999		David A. Hinds
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/device/class.h>
 #include <linux/module.h>

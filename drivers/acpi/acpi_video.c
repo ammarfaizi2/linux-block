@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "ACPI: video: " fmt
 
+#include <linux/sysfs.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>

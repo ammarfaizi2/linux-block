@@ -6,6 +6,7 @@
  *  Copyright (c) 2020 Dell Inc.
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 
 #include "dell-wmi-sysman.h"

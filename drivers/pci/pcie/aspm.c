@@ -7,6 +7,7 @@
  * Copyright (C) Shaohua Li (shaohua.li@intel.com)
  */
 
+#include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>

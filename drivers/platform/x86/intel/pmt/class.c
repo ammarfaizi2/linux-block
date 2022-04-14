@@ -8,6 +8,7 @@
  * Author: "Alexander Duyck" <alexander.h.duyck@linux.intel.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

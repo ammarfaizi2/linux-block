@@ -5,6 +5,7 @@
  * Portions Copyright (C) 2020 Christoph Hellwig
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

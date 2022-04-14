@@ -34,6 +34,7 @@
 
 #include "core_priv.h"
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/kobject_api.h>

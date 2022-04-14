@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Markus Franke <franke.m@sebakmt.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

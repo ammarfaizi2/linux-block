@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/kmod.h>

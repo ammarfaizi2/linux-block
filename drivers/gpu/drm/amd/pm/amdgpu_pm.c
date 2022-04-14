@@ -28,6 +28,7 @@
 #include "amdgpu_pm.h"
 #include "amdgpu_dpm.h"
 #include "atom.h"
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>

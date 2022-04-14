@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2014 ARM Ltd.
  */
+#include <linux/sysfs.h>
 #include <linux/smp_api.h>
 #include <linux/kobject_api.h>
 #include <linux/crc32.h>

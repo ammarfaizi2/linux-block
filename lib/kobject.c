@@ -10,6 +10,7 @@
  * about using the kobject interface.
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>

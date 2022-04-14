@@ -10,6 +10,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/sysfs.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

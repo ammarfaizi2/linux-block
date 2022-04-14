@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sysfs.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

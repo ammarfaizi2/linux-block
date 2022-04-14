@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/net.h>

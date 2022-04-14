@@ -15,6 +15,7 @@
  * https://www.ti.com/lit/ds/symlink/dac7573.pdf
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/iio/iio.h>
 #include <linux/i2c.h>

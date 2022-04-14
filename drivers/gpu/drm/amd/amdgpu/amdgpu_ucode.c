@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/sysfs.h>
 #include <linux/crc32.h>
 #include <linux/firmware.h>
 #include <linux/slab.h>

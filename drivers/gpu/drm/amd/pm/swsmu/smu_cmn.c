@@ -22,6 +22,7 @@
 
 #define SWSMU_CODE_LAYER_L4
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitmap.h>

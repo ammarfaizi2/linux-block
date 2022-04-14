@@ -5,6 +5,7 @@
  * Copyright (C) 2013 The IMS Company
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/bitops.h>

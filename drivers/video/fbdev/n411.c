@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/sysfs.h>
 #include <linux/kmod.h>
 #include <linux/io.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2016 Mentor Graphics
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/list.h>

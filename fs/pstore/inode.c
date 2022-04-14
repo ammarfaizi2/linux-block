@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Intel Corporation <tony.luck@intel.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

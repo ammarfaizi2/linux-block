@@ -10,6 +10,7 @@
  * - ABC/target calibration
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>

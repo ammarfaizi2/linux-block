@@ -8,6 +8,7 @@
  * configfs Copyright (C) 2005 Oracle.  All rights reserved.
  */
 
+#include <linux/sysfs.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

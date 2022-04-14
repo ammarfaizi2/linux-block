@@ -6,6 +6,7 @@
  * Author: Mike Looijmans <mike.looijmans@topic.nl>
  */
 
+#include <linux/sysfs.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/err.h>

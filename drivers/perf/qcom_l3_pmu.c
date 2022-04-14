@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/sysfs.h>
 #include <linux/perf_event_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

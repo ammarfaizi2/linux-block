@@ -10,6 +10,7 @@
  * manipulate wakelocks on Android.
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/pm_wakeup.h>

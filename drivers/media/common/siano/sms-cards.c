@@ -7,6 +7,7 @@
 
 #include "sms-cards.h"
 #include "smsir.h"
+#include <linux/sysfs.h>
 #include <linux/kmod.h>
 #include <linux/module.h>
 

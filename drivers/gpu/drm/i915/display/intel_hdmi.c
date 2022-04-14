@@ -26,6 +26,7 @@
  *	Jesse Barnes <jesse.barnes@intel.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/capability.h>
 #include <linux/delay.h>
 #include <linux/hdmi.h>

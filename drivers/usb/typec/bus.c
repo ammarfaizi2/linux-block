@@ -6,6 +6,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/usb/pd_vdo.h>

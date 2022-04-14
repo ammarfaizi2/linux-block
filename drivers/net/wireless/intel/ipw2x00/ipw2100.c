@@ -119,6 +119,7 @@ that only one external action is invoked at a time.
 
 */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>

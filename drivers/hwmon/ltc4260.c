@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Guenter Roeck
  */
 
+#include <linux/sysfs.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/err.h>

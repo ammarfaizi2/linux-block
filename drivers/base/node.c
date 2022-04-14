@@ -3,6 +3,7 @@
  * Basic Node interface support
  */
 
+#include <linux/sysfs.h>
 #include <linux/stat.h>
 #include <linux/sched.h>
 #include <linux/preempt.h>

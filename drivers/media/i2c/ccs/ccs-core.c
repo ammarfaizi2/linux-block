@@ -13,6 +13,7 @@
  * Based on smia-sensor.c by Tuukka Toivonen <tuukkat76@gmail.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/mm.h>
 #include <linux/mm_api_kvmalloc.h>

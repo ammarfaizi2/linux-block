@@ -57,6 +57,7 @@
  *      http://aiptektablet.sourceforge.net.
  */
 
+#include <linux/sysfs.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

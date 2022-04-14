@@ -6,6 +6,7 @@
  * Copyright (C) 2005-2012 Tai-hwa Liang, Sentelic Corporation.
  */
 
+#include <linux/sysfs.h>
 #include <linux/module.h>
 #include <linux/input.h>
 #include <linux/input/mt.h>

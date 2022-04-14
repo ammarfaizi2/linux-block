@@ -13,6 +13,7 @@
  * configured.
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/input.h>

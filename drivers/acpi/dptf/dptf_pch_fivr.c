@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Intel Corporation.
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>

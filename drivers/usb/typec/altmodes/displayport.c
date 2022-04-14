@@ -8,6 +8,7 @@
  * DisplayPort is trademark of VESA (www.vesa.org)
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

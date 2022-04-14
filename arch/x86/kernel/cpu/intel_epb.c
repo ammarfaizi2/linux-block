@@ -8,6 +8,7 @@
  *	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/preempt.h>
 #include <linux/irqflags.h>
 #include <linux/init.h>

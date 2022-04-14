@@ -21,6 +21,7 @@
  *          Alex Deucher <alexdeucher@gmail.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>

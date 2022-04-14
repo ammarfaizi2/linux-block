@@ -12,6 +12,7 @@
  *  Copyright (C) 1995-2006 Dell Inc.
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/notifier_api.h>

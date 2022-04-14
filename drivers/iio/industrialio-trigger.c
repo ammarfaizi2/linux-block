@@ -4,6 +4,7 @@
  * Copyright (c) 2008 Jonathan Cameron
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/log2.h>
 #include <linux/irqdesc.h>

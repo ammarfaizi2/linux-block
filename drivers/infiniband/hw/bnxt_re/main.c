@@ -36,6 +36,7 @@
  * Description: Main component of the bnxt_re driver
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

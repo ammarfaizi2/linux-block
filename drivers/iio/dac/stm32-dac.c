@@ -7,6 +7,7 @@
  *	    Fabrice Gasnier <fabrice.gasnier@st.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bitfield.h>

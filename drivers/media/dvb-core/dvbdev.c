@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "dvbdev: " fmt
 
+#include <linux/sysfs.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

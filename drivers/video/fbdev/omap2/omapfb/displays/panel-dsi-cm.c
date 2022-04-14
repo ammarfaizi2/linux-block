@@ -8,6 +8,7 @@
 
 /* #define DEBUG */
 
+#include <linux/sysfs.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

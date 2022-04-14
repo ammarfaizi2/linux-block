@@ -8,6 +8,7 @@
  *
  * All rights reserved.
  */
+#include <linux/sysfs.h>
 #include <linux/smp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

@@ -6,6 +6,7 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

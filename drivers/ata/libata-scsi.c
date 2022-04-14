@@ -13,6 +13,7 @@
  *  - http://www.t13.org/
  */
 
+#include <linux/sysfs.h>
 #include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

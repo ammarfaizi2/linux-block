@@ -22,6 +22,7 @@
  * Authors: Christian König
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/atomic_api.h>

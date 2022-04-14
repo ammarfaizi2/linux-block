@@ -8,6 +8,7 @@
  *    statistics, and service functions...
  *    Add vports, etc
  */
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

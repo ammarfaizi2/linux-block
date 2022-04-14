@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/kobject_api.h>
 #include <linux/kdev_t.h>

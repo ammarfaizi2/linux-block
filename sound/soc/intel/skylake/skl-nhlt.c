@@ -8,6 +8,7 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+#include <linux/sysfs.h>
 #include <linux/pci.h>
 #include <sound/intel-nhlt.h>
 #include "skl.h"

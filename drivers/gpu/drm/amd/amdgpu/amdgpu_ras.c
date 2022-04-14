@@ -21,6 +21,7 @@
  *
  *
  */
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

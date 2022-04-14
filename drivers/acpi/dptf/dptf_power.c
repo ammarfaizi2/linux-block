@@ -4,6 +4,7 @@
  * Copyright (c) 2016, Intel Corporation.
  */
 
+#include <linux/sysfs.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

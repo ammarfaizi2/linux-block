@@ -4,6 +4,7 @@
  *  Copyright (c) 2021 by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/rwsem_api.h>
 #include <linux/mutex_api.h>

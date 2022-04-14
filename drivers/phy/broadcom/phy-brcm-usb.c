@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2017 Broadcom
  */
 
+#include <linux/sysfs.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

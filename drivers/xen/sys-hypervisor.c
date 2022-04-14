@@ -4,6 +4,7 @@
  *  Authored by: Mike D. Day <ncmike@us.ibm.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

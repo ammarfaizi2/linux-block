@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies Ltd */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/mlx5/driver.h>

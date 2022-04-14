@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/sysfs.h>
 #include <linux/kmod.h>
 #include <linux/module.h>
 

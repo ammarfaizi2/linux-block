@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2004 - 2006  Paul Mundt
  */
+#include <linux/sysfs.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/kernel.h>

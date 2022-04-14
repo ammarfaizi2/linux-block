@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/configfs.h>

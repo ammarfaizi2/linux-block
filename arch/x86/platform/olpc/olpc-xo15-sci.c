@@ -5,6 +5,7 @@
  * Copyright (C) 2009-2010 One Laptop per Child
  */
 
+#include <linux/sysfs.h>
 #include <linux/pm_wakeup.h>
 #include <linux/device.h>
 #include <linux/slab.h>

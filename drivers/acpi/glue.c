@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/sysfs.h>
 #include <linux/rwsem_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>

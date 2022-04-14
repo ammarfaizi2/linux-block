@@ -3,6 +3,7 @@
  * Copyright (c) 2018 Google LLC
  * Copyright (c) 2021 Aspeed Technology Inc.
  */
+#include <linux/sysfs.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/module.h>

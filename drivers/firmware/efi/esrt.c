@@ -13,6 +13,7 @@
  */
 #define pr_fmt(fmt) "esrt: " fmt
 
+#include <linux/sysfs.h>
 #include <linux/kobject_api.h>
 #include <linux/capability.h>
 #include <linux/device.h>

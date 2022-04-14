@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ACPI FPDT: " fmt
 
+#include <linux/sysfs.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>
