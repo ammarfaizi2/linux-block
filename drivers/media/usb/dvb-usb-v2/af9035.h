@@ -9,6 +9,7 @@
 #ifndef AF9035_H
 #define AF9035_H
 
+#include <linux/i2c.h>
 #include <linux/platform_device.h>
 #include "dvb_usb.h"
 #include "af9033.h"

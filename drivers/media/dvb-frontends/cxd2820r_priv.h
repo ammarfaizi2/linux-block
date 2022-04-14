@@ -9,6 +9,7 @@
 #ifndef CXD2820R_PRIV_H
 #define CXD2820R_PRIV_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/version.h>
 #include <media/dvb_frontend.h>
 #include <media/dvb_math.h>

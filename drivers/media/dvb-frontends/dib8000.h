@@ -2,6 +2,8 @@
 #ifndef DIB8000_H
 #define DIB8000_H
 
+#include <linux/i2c.h>
+
 #include "dibx000_common.h"
 
 struct dib8000_config {

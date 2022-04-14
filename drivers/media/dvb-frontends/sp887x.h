@@ -6,6 +6,7 @@
 #ifndef SP887X_H
 #define SP887X_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <linux/firmware.h>
 

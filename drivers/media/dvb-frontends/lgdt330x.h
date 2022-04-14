@@ -8,6 +8,7 @@
 #ifndef LGDT330X_H
 #define LGDT330X_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 typedef enum lg_chip_t {

@@ -7,6 +7,8 @@
 #define _DIB0700_H_
 
 #define DVB_USB_LOG_PREFIX "dib0700"
+#include <linux/i2c.h>
+
 #include "dvb-usb.h"
 
 #include "dib07x0.h"

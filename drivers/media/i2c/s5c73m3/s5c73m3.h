@@ -9,6 +9,7 @@
 #ifndef S5C73M3_H_
 #define S5C73M3_H_
 
+#include <linux/i2c.h>
 #include <linux/clk.h>
 #include <linux/kernel.h>
 #include <linux/regulator/consumer.h>

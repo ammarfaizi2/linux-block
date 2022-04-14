@@ -8,6 +8,7 @@
 #ifndef TDA10071_H
 #define TDA10071_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 /*

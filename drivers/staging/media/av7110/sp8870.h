@@ -10,6 +10,7 @@
 #ifndef SP8870_H
 #define SP8870_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <linux/firmware.h>
 

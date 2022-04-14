@@ -8,6 +8,7 @@
 #ifndef RTL2830_H
 #define RTL2830_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 /**

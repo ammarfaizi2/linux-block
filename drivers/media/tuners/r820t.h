@@ -8,6 +8,7 @@
 #ifndef R820T_H
 #define R820T_H
 
+#include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 
 enum r820t_chip {

@@ -10,6 +10,7 @@
 #ifndef CX24117_H
 #define CX24117_H
 
+#include <linux/i2c.h>
 #include <linux/dev_printk.h>
 #include <linux/dvb/frontend.h>
 

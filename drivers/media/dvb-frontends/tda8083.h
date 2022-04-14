@@ -15,6 +15,7 @@
 #ifndef TDA8083_H
 #define TDA8083_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct tda8083_config

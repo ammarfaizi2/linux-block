@@ -9,6 +9,7 @@
 #define SP2_PRIV_H
 
 #include "sp2.h"
+#include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 
 /* state struct */

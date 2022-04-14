@@ -10,6 +10,7 @@
 #ifndef NXT200X_H
 #define NXT200X_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <linux/firmware.h>
 

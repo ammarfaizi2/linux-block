@@ -9,6 +9,7 @@
 #ifndef QT1010_H
 #define QT1010_H
 
+#include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 
 struct qt1010_config {

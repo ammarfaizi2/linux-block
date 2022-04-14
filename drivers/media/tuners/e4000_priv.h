@@ -9,6 +9,7 @@
 #define E4000_PRIV_H
 
 #include "e4000.h"
+#include <linux/i2c.h>
 #include <linux/math64.h>
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-subdev.h>

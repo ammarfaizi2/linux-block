@@ -10,6 +10,8 @@
 #ifndef TDHD1_H
 #define TDHD1_H
 
+#include <linux/i2c.h>
+
 #include "tda1004x.h"
 
 static int alps_tdhd1_204_request_firmware(struct dvb_frontend *fe, const struct firmware **fw, char *name);

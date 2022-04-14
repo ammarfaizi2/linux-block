@@ -9,6 +9,7 @@
 #ifndef S921_H
 #define S921_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct s921_config {

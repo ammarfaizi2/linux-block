@@ -23,6 +23,7 @@
 
 #define DVB_USB_LOG_PREFIX "anysee"
 #include "dvb_usb.h"
+#include <linux/i2c.h>
 #include <media/dvb_ca_en50221.h>
 
 enum cmd {

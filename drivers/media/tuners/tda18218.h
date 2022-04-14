@@ -8,6 +8,7 @@
 #ifndef TDA18218_H
 #define TDA18218_H
 
+#include <linux/i2c.h>
 #include <media/dvb_frontend.h>
 
 struct tda18218_config {

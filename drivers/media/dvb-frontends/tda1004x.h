@@ -10,6 +10,7 @@
 #ifndef TDA1004X_H
 #define TDA1004X_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <linux/firmware.h>
 

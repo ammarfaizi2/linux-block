@@ -13,6 +13,7 @@
 #ifndef CXD2841ER_H
 #define CXD2841ER_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 #define CXD2841ER_USE_GATECTRL	1	/* bit 0 */

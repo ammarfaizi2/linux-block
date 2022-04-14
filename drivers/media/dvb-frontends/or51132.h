@@ -8,6 +8,7 @@
 #ifndef OR51132_H
 #define OR51132_H
 
+#include <linux/i2c.h>
 #include <linux/firmware.h>
 #include <linux/dvb/frontend.h>
 

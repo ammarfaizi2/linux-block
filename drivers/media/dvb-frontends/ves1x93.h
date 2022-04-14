@@ -13,6 +13,7 @@
 #ifndef VES1X93_H
 #define VES1X93_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct ves1x93_config

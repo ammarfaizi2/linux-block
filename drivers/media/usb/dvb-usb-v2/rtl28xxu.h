@@ -9,6 +9,7 @@
 #ifndef RTL28XXU_H
 #define RTL28XXU_H
 
+#include <linux/i2c.h>
 #include <linux/platform_device.h>
 
 #include "dvb_usb.h"

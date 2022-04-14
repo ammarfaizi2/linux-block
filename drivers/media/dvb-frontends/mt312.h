@@ -13,6 +13,7 @@
 #ifndef MT312_H
 #define MT312_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 struct mt312_config {

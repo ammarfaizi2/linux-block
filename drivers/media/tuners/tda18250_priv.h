@@ -8,6 +8,8 @@
 #ifndef TDA18250_PRIV_H
 #define TDA18250_PRIV_H
 
+#include <linux/i2c.h>
+
 #include "tda18250.h"
 
 #define R00_ID1		0x00	/* ID byte 1 */

@@ -9,6 +9,7 @@
 #ifndef CXD2820R_H
 #define CXD2820R_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 
 #define CXD2820R_GPIO_D (0 << 0) /* disable */

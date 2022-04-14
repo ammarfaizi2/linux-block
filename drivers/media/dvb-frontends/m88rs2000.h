@@ -8,6 +8,7 @@
 #ifndef M88RS2000_H
 #define M88RS2000_H
 
+#include <linux/i2c.h>
 #include <linux/dvb/frontend.h>
 #include <media/dvb_frontend.h>
 
