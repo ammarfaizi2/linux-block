@@ -5,6 +5,8 @@
 #ifndef _LINUX_KCORE_H
 #define _LINUX_KCORE_H
 
+#include <linux/list.h>
+
 enum kcore_type {
 	KCORE_TEXT,
 	KCORE_VMALLOC,
