@@ -8,6 +8,7 @@
 /*
  * The mincore() system call.
  */
+#include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>

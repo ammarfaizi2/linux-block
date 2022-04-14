@@ -113,6 +113,7 @@
  * ->readpage() which may be less efficient.
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>

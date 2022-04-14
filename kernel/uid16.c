@@ -4,6 +4,7 @@
  *	together in the faint hope we can take the out in five years time.
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/mm.h>
 #include <linux/mman.h>
 #include <linux/notifier.h>

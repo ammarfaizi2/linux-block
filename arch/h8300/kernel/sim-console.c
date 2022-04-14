@@ -7,6 +7,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/syscalls_api.h>
 #include <linux/console.h>
 #include <linux/init.h>
 #include <linux/serial_core.h>

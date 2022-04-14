@@ -2,6 +2,7 @@
 /* Common capabilities, needed by capability.o.
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

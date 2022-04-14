@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/fs_api_sb.h>

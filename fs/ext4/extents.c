@@ -17,6 +17,7 @@
  *   - smart tree reduction
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/percpu_counter_api.h>

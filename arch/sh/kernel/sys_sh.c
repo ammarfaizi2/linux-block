@@ -8,6 +8,7 @@
  *
  * Taken from i386 version.
  */
+#include <linux/syscalls_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/errno.h>

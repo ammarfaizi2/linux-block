@@ -11,6 +11,7 @@
  */
 #define __COMPAT_SYSCALL_NR
 
+#include <linux/syscalls_api.h>
 #include <linux/compat.h>
 #include <linux/compiler.h>
 #include <linux/syscalls.h>

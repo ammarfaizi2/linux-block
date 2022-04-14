@@ -5,6 +5,7 @@
  * Copyright (C) 2000 Silicon Graphics, Inc.
  * Written by Ulf Carlsson (ulfc@engr.sgi.com)
  */
+#include <linux/syscalls_api.h>
 #include <linux/compiler.h>
 #include <linux/mm.h>
 #include <linux/errno.h>

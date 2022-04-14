@@ -13,6 +13,7 @@
  * overwrite the default setting if needed.
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_api.h>

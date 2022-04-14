@@ -9,6 +9,7 @@
  *  have a non-standard calling sequence on the Linux/arm
  *  platform.
  */
+#include <linux/syscalls_api.h>
 #include <linux/export.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

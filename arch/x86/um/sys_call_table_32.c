@@ -4,6 +4,7 @@
  * with some changes for UML.
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/linkage.h>
 #include <linux/sys.h>
 #include <linux/cache.h>

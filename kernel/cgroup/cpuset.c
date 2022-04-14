@@ -22,6 +22,7 @@
  *  distribution for more details.
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched/topology.h>

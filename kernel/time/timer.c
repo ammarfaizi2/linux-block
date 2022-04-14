@@ -18,6 +18,7 @@
  *              Designed by David S. Miller, Alexey Kuznetsov and Ingo Molnar
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/softirq.h>
 #include <linux/sched.h>

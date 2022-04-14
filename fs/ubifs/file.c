@@ -38,6 +38,7 @@
  */
 
 #include "ubifs.h"
+#include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pagemap.h>
 #include <linux/pagemap_api_readahead.h>

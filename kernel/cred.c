@@ -4,6 +4,7 @@
  * Copyright (C) 2008 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
+#include <linux/syscalls_api.h>
 #include <linux/sched/user.h>
 #include <linux/fs.h>
 #include <linux/capability.h>

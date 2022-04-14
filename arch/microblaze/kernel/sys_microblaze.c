@@ -12,6 +12,7 @@
  * for more details.
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/errno.h>
 #include <linux/export.h>
 #include <linux/mm.h>

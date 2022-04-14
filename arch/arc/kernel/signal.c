@@ -44,6 +44,7 @@
  * Rahul Trivedi, Kanika Nema: Codito Technologies 2004
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>

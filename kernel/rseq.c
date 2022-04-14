@@ -8,6 +8,7 @@
  * Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched/signal.h>
 #include <linux/ratelimit.h>

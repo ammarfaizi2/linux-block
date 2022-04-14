@@ -8,6 +8,7 @@
  *  Copyright (C) 2002-2003 Stephen Rothwell, IBM Corporation
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/sched/signal.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched/affinity.h>

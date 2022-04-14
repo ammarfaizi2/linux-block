@@ -37,6 +37,7 @@
  * and only accepts the connection if the higher numbered node is heartbeating.
  */
 
+#include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
