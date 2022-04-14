@@ -7,6 +7,7 @@
 #ifndef _NET_DSA_SJA1105_H
 #define _NET_DSA_SJA1105_H
 
+#include <linux/kthread.h>
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>
 #include <linux/dsa/8021q.h>

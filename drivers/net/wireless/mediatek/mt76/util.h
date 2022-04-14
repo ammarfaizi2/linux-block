@@ -7,6 +7,7 @@
 #ifndef __MT76_UTIL_H
 #define __MT76_UTIL_H
 
+#include <linux/kthread.h>
 #include <linux/skbuff.h>
 #include <linux/bitops.h>
 #include <linux/bitfield.h>
