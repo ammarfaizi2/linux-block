@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Linaro Ltd. <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/math.h>
 #include <asm/unaligned.h>
 #include <crypto/algapi.h>
 #include <crypto/internal/hash.h>

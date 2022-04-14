@@ -38,6 +38,7 @@
  * saturated values.
  */
 
+#include <linux/math.h>
 #include <linux/capability.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

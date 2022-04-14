@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2017, Intel Corporation
  */
+#include <linux/math.h>
 #include <linux/slab.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

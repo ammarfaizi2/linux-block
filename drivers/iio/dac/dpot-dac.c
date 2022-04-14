@@ -26,6 +26,7 @@
  *                   '------+------------+
  */
 
+#include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/iio/consumer.h>

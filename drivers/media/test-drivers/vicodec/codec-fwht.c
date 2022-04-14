@@ -9,6 +9,7 @@
  * R.D. Brown, 1977
  */
 
+#include <linux/math.h>
 #include <linux/string.h>
 #include <linux/kernel.h>
 #include <linux/videodev2.h>

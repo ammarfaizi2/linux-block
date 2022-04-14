@@ -3,6 +3,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/math.h>
 #include <linux/log2.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

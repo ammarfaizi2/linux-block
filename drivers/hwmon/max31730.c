@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Guenter Roeck <linux@roeck-us.net>
  */
 
+#include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/err.h>

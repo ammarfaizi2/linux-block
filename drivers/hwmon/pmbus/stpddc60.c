@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Flextronics International Sweden AB.
  */
 
+#include <linux/math.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

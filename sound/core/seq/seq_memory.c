@@ -6,6 +6,7 @@
  *                2000 by Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/math.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/export.h>

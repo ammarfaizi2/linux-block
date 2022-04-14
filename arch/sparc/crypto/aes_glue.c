@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/math.h>
 #include <linux/crypto.h>
 #include <linux/init.h>
 #include <linux/module.h>

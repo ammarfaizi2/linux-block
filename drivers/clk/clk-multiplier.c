@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/math.h>
 #include <linux/bitops.h>
 #include <linux/clk-provider.h>
 #include <linux/err.h>

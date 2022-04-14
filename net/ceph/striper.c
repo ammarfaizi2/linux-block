@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
+#include <linux/math.h>
 #include <linux/kernel.h>
 #include <linux/ceph/ceph_debug.h>
 

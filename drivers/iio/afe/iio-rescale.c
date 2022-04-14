@@ -8,6 +8,7 @@
  * Author: Peter Rosin <peda@axentia.se>
  */
 
+#include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/gcd.h>

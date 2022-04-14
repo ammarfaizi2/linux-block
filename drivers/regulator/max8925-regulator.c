@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Marvell International Ltd.
  *      Haojian Zhuang <haojian.zhuang@marvell.com>
  */
+#include <linux/math.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
 // Copyright (C) 2006-2008 Marvell International Ltd.
 // Copyright (C) 2008 Compulab Ltd.
 
+#include <linux/math.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/err.h>

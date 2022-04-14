@@ -8,6 +8,7 @@
  * Author: Leonard Crestez <leonard.crestez@nxp.com>
  */
 
+#include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/interconnect-provider.h>

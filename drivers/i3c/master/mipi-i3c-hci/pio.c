@@ -5,6 +5,7 @@
  * Author: Nicolas Pitre <npitre@baylibre.com>
  */
 
+#include <linux/math.h>
 #include <linux/bitfield.h>
 #include <linux/device.h>
 #include <linux/errno.h>

@@ -6,6 +6,7 @@
  * propagate the unknown bits such that the tnum result represents all the
  * possible results for possible values of the operands.
  */
+#include <linux/math.h>
 #include <linux/export.h>
 #include <linux/bitops.h>
 #include <linux/kernel.h>

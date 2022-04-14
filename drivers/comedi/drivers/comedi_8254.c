@@ -113,6 +113,7 @@
  * counters is not handled by this module. These features are driver dependent.
  */
 
+#include <linux/math.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/io.h>

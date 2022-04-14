@@ -4,6 +4,7 @@
  * Copyright 2012 Linaro Ltd.
  */
 
+#include <linux/math.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>
 #include <linux/slab.h>
