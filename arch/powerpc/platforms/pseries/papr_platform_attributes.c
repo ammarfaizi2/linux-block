@@ -20,6 +20,7 @@
  * Copyright 2022 IBM Corp.
  */
 
+#include <linux/sysfs.h>
 #include <asm/hvcall.h>
 #include <asm/machdep.h>
 

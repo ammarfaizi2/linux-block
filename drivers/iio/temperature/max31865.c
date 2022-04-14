@@ -8,6 +8,7 @@
  * Author: Navin Sankar Velliangiri <navin@linumiz.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ctype.h>

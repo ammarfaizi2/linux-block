@@ -5,6 +5,7 @@
  * Copyright (c) 2022 SeongJae Park <sj@kernel.org>
  */
 
+#include <linux/sysfs.h>
 #include <linux/damon.h>
 #include <linux/kobject.h>
 #include <linux/pid.h>

@@ -6,6 +6,7 @@
  * Author: Matt Ranostay <matt.ranostay@konsulko.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>

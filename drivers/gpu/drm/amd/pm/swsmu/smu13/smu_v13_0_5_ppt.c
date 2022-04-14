@@ -23,6 +23,8 @@
 
 #define SWSMU_CODE_LAYER_L2
 
+#include <linux/sysfs.h>
+
 #include "amdgpu.h"
 #include "amdgpu_smu.h"
 #include "smu_v13_0.h"

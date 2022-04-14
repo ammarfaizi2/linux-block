@@ -4,6 +4,7 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/slab.h>

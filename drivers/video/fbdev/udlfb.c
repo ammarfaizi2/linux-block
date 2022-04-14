@@ -13,6 +13,7 @@
  * from Florian Echtler, Henrik Bjerregaard Pedersen, and others.
  */
 
+#include <linux/sysfs.h>
 #include <linux/workqueue_api.h>
 #include <linux/timex.h>
 #include <linux/spinlock_api.h>

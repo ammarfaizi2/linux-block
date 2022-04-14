@@ -6,6 +6,7 @@
  * Copyright (C) 2018-2019 Rockwell Collins
  */
 
+#include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/ctype.h>
 #include <linux/module.h>

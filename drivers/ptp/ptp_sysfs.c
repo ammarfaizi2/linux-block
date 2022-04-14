@@ -5,6 +5,7 @@
  * Copyright (C) 2010 OMICRON electronics GmbH
  * Copyright 2021 NXP
  */
+#include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

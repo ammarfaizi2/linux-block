@@ -7,6 +7,7 @@
  * Author: Johan Hovold <jhovold@gmail.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>

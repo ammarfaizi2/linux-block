@@ -5,6 +5,7 @@
  * All rights reserved.
  *
  */
+#include <linux/sysfs.h>
 #include <linux/cpu.h>
 #include <linux/module.h>
 #include "uncore-frequency-common.h"

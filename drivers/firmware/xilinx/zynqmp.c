@@ -10,6 +10,7 @@
  *  Rajan Vaja <rajanv@xilinx.com>
  */
 
+#include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/device_api_lock.h>
