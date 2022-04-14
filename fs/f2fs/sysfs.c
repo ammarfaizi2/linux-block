@@ -6,6 +6,7 @@
  *             http://www.samsung.com/
  * Copyright (c) 2017 Chao Yu <chao@kernel.org>
  */
+#include <linux/iocontext.h>
 #include <linux/fs_api.h>
 #include <linux/atomic_api.h>
 #include <linux/compiler.h>

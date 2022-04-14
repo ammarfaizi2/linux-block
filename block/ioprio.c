@@ -20,6 +20,7 @@
  * See also Documentation/block/ioprio.rst
  *
  */
+#include <linux/iocontext.h>
 #include <linux/gfp.h>
 #include <linux/kernel.h>
 #include <linux/ioprio.h>

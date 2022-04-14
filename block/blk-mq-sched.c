@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 Jens Axboe
  */
+#include <linux/iocontext.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/blk-mq.h>
