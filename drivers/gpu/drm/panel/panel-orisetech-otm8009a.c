@@ -6,6 +6,7 @@
  *          Yannick Fertre <yannick.fertre@st.com>
  */
 
+#include <linux/of.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>

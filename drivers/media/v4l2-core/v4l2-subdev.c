@@ -8,6 +8,7 @@
  *	    Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/of.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/fs.h>
