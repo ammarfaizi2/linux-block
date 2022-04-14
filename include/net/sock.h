@@ -35,6 +35,7 @@
 #ifndef _SOCK_H
 #define _SOCK_H
 
+#include <linux/debug_locks.h>
 #include <linux/hardirq.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
