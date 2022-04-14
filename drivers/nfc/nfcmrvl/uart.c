@@ -5,6 +5,7 @@
  * Copyright (C) 2015, Marvell International Ltd.
  */
 
+#include <linux/device/driver.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/of_gpio.h>

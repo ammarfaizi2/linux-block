@@ -5,6 +5,8 @@
  * Copyright (c) 2014-2015 Takashi Sakamoto
  */
 
+#include <linux/device/driver.h>
+
 #include "digi00x.h"
 
 MODULE_DESCRIPTION("Digidesign Digi 002/003 family Driver");

@@ -5,6 +5,7 @@
  * Copyright (C) 2012 NVIDIA CORPORATION. All rights reserved.
  */
 
+#include <linux/device/driver.h>
 #include <linux/device.h>
 #include <linux/of.h>
 #include <linux/pinctrl/pinctrl.h>

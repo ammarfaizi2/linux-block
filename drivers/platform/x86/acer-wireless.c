@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Endless Mobile, Inc.
  */
 
+#include <linux/device/driver.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/input.h>

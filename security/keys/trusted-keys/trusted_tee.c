@@ -6,6 +6,7 @@
  * Sumit Garg <sumit.garg@linaro.org>
  */
 
+#include <linux/device/driver.h>
 #include <linux/err.h>
 #include <linux/key-type.h>
 #include <linux/module.h>
