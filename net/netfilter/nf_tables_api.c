@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/hash.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

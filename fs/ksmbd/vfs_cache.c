@@ -4,6 +4,7 @@
  * Copyright (C) 2019 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/hash.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/atomic_api.h>
