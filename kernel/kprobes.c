@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/stacktrace.h>
 #include <linux/sched/per_task.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>
