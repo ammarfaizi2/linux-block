@@ -6,23 +6,10 @@
  * syscall compatibility layer.
  */
 
-#include <linux/time32.h>
-#include <linux/types.h>
-#include <linux/time.h>
-
-#include <linux/stat.h>
-#include <linux/param.h>	/* for HZ */
-#include <linux/sem.h>
-#include <linux/socket.h>
-#include <linux/if.h>
-#include <linux/fs.h>
-#include <linux/aio_abi.h>	/* for aio_context_t */
-#include <linux/uaccess.h>
-#include <linux/unistd.h>
-
 #include <asm/compat.h>
 #include <asm/siginfo.h>
 #include <asm/signal.h>
+#include <uapi/linux/if.h>
 
 #ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
 /*
@@ -610,6 +597,8 @@ asmlinkage long compat_sys_sendfile(int out_fd, int in_fd,
 				    compat_off_t __user *offset, compat_size_t count);
 asmlinkage long compat_sys_sendfile64(int out_fd, int in_fd,
 				    compat_loff_t __user *offset, compat_size_t count);
+
+struct pollfd;
 
 /* fs/select.c */
 asmlinkage long compat_sys_pselect6_time32(int n, compat_ulong_t __user *inp,
