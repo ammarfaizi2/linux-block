@@ -8,6 +8,7 @@
 
 #include <linux/sched.h>
 #include <linux/magic.h>
+#include <linux/sched/thread.h>
 
 #ifdef CONFIG_THREAD_INFO_IN_TASK
 
@@ -18,7 +19,7 @@
  */
 static inline void *task_stack_page(const struct task_struct *task)
 {
-	return task->stack;
+	return per_task(task, stack);
 }
 
 #define setup_thread_stack(new,old)	do { } while(0)
@@ -26,9 +27,9 @@ static inline void *task_stack_page(const struct task_struct *task)
 static inline unsigned long *end_of_stack(const struct task_struct *task)
 {
 #ifdef CONFIG_STACK_GROWSUP
-	return (unsigned long *)((unsigned long)task->stack + THREAD_SIZE) - 1;
+	return (unsigned long *)((unsigned long)per_task(task, stack) + THREAD_SIZE) - 1;
 #else
-	return task->stack;
+	return per_task(task, stack);
 #endif
 }
 

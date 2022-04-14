@@ -177,7 +177,8 @@ void start_secondary(void)
 
 int __cpu_up(unsigned int cpu, struct task_struct *idle)
 {
-	struct thread_info *thread = (struct thread_info *)idle->stack;
+	struct thread_info *thread = (struct thread_info *) per_task(idle,
+								     stack);
 	void *stack_start;
 
 	thread->cpu = cpu;

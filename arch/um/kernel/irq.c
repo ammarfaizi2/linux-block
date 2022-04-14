@@ -758,7 +758,7 @@ unsigned long from_irq_stack(int nested)
 	pending_mask = 1;
 
 	to = ti->real_thread;
-	current->stack = to;
+	per_task(current, stack) = to;
 	ti->real_thread = NULL;
 	*to = *ti;
 

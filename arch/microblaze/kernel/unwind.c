@@ -280,7 +280,7 @@ void microblaze_unwind(struct task_struct *task, struct stack_trace *trace,
 						regs->r15, trace, loglvl);
 		} else {
 			struct thread_info *thread_info =
-				(struct thread_info *)(task->stack);
+				(struct thread_info *)(per_task(task, stack));
 			const struct cpu_context *cpu_context =
 				&thread_info->cpu_context;
 

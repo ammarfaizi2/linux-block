@@ -99,6 +99,9 @@ DEFINE_PER_TASK(struct sched_rt_entity,			rt);
 DEFINE_PER_TASK(const struct sched_class *,		sched_class);
 DEFINE_PER_TASK(struct sched_entity,			se);
 
+DEFINE_PER_TASK(void *,					stack);
+
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.

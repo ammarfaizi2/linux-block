@@ -231,7 +231,7 @@ static void thread_stack_free_rcu(struct rcu_head *rh)
 
 static void thread_stack_delayed_free(struct task_struct *tsk)
 {
-	struct vm_stack *vm_stack = tsk->stack;
+	struct vm_stack *vm_stack = per_task(tsk, stack);
 
 	vm_stack->stack_vm_area = tsk->stack_vm_area;
 	call_rcu(&vm_stack->rcu, thread_stack_free_rcu);
@@ -308,7 +308,7 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 		}
 
 		tsk->stack_vm_area = s;
-		tsk->stack = stack;
+		per_task(tsk, stack) = stack;
 		return 0;
 	}
 
@@ -337,7 +337,7 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 	 */
 	tsk->stack_vm_area = vm;
 	stack = kasan_reset_tag(stack);
-	tsk->stack = stack;
+	per_task(tsk, stack) = stack;
 	return 0;
 }
 
@@ -346,7 +346,7 @@ static void free_thread_stack(struct task_struct *tsk)
 	if (!try_release_thread_stack_to_cache(tsk->stack_vm_area))
 		thread_stack_delayed_free(tsk);
 
-	tsk->stack = NULL;
+	per_task(tsk, stack) = NULL;
 	tsk->stack_vm_area = NULL;
 }
 
@@ -359,7 +359,7 @@ static void thread_stack_free_rcu(struct rcu_head *rh)
 
 static void thread_stack_delayed_free(struct task_struct *tsk)
 {
-	struct rcu_head *rh = tsk->stack;
+	struct rcu_head *rh = per_task(tsk, stack);
 
 	call_rcu(rh, thread_stack_free_rcu);
 }
@@ -370,7 +370,7 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 					     THREAD_SIZE_ORDER);
 
 	if (likely(page)) {
-		tsk->stack = kasan_reset_tag(page_address(page));
+		per_task(tsk, stack) = kasan_reset_tag(page_address(page));
 		return 0;
 	}
 	return -ENOMEM;
@@ -379,7 +379,7 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 static void free_thread_stack(struct task_struct *tsk)
 {
 	thread_stack_delayed_free(tsk);
-	tsk->stack = NULL;
+	per_task(tsk, stack) = NULL;
 }
 
 #  endif /* CONFIG_VMAP_STACK */
@@ -394,7 +394,7 @@ static void thread_stack_free_rcu(struct rcu_head *rh)
 
 static void thread_stack_delayed_free(struct task_struct *tsk)
 {
-	struct rcu_head *rh = tsk->stack;
+	struct rcu_head *rh = per_task(tsk, stack);
 
 	call_rcu(rh, thread_stack_free_rcu);
 }
@@ -404,14 +404,14 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 	unsigned long *stack;
 	stack = kmem_cache_alloc_node(thread_stack_cache, THREADINFO_GFP, node);
 	stack = kasan_reset_tag(stack);
-	tsk->stack = stack;
+	per_task(tsk, stack) = stack;
 	return stack ? 0 : -ENOMEM;
 }
 
 static void free_thread_stack(struct task_struct *tsk)
 {
 	thread_stack_delayed_free(tsk);
-	tsk->stack = NULL;
+	per_task(tsk, stack) = NULL;
 }
 
 void thread_stack_cache_init(void)
@@ -430,14 +430,14 @@ static int alloc_thread_stack_node(struct task_struct *tsk, int node)
 	unsigned long *stack;
 
 	stack = arch_alloc_thread_stack_node(tsk, node);
-	tsk->stack = stack;
+	per_task(tsk, stack) = stack;
 	return stack ? 0 : -ENOMEM;
 }
 
 static void free_thread_stack(struct task_struct *tsk)
 {
 	arch_free_thread_stack(tsk);
-	tsk->stack = NULL;
+	per_task(tsk, stack) = NULL;
 }
 
 #endif /* !CONFIG_ARCH_THREAD_STACK_ALLOCATOR */

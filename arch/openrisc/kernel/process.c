@@ -236,8 +236,8 @@ struct task_struct *__switch_to(struct task_struct *old,
 	 * (one for each cpu). we need them at user->kernel transition,
 	 * while we save them at kernel->user transition
 	 */
-	new_ti = new->stack;
-	old_ti = old->stack;
+	new_ti = per_task(new, stack);
+	old_ti = per_task(old, stack);
 
 	lwa_flag = 0;
 
