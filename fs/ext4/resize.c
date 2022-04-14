@@ -12,6 +12,7 @@
 
 #define EXT4FS_DEBUG
 
+#include <linux/percpu_counter_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/math64.h>
 #include <linux/fs_api_rw_access.h>

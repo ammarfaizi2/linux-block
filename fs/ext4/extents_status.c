@@ -10,6 +10,7 @@
  *
  * Ext4 extents status tree core functions.
  */
+#include <linux/percpu_counter_api.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/list_sort.h>

@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/percpu_counter_api.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/gfp_api.h>

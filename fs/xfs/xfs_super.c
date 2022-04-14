@@ -39,6 +39,7 @@
 #include "xfs_ag.h"
 #include "xfs_defer.h"
 
+#include <linux/percpu_counter_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>

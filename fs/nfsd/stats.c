@@ -20,6 +20,7 @@
  * Copyright (C) 1995, 1996, 1997 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/percpu_counter_api.h>
 #include <linux/atomic_api.h>
 #include <linux/seq_file.h>
 #include <linux/module.h>

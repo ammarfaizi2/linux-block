@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/percpu_counter_api.h>
 #include <linux/kobject_api.h>
 #include <linux/fs_api.h>
 #include <linux/cpumask_api.h>

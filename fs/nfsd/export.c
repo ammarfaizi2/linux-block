@@ -12,6 +12,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch, <okir@monad.swb.de>
  */
 
+#include <linux/percpu_counter_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/hash.h>

@@ -12,6 +12,7 @@
  *		Initial version
  */
 
+#include <linux/percpu_counter_api.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>

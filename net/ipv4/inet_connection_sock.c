@@ -9,6 +9,7 @@
  * Authors:	See the TCP sources
  */
 
+#include <linux/percpu_counter_api.h>
 #include <linux/memcontrol.h>
 #include <linux/jiffies.h>
 #include <linux/ipv6.h>

@@ -2,6 +2,7 @@
 /*
  * cgroups support for the BFQ I/O scheduler.
  */
+#include <linux/percpu_counter_api.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/atomic_api.h>
