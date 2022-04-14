@@ -148,6 +148,7 @@
 
 /* ----------------------------------------------------------------------- */
 
+#include <linux/irqnr.h>
 #include <linux/capability.h>
 #include <linux/compat.h>
 #include <linux/module.h>
