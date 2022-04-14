@@ -5,6 +5,7 @@
 #ifndef __ASM_COMPAT_H
 #define __ASM_COMPAT_H
 
+#include <linux/time.h>
 #include <linux/sched/thread_info_api.h>
 #include <asm/processor.h>
 #include <linux/types.h>
