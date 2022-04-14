@@ -8,6 +8,7 @@
  * based on arch/arm/common/rtctime.c
  */
 
+#include <uapi/linux/signal.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/timerqueue_api.h>
