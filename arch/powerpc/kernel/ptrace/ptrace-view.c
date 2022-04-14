@@ -108,28 +108,28 @@ const char *regs_query_register_name(unsigned int offset)
 
 static unsigned long get_user_msr(struct task_struct *task)
 {
-	return task->thread.regs->msr | task->thread.fpexc_mode;
+	return task_thread(task).regs->msr | task_thread(task).fpexc_mode;
 }
 
 static __always_inline int set_user_msr(struct task_struct *task, unsigned long msr)
 {
-	unsigned long newmsr = (task->thread.regs->msr & ~MSR_DEBUGCHANGE) |
+	unsigned long newmsr = (task_thread(task).regs->msr & ~MSR_DEBUGCHANGE) |
 				(msr & MSR_DEBUGCHANGE);
-	regs_set_return_msr(task->thread.regs, newmsr);
+	regs_set_return_msr(task_thread(task).regs, newmsr);
 	return 0;
 }
 
 #ifdef CONFIG_PPC64
 static int get_user_dscr(struct task_struct *task, unsigned long *data)
 {
-	*data = task->thread.dscr;
+	*data = task_thread(task).dscr;
 	return 0;
 }
 
 static int set_user_dscr(struct task_struct *task, unsigned long dscr)
 {
-	task->thread.dscr = dscr;
-	task->thread.dscr_inherit = 1;
+	task_thread(task).dscr = dscr;
+	task_thread(task).dscr_inherit = 1;
 	return 0;
 }
 #else
@@ -150,7 +150,7 @@ static int set_user_dscr(struct task_struct *task, unsigned long dscr)
  */
 static __always_inline int set_user_trap(struct task_struct *task, unsigned long trap)
 {
-	set_trap(task->thread.regs, trap);
+	set_trap(task_thread(task).regs, trap);
 	return 0;
 }
 
@@ -161,7 +161,7 @@ int ptrace_get_reg(struct task_struct *task, int regno, unsigned long *data)
 {
 	unsigned int regs_max;
 
-	if (task->thread.regs == NULL || !data)
+	if (task_thread(task).regs == NULL || !data)
 		return -EIO;
 
 	if (regno == PT_MSR) {
@@ -185,7 +185,7 @@ int ptrace_get_reg(struct task_struct *task, int regno, unsigned long *data)
 	regs_max = sizeof(struct user_pt_regs) / sizeof(unsigned long);
 	if (regno < regs_max) {
 		regno = array_index_nospec(regno, regs_max);
-		*data = ((unsigned long *)task->thread.regs)[regno];
+		*data = ((unsigned long *)task_thread(task).regs)[regno];
 		return 0;
 	}
 
@@ -197,7 +197,7 @@ int ptrace_get_reg(struct task_struct *task, int regno, unsigned long *data)
  */
 int ptrace_put_reg(struct task_struct *task, int regno, unsigned long data)
 {
-	if (task->thread.regs == NULL)
+	if (task_thread(task).regs == NULL)
 		return -EIO;
 
 	if (regno == PT_MSR)
@@ -209,7 +209,7 @@ int ptrace_put_reg(struct task_struct *task, int regno, unsigned long data)
 
 	if (regno <= PT_MAX_PUT_REG) {
 		regno = array_index_nospec(regno, PT_MAX_PUT_REG + 1);
-		((unsigned long *)task->thread.regs)[regno] = data;
+		((unsigned long *)task_thread(task).regs)[regno] = data;
 		return 0;
 	}
 	return -EIO;
@@ -222,10 +222,10 @@ static int gpr_get(struct task_struct *target, const struct user_regset *regset,
 #ifdef CONFIG_PPC64
 	struct membuf to_softe = membuf_at(&to, offsetof(struct pt_regs, softe));
 #endif
-	if (target->thread.regs == NULL)
+	if (task_thread(target).regs == NULL)
 		return -EIO;
 
-	membuf_write(&to, target->thread.regs, sizeof(struct user_pt_regs));
+	membuf_write(&to, task_thread(target).regs, sizeof(struct user_pt_regs));
 
 	membuf_store(&to_msr, get_user_msr(target));
 #ifdef CONFIG_PPC64
@@ -242,11 +242,11 @@ static int gpr_set(struct task_struct *target, const struct user_regset *regset,
 	unsigned long reg;
 	int ret;
 
-	if (target->thread.regs == NULL)
+	if (task_thread(target).regs == NULL)
 		return -EIO;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 target->thread.regs,
+				 task_thread(target).regs,
 				 0, PT_MSR * sizeof(reg));
 
 	if (!ret && count > 0) {
@@ -262,7 +262,7 @@ static int gpr_set(struct task_struct *target, const struct user_regset *regset,
 
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.regs->orig_gpr3,
+					 &task_thread(target).regs->orig_gpr3,
 					 PT_ORIG_R3 * sizeof(reg),
 					 (PT_MAX_PUT_REG + 1) * sizeof(reg));
 
@@ -290,7 +290,7 @@ static int gpr_set(struct task_struct *target, const struct user_regset *regset,
 static int ppr_get(struct task_struct *target, const struct user_regset *regset,
 		   struct membuf to)
 {
-	return membuf_write(&to, &target->thread.regs->ppr, sizeof(u64));
+	return membuf_write(&to, &task_thread(target).regs->ppr, sizeof(u64));
 }
 
 static int ppr_set(struct task_struct *target, const struct user_regset *regset,
@@ -298,34 +298,34 @@ static int ppr_set(struct task_struct *target, const struct user_regset *regset,
 		   const void __user *ubuf)
 {
 	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				  &target->thread.regs->ppr, 0, sizeof(u64));
+				  &task_thread(target).regs->ppr, 0, sizeof(u64));
 }
 
 static int dscr_get(struct task_struct *target, const struct user_regset *regset,
 		    struct membuf to)
 {
-	return membuf_write(&to, &target->thread.dscr, sizeof(u64));
+	return membuf_write(&to, &task_thread(target).dscr, sizeof(u64));
 }
 static int dscr_set(struct task_struct *target, const struct user_regset *regset,
 		    unsigned int pos, unsigned int count, const void *kbuf,
 		    const void __user *ubuf)
 {
 	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				  &target->thread.dscr, 0, sizeof(u64));
+				  &task_thread(target).dscr, 0, sizeof(u64));
 }
 #endif
 #ifdef CONFIG_PPC_BOOK3S_64
 static int tar_get(struct task_struct *target, const struct user_regset *regset,
 		   struct membuf to)
 {
-	return membuf_write(&to, &target->thread.tar, sizeof(u64));
+	return membuf_write(&to, &task_thread(target).tar, sizeof(u64));
 }
 static int tar_set(struct task_struct *target, const struct user_regset *regset,
 		   unsigned int pos, unsigned int count, const void *kbuf,
 		   const void __user *ubuf)
 {
 	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				  &target->thread.tar, 0, sizeof(u64));
+				  &task_thread(target).tar, 0, sizeof(u64));
 }
 
 static int ebb_active(struct task_struct *target, const struct user_regset *regset)
@@ -333,7 +333,7 @@ static int ebb_active(struct task_struct *target, const struct user_regset *regs
 	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
 		return -ENODEV;
 
-	if (target->thread.used_ebb)
+	if (task_thread(target).used_ebb)
 		return regset->n;
 
 	return 0;
@@ -349,10 +349,10 @@ static int ebb_get(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
 		return -ENODEV;
 
-	if (!target->thread.used_ebb)
+	if (!task_thread(target).used_ebb)
 		return -ENODATA;
 
-	return membuf_write(&to, &target->thread.ebbrr, 3 * sizeof(unsigned long));
+	return membuf_write(&to, &task_thread(target).ebbrr, 3 * sizeof(unsigned long));
 }
 
 static int ebb_set(struct task_struct *target, const struct user_regset *regset,
@@ -368,20 +368,20 @@ static int ebb_set(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
 		return -ENODEV;
 
-	if (target->thread.used_ebb)
+	if (task_thread(target).used_ebb)
 		return -ENODATA;
 
-	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &target->thread.ebbrr,
+	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &task_thread(target).ebbrr,
 				 0, sizeof(unsigned long));
 
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.ebbhr, sizeof(unsigned long),
+					 &task_thread(target).ebbhr, sizeof(unsigned long),
 					 2 * sizeof(unsigned long));
 
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.bescr, 2 * sizeof(unsigned long),
+					 &task_thread(target).bescr, 2 * sizeof(unsigned long),
 					 3 * sizeof(unsigned long));
 
 	return ret;
@@ -406,7 +406,7 @@ static int pmu_get(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
 		return -ENODEV;
 
-	return membuf_write(&to, &target->thread.siar, 5 * sizeof(unsigned long));
+	return membuf_write(&to, &task_thread(target).siar, 5 * sizeof(unsigned long));
 }
 
 static int pmu_set(struct task_struct *target, const struct user_regset *regset,
@@ -424,27 +424,27 @@ static int pmu_set(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_ARCH_207S))
 		return -ENODEV;
 
-	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &target->thread.siar,
+	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &task_thread(target).siar,
 				 0, sizeof(unsigned long));
 
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.sdar, sizeof(unsigned long),
+					 &task_thread(target).sdar, sizeof(unsigned long),
 					 2 * sizeof(unsigned long));
 
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.sier, 2 * sizeof(unsigned long),
+					 &task_thread(target).sier, 2 * sizeof(unsigned long),
 					 3 * sizeof(unsigned long));
 
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.mmcr2, 3 * sizeof(unsigned long),
+					 &task_thread(target).mmcr2, 3 * sizeof(unsigned long),
 					 4 * sizeof(unsigned long));
 
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.mmcr0, 4 * sizeof(unsigned long),
+					 &task_thread(target).mmcr0, 4 * sizeof(unsigned long),
 					 5 * sizeof(unsigned long));
 	return ret;
 }
@@ -466,8 +466,8 @@ static int pkey_get(struct task_struct *target, const struct user_regset *regset
 	if (!arch_pkeys_enabled())
 		return -ENODEV;
 
-	membuf_store(&to, target->thread.regs->amr);
-	membuf_store(&to, target->thread.regs->iamr);
+	membuf_store(&to, task_thread(target).regs->amr);
+	membuf_store(&to, task_thread(target).regs->iamr);
 	return membuf_store(&to, default_uamor);
 }
 
@@ -500,8 +500,8 @@ static int pkey_set(struct task_struct *target, const struct user_regset *regset
 	 * Pick the AMR values for the keys that kernel is using. This
 	 * will be indicated by the ~default_uamor bits.
 	 */
-	target->thread.regs->amr = (new_amr & default_uamor) |
-		(target->thread.regs->amr & ~default_uamor);
+	task_thread(target).regs->amr = (new_amr & default_uamor) |
+		(task_thread(target).regs->amr & ~default_uamor);
 
 	return 0;
 }
@@ -718,11 +718,11 @@ static int gpr32_get(struct task_struct *target,
 		     const struct user_regset *regset,
 		     struct membuf to)
 {
-	if (target->thread.regs == NULL)
+	if (task_thread(target).regs == NULL)
 		return -EIO;
 
 	return gpr32_get_common(target, regset, to,
-			&target->thread.regs->gpr[0]);
+			&task_thread(target).regs->gpr[0]);
 }
 
 static int gpr32_set(struct task_struct *target,
@@ -730,11 +730,11 @@ static int gpr32_set(struct task_struct *target,
 		     unsigned int pos, unsigned int count,
 		     const void *kbuf, const void __user *ubuf)
 {
-	if (target->thread.regs == NULL)
+	if (task_thread(target).regs == NULL)
 		return -EIO;
 
 	return gpr32_set_common(target, regset, pos, count, kbuf, ubuf,
-			&target->thread.regs->gpr[0]);
+			&task_thread(target).regs->gpr[0]);
 }
 
 /*

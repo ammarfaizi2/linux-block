@@ -128,7 +128,7 @@ int dbg_set_reg(int regno, void *mem, struct pt_regs *regs)
 void
 sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *task)
 {
-	struct cpu_context *cpu_context = &task->thread.cpu_context;
+	struct cpu_context *cpu_context = &task_thread(task).cpu_context;
 
 	/* Initialize to zero */
 	memset((char *)gdb_regs, 0, NUMREGBYTES);

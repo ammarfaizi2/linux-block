@@ -97,8 +97,8 @@ do {									\
 static inline void dsp_save_restore(struct task_struct *prev,
 					struct task_struct *next)
 {
-	long unsigned int *saveto = &prev->thread.dsp.ACC0_GLO;
-	long unsigned int *readfrom = &next->thread.dsp.ACC0_GLO;
+	long unsigned int *saveto = &task_thread(prev).dsp.ACC0_GLO;
+	long unsigned int *readfrom = &task_thread(next).dsp.ACC0_GLO;
 
 	DSP_AUX_SAVE_RESTORE(saveto, readfrom, ACC0_GLO);
 	DSP_AUX_SAVE_RESTORE(saveto, readfrom, ACC0_GHI);

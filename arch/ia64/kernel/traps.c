@@ -215,8 +215,8 @@ disabled_fph_fault (struct pt_regs *regs)
 	}
 #endif /* !CONFIG_SMP */
 	ia64_set_local_fpu_owner(current);
-	if ((current->thread.flags & IA64_THREAD_FPH_VALID) != 0) {
-		__ia64_load_fpu(current->thread.fph);
+	if ((task_thread(current).flags & IA64_THREAD_FPH_VALID) != 0) {
+		__ia64_load_fpu(task_thread(current).fph);
 		psr->mfh = 0;
 	} else {
 		__ia64_init_fpu();
@@ -292,7 +292,7 @@ handle_fpu_swa (int fp_fault, struct pt_regs *regs, unsigned long isr)
 	if (copy_from_user(bundle, (void __user *) fault_ip, sizeof(bundle)))
 		return -1;
 
-	if (!(current->thread.flags & IA64_THREAD_FPEMU_NOPRINT))  {
+	if (!(task_thread(current).flags & IA64_THREAD_FPEMU_NOPRINT))  {
 		unsigned long count, current_jiffies = jiffies;
 		struct fpu_swa_msg *cp = this_cpu_ptr(&cpulast);
 
@@ -548,7 +548,7 @@ ia64_fault (unsigned long vector, unsigned long isr, unsigned long ifa,
 	      case 32: /* fp fault */
 	      case 33: /* fp trap */
 		result = handle_fpu_swa((vector == 32) ? 1 : 0, &regs, isr);
-		if ((result < 0) || (current->thread.flags & IA64_THREAD_FPEMU_SIGFPE)) {
+		if ((result < 0) || (task_thread(current).flags & IA64_THREAD_FPEMU_SIGFPE)) {
 			force_sig_fault(SIGFPE, FPE_FLTINV, (void __user *) iip,
 					0, __ISR_VALID, isr);
 		}

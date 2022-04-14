@@ -31,7 +31,7 @@ GLOBAL_ENTRY(mca_handler_bhhook)
 	;;
 	adds	r2=IA64_TASK_THREAD_ON_USTACK_OFFSET,r13
 	;;
-	st1	[r2]=r0		// clear current->thread.on_ustack flag
+	st1	[r2]=r0		// clear task_thread(current).on_ustack flag
 	mov	loc0=r16
 	movl	loc1=mca_handler_bh	// recovery C function
 	;;

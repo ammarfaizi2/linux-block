@@ -34,7 +34,7 @@ unsigned long octeon_crypto_enable(struct octeon_cop2_state *state)
 	status = read_c0_status();
 	write_c0_status(status | ST0_CU2);
 	if (KSTK_STATUS(current) & ST0_CU2) {
-		octeon_cop2_save(&(current->thread.cp2));
+		octeon_cop2_save(&(task_thread(current).cp2));
 		KSTK_STATUS(current) &= ~ST0_CU2;
 		status &= ~ST0_CU2;
 	} else if (status & ST0_CU2) {

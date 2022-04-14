@@ -112,11 +112,11 @@ static __always_inline void ptrauth_enable(void)
 }
 
 #define ptrauth_suspend_exit()                                                 \
-	ptrauth_keys_install_user(&current->thread.keys_user)
+	ptrauth_keys_install_user(&task_thread(current).keys_user)
 
 #define ptrauth_thread_init_user()                                             \
 	do {                                                                   \
-		ptrauth_keys_init_user(&current->thread.keys_user);            \
+		ptrauth_keys_init_user(&task_thread(current).keys_user);       \
 									       \
 		/* enable all keys */                                          \
 		if (system_supports_address_auth())                            \
@@ -126,7 +126,7 @@ static __always_inline void ptrauth_enable(void)
 	} while (0)
 
 #define ptrauth_thread_switch_user(tsk)                                        \
-	ptrauth_keys_install_user(&(tsk)->thread.keys_user)
+	ptrauth_keys_install_user(&task_thread(tsk).keys_user)
 
 #else /* CONFIG_ARM64_PTR_AUTH */
 #define ptrauth_enable()
@@ -141,9 +141,9 @@ static __always_inline void ptrauth_enable(void)
 
 #ifdef CONFIG_ARM64_PTR_AUTH_KERNEL
 #define ptrauth_thread_init_kernel(tsk)					\
-	ptrauth_keys_init_kernel(&(tsk)->thread.keys_kernel)
+	ptrauth_keys_init_kernel(&task_thread(tsk).keys_kernel)
 #define ptrauth_thread_switch_kernel(tsk)				\
-	ptrauth_keys_switch_kernel(&(tsk)->thread.keys_kernel)
+	ptrauth_keys_switch_kernel(&task_thread(tsk).keys_kernel)
 #else
 #define ptrauth_thread_init_kernel(tsk)
 #define ptrauth_thread_switch_kernel(tsk)

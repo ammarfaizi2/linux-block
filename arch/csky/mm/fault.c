@@ -53,7 +53,7 @@ static inline void csky_cmpxchg_fixup(struct pt_regs *regs)
 
 static inline void no_context(struct pt_regs *regs, unsigned long addr)
 {
-	current->thread.trap_no = trap_no(regs);
+	task_thread(current).trap_no = trap_no(regs);
 
 	/* Are we prepared to handle this kernel fault? */
 	if (fixup_exception(regs))
@@ -72,7 +72,7 @@ static inline void no_context(struct pt_regs *regs, unsigned long addr)
 
 static inline void mm_fault_error(struct pt_regs *regs, unsigned long addr, vm_fault_t fault)
 {
-	current->thread.trap_no = trap_no(regs);
+	task_thread(current).trap_no = trap_no(regs);
 
 	if (fault & VM_FAULT_OOM) {
 		/*
@@ -200,7 +200,7 @@ asmlinkage void do_page_fault(struct pt_regs *regs)
 
 	csky_cmpxchg_fixup(regs);
 
-	if (kprobe_page_fault(regs, tsk->thread.trap_no))
+	if (kprobe_page_fault(regs, task_thread(tsk).trap_no))
 		return;
 
 	/*

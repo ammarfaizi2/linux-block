@@ -259,8 +259,8 @@ static inline int restore_fpu_state(struct sigcontext *sc)
 
 	if (FPU_IS_EMU) {
 	    /* restore registers */
-	    memcpy(current->thread.fpcntl, sc->sc_fpcntl, 12);
-	    memcpy(current->thread.fp, sc->sc_fpregs, 24);
+	    memcpy(task_thread(current).fpcntl, sc->sc_fpcntl, 12);
+	    memcpy(task_thread(current).fp, sc->sc_fpregs, 24);
 	    return 0;
 	}
 
@@ -338,11 +338,11 @@ static inline int rt_restore_fpu_state(struct ucontext __user *uc)
 
 	if (FPU_IS_EMU) {
 		/* restore fpu control register */
-		if (__copy_from_user(current->thread.fpcntl,
+		if (__copy_from_user(task_thread(current).fpcntl,
 				uc->uc_mcontext.fpregs.f_fpcntl, 12))
 			goto out;
 		/* restore all other fpu register */
-		if (__copy_from_user(current->thread.fp,
+		if (__copy_from_user(task_thread(current).fp,
 				uc->uc_mcontext.fpregs.f_fpregs, 96))
 			goto out;
 		return 0;
@@ -431,8 +431,8 @@ static inline void save_fpu_state(struct sigcontext *sc, struct pt_regs *regs)
 {
 	if (FPU_IS_EMU) {
 		/* save registers */
-		memcpy(sc->sc_fpcntl, current->thread.fpcntl, 12);
-		memcpy(sc->sc_fpregs, current->thread.fp, 24);
+		memcpy(sc->sc_fpcntl, task_thread(current).fpcntl, 12);
+		memcpy(sc->sc_fpregs, task_thread(current).fp, 24);
 		return;
 	}
 
@@ -489,10 +489,10 @@ static inline int rt_save_fpu_state(struct ucontext __user *uc, struct pt_regs *
 	if (FPU_IS_EMU) {
 		/* save fpu control register */
 		err |= copy_to_user(uc->uc_mcontext.fpregs.f_fpcntl,
-				current->thread.fpcntl, 12);
+				task_thread(current).fpcntl, 12);
 		/* save all other fpu register */
 		err |= copy_to_user(uc->uc_mcontext.fpregs.f_fpregs,
-				current->thread.fp, 96);
+				task_thread(current).fp, 96);
 		return err;
 	}
 
@@ -663,7 +663,7 @@ static int mangle_kernel_stack(struct pt_regs *regs, int formatvec,
 
 		memmove(p - extra, p, size);
 		memcpy(p - extra + size, buf, extra);
-		current->thread.esp0 = (unsigned long)&new->ptregs;
+		task_thread(current).esp0 = (unsigned long)&new->ptregs;
 #ifdef CONFIG_M68040
 		/* on 68040 complete pending writebacks if any */
 		if (new->ptregs.format == 7) // bus error frame
@@ -1086,7 +1086,7 @@ static void do_signal(struct pt_regs *regs)
 {
 	struct ksignal ksig;
 
-	current->thread.esp0 = (unsigned long) regs;
+	task_thread(current).esp0 = (unsigned long) regs;
 
 	if (get_signal(&ksig)) {
 		/* Whee!  Actually deliver the signal.  */

@@ -370,7 +370,7 @@ int kvmppc_booke_emulate_mtspr(struct kvm_vcpu *vcpu, int sprn, ulong spr_val)
 	}
 
 	if (debug_inst) {
-		current->thread.debug = vcpu->arch.dbg_reg;
+		task_thread(current).debug = vcpu->arch.dbg_reg;
 		switch_booke_debug_regs(&vcpu->arch.dbg_reg);
 	}
 	return emulated;

@@ -93,7 +93,7 @@ union __fpsimd_vreg {
 static int compat_preserve_vfp_context(struct compat_vfp_sigframe __user *frame)
 {
 	struct user_fpsimd_state const *fpsimd =
-		&current->thread.uw.fpsimd_state;
+		&task_thread(current).uw.fpsimd_state;
 	compat_ulong_t magic = VFP_MAGIC;
 	compat_ulong_t size = VFP_STORAGE_SIZE;
 	compat_ulong_t fpscr, fpexc;
@@ -382,9 +382,9 @@ static int compat_setup_sigframe(struct compat_sigframe __user *sf,
 
 	__put_user_error((compat_ulong_t)0, &sf->uc.uc_mcontext.trap_no, err);
 	/* set the compat FSR WnR */
-	__put_user_error(!!(current->thread.fault_code & ESR_ELx_WNR) <<
+	__put_user_error(!!(task_thread(current).fault_code & ESR_ELx_WNR) <<
 			 FSR_WRITE_SHIFT, &sf->uc.uc_mcontext.error_code, err);
-	__put_user_error(current->thread.fault_address, &sf->uc.uc_mcontext.fault_address, err);
+	__put_user_error(task_thread(current).fault_address, &sf->uc.uc_mcontext.fault_address, err);
 	__put_user_error(set->sig[0], &sf->uc.uc_mcontext.oldmask, err);
 
 	err |= put_sigset_t(&sf->uc.uc_sigmask, set);

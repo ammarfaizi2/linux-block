@@ -90,7 +90,7 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 	save_fpu_regs();
 
 	memcpy(dst, src, arch_task_struct_size);
-	dst->thread.fpu.regs = dst->thread.fpu.fprs;
+	task_thread(dst).fpu.regs = task_thread(dst).fpu.fprs;
 	return 0;
 }
 
@@ -104,22 +104,22 @@ int copy_thread(unsigned long clone_flags, unsigned long new_stackp,
 	} *frame;
 
 	frame = container_of(task_pt_regs(p), struct fake_frame, childregs);
-	p->thread.ksp = (unsigned long) frame;
+	task_thread(p).ksp = (unsigned long) frame;
 	/* Save access registers to new thread structure. */
-	save_access_regs(&p->thread.acrs[0]);
+	save_access_regs(&task_thread(p).acrs[0]);
 	/* start new process with ar4 pointing to the correct address space */
 	/* Don't copy debug registers */
-	memset(&p->thread.per_user, 0, sizeof(p->thread.per_user));
-	memset(&p->thread.per_event, 0, sizeof(p->thread.per_event));
+	memset(&task_thread(p).per_user, 0, sizeof(task_thread(p).per_user));
+	memset(&task_thread(p).per_event, 0, sizeof(task_thread(p).per_event));
 	clear_tsk_thread_flag(p, TIF_SINGLE_STEP);
-	p->thread.per_flags = 0;
+	task_thread(p).per_flags = 0;
 	/* Initialize per thread user and system timer values */
-	p->thread.user_timer = 0;
-	p->thread.guest_timer = 0;
-	p->thread.system_timer = 0;
-	p->thread.hardirq_timer = 0;
-	p->thread.softirq_timer = 0;
-	p->thread.last_break = 1;
+	task_thread(p).user_timer = 0;
+	task_thread(p).guest_timer = 0;
+	task_thread(p).system_timer = 0;
+	task_thread(p).hardirq_timer = 0;
+	task_thread(p).softirq_timer = 0;
+	task_thread(p).last_break = 1;
 
 	frame->sf.back_chain = 0;
 	frame->sf.gprs[5] = (unsigned long)frame + sizeof(struct stack_frame);
@@ -150,19 +150,19 @@ int copy_thread(unsigned long clone_flags, unsigned long new_stackp,
 		frame->childregs.gprs[15] = new_stackp;
 
 	/* Don't copy runtime instrumentation info */
-	p->thread.ri_cb = NULL;
+	task_thread(p).ri_cb = NULL;
 	frame->childregs.psw.mask &= ~PSW_MASK_RI;
 	/* Don't copy guarded storage control block */
-	p->thread.gs_cb = NULL;
-	p->thread.gs_bc_cb = NULL;
+	task_thread(p).gs_cb = NULL;
+	task_thread(p).gs_bc_cb = NULL;
 
 	/* Set a new TLS ?  */
 	if (clone_flags & CLONE_SETTLS) {
 		if (is_compat_task()) {
-			p->thread.acrs[0] = (unsigned int)tls;
+			task_thread(p).acrs[0] = (unsigned int)tls;
 		} else {
-			p->thread.acrs[0] = (unsigned int)(tls >> 32);
-			p->thread.acrs[1] = (unsigned int)tls;
+			task_thread(p).acrs[0] = (unsigned int)(tls >> 32);
+			task_thread(p).acrs[1] = (unsigned int)tls;
 		}
 	}
 	/*
@@ -176,7 +176,7 @@ int copy_thread(unsigned long clone_flags, unsigned long new_stackp,
 
 void execve_tail(void)
 {
-	current->thread.fpu.fpc = 0;
+	task_thread(current).fpu.fpc = 0;
 	asm volatile("sfpc %0" : : "d" (0));
 }
 

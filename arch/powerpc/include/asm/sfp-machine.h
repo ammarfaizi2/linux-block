@@ -105,7 +105,7 @@
 #define FP_EX_OVERFLOW		(1 << 17)
 #define FP_INHIBIT_RESULTS	0
 
-#define __FPU_FPSCR	(current->thread.spefscr)
+#define __FPU_FPSCR	(task_thread(current).spefscr)
 #define __FPU_ENABLED_EXC		\
 ({					\
 	(__FPU_FPSCR >> 2) & 0x1f;	\
@@ -125,7 +125,7 @@
 #define FP_EX_DIVZERO         (1 << (31 - 5))
 #define FP_EX_INEXACT         (1 << (31 - 6))
 
-#define __FPU_FPSCR	(current->thread.fp_state.fpscr)
+#define __FPU_FPSCR	(task_thread(current).fp_state.fpscr)
 
 /* We only actually write to the destination register
  * if exceptions signalled (if any) will not trap.

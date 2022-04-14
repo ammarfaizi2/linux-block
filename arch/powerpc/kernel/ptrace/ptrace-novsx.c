@@ -27,7 +27,7 @@ int fpr_get(struct task_struct *target, const struct user_regset *regset,
 
 	flush_fp_to_thread(target);
 
-	return membuf_write(&to, &target->thread.fp_state, 33 * sizeof(u64));
+	return membuf_write(&to, &task_thread(target).fp_state, 33 * sizeof(u64));
 #else
 	return membuf_write(&to, &empty_zero_page, 33 * sizeof(u64));
 #endif
@@ -57,7 +57,7 @@ int fpr_set(struct task_struct *target, const struct user_regset *regset,
 	flush_fp_to_thread(target);
 
 	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				  &target->thread.fp_state, 0, -1);
+				  &task_thread(target).fp_state, 0, -1);
 #else
 	return 0;
 #endif

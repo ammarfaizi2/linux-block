@@ -614,7 +614,7 @@ static int ebb_event_check(struct perf_event *event)
 
 static void ebb_event_add(struct perf_event *event)
 {
-	if (!is_ebb_event(event) || current->thread.used_ebb)
+	if (!is_ebb_event(event) || task_thread(current).used_ebb)
 		return;
 
 	/*
@@ -623,8 +623,8 @@ static void ebb_event_add(struct perf_event *event)
 	 * userspace. We need this so that we can context switch while
 	 * userspace is in the EBB handler (where PMXE is 0).
 	 */
-	current->thread.used_ebb = 1;
-	current->thread.mmcr0 |= MMCR0_PMXE;
+	task_thread(current).used_ebb = 1;
+	task_thread(current).mmcr0 |= MMCR0_PMXE;
 }
 
 static void ebb_switch_out(unsigned long mmcr0)
@@ -632,15 +632,15 @@ static void ebb_switch_out(unsigned long mmcr0)
 	if (!(mmcr0 & MMCR0_EBE))
 		return;
 
-	current->thread.siar  = mfspr(SPRN_SIAR);
-	current->thread.sier  = mfspr(SPRN_SIER);
-	current->thread.sdar  = mfspr(SPRN_SDAR);
-	current->thread.mmcr0 = mmcr0 & MMCR0_USER_MASK;
-	current->thread.mmcr2 = mfspr(SPRN_MMCR2) & MMCR2_USER_MASK;
+	task_thread(current).siar  = mfspr(SPRN_SIAR);
+	task_thread(current).sier  = mfspr(SPRN_SIER);
+	task_thread(current).sdar  = mfspr(SPRN_SDAR);
+	task_thread(current).mmcr0 = mmcr0 & MMCR0_USER_MASK;
+	task_thread(current).mmcr2 = mfspr(SPRN_MMCR2) & MMCR2_USER_MASK;
 	if (ppmu->flags & PPMU_ARCH_31) {
-		current->thread.mmcr3 = mfspr(SPRN_MMCR3);
-		current->thread.sier2 = mfspr(SPRN_SIER2);
-		current->thread.sier3 = mfspr(SPRN_SIER3);
+		task_thread(current).mmcr3 = mfspr(SPRN_MMCR3);
+		task_thread(current).sier2 = mfspr(SPRN_SIER2);
+		task_thread(current).sier3 = mfspr(SPRN_SIER3);
 	}
 }
 
@@ -659,19 +659,19 @@ static unsigned long ebb_switch_in(bool ebb, struct cpu_hw_events *cpuhw)
 	 * with pmao_restore_workaround() because we may add PMAO but we never
 	 * clear it here.
 	 */
-	mmcr0 |= current->thread.mmcr0;
+	mmcr0 |= task_thread(current).mmcr0;
 
 	/*
 	 * Be careful not to set PMXE if userspace had it cleared. This is also
 	 * compatible with pmao_restore_workaround() because it has already
 	 * cleared PMXE and we leave PMAO alone.
 	 */
-	if (!(current->thread.mmcr0 & MMCR0_PMXE))
+	if (!(task_thread(current).mmcr0 & MMCR0_PMXE))
 		mmcr0 &= ~MMCR0_PMXE;
 
-	mtspr(SPRN_SIAR, current->thread.siar);
-	mtspr(SPRN_SIER, current->thread.sier);
-	mtspr(SPRN_SDAR, current->thread.sdar);
+	mtspr(SPRN_SIAR, task_thread(current).siar);
+	mtspr(SPRN_SIER, task_thread(current).sier);
+	mtspr(SPRN_SDAR, task_thread(current).sdar);
 
 	/*
 	 * Merge the kernel & user values of MMCR2. The semantics we implement
@@ -680,12 +680,12 @@ static unsigned long ebb_switch_in(bool ebb, struct cpu_hw_events *cpuhw)
 	 * unfreeze counters, it should not set exclude_xxx in its events and
 	 * instead manage the MMCR2 entirely by itself.
 	 */
-	mtspr(SPRN_MMCR2, cpuhw->mmcr.mmcr2 | current->thread.mmcr2);
+	mtspr(SPRN_MMCR2, cpuhw->mmcr.mmcr2 | task_thread(current).mmcr2);
 
 	if (ppmu->flags & PPMU_ARCH_31) {
-		mtspr(SPRN_MMCR3, current->thread.mmcr3);
-		mtspr(SPRN_SIER2, current->thread.sier2);
-		mtspr(SPRN_SIER3, current->thread.sier3);
+		mtspr(SPRN_MMCR3, task_thread(current).mmcr3);
+		mtspr(SPRN_SIER2, task_thread(current).sier2);
+		mtspr(SPRN_SIER3, task_thread(current).sier3);
 	}
 out:
 	return mmcr0;
@@ -731,11 +731,11 @@ static void pmao_restore_workaround(bool ebb)
 	 */
 
 	/* Only if PMAO is set and PMAO_SYNC is clear */
-	if ((current->thread.mmcr0 & (MMCR0_PMAO | MMCR0_PMAO_SYNC)) != MMCR0_PMAO)
+	if ((task_thread(current).mmcr0 & (MMCR0_PMAO | MMCR0_PMAO_SYNC)) != MMCR0_PMAO)
 		return;
 
 	/* If we're doing EBB, only if BESCR[GE] is set */
-	if (ebb && !(current->thread.bescr & BESCR_GE))
+	if (ebb && !(task_thread(current).bescr & BESCR_GE))
 		return;
 
 	/*

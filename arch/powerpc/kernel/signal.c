@@ -34,8 +34,8 @@ unsigned long copy_fpr_to_user(void __user *to,
 
 	/* save FPR copy to local buffer then write to the thread_struct */
 	for (i = 0; i < (ELF_NFPREG - 1) ; i++)
-		buf[i] = task->thread.TS_FPR(i);
-	buf[i] = task->thread.fp_state.fpscr;
+		buf[i] = task_thread(task).TS_FPR(i);
+	buf[i] = task_thread(task).fp_state.fpscr;
 	return __copy_to_user(to, buf, ELF_NFPREG * sizeof(double));
 }
 
@@ -48,8 +48,8 @@ unsigned long copy_fpr_from_user(struct task_struct *task,
 	if (__copy_from_user(buf, from, ELF_NFPREG * sizeof(double)))
 		return 1;
 	for (i = 0; i < (ELF_NFPREG - 1) ; i++)
-		task->thread.TS_FPR(i) = buf[i];
-	task->thread.fp_state.fpscr = buf[i];
+		task_thread(task).TS_FPR(i) = buf[i];
+	task_thread(task).fp_state.fpscr = buf[i];
 
 	return 0;
 }
@@ -62,7 +62,7 @@ unsigned long copy_vsx_to_user(void __user *to,
 
 	/* save FPR copy to local buffer then write to the thread_struct */
 	for (i = 0; i < ELF_NVSRHALFREG; i++)
-		buf[i] = task->thread.fp_state.fpr[i][TS_VSRLOWOFFSET];
+		buf[i] = task_thread(task).fp_state.fpr[i][TS_VSRLOWOFFSET];
 	return __copy_to_user(to, buf, ELF_NVSRHALFREG * sizeof(double));
 }
 
@@ -75,7 +75,7 @@ unsigned long copy_vsx_from_user(struct task_struct *task,
 	if (__copy_from_user(buf, from, ELF_NVSRHALFREG * sizeof(double)))
 		return 1;
 	for (i = 0; i < ELF_NVSRHALFREG ; i++)
-		task->thread.fp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
+		task_thread(task).fp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
 	return 0;
 }
 
@@ -88,8 +88,8 @@ unsigned long copy_ckfpr_to_user(void __user *to,
 
 	/* save FPR copy to local buffer then write to the thread_struct */
 	for (i = 0; i < (ELF_NFPREG - 1) ; i++)
-		buf[i] = task->thread.TS_CKFPR(i);
-	buf[i] = task->thread.ckfp_state.fpscr;
+		buf[i] = task_thread(task).TS_CKFPR(i);
+	buf[i] = task_thread(task).ckfp_state.fpscr;
 	return __copy_to_user(to, buf, ELF_NFPREG * sizeof(double));
 }
 
@@ -102,8 +102,8 @@ unsigned long copy_ckfpr_from_user(struct task_struct *task,
 	if (__copy_from_user(buf, from, ELF_NFPREG * sizeof(double)))
 		return 1;
 	for (i = 0; i < (ELF_NFPREG - 1) ; i++)
-		task->thread.TS_CKFPR(i) = buf[i];
-	task->thread.ckfp_state.fpscr = buf[i];
+		task_thread(task).TS_CKFPR(i) = buf[i];
+	task_thread(task).ckfp_state.fpscr = buf[i];
 
 	return 0;
 }
@@ -116,7 +116,7 @@ unsigned long copy_ckvsx_to_user(void __user *to,
 
 	/* save FPR copy to local buffer then write to the thread_struct */
 	for (i = 0; i < ELF_NVSRHALFREG; i++)
-		buf[i] = task->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET];
+		buf[i] = task_thread(task).ckfp_state.fpr[i][TS_VSRLOWOFFSET];
 	return __copy_to_user(to, buf, ELF_NVSRHALFREG * sizeof(double));
 }
 
@@ -129,7 +129,7 @@ unsigned long copy_ckvsx_from_user(struct task_struct *task,
 	if (__copy_from_user(buf, from, ELF_NVSRHALFREG * sizeof(double)))
 		return 1;
 	for (i = 0; i < ELF_NVSRHALFREG ; i++)
-		task->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
+		task_thread(task).ckfp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
 	return 0;
 }
 #endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
@@ -239,12 +239,12 @@ static void do_signal(struct task_struct *tsk)
 	get_signal(&ksig);
 
 	/* Is there any syscall restart business here ? */
-	check_syscall_restart(tsk->thread.regs, &ksig.ka, ksig.sig > 0);
+	check_syscall_restart(task_thread(tsk).regs, &ksig.ka, ksig.sig > 0);
 
 	if (ksig.sig <= 0) {
 		/* No signal to deliver -- put the saved sigmask back */
 		restore_saved_sigmask();
-		set_trap_norestart(tsk->thread.regs);
+		set_trap_norestart(task_thread(tsk).regs);
 		return;               /* no signals delivered */
 	}
 
@@ -257,15 +257,15 @@ static void do_signal(struct task_struct *tsk)
 		int i;
 
 		for (i = 0; i < nr_wp_slots(); i++) {
-			if (tsk->thread.hw_brk[i].address && tsk->thread.hw_brk[i].type)
-				__set_breakpoint(i, &tsk->thread.hw_brk[i]);
+			if (task_thread(tsk).hw_brk[i].address && task_thread(tsk).hw_brk[i].type)
+				__set_breakpoint(i, &task_thread(tsk).hw_brk[i]);
 		}
 	}
 
 	/* Re-enable the breakpoints for the signal stack */
-	thread_change_pc(tsk, tsk->thread.regs);
+	thread_change_pc(tsk, task_thread(tsk).regs);
 
-	rseq_signal_deliver(&ksig, tsk->thread.regs);
+	rseq_signal_deliver(&ksig, task_thread(tsk).regs);
 
 	if (is_32bit_task()) {
         	if (ksig.ka.sa.sa_flags & SA_SIGINFO)
@@ -276,7 +276,7 @@ static void do_signal(struct task_struct *tsk)
 		ret = handle_rt_signal64(&ksig, oldset, tsk);
 	}
 
-	set_trap_norestart(tsk->thread.regs);
+	set_trap_norestart(task_thread(tsk).regs);
 	signal_setup_done(ret, &ksig, test_thread_flag(TIF_SINGLESTEP));
 }
 
@@ -289,7 +289,7 @@ void do_notify_resume(struct pt_regs *regs, unsigned long thread_info_flags)
 		klp_update_patch_state(current);
 
 	if (thread_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) {
-		BUG_ON(regs != current->thread.regs);
+		BUG_ON(regs != task_thread(current).regs);
 		do_signal(current);
 	}
 
@@ -320,7 +320,7 @@ static unsigned long get_tm_stackpointer(struct task_struct *tsk)
 	 * For signals taken in non-TM or suspended mode, we use the
 	 * normal/non-checkpointed stack pointer.
 	 */
-	struct pt_regs *regs = tsk->thread.regs;
+	struct pt_regs *regs = task_thread(tsk).regs;
 	unsigned long ret = regs->gpr[1];
 
 #ifdef CONFIG_PPC_TRANSACTIONAL_MEM
@@ -330,7 +330,7 @@ static unsigned long get_tm_stackpointer(struct task_struct *tsk)
 		preempt_disable();
 		tm_reclaim_current(TM_CAUSE_SIGNAL);
 		if (MSR_TM_TRANSACTIONAL(regs->msr))
-			ret = tsk->thread.ckpt_regs.gpr[1];
+			ret = task_thread(tsk).ckpt_regs.gpr[1];
 
 		/*
 		 * If we treclaim, we must clear the current thread's TM bits

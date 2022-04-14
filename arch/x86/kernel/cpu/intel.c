@@ -1141,8 +1141,8 @@ bool handle_guest_split_lock(unsigned long ip)
 		     current->comm, current->pid,
 		     sld_state == sld_fatal ? "fatal" : "bogus", ip);
 
-	current->thread.error_code = 0;
-	current->thread.trap_nr = X86_TRAP_AC;
+	task_thread(current).error_code = 0;
+	task_thread(current).trap_nr = X86_TRAP_AC;
 	force_sig_fault(SIGBUS, BUS_ADRALN, NULL);
 	return false;
 }

@@ -262,7 +262,7 @@ int hw_breakpoint_arch_parse(struct perf_event *bp,
 void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
 {
 	int i;
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &task_thread(tsk);
 
 	for (i = 0; i < sh_ubc->num_events; i++) {
 		unregister_hw_breakpoint(t->ptrace_bps[i]);

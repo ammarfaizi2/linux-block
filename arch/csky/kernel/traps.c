@@ -131,7 +131,7 @@ void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr)
 static void do_trap_error(struct pt_regs *regs, int signo, int code,
 	unsigned long addr, const char *str)
 {
-	current->thread.trap_no = trap_no(regs);
+	task_thread(current).trap_no = trap_no(regs);
 
 	if (user_mode(regs)) {
 		do_trap(regs, signo, code, addr);
@@ -159,7 +159,7 @@ asmlinkage void do_trap_misaligned(struct pt_regs *regs)
 #ifdef CONFIG_CPU_NEED_SOFTALIGN
 	csky_alignment(regs);
 #else
-	current->thread.trap_no = trap_no(regs);
+	task_thread(current).trap_no = trap_no(regs);
 	do_trap_error(regs, SIGBUS, BUS_ADRALN, regs->pc,
 		      "Oops - load/store address misaligned");
 #endif
@@ -186,7 +186,7 @@ asmlinkage void do_trap_bkpt(struct pt_regs *regs)
 
 asmlinkage void do_trap_illinsn(struct pt_regs *regs)
 {
-	current->thread.trap_no = trap_no(regs);
+	task_thread(current).trap_no = trap_no(regs);
 
 #ifdef CONFIG_KPROBES
 	if (kprobe_breakpoint_handler(regs))

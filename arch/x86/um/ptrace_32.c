@@ -89,7 +89,7 @@ int putreg(struct task_struct *child, int regno, unsigned long value)
 		break;
 	case ORIG_EAX:
 		/* Update the syscall number. */
-		UPT_SYSCALL_NR(&child->thread.regs.regs) = value;
+		UPT_SYSCALL_NR(&task_thread(child).regs.regs) = value;
 		break;
 	case FS:
 		if (value && (value & 3) != 3)
@@ -113,12 +113,12 @@ int putreg(struct task_struct *child, int regno, unsigned long value)
 		break;
 	case EFL:
 		value &= FLAG_MASK;
-		child->thread.regs.regs.gp[HOST_EFLAGS] |= value;
+		task_thread(child).regs.regs.gp[HOST_EFLAGS] |= value;
 		return 0;
 	default :
 		panic("Bad register in putreg() : %d\n", regno);
 	}
-	child->thread.regs.regs.gp[reg_offsets[regno]] = value;
+	task_thread(child).regs.regs.gp[reg_offsets[regno]] = value;
 	return 0;
 }
 
@@ -135,7 +135,7 @@ int poke_user(struct task_struct *child, long addr, long data)
 		addr = addr >> 2;
 		if ((addr == 4) || (addr == 5))
 			return -EIO;
-		child->thread.arch.debugregs[addr] = data;
+		task_thread(child).arch.debugregs[addr] = data;
 		return 0;
 	}
 	return -EIO;
@@ -170,7 +170,7 @@ unsigned long getreg(struct task_struct *child, int regno)
 	default:
 		panic("Bad register in getreg() : %d\n", regno);
 	}
-	return mask & child->thread.regs.regs.gp[reg_offsets[regno]];
+	return mask & task_thread(child).regs.regs.gp[reg_offsets[regno]];
 }
 
 /* read the word at location addr in the USER area. */
@@ -189,7 +189,7 @@ int peek_user(struct task_struct *child, long addr, long data)
 		 (addr <= offsetof(struct user, u_debugreg[7]))) {
 		addr -= offsetof(struct user, u_debugreg[0]);
 		addr = addr >> 2;
-		tmp = child->thread.arch.debugregs[addr];
+		tmp = task_thread(child).arch.debugregs[addr];
 	}
 	return put_user(tmp, (unsigned long __user *) data);
 }

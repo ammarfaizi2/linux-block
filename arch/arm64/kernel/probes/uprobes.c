@@ -64,7 +64,7 @@ int arch_uprobe_pre_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 	struct uprobe_task *utask = current->utask;
 
 	/* Initialize with an invalid fault code to detect if ol insn trapped */
-	current->thread.fault_code = UPROBE_INV_FAULT_CODE;
+	task_thread(current).fault_code = UPROBE_INV_FAULT_CODE;
 
 	/* Instruction points to execute ol */
 	instruction_pointer_set(regs, utask->xol_vaddr);
@@ -78,7 +78,7 @@ int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 {
 	struct uprobe_task *utask = current->utask;
 
-	WARN_ON_ONCE(current->thread.fault_code != UPROBE_INV_FAULT_CODE);
+	WARN_ON_ONCE(task_thread(current).fault_code != UPROBE_INV_FAULT_CODE);
 
 	/* Instruction points to execute next to breakpoint address */
 	instruction_pointer_set(regs, utask->vaddr + 4);
@@ -94,7 +94,7 @@ bool arch_uprobe_xol_was_trapped(struct task_struct *t)
 	 * insn itself is trapped, then detect the case with the help of
 	 * invalid fault code which is being set in arch_uprobe_pre_xol
 	 */
-	if (t->thread.fault_code != UPROBE_INV_FAULT_CODE)
+	if (task_thread(t).fault_code != UPROBE_INV_FAULT_CODE)
 		return true;
 
 	return false;

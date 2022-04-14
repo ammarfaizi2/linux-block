@@ -126,7 +126,7 @@ static inline void nap_adjust_return(struct pt_regs *regs)
 static inline void booke_restore_dbcr0(void)
 {
 #ifdef CONFIG_PPC_ADV_DEBUG_REGS
-	unsigned long dbcr0 = current->thread.debug.dbcr0;
+	unsigned long dbcr0 = task_thread(current).debug.dbcr0;
 
 	if (IS_ENABLED(CONFIG_PPC32) && unlikely(dbcr0 & DBCR0_IDM)) {
 		mtspr(SPRN_DBSR, -1);

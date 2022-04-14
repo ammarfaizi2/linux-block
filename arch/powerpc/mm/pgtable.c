@@ -38,7 +38,7 @@ pgd_t swapper_pg_dir[MAX_PTRS_PER_PGD] __section(".bss..page_aligned") __aligned
 
 static inline int is_exec_fault(void)
 {
-	return current->thread.regs && TRAP(current->thread.regs) == 0x400;
+	return task_thread(current).regs && TRAP(task_thread(current).regs) == 0x400;
 }
 
 /* We only try to do i/d cache coherency on stuff that looks like

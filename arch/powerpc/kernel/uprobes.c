@@ -60,8 +60,8 @@ int arch_uprobe_pre_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 {
 	struct arch_uprobe_task *autask = &current->utask->autask;
 
-	autask->saved_trap_nr = current->thread.trap_nr;
-	current->thread.trap_nr = UPROBE_TRAP_NR;
+	autask->saved_trap_nr = task_thread(current).trap_nr;
+	task_thread(current).trap_nr = UPROBE_TRAP_NR;
 	regs_set_return_ip(regs, current->utask->xol_vaddr);
 
 	user_enable_single_step(current);
@@ -91,7 +91,7 @@ unsigned long uprobe_get_swbp_addr(struct pt_regs *regs)
  */
 bool arch_uprobe_xol_was_trapped(struct task_struct *t)
 {
-	if (t->thread.trap_nr != UPROBE_TRAP_NR)
+	if (task_thread(t).trap_nr != UPROBE_TRAP_NR)
 		return true;
 
 	return false;
@@ -108,9 +108,9 @@ int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 {
 	struct uprobe_task *utask = current->utask;
 
-	WARN_ON_ONCE(current->thread.trap_nr != UPROBE_TRAP_NR);
+	WARN_ON_ONCE(task_thread(current).trap_nr != UPROBE_TRAP_NR);
 
-	current->thread.trap_nr = utask->autask.saved_trap_nr;
+	task_thread(current).trap_nr = utask->autask.saved_trap_nr;
 
 	/*
 	 * On powerpc, except for loads and stores, most instructions
@@ -164,7 +164,7 @@ void arch_uprobe_abort_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 {
 	struct uprobe_task *utask = current->utask;
 
-	current->thread.trap_nr = utask->autask.saved_trap_nr;
+	task_thread(current).trap_nr = utask->autask.saved_trap_nr;
 	instruction_pointer_set(regs, utask->vaddr);
 
 	user_disable_single_step(current);

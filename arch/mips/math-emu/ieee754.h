@@ -167,7 +167,7 @@ struct _ieee754_csr {
 	__BITFIELD_FIELD(unsigned rm:2,		/* current rounding mode */
 	;))))))))))
 };
-#define ieee754_csr (*(struct _ieee754_csr *)(&current->thread.fpu.fcr31))
+#define ieee754_csr (*(struct _ieee754_csr *)(&task_thread(current).fpu.fcr31))
 
 static inline unsigned int ieee754_getrm(void)
 {

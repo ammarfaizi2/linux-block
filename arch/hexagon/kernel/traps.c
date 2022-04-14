@@ -98,7 +98,7 @@ static void do_show_stack(struct task_struct *task, unsigned long *fp,
 		} else {
 			fp = (unsigned long *)
 			     ((struct hexagon_switch_stack *)
-			     task->thread.switch_sp)->fp;
+			     task_thread(task).switch_sp)->fp;
 		}
 	}
 

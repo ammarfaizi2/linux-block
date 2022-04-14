@@ -675,7 +675,7 @@ ptrace_attach_sync_user_rbs (struct task_struct *child)
 }
 
 /*
- * Write f32-f127 back to task->thread.fph if it has been modified.
+ * Write f32-f127 back to task_thread(task).fph if it has been modified.
  */
 inline void
 ia64_flush_fph (struct task_struct *task)
@@ -689,8 +689,8 @@ ia64_flush_fph (struct task_struct *task)
 	preempt_disable();
 	if (ia64_is_local_fpu_owner(task) && psr->mfh) {
 		psr->mfh = 0;
-		task->thread.flags |= IA64_THREAD_FPH_VALID;
-		ia64_save_fpu(&task->thread.fph[0]);
+		task_thread(task).flags |= IA64_THREAD_FPH_VALID;
+		ia64_save_fpu(&task_thread(task).fph[0]);
 	}
 	preempt_enable();
 }
@@ -709,9 +709,9 @@ ia64_sync_fph (struct task_struct *task)
 	struct ia64_psr *psr = ia64_psr(task_pt_regs(task));
 
 	ia64_flush_fph(task);
-	if (!(task->thread.flags & IA64_THREAD_FPH_VALID)) {
-		task->thread.flags |= IA64_THREAD_FPH_VALID;
-		memset(&task->thread.fph, 0, sizeof(task->thread.fph));
+	if (!(task_thread(task).flags & IA64_THREAD_FPH_VALID)) {
+		task_thread(task).flags |= IA64_THREAD_FPH_VALID;
+		memset(&task_thread(task).fph, 0, sizeof(task_thread(task).fph));
 	}
 	ia64_drop_fpu(task);
 	psr->dfh = 1;
@@ -836,7 +836,7 @@ ptrace_getregs (struct task_struct *child, struct pt_all_user_regs __user *ppr)
 		return -EIO;
 
 	pt = task_pt_regs(child);
-	sw = (struct switch_stack *) (child->thread.ksp + 16);
+	sw = (struct switch_stack *) (task_thread(child).ksp + 16);
 	unw_init_from_blocked_task(&info, child);
 	if (unw_unwind_to_user(&info) < 0) {
 		return -EIO;
@@ -949,7 +949,7 @@ ptrace_getregs (struct task_struct *child, struct pt_all_user_regs __user *ppr)
 	/* fph */
 
 	ia64_flush_fph(child);
-	retval |= __copy_to_user(&ppr->fr[32], &child->thread.fph,
+	retval |= __copy_to_user(&ppr->fr[32], &task_thread(child).fph,
 				 sizeof(ppr->fr[32]) * 96);
 
 	/*  preds */
@@ -981,7 +981,7 @@ ptrace_setregs (struct task_struct *child, struct pt_all_user_regs __user *ppr)
 		return -EIO;
 
 	pt = task_pt_regs(child);
-	sw = (struct switch_stack *) (child->thread.ksp + 16);
+	sw = (struct switch_stack *) (task_thread(child).ksp + 16);
 	unw_init_from_blocked_task(&info, child);
 	if (unw_unwind_to_user(&info) < 0) {
 		return -EIO;
@@ -1086,7 +1086,7 @@ ptrace_setregs (struct task_struct *child, struct pt_all_user_regs __user *ppr)
 	/* fph */
 
 	ia64_sync_fph(child);
-	retval |= __copy_from_user(&child->thread.fph, &ppr->fr[32],
+	retval |= __copy_from_user(&task_thread(child).fph, &ppr->fr[32],
 				   sizeof(ppr->fr[32]) * 96);
 
 	/* preds */
@@ -1600,8 +1600,8 @@ static void do_fpregs_get(struct unw_frame_info *info, void *arg)
 		return;
 
 	ia64_flush_fph(task);
-	if (task->thread.flags & IA64_THREAD_FPH_VALID)
-		membuf_write(&to, &task->thread.fph, 96 * sizeof(reg));
+	if (task_thread(task).flags & IA64_THREAD_FPH_VALID)
+		membuf_write(&to, &task_thread(task).fph, 96 * sizeof(reg));
 	else
 		membuf_zero(&to, 96 * sizeof(reg));
 }
@@ -1674,7 +1674,7 @@ static void do_fpregs_set(struct unw_frame_info *info, void *arg)
 		dst->ret = user_regset_copyin(&dst->pos, &dst->count,
 						&dst->u.set.kbuf,
 						&dst->u.set.ubuf,
-						&dst->target->thread.fph,
+						&dst->task_thread(target).fph,
 						ELF_FP_OFFSET(32), -1);
 	}
 }
@@ -1752,7 +1752,7 @@ gpregs_writeback(struct task_struct *target,
 static int
 fpregs_active(struct task_struct *target, const struct user_regset *regset)
 {
-	return (target->thread.flags & IA64_THREAD_FPH_VALID) ? 128 : 32;
+	return (task_thread(target).flags & IA64_THREAD_FPH_VALID) ? 128 : 32;
 }
 
 static int fpregs_get(struct task_struct *target,
@@ -1831,13 +1831,13 @@ access_uarea(struct task_struct *child, unsigned long addr,
 				*data = fpreg.u.bits[which_half];
 			}
 		} else { /* fph */
-			elf_fpreg_t *p = &child->thread.fph[reg - 32];
+			elf_fpreg_t *p = &task_thread(child).fph[reg - 32];
 			unsigned long *bits = &p->u.bits[which_half];
 
 			ia64_sync_fph(child);
 			if (write_access)
 				*bits = *data;
-			else if (child->thread.flags & IA64_THREAD_FPH_VALID)
+			else if (task_thread(child).flags & IA64_THREAD_FPH_VALID)
 				*data = *bits;
 			else
 				*data = 0;
@@ -1940,10 +1940,10 @@ access_uarea(struct task_struct *child, unsigned long addr,
 	/* access debug registers */
 	if (addr >= PT_IBR) {
 		regnum = (addr - PT_IBR) >> 3;
-		ptr = &child->thread.ibr[0];
+		ptr = &task_thread(child).ibr[0];
 	} else {
 		regnum = (addr - PT_DBR) >> 3;
-		ptr = &child->thread.dbr[0];
+		ptr = &task_thread(child).dbr[0];
 	}
 
 	if (regnum >= 8) {
@@ -1952,12 +1952,12 @@ access_uarea(struct task_struct *child, unsigned long addr,
 		return -1;
 	}
 
-	if (!(child->thread.flags & IA64_THREAD_DBG_VALID)) {
-		child->thread.flags |= IA64_THREAD_DBG_VALID;
-		memset(child->thread.dbr, 0,
-				sizeof(child->thread.dbr));
-		memset(child->thread.ibr, 0,
-				sizeof(child->thread.ibr));
+	if (!(task_thread(child).flags & IA64_THREAD_DBG_VALID)) {
+		task_thread(child).flags |= IA64_THREAD_DBG_VALID;
+		memset(task_thread(child).dbr, 0,
+				sizeof(task_thread(child).dbr));
+		memset(task_thread(child).ibr, 0,
+				sizeof(task_thread(child).ibr));
 	}
 
 	ptr += regnum;

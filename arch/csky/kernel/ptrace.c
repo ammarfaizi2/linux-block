@@ -114,7 +114,7 @@ static int fpr_get(struct task_struct *target,
 		   const struct user_regset *regset,
 		   struct membuf to)
 {
-	struct user_fp *regs = (struct user_fp *)&target->thread.user_fp;
+	struct user_fp *regs = (struct user_fp *)&task_thread(target).user_fp;
 
 #if defined(CONFIG_CPU_HAS_FPUV2) && !defined(CONFIG_CPU_HAS_VDSP)
 	int i;
@@ -140,7 +140,7 @@ static int fpr_set(struct task_struct *target,
 		   const void *kbuf, const void __user *ubuf)
 {
 	int ret;
-	struct user_fp *regs = (struct user_fp *)&target->thread.user_fp;
+	struct user_fp *regs = (struct user_fp *)&task_thread(target).user_fp;
 
 #if defined(CONFIG_CPU_HAS_FPUV2) && !defined(CONFIG_CPU_HAS_VDSP)
 	int i;

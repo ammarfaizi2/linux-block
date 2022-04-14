@@ -216,7 +216,7 @@ int __cpu_up(unsigned int cpu, struct task_struct *tsk)
 	per_cpu(cpu_state, cpu) = CPU_UP_PREPARE;
 
 	/* Fill in data in head.S for secondary cpus */
-	stack_start.sp = tsk->thread.sp;
+	stack_start.sp = task_thread(tsk).sp;
 	stack_start.thread_info = tsk->stack;
 	stack_start.bss_start = 0; /* don't clear bss for secondary cpus */
 	stack_start.start_kernel_fn = start_secondary;

@@ -196,11 +196,11 @@ int do_spe_mathemu(struct pt_regs *regs)
 	fb = (speinsn >> 11) & 0x1f;
 	src = (speinsn >> 5) & 0x7;
 
-	vc.wp[0] = current->thread.evr[fc];
+	vc.wp[0] = task_thread(current).evr[fc];
 	vc.wp[1] = regs->gpr[fc];
-	va.wp[0] = current->thread.evr[fa];
+	va.wp[0] = task_thread(current).evr[fa];
 	va.wp[1] = regs->gpr[fa];
-	vb.wp[0] = current->thread.evr[fb];
+	vb.wp[0] = task_thread(current).evr[fb];
 	vb.wp[1] = regs->gpr[fb];
 
 	__FPU_FPSCR = mfspr(SPRN_SPEFSCR);
@@ -673,12 +673,12 @@ update_regs:
 	 * instruction without the kernel being aware of it.
 	 */
 	__FPU_FPSCR
-	  &= ~(FP_EX_INVALID | FP_EX_UNDERFLOW) | current->thread.spefscr_last;
+	  &= ~(FP_EX_INVALID | FP_EX_UNDERFLOW) | task_thread(current).spefscr_last;
 	__FPU_FPSCR |= (FP_CUR_EXCEPTIONS & FP_EX_MASK);
 	mtspr(SPRN_SPEFSCR, __FPU_FPSCR);
-	current->thread.spefscr_last = __FPU_FPSCR;
+	task_thread(current).spefscr_last = __FPU_FPSCR;
 
-	current->thread.evr[fc] = vc.wp[0];
+	task_thread(current).evr[fc] = vc.wp[0];
 	regs->gpr[fc] = vc.wp[1];
 
 	pr_debug("ccr = %08lx\n", regs->ccr);
@@ -688,21 +688,21 @@ update_regs:
 	pr_debug("va: %08x  %08x\n", va.wp[0], va.wp[1]);
 	pr_debug("vb: %08x  %08x\n", vb.wp[0], vb.wp[1]);
 
-	if (current->thread.fpexc_mode & PR_FP_EXC_SW_ENABLE) {
+	if (task_thread(current).fpexc_mode & PR_FP_EXC_SW_ENABLE) {
 		if ((FP_CUR_EXCEPTIONS & FP_EX_DIVZERO)
-		    && (current->thread.fpexc_mode & PR_FP_EXC_DIV))
+		    && (task_thread(current).fpexc_mode & PR_FP_EXC_DIV))
 			return 1;
 		if ((FP_CUR_EXCEPTIONS & FP_EX_OVERFLOW)
-		    && (current->thread.fpexc_mode & PR_FP_EXC_OVF))
+		    && (task_thread(current).fpexc_mode & PR_FP_EXC_OVF))
 			return 1;
 		if ((FP_CUR_EXCEPTIONS & FP_EX_UNDERFLOW)
-		    && (current->thread.fpexc_mode & PR_FP_EXC_UND))
+		    && (task_thread(current).fpexc_mode & PR_FP_EXC_UND))
 			return 1;
 		if ((FP_CUR_EXCEPTIONS & FP_EX_INEXACT)
-		    && (current->thread.fpexc_mode & PR_FP_EXC_RES))
+		    && (task_thread(current).fpexc_mode & PR_FP_EXC_RES))
 			return 1;
 		if ((FP_CUR_EXCEPTIONS & FP_EX_INVALID)
-		    && (current->thread.fpexc_mode & PR_FP_EXC_INV))
+		    && (task_thread(current).fpexc_mode & PR_FP_EXC_INV))
 			return 1;
 	}
 	return 0;
@@ -749,8 +749,8 @@ int speround_handler(struct pt_regs *regs)
 
 	fc = (speinsn >> 21) & 0x1f;
 	s_lo = regs->gpr[fc] & SIGN_BIT_S;
-	s_hi = current->thread.evr[fc] & SIGN_BIT_S;
-	fgpr.wp[0] = current->thread.evr[fc];
+	s_hi = task_thread(current).evr[fc] & SIGN_BIT_S;
+	fgpr.wp[0] = task_thread(current).evr[fc];
 	fgpr.wp[1] = regs->gpr[fc];
 
 	fb = (speinsn >> 11) & 0x1f;
@@ -795,7 +795,7 @@ int speround_handler(struct pt_regs *regs)
 		if (fgpr.wp[1] == 0)
 			s_lo = regs->gpr[fb] & SIGN_BIT_S;
 		if (fgpr.wp[0] == 0)
-			s_hi = current->thread.evr[fb] & SIGN_BIT_S;
+			s_hi = task_thread(current).evr[fb] & SIGN_BIT_S;
 		break;
 
 	case EFDCTSI:
@@ -804,7 +804,7 @@ int speround_handler(struct pt_regs *regs)
 		s_hi = s_lo;
 		/* Recover the sign of a zero result if possible.  */
 		if (fgpr.wp[1] == 0)
-			s_hi = current->thread.evr[fb] & SIGN_BIT_S;
+			s_hi = task_thread(current).evr[fb] & SIGN_BIT_S;
 		break;
 
 	default:
@@ -876,13 +876,13 @@ int speround_handler(struct pt_regs *regs)
 		return -EINVAL;
 	}
 
-	current->thread.evr[fc] = fgpr.wp[0];
+	task_thread(current).evr[fc] = fgpr.wp[0];
 	regs->gpr[fc] = fgpr.wp[1];
 
 	pr_debug("  to fgpr: %08x  %08x\n", fgpr.wp[0], fgpr.wp[1]);
 
-	if (current->thread.fpexc_mode & PR_FP_EXC_SW_ENABLE)
-		return (current->thread.fpexc_mode & PR_FP_EXC_RES) ? 1 : 0;
+	if (task_thread(current).fpexc_mode & PR_FP_EXC_SW_ENABLE)
+		return (task_thread(current).fpexc_mode & PR_FP_EXC_RES) ? 1 : 0;
 	return 0;
 }
 

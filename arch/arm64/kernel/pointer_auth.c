@@ -10,7 +10,7 @@
 
 int ptrauth_prctl_reset_keys(struct task_struct *tsk, unsigned long arg)
 {
-	struct ptrauth_keys_user *keys = &tsk->thread.keys_user;
+	struct ptrauth_keys_user *keys = &task_thread(tsk).keys_user;
 	unsigned long addr_key_mask = PR_PAC_APIAKEY | PR_PAC_APIBKEY |
 				      PR_PAC_APDAKEY | PR_PAC_APDBKEY;
 	unsigned long key_mask = addr_key_mask | PR_PAC_APGAKEY;
@@ -79,10 +79,10 @@ int ptrauth_set_enabled_keys(struct task_struct *tsk, unsigned long keys,
 		return -EINVAL;
 
 	preempt_disable();
-	sctlr = tsk->thread.sctlr_user;
+	sctlr = task_thread(tsk).sctlr_user;
 	sctlr &= ~arg_to_enxx_mask(keys);
 	sctlr |= arg_to_enxx_mask(enabled);
-	tsk->thread.sctlr_user = sctlr;
+	task_thread(tsk).sctlr_user = sctlr;
 	if (tsk == current)
 		update_sctlr_el1(sctlr);
 	preempt_enable();
@@ -100,13 +100,13 @@ int ptrauth_get_enabled_keys(struct task_struct *tsk)
 	if (is_compat_thread(task_thread_info(tsk)))
 		return -EINVAL;
 
-	if (tsk->thread.sctlr_user & SCTLR_ELx_ENIA)
+	if (task_thread(tsk).sctlr_user & SCTLR_ELx_ENIA)
 		retval |= PR_PAC_APIAKEY;
-	if (tsk->thread.sctlr_user & SCTLR_ELx_ENIB)
+	if (task_thread(tsk).sctlr_user & SCTLR_ELx_ENIB)
 		retval |= PR_PAC_APIBKEY;
-	if (tsk->thread.sctlr_user & SCTLR_ELx_ENDA)
+	if (task_thread(tsk).sctlr_user & SCTLR_ELx_ENDA)
 		retval |= PR_PAC_APDAKEY;
-	if (tsk->thread.sctlr_user & SCTLR_ELx_ENDB)
+	if (task_thread(tsk).sctlr_user & SCTLR_ELx_ENDB)
 		retval |= PR_PAC_APDBKEY;
 
 	return retval;

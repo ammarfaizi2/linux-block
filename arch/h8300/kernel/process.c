@@ -121,9 +121,9 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 		*childregs = *current_pt_regs();
 		childregs->er0 = 0;
 		childregs->retpc = (unsigned long) ret_from_fork;
-		p->thread.usp = usp ?: rdusp();
+		task_thread(p).usp = usp ?: rdusp();
 	}
-	p->thread.ksp = (unsigned long)childregs;
+	task_thread(p).ksp = (unsigned long)childregs;
 
 	return 0;
 }
@@ -135,7 +135,7 @@ unsigned long __get_wchan(struct task_struct *p)
 	int count = 0;
 
 	stack_page = (unsigned long)p;
-	fp = ((struct pt_regs *)p->thread.ksp)->er6;
+	fp = ((struct pt_regs *)task_thread(p).ksp)->er6;
 	do {
 		if (fp < stack_page+sizeof(struct thread_info) ||
 		    fp >= 8184+stack_page)

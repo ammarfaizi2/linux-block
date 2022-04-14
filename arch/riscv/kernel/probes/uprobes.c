@@ -54,8 +54,8 @@ int arch_uprobe_pre_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 {
 	struct uprobe_task *utask = current->utask;
 
-	utask->autask.saved_cause = current->thread.bad_cause;
-	current->thread.bad_cause = UPROBE_TRAP_NR;
+	utask->autask.saved_cause = task_thread(current).bad_cause;
+	task_thread(current).bad_cause = UPROBE_TRAP_NR;
 
 	instruction_pointer_set(regs, utask->xol_vaddr);
 
@@ -68,7 +68,7 @@ int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 {
 	struct uprobe_task *utask = current->utask;
 
-	WARN_ON_ONCE(current->thread.bad_cause != UPROBE_TRAP_NR);
+	WARN_ON_ONCE(task_thread(current).bad_cause != UPROBE_TRAP_NR);
 
 	instruction_pointer_set(regs, utask->vaddr + auprobe->insn_size);
 
@@ -79,7 +79,7 @@ int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 
 bool arch_uprobe_xol_was_trapped(struct task_struct *t)
 {
-	if (t->thread.bad_cause != UPROBE_TRAP_NR)
+	if (task_thread(t).bad_cause != UPROBE_TRAP_NR)
 		return true;
 
 	return false;

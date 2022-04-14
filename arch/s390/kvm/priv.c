@@ -60,8 +60,8 @@ static int handle_gs(struct kvm_vcpu *vcpu)
 		VCPU_EVENT(vcpu, 3, "%s", "ENABLE: GS (lazy)");
 		preempt_disable();
 		__ctl_set_bit(2, 4);
-		current->thread.gs_cb = (struct gs_cb *)&vcpu->run->s.regs.gscb;
-		restore_gs_cb(current->thread.gs_cb);
+		task_thread(current).gs_cb = (struct gs_cb *)&vcpu->run->s.regs.gscb;
+		restore_gs_cb(task_thread(current).gs_cb);
 		preempt_enable();
 		vcpu->arch.sie_block->ecb |= ECB_GS;
 		vcpu->arch.sie_block->ecd |= ECD_HOSTREGMGMT;

@@ -27,7 +27,7 @@ __switch_to:
 	st.a    fp, [sp, -4]
 	SAVE_CALLEE_SAVED_KERNEL
 
-	/* Save the now KSP in task->thread.ksp */
+	/* Save the now KSP in task_thread(task).ksp */
 #if KSP_WORD_OFF  <= 255
 	st.as  sp, [r0, KSP_WORD_OFF]
 #else
@@ -48,7 +48,7 @@ __switch_to:
 	 */
 	SET_CURR_TASK_ON_CPU  r1, r3
 
-	/* reload SP with kernel mode stack pointer in task->thread.ksp */
+	/* reload SP with kernel mode stack pointer in task_thread(task).ksp */
 	ld.as  sp, [r1, (TASK_THREAD + THREAD_KSP)/4]
 
 	/* restore the registers */

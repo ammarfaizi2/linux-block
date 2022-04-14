@@ -88,7 +88,7 @@ static unsigned long vdso_base(void)
 
 int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
 {
-	struct mips_vdso_image *image = current->thread.abi->vdso;
+	struct mips_vdso_image *image = task_thread(current).abi->vdso;
 	struct mm_struct *mm = current->mm;
 	unsigned long gic_size, vvar_size, size, base, data_addr, vdso_addr, gic_pfn, gic_base;
 	struct vm_area_struct *vma;

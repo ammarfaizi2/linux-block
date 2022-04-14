@@ -84,7 +84,7 @@ static int genregs32_get(struct task_struct *target,
 			 const struct user_regset *regset,
 			 struct membuf to)
 {
-	const struct pt_regs *regs = target->thread.kregs;
+	const struct pt_regs *regs = task_thread(target).kregs;
 	u32 uregs[16];
 
 	if (target == current)
@@ -108,7 +108,7 @@ static int genregs32_set(struct task_struct *target,
 			 unsigned int pos, unsigned int count,
 			 const void *kbuf, const void __user *ubuf)
 {
-	struct pt_regs *regs = target->thread.kregs;
+	struct pt_regs *regs = task_thread(target).kregs;
 	u32 uregs[16];
 	u32 psr;
 	int ret;
@@ -171,9 +171,9 @@ static int fpregs32_get(struct task_struct *target,
 		save_and_clear_fpu();
 #endif
 
-	membuf_write(&to, target->thread.float_regs, 32 * sizeof(u32));
+	membuf_write(&to, task_thread(target).float_regs, 32 * sizeof(u32));
 	membuf_zero(&to, sizeof(u32));
-	membuf_write(&to, &target->thread.fsr, sizeof(u32));
+	membuf_write(&to, &task_thread(target).fsr, sizeof(u32));
 	membuf_store(&to, (u32)((1 << 8) | (8 << 16)));
 	return membuf_zero(&to, 64 * sizeof(u32));
 }
@@ -183,7 +183,7 @@ static int fpregs32_set(struct task_struct *target,
 			unsigned int pos, unsigned int count,
 			const void *kbuf, const void __user *ubuf)
 {
-	unsigned long *fpregs = target->thread.float_regs;
+	unsigned long *fpregs = task_thread(target).float_regs;
 	int ret;
 
 #if 0
@@ -199,7 +199,7 @@ static int fpregs32_set(struct task_struct *target,
 					  33 * sizeof(u32));
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.fsr,
+					 &task_thread(target).fsr,
 					 33 * sizeof(u32),
 					 34 * sizeof(u32));
 	if (!ret)
@@ -244,7 +244,7 @@ static int getregs_get(struct task_struct *target,
 			 const struct user_regset *regset,
 			 struct membuf to)
 {
-	const struct pt_regs *regs = target->thread.kregs;
+	const struct pt_regs *regs = task_thread(target).kregs;
 
 	if (target == current)
 		flush_user_windows();
@@ -261,7 +261,7 @@ static int setregs_set(struct task_struct *target,
 			 unsigned int pos, unsigned int count,
 			 const void *kbuf, const void __user *ubuf)
 {
-	struct pt_regs *regs = target->thread.kregs;
+	struct pt_regs *regs = task_thread(target).kregs;
 	u32 v[4];
 	int ret;
 
@@ -291,8 +291,8 @@ static int getfpregs_get(struct task_struct *target,
 	if (target == current)
 		save_and_clear_fpu();
 #endif
-	membuf_write(&to, &target->thread.float_regs, 32 * sizeof(u32));
-	membuf_write(&to, &target->thread.fsr, sizeof(u32));
+	membuf_write(&to, &task_thread(target).float_regs, 32 * sizeof(u32));
+	membuf_write(&to, &task_thread(target).fsr, sizeof(u32));
 	return membuf_zero(&to, 35 * sizeof(u32));
 }
 
@@ -301,7 +301,7 @@ static int setfpregs_set(struct task_struct *target,
 			unsigned int pos, unsigned int count,
 			const void *kbuf, const void __user *ubuf)
 {
-	unsigned long *fpregs = target->thread.float_regs;
+	unsigned long *fpregs = task_thread(target).float_regs;
 	int ret;
 
 #if 0
@@ -314,7 +314,7 @@ static int setfpregs_set(struct task_struct *target,
 	if (ret)
 		return ret;
 	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.fsr,
+				 &task_thread(target).fsr,
 				 32 * sizeof(u32),
 				 33 * sizeof(u32));
 }
@@ -359,7 +359,7 @@ struct fps {
 long arch_ptrace(struct task_struct *child, long request,
 		 unsigned long addr, unsigned long data)
 {
-	unsigned long addr2 = current->thread.kregs->u_regs[UREG_I4];
+	unsigned long addr2 = task_thread(current).kregs->u_regs[UREG_I4];
 	void __user *addr2p;
 	struct pt_regs __user *pregs;
 	struct fps __user *fps;

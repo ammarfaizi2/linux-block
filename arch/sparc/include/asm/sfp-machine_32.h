@@ -182,9 +182,9 @@ extern struct task_struct *last_task_used_math;
 /* Obtain the current rounding mode. */
 #ifndef FP_ROUNDMODE
 #ifdef CONFIG_SMP
-#define FP_ROUNDMODE	((current->thread.fsr >> 30) & 0x3)
+#define FP_ROUNDMODE	((task_thread(current).fsr >> 30) & 0x3)
 #else
-#define FP_ROUNDMODE	((last_task_used_math->thread.fsr >> 30) & 0x3)
+#define FP_ROUNDMODE	((task_thread(last_task_used_math).fsr >> 30) & 0x3)
 #endif
 #endif
 
@@ -198,15 +198,15 @@ extern struct task_struct *last_task_used_math;
 #define FP_HANDLE_EXCEPTIONS return _fex
 
 #ifdef CONFIG_SMP
-#define FP_INHIBIT_RESULTS ((current->thread.fsr >> 23) & _fex)
+#define FP_INHIBIT_RESULTS ((task_thread(current).fsr >> 23) & _fex)
 #else
-#define FP_INHIBIT_RESULTS ((last_task_used_math->thread.fsr >> 23) & _fex)
+#define FP_INHIBIT_RESULTS ((task_thread(last_task_used_math).fsr >> 23) & _fex)
 #endif
 
 #ifdef CONFIG_SMP
-#define FP_TRAPPING_EXCEPTIONS ((current->thread.fsr >> 23) & 0x1f)
+#define FP_TRAPPING_EXCEPTIONS ((task_thread(current).fsr >> 23) & 0x1f)
 #else
-#define FP_TRAPPING_EXCEPTIONS ((last_task_used_math->thread.fsr >> 23) & 0x1f)
+#define FP_TRAPPING_EXCEPTIONS ((task_thread(last_task_used_math).fsr >> 23) & 0x1f)
 #endif
 
 #endif

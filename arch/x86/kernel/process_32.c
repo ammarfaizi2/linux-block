@@ -157,8 +157,8 @@ EXPORT_SYMBOL_GPL(start_thread);
 __visible __notrace_funcgraph struct task_struct *
 __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 {
-	struct thread_struct *prev = &prev_p->thread,
-			     *next = &next_p->thread;
+	struct thread_struct *prev = &task_thread(prev_p),
+			     *next = &task_thread(next_p);
 	struct fpu *prev_fpu = prev->fpu;
 	int cpu = smp_processor_id();
 

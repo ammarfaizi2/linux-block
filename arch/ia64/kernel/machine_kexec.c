@@ -93,7 +93,7 @@ static void ia64_machine_kexec(struct unw_frame_info *info, void *arg)
 	code_addr = (unsigned long)page_address(image->control_code_page);
 	if (image->type == KEXEC_TYPE_CRASH) {
 		crash_save_this_cpu();
-		current->thread.ksp = (__u64)info->sw - 16;
+		task_thread(current).ksp = (__u64)info->sw - 16;
 
 		/* Register noop init handler */
 		fp = ia64_tpa(init_handler->fp);

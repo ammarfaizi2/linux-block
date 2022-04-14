@@ -492,7 +492,7 @@ static void fpu_init(struct sh_fpu_soft_struct *fpu)
 int do_fpu_inst(unsigned short inst, struct pt_regs *regs)
 {
 	struct task_struct *tsk = current;
-	struct sh_fpu_soft_struct *fpu = &(tsk->thread.xstate->softfpu);
+	struct sh_fpu_soft_struct *fpu = &(task_thread(tsk).xstate->softfpu);
 
 	perf_sw_event(PERF_COUNT_SW_EMULATION_FAULTS, 1, regs, 0);
 

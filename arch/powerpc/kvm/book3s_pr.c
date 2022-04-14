@@ -149,7 +149,7 @@ static void kvmppc_core_vcpu_load_pr(struct kvm_vcpu *vcpu, int cpu)
 
 	vcpu->cpu = smp_processor_id();
 #ifdef CONFIG_PPC_BOOK3S_32
-	current->thread.kvm_shadow_vcpu = vcpu->arch.shadow_vcpu;
+	task_thread(current).kvm_shadow_vcpu = vcpu->arch.shadow_vcpu;
 #endif
 
 	if (kvmppc_is_split_real(vcpu))
@@ -804,7 +804,7 @@ static int kvmppc_handle_pagefault(struct kvm_vcpu *vcpu,
 /* Give up external provider (FPU, Altivec, VSX) */
 void kvmppc_giveup_ext(struct kvm_vcpu *vcpu, ulong msr)
 {
-	struct thread_struct *t = &current->thread;
+	struct thread_struct *t = &task_thread(current);
 
 	/*
 	 * VSX instructions can access FP and vector registers, so if
@@ -834,7 +834,7 @@ void kvmppc_giveup_ext(struct kvm_vcpu *vcpu, ulong msr)
 
 #ifdef CONFIG_ALTIVEC
 	if (msr & MSR_VEC) {
-		if (current->thread.regs->msr & MSR_VEC)
+		if (task_thread(current).regs->msr & MSR_VEC)
 			giveup_altivec(current);
 		t->vr_save_area = NULL;
 	}
@@ -856,7 +856,7 @@ void kvmppc_giveup_fac(struct kvm_vcpu *vcpu, ulong fac)
 	switch (fac) {
 	case FSCR_TAR_LG:
 		vcpu->arch.tar = mfspr(SPRN_TAR);
-		mtspr(SPRN_TAR, current->thread.tar);
+		mtspr(SPRN_TAR, task_thread(current).tar);
 		vcpu->arch.shadow_fscr &= ~FSCR_TAR;
 		break;
 	}
@@ -867,7 +867,7 @@ void kvmppc_giveup_fac(struct kvm_vcpu *vcpu, ulong fac)
 static int kvmppc_handle_ext(struct kvm_vcpu *vcpu, unsigned int exit_nr,
 			     ulong msr)
 {
-	struct thread_struct *t = &current->thread;
+	struct thread_struct *t = &task_thread(current);
 
 	/* When we have paired singles, we emulate in software */
 	if (vcpu->arch.hflags & BOOK3S_HFLAG_PAIRED_SINGLE)
@@ -939,7 +939,7 @@ static void kvmppc_handle_lost_ext(struct kvm_vcpu *vcpu)
 {
 	unsigned long lost_ext;
 
-	lost_ext = vcpu->arch.guest_owned_ext & ~current->thread.regs->msr;
+	lost_ext = vcpu->arch.guest_owned_ext & ~task_thread(current).regs->msr;
 	if (!lost_ext)
 		return;
 
@@ -959,7 +959,7 @@ static void kvmppc_handle_lost_ext(struct kvm_vcpu *vcpu)
 		preempt_enable();
 	}
 #endif
-	current->thread.regs->msr |= lost_ext;
+	task_thread(current).regs->msr |= lost_ext;
 }
 
 #ifdef CONFIG_PPC_BOOK3S_64
@@ -1017,7 +1017,7 @@ static int kvmppc_handle_fac(struct kvm_vcpu *vcpu, ulong fac)
 	switch (fac) {
 	case FSCR_TAR_LG:
 		/* TAR switching isn't lazy in Linux yet */
-		current->thread.tar = mfspr(SPRN_TAR);
+		task_thread(current).tar = mfspr(SPRN_TAR);
 		mtspr(SPRN_TAR, vcpu->arch.tar);
 		vcpu->arch.shadow_fscr |= FSCR_TAR;
 		break;

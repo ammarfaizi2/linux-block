@@ -224,7 +224,7 @@ static int hw_breakpoint_control(struct perf_event *bp,
 {
 	struct arch_hw_breakpoint *info = counter_arch_bp(bp);
 	struct perf_event **slots;
-	struct debug_info *debug_info = &current->thread.debug;
+	struct debug_info *debug_info = &task_thread(current).debug;
 	int i, max_slots, ctrl_reg, val_reg, reg_enable;
 	enum dbg_active_el dbg_el = debug_exception_level(info->ctrl.privilege);
 	u32 ctrl;
@@ -629,7 +629,7 @@ static int breakpoint_handler(unsigned long unused, unsigned int esr,
 
 	slots = this_cpu_ptr(bp_on_reg);
 	addr = instruction_pointer(regs);
-	debug_info = &current->thread.debug;
+	debug_info = &task_thread(current).debug;
 
 	for (i = 0; i < core_num_brps; ++i) {
 		rcu_read_lock();
@@ -763,7 +763,7 @@ static int watchpoint_handler(unsigned long addr, unsigned int esr,
 	struct arch_hw_breakpoint_ctrl ctrl;
 
 	slots = this_cpu_ptr(wp_on_reg);
-	debug_info = &current->thread.debug;
+	debug_info = &task_thread(current).debug;
 
 	/*
 	 * Find all watchpoints that match the reported address. If no exact
@@ -850,7 +850,7 @@ NOKPROBE_SYMBOL(watchpoint_handler);
  */
 int reinstall_suspended_bps(struct pt_regs *regs)
 {
-	struct debug_info *debug_info = &current->thread.debug;
+	struct debug_info *debug_info = &task_thread(current).debug;
 	int handled_exception = 0, *kernel_step;
 
 	kernel_step = this_cpu_ptr(&stepping_kernel_bp);
@@ -919,8 +919,8 @@ void hw_breakpoint_thread_switch(struct task_struct *next)
 
 	struct debug_info *current_debug_info, *next_debug_info;
 
-	current_debug_info = &current->thread.debug;
-	next_debug_info = &next->thread.debug;
+	current_debug_info = &task_thread(current).debug;
+	next_debug_info = &task_thread(next).debug;
 
 	/* Update breakpoints. */
 	if (current_debug_info->bps_disabled != next_debug_info->bps_disabled)

@@ -17,9 +17,9 @@
 /* disable singlestep */
 void user_disable_single_step(struct task_struct *child)
 {
-	if ((long)child->thread.breakinfo.addr != -1L) {
-		*(child->thread.breakinfo.addr) = child->thread.breakinfo.inst;
-		child->thread.breakinfo.addr = (unsigned short *)-1L;
+	if ((long)task_thread(child).breakinfo.addr != -1L) {
+		*(task_thread(child).breakinfo.addr) = task_thread(child).breakinfo.inst;
+		task_thread(child).breakinfo.addr = (unsigned short *)-1L;
 	}
 }
 
@@ -241,14 +241,14 @@ void user_enable_single_step(struct task_struct *child)
 	unsigned short *next;
 
 	next = nextpc(child, (unsigned short *)h8300_get_reg(child, PT_PC));
-	child->thread.breakinfo.addr = next;
-	child->thread.breakinfo.inst = *next;
+	task_thread(child).breakinfo.addr = next;
+	task_thread(child).breakinfo.inst = *next;
 	*next = BREAKINST;
 }
 
 asmlinkage void trace_trap(unsigned long bp)
 {
-	if ((unsigned long)current->thread.breakinfo.addr == bp) {
+	if ((unsigned long)task_thread(current).breakinfo.addr == bp) {
 		user_disable_single_step(current);
 		force_sig(SIGTRAP);
 	} else

@@ -474,7 +474,7 @@ GLOBAL_ENTRY(fsys_bubble_down)
 	adds r16=IA64_TASK_THREAD_ON_USTACK_OFFSET,r16 // A
 	mov r31=pr				// I0   save pr (2 cyc)
 	;;
-	st1 [r16]=r0				// M2|3 clear current->thread.on_ustack flag
+	st1 [r16]=r0				// M2|3 clear task_thread(current).on_ustack flag
 	addl r22=IA64_RBS_OFFSET,r2		// A    compute base of RBS
 	add r3=TI_FLAGS+IA64_TASK_SIZE,r2	// A
 	;;

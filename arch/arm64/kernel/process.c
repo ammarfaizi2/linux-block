@@ -253,7 +253,7 @@ static void tls_thread_flush(void)
 	write_sysreg(0, tpidr_el0);
 
 	if (is_compat_task()) {
-		current->thread.uw.tp_value = 0;
+		task_thread(current).uw.tp_value = 0;
 
 		/*
 		 * We need to ensure ordering between the shadow state and the
@@ -306,7 +306,7 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 	 * maintainers it is best not to leave TIF_SVE and sve_state in
 	 * an inconsistent state, even temporarily.
 	 */
-	dst->thread.sve_state = NULL;
+	task_thread(dst).sve_state = NULL;
 	clear_tsk_thread_flag(dst, TIF_SVE);
 
 	/* clear any pending asynchronous tag fault raised by the parent */
@@ -322,7 +322,7 @@ int copy_thread(unsigned long clone_flags, unsigned long stack_start,
 {
 	struct pt_regs *childregs = task_pt_regs(p);
 
-	memset(&p->thread.cpu_context, 0, sizeof(struct cpu_context));
+	memset(&task_thread(p).cpu_context, 0, sizeof(struct cpu_context));
 
 	/*
 	 * In case p was allocated the same task_struct pointer as some
@@ -357,7 +357,7 @@ int copy_thread(unsigned long clone_flags, unsigned long stack_start,
 		 * thread.
 		 */
 		if (clone_flags & CLONE_SETTLS)
-			p->thread.uw.tp_value = tls;
+			task_thread(p).uw.tp_value = tls;
 	} else {
 		/*
 		 * A kthread has no context to ERET to, so ensure any buggy
@@ -369,16 +369,16 @@ int copy_thread(unsigned long clone_flags, unsigned long stack_start,
 		memset(childregs, 0, sizeof(struct pt_regs));
 		childregs->pstate = PSR_MODE_EL1h | PSR_IL_BIT;
 
-		p->thread.cpu_context.x19 = stack_start;
-		p->thread.cpu_context.x20 = stk_sz;
+		task_thread(p).cpu_context.x19 = stack_start;
+		task_thread(p).cpu_context.x20 = stk_sz;
 	}
-	p->thread.cpu_context.pc = (unsigned long)ret_from_fork;
-	p->thread.cpu_context.sp = (unsigned long)childregs;
+	task_thread(p).cpu_context.pc = (unsigned long)ret_from_fork;
+	task_thread(p).cpu_context.sp = (unsigned long)childregs;
 	/*
 	 * For the benefit of the unwinder, set up childregs->stackframe
 	 * as the final frame for the new task.
 	 */
-	p->thread.cpu_context.fp = (unsigned long)childregs->stackframe;
+	task_thread(p).cpu_context.fp = (unsigned long)childregs->stackframe;
 
 	ptrace_hw_copy_thread(p);
 
@@ -395,7 +395,7 @@ static void tls_thread_switch(struct task_struct *next)
 	tls_preserve_current_state();
 
 	if (is_compat_thread(task_thread_info(next)))
-		write_sysreg(next->thread.uw.tp_value, tpidrro_el0);
+		write_sysreg(task_thread(next).uw.tp_value, tpidrro_el0);
 	else if (!arm64_kernel_unmapped_at_el0())
 		write_sysreg(0, tpidrro_el0);
 
@@ -464,7 +464,7 @@ static void erratum_1418040_new_exec(void)
 }
 
 /*
- * __switch_to() checks current->thread.sctlr_user as an optimisation. Therefore
+ * __switch_to() checks task_thread(current).sctlr_user as an optimisation. Therefore
  * this function must be called with preemption disabled and the update to
  * sctlr_user must be made in the same preemption disabled block so that
  * __switch_to() does not see the variable update before the SCTLR_EL1 one.
@@ -514,8 +514,8 @@ struct task_struct *__switch_to(struct task_struct *prev,
 	 */
 	mte_thread_switch(next);
 	/* avoid expensive SCTLR_EL1 accesses if no change */
-	if (prev->thread.sctlr_user != next->thread.sctlr_user)
-		update_sctlr_el1(next->thread.sctlr_user);
+	if (task_thread(prev).sctlr_user != task_thread(next).sctlr_user)
+		update_sctlr_el1(task_thread(next).sctlr_user);
 
 	/* the actual thread switch */
 	last = cpu_switch_to(prev, next);

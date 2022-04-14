@@ -12,7 +12,7 @@ int arch_set_tls(struct task_struct *t, unsigned long tls)
 	 * If CLONE_SETTLS is set, we need to save the thread id
 	 * so it can be set during context switches.
 	 */
-	t->thread.arch.fs = tls;
+	task_thread(t).arch.fs = tls;
 
 	return 0;
 }

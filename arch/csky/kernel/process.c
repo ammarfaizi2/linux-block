@@ -40,14 +40,14 @@ int copy_thread(unsigned long clone_flags,
 	struct pt_regs *childregs = task_pt_regs(p);
 
 #ifdef CONFIG_CPU_HAS_FPU
-	save_to_user_fp(&p->thread.user_fp);
+	save_to_user_fp(&task_thread(p).user_fp);
 #endif
 
 	childstack = ((struct switch_stack *) childregs) - 1;
 	memset(childstack, 0, sizeof(struct switch_stack));
 
 	/* setup thread.sp for switch_to !!! */
-	p->thread.sp = (unsigned long)childstack;
+	task_thread(p).sp = (unsigned long)childstack;
 
 	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
 		memset(childregs, 0, sizeof(struct pt_regs));
@@ -73,7 +73,7 @@ int copy_thread(unsigned long clone_flags,
 /* Fill in the fpu structure for a core dump.  */
 int dump_fpu(struct pt_regs *regs, struct user_fp *fpu)
 {
-	memcpy(fpu, &current->thread.user_fp, sizeof(*fpu));
+	memcpy(fpu, &task_thread(current).user_fp, sizeof(*fpu));
 	return 1;
 }
 EXPORT_SYMBOL(dump_fpu);

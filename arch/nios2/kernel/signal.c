@@ -238,7 +238,7 @@ static int do_signal(struct pt_regs *regs)
 	int restart = 0;
 	struct ksignal ksig;
 
-	current->thread.kregs = regs;
+	task_thread(current).kregs = regs;
 
 	/*
 	 * If we were from a system call, check for system call restarting...

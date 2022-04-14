@@ -17,7 +17,7 @@
 #define KSTK_EBP(tsk) KSTK_REG(tsk, HOST_BP)
 
 #define ARCH_IS_STACKGROW(address) \
-       (address + 65536 + 32 * sizeof(unsigned long) >= UPT_SP(&current->thread.regs.regs))
+       (address + 65536 + 32 * sizeof(unsigned long) >= UPT_SP(&task_thread(current).regs.regs))
 
 #include <asm/user.h>
 
@@ -36,7 +36,7 @@ static __always_inline void cpu_relax(void)
 		rep_nop();
 }
 
-#define task_pt_regs(t) (&(t)->thread.regs)
+#define task_pt_regs(t) (&task_thread(t).regs)
 
 #include <asm/processor-generic.h>
 

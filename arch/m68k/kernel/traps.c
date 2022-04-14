@@ -230,7 +230,7 @@ static inline void fix_xframe040(struct frame *fp, unsigned long wba, unsigned s
 {
 	fp->un.fmt7.faddr = wba;
 	fp->un.fmt7.ssw = wbs & 0xff;
-	if (wba != current->thread.faddr)
+	if (wba != task_thread(current).faddr)
 	    fp->un.fmt7.ssw |= MA_040;
 }
 
@@ -348,8 +348,8 @@ disable_wb:
 		 * the kernel to catch the fault, which then is also responsible
 		 * for cleaning up the mess.
 		 */
-		current->thread.signo = SIGBUS;
-		current->thread.faddr = fp->un.fmt7.faddr;
+		task_thread(current).signo = SIGBUS;
+		task_thread(current).faddr = fp->un.fmt7.faddr;
 		if (send_fault_sig(&fp->ptregs) >= 0)
 			pr_err("68040 bus error (ssw=%x, faddr=%lx)\n", ssw,
 			       fp->un.fmt7.faddr);
@@ -752,7 +752,7 @@ asmlinkage void buserr_c(struct frame *fp)
 {
 	/* Only set esp0 if coming from user mode */
 	if (user_mode(&fp->ptregs))
-		current->thread.esp0 = (unsigned long) fp;
+		task_thread(current).esp0 = (unsigned long) fp;
 
 	pr_debug("*** Bus Error *** Format is %x\n", fp->ptregs.format);
 
@@ -935,7 +935,7 @@ void show_stack(struct task_struct *task, unsigned long *stack,
 
 	if (!stack) {
 		if (task)
-			stack = (unsigned long *)task->thread.esp0;
+			stack = (unsigned long *)task_thread(task).esp0;
 		else
 			stack = (unsigned long *)&stack;
 	}
@@ -1136,7 +1136,7 @@ void die_if_kernel (char *str, struct pt_regs *fp, int nr)
 
 asmlinkage void set_esp0(unsigned long ssp)
 {
-	current->thread.esp0 = ssp;
+	task_thread(current).esp0 = ssp;
 }
 
 /*

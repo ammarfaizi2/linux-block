@@ -356,7 +356,7 @@ static void ptrace_hbptriggered(struct perf_event *bp,
 	int i;
 
 	for (i = 0; i < ARM_MAX_HBP_SLOTS; ++i)
-		if (current->thread.debug.hbp[i] == bp)
+		if (task_thread(current).debug.hbp[i] == bp)
 			break;
 
 	num = (i == ARM_MAX_HBP_SLOTS) ? 0 : ptrace_hbp_idx_to_num(i);
@@ -371,7 +371,7 @@ static void ptrace_hbptriggered(struct perf_event *bp,
  */
 void clear_ptrace_hw_breakpoint(struct task_struct *tsk)
 {
-	memset(tsk->thread.debug.hbp, 0, sizeof(tsk->thread.debug.hbp));
+	memset(task_thread(tsk).debug.hbp, 0, sizeof(task_thread(tsk).debug.hbp));
 }
 
 /*
@@ -381,7 +381,7 @@ void clear_ptrace_hw_breakpoint(struct task_struct *tsk)
 void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
 {
 	int i;
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &task_thread(tsk);
 
 	for (i = 0; i < ARM_MAX_HBP_SLOTS; i++) {
 		if (t->debug.hbp[i]) {
@@ -445,7 +445,7 @@ static int ptrace_gethbpregs(struct task_struct *tsk, long num,
 			goto out;
 		}
 
-		bp = tsk->thread.debug.hbp[idx];
+		bp = task_thread(tsk).debug.hbp[idx];
 		if (!bp) {
 			reg = 0;
 			goto put;
@@ -501,14 +501,14 @@ static int ptrace_sethbpregs(struct task_struct *tsk, long num,
 		goto out;
 	}
 
-	bp = tsk->thread.debug.hbp[idx];
+	bp = task_thread(tsk).debug.hbp[idx];
 	if (!bp) {
 		bp = ptrace_hbp_create(tsk, implied_type);
 		if (IS_ERR(bp)) {
 			ret = PTR_ERR(bp);
 			goto out;
 		}
-		tsk->thread.debug.hbp[idx] = bp;
+		task_thread(tsk).debug.hbp[idx] = bp;
 	}
 
 	attr = bp->attr;

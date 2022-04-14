@@ -25,25 +25,25 @@ void flush_tmregs_to_thread(struct task_struct *tsk)
 		tm_reclaim_current(TM_CAUSE_SIGNAL);
 	} else {
 		tm_enable();
-		tm_save_sprs(&tsk->thread);
+		tm_save_sprs(&task_thread(tsk));
 	}
 }
 
 static unsigned long get_user_ckpt_msr(struct task_struct *task)
 {
-	return task->thread.ckpt_regs.msr | task->thread.fpexc_mode;
+	return task_thread(task).ckpt_regs.msr | task_thread(task).fpexc_mode;
 }
 
 static int set_user_ckpt_msr(struct task_struct *task, unsigned long msr)
 {
-	task->thread.ckpt_regs.msr &= ~MSR_DEBUGCHANGE;
-	task->thread.ckpt_regs.msr |= msr & MSR_DEBUGCHANGE;
+	task_thread(task).ckpt_regs.msr &= ~MSR_DEBUGCHANGE;
+	task_thread(task).ckpt_regs.msr |= msr & MSR_DEBUGCHANGE;
 	return 0;
 }
 
 static int set_user_ckpt_trap(struct task_struct *task, unsigned long trap)
 {
-	set_trap(&task->thread.ckpt_regs, trap);
+	set_trap(&task_thread(task).ckpt_regs, trap);
 	return 0;
 }
 
@@ -60,7 +60,7 @@ int tm_cgpr_active(struct task_struct *target, const struct user_regset *regset)
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return 0;
 
 	return regset->n;
@@ -94,14 +94,14 @@ int tm_cgpr_get(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	flush_tmregs_to_thread(target);
 	flush_fp_to_thread(target);
 	flush_altivec_to_thread(target);
 
-	membuf_write(&to, &target->thread.ckpt_regs, sizeof(struct user_pt_regs));
+	membuf_write(&to, &task_thread(target).ckpt_regs, sizeof(struct user_pt_regs));
 
 	membuf_store(&to_msr, get_user_ckpt_msr(target));
 #ifdef CONFIG_PPC64
@@ -141,7 +141,7 @@ int tm_cgpr_set(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	flush_tmregs_to_thread(target);
@@ -149,7 +149,7 @@ int tm_cgpr_set(struct task_struct *target, const struct user_regset *regset,
 	flush_altivec_to_thread(target);
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.ckpt_regs,
+				 &task_thread(target).ckpt_regs,
 				 0, PT_MSR * sizeof(reg));
 
 	if (!ret && count > 0) {
@@ -165,7 +165,7 @@ int tm_cgpr_set(struct task_struct *target, const struct user_regset *regset,
 
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.ckpt_regs.orig_gpr3,
+					 &task_thread(target).ckpt_regs.orig_gpr3,
 					 PT_ORIG_R3 * sizeof(reg),
 					 (PT_MAX_PUT_REG + 1) * sizeof(reg));
 
@@ -202,7 +202,7 @@ int tm_cfpr_active(struct task_struct *target, const struct user_regset *regset)
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return 0;
 
 	return regset->n;
@@ -235,7 +235,7 @@ int tm_cfpr_get(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	flush_tmregs_to_thread(target);
@@ -244,8 +244,8 @@ int tm_cfpr_get(struct task_struct *target, const struct user_regset *regset,
 
 	/* copy to local buffer then write that out */
 	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.TS_CKFPR(i);
-	buf[32] = target->thread.ckfp_state.fpscr;
+		buf[i] = task_thread(target).TS_CKFPR(i);
+	buf[32] = task_thread(target).ckfp_state.fpscr;
 	return membuf_write(&to, buf, sizeof(buf));
 }
 
@@ -280,7 +280,7 @@ int tm_cfpr_set(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	flush_tmregs_to_thread(target);
@@ -288,16 +288,16 @@ int tm_cfpr_set(struct task_struct *target, const struct user_regset *regset,
 	flush_altivec_to_thread(target);
 
 	for (i = 0; i < 32; i++)
-		buf[i] = target->thread.TS_CKFPR(i);
-	buf[32] = target->thread.ckfp_state.fpscr;
+		buf[i] = task_thread(target).TS_CKFPR(i);
+	buf[32] = task_thread(target).ckfp_state.fpscr;
 
 	/* copy to local buffer then write that out */
 	i = user_regset_copyin(&pos, &count, &kbuf, &ubuf, buf, 0, -1);
 	if (i)
 		return i;
 	for (i = 0; i < 32 ; i++)
-		target->thread.TS_CKFPR(i) = buf[i];
-	target->thread.ckfp_state.fpscr = buf[32];
+		task_thread(target).TS_CKFPR(i) = buf[i];
+	task_thread(target).ckfp_state.fpscr = buf[32];
 	return 0;
 }
 
@@ -314,7 +314,7 @@ int tm_cvmx_active(struct task_struct *target, const struct user_regset *regset)
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return 0;
 
 	return regset->n;
@@ -351,7 +351,7 @@ int tm_cvmx_get(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	/* Flush the state */
@@ -359,12 +359,12 @@ int tm_cvmx_get(struct task_struct *target, const struct user_regset *regset,
 	flush_fp_to_thread(target);
 	flush_altivec_to_thread(target);
 
-	membuf_write(&to, &target->thread.ckvr_state, 33 * sizeof(vector128));
+	membuf_write(&to, &task_thread(target).ckvr_state, 33 * sizeof(vector128));
 	/*
 	 * Copy out only the low-order word of vrsave.
 	 */
 	memset(&vrsave, 0, sizeof(vrsave));
-	vrsave.word = target->thread.ckvrsave;
+	vrsave.word = task_thread(target).ckvrsave;
 	return membuf_write(&to, &vrsave, sizeof(vrsave));
 }
 
@@ -401,14 +401,14 @@ int tm_cvmx_set(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	flush_tmregs_to_thread(target);
 	flush_fp_to_thread(target);
 	flush_altivec_to_thread(target);
 
-	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &target->thread.ckvr_state,
+	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &task_thread(target).ckvr_state,
 				 0, 33 * sizeof(vector128));
 	if (!ret && count > 0) {
 		/*
@@ -419,11 +419,11 @@ int tm_cvmx_set(struct task_struct *target, const struct user_regset *regset,
 			u32 word;
 		} vrsave;
 		memset(&vrsave, 0, sizeof(vrsave));
-		vrsave.word = target->thread.ckvrsave;
+		vrsave.word = task_thread(target).ckvrsave;
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &vrsave,
 					 33 * sizeof(vector128), -1);
 		if (!ret)
-			target->thread.ckvrsave = vrsave.word;
+			task_thread(target).ckvrsave = vrsave.word;
 	}
 
 	return ret;
@@ -442,11 +442,11 @@ int tm_cvsx_active(struct task_struct *target, const struct user_regset *regset)
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return 0;
 
 	flush_vsx_to_thread(target);
-	return target->thread.used_vsr ? regset->n : 0;
+	return task_thread(target).used_vsr ? regset->n : 0;
 }
 
 /**
@@ -475,7 +475,7 @@ int tm_cvsx_get(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	/* Flush the state */
@@ -485,7 +485,7 @@ int tm_cvsx_get(struct task_struct *target, const struct user_regset *regset,
 	flush_vsx_to_thread(target);
 
 	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET];
+		buf[i] = task_thread(target).ckfp_state.fpr[i][TS_VSRLOWOFFSET];
 	return membuf_write(&to, buf, 32 * sizeof(double));
 }
 
@@ -519,7 +519,7 @@ int tm_cvsx_set(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	/* Flush the state */
@@ -529,13 +529,13 @@ int tm_cvsx_set(struct task_struct *target, const struct user_regset *regset,
 	flush_vsx_to_thread(target);
 
 	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET];
+		buf[i] = task_thread(target).ckfp_state.fpr[i][TS_VSRLOWOFFSET];
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 buf, 0, 32 * sizeof(double));
 	if (!ret)
 		for (i = 0; i < 32 ; i++)
-			target->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
+			task_thread(target).ckfp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
 
 	return ret;
 }
@@ -588,11 +588,11 @@ int tm_spr_get(struct task_struct *target, const struct user_regset *regset,
 	flush_altivec_to_thread(target);
 
 	/* TFHAR register */
-	membuf_write(&to, &target->thread.tm_tfhar, sizeof(u64));
+	membuf_write(&to, &task_thread(target).tm_tfhar, sizeof(u64));
 	/* TEXASR register */
-	membuf_write(&to, &target->thread.tm_texasr, sizeof(u64));
+	membuf_write(&to, &task_thread(target).tm_texasr, sizeof(u64));
 	/* TFIAR register */
-	return membuf_write(&to, &target->thread.tm_tfiar, sizeof(u64));
+	return membuf_write(&to, &task_thread(target).tm_tfiar, sizeof(u64));
 }
 
 /**
@@ -634,18 +634,18 @@ int tm_spr_set(struct task_struct *target, const struct user_regset *regset,
 
 	/* TFHAR register */
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.tm_tfhar, 0, sizeof(u64));
+				 &task_thread(target).tm_tfhar, 0, sizeof(u64));
 
 	/* TEXASR register */
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.tm_texasr, sizeof(u64),
+					 &task_thread(target).tm_texasr, sizeof(u64),
 					 2 * sizeof(u64));
 
 	/* TFIAR register */
 	if (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.tm_tfiar,
+					 &task_thread(target).tm_tfiar,
 					 2 * sizeof(u64), 3 * sizeof(u64));
 	return ret;
 }
@@ -655,7 +655,7 @@ int tm_tar_active(struct task_struct *target, const struct user_regset *regset)
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return regset->n;
 
 	return 0;
@@ -667,10 +667,10 @@ int tm_tar_get(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
-	return membuf_write(&to, &target->thread.tm_tar, sizeof(u64));
+	return membuf_write(&to, &task_thread(target).tm_tar, sizeof(u64));
 }
 
 int tm_tar_set(struct task_struct *target, const struct user_regset *regset,
@@ -682,11 +682,11 @@ int tm_tar_set(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.tm_tar, 0, sizeof(u64));
+				 &task_thread(target).tm_tar, 0, sizeof(u64));
 	return ret;
 }
 
@@ -695,7 +695,7 @@ int tm_ppr_active(struct task_struct *target, const struct user_regset *regset)
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return regset->n;
 
 	return 0;
@@ -708,10 +708,10 @@ int tm_ppr_get(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
-	return membuf_write(&to, &target->thread.tm_ppr, sizeof(u64));
+	return membuf_write(&to, &task_thread(target).tm_ppr, sizeof(u64));
 }
 
 int tm_ppr_set(struct task_struct *target, const struct user_regset *regset,
@@ -723,11 +723,11 @@ int tm_ppr_set(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.tm_ppr, 0, sizeof(u64));
+				 &task_thread(target).tm_ppr, 0, sizeof(u64));
 	return ret;
 }
 
@@ -736,7 +736,7 @@ int tm_dscr_active(struct task_struct *target, const struct user_regset *regset)
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return regset->n;
 
 	return 0;
@@ -748,10 +748,10 @@ int tm_dscr_get(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
-	return membuf_write(&to, &target->thread.tm_dscr, sizeof(u64));
+	return membuf_write(&to, &task_thread(target).tm_dscr, sizeof(u64));
 }
 
 int tm_dscr_set(struct task_struct *target, const struct user_regset *regset,
@@ -763,11 +763,11 @@ int tm_dscr_set(struct task_struct *target, const struct user_regset *regset,
 	if (!cpu_has_feature(CPU_FTR_TM))
 		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
+	if (!MSR_TM_ACTIVE(task_thread(target).regs->msr))
 		return -ENODATA;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.tm_dscr, 0, sizeof(u64));
+				 &task_thread(target).tm_dscr, 0, sizeof(u64));
 	return ret;
 }
 
@@ -775,7 +775,7 @@ int tm_cgpr32_get(struct task_struct *target, const struct user_regset *regset,
 		  struct membuf to)
 {
 	gpr32_get_common(target, regset, to,
-				&target->thread.ckpt_regs.gpr[0]);
+				&task_thread(target).ckpt_regs.gpr[0]);
 	return membuf_zero(&to, ELF_NGREG * sizeof(u32));
 }
 
@@ -784,5 +784,5 @@ int tm_cgpr32_set(struct task_struct *target, const struct user_regset *regset,
 		  const void *kbuf, const void __user *ubuf)
 {
 	return gpr32_set_common(target, regset, pos, count, kbuf, ubuf,
-				&target->thread.ckpt_regs.gpr[0]);
+				&task_thread(target).ckpt_regs.gpr[0]);
 }

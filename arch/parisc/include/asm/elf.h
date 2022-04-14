@@ -236,8 +236,8 @@ typedef unsigned long elf_greg_t;
 ({	\
 	set_personality((current->personality & ~PER_MASK) | PER_LINUX); \
 	clear_thread_flag(TIF_32BIT); \
-	current->thread.map_base = DEFAULT_MAP_BASE; \
-	current->thread.task_size = DEFAULT_TASK_SIZE; \
+	task_thread(current).map_base = DEFAULT_MAP_BASE; \
+	task_thread(current).task_size = DEFAULT_TASK_SIZE; \
  })
 
 #endif /* ! ELF_CLASS */
@@ -246,8 +246,8 @@ typedef unsigned long elf_greg_t;
 ({	\
 	if ((ex).e_ident[EI_CLASS] == ELFCLASS32) { \
 		set_thread_flag(TIF_32BIT); \
-		current->thread.map_base = DEFAULT_MAP_BASE32; \
-		current->thread.task_size = DEFAULT_TASK_SIZE32; \
+		task_thread(current).map_base = DEFAULT_MAP_BASE32; \
+		task_thread(current).task_size = DEFAULT_TASK_SIZE32; \
 	} else clear_thread_flag(TIF_32BIT); \
  })
 

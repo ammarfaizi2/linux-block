@@ -905,19 +905,19 @@ static int handle_fault(struct kvm_vcpu *vcpu, struct vsie_page *vsie_page)
 {
 	int rc;
 
-	if (current->thread.gmap_int_code == PGM_PROTECTION)
+	if (task_thread(current).gmap_int_code == PGM_PROTECTION)
 		/* we can directly forward all protection exceptions */
 		return inject_fault(vcpu, PGM_PROTECTION,
-				    current->thread.gmap_addr, 1);
+				    task_thread(current).gmap_addr, 1);
 
 	rc = kvm_s390_shadow_fault(vcpu, vsie_page->gmap,
-				   current->thread.gmap_addr, NULL);
+				   task_thread(current).gmap_addr, NULL);
 	if (rc > 0) {
 		rc = inject_fault(vcpu, rc,
-				  current->thread.gmap_addr,
-				  current->thread.gmap_write_flag);
+				  task_thread(current).gmap_addr,
+				  task_thread(current).gmap_write_flag);
 		if (rc >= 0)
-			vsie_page->fault_addr = current->thread.gmap_addr;
+			vsie_page->fault_addr = task_thread(current).gmap_addr;
 	}
 	return rc;
 }

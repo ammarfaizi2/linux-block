@@ -19,7 +19,7 @@ void dump_trace(struct task_struct *tsk,
 {
 	int reliable = 0;
 	unsigned long *sp, bp, addr;
-	struct pt_regs *segv_regs = tsk->thread.segv_regs;
+	struct pt_regs *segv_regs = task_thread(tsk).segv_regs;
 	struct stack_frame *frame;
 
 	bp = get_frame_pointer(tsk, segv_regs);

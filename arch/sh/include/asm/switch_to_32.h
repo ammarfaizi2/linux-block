@@ -5,12 +5,12 @@
 #ifdef CONFIG_SH_DSP
 
 #define is_dsp_enabled(tsk)						\
-	(!!(tsk->thread.dsp_status.status & SR_DSP))
+	(!!(task_thread(tsk).dsp_status.status & SR_DSP))
 
 #define __restore_dsp(tsk)						\
 do {									\
 	register u32 *__ts2 __asm__ ("r2") =				\
-			(u32 *)&tsk->thread.dsp_status;			\
+			(u32 *)&task_thread(tsk).dsp_status;			\
 	__asm__ __volatile__ (						\
 		".balign 4\n\t"						\
 		"movs.l	@r2+, a0\n\t"					\
@@ -33,7 +33,7 @@ do {									\
 #define __save_dsp(tsk)							\
 do {									\
 	register u32 *__ts2 __asm__ ("r2") =				\
-			(u32 *)&tsk->thread.dsp_status + 14;		\
+			(u32 *)&task_thread(tsk).dsp_status + 14;		\
 									\
 	__asm__ __volatile__ (						\
 		".balign 4\n\t"						\
@@ -82,12 +82,12 @@ do {								\
 	if (is_dsp_enabled(next))				\
 		__restore_dsp(next);				\
 								\
-	__ts1 = (u32 *)&prev->thread.sp;			\
-	__ts2 = (u32 *)&prev->thread.pc;			\
+	__ts1 = (u32 *)&task_thread(prev).sp;			\
+	__ts2 = (u32 *)&task_thread(prev).pc;			\
 	__ts4 = (u32 *)prev;					\
 	__ts5 = (u32 *)next;					\
-	__ts6 = (u32 *)&next->thread.sp;			\
-	__ts7 = next->thread.pc;				\
+	__ts6 = (u32 *)&task_thread(next).sp;			\
+	__ts7 = task_thread(next).pc;				\
 								\
 	__asm__ __volatile__ (					\
 		".balign 4\n\t"					\

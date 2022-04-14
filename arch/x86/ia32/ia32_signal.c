@@ -172,8 +172,8 @@ __unsafe_setup_sigcontext32(struct sigcontext_32 __user *sc,
 	unsafe_put_user(regs->dx, &sc->dx, Efault);
 	unsafe_put_user(regs->cx, &sc->cx, Efault);
 	unsafe_put_user(regs->ax, &sc->ax, Efault);
-	unsafe_put_user(current->thread.trap_nr, &sc->trapno, Efault);
-	unsafe_put_user(current->thread.error_code, &sc->err, Efault);
+	unsafe_put_user(task_thread(current).trap_nr, &sc->trapno, Efault);
+	unsafe_put_user(task_thread(current).error_code, &sc->err, Efault);
 	unsafe_put_user(regs->ip, &sc->ip, Efault);
 	unsafe_put_user(regs->cs, (unsigned int __user *)&sc->cs, Efault);
 	unsafe_put_user(regs->flags, &sc->flags, Efault);
@@ -184,7 +184,7 @@ __unsafe_setup_sigcontext32(struct sigcontext_32 __user *sc,
 
 	/* non-iBCS2 extensions.. */
 	unsafe_put_user(mask, &sc->oldmask, Efault);
-	unsafe_put_user(current->thread.cr2, &sc->cr2, Efault);
+	unsafe_put_user(task_thread(current).cr2, &sc->cr2, Efault);
 	return 0;
 
 Efault:

@@ -469,7 +469,7 @@ int hw_breakpoint_arch_parse(struct perf_event *bp,
 void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
 {
 	int i;
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &task_thread(tsk);
 
 	for (i = 0; i < HBP_NUM; i++) {
 		unregister_hw_breakpoint(t->ptrace_bps[i]);
@@ -567,7 +567,7 @@ static int hw_breakpoint_handler(struct die_args *args)
 	 * breakpoints (to generate signals) and b) when the system has
 	 * taken exception due to multiple causes
 	 */
-	if ((current->thread.virtual_dr6 & DR_TRAP_BITS) ||
+	if ((task_thread(current).virtual_dr6 & DR_TRAP_BITS) ||
 	    (dr6 & (~DR_TRAP_BITS)))
 		rc = NOTIFY_DONE;
 

@@ -47,7 +47,7 @@ static bool single_step_pending(void)
 	int i;
 
 	for (i = 0; i < nr_wp_slots(); i++) {
-		if (current->thread.last_hit_ubp[i])
+		if (task_thread(current).last_hit_ubp[i])
 			return true;
 	}
 	return false;
@@ -360,8 +360,8 @@ void arch_unregister_hw_breakpoint(struct perf_event *bp)
 		int i;
 
 		for (i = 0; i < nr_wp_slots(); i++) {
-			if (bp->ctx->task->thread.last_hit_ubp[i] == bp)
-				bp->ctx->task->thread.last_hit_ubp[i] = NULL;
+			if (bp->ctx->task_thread(task).last_hit_ubp[i] == bp)
+				bp->ctx->task_thread(task).last_hit_ubp[i] = NULL;
 		}
 	}
 }
@@ -479,7 +479,7 @@ void thread_change_pc(struct task_struct *tsk, struct pt_regs *regs)
 	int i;
 
 	for (i = 0; i < nr_wp_slots(); i++) {
-		if (unlikely(tsk->thread.last_hit_ubp[i]))
+		if (unlikely(task_thread(tsk).last_hit_ubp[i]))
 			goto reset;
 	}
 	return;
@@ -489,7 +489,7 @@ reset:
 	for (i = 0; i < nr_wp_slots(); i++) {
 		info = counter_arch_bp(__this_cpu_read(bp_per_reg[i]));
 		__set_breakpoint(i, info);
-		tsk->thread.last_hit_ubp[i] = NULL;
+		task_thread(tsk).last_hit_ubp[i] = NULL;
 	}
 }
 
@@ -533,7 +533,7 @@ static bool stepping_handler(struct pt_regs *regs, struct perf_event **bp,
 		for (i = 0; i < nr_wp_slots(); i++) {
 			if (!hit[i])
 				continue;
-			current->thread.last_hit_ubp[i] = bp[i];
+			task_thread(current).last_hit_ubp[i] = bp[i];
 			info[i] = NULL;
 		}
 		regs_set_return_msr(regs, regs->msr | MSR_SE);
@@ -745,7 +745,7 @@ static int single_step_dabr_instruction(struct die_args *args)
 	 * previous HW Breakpoint exception
 	 */
 	for (i = 0; i < nr_wp_slots(); i++) {
-		bp = current->thread.last_hit_ubp[i];
+		bp = task_thread(current).last_hit_ubp[i];
 
 		if (!bp)
 			continue;
@@ -760,7 +760,7 @@ static int single_step_dabr_instruction(struct die_args *args)
 		 */
 		if (!(info->type & HW_BRK_TYPE_EXTRANEOUS_IRQ))
 			perf_bp_event(bp, regs);
-		current->thread.last_hit_ubp[i] = NULL;
+		task_thread(current).last_hit_ubp[i] = NULL;
 	}
 
 	if (!found)
@@ -813,7 +813,7 @@ NOKPROBE_SYMBOL(hw_breakpoint_exceptions_notify);
 void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
 {
 	int i;
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &task_thread(tsk);
 
 	for (i = 0; i < nr_wp_slots(); i++) {
 		unregister_hw_breakpoint(t->ptrace_bps[i]);

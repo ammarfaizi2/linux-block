@@ -55,7 +55,7 @@ long arch_ptrace(struct task_struct *child, long request,
 		ret = -EIO;
 		/* convert to index and check */
 		index = addr / sizeof(long);
-		if ((addr & (sizeof(long) - 1)) || !child->thread.regs)
+		if ((addr & (sizeof(long) - 1)) || !task_thread(child).regs)
 			break;
 
 		if (index < PT_FPR0)
@@ -76,7 +76,7 @@ long arch_ptrace(struct task_struct *child, long request,
 		ret = -EIO;
 		/* convert to index and check */
 		index = addr / sizeof(long);
-		if ((addr & (sizeof(long) - 1)) || !child->thread.regs)
+		if ((addr & (sizeof(long) - 1)) || !task_thread(child).regs)
 			break;
 
 		if (index < PT_FPR0)

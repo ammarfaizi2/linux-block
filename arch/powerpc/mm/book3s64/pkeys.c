@@ -315,7 +315,7 @@ static inline void init_amr(int pkey, u8 init_bits)
 	u64 new_amr_bits = (((u64)init_bits & 0x3UL) << pkeyshift(pkey));
 	u64 old_amr = current_thread_amr() & ~((u64)(0x3ul) << pkeyshift(pkey));
 
-	current->thread.regs->amr = old_amr | new_amr_bits;
+	task_thread(current).regs->amr = old_amr | new_amr_bits;
 }
 
 static inline void init_iamr(int pkey, u8 init_bits)
@@ -326,7 +326,7 @@ static inline void init_iamr(int pkey, u8 init_bits)
 	if (!likely(pkey_execute_disable_supported))
 		return;
 
-	current->thread.regs->iamr = old_iamr | new_iamr_bits;
+	task_thread(current).regs->iamr = old_iamr | new_iamr_bits;
 }
 
 /*

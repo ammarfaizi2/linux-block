@@ -168,7 +168,7 @@ do {								\
 	(pr_reg)[18] = (_regs)->regs.gp[18];			\
 	(pr_reg)[19] = (_regs)->regs.gp[19];			\
 	(pr_reg)[20] = (_regs)->regs.gp[20];			\
-	(pr_reg)[21] = current->thread.arch.fs;			\
+	(pr_reg)[21] = task_thread(current).arch.fs;			\
 	(pr_reg)[22] = 0;					\
 	(pr_reg)[23] = 0;					\
 	(pr_reg)[24] = 0;					\

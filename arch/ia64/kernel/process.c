@@ -252,15 +252,15 @@ void arch_cpu_idle(void)
 void
 ia64_save_extra (struct task_struct *task)
 {
-	if ((task->thread.flags & IA64_THREAD_DBG_VALID) != 0)
-		ia64_save_debug_regs(&task->thread.dbr[0]);
+	if ((task_thread(task).flags & IA64_THREAD_DBG_VALID) != 0)
+		ia64_save_debug_regs(&task_thread(task).dbr[0]);
 }
 
 void
 ia64_load_extra (struct task_struct *task)
 {
-	if ((task->thread.flags & IA64_THREAD_DBG_VALID) != 0)
-		ia64_load_debug_regs(&task->thread.dbr[0]);
+	if ((task_thread(task).flags & IA64_THREAD_DBG_VALID) != 0)
+		ia64_load_debug_regs(&task_thread(task).dbr[0]);
 }
 
 /*
@@ -312,7 +312,7 @@ copy_thread(unsigned long clone_flags, unsigned long user_stack_base,
 	child_rbs = (unsigned long) p + IA64_RBS_OFFSET;
 
 	/* copy parts of thread_struct: */
-	p->thread.ksp = (unsigned long) child_stack - 16;
+	task_thread(p).ksp = (unsigned long) child_stack - 16;
 
 	/*
 	 * NOTE: The calling convention considers all floating point
@@ -333,7 +333,7 @@ copy_thread(unsigned long clone_flags, unsigned long user_stack_base,
 #	define THREAD_FLAGS_TO_CLEAR	(IA64_THREAD_FPH_VALID | IA64_THREAD_DBG_VALID \
 					 | IA64_THREAD_PM_VALID)
 #	define THREAD_FLAGS_TO_SET	0
-	p->thread.flags = ((current->thread.flags & ~THREAD_FLAGS_TO_CLEAR)
+	task_thread(p).flags = ((task_thread(current).flags & ~THREAD_FLAGS_TO_CLEAR)
 			   | THREAD_FLAGS_TO_SET);
 
 	ia64_drop_fpu(p);	/* don't pick up stale state from a CPU's fph */
@@ -507,7 +507,7 @@ void
 flush_thread (void)
 {
 	/* drop floating-point and debug-register state if it exists: */
-	current->thread.flags &= ~(IA64_THREAD_FPH_VALID | IA64_THREAD_DBG_VALID);
+	task_thread(current).flags &= ~(IA64_THREAD_FPH_VALID | IA64_THREAD_DBG_VALID);
 	ia64_drop_fpu(current);
 }
 

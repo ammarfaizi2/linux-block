@@ -233,7 +233,7 @@ void hw_breakpoint_pmu_read(struct perf_event *bp)
 void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
 {
 	int i;
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &task_thread(tsk);
 
 	for (i = 0; i < XCHAL_NUM_IBREAK; ++i) {
 		if (t->ptrace_bp[i]) {
@@ -256,8 +256,8 @@ void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
  */
 void clear_ptrace_hw_breakpoint(struct task_struct *tsk)
 {
-	memset(tsk->thread.ptrace_bp, 0, sizeof(tsk->thread.ptrace_bp));
-	memset(tsk->thread.ptrace_wp, 0, sizeof(tsk->thread.ptrace_wp));
+	memset(task_thread(tsk).ptrace_bp, 0, sizeof(task_thread(tsk).ptrace_bp));
+	memset(task_thread(tsk).ptrace_wp, 0, sizeof(task_thread(tsk).ptrace_wp));
 }
 
 void restore_dbreak(void)

@@ -61,8 +61,8 @@ struct unwind_frame_info {
 #define UNW_FP(frame)		((frame)->regs.r27)
 #define FRAME_RETADDR_OFFSET	4
 #define FRAME_LINK_OFFSET	0
-#define STACK_BOTTOM_UNW(tsk)	STACK_LIMIT((tsk)->thread.ksp)
-#define STACK_TOP_UNW(tsk)	((tsk)->thread.ksp)
+#define STACK_BOTTOM_UNW(tsk)	STACK_LIMIT(task_thread(tsk).ksp)
+#define STACK_TOP_UNW(tsk)	(task_thread(tsk).ksp)
 #else
 #define UNW_FP(frame)		((void)(frame), 0)
 #endif

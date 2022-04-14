@@ -169,18 +169,18 @@ int do_mathemu(struct pt_regs *regs, struct task_struct *fpt)
 
 #ifdef DEBUG_MATHEMU
 	printk("In do_mathemu()... pc is %08lx\n", regs->pc);
-	printk("fpqdepth is %ld\n", fpt->thread.fpqdepth);
-	for (i = 0; i < fpt->thread.fpqdepth; i++)
-		printk("%d: %08lx at %08lx\n", i, fpt->thread.fpqueue[i].insn,
-		       (unsigned long)fpt->thread.fpqueue[i].insn_addr);
+	printk("fpqdepth is %ld\n", task_thread(fpt).fpqdepth);
+	for (i = 0; i < task_thread(fpt).fpqdepth; i++)
+		printk("%d: %08lx at %08lx\n", i, task_thread(fpt).fpqueue[i].insn,
+		       (unsigned long)task_thread(fpt).fpqueue[i].insn_addr);
 #endif
 
-	if (fpt->thread.fpqdepth == 0) {                   /* no queue, guilty insn is at regs->pc */
+	if (task_thread(fpt).fpqdepth == 0) {                   /* no queue, guilty insn is at regs->pc */
 #ifdef DEBUG_MATHEMU
 		printk("precise trap at %08lx\n", regs->pc);
 #endif
 		if (!get_user(insn, (u32 __user *) regs->pc)) {
-			retcode = do_one_mathemu(insn, &fpt->thread.fsr, fpt->thread.float_regs);
+			retcode = do_one_mathemu(insn, &task_thread(fpt).fsr, task_thread(fpt).float_regs);
 			if (retcode) {
 				/* in this case we need to fix up PC & nPC */
 				regs->pc = regs->npc;
@@ -191,17 +191,17 @@ int do_mathemu(struct pt_regs *regs, struct task_struct *fpt)
 	}
 
 	/* Normal case: need to empty the queue... */
-	for (i = 0; i < fpt->thread.fpqdepth; i++) {
-		retcode = do_one_mathemu(fpt->thread.fpqueue[i].insn, &(fpt->thread.fsr), fpt->thread.float_regs);
+	for (i = 0; i < task_thread(fpt).fpqdepth; i++) {
+		retcode = do_one_mathemu(task_thread(fpt).fpqueue[i].insn, &(task_thread(fpt).fsr), task_thread(fpt).float_regs);
 		if (!retcode)                               /* insn failed, no point doing any more */
 			break;
 	}
 	/* Now empty the queue and clear the queue_not_empty flag */
 	if (retcode)
-		fpt->thread.fsr &= ~(0x3000 | FSR_CEXC_MASK);
+		task_thread(fpt).fsr &= ~(0x3000 | FSR_CEXC_MASK);
 	else
-		fpt->thread.fsr &= ~0x3000;
-	fpt->thread.fpqdepth = 0;
+		task_thread(fpt).fsr &= ~0x3000;
+	task_thread(fpt).fpqdepth = 0;
 
 	return retcode;
 }

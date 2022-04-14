@@ -168,7 +168,7 @@ static void __kprobes setup_singlestep(struct kprobe *p, struct pt_regs *regs)
 	} else
 		is_branch =
 		    disasm_next_pc((unsigned long)p->addr, regs,
-			(struct callee_regs *) current->thread.callee_reg,
+			(struct callee_regs *) task_thread(current).callee_reg,
 			&next_pc, &tgt_if_br);
 
 	p->ainsn.t1_addr = (kprobe_opcode_t *) next_pc;

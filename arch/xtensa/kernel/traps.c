@@ -337,8 +337,8 @@ do_unaligned_user (struct pt_regs *regs)
 	__die_if_kernel("Unhandled unaligned exception in kernel",
 			regs, SIGKILL);
 
-	current->thread.bad_vaddr = regs->excvaddr;
-	current->thread.error_code = -3;
+	task_thread(current).bad_vaddr = regs->excvaddr;
+	task_thread(current).error_code = -3;
 	pr_info_ratelimited("Unaligned memory access to %08lx in '%s' "
 			    "(pid = %d, pc = %#010lx)\n",
 			    regs->excvaddr, current->comm,

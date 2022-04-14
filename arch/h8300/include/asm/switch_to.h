@@ -42,8 +42,8 @@ do {			     \
 		"jsr @_resume\n\t"			    \
 		"mov.l	er2,%0\n\t"			    \
 		: "=r" (_last)				    \
-		: "r" (&(prev->thread)),		    \
-		  "r" (&(next->thread)),		    \
+		: "r" (&(task_thread(prev))),		    \
+		  "r" (&(task_thread(next))),		    \
 		  "g" (prev)				    \
 		: "cc", "er0", "er1", "er2", "er3");	    \
 	(last) = _last;					    \

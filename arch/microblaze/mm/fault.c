@@ -172,7 +172,7 @@ retry:
 	if (unlikely(address + 0x100000 < vma->vm_end)) {
 
 		/* get user regs even if this fault is in kernel mode */
-		struct pt_regs *uregs = current->thread.regs;
+		struct pt_regs *uregs = task_thread(current).regs;
 		if (uregs == NULL)
 			goto bad_area;
 

@@ -58,8 +58,8 @@
 	;;											\
 	adds r16=IA64_TASK_THREAD_ON_USTACK_OFFSET,r16;						\
 	;;											\
-	ld1 r17=[r16];				/* load current->thread.on_ustack flag */	\
-	st1 [r16]=r0;				/* clear current->thread.on_ustack flag */	\
+	ld1 r17=[r16];				/* load task_thread(current).on_ustack flag */	\
+	st1 [r16]=r0;				/* clear task_thread(current).on_ustack flag */	\
 	adds r1=-IA64_TASK_THREAD_ON_USTACK_OFFSET,r16						\
 	/* switch from user to kernel RBS: */							\
 	;;											\

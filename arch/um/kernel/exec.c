@@ -25,7 +25,7 @@ void flush_thread(void)
 	void *data = NULL;
 	int ret;
 
-	arch_flush_thread(&current->thread.arch);
+	arch_flush_thread(&task_thread(current).arch);
 
 	ret = unmap(&current->mm->context.id, 0, TASK_SIZE, 1, &data);
 	if (ret) {

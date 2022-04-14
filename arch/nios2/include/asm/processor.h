@@ -75,8 +75,8 @@ extern unsigned long __get_wchan(struct task_struct *p);
 	((struct pt_regs *)(THREAD_SIZE + task_stack_page(p)) - 1)
 
 /* Used by procfs */
-#define KSTK_EIP(tsk)	((tsk)->thread.kregs->ea)
-#define KSTK_ESP(tsk)	((tsk)->thread.kregs->sp)
+#define KSTK_EIP(tsk)	(task_thread(tsk).kregs->ea)
+#define KSTK_ESP(tsk)	(task_thread(tsk).kregs->sp)
 
 #define cpu_relax()	barrier()
 

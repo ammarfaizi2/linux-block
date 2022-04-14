@@ -84,8 +84,8 @@
 /*
  * virtual flags (16 and 32-bit versions)
  */
-#define VFLAGS	(*(unsigned short *)&(current->thread.vm86->veflags))
-#define VEFLAGS	(current->thread.vm86->veflags)
+#define VFLAGS	(*(unsigned short *)&(task_thread(current).vm86->veflags))
+#define VEFLAGS	(task_thread(current).vm86->veflags)
 
 #define set_flags(X, new, mask) \
 ((X) = ((X) & ~(mask)) | ((new) & (mask)))
@@ -97,7 +97,7 @@ void save_v86_state(struct kernel_vm86_regs *regs, int retval)
 {
 	struct task_struct *tsk = current;
 	struct vm86plus_struct __user *user;
-	struct vm86 *vm86 = current->thread.vm86;
+	struct vm86 *vm86 = task_thread(current).vm86;
 
 	/*
 	 * This gets called from entry.S with interrupts disabled, but
@@ -142,10 +142,10 @@ void save_v86_state(struct kernel_vm86_regs *regs, int retval)
 
 exit_vm86:
 	preempt_disable();
-	tsk->thread.sp0 = vm86->saved_sp0;
-	tsk->thread.sysenter_cs = __KERNEL_CS;
+	task_thread(tsk).sp0 = vm86->saved_sp0;
+	task_thread(tsk).sysenter_cs = __KERNEL_CS;
 	update_task_stack(tsk);
-	refresh_sysenter_cs(&tsk->thread);
+	refresh_sysenter_cs(&task_thread(tsk));
 	vm86->saved_sp0 = 0;
 	preempt_enable();
 
@@ -199,7 +199,7 @@ SYSCALL_DEFINE2(vm86, unsigned long, cmd, unsigned long, arg)
 static long do_sys_vm86(struct vm86plus_struct __user *user_vm86, bool plus)
 {
 	struct task_struct *tsk = current;
-	struct vm86 *vm86 = tsk->thread.vm86;
+	struct vm86 *vm86 = task_thread(tsk).vm86;
 	struct kernel_vm86_regs vm86regs;
 	struct pt_regs *regs = current_pt_regs();
 	unsigned long err = 0;
@@ -234,7 +234,7 @@ static long do_sys_vm86(struct vm86plus_struct __user *user_vm86, bool plus)
 	if (!vm86) {
 		if (!(vm86 = kzalloc(sizeof(*vm86), GFP_KERNEL)))
 			return -ENOMEM;
-		tsk->thread.vm86 = vm86;
+		task_thread(tsk).vm86 = vm86;
 	}
 	if (vm86->saved_sp0)
 		return -EPERM;
@@ -324,16 +324,16 @@ static long do_sys_vm86(struct vm86plus_struct __user *user_vm86, bool plus)
 /*
  * Save old state
  */
-	vm86->saved_sp0 = tsk->thread.sp0;
+	vm86->saved_sp0 = task_thread(tsk).sp0;
 	lazy_save_gs(vm86->regs32.gs);
 
 	/* make room for real-mode segments */
 	preempt_disable();
-	tsk->thread.sp0 += 16;
+	task_thread(tsk).sp0 += 16;
 
 	if (boot_cpu_has(X86_FEATURE_SEP)) {
-		tsk->thread.sysenter_cs = 0;
-		refresh_sysenter_cs(&tsk->thread);
+		task_thread(tsk).sysenter_cs = 0;
+		refresh_sysenter_cs(&task_thread(tsk));
 	}
 
 	update_task_stack(tsk);
@@ -377,7 +377,7 @@ static inline void clear_AC(struct kernel_vm86_regs *regs)
 
 static inline void set_vflags_long(unsigned long flags, struct kernel_vm86_regs *regs)
 {
-	set_flags(VEFLAGS, flags, current->thread.vm86->veflags_mask);
+	set_flags(VEFLAGS, flags, task_thread(current).vm86->veflags_mask);
 	set_flags(regs->pt.flags, flags, SAFE_MASK);
 	if (flags & X86_EFLAGS_IF)
 		set_IF(regs);
@@ -387,7 +387,7 @@ static inline void set_vflags_long(unsigned long flags, struct kernel_vm86_regs 
 
 static inline void set_vflags_short(unsigned short flags, struct kernel_vm86_regs *regs)
 {
-	set_flags(VFLAGS, flags, current->thread.vm86->veflags_mask);
+	set_flags(VFLAGS, flags, task_thread(current).vm86->veflags_mask);
 	set_flags(regs->pt.flags, flags, SAFE_MASK);
 	if (flags & X86_EFLAGS_IF)
 		set_IF(regs);
@@ -402,7 +402,7 @@ static inline unsigned long get_vflags(struct kernel_vm86_regs *regs)
 	if (VEFLAGS & X86_EFLAGS_VIF)
 		flags |= X86_EFLAGS_IF;
 	flags |= X86_EFLAGS_IOPL;
-	return flags | (VEFLAGS & current->thread.vm86->veflags_mask);
+	return flags | (VEFLAGS & task_thread(current).vm86->veflags_mask);
 }
 
 static inline int is_revectored(int nr, struct revectored_struct *bitmap)
@@ -497,7 +497,7 @@ static void do_int(struct kernel_vm86_regs *regs, int i,
 {
 	unsigned long __user *intr_ptr;
 	unsigned long segoffs;
-	struct vm86 *vm86 = current->thread.vm86;
+	struct vm86 *vm86 = task_thread(current).vm86;
 
 	if (regs->pt.cs == BIOSSEG)
 		goto cannot_handle;
@@ -527,7 +527,7 @@ cannot_handle:
 
 int handle_vm86_trap(struct kernel_vm86_regs *regs, long error_code, int trapno)
 {
-	struct vm86 *vm86 = current->thread.vm86;
+	struct vm86 *vm86 = task_thread(current).vm86;
 
 	if (vm86->vm86plus.is_vm86pus) {
 		if ((trapno == 3) || (trapno == 1)) {
@@ -539,8 +539,8 @@ int handle_vm86_trap(struct kernel_vm86_regs *regs, long error_code, int trapno)
 	}
 	if (trapno != 1)
 		return 1; /* we let this handle by the calling routine */
-	current->thread.trap_nr = trapno;
-	current->thread.error_code = error_code;
+	task_thread(current).trap_nr = trapno;
+	task_thread(current).error_code = error_code;
 	force_sig(SIGTRAP);
 	return 0;
 }
@@ -552,7 +552,7 @@ void handle_vm86_fault(struct kernel_vm86_regs *regs, long error_code)
 	unsigned char __user *ssp;
 	unsigned short ip, sp, orig_flags;
 	int data32, pref_done;
-	struct vm86plus_info_struct *vmpi = &current->thread.vm86->vm86plus;
+	struct vm86plus_info_struct *vmpi = &task_thread(current).vm86->vm86plus;
 
 #define CHECK_IF_IN_TRAP \
 	if (vmpi->vm86dbg_active && vmpi->vm86dbg_TFpendig) \

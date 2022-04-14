@@ -83,7 +83,7 @@ ia64_set_rbs_bot (void)
 
 	if (stack_size > MAX_USER_STACK_SIZE)
 		stack_size = MAX_USER_STACK_SIZE;
-	current->thread.rbs_bot = PAGE_ALIGN(current->mm->start_stack - stack_size);
+	task_thread(current).rbs_bot = PAGE_ALIGN(current->mm->start_stack - stack_size);
 }
 
 /*
@@ -107,7 +107,7 @@ ia64_init_addr_space (void)
 	vma = vm_area_alloc(current->mm);
 	if (vma) {
 		vma_set_anonymous(vma);
-		vma->vm_start = current->thread.rbs_bot & PAGE_MASK;
+		vma->vm_start = task_thread(current).rbs_bot & PAGE_MASK;
 		vma->vm_end = vma->vm_start + PAGE_SIZE;
 		vma->vm_flags = VM_DATA_DEFAULT_FLAGS|VM_GROWSUP|VM_ACCOUNT;
 		vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);

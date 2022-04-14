@@ -240,32 +240,32 @@ static __always_inline void save_base_legacy(struct task_struct *prev_p,
 		 * saving the base isn't necessary.
 		 */
 		if (which == FS)
-			prev_p->thread.fsbase = 0;
+			task_thread(prev_p).fsbase = 0;
 		else
-			prev_p->thread.gsbase = 0;
+			task_thread(prev_p).gsbase = 0;
 	}
 }
 
 static __always_inline void save_fsgs(struct task_struct *task)
 {
-	savesegment(fs, task->thread.fsindex);
-	savesegment(gs, task->thread.gsindex);
+	savesegment(fs, task_thread(task).fsindex);
+	savesegment(gs, task_thread(task).gsindex);
 	if (static_cpu_has(X86_FEATURE_FSGSBASE)) {
 		/*
 		 * If FSGSBASE is enabled, we can't make any useful guesses
 		 * about the base, and user code expects us to save the current
 		 * value.  Fortunately, reading the base directly is efficient.
 		 */
-		task->thread.fsbase = rdfsbase();
-		task->thread.gsbase = __rdgsbase_inactive();
+		task_thread(task).fsbase = rdfsbase();
+		task_thread(task).gsbase = __rdgsbase_inactive();
 	} else {
-		save_base_legacy(task, task->thread.fsindex, FS);
-		save_base_legacy(task, task->thread.gsindex, GS);
+		save_base_legacy(task, task_thread(task).fsindex, FS);
+		save_base_legacy(task, task_thread(task).gsindex, GS);
 	}
 }
 
 /*
- * While a process is running,current->thread.fsbase and current->thread.gsbase
+ * While a process is running,task_thread(current).fsbase and task_thread(current).gsbase
  * may not match the corresponding CPU registers (see save_base_legacy()).
  */
 void current_save_fsgs(void)
@@ -402,7 +402,7 @@ unsigned long x86_fsgsbase_read_task(struct task_struct *task,
 			return 0;
 
 		idx -= GDT_ENTRY_TLS_MIN;
-		base = get_desc_base(&task->thread.tls_array[idx]);
+		base = get_desc_base(&task_thread(task).tls_array[idx]);
 	} else {
 #ifdef CONFIG_MODIFY_LDT_SYSCALL
 		struct ldt_struct *ldt;
@@ -464,10 +464,10 @@ unsigned long x86_fsbase_read_task(struct task_struct *task)
 	if (task == current)
 		fsbase = x86_fsbase_read_cpu();
 	else if (boot_cpu_has(X86_FEATURE_FSGSBASE) ||
-		 (task->thread.fsindex == 0))
-		fsbase = task->thread.fsbase;
+		 (task_thread(task).fsindex == 0))
+		fsbase = task_thread(task).fsbase;
 	else
-		fsbase = x86_fsgsbase_read_task(task, task->thread.fsindex);
+		fsbase = x86_fsgsbase_read_task(task, task_thread(task).fsindex);
 
 	return fsbase;
 }
@@ -479,10 +479,10 @@ unsigned long x86_gsbase_read_task(struct task_struct *task)
 	if (task == current)
 		gsbase = x86_gsbase_read_cpu_inactive();
 	else if (boot_cpu_has(X86_FEATURE_FSGSBASE) ||
-		 (task->thread.gsindex == 0))
-		gsbase = task->thread.gsbase;
+		 (task_thread(task).gsindex == 0))
+		gsbase = task_thread(task).gsbase;
 	else
-		gsbase = x86_fsgsbase_read_task(task, task->thread.gsindex);
+		gsbase = x86_fsgsbase_read_task(task, task_thread(task).gsindex);
 
 	return gsbase;
 }
@@ -491,14 +491,14 @@ void x86_fsbase_write_task(struct task_struct *task, unsigned long fsbase)
 {
 	WARN_ON_ONCE(task == current);
 
-	task->thread.fsbase = fsbase;
+	task_thread(task).fsbase = fsbase;
 }
 
 void x86_gsbase_write_task(struct task_struct *task, unsigned long gsbase)
 {
 	WARN_ON_ONCE(task == current);
 
-	task->thread.gsbase = gsbase;
+	task_thread(task).gsbase = gsbase;
 }
 
 static void
@@ -556,8 +556,8 @@ void compat_start_thread(struct pt_regs *regs, u32 new_ip, u32 new_sp, bool x32)
 __visible __notrace_funcgraph struct task_struct *
 __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 {
-	struct thread_struct *prev = &prev_p->thread;
-	struct thread_struct *next = &next_p->thread;
+	struct thread_struct *prev = &task_thread(prev_p);
+	struct thread_struct *next = &task_thread(next_p);
 	struct fpu *prev_fpu = prev->fpu;
 	int cpu = smp_processor_id();
 
@@ -766,10 +766,10 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
 			 * On non-FSGSBASE systems, save_base_legacy() expects
 			 * that we also fill in thread.gsbase.
 			 */
-			task->thread.gsbase = arg2;
+			task_thread(task).gsbase = arg2;
 
 		} else {
-			task->thread.gsindex = 0;
+			task_thread(task).gsindex = 0;
 			x86_gsbase_write_task(task, arg2);
 		}
 		preempt_enable();
@@ -796,9 +796,9 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
 			 * On non-FSGSBASE systems, save_base_legacy() expects
 			 * that we also fill in thread.fsbase.
 			 */
-			task->thread.fsbase = arg2;
+			task_thread(task).fsbase = arg2;
 		} else {
-			task->thread.fsindex = 0;
+			task_thread(task).fsindex = 0;
 			x86_fsbase_write_task(task, arg2);
 		}
 		preempt_enable();

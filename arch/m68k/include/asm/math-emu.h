@@ -125,7 +125,7 @@ extern unsigned int fp_debugprint;
 	}						\
 })
 
-#define FPDATA		((struct fp_data *)current->thread.fp)
+#define FPDATA		((struct fp_data *)task_thread(current).fp)
 
 #else	/* __ASSEMBLY__ */
 

@@ -24,7 +24,7 @@ static __always_inline unsigned long *stack_pointer(struct task_struct *task)
 	if (!task || task == current)
 		sp = current_stack_pointer;
 	else
-		sp = task->thread.sp;
+		sp = task_thread(task).sp;
 
 	return (unsigned long *)sp;
 }

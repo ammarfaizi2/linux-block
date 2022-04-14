@@ -166,7 +166,7 @@ static inline void lose_fpu_inatomic(int save, struct task_struct *tsk)
 	if (is_msa_enabled()) {
 		if (save) {
 			save_msa(tsk);
-			tsk->thread.fpu.fcr31 =
+			task_thread(tsk).fpu.fcr31 =
 					read_32bit_cp1_register(CP1_STATUS);
 		}
 		disable_msa();
@@ -210,7 +210,7 @@ static inline bool init_fp_ctx(struct task_struct *target)
 		return false;
 
 	/* Begin with data registers set to all 1s... */
-	memset(&target->thread.fpu.fpr, ~0, sizeof(target->thread.fpu.fpr));
+	memset(&task_thread(target).fpu.fpr, ~0, sizeof(task_thread(target).fpu.fpr));
 
 	/* FCSR has been preset by `mips_set_personality_nan'.  */
 
@@ -245,7 +245,7 @@ static inline union fpureg *get_fpu_regs(struct task_struct *tsk)
 		preempt_enable();
 	}
 
-	return tsk->thread.fpu.fpr;
+	return task_thread(tsk).fpu.fpr;
 }
 
 #else /* !CONFIG_MIPS_FP_SUPPORT */

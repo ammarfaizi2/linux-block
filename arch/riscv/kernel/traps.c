@@ -76,7 +76,7 @@ void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr)
 static void do_trap_error(struct pt_regs *regs, int signo, int code,
 	unsigned long addr, const char *str)
 {
-	current->thread.bad_cause = regs->cause;
+	task_thread(current).bad_cause = regs->cause;
 
 	if (user_mode(regs)) {
 		do_trap(regs, signo, code, addr);
@@ -167,7 +167,7 @@ asmlinkage __visible __trap_section void do_trap_break(struct pt_regs *regs)
 	if (uprobe_breakpoint_handler(regs))
 		return;
 #endif
-	current->thread.bad_cause = regs->cause;
+	task_thread(current).bad_cause = regs->cause;
 
 	if (user_mode(regs))
 		force_sig_fault(SIGTRAP, TRAP_BRKPT, (void __user *)regs->epc);

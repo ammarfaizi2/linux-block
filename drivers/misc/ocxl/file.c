@@ -128,7 +128,7 @@ static long afu_ioctl_enable_p9_wait(struct ocxl_context *ctx,
 				return -ENOENT;
 			}
 
-			ctx->tidr = current->thread.tidr;
+			ctx->tidr = task_thread(current).tidr;
 		}
 
 		status = ctx->status;

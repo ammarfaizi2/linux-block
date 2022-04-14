@@ -154,7 +154,7 @@ bool dsemul_thread_cleanup(struct task_struct *tsk)
 	int fr_idx;
 
 	/* Clear any allocated frame, retrieving its index */
-	fr_idx = atomic_xchg(&tsk->thread.bd_emu_frame, BD_EMUFRAME_NONE);
+	fr_idx = atomic_xchg(&task_thread(tsk).bd_emu_frame, BD_EMUFRAME_NONE);
 
 	/* If no frame was allocated, we're done */
 	if (fr_idx == BD_EMUFRAME_NONE)
@@ -180,7 +180,7 @@ bool dsemul_thread_rollback(struct pt_regs *regs)
 		return false;
 
 	/* Find the frame being executed */
-	fr_idx = atomic_read(&current->thread.bd_emu_frame);
+	fr_idx = atomic_read(&task_thread(current).bd_emu_frame);
 	if (fr_idx == BD_EMUFRAME_NONE)
 		return false;
 	fr = &dsemul_page()[fr_idx];
@@ -193,11 +193,11 @@ bool dsemul_thread_rollback(struct pt_regs *regs)
 	 * of the emupage - we'll free the allocated frame anyway.
 	 */
 	if (msk_isa16_mode(regs->cp0_epc) == (unsigned long)&fr->emul)
-		regs->cp0_epc = current->thread.bd_emu_branch_pc;
+		regs->cp0_epc = task_thread(current).bd_emu_branch_pc;
 	else if (msk_isa16_mode(regs->cp0_epc) == (unsigned long)&fr->badinst)
-		regs->cp0_epc = current->thread.bd_emu_cont_pc;
+		regs->cp0_epc = task_thread(current).bd_emu_cont_pc;
 
-	atomic_set(&current->thread.bd_emu_frame, BD_EMUFRAME_NONE);
+	atomic_set(&task_thread(current).bd_emu_frame, BD_EMUFRAME_NONE);
 	free_emuframe(fr_idx, current->mm);
 	return true;
 }
@@ -246,7 +246,7 @@ int mips_dsemul(struct pt_regs *regs, mips_instruction ir,
 	pr_debug("dsemul 0x%08lx cont at 0x%08lx\n", regs->cp0_epc, cont_pc);
 
 	/* Allocate a frame if we don't already have one */
-	fr_idx = atomic_read(&current->thread.bd_emu_frame);
+	fr_idx = atomic_read(&task_thread(current).bd_emu_frame);
 	if (fr_idx == BD_EMUFRAME_NONE)
 		fr_idx = alloc_emuframe();
 	if (fr_idx == BD_EMUFRAME_NONE)
@@ -282,9 +282,9 @@ int mips_dsemul(struct pt_regs *regs, mips_instruction ir,
 	}
 
 	/* Record the PC of the branch, PC to continue from & frame index */
-	current->thread.bd_emu_branch_pc = branch_pc;
-	current->thread.bd_emu_cont_pc = cont_pc;
-	atomic_set(&current->thread.bd_emu_frame, fr_idx);
+	task_thread(current).bd_emu_branch_pc = branch_pc;
+	task_thread(current).bd_emu_cont_pc = cont_pc;
+	atomic_set(&task_thread(current).bd_emu_frame, fr_idx);
 
 	/* Change user register context to execute the frame */
 	regs->cp0_epc = fr_uaddr | isa16;
@@ -301,7 +301,7 @@ bool do_dsemulret(struct pt_regs *xcp)
 	}
 
 	/* Set EPC to return to post-branch instruction */
-	xcp->cp0_epc = current->thread.bd_emu_cont_pc;
+	xcp->cp0_epc = task_thread(current).bd_emu_cont_pc;
 	pr_debug("dsemulret to 0x%08lx\n", xcp->cp0_epc);
 	MIPS_FPU_EMU_INC_STATS(ds_emul);
 	return true;

@@ -155,13 +155,13 @@ unsigned long __get_wchan(struct task_struct *p);
 #define	KSTK_EIP(tsk)	\
     ({			\
 	unsigned long eip = 0;	 \
-	if ((tsk)->thread.esp0 > PAGE_SIZE && \
-	    (virt_addr_valid((tsk)->thread.esp0))) \
-	      eip = ((struct pt_regs *) (tsk)->thread.esp0)->pc; \
+	if (task_thread(tsk).esp0 > PAGE_SIZE && \
+	    (virt_addr_valid(task_thread(tsk).esp0))) \
+	      eip = ((struct pt_regs *) task_thread(tsk).esp0)->pc; \
 	eip; })
-#define	KSTK_ESP(tsk)	((tsk) == current ? rdusp() : (tsk)->thread.usp)
+#define	KSTK_ESP(tsk)	((tsk) == current ? rdusp() : task_thread(tsk).usp)
 
-#define task_pt_regs(tsk)	((struct pt_regs *) ((tsk)->thread.esp0))
+#define task_pt_regs(tsk)	((struct pt_regs *) (task_thread(tsk).esp0))
 
 #define cpu_relax()	barrier()
 

@@ -332,11 +332,11 @@ void update_mmu_cache(struct vm_area_struct *vma, unsigned long address,
 		return;
 
 	/* We have to test for regs NULL since init will get here first thing at boot */
-	if (!current->thread.regs)
+	if (!task_thread(current).regs)
 		return;
 
 	/* We also avoid filling the hash if not coming from a fault */
-	if (TRAP(current->thread.regs) != 0x300 && TRAP(current->thread.regs) != 0x400)
+	if (TRAP(task_thread(current).regs) != 0x300 && TRAP(task_thread(current).regs) != 0x400)
 		return;
 
 	hash_preload(vma->vm_mm, address);

@@ -25,7 +25,7 @@ struct runtime_instr_cb runtime_instr_empty_cb;
 
 void runtime_instr_release(struct task_struct *tsk)
 {
-	kfree(tsk->thread.ri_cb);
+	kfree(task_thread(tsk).ri_cb);
 }
 
 static void disable_runtime_instr(void)
@@ -33,13 +33,13 @@ static void disable_runtime_instr(void)
 	struct task_struct *task = current;
 	struct pt_regs *regs;
 
-	if (!task->thread.ri_cb)
+	if (!task_thread(task).ri_cb)
 		return;
 	regs = task_pt_regs(task);
 	preempt_disable();
 	load_runtime_instr_cb(&runtime_instr_empty_cb);
-	kfree(task->thread.ri_cb);
-	task->thread.ri_cb = NULL;
+	kfree(task_thread(task).ri_cb);
+	task_thread(task).ri_cb = NULL;
 	preempt_enable();
 
 	/*
@@ -82,12 +82,12 @@ SYSCALL_DEFINE2(s390_runtime_instr, int, command, int, signum)
 	if (command != S390_RUNTIME_INSTR_START)
 		return -EINVAL;
 
-	if (!current->thread.ri_cb) {
+	if (!task_thread(current).ri_cb) {
 		cb = kzalloc(sizeof(*cb), GFP_KERNEL);
 		if (!cb)
 			return -ENOMEM;
 	} else {
-		cb = current->thread.ri_cb;
+		cb = task_thread(current).ri_cb;
 		memset(cb, 0, sizeof(*cb));
 	}
 
@@ -95,7 +95,7 @@ SYSCALL_DEFINE2(s390_runtime_instr, int, command, int, signum)
 
 	/* now load the control block to make it available */
 	preempt_disable();
-	current->thread.ri_cb = cb;
+	task_thread(current).ri_cb = cb;
 	load_runtime_instr_cb(cb);
 	preempt_enable();
 	return 0;

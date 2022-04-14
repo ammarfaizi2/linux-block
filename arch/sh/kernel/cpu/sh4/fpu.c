@@ -81,7 +81,7 @@ void save_fpu(struct task_struct *tsk)
 		      "fmov.s	fr1, @-%0\n\t"
 		      "fmov.s	fr0, @-%0\n\t"
 		      "lds	%3, fpscr\n\t":"=r" (dummy)
-		      :"0"((char *)(&tsk->thread.xstate->hardfpu.status)),
+		      :"0"((char *)(&task_thread(tsk).xstate->hardfpu.status)),
 		      "r"(FPSCR_RCHG), "r"(FPSCR_INIT)
 		      :"memory");
 
@@ -131,7 +131,7 @@ void restore_fpu(struct task_struct *tsk)
 		      "lds.l	@%0+, fpscr\n\t"
 		      "lds.l	@%0+, fpul\n\t"
 		      :"=r" (dummy)
-		      :"0" (tsk->thread.xstate), "r" (FPSCR_RCHG)
+		      :"0" (task_thread(tsk).xstate), "r" (FPSCR_RCHG)
 		      :"memory");
 	disable_fpu();
 }
@@ -227,9 +227,9 @@ static int ieee_fpe_handler(struct pt_regs *regs)
 		/* fcnvsd */
 		struct task_struct *tsk = current;
 
-		if ((tsk->thread.xstate->hardfpu.fpscr & FPSCR_CAUSE_ERROR))
+		if ((task_thread(tsk).xstate->hardfpu.fpscr & FPSCR_CAUSE_ERROR))
 			/* FPU error */
-			denormal_to_double(&tsk->thread.xstate->hardfpu,
+			denormal_to_double(&task_thread(tsk).xstate->hardfpu,
 					   (finsn >> 8) & 0xf);
 		else
 			return 0;
@@ -245,9 +245,9 @@ static int ieee_fpe_handler(struct pt_regs *regs)
 
 		n = (finsn >> 8) & 0xf;
 		m = (finsn >> 4) & 0xf;
-		hx = tsk->thread.xstate->hardfpu.fp_regs[n];
-		hy = tsk->thread.xstate->hardfpu.fp_regs[m];
-		fpscr = tsk->thread.xstate->hardfpu.fpscr;
+		hx = task_thread(tsk).xstate->hardfpu.fp_regs[n];
+		hy = task_thread(tsk).xstate->hardfpu.fp_regs[m];
+		fpscr = task_thread(tsk).xstate->hardfpu.fpscr;
 		prec = fpscr & FPSCR_DBL_PRECISION;
 
 		if ((fpscr & FPSCR_CAUSE_ERROR)
@@ -257,18 +257,18 @@ static int ieee_fpe_handler(struct pt_regs *regs)
 
 			/* FPU error because of denormal (doubles) */
 			llx = ((long long)hx << 32)
-			    | tsk->thread.xstate->hardfpu.fp_regs[n + 1];
+			    | task_thread(tsk).xstate->hardfpu.fp_regs[n + 1];
 			lly = ((long long)hy << 32)
-			    | tsk->thread.xstate->hardfpu.fp_regs[m + 1];
+			    | task_thread(tsk).xstate->hardfpu.fp_regs[m + 1];
 			llx = float64_mul(llx, lly);
-			tsk->thread.xstate->hardfpu.fp_regs[n] = llx >> 32;
-			tsk->thread.xstate->hardfpu.fp_regs[n + 1] = llx & 0xffffffff;
+			task_thread(tsk).xstate->hardfpu.fp_regs[n] = llx >> 32;
+			task_thread(tsk).xstate->hardfpu.fp_regs[n + 1] = llx & 0xffffffff;
 		} else if ((fpscr & FPSCR_CAUSE_ERROR)
 			   && (!prec && ((hx & 0x7fffffff) < 0x00800000
 					 || (hy & 0x7fffffff) < 0x00800000))) {
 			/* FPU error because of denormal (floats) */
 			hx = float32_mul(hx, hy);
-			tsk->thread.xstate->hardfpu.fp_regs[n] = hx;
+			task_thread(tsk).xstate->hardfpu.fp_regs[n] = hx;
 		} else
 			return 0;
 
@@ -283,9 +283,9 @@ static int ieee_fpe_handler(struct pt_regs *regs)
 
 		n = (finsn >> 8) & 0xf;
 		m = (finsn >> 4) & 0xf;
-		hx = tsk->thread.xstate->hardfpu.fp_regs[n];
-		hy = tsk->thread.xstate->hardfpu.fp_regs[m];
-		fpscr = tsk->thread.xstate->hardfpu.fpscr;
+		hx = task_thread(tsk).xstate->hardfpu.fp_regs[n];
+		hy = task_thread(tsk).xstate->hardfpu.fp_regs[m];
+		fpscr = task_thread(tsk).xstate->hardfpu.fpscr;
 		prec = fpscr & FPSCR_DBL_PRECISION;
 
 		if ((fpscr & FPSCR_CAUSE_ERROR)
@@ -295,15 +295,15 @@ static int ieee_fpe_handler(struct pt_regs *regs)
 
 			/* FPU error because of denormal (doubles) */
 			llx = ((long long)hx << 32)
-			    | tsk->thread.xstate->hardfpu.fp_regs[n + 1];
+			    | task_thread(tsk).xstate->hardfpu.fp_regs[n + 1];
 			lly = ((long long)hy << 32)
-			    | tsk->thread.xstate->hardfpu.fp_regs[m + 1];
+			    | task_thread(tsk).xstate->hardfpu.fp_regs[m + 1];
 			if ((finsn & 0xf00f) == 0xf000)
 				llx = float64_add(llx, lly);
 			else
 				llx = float64_sub(llx, lly);
-			tsk->thread.xstate->hardfpu.fp_regs[n] = llx >> 32;
-			tsk->thread.xstate->hardfpu.fp_regs[n + 1] = llx & 0xffffffff;
+			task_thread(tsk).xstate->hardfpu.fp_regs[n] = llx >> 32;
+			task_thread(tsk).xstate->hardfpu.fp_regs[n + 1] = llx & 0xffffffff;
 		} else if ((fpscr & FPSCR_CAUSE_ERROR)
 			   && (!prec && ((hx & 0x7fffffff) < 0x00800000
 					 || (hy & 0x7fffffff) < 0x00800000))) {
@@ -312,7 +312,7 @@ static int ieee_fpe_handler(struct pt_regs *regs)
 				hx = float32_add(hx, hy);
 			else
 				hx = float32_sub(hx, hy);
-			tsk->thread.xstate->hardfpu.fp_regs[n] = hx;
+			task_thread(tsk).xstate->hardfpu.fp_regs[n] = hx;
 		} else
 			return 0;
 
@@ -327,9 +327,9 @@ static int ieee_fpe_handler(struct pt_regs *regs)
 
 		n = (finsn >> 8) & 0xf;
 		m = (finsn >> 4) & 0xf;
-		hx = tsk->thread.xstate->hardfpu.fp_regs[n];
-		hy = tsk->thread.xstate->hardfpu.fp_regs[m];
-		fpscr = tsk->thread.xstate->hardfpu.fpscr;
+		hx = task_thread(tsk).xstate->hardfpu.fp_regs[n];
+		hy = task_thread(tsk).xstate->hardfpu.fp_regs[m];
+		fpscr = task_thread(tsk).xstate->hardfpu.fpscr;
 		prec = fpscr & FPSCR_DBL_PRECISION;
 
 		if ((fpscr & FPSCR_CAUSE_ERROR)
@@ -339,20 +339,20 @@ static int ieee_fpe_handler(struct pt_regs *regs)
 
 			/* FPU error because of denormal (doubles) */
 			llx = ((long long)hx << 32)
-			    | tsk->thread.xstate->hardfpu.fp_regs[n + 1];
+			    | task_thread(tsk).xstate->hardfpu.fp_regs[n + 1];
 			lly = ((long long)hy << 32)
-			    | tsk->thread.xstate->hardfpu.fp_regs[m + 1];
+			    | task_thread(tsk).xstate->hardfpu.fp_regs[m + 1];
 
 			llx = float64_div(llx, lly);
 
-			tsk->thread.xstate->hardfpu.fp_regs[n] = llx >> 32;
-			tsk->thread.xstate->hardfpu.fp_regs[n + 1] = llx & 0xffffffff;
+			task_thread(tsk).xstate->hardfpu.fp_regs[n] = llx >> 32;
+			task_thread(tsk).xstate->hardfpu.fp_regs[n + 1] = llx & 0xffffffff;
 		} else if ((fpscr & FPSCR_CAUSE_ERROR)
 			   && (!prec && ((hx & 0x7fffffff) < 0x00800000
 					 || (hy & 0x7fffffff) < 0x00800000))) {
 			/* FPU error because of denormal (floats) */
 			hx = float32_div(hx, hy);
-			tsk->thread.xstate->hardfpu.fp_regs[n] = hx;
+			task_thread(tsk).xstate->hardfpu.fp_regs[n] = hx;
 		} else
 			return 0;
 
@@ -365,17 +365,17 @@ static int ieee_fpe_handler(struct pt_regs *regs)
 		unsigned int hx;
 
 		m = (finsn >> 8) & 0x7;
-		hx = tsk->thread.xstate->hardfpu.fp_regs[m];
+		hx = task_thread(tsk).xstate->hardfpu.fp_regs[m];
 
-		if ((tsk->thread.xstate->hardfpu.fpscr & FPSCR_CAUSE_ERROR)
+		if ((task_thread(tsk).xstate->hardfpu.fpscr & FPSCR_CAUSE_ERROR)
 			&& ((hx & 0x7fffffff) < 0x00100000)) {
 			/* subnormal double to float conversion */
 			long long llx;
 
-			llx = ((long long)tsk->thread.xstate->hardfpu.fp_regs[m] << 32)
-			    | tsk->thread.xstate->hardfpu.fp_regs[m + 1];
+			llx = ((long long)task_thread(tsk).xstate->hardfpu.fp_regs[m] << 32)
+			    | task_thread(tsk).xstate->hardfpu.fp_regs[m + 1];
 
-			tsk->thread.xstate->hardfpu.fpul = float64_to_float32(llx);
+			task_thread(tsk).xstate->hardfpu.fpul = float64_to_float32(llx);
 		} else
 			return 0;
 
@@ -394,7 +394,7 @@ void float_raise(unsigned int flags)
 int float_rounding_mode(void)
 {
 	struct task_struct *tsk = current;
-	int roundingMode = FPSCR_ROUNDING_MODE(tsk->thread.xstate->hardfpu.fpscr);
+	int roundingMode = FPSCR_ROUNDING_MODE(task_thread(tsk).xstate->hardfpu.fpscr);
 	return roundingMode;
 }
 
@@ -406,16 +406,16 @@ BUILD_TRAP_HANDLER(fpu_error)
 	__unlazy_fpu(tsk, regs);
 	fpu_exception_flags = 0;
 	if (ieee_fpe_handler(regs)) {
-		tsk->thread.xstate->hardfpu.fpscr &=
+		task_thread(tsk).xstate->hardfpu.fpscr &=
 		    ~(FPSCR_CAUSE_MASK | FPSCR_FLAG_MASK);
-		tsk->thread.xstate->hardfpu.fpscr |= fpu_exception_flags;
+		task_thread(tsk).xstate->hardfpu.fpscr |= fpu_exception_flags;
 		/* Set the FPSCR flag as well as cause bits - simply
 		 * replicate the cause */
-		tsk->thread.xstate->hardfpu.fpscr |= (fpu_exception_flags >> 10);
+		task_thread(tsk).xstate->hardfpu.fpscr |= (fpu_exception_flags >> 10);
 		grab_fpu(regs);
 		restore_fpu(tsk);
 		task_thread_info(tsk)->status |= TS_USEDFPU;
-		if ((((tsk->thread.xstate->hardfpu.fpscr & FPSCR_ENABLE_MASK) >> 7) &
+		if ((((task_thread(tsk).xstate->hardfpu.fpscr & FPSCR_ENABLE_MASK) >> 7) &
 		     (fpu_exception_flags >> 2)) == 0) {
 			return;
 		}

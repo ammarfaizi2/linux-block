@@ -312,12 +312,12 @@ struct thread_struct {
 }
 #endif
 
-#define task_pt_regs(tsk)	((tsk)->thread.regs)
+#define task_pt_regs(tsk)	(task_thread(tsk).regs)
 
 unsigned long __get_wchan(struct task_struct *p);
 
-#define KSTK_EIP(tsk)  ((tsk)->thread.regs? (tsk)->thread.regs->nip: 0)
-#define KSTK_ESP(tsk)  ((tsk)->thread.regs? (tsk)->thread.regs->gpr[1]: 0)
+#define KSTK_EIP(tsk)  (task_thread(tsk).regs? task_thread(tsk).regs->nip: 0)
+#define KSTK_ESP(tsk)  (task_thread(tsk).regs? task_thread(tsk).regs->gpr[1]: 0)
 
 /* Get/set floating-point exception mode */
 #define GET_FPEXC_CTL(tsk, adr) get_fpexc_mode((tsk), (adr))

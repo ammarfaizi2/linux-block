@@ -85,18 +85,19 @@ extern void arch_switch_to(struct task_struct *to);
 
 void *__switch_to(struct task_struct *from, struct task_struct *to)
 {
-	to->thread.prev_sched = from;
+	task_thread(to).prev_sched = from;
 	set_current(to);
 
-	switch_threads(&from->thread.switch_buf, &to->thread.switch_buf);
+	switch_threads(&task_thread(from).switch_buf,
+		       &task_thread(to).switch_buf);
 	arch_switch_to(current);
 
-	return current->thread.prev_sched;
+	return task_thread(current).prev_sched;
 }
 
 void interrupt_end(void)
 {
-	struct pt_regs *regs = &current->thread.regs;
+	struct pt_regs *regs = &task_thread(current).regs;
 
 	if (need_resched())
 		schedule();
@@ -121,18 +122,18 @@ void new_thread_handler(void)
 	int (*fn)(void *), n;
 	void *arg;
 
-	if (current->thread.prev_sched != NULL)
-		schedule_tail(current->thread.prev_sched);
-	current->thread.prev_sched = NULL;
+	if (task_thread(current).prev_sched != NULL)
+		schedule_tail(task_thread(current).prev_sched);
+	task_thread(current).prev_sched = NULL;
 
-	fn = current->thread.request.u.thread.proc;
-	arg = current->thread.request.u.thread.arg;
+	fn = task_thread(current).request.u.thread.proc;
+	arg = task_thread(current).request.u.thread.arg;
 
 	/*
 	 * callback returns only if the kernel thread execs a process
 	 */
 	n = fn(arg);
-	userspace(&current->thread.regs.regs, current_thread_info()->aux_fp_regs);
+	userspace(&task_thread(current).regs.regs, current_thread_info()->aux_fp_regs);
 }
 
 /* Called magically, see new_thread_handler above */
@@ -140,7 +141,7 @@ void fork_handler(void)
 {
 	force_flush_all();
 
-	schedule_tail(current->thread.prev_sched);
+	schedule_tail(task_thread(current).prev_sched);
 
 	/*
 	 * XXX: if interrupt_end() calls schedule, this call to
@@ -149,9 +150,9 @@ void fork_handler(void)
 	 */
 	arch_switch_to(current);
 
-	current->thread.prev_sched = NULL;
+	task_thread(current).prev_sched = NULL;
 
-	userspace(&current->thread.regs.regs, current_thread_info()->aux_fp_regs);
+	userspace(&task_thread(current).regs.regs, current_thread_info()->aux_fp_regs);
 }
 
 int copy_thread(unsigned long clone_flags, unsigned long sp,
@@ -161,26 +162,26 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
 	int kthread = current->flags & (PF_KTHREAD | PF_IO_WORKER);
 	int ret = 0;
 
-	p->thread = (struct thread_struct) INIT_THREAD;
+	task_thread(p) = (struct thread_struct) INIT_THREAD;
 
 	if (!kthread) {
-	  	memcpy(&p->thread.regs.regs, current_pt_regs(),
-		       sizeof(p->thread.regs.regs));
-		PT_REGS_SET_SYSCALL_RETURN(&p->thread.regs, 0);
+	  	memcpy(&task_thread(p).regs.regs, current_pt_regs(),
+		       sizeof(task_thread(p).regs.regs));
+		PT_REGS_SET_SYSCALL_RETURN(&task_thread(p).regs, 0);
 		if (sp != 0)
-			REGS_SP(p->thread.regs.regs.gp) = sp;
+			REGS_SP(task_thread(p).regs.regs.gp) = sp;
 
 		handler = fork_handler;
 
-		arch_copy_thread(&current->thread.arch, &p->thread.arch);
+		arch_copy_thread(&task_thread(current).arch, &task_thread(p).arch);
 	} else {
-		get_safe_registers(p->thread.regs.regs.gp, p->thread.regs.regs.fp);
-		p->thread.request.u.thread.proc = (int (*)(void *))sp;
-		p->thread.request.u.thread.arg = (void *)arg;
+		get_safe_registers(task_thread(p).regs.regs.gp, task_thread(p).regs.regs.fp);
+		task_thread(p).request.u.thread.proc = (int (*)(void *))sp;
+		task_thread(p).request.u.thread.arg = (void *)arg;
 		handler = new_thread_handler;
 	}
 
-	new_thread(task_stack_page(p), &p->thread.switch_buf, handler);
+	new_thread(task_stack_page(p), &task_thread(p).switch_buf, handler);
 
 	if (!kthread) {
 		clear_flushed_tls(p);
@@ -338,7 +339,7 @@ int singlestepping(void * t)
 	if (!(task->ptrace & PT_DTRACE))
 		return 0;
 
-	if (task->thread.singlestep_syscall)
+	if (task_thread(task).singlestep_syscall)
 		return 1;
 
 	return 2;
@@ -370,7 +371,7 @@ unsigned long __get_wchan(struct task_struct *p)
 	if (stack_page == 0)
 		return 0;
 
-	sp = p->thread.switch_buf->JB_SP;
+	sp = task_thread(p).switch_buf->JB_SP;
 	/*
 	 * Bail if the stack pointer is below the bottom of the kernel
 	 * stack for some reason

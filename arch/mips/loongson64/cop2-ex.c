@@ -95,8 +95,8 @@ static int loongson_cu2_call(struct notifier_block *nfb, unsigned long action,
 			if (res)
 				goto fault;
 
-			set_fpr64(&current->thread.fpu.fpr[insn.loongson3_lswc2_format.rt], 0, value);
-			set_fpr64(&current->thread.fpu.fpr[insn.loongson3_lswc2_format.rq], 0, value_next);
+			set_fpr64(&task_thread(current).fpu.fpr[insn.loongson3_lswc2_format.rt], 0, value);
+			set_fpr64(&task_thread(current).fpu.fpr[insn.loongson3_lswc2_format.rq], 0, value_next);
 			compute_return_epc(regs);
 			own_fpu(1);
 		}
@@ -128,13 +128,13 @@ static int loongson_cu2_call(struct notifier_block *nfb, unsigned long action,
 				goto sigbus;
 
 			lose_fpu(1);
-			value_next = get_fpr64(&current->thread.fpu.fpr[insn.loongson3_lswc2_format.rq], 0);
+			value_next = get_fpr64(&task_thread(current).fpu.fpr[insn.loongson3_lswc2_format.rq], 0);
 
 			StoreDW(addr + 8, value_next, res);
 			if (res)
 				goto fault;
 
-			value = get_fpr64(&current->thread.fpu.fpr[insn.loongson3_lswc2_format.rt], 0);
+			value = get_fpr64(&task_thread(current).fpu.fpr[insn.loongson3_lswc2_format.rt], 0);
 
 			StoreDW(addr, value, res);
 			if (res)
@@ -200,7 +200,7 @@ static int loongson_cu2_call(struct notifier_block *nfb, unsigned long action,
 			if (res)
 				goto fault;
 
-			set_fpr64(&current->thread.fpu.fpr[insn.loongson3_lsdc2_format.rt], 0, value);
+			set_fpr64(&task_thread(current).fpu.fpr[insn.loongson3_lsdc2_format.rt], 0, value);
 			compute_return_epc(regs);
 			own_fpu(1);
 
@@ -216,7 +216,7 @@ static int loongson_cu2_call(struct notifier_block *nfb, unsigned long action,
 			if (res)
 				goto fault;
 
-			set_fpr64(&current->thread.fpu.fpr[insn.loongson3_lsdc2_format.rt], 0, value);
+			set_fpr64(&task_thread(current).fpu.fpr[insn.loongson3_lsdc2_format.rt], 0, value);
 			compute_return_epc(regs);
 			own_fpu(1);
 			break;
@@ -280,7 +280,7 @@ static int loongson_cu2_call(struct notifier_block *nfb, unsigned long action,
 				goto sigbus;
 
 			lose_fpu(1);
-			value = get_fpr64(&current->thread.fpu.fpr[insn.loongson3_lsdc2_format.rt], 0);
+			value = get_fpr64(&task_thread(current).fpu.fpr[insn.loongson3_lsdc2_format.rt], 0);
 
 			StoreW(addr, value, res);
 			if (res)
@@ -298,7 +298,7 @@ static int loongson_cu2_call(struct notifier_block *nfb, unsigned long action,
 				goto sigbus;
 
 			lose_fpu(1);
-			value = get_fpr64(&current->thread.fpu.fpr[insn.loongson3_lsdc2_format.rt], 0);
+			value = get_fpr64(&task_thread(current).fpu.fpr[insn.loongson3_lsdc2_format.rt], 0);
 
 			StoreDW(addr, value, res);
 			if (res)

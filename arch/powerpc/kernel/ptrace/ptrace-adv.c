@@ -7,11 +7,11 @@
 
 void user_enable_single_step(struct task_struct *task)
 {
-	struct pt_regs *regs = task->thread.regs;
+	struct pt_regs *regs = task_thread(task).regs;
 
 	if (regs != NULL) {
-		task->thread.debug.dbcr0 &= ~DBCR0_BT;
-		task->thread.debug.dbcr0 |= DBCR0_IDM | DBCR0_IC;
+		task_thread(task).debug.dbcr0 &= ~DBCR0_BT;
+		task_thread(task).debug.dbcr0 |= DBCR0_IDM | DBCR0_IC;
 		regs_set_return_msr(regs, regs->msr | MSR_DE);
 	}
 	set_tsk_thread_flag(task, TIF_SINGLESTEP);
@@ -19,11 +19,11 @@ void user_enable_single_step(struct task_struct *task)
 
 void user_enable_block_step(struct task_struct *task)
 {
-	struct pt_regs *regs = task->thread.regs;
+	struct pt_regs *regs = task_thread(task).regs;
 
 	if (regs != NULL) {
-		task->thread.debug.dbcr0 &= ~DBCR0_IC;
-		task->thread.debug.dbcr0 = DBCR0_IDM | DBCR0_BT;
+		task_thread(task).debug.dbcr0 &= ~DBCR0_IC;
+		task_thread(task).debug.dbcr0 = DBCR0_IDM | DBCR0_BT;
 		regs_set_return_msr(regs, regs->msr | MSR_DE);
 	}
 	set_tsk_thread_flag(task, TIF_SINGLESTEP);
@@ -31,7 +31,7 @@ void user_enable_block_step(struct task_struct *task)
 
 void user_disable_single_step(struct task_struct *task)
 {
-	struct pt_regs *regs = task->thread.regs;
+	struct pt_regs *regs = task_thread(task).regs;
 
 	if (regs != NULL) {
 		/*
@@ -40,16 +40,16 @@ void user_disable_single_step(struct task_struct *task)
 		 * And, after doing so, if all debug flags are off, turn
 		 * off DBCR0(IDM) and MSR(DE) .... Torez
 		 */
-		task->thread.debug.dbcr0 &= ~(DBCR0_IC | DBCR0_BT);
+		task_thread(task).debug.dbcr0 &= ~(DBCR0_IC | DBCR0_BT);
 		/*
 		 * Test to see if any of the DBCR_ACTIVE_EVENTS bits are set.
 		 */
-		if (!DBCR_ACTIVE_EVENTS(task->thread.debug.dbcr0,
-					task->thread.debug.dbcr1)) {
+		if (!DBCR_ACTIVE_EVENTS(task_thread(task).debug.dbcr0,
+					task_thread(task).debug.dbcr1)) {
 			/*
 			 * All debug events were off.....
 			 */
-			task->thread.debug.dbcr0 &= ~DBCR0_IDM;
+			task_thread(task).debug.dbcr0 &= ~DBCR0_IDM;
 			regs_set_return_msr(regs, regs->msr & ~MSR_DE);
 		}
 	}
@@ -77,15 +77,15 @@ int ptrace_get_debugreg(struct task_struct *child, unsigned long addr,
 	/* We only support one DABR and no IABRS at the moment */
 	if (addr > 0)
 		return -EINVAL;
-	return put_user(child->thread.debug.dac1, datalp);
+	return put_user(task_thread(child).debug.dac1, datalp);
 }
 
 int ptrace_set_debugreg(struct task_struct *task, unsigned long addr, unsigned long data)
 {
-	struct pt_regs *regs = task->thread.regs;
+	struct pt_regs *regs = task_thread(task).regs;
 #ifdef CONFIG_HAVE_HW_BREAKPOINT
 	int ret;
-	struct thread_struct *thread = &task->thread;
+	struct thread_struct *thread = &task_thread(task);
 	struct perf_event *bp;
 	struct perf_event_attr attr;
 #endif /* CONFIG_HAVE_HW_BREAKPOINT */
@@ -107,14 +107,14 @@ int ptrace_set_debugreg(struct task_struct *task, unsigned long addr, unsigned l
 	 */
 
 	/* DAC's hold the whole address without any mode flags */
-	task->thread.debug.dac1 = data & ~0x3UL;
+	task_thread(task).debug.dac1 = data & ~0x3UL;
 
-	if (task->thread.debug.dac1 == 0) {
+	if (task_thread(task).debug.dac1 == 0) {
 		dbcr_dac(task) &= ~(DBCR_DAC1R | DBCR_DAC1W);
-		if (!DBCR_ACTIVE_EVENTS(task->thread.debug.dbcr0,
-					task->thread.debug.dbcr1)) {
+		if (!DBCR_ACTIVE_EVENTS(task_thread(task).debug.dbcr0,
+					task_thread(task).debug.dbcr1)) {
 			regs_set_return_msr(regs, regs->msr & ~MSR_DE);
-			task->thread.debug.dbcr0 &= ~DBCR0_IDM;
+			task_thread(task).debug.dbcr0 &= ~DBCR0_IDM;
 		}
 		return 0;
 	}
@@ -125,7 +125,7 @@ int ptrace_set_debugreg(struct task_struct *task, unsigned long addr, unsigned l
 		return -EINVAL;
 
 	/* Set the Internal Debugging flag (IDM bit 1) for the DBCR0 register */
-	task->thread.debug.dbcr0 |= DBCR0_IDM;
+	task_thread(task).debug.dbcr0 |= DBCR0_IDM;
 
 	/* Check for write and read flags and set DBCR0 accordingly */
 	dbcr_dac(task) &= ~(DBCR_DAC1R | DBCR_DAC1W);
@@ -141,10 +141,10 @@ static long set_instruction_bp(struct task_struct *child,
 			       struct ppc_hw_breakpoint *bp_info)
 {
 	int slot;
-	int slot1_in_use = ((child->thread.debug.dbcr0 & DBCR0_IAC1) != 0);
-	int slot2_in_use = ((child->thread.debug.dbcr0 & DBCR0_IAC2) != 0);
-	int slot3_in_use = ((child->thread.debug.dbcr0 & DBCR0_IAC3) != 0);
-	int slot4_in_use = ((child->thread.debug.dbcr0 & DBCR0_IAC4) != 0);
+	int slot1_in_use = ((task_thread(child).debug.dbcr0 & DBCR0_IAC1) != 0);
+	int slot2_in_use = ((task_thread(child).debug.dbcr0 & DBCR0_IAC2) != 0);
+	int slot3_in_use = ((task_thread(child).debug.dbcr0 & DBCR0_IAC3) != 0);
+	int slot4_in_use = ((task_thread(child).debug.dbcr0 & DBCR0_IAC4) != 0);
 
 	if (dbcr_iac_range(child) & DBCR_IAC12MODE)
 		slot2_in_use = 1;
@@ -162,9 +162,9 @@ static long set_instruction_bp(struct task_struct *child,
 		/* We need a pair of IAC regsisters */
 		if (!slot1_in_use && !slot2_in_use) {
 			slot = 1;
-			child->thread.debug.iac1 = bp_info->addr;
-			child->thread.debug.iac2 = bp_info->addr2;
-			child->thread.debug.dbcr0 |= DBCR0_IAC1;
+			task_thread(child).debug.iac1 = bp_info->addr;
+			task_thread(child).debug.iac2 = bp_info->addr2;
+			task_thread(child).debug.dbcr0 |= DBCR0_IAC1;
 			if (bp_info->addr_mode ==
 					PPC_BREAKPOINT_MODE_RANGE_EXCLUSIVE)
 				dbcr_iac_range(child) |= DBCR_IAC12X;
@@ -173,9 +173,9 @@ static long set_instruction_bp(struct task_struct *child,
 #if CONFIG_PPC_ADV_DEBUG_IACS > 2
 		} else if ((!slot3_in_use) && (!slot4_in_use)) {
 			slot = 3;
-			child->thread.debug.iac3 = bp_info->addr;
-			child->thread.debug.iac4 = bp_info->addr2;
-			child->thread.debug.dbcr0 |= DBCR0_IAC3;
+			task_thread(child).debug.iac3 = bp_info->addr;
+			task_thread(child).debug.iac4 = bp_info->addr2;
+			task_thread(child).debug.dbcr0 |= DBCR0_IAC3;
 			if (bp_info->addr_mode ==
 					PPC_BREAKPOINT_MODE_RANGE_EXCLUSIVE)
 				dbcr_iac_range(child) |= DBCR_IAC34X;
@@ -196,32 +196,32 @@ static long set_instruction_bp(struct task_struct *child,
 			 */
 			if (slot2_in_use || slot3_in_use == slot4_in_use) {
 				slot = 1;
-				child->thread.debug.iac1 = bp_info->addr;
-				child->thread.debug.dbcr0 |= DBCR0_IAC1;
+				task_thread(child).debug.iac1 = bp_info->addr;
+				task_thread(child).debug.dbcr0 |= DBCR0_IAC1;
 				goto out;
 			}
 		}
 		if (!slot2_in_use) {
 			slot = 2;
-			child->thread.debug.iac2 = bp_info->addr;
-			child->thread.debug.dbcr0 |= DBCR0_IAC2;
+			task_thread(child).debug.iac2 = bp_info->addr;
+			task_thread(child).debug.dbcr0 |= DBCR0_IAC2;
 #if CONFIG_PPC_ADV_DEBUG_IACS > 2
 		} else if (!slot3_in_use) {
 			slot = 3;
-			child->thread.debug.iac3 = bp_info->addr;
-			child->thread.debug.dbcr0 |= DBCR0_IAC3;
+			task_thread(child).debug.iac3 = bp_info->addr;
+			task_thread(child).debug.dbcr0 |= DBCR0_IAC3;
 		} else if (!slot4_in_use) {
 			slot = 4;
-			child->thread.debug.iac4 = bp_info->addr;
-			child->thread.debug.dbcr0 |= DBCR0_IAC4;
+			task_thread(child).debug.iac4 = bp_info->addr;
+			task_thread(child).debug.dbcr0 |= DBCR0_IAC4;
 #endif
 		} else {
 			return -ENOSPC;
 		}
 	}
 out:
-	child->thread.debug.dbcr0 |= DBCR0_IDM;
-	regs_set_return_msr(child->thread.regs, child->thread.regs->msr | MSR_DE);
+	task_thread(child).debug.dbcr0 |= DBCR0_IDM;
+	regs_set_return_msr(task_thread(child).regs, task_thread(child).regs->msr | MSR_DE);
 
 	return slot;
 }
@@ -230,49 +230,49 @@ static int del_instruction_bp(struct task_struct *child, int slot)
 {
 	switch (slot) {
 	case 1:
-		if ((child->thread.debug.dbcr0 & DBCR0_IAC1) == 0)
+		if ((task_thread(child).debug.dbcr0 & DBCR0_IAC1) == 0)
 			return -ENOENT;
 
 		if (dbcr_iac_range(child) & DBCR_IAC12MODE) {
 			/* address range - clear slots 1 & 2 */
-			child->thread.debug.iac2 = 0;
+			task_thread(child).debug.iac2 = 0;
 			dbcr_iac_range(child) &= ~DBCR_IAC12MODE;
 		}
-		child->thread.debug.iac1 = 0;
-		child->thread.debug.dbcr0 &= ~DBCR0_IAC1;
+		task_thread(child).debug.iac1 = 0;
+		task_thread(child).debug.dbcr0 &= ~DBCR0_IAC1;
 		break;
 	case 2:
-		if ((child->thread.debug.dbcr0 & DBCR0_IAC2) == 0)
+		if ((task_thread(child).debug.dbcr0 & DBCR0_IAC2) == 0)
 			return -ENOENT;
 
 		if (dbcr_iac_range(child) & DBCR_IAC12MODE)
 			/* used in a range */
 			return -EINVAL;
-		child->thread.debug.iac2 = 0;
-		child->thread.debug.dbcr0 &= ~DBCR0_IAC2;
+		task_thread(child).debug.iac2 = 0;
+		task_thread(child).debug.dbcr0 &= ~DBCR0_IAC2;
 		break;
 #if CONFIG_PPC_ADV_DEBUG_IACS > 2
 	case 3:
-		if ((child->thread.debug.dbcr0 & DBCR0_IAC3) == 0)
+		if ((task_thread(child).debug.dbcr0 & DBCR0_IAC3) == 0)
 			return -ENOENT;
 
 		if (dbcr_iac_range(child) & DBCR_IAC34MODE) {
 			/* address range - clear slots 3 & 4 */
-			child->thread.debug.iac4 = 0;
+			task_thread(child).debug.iac4 = 0;
 			dbcr_iac_range(child) &= ~DBCR_IAC34MODE;
 		}
-		child->thread.debug.iac3 = 0;
-		child->thread.debug.dbcr0 &= ~DBCR0_IAC3;
+		task_thread(child).debug.iac3 = 0;
+		task_thread(child).debug.dbcr0 &= ~DBCR0_IAC3;
 		break;
 	case 4:
-		if ((child->thread.debug.dbcr0 & DBCR0_IAC4) == 0)
+		if ((task_thread(child).debug.dbcr0 & DBCR0_IAC4) == 0)
 			return -ENOENT;
 
 		if (dbcr_iac_range(child) & DBCR_IAC34MODE)
 			/* Used in a range */
 			return -EINVAL;
-		child->thread.debug.iac4 = 0;
-		child->thread.debug.dbcr0 &= ~DBCR0_IAC4;
+		task_thread(child).debug.iac4 = 0;
+		task_thread(child).debug.dbcr0 &= ~DBCR0_IAC4;
 		break;
 #endif
 	default:
@@ -302,18 +302,18 @@ static int set_dac(struct task_struct *child, struct ppc_hw_breakpoint *bp_info)
 			dbcr_dac(child) |= DBCR_DAC1R;
 		if (bp_info->trigger_type & PPC_BREAKPOINT_TRIGGER_WRITE)
 			dbcr_dac(child) |= DBCR_DAC1W;
-		child->thread.debug.dac1 = (unsigned long)bp_info->addr;
+		task_thread(child).debug.dac1 = (unsigned long)bp_info->addr;
 #if CONFIG_PPC_ADV_DEBUG_DVCS > 0
 		if (byte_enable) {
-			child->thread.debug.dvc1 =
+			task_thread(child).debug.dvc1 =
 				(unsigned long)bp_info->condition_value;
-			child->thread.debug.dbcr2 |=
+			task_thread(child).debug.dbcr2 |=
 				((byte_enable << DBCR2_DVC1BE_SHIFT) |
 				 (condition_mode << DBCR2_DVC1M_SHIFT));
 		}
 #endif
 #ifdef CONFIG_PPC_ADV_DEBUG_DAC_RANGE
-	} else if (child->thread.debug.dbcr2 & DBCR2_DAC12MODE) {
+	} else if (task_thread(child).debug.dbcr2 & DBCR2_DAC12MODE) {
 		/* Both dac1 and dac2 are part of a range */
 		return -ENOSPC;
 #endif
@@ -323,12 +323,12 @@ static int set_dac(struct task_struct *child, struct ppc_hw_breakpoint *bp_info)
 			dbcr_dac(child) |= DBCR_DAC2R;
 		if (bp_info->trigger_type & PPC_BREAKPOINT_TRIGGER_WRITE)
 			dbcr_dac(child) |= DBCR_DAC2W;
-		child->thread.debug.dac2 = (unsigned long)bp_info->addr;
+		task_thread(child).debug.dac2 = (unsigned long)bp_info->addr;
 #if CONFIG_PPC_ADV_DEBUG_DVCS > 0
 		if (byte_enable) {
-			child->thread.debug.dvc2 =
+			task_thread(child).debug.dvc2 =
 				(unsigned long)bp_info->condition_value;
-			child->thread.debug.dbcr2 |=
+			task_thread(child).debug.dbcr2 |=
 				((byte_enable << DBCR2_DVC2BE_SHIFT) |
 				 (condition_mode << DBCR2_DVC2M_SHIFT));
 		}
@@ -336,8 +336,8 @@ static int set_dac(struct task_struct *child, struct ppc_hw_breakpoint *bp_info)
 	} else {
 		return -ENOSPC;
 	}
-	child->thread.debug.dbcr0 |= DBCR0_IDM;
-	regs_set_return_msr(child->thread.regs, child->thread.regs->msr | MSR_DE);
+	task_thread(child).debug.dbcr0 |= DBCR0_IDM;
+	regs_set_return_msr(task_thread(child).regs, task_thread(child).regs->msr | MSR_DE);
 
 	return slot + 4;
 }
@@ -348,32 +348,32 @@ static int del_dac(struct task_struct *child, int slot)
 		if ((dbcr_dac(child) & (DBCR_DAC1R | DBCR_DAC1W)) == 0)
 			return -ENOENT;
 
-		child->thread.debug.dac1 = 0;
+		task_thread(child).debug.dac1 = 0;
 		dbcr_dac(child) &= ~(DBCR_DAC1R | DBCR_DAC1W);
 #ifdef CONFIG_PPC_ADV_DEBUG_DAC_RANGE
-		if (child->thread.debug.dbcr2 & DBCR2_DAC12MODE) {
-			child->thread.debug.dac2 = 0;
-			child->thread.debug.dbcr2 &= ~DBCR2_DAC12MODE;
+		if (task_thread(child).debug.dbcr2 & DBCR2_DAC12MODE) {
+			task_thread(child).debug.dac2 = 0;
+			task_thread(child).debug.dbcr2 &= ~DBCR2_DAC12MODE;
 		}
-		child->thread.debug.dbcr2 &= ~(DBCR2_DVC1M | DBCR2_DVC1BE);
+		task_thread(child).debug.dbcr2 &= ~(DBCR2_DVC1M | DBCR2_DVC1BE);
 #endif
 #if CONFIG_PPC_ADV_DEBUG_DVCS > 0
-		child->thread.debug.dvc1 = 0;
+		task_thread(child).debug.dvc1 = 0;
 #endif
 	} else if (slot == 2) {
 		if ((dbcr_dac(child) & (DBCR_DAC2R | DBCR_DAC2W)) == 0)
 			return -ENOENT;
 
 #ifdef CONFIG_PPC_ADV_DEBUG_DAC_RANGE
-		if (child->thread.debug.dbcr2 & DBCR2_DAC12MODE)
+		if (task_thread(child).debug.dbcr2 & DBCR2_DAC12MODE)
 			/* Part of a range */
 			return -EINVAL;
-		child->thread.debug.dbcr2 &= ~(DBCR2_DVC2M | DBCR2_DVC2BE);
+		task_thread(child).debug.dbcr2 &= ~(DBCR2_DVC2M | DBCR2_DVC2BE);
 #endif
 #if CONFIG_PPC_ADV_DEBUG_DVCS > 0
-		child->thread.debug.dvc2 = 0;
+		task_thread(child).debug.dvc2 = 0;
 #endif
-		child->thread.debug.dac2 = 0;
+		task_thread(child).debug.dac2 = 0;
 		dbcr_dac(child) &= ~(DBCR_DAC2R | DBCR_DAC2W);
 	} else {
 		return -EINVAL;
@@ -415,23 +415,23 @@ static int set_dac_range(struct task_struct *child,
 			return -EIO;
 	}
 
-	if (child->thread.debug.dbcr0 &
+	if (task_thread(child).debug.dbcr0 &
 	    (DBCR0_DAC1R | DBCR0_DAC1W | DBCR0_DAC2R | DBCR0_DAC2W))
 		return -ENOSPC;
 
 	if (bp_info->trigger_type & PPC_BREAKPOINT_TRIGGER_READ)
-		child->thread.debug.dbcr0 |= (DBCR0_DAC1R | DBCR0_IDM);
+		task_thread(child).debug.dbcr0 |= (DBCR0_DAC1R | DBCR0_IDM);
 	if (bp_info->trigger_type & PPC_BREAKPOINT_TRIGGER_WRITE)
-		child->thread.debug.dbcr0 |= (DBCR0_DAC1W | DBCR0_IDM);
-	child->thread.debug.dac1 = bp_info->addr;
-	child->thread.debug.dac2 = bp_info->addr2;
+		task_thread(child).debug.dbcr0 |= (DBCR0_DAC1W | DBCR0_IDM);
+	task_thread(child).debug.dac1 = bp_info->addr;
+	task_thread(child).debug.dac2 = bp_info->addr2;
 	if (mode == PPC_BREAKPOINT_MODE_RANGE_INCLUSIVE)
-		child->thread.debug.dbcr2  |= DBCR2_DAC12M;
+		task_thread(child).debug.dbcr2  |= DBCR2_DAC12M;
 	else if (mode == PPC_BREAKPOINT_MODE_RANGE_EXCLUSIVE)
-		child->thread.debug.dbcr2  |= DBCR2_DAC12MX;
+		task_thread(child).debug.dbcr2  |= DBCR2_DAC12MX;
 	else	/* PPC_BREAKPOINT_MODE_MASK */
-		child->thread.debug.dbcr2  |= DBCR2_DAC12MM;
-	regs_set_return_msr(child->thread.regs, child->thread.regs->msr | MSR_DE);
+		task_thread(child).debug.dbcr2  |= DBCR2_DAC12MM;
+	regs_set_return_msr(task_thread(child).regs, task_thread(child).regs->msr | MSR_DE);
 
 	return 5;
 }
@@ -483,11 +483,11 @@ long ppc_del_hwdebug(struct task_struct *child, long data)
 		rc = del_dac(child, (int)data - 4);
 
 	if (!rc) {
-		if (!DBCR_ACTIVE_EVENTS(child->thread.debug.dbcr0,
-					child->thread.debug.dbcr1)) {
-			child->thread.debug.dbcr0 &= ~DBCR0_IDM;
-			regs_set_return_msr(child->thread.regs,
-					child->thread.regs->msr & ~MSR_DE);
+		if (!DBCR_ACTIVE_EVENTS(task_thread(child).debug.dbcr0,
+					task_thread(child).debug.dbcr1)) {
+			task_thread(child).debug.dbcr0 &= ~DBCR0_IDM;
+			regs_set_return_msr(task_thread(child).regs,
+					task_thread(child).regs->msr & ~MSR_DE);
 		}
 	}
 	return rc;

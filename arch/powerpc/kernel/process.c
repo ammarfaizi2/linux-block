@@ -93,11 +93,11 @@ static void check_if_tm_restore_required(struct task_struct *tsk)
 	 * bit so that we know to restore the registers before
 	 * returning to userspace.
 	 */
-	if (tsk == current && tsk->thread.regs &&
-	    MSR_TM_ACTIVE(tsk->thread.regs->msr) &&
+	if (tsk == current && task_thread(tsk).regs &&
+	    MSR_TM_ACTIVE(task_thread(tsk).regs->msr) &&
 	    !test_thread_flag(TIF_RESTORE_TM)) {
-		regs_set_return_msr(&tsk->thread.ckpt_regs,
-						tsk->thread.regs->msr);
+		regs_set_return_msr(&task_thread(tsk).ckpt_regs,
+						task_thread(tsk).regs->msr);
 		set_thread_flag(TIF_RESTORE_TM);
 	}
 }
@@ -158,11 +158,11 @@ static void __giveup_fpu(struct task_struct *tsk)
 	unsigned long msr;
 
 	save_fpu(tsk);
-	msr = tsk->thread.regs->msr;
+	msr = task_thread(tsk).regs->msr;
 	msr &= ~(MSR_FP|MSR_FE0|MSR_FE1);
 	if (cpu_has_feature(CPU_FTR_VSX))
 		msr &= ~MSR_VSX;
-	regs_set_return_msr(tsk->thread.regs, msr);
+	regs_set_return_msr(task_thread(tsk).regs, msr);
 }
 
 void giveup_fpu(struct task_struct *tsk)
@@ -181,7 +181,7 @@ EXPORT_SYMBOL(giveup_fpu);
  */
 void flush_fp_to_thread(struct task_struct *tsk)
 {
-	if (tsk->thread.regs) {
+	if (task_thread(tsk).regs) {
 		/*
 		 * We need to disable preemption here because if we didn't,
 		 * another process could get scheduled after the regs->msr
@@ -191,7 +191,7 @@ void flush_fp_to_thread(struct task_struct *tsk)
 		 * bogus values for the remaining FP registers.
 		 */
 		preempt_disable();
-		if (tsk->thread.regs->msr & MSR_FP) {
+		if (task_thread(tsk).regs->msr & MSR_FP) {
 			/*
 			 * This should only ever be called for current or
 			 * for a stopped child process.  Since we save away
@@ -215,7 +215,7 @@ void enable_kernel_fp(void)
 
 	cpumsr = msr_check_and_set(MSR_FP);
 
-	if (current->thread.regs && (current->thread.regs->msr & MSR_FP)) {
+	if (task_thread(current).regs && (task_thread(current).regs->msr & MSR_FP)) {
 		check_if_tm_restore_required(current);
 		/*
 		 * If a thread has already been reclaimed then the
@@ -225,7 +225,7 @@ void enable_kernel_fp(void)
 		 * checkpointed structure.
 		 */
 		if (!MSR_TM_ACTIVE(cpumsr) &&
-		     MSR_TM_ACTIVE(current->thread.regs->msr))
+		     MSR_TM_ACTIVE(task_thread(current).regs->msr))
 			return;
 		__giveup_fpu(current);
 	}
@@ -241,11 +241,11 @@ static void __giveup_altivec(struct task_struct *tsk)
 	unsigned long msr;
 
 	save_altivec(tsk);
-	msr = tsk->thread.regs->msr;
+	msr = task_thread(tsk).regs->msr;
 	msr &= ~MSR_VEC;
 	if (cpu_has_feature(CPU_FTR_VSX))
 		msr &= ~MSR_VSX;
-	regs_set_return_msr(tsk->thread.regs, msr);
+	regs_set_return_msr(task_thread(tsk).regs, msr);
 }
 
 void giveup_altivec(struct task_struct *tsk)
@@ -266,7 +266,7 @@ void enable_kernel_altivec(void)
 
 	cpumsr = msr_check_and_set(MSR_VEC);
 
-	if (current->thread.regs && (current->thread.regs->msr & MSR_VEC)) {
+	if (task_thread(current).regs && (task_thread(current).regs->msr & MSR_VEC)) {
 		check_if_tm_restore_required(current);
 		/*
 		 * If a thread has already been reclaimed then the
@@ -276,7 +276,7 @@ void enable_kernel_altivec(void)
 		 * checkpointed structure.
 		 */
 		if (!MSR_TM_ACTIVE(cpumsr) &&
-		     MSR_TM_ACTIVE(current->thread.regs->msr))
+		     MSR_TM_ACTIVE(task_thread(current).regs->msr))
 			return;
 		__giveup_altivec(current);
 	}
@@ -289,9 +289,9 @@ EXPORT_SYMBOL(enable_kernel_altivec);
  */
 void flush_altivec_to_thread(struct task_struct *tsk)
 {
-	if (tsk->thread.regs) {
+	if (task_thread(tsk).regs) {
 		preempt_disable();
-		if (tsk->thread.regs->msr & MSR_VEC) {
+		if (task_thread(tsk).regs->msr & MSR_VEC) {
 			BUG_ON(tsk != current);
 			giveup_altivec(tsk);
 		}
@@ -304,7 +304,7 @@ EXPORT_SYMBOL_GPL(flush_altivec_to_thread);
 #ifdef CONFIG_VSX
 static void __giveup_vsx(struct task_struct *tsk)
 {
-	unsigned long msr = tsk->thread.regs->msr;
+	unsigned long msr = task_thread(tsk).regs->msr;
 
 	/*
 	 * We should never be ssetting MSR_VSX without also setting
@@ -336,8 +336,8 @@ void enable_kernel_vsx(void)
 
 	cpumsr = msr_check_and_set(MSR_FP|MSR_VEC|MSR_VSX);
 
-	if (current->thread.regs &&
-	    (current->thread.regs->msr & (MSR_VSX|MSR_VEC|MSR_FP))) {
+	if (task_thread(current).regs &&
+	    (task_thread(current).regs->msr & (MSR_VSX|MSR_VEC|MSR_FP))) {
 		check_if_tm_restore_required(current);
 		/*
 		 * If a thread has already been reclaimed then the
@@ -347,7 +347,7 @@ void enable_kernel_vsx(void)
 		 * checkpointed structure.
 		 */
 		if (!MSR_TM_ACTIVE(cpumsr) &&
-		     MSR_TM_ACTIVE(current->thread.regs->msr))
+		     MSR_TM_ACTIVE(task_thread(current).regs->msr))
 			return;
 		__giveup_vsx(current);
 	}
@@ -356,9 +356,9 @@ EXPORT_SYMBOL(enable_kernel_vsx);
 
 void flush_vsx_to_thread(struct task_struct *tsk)
 {
-	if (tsk->thread.regs) {
+	if (task_thread(tsk).regs) {
 		preempt_disable();
-		if (tsk->thread.regs->msr & (MSR_VSX|MSR_VEC|MSR_FP)) {
+		if (task_thread(tsk).regs->msr & (MSR_VSX|MSR_VEC|MSR_FP)) {
 			BUG_ON(tsk != current);
 			giveup_vsx(tsk);
 		}
@@ -385,7 +385,7 @@ void enable_kernel_spe(void)
 
 	msr_check_and_set(MSR_SPE);
 
-	if (current->thread.regs && (current->thread.regs->msr & MSR_SPE)) {
+	if (task_thread(current).regs && (task_thread(current).regs->msr & MSR_SPE)) {
 		check_if_tm_restore_required(current);
 		__giveup_spe(current);
 	}
@@ -394,11 +394,11 @@ EXPORT_SYMBOL(enable_kernel_spe);
 
 void flush_spe_to_thread(struct task_struct *tsk)
 {
-	if (tsk->thread.regs) {
+	if (task_thread(tsk).regs) {
 		preempt_disable();
-		if (tsk->thread.regs->msr & MSR_SPE) {
+		if (task_thread(tsk).regs->msr & MSR_SPE) {
 			BUG_ON(tsk != current);
-			tsk->thread.spefscr = mfspr(SPRN_SPEFSCR);
+			task_thread(tsk).spefscr = mfspr(SPRN_SPEFSCR);
 			giveup_spe(tsk);
 		}
 		preempt_enable();
@@ -427,12 +427,12 @@ void giveup_all(struct task_struct *tsk)
 {
 	unsigned long usermsr;
 
-	if (!tsk->thread.regs)
+	if (!task_thread(tsk).regs)
 		return;
 
 	check_if_tm_restore_required(tsk);
 
-	usermsr = tsk->thread.regs->msr;
+	usermsr = task_thread(tsk).regs->msr;
 
 	if ((usermsr & msr_all_available) == 0)
 		return;
@@ -456,8 +456,8 @@ EXPORT_SYMBOL(giveup_all);
 #ifdef CONFIG_PPC_FPU
 static bool should_restore_fp(void)
 {
-	if (current->thread.load_fp) {
-		current->thread.load_fp++;
+	if (task_thread(current).load_fp) {
+		task_thread(current).load_fp++;
 		return true;
 	}
 	return false;
@@ -465,7 +465,7 @@ static bool should_restore_fp(void)
 
 static void do_restore_fp(void)
 {
-	load_fp_state(&current->thread.fp_state);
+	load_fp_state(&task_thread(current).fp_state);
 }
 #else
 static bool should_restore_fp(void) { return false; }
@@ -475,8 +475,8 @@ static void do_restore_fp(void) { }
 #ifdef CONFIG_ALTIVEC
 static bool should_restore_altivec(void)
 {
-	if (cpu_has_feature(CPU_FTR_ALTIVEC) && (current->thread.load_vec)) {
-		current->thread.load_vec++;
+	if (cpu_has_feature(CPU_FTR_ALTIVEC) && (task_thread(current).load_vec)) {
+		task_thread(current).load_vec++;
 		return true;
 	}
 	return false;
@@ -484,8 +484,8 @@ static bool should_restore_altivec(void)
 
 static void do_restore_altivec(void)
 {
-	load_vr_state(&current->thread.vr_state);
-	current->thread.used_vr = 1;
+	load_vr_state(&task_thread(current).vr_state);
+	task_thread(current).used_vr = 1;
 }
 #else
 static bool should_restore_altivec(void) { return false; }
@@ -501,7 +501,7 @@ static bool should_restore_vsx(void)
 #ifdef CONFIG_VSX
 static void do_restore_vsx(void)
 {
-	current->thread.used_vsr = 1;
+	task_thread(current).used_vsr = 1;
 }
 #else
 static void do_restore_vsx(void) { }
@@ -549,7 +549,7 @@ void notrace restore_math(struct pt_regs *regs)
 			do_restore_fp();
 
 			// This also covers VSX, because VSX implies FP
-			fpexc_mode = current->thread.fpexc_mode;
+			fpexc_mode = task_thread(current).fpexc_mode;
 		}
 
 		if (new_msr & MSR_VEC)
@@ -569,10 +569,10 @@ static void save_all(struct task_struct *tsk)
 {
 	unsigned long usermsr;
 
-	if (!tsk->thread.regs)
+	if (!task_thread(tsk).regs)
 		return;
 
-	usermsr = tsk->thread.regs->msr;
+	usermsr = task_thread(tsk).regs->msr;
 
 	if ((usermsr & msr_all_available) == 0)
 		return;
@@ -595,12 +595,12 @@ static void save_all(struct task_struct *tsk)
 
 void flush_all_to_thread(struct task_struct *tsk)
 {
-	if (tsk->thread.regs) {
+	if (task_thread(tsk).regs) {
 		preempt_disable();
 		BUG_ON(tsk != current);
 #ifdef CONFIG_SPE
-		if (tsk->thread.regs->msr & MSR_SPE)
-			tsk->thread.spefscr = mfspr(SPRN_SPEFSCR);
+		if (task_thread(tsk).regs->msr & MSR_SPE)
+			task_thread(tsk).spefscr = mfspr(SPRN_SPEFSCR);
 #endif
 		save_all(tsk);
 
@@ -613,7 +613,7 @@ EXPORT_SYMBOL(flush_all_to_thread);
 void do_send_trap(struct pt_regs *regs, unsigned long address,
 		  unsigned long error_code, int breakpt)
 {
-	current->thread.trap_nr = TRAP_HWBKPT;
+	task_thread(current).trap_nr = TRAP_HWBKPT;
 	if (notify_die(DIE_DABR_MATCH, "dabr_match", regs, error_code,
 			11, SIGSEGV) == NOTIFY_STOP)
 		return;
@@ -640,8 +640,8 @@ static void do_break_handler(struct pt_regs *regs)
 	 */
 	if (nr_wp_slots() == 1) {
 		__set_breakpoint(0, &null_brk);
-		current->thread.hw_brk[0] = null_brk;
-		current->thread.hw_brk[0].flags |= HW_BRK_FLAG_DISABLED;
+		task_thread(current).hw_brk[0] = null_brk;
+		task_thread(current).hw_brk[0].flags |= HW_BRK_FLAG_DISABLED;
 		return;
 	}
 
@@ -649,21 +649,21 @@ static void do_break_handler(struct pt_regs *regs)
 	wp_get_instr_detail(regs, &instr, &type, &size, &ea);
 
 	for (i = 0; i < nr_wp_slots(); i++) {
-		info = &current->thread.hw_brk[i];
+		info = &task_thread(current).hw_brk[i];
 		if (!info->address)
 			continue;
 
 		if (wp_check_constraints(regs, instr, ea, type, size, info)) {
 			__set_breakpoint(i, &null_brk);
-			current->thread.hw_brk[i] = null_brk;
-			current->thread.hw_brk[i].flags |= HW_BRK_FLAG_DISABLED;
+			task_thread(current).hw_brk[i] = null_brk;
+			task_thread(current).hw_brk[i].flags |= HW_BRK_FLAG_DISABLED;
 		}
 	}
 }
 
 DEFINE_INTERRUPT_HANDLER(do_break)
 {
-	current->thread.trap_nr = TRAP_HWBKPT;
+	task_thread(current).trap_nr = TRAP_HWBKPT;
 	if (notify_die(DIE_DABR_MATCH, "dabr_match", regs, regs->dsisr,
 			11, SIGSEGV) == NOTIFY_STOP)
 		return;
@@ -753,7 +753,7 @@ static void prime_debug_regs(struct debug_reg *debug)
  */
 void switch_booke_debug_regs(struct debug_reg *new_debug)
 {
-	if ((current->thread.debug.dbcr0 & DBCR0_IDM)
+	if ((task_thread(current).debug.dbcr0 & DBCR0_IDM)
 		|| (new_debug->dbcr0 & DBCR0_IDM))
 			prime_debug_regs(new_debug);
 }
@@ -798,10 +798,10 @@ static void switch_hw_breakpoint(struct task_struct *new)
 
 	for (i = 0; i < nr_wp_slots(); i++) {
 		if (likely(hw_brk_match(this_cpu_ptr(&current_brk[i]),
-					&new->thread.hw_brk[i])))
+					&task_thread(new).hw_brk[i])))
 			continue;
 
-		__set_breakpoint(i, &new->thread.hw_brk[i]);
+		__set_breakpoint(i, &task_thread(new).hw_brk[i]);
 	}
 }
 #endif /* !CONFIG_HAVE_HW_BREAKPOINT */
@@ -898,7 +898,7 @@ EXPORT_SYMBOL_GPL(ppc_breakpoint_available);
 
 static inline bool tm_enabled(struct task_struct *tsk)
 {
-	return tsk && tsk->thread.regs && (tsk->thread.regs->msr & MSR_TM);
+	return tsk && task_thread(tsk).regs && (task_thread(tsk).regs->msr & MSR_TM);
 }
 
 static void tm_reclaim_thread(struct thread_struct *thr, uint8_t cause)
@@ -948,7 +948,7 @@ static void tm_reclaim_thread(struct thread_struct *thr, uint8_t cause)
 void tm_reclaim_current(uint8_t cause)
 {
 	tm_enable();
-	tm_reclaim_thread(&current->thread, cause);
+	tm_reclaim_thread(&task_thread(current), cause);
 }
 
 static inline void tm_reclaim_task(struct task_struct *tsk)
@@ -963,7 +963,7 @@ static inline void tm_reclaim_task(struct task_struct *tsk)
 	 *
 	 * We also context switch (save) TFHAR/TEXASR/TFIAR in here.
 	 */
-	struct thread_struct *thr = &tsk->thread;
+	struct thread_struct *thr = &task_thread(tsk);
 
 	if (!thr->regs)
 		return;
@@ -1035,22 +1035,22 @@ static inline void tm_recheckpoint_new_task(struct task_struct *new)
 	if (!tm_enabled(new))
 		return;
 
-	if (!MSR_TM_ACTIVE(new->thread.regs->msr)){
-		tm_restore_sprs(&new->thread);
+	if (!MSR_TM_ACTIVE(task_thread(new).regs->msr)){
+		tm_restore_sprs(&task_thread(new));
 		return;
 	}
 	/* Recheckpoint to restore original checkpointed register state. */
 	TM_DEBUG("*** tm_recheckpoint of pid %d (new->msr 0x%lx)\n",
-		 new->pid, new->thread.regs->msr);
+		 new->pid, task_thread(new).regs->msr);
 
-	tm_recheckpoint(&new->thread);
+	tm_recheckpoint(&task_thread(new));
 
 	/*
 	 * The checkpointed state has been restored but the live state has
 	 * not, ensure all the math functionality is turned off to trigger
 	 * restore_math() to reload.
 	 */
-	new->thread.regs->msr &= ~(MSR_FP | MSR_VEC | MSR_VSX);
+	task_thread(new).regs->msr &= ~(MSR_FP | MSR_VEC | MSR_VSX);
 
 	TM_DEBUG("*** tm_recheckpoint of pid %d complete "
 		 "(kernel msr 0x%lx)\n",
@@ -1065,10 +1065,10 @@ static inline void __switch_to_tm(struct task_struct *prev,
 			tm_enable();
 
 		if (tm_enabled(prev)) {
-			prev->thread.load_tm++;
+			task_thread(prev).load_tm++;
 			tm_reclaim_task(prev);
-			if (!MSR_TM_ACTIVE(prev->thread.regs->msr) && prev->thread.load_tm == 0)
-				prev->thread.regs->msr &= ~MSR_TM;
+			if (!MSR_TM_ACTIVE(task_thread(prev).regs->msr) && task_thread(prev).load_tm == 0)
+				task_thread(prev).regs->msr &= ~MSR_TM;
 		}
 
 		tm_recheckpoint_new_task(new);
@@ -1103,15 +1103,15 @@ void restore_tm_state(struct pt_regs *regs)
 	if (!MSR_TM_ACTIVE(regs->msr))
 		return;
 
-	msr_diff = current->thread.ckpt_regs.msr & ~regs->msr;
+	msr_diff = task_thread(current).ckpt_regs.msr & ~regs->msr;
 	msr_diff &= MSR_FP | MSR_VEC | MSR_VSX;
 
 	/* Ensure that restore_math() will restore */
 	if (msr_diff & MSR_FP)
-		current->thread.load_fp = 1;
+		task_thread(current).load_fp = 1;
 #ifdef CONFIG_ALTIVEC
 	if (cpu_has_feature(CPU_FTR_ALTIVEC) && msr_diff & MSR_VEC)
-		current->thread.load_vec = 1;
+		task_thread(current).load_vec = 1;
 #endif
 	restore_math(regs);
 
@@ -1244,8 +1244,8 @@ struct task_struct *__switch_to(struct task_struct *prev,
 	struct ppc64_tlb_batch *batch;
 #endif
 
-	new_thread = &new->thread;
-	old_thread = &current->thread;
+	new_thread = &task_thread(new);
+	old_thread = &task_thread(current);
 
 	WARN_ON(!irqs_disabled());
 
@@ -1273,7 +1273,7 @@ struct task_struct *__switch_to(struct task_struct *prev,
 #endif /* CONFIG_PPC_BOOK3S_64 */
 
 #ifdef CONFIG_PPC_ADV_DEBUG_REGS
-	switch_booke_debug_regs(&new->thread.debug);
+	switch_booke_debug_regs(&task_thread(new).debug);
 #else
 /*
  * For PPC_BOOK3S_64, we use the hw-breakpoint interfaces that would
@@ -1288,7 +1288,7 @@ struct task_struct *__switch_to(struct task_struct *prev,
 	 * We need to save SPRs before treclaim/trecheckpoint as these will
 	 * change a number of them.
 	 */
-	save_sprs(&prev->thread);
+	save_sprs(&task_thread(prev));
 
 	/* Save FPU, Altivec, VSX and SPE state */
 	giveup_all(prev);
@@ -1347,8 +1347,8 @@ struct task_struct *__switch_to(struct task_struct *prev,
 	 * A new task does not need to restore_math because it will
 	 * demand fault them.
 	 */
-	if (current->thread.regs)
-		restore_math(current->thread.regs);
+	if (task_thread(current).regs)
+		restore_math(task_thread(current).regs);
 #endif /* CONFIG_PPC_BOOK3S_64 */
 
 	return last;
@@ -1578,7 +1578,7 @@ void flush_thread(void)
 #ifdef CONFIG_HAVE_HW_BREAKPOINT
 	flush_ptrace_hw_breakpoint(current);
 #else /* CONFIG_HAVE_HW_BREAKPOINT */
-	set_debug_reg_defaults(&current->thread);
+	set_debug_reg_defaults(&task_thread(current));
 #endif /* CONFIG_HAVE_HW_BREAKPOINT */
 }
 
@@ -1593,14 +1593,14 @@ void arch_setup_new_exec(void)
 	 * If we exec out of a kernel thread then thread.regs will not be
 	 * set.  Do it now.
 	 */
-	if (!current->thread.regs) {
+	if (!task_thread(current).regs) {
 		struct pt_regs *regs = task_stack_page(current) + THREAD_SIZE;
-		current->thread.regs = regs - 1;
+		task_thread(current).regs = regs - 1;
 	}
 
 #ifdef CONFIG_PPC_MEM_KEYS
-	current->thread.regs->amr  = default_amr;
-	current->thread.regs->iamr  = default_iamr;
+	task_thread(current).regs->amr  = default_amr;
+	task_thread(current).regs->iamr  = default_iamr;
 #endif
 }
 
@@ -1646,11 +1646,11 @@ int set_thread_tidr(struct task_struct *t)
 	if (t != current)
 		return -EINVAL;
 
-	if (t->thread.tidr)
+	if (task_thread(t).tidr)
 		return 0;
 
-	t->thread.tidr = (u16)task_pid_nr(t);
-	mtspr(SPRN_TIDR, t->thread.tidr);
+	task_thread(t).tidr = (u16)task_pid_nr(t);
+	mtspr(SPRN_TIDR, task_thread(t).tidr);
 
 	return 0;
 }
@@ -1705,7 +1705,7 @@ static void setup_ksp_vsid(struct task_struct *p, unsigned long sp)
 		sp_vsid = get_kernel_vsid(sp, MMU_SEGSIZE_256M)
 			<< SLB_VSID_SHIFT;
 	sp_vsid |= SLB_VSID_KERNEL | llp;
-	p->thread.ksp_vsid = sp_vsid;
+	task_thread(p).ksp_vsid = sp_vsid;
 #endif
 }
 
@@ -1748,7 +1748,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 		childregs->softe = IRQS_ENABLED;
 #endif
 		childregs->gpr[15] = kthread_arg;
-		p->thread.regs = NULL;	/* no user register state */
+		task_thread(p).regs = NULL;	/* no user register state */
 		ti->flags |= _TIF_RESTOREALL;
 		f = ret_from_kernel_thread;
 	} else {
@@ -1757,7 +1757,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 		*childregs = *regs;
 		if (usp)
 			childregs->gpr[1] = usp;
-		p->thread.regs = childregs;
+		task_thread(p).regs = childregs;
 		/* 64s sets this in ret_from_fork */
 		if (!IS_ENABLED(CONFIG_PPC_BOOK3S_64))
 			childregs->gpr[3] = 0;  /* Result from fork() */
@@ -1788,20 +1788,20 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 	sp -= sizeof(struct pt_regs);
 	kregs = (struct pt_regs *) sp;
 	sp -= STACK_FRAME_OVERHEAD;
-	p->thread.ksp = sp;
+	task_thread(p).ksp = sp;
 #ifdef CONFIG_HAVE_HW_BREAKPOINT
 	for (i = 0; i < nr_wp_slots(); i++)
-		p->thread.ptrace_bps[i] = NULL;
+		task_thread(p).ptrace_bps[i] = NULL;
 #endif
 
 #ifdef CONFIG_PPC_FPU_REGS
-	p->thread.fp_save_area = NULL;
+	task_thread(p).fp_save_area = NULL;
 #endif
 #ifdef CONFIG_ALTIVEC
-	p->thread.vr_save_area = NULL;
+	task_thread(p).vr_save_area = NULL;
 #endif
 #if defined(CONFIG_PPC_BOOK3S_32) && defined(CONFIG_PPC_KUAP)
-	p->thread.kuap = KUAP_NONE;
+	task_thread(p).kuap = KUAP_NONE;
 #endif
 #if defined(CONFIG_BOOKE_OR_40x) && defined(CONFIG_PPC_KUAP)
 	p->thread.pid = MMU_NO_CONTEXT;
@@ -1811,13 +1811,13 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 
 #ifdef CONFIG_PPC64 
 	if (cpu_has_feature(CPU_FTR_DSCR)) {
-		p->thread.dscr_inherit = current->thread.dscr_inherit;
-		p->thread.dscr = mfspr(SPRN_DSCR);
+		task_thread(p).dscr_inherit = task_thread(current).dscr_inherit;
+		task_thread(p).dscr = mfspr(SPRN_DSCR);
 	}
 	if (cpu_has_feature(CPU_FTR_HAS_PPR))
 		childregs->ppr = DEFAULT_PPR;
 
-	p->thread.tidr = 0;
+	task_thread(p).tidr = 0;
 #endif
 	/*
 	 * Run with the current AMR value of the kernel
@@ -1918,33 +1918,33 @@ void start_thread(struct pt_regs *regs, unsigned long start, unsigned long sp)
 
 #endif
 #ifdef CONFIG_VSX
-	current->thread.used_vsr = 0;
+	task_thread(current).used_vsr = 0;
 #endif
-	current->thread.load_slb = 0;
-	current->thread.load_fp = 0;
+	task_thread(current).load_slb = 0;
+	task_thread(current).load_fp = 0;
 #ifdef CONFIG_PPC_FPU_REGS
-	memset(&current->thread.fp_state, 0, sizeof(current->thread.fp_state));
-	current->thread.fp_save_area = NULL;
+	memset(&task_thread(current).fp_state, 0, sizeof(task_thread(current).fp_state));
+	task_thread(current).fp_save_area = NULL;
 #endif
 #ifdef CONFIG_ALTIVEC
-	memset(&current->thread.vr_state, 0, sizeof(current->thread.vr_state));
-	current->thread.vr_state.vscr.u[3] = 0x00010000; /* Java mode disabled */
-	current->thread.vr_save_area = NULL;
-	current->thread.vrsave = 0;
-	current->thread.used_vr = 0;
-	current->thread.load_vec = 0;
+	memset(&task_thread(current).vr_state, 0, sizeof(task_thread(current).vr_state));
+	task_thread(current).vr_state.vscr.u[3] = 0x00010000; /* Java mode disabled */
+	task_thread(current).vr_save_area = NULL;
+	task_thread(current).vrsave = 0;
+	task_thread(current).used_vr = 0;
+	task_thread(current).load_vec = 0;
 #endif /* CONFIG_ALTIVEC */
 #ifdef CONFIG_SPE
-	memset(current->thread.evr, 0, sizeof(current->thread.evr));
-	current->thread.acc = 0;
-	current->thread.spefscr = 0;
-	current->thread.used_spe = 0;
+	memset(task_thread(current).evr, 0, sizeof(task_thread(current).evr));
+	task_thread(current).acc = 0;
+	task_thread(current).spefscr = 0;
+	task_thread(current).used_spe = 0;
 #endif /* CONFIG_SPE */
 #ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-	current->thread.tm_tfhar = 0;
-	current->thread.tm_texasr = 0;
-	current->thread.tm_tfiar = 0;
-	current->thread.load_tm = 0;
+	task_thread(current).tm_tfhar = 0;
+	task_thread(current).tm_texasr = 0;
+	task_thread(current).tm_tfiar = 0;
+	task_thread(current).load_tm = 0;
 #endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
 }
 EXPORT_SYMBOL(start_thread);
@@ -1954,7 +1954,7 @@ EXPORT_SYMBOL(start_thread);
 
 int set_fpexc_mode(struct task_struct *tsk, unsigned int val)
 {
-	struct pt_regs *regs = tsk->thread.regs;
+	struct pt_regs *regs = task_thread(tsk).regs;
 
 	/* This is a bit hairy.  If we are an SPE enabled  processor
 	 * (have embedded fp) we store the IEEE exception enable flags in
@@ -1975,8 +1975,8 @@ int set_fpexc_mode(struct task_struct *tsk, unsigned int val)
 			 * the saved environment.
 			 */
 #ifdef CONFIG_SPE
-			tsk->thread.spefscr_last = mfspr(SPRN_SPEFSCR);
-			tsk->thread.fpexc_mode = val &
+			task_thread(tsk).spefscr_last = mfspr(SPRN_SPEFSCR);
+			task_thread(tsk).fpexc_mode = val &
 				(PR_FP_EXC_SW_ENABLE | PR_FP_ALL_EXCEPT);
 #endif
 			return 0;
@@ -1992,10 +1992,10 @@ int set_fpexc_mode(struct task_struct *tsk, unsigned int val)
 	 * them does not change anything */
 	if (val > PR_FP_EXC_PRECISE)
 		return -EINVAL;
-	tsk->thread.fpexc_mode = __pack_fe01(val);
+	task_thread(tsk).fpexc_mode = __pack_fe01(val);
 	if (regs != NULL && (regs->msr & MSR_FP) != 0) {
 		regs_set_return_msr(regs, (regs->msr & ~(MSR_FE0|MSR_FE1))
-						| tsk->thread.fpexc_mode);
+						| task_thread(tsk).fpexc_mode);
 	}
 	return 0;
 }
@@ -2004,7 +2004,7 @@ int get_fpexc_mode(struct task_struct *tsk, unsigned long adr)
 {
 	unsigned int val = 0;
 
-	if (tsk->thread.fpexc_mode & PR_FP_EXC_SW_ENABLE) {
+	if (task_thread(tsk).fpexc_mode & PR_FP_EXC_SW_ENABLE) {
 		if (cpu_has_feature(CPU_FTR_SPE)) {
 			/*
 			 * When the sticky exception bits are set
@@ -2019,20 +2019,20 @@ int get_fpexc_mode(struct task_struct *tsk, unsigned long adr)
 			 * the saved environment.
 			 */
 #ifdef CONFIG_SPE
-			tsk->thread.spefscr_last = mfspr(SPRN_SPEFSCR);
-			val = tsk->thread.fpexc_mode;
+			task_thread(tsk).spefscr_last = mfspr(SPRN_SPEFSCR);
+			val = task_thread(tsk).fpexc_mode;
 #endif
 		} else
 			return -EINVAL;
 	} else {
-		val = __unpack_fe01(tsk->thread.fpexc_mode);
+		val = __unpack_fe01(task_thread(tsk).fpexc_mode);
 	}
 	return put_user(val, (unsigned int __user *) adr);
 }
 
 int set_endian(struct task_struct *tsk, unsigned int val)
 {
-	struct pt_regs *regs = tsk->thread.regs;
+	struct pt_regs *regs = task_thread(tsk).regs;
 
 	if ((val == PR_ENDIAN_LITTLE && !cpu_has_feature(CPU_FTR_REAL_LE)) ||
 	    (val == PR_ENDIAN_PPC_LITTLE && !cpu_has_feature(CPU_FTR_PPC_LE)))
@@ -2053,7 +2053,7 @@ int set_endian(struct task_struct *tsk, unsigned int val)
 
 int get_endian(struct task_struct *tsk, unsigned long adr)
 {
-	struct pt_regs *regs = tsk->thread.regs;
+	struct pt_regs *regs = task_thread(tsk).regs;
 	unsigned int val;
 
 	if (!cpu_has_feature(CPU_FTR_PPC_LE) &&
@@ -2076,13 +2076,13 @@ int get_endian(struct task_struct *tsk, unsigned long adr)
 
 int set_unalign_ctl(struct task_struct *tsk, unsigned int val)
 {
-	tsk->thread.align_ctl = val;
+	task_thread(tsk).align_ctl = val;
 	return 0;
 }
 
 int get_unalign_ctl(struct task_struct *tsk, unsigned long adr)
 {
-	return put_user(tsk->thread.align_ctl, (unsigned int __user *)adr);
+	return put_user(task_thread(tsk).align_ctl, (unsigned int __user *)adr);
 }
 
 static inline int valid_irq_stack(unsigned long sp, struct task_struct *p,
@@ -2155,7 +2155,7 @@ static unsigned long ___get_wchan(struct task_struct *p)
 	unsigned long ip, sp;
 	int count = 0;
 
-	sp = p->thread.ksp;
+	sp = task_thread(p).ksp;
 	if (!validate_sp(sp, p, STACK_FRAME_OVERHEAD))
 		return 0;
 
@@ -2210,7 +2210,7 @@ void __no_sanitize_address show_stack(struct task_struct *tsk,
 		if (tsk == current)
 			sp = current_stack_frame();
 		else
-			sp = tsk->thread.ksp;
+			sp = task_thread(tsk).ksp;
 	}
 
 	lr = 0;

@@ -114,7 +114,7 @@ static int emulate_spe(struct pt_regs *regs, unsigned int reg,
 		u8 v[8];
 	} data, temp;
 	unsigned char __user *p, *addr;
-	unsigned long *evr = &current->thread.evr[reg];
+	unsigned long *evr = &task_thread(current).evr[reg];
 	unsigned int nb, flags, instr;
 
 	instr = ppc_inst_val(ppc_instr);

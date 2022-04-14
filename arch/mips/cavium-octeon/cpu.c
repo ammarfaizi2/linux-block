@@ -28,12 +28,12 @@ static int cnmips_cu2_call(struct notifier_block *nfb, unsigned long action,
 
 	switch (action) {
 	case CU2_EXCEPTION:
-		prefetch(&current->thread.cp2);
+		prefetch(&task_thread(current).cp2);
 		local_irq_save(flags);
 		KSTK_STATUS(current) |= ST0_CU2;
 		status = read_c0_status();
 		write_c0_status(status | ST0_CU2);
-		octeon_cop2_restore(&(current->thread.cp2));
+		octeon_cop2_restore(&(task_thread(current).cp2));
 		write_c0_status(status & ~ST0_CU2);
 		local_irq_restore(flags);
 

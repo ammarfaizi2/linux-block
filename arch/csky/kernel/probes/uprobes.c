@@ -49,8 +49,8 @@ int arch_uprobe_pre_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 {
 	struct uprobe_task *utask = current->utask;
 
-	utask->autask.saved_trap_no = current->thread.trap_no;
-	current->thread.trap_no = UPROBE_TRAP_NR;
+	utask->autask.saved_trap_no = task_thread(current).trap_no;
+	task_thread(current).trap_no = UPROBE_TRAP_NR;
 
 	instruction_pointer_set(regs, utask->xol_vaddr);
 
@@ -63,7 +63,7 @@ int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 {
 	struct uprobe_task *utask = current->utask;
 
-	WARN_ON_ONCE(current->thread.trap_no != UPROBE_TRAP_NR);
+	WARN_ON_ONCE(task_thread(current).trap_no != UPROBE_TRAP_NR);
 
 	instruction_pointer_set(regs, utask->vaddr + auprobe->insn_size);
 
@@ -74,7 +74,7 @@ int arch_uprobe_post_xol(struct arch_uprobe *auprobe, struct pt_regs *regs)
 
 bool arch_uprobe_xol_was_trapped(struct task_struct *t)
 {
-	if (t->thread.trap_no != UPROBE_TRAP_NR)
+	if (task_thread(t).trap_no != UPROBE_TRAP_NR)
 		return true;
 
 	return false;

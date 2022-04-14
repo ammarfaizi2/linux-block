@@ -217,8 +217,8 @@ static void vfp_raise_sigfpe(unsigned int sicode, struct pt_regs *regs)
 	 * This is the same as NWFPE, because it's not clear what
 	 * this is used for
 	 */
-	current->thread.error_code = 0;
-	current->thread.trap_no = 6;
+	task_thread(current).error_code = 0;
+	task_thread(current).trap_no = 6;
 
 	send_sig_fault(SIGFPE, sicode,
 		       (void __user *)(instruction_pointer(regs) - 4),

@@ -113,7 +113,7 @@ static struct fsl_mpic_info fsl_mpic_42 = {
 static int get_current_cpu(void)
 {
 #if defined(CONFIG_KVM) && defined(CONFIG_BOOKE)
-	struct kvm_vcpu *vcpu = current->thread.kvm_vcpu;
+	struct kvm_vcpu *vcpu = task_thread(current).kvm_vcpu;
 	return vcpu ? vcpu->arch.irq_cpu_id : -1;
 #else
 	/* XXX */

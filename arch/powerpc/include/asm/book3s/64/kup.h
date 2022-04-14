@@ -214,15 +214,15 @@ extern u64 __ro_after_init default_iamr;
  */
 static inline u64 current_thread_amr(void)
 {
-	if (current->thread.regs)
-		return current->thread.regs->amr;
+	if (task_thread(current).regs)
+		return task_thread(current).regs->amr;
 	return default_amr;
 }
 
 static inline u64 current_thread_iamr(void)
 {
-	if (current->thread.regs)
-		return current->thread.regs->iamr;
+	if (task_thread(current).regs)
+		return task_thread(current).regs->iamr;
 	return default_iamr;
 }
 #endif /* CONFIG_PPC_PKEY */

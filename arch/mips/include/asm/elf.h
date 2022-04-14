@@ -331,7 +331,7 @@ do {									\
 	clear_thread_flag(TIF_HYBRID_FPREGS);				\
 	set_thread_flag(TIF_32BIT_FPREGS);				\
 									\
-	current->thread.abi = &mips_abi;				\
+	task_thread(current).abi = &mips_abi;				\
 									\
 	mips_set_personality_fp(state);					\
 	mips_set_personality_nan(state);				\
@@ -349,7 +349,7 @@ do {									\
 	do {								\
 		set_thread_flag(TIF_32BIT_ADDR);			\
 									\
-		current->thread.abi = &mips_abi_n32;			\
+		task_thread(current).abi = &mips_abi_n32;			\
 	} while (0)
 #else
 #define __SET_PERSONALITY32_N32()					\
@@ -364,7 +364,7 @@ do {									\
 		clear_thread_flag(TIF_HYBRID_FPREGS);			\
 		set_thread_flag(TIF_32BIT_FPREGS);			\
 									\
-		current->thread.abi = &mips_abi_32;			\
+		task_thread(current).abi = &mips_abi_32;			\
 									\
 		mips_set_personality_fp(state);				\
 	} while (0)
@@ -399,7 +399,7 @@ do {									\
 	if ((ex).e_ident[EI_CLASS] == ELFCLASS32)			\
 		__SET_PERSONALITY32(ex, state);				\
 	else								\
-		current->thread.abi = &mips_abi;			\
+		task_thread(current).abi = &mips_abi;			\
 									\
 	mips_set_personality_nan(state);				\
 									\

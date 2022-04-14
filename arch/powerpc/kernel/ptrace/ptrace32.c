@@ -94,7 +94,7 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 			 * to be an array of unsigned int (32 bits) - the
 			 * index passed in is based on this assumption.
 			 */
-			tmp = ((unsigned int *)child->thread.fp_state.fpr)
+			tmp = ((unsigned int *)task_thread(child).fp_state.fpr)
 				[FPRINDEX(index)];
 		}
 		ret = put_user((unsigned int)tmp, (u32 __user *)data);
@@ -135,7 +135,7 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 		if (numReg >= PT_FPR0) {
 			flush_fp_to_thread(child);
 			/* get 64 bit FPR */
-			tmp = child->thread.fp_state.fpr[numReg - PT_FPR0][0];
+			tmp = task_thread(child).fp_state.fpr[numReg - PT_FPR0][0];
 		} else { /* register within PT_REGS struct */
 			unsigned long tmp2;
 			ret = ptrace_get_reg(child, numReg, &tmp2);
@@ -194,7 +194,7 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 			 * to be an array of unsigned int (32 bits) - the
 			 * index passed in is based on this assumption.
 			 */
-			((unsigned int *)child->thread.fp_state.fpr)
+			((unsigned int *)task_thread(child).fp_state.fpr)
 				[FPRINDEX(index)] = data;
 			ret = 0;
 		}
@@ -237,7 +237,7 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 			u64 *tmp;
 			flush_fp_to_thread(child);
 			/* get 64 bit FPR ... */
-			tmp = &child->thread.fp_state.fpr[numReg - PT_FPR0][0];
+			tmp = &task_thread(child).fp_state.fpr[numReg - PT_FPR0][0];
 			/* ... write the 32 bit part we want */
 			((u32 *)tmp)[index % 2] = data;
 			ret = 0;
@@ -254,11 +254,11 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 		if (addr > 0)
 			break;
 #ifdef CONFIG_PPC_ADV_DEBUG_REGS
-		ret = put_user(child->thread.debug.dac1, (u32 __user *)data);
+		ret = put_user(task_thread(child).debug.dac1, (u32 __user *)data);
 #else
 		dabr_fake = (
-			(child->thread.hw_brk[0].address & (~HW_BRK_TYPE_DABR)) |
-			(child->thread.hw_brk[0].type & HW_BRK_TYPE_DABR));
+			(task_thread(child).hw_brk[0].address & (~HW_BRK_TYPE_DABR)) |
+			(task_thread(child).hw_brk[0].type & HW_BRK_TYPE_DABR));
 		ret = put_user(dabr_fake, (u32 __user *)data);
 #endif
 		break;

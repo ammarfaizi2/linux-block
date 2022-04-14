@@ -103,7 +103,7 @@ static inline void load_ksp_mmu(struct task_struct *task)
 	unsigned long mmuar;
 
 	local_irq_save(flags);
-	mmuar = task->thread.ksp;
+	mmuar = task_thread(task).ksp;
 
 	/* Search for a valid TLB entry, if one is found, don't remap */
 	mmu_write(MMUAR, mmuar);
