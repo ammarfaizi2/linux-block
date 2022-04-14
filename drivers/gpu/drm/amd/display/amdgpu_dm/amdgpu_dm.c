@@ -48,6 +48,7 @@
 #include "amdgpu_dm.h"
 #ifdef CONFIG_DRM_AMD_DC_HDCP
 #include "amdgpu_dm_hdcp.h"
+#include <linux/backlight.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_hdcp.h>
 #endif

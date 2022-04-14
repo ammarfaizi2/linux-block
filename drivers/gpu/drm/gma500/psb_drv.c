@@ -7,6 +7,7 @@
  *
  **************************************************************************/
 
+#include <linux/backlight.h>
 #include <linux/cpu.h>
 #include <linux/module.h>
 #include <linux/notifier.h>

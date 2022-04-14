@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/backlight.h>
 #include <linux/pci.h>
 #include <linux/acpi.h>
 #include <linux/slab.h>

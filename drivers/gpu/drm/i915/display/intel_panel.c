@@ -28,6 +28,7 @@
  *      Chris Wilson <chris@chris-wilson.co.uk>
  */
 
+#include <linux/backlight.h>
 #include <linux/kernel.h>
 #include <linux/pwm.h>
 

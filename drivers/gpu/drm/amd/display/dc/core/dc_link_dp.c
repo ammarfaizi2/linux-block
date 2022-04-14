@@ -21,6 +21,8 @@
  *
  * Authors: AMD
  */
+#include <linux/backlight.h>
+
 #include "dm_services.h"
 #include "dc.h"
 #include "dc_link_dp.h"
