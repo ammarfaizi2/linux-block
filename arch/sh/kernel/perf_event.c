@@ -17,6 +17,7 @@
  * ppc:
  *  Copyright 2008-2009 Paul Mackerras, IBM Corporation.
  */
+#include <asm/local64_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/io.h>

@@ -7,6 +7,7 @@
  *         Tai Nguyen <ttnguyen@apm.com>
  */
 
+#include <asm/local64_api.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>
 #include <linux/cpuhotplug.h>

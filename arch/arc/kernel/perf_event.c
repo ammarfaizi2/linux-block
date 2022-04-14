@@ -5,6 +5,7 @@
 //
 // Copyright (C) 2013-2018 Synopsys, Inc. (www.synopsys.com)
 
+#include <asm/local64_api.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

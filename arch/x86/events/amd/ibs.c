@@ -6,6 +6,7 @@
  *  For licencing details see kernel-base/COPYING
  */
 
+#include <asm/local64_api.h>
 #include <linux/perf_event.h>
 #include <linux/init.h>
 #include <linux/export.h>

@@ -5,6 +5,7 @@
  * Author: Ganapatrao Kulkarni <gkulkarni@cavium.com>
  */
 
+#include <asm/local64_api.h>
 #include <linux/acpi.h>
 #include <linux/cpuhotplug.h>
 #include <linux/perf_event.h>

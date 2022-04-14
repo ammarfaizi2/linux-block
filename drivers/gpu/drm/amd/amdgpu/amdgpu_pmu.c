@@ -21,6 +21,7 @@
  *
  */
 
+#include <asm/local64_api.h>
 #include <linux/perf_event.h>
 #include <linux/init.h>
 #include "amdgpu.h"

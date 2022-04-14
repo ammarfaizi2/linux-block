@@ -12,6 +12,7 @@
  */
 #define pr_fmt(fmt) "hw perfevents: " fmt
 
+#include <asm/local64_api.h>
 #include <linux/bitmap.h>
 #include <linux/cpumask.h>
 #include <linux/cpu_pm.h>

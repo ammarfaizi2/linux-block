@@ -4,6 +4,7 @@
  * Copyright © 2017-2018 Intel Corporation
  */
 
+#include <asm/local64_api.h>
 #include <linux/pm_runtime.h>
 
 #include "gt/intel_engine.h"

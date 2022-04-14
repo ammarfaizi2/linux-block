@@ -13,6 +13,7 @@
  *  Copyright (C) 2008-2009 Red Hat, Inc., Peter Zijlstra
  */
 
+#include <asm/local64_api.h>
 #include <linux/perf_event.h>
 #include <linux/kprobes.h>
 #include <linux/ftrace.h>

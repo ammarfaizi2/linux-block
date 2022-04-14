@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "hv-gpci: " fmt
 
+#include <asm/local64_api.h>
 #include <linux/init.h>
 #include <linux/perf_event.h>
 #include <asm/firmware.h>

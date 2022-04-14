@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "tad_pmu: " fmt
 
+#include <asm/local64_api.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

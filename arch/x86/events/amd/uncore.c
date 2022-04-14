@@ -5,6 +5,7 @@
  * Author: Jacob Shin <jacob.shin@amd.com>
  */
 
+#include <asm/local64_api.h>
 #include <linux/perf_event.h>
 #include <linux/percpu.h>
 #include <linux/types.h>

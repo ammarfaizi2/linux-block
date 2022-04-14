@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT	"cpum_cf"
 #define pr_fmt(fmt)	KMSG_COMPONENT ": " fmt
 
+#include <asm/local64_api.h>
 #include <linux/kernel.h>
 #include <linux/kernel_stat.h>
 #include <linux/percpu.h>

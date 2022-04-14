@@ -5,6 +5,7 @@
  * Copyright 2016 Christophe Leroy, CS Systemes d'Information
  */
 
+#include <asm/local64_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/perf_event.h>

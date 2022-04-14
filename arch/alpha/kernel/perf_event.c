@@ -10,6 +10,7 @@
  * ARM code, which are copyright by their respective authors.
  */
 
+#include <asm/local64_api.h>
 #include <linux/perf_event.h>
 #include <linux/kprobes.h>
 #include <linux/kernel.h>

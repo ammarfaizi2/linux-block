@@ -55,6 +55,7 @@
 
 #define pr_fmt(fmt) "RAPL PMU: " fmt
 
+#include <asm/local64_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/perf_event.h>

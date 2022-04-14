@@ -7,6 +7,7 @@
  * Copyright (c) Mike Travis
  */
 
+#include <asm/local64_api.h>
 #include <linux/cpu.h>
 #include <linux/delay.h>
 #include <linux/kdb.h>
