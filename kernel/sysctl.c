@@ -19,6 +19,7 @@
  *  Removed it and replaced it with older style, 03/23/00, Bill Wendling
  */
 
+#include <linux/utsname.h>
 #include <linux/sched.h>
 #include <linux/perf_event_api.h>
 #include <linux/mutex_api.h>
