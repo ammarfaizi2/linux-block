@@ -8,6 +8,7 @@
  * xattr.c
  */
 
+#include <linux/fs_types_sb.h>
 #include <linux/dcache.h>
 #include <linux/capability.h>
 #include <linux/init.h>
