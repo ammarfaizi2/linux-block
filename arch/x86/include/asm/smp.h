@@ -39,6 +39,7 @@ DECLARE_EARLY_PER_CPU_READ_MOSTLY(int, x86_cpu_to_logical_apicid);
 #endif
 
 struct task_struct;
+struct pt_regs;
 
 struct smp_ops {
 	void (*smp_prepare_boot_cpu)(void);

@@ -8,6 +8,7 @@
 
 struct module;
 struct request;
+struct class_interface;
 
 struct scsi_driver {
 	struct device_driver	gendrv;

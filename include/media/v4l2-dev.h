@@ -62,6 +62,7 @@ struct v4l2_ioctl_callbacks;
 struct video_device;
 struct v4l2_device;
 struct v4l2_ctrl_handler;
+struct poll_table_struct;
 
 /**
  * enum v4l2_video_device_flags - Flags used by &struct video_device

@@ -64,6 +64,8 @@ struct nf_hook_ops;
 
 struct sock;
 
+struct nf_conntrack;
+
 struct nf_hook_state {
 	u8 hook;
 	u8 pf;

@@ -428,6 +428,8 @@ void sctp_stream_update(struct sctp_stream *stream, struct sctp_stream *new);
 #define sctp_mid_uo_next(stream, type, sid) \
 	(sctp_stream_##type((stream), (sid))->mid_uo++)
 
+struct seq_file;
+
 /*
  * Pointers to address related SCTP functions.
  * (i.e. things that depend on the address family.)

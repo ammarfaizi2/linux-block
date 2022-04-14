@@ -55,6 +55,8 @@ static inline int seccomp_mode(struct seccomp *s)
 }
 #endif /* CONFIG_SECCOMP */
 
+struct task_struct;
+
 #ifdef CONFIG_SECCOMP_FILTER
 extern void seccomp_filter_release(struct task_struct *tsk);
 extern void get_seccomp_filter(struct task_struct *tsk);

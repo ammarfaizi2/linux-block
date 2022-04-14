@@ -514,6 +514,9 @@ int __compat_save_altstack(compat_stack_t __user *, unsigned long);
  * include the prototypes if CONFIG_ARCH_HAS_SYSCALL_WRAPPER is enabled.
  */
 #ifndef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
+
+struct io_event;
+
 asmlinkage long compat_sys_io_setup(unsigned nr_reqs, u32 __user *ctx32p);
 asmlinkage long compat_sys_io_submit(compat_aio_context_t ctx_id, int nr,
 				     u32 __user *iocb);
@@ -576,6 +579,8 @@ asmlinkage long compat_sys_openat(int dfd, const char __user *filename,
 asmlinkage long compat_sys_getdents(unsigned int fd,
 				    struct compat_linux_dirent __user *dirent,
 				    unsigned int count);
+
+struct iovec;
 
 /* fs/read_write.c */
 asmlinkage long compat_sys_lseek(unsigned int, compat_off_t, unsigned int);
@@ -773,6 +778,8 @@ asmlinkage long compat_sys_execve(const char __user *filename, const compat_uptr
 		     const compat_uptr_t __user *envp);
 
 /* mm/fadvise.c: No generic prototype for fadvise64_64 */
+
+struct file_handle;
 
 /* mm/, CONFIG_MMU only */
 asmlinkage long compat_sys_rt_tgsigqueueinfo(compat_pid_t tgid,

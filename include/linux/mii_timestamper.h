@@ -11,6 +11,7 @@
 #include <linux/skbuff.h>
 
 struct phy_device;
+struct ifreq;
 
 /**
  * struct mii_timestamper - Callback interface to MII time stamping devices.

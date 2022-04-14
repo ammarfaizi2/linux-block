@@ -23,6 +23,7 @@
 union fscrypt_policy;
 struct fscrypt_info;
 struct seq_file;
+struct request_queue;
 
 struct fscrypt_str {
 	unsigned char *name;

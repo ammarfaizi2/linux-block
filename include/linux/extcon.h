@@ -187,6 +187,8 @@ int extcon_get_property(struct extcon_dev *edev, unsigned int id,
 int extcon_get_property_capability(struct extcon_dev *edev,
 				unsigned int id, unsigned int prop);
 
+struct notifier_block;
+
 /*
  * Following APIs register the notifier block in order to detect
  * the change of both state and property value for each external connector.

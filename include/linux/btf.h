@@ -26,6 +26,7 @@ struct btf_type;
 union bpf_attr;
 struct btf_show;
 struct btf_id_set;
+struct seq_file;
 
 struct btf_kfunc_id_set {
 	struct module *owner;

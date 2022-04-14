@@ -22,6 +22,7 @@
 #include <linux/cdev.h>
 
 struct media_device;
+struct poll_table_struct;
 
 /*
  * Flag to mark the media_devnode struct as registered. Drivers must not touch

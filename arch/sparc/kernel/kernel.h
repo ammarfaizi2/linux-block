@@ -158,6 +158,8 @@ void floppy_hardint(void);
 extern unsigned long sun4m_cpu_startup;
 extern unsigned long sun4d_cpu_startup;
 
+struct sigstack;
+
 /* signal_32.c */
 asmlinkage void do_sigreturn(struct pt_regs *regs);
 asmlinkage void do_rt_sigreturn(struct pt_regs *regs);
