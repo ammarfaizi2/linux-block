@@ -13,6 +13,7 @@
 #define _LINUX_RTC_H_
 
 
+#include <linux/time64.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>
 #include <linux/nvmem-provider.h>
