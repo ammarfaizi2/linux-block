@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt)    "iommu: " fmt
 
+#include <linux/mem_encrypt.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

@@ -22,6 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/mem_encrypt.h>
 #include <linux/delay.h>
 #include <drm/amdgpu_drm.h>
 #include <drm/drm_aperture.h>
