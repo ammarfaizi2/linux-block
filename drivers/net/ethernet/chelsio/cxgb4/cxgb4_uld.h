@@ -35,6 +35,7 @@
 #ifndef __CXGB4_ULD_H
 #define __CXGB4_ULD_H
 
+#include <linux/bitmap.h>
 #include <linux/cache.h>
 #include <linux/spinlock.h>
 #include <linux/skbuff.h>

@@ -117,6 +117,7 @@
 #ifndef __XGBE_H__
 #define __XGBE_H__
 
+#include <linux/bitmap.h>
 #include <linux/dma-mapping.h>
 #include <linux/netdevice.h>
 #include <linux/workqueue.h>

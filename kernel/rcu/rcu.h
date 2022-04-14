@@ -10,6 +10,7 @@
 #ifndef __LINUX_RCU_H
 #define __LINUX_RCU_H
 
+#include <linux/bitmap.h>
 #include <trace/events/rcu.h>
 
 /* Offset to allow distinguishing irq vs. task-based idle entry/exit. */

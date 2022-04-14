@@ -3,6 +3,7 @@
 #define _ASM_X86_MPSPEC_H
 
 
+#include <linux/bitmap.h>
 #include <asm/mpspec_def.h>
 #include <asm/x86_init.h>
 #include <asm/apicdef.h>

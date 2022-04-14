@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_MCE_H
 #define _ASM_X86_MCE_H
 
+#include <linux/bitmap.h>
 #include <uapi/asm/mce.h>
 
 /*

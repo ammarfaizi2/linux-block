@@ -4,6 +4,7 @@
  * licensing and copyright details
  */
 
+#include <linux/bitmap.h>
 #include <linux/reiserfs_fs.h>
 
 #include <linux/slab.h>

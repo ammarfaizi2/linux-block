@@ -3,6 +3,7 @@
 #ifndef IRDMA_MAIN_H
 #define IRDMA_MAIN_H
 
+#include <linux/bitmap.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <linux/if_vlan.h>

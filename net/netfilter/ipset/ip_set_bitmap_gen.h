@@ -4,6 +4,7 @@
 #ifndef __IP_SET_BITMAP_IP_GEN_H
 #define __IP_SET_BITMAP_IP_GEN_H
 
+#include <linux/bitmap.h>
 #include <linux/sched/cond_resched.h>
 
 #define mtype_do_test		IPSET_TOKEN(MTYPE, _do_test)
