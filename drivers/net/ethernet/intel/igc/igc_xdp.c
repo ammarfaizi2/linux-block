@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020, Intel Corporation. */
 
+#include <linux/bpf.h>
 #include <linux/atomic_api.h>
 #include <linux/if_vlan.h>
 #include <net/xdp_sock_drv.h>
