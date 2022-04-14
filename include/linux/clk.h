@@ -9,6 +9,7 @@
 #ifndef __LINUX_CLK_H
 #define __LINUX_CLK_H
 
+#include <linux/notifier_api.h>
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <linux/kernel.h>

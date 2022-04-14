@@ -8,6 +8,7 @@
 #ifndef __LINUX_MFD_IQS62X_H
 #define __LINUX_MFD_IQS62X_H
 
+#include <linux/notifier_api.h>
 #include <linux/types.h>
 
 #define IQS620_PROD_NUM				0x41

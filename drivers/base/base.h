@@ -10,6 +10,7 @@
  * shared outside of the drivers/base/ directory.
  *
  */
+#include <linux/notifier_api.h>
 #include <linux/device_api.h>
 #include <linux/notifier.h>
 

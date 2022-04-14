@@ -9,6 +9,7 @@
 #ifndef GPIOLIB_H
 #define GPIOLIB_H
 
+#include <linux/notifier_api.h>
 #include <linux/dev_printk.h>
 #include <linux/gpio/driver.h>
 #include <linux/gpio/consumer.h> /* for enum gpiod_flags */

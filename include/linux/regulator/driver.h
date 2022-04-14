@@ -12,6 +12,7 @@
 #ifndef __LINUX_REGULATOR_DRIVER_H_
 #define __LINUX_REGULATOR_DRIVER_H_
 
+#include <linux/notifier_api.h>
 #include <linux/device.h>
 #include <linux/linear_range.h>
 #include <linux/notifier.h>

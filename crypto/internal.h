@@ -8,6 +8,7 @@
 #ifndef _CRYPTO_INTERNAL_H
 #define _CRYPTO_INTERNAL_H
 
+#include <linux/notifier_api.h>
 #include <linux/sched/cond_resched.h>
 #include <crypto/algapi.h>
 #include <linux/completion.h>

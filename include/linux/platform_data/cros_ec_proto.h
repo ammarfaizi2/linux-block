@@ -8,6 +8,7 @@
 #ifndef __LINUX_CROS_EC_PROTO_H
 #define __LINUX_CROS_EC_PROTO_H
 
+#include <linux/notifier_api.h>
 #include <linux/ktime_api.h>
 #include <linux/device.h>
 #include <linux/mutex.h>

@@ -9,6 +9,7 @@
 #ifndef __DRM_PRIVACY_SCREEN_DRIVER_H__
 #define __DRM_PRIVACY_SCREEN_DRIVER_H__
 
+#include <linux/notifier_api.h>
 #include <linux/device.h>
 #include <linux/list.h>
 #include <linux/mutex.h>

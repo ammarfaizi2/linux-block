@@ -6,6 +6,7 @@
 #ifndef __INTEL_ENGINE_TYPES__
 #define __INTEL_ENGINE_TYPES__
 
+#include <linux/notifier_api.h>
 #include <linux/completion.h>
 #include <linux/average.h>
 #include <linux/hashtable.h>
