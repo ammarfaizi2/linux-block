@@ -30,6 +30,20 @@
 #include <drm/ttm/ttm_bo_driver.h>
 
 /**
+ * ttm_resource_manager_cleanup
+ *
+ * @man: A memory manager object.
+ *
+ * Cleanup the move fences from the memory manager object.
+ */
+void ttm_resource_manager_cleanup(struct ttm_resource_manager *man)
+{
+	dma_fence_put(man->move);
+	man->move = NULL;
+}
+EXPORT_SYMBOL(ttm_resource_manager_cleanup);
+
+/**
  * ttm_resource_init - resource object constructure
  * @bo: buffer object this resources is allocated for
  * @place: placement of the resource
