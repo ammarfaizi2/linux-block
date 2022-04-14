@@ -19,6 +19,7 @@
  *		Jorge Cwik, <jorge@laser.satlink.net>
  */
 
+#include <net/tcp_bpf.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/dst_api.h>

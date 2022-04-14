@@ -35,6 +35,7 @@
  * SOFTWARE.
  */
 
+#include <net/tcp_bpf.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

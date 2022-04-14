@@ -52,6 +52,7 @@
  *	Based upon Swansea University Computer Society NET3.039
  */
 
+#include <net/tcp_bpf.h>
 #include <net/socket_alloc.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
