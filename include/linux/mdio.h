@@ -6,6 +6,7 @@
 #ifndef __LINUX_MDIO_H__
 #define __LINUX_MDIO_H__
 
+#include <linux/device.h>
 #include <uapi/linux/mdio.h>
 #include <linux/bitfield.h>
 #include <linux/mod_devicetable.h>
