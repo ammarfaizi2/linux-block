@@ -6,6 +6,7 @@
 //
 // Copyright 2010 Freescale Semiconductor, Inc.
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

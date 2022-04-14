@@ -30,6 +30,7 @@
  * (the low to high transition will not occur).
  */
 
+#include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>

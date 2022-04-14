@@ -12,6 +12,7 @@
  * Hardware interface for audio DSP on Baytrail, Braswell and Cherrytrail.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/property.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

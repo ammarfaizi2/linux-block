@@ -41,6 +41,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

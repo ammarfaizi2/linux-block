@@ -11,6 +11,7 @@
  * Eric Biederman, of course, was a major help in this effort.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

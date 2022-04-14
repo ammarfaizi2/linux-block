@@ -11,6 +11,7 @@
  *          Luke Diamand @ Broadcom
  */
 
+#include <linux/vmalloc.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

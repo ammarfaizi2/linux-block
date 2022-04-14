@@ -6,6 +6,7 @@
  * This file contains TC6387XB base support.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

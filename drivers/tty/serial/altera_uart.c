@@ -9,6 +9,7 @@
  * (C) Copyright 2010, Tobias Klauser <tklauser@distanz.ch>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

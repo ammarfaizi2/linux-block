@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "memtrace: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

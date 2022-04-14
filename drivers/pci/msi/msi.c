@@ -6,6 +6,7 @@
  * Copyright (C) Tom Long Nguyen (tom.l.nguyen@intel.com)
  * Copyright (C) 2016 Christoph Hellwig.
  */
+#include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

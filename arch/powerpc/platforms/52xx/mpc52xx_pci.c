@@ -12,6 +12,7 @@
 
 #undef DEBUG
 
+#include <linux/vmalloc.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

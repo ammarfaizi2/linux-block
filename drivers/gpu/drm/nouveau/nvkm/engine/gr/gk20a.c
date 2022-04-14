@@ -22,6 +22,7 @@
 #include "gf100.h"
 #include "ctxgf100.h"
 
+#include <linux/vmalloc.h>
 #include <core/firmware.h>
 #include <subdev/timer.h>
 

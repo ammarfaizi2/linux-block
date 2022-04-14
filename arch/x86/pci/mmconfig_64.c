@@ -6,6 +6,7 @@
  * space mapped. This allows lockless config space operation.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/pci.h>
 #include <linux/init.h>

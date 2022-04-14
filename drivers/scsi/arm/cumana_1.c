@@ -4,6 +4,7 @@
  *
  * Copyright 1995-2002, Russell King
  */
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

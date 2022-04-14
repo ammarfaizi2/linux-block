@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>

@@ -4,6 +4,7 @@
  *
  * (C) Copyright 2004 Linus Torvalds
  */
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/pci.h>
 #include <linux/io.h>

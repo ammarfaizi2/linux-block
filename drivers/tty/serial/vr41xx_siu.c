@@ -7,6 +7,7 @@
  *  Based on drivers/serial/8250.c, by Russell King.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/console.h>
 #include <linux/errno.h>

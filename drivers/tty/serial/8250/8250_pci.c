@@ -7,6 +7,7 @@
  *  Copyright (C) 2001 Russell King, All Rights Reserved.
  */
 #undef DEBUG
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>

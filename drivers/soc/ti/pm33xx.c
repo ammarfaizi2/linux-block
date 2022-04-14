@@ -6,6 +6,7 @@
  *	Vaibhav Bedia, Dave Gerlach
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/cpu.h>

@@ -6,6 +6,7 @@
  */
 
 #include "ubi.h"
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>

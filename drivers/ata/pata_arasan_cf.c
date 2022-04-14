@@ -21,6 +21,7 @@
  * Tested on arch/arm/mach-spear13xx
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>

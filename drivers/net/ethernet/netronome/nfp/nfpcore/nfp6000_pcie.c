@@ -15,6 +15,7 @@
  * abstraction builds upon this BAR interface.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

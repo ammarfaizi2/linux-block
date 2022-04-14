@@ -51,6 +51,7 @@
  * needs to be tracked by this code.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 

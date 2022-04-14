@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Texas Instruments Incorporated
  */
 
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/io.h>

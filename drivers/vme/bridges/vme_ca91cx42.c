@@ -11,6 +11,7 @@
  * Derived from ca91c042.c by Michael Wyrick
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

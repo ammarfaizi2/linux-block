@@ -47,6 +47,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME	": " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/irq_api_eff_affinity.h>

@@ -14,6 +14,7 @@
  * sh7760_setcolreg get from drivers/video/sh_mobile_lcdcfb.c
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

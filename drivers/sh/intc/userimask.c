@@ -9,6 +9,7 @@
  */
 #define pr_fmt(fmt) "intc: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/device_api_lock.h>
 #include <linux/errno.h>
 #include <linux/device.h>

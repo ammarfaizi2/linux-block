@@ -4,6 +4,7 @@
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
 
+#include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/io.h>
 #include <linux/memblock.h>

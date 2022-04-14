@@ -5,6 +5,7 @@
  *
  * Generic IRQ handling for the SA11x0.
  */
+#include <linux/vmalloc.h>
 #include <linux/irqdesc.h>
 #include <linux/init.h>
 #include <linux/module.h>

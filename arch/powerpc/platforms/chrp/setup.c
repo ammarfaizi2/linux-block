@@ -9,6 +9,7 @@
  * bootup setup stuff..
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

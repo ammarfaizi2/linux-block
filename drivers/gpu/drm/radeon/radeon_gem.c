@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/vmalloc.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

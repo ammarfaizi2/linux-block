@@ -24,6 +24,7 @@
 #include "cx18-ioctl.h"
 #include "cx18-controls.h"
 #include "xc2028.h"
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2012 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
  */
+#include <linux/vmalloc.h>
 #include <linux/mm.h>
 #include <linux/delay.h>
 #include <linux/clk.h>

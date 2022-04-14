@@ -5,6 +5,7 @@
  * Copyright (C) 2011  Renesas Solutions Corp.
  * Copyright (C) 2011  Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/io.h>

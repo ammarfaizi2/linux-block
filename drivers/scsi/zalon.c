@@ -4,6 +4,7 @@
  * By Richard Hirst (rhirst@linuxcare.com)
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2004-2005 Nokia Corporation
  * Author: Juha Yrjölä <juha.yrjola@nokia.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/mm.h>

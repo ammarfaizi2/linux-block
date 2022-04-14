@@ -9,6 +9,7 @@
  *   Copyright (c) 2006 Simtec Electronics
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

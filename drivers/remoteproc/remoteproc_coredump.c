@@ -5,6 +5,7 @@
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/io_extra.h>
 #include <linux/completion.h>

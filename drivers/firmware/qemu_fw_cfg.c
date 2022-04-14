@@ -27,6 +27,7 @@
  *      qemu_fw_cfg.mmio=16@0x9020000:8:0:16	(the default on arm)
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

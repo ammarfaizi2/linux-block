@@ -6,6 +6,7 @@
  * Copyright 2010 Ion Beam Application, Inc.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/types.h>

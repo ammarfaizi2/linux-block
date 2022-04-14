@@ -12,6 +12,7 @@
  *                and Philip Prindeville <philipp@redfish-solutions.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/io.h>

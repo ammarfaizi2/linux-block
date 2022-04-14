@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/vmalloc.h>
 #include <linux/module.h>
 #include <linux/smp.h>
 #include <linux/time.h>

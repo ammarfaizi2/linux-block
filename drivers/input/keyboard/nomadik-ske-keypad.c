@@ -9,6 +9,7 @@
  * the Nomadik 8815 and Ux500 platforms.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/ioport.h>

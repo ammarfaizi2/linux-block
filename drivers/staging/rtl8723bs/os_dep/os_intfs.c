@@ -4,6 +4,7 @@
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>

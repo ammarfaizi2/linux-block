@@ -45,6 +45,7 @@
 
 #undef DEBUG
 
+#include <linux/vmalloc.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

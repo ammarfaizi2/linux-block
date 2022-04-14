@@ -69,6 +69,7 @@
  *   o Otherwise this is corruption type 2.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>
 #include <linux/mutex_api.h>

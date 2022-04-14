@@ -5,6 +5,7 @@
  * Author: Yun Wu <wuyun.wu@huawei.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

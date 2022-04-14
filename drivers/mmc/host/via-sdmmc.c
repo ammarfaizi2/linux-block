@@ -4,6 +4,7 @@
  *  Copyright (c) 2008, VIA Technologies Inc. All Rights Reserved.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

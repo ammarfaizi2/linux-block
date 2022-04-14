@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Western Digital Corporation or its affiliates.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/blkdev.h>
 #include <linux/mm.h>

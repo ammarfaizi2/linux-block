@@ -24,6 +24,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

@@ -11,6 +11,7 @@
  *  (C) 2011 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

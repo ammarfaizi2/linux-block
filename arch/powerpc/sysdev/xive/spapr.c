@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "xive: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>

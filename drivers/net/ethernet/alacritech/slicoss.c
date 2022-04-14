@@ -7,6 +7,7 @@
  * Copyright (C) 2016 Lino Sanfilippo <LinoSanfilippo@gmx.de>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

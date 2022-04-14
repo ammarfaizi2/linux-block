@@ -3,6 +3,7 @@
  * Copyright (c) 2019 Christoph Hellwig.
  * Copyright (c) 2019 Western Digital Corporation or its affiliates.
  */
+#include <linux/vmalloc.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>

@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/filter_api.h>
 #include <linux/bpf.h>

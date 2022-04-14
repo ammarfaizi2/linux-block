@@ -10,6 +10,7 @@
 #include "tea5767.h"
 #include "xc4000.h"
 
+#include <linux/vmalloc.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

@@ -4,6 +4,7 @@
 //
 // Interrupt handler for DaVinci boards.
 
+#include <linux/vmalloc.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>

@@ -3,6 +3,7 @@
  * ti-sysc.c - Texas Instruments sysc interconnect target driver
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

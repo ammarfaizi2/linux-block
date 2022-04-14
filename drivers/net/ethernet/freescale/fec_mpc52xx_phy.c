@@ -9,6 +9,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2010-2012 Broadcom. All rights reserved.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

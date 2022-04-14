@@ -15,6 +15,7 @@
  * handled by this driver, rather than giving each LED bit position its
  * own struct device.
  */
+#include <linux/vmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/init.h>

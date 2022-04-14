@@ -5,6 +5,7 @@
  * Copyright (c) 2009, 2014 Intel Corporation.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/pci.h>

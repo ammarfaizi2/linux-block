@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 

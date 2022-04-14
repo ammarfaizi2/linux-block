@@ -16,6 +16,7 @@
  *
  * 2005-2006 (c) MontaVista Software, Inc.
  */
+#include <linux/vmalloc.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

@@ -6,6 +6,7 @@
  * Author: Ulf Hansson <ulf.hansson@linaro.org>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/clk-provider.h>
 #include <linux/slab.h>
 #include <linux/io.h>

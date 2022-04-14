@@ -16,6 +16,7 @@
  * Interface to generic NAND code for M-Systems DiskOnChip devices
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

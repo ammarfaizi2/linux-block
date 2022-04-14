@@ -4,6 +4,7 @@
  * Copyright 2012 Red Hat Inc
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_api.h>

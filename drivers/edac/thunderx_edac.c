@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>

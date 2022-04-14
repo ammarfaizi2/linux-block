@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/device.h>
 #include <linux/slab.h>

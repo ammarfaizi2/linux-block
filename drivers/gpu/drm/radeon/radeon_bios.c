@@ -26,6 +26,7 @@
  *          Jerome Glisse
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/acpi.h>

@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>

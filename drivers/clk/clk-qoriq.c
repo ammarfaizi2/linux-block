@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <dt-bindings/clock/fsl,qoriq-clockgen.h>
 #include <linux/clk.h>

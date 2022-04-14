@@ -7,6 +7,7 @@
  *  Copyright (C) 2010 Alexey Charkov <alchark@gmail.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ioport.h>

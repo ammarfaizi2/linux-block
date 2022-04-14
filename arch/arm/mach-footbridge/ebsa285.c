@@ -4,6 +4,7 @@
  *
  * EBSA285 machine fixup
  */
+#include <linux/vmalloc.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/spinlock.h>

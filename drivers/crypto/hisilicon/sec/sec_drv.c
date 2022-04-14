@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2016-2017 HiSilicon Limited.
  */
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ioport.h>

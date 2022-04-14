@@ -16,6 +16,7 @@
  * rendering can return quickly.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>

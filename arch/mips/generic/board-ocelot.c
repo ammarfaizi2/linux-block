@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2017 Microsemi Corporation
  */
+#include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/io.h>
 #include <asm/machine.h>

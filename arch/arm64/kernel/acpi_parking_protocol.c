@@ -5,6 +5,7 @@
  * Authors: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
  *	    Mark Salter <msalter@redhat.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

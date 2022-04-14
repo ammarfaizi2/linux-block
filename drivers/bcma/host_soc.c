@@ -7,6 +7,7 @@
 
 #include "bcma_private.h"
 #include "scan.h"
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/slab.h>

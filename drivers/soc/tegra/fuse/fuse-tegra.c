@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2021, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

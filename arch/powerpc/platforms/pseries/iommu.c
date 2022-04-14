@@ -10,6 +10,7 @@
  * Dynamic DMA mapping support, pSeries-specific parts, both SMP and LPAR.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/of_api.h>

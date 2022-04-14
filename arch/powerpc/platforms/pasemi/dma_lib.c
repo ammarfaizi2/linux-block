@@ -5,6 +5,7 @@
  * Common functions for DMA access on PA Semi PWRficient
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/jiffies.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2014 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <asm/vdso/processor.h>
 #include <linux/io.h>

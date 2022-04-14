@@ -8,6 +8,7 @@
  * Author: Jassi Brar <jaswinder.singh@linaro.org>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mod_devicetable.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

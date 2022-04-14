@@ -2,6 +2,7 @@
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

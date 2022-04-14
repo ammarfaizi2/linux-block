@@ -9,6 +9,7 @@
  * io_apic.c.)
  */
 
+#include <linux/vmalloc.h>
 #include <linux/pgtable.h>
 #include <linux/percpu.h>
 #include <linux/mmzone.h>

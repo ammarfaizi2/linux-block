@@ -9,6 +9,7 @@
  *  And anyone else who helped me on this.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/types.h>
 #include <linux/init.h>

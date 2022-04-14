@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "mmiotrace: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/rcupdate.h>

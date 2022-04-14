@@ -16,6 +16,7 @@
 #define KMSG_COMPONENT "setup"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/sched/task_stack.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>

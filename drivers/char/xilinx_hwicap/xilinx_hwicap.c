@@ -71,6 +71,7 @@
  * currently programmed in the FPGA.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>

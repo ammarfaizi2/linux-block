@@ -6,6 +6,7 @@
  * Copyright 2003 by Texas Instruments Incorporated
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

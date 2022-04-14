@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/errno.h>
 #include <linux/pci.h>

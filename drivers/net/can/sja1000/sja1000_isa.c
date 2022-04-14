@@ -3,6 +3,7 @@
  * Copyright (C) 2009 Wolfgang Grandegger <wg@grandegger.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>

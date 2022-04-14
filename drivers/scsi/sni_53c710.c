@@ -13,6 +13,7 @@
  * Based on lasi700.c
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>

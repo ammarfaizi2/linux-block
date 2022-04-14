@@ -6,6 +6,7 @@
  * Copyright (C) 2001, 2003 Keith M Wesolowski
  * Copyright (C) 2005 Ilya A. Volynets <ilya@total-knowledge.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/types.h>
 #include <linux/init.h>

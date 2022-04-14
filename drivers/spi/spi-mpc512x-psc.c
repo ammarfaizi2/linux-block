@@ -10,6 +10,7 @@
  *	Copyright (C) 2006 TOPTICA Photonics AG., Dragos Carp
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/module.h>

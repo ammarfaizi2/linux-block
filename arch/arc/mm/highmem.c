@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/vmalloc.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/pagefault_ctrl.h>

@@ -13,6 +13,7 @@
  * subsystem.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/crc16.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2016 Oracle Corporation
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

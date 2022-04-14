@@ -26,6 +26,7 @@
  * NVIF client driver - NVKM directly linked
  ******************************************************************************/
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <core/client.h>
 #include <core/notify.h>

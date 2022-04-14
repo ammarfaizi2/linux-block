@@ -8,6 +8,7 @@
  *
  *  MCP read/write timeouts from Jordi Colomer, rehacked by rmk.
  */
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/io.h>

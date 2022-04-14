@@ -29,6 +29,7 @@
 #include "amdgpu.h"
 #include "atom.h"
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/pci.h>

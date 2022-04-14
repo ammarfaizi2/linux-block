@@ -8,6 +8,7 @@
 #define pr_fmt(fmt)     "AMD-Vi: " fmt
 #define dev_fmt(fmt)    pr_fmt(fmt)
 
+#include <linux/vmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

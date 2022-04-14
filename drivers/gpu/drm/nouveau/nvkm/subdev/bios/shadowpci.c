@@ -22,6 +22,7 @@
  */
 #include "priv.h"
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

@@ -22,6 +22,7 @@
  * Authors: Andreas Pokorny
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uuid_api.h>
 #include <linux/sched.h>
 #include <linux/device_api.h>

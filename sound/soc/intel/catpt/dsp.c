@@ -5,6 +5,7 @@
 // Author: Cezary Rojewski <cezary.rojewski@intel.com>
 //
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>

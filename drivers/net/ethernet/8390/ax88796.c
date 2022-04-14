@@ -8,6 +8,7 @@
  *	Based on ne.c, by Donald Becker, et-al.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

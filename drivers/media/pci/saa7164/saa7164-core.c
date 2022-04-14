@@ -5,6 +5,7 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

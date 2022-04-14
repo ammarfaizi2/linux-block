@@ -27,6 +27,7 @@
 /* End of FZA configurable parameters.  No need to change anything below.    */
 /* ------------------------------------------------------------------------- */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

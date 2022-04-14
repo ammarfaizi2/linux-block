@@ -3,6 +3,7 @@
  *  Copyright (C) 2004 Embedded Edge, LLC
  */
 
+#include <linux/vmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

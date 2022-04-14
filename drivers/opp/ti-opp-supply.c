@@ -8,6 +8,7 @@
  * for generic opp core to handle devices with ABB regulator and/or
  * SmartReflex Class0.
  */
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/clk.h>

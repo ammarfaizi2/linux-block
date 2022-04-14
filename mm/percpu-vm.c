@@ -8,6 +8,7 @@
  * Chunks are mapped into vmalloc areas and populated page by page.
  * This is the default chunk allocator.
  */
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/mm_page_address.h>
 #include <linux/lockdep_api.h>

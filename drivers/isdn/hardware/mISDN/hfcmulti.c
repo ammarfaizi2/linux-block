@@ -150,6 +150,7 @@
 
 #define HFC_MULTI_VERSION	"2.03"
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched.h>

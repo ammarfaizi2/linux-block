@@ -5,6 +5,7 @@
  *
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
+#include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/scatterlist_api.h>
 #include <linux/device/class.h>

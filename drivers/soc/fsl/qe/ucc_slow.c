@@ -8,6 +8,7 @@
  * Description:
  * QE UCC Slow API Set - UCC Slow specific routines implementations.
  */
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

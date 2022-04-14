@@ -33,6 +33,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/radix-tree-api.h>
 #include <linux/pgtable_api.h>

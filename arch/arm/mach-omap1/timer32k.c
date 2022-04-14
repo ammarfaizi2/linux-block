@@ -34,6 +34,7 @@
  * 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

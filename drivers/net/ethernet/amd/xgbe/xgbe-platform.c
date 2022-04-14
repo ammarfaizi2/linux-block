@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>

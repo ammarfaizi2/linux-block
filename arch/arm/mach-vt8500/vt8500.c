@@ -5,6 +5,7 @@
  *  Copyright (C) 2012 Tony Prisk <linux@prisktech.co.nz>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/pm.h>

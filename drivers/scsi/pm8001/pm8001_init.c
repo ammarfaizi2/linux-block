@@ -38,6 +38,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

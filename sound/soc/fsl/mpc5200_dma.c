@@ -6,6 +6,7 @@
 // Copyright (C) 2008 Secret Lab Technologies Ltd.
 // Copyright (C) 2009 Jon Smirl, Digispeaker
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

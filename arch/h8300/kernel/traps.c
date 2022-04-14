@@ -14,6 +14,7 @@
  * for more details.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread.h>
 #include <linux/types.h>

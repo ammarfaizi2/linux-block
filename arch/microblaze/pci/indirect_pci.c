@@ -5,6 +5,7 @@
  * Copyright (C) 1998 Gabriel Paubert.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/delay.h>

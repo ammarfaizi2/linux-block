@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Akihiro Tsukada <tskd08@gmail.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

@@ -8,6 +8,7 @@
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
+#include <linux/vmalloc.h>
 #include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/io.h>

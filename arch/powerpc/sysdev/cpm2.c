@@ -25,6 +25,7 @@
  * process is reset, we reclaim the memory available.  There is
  * currently no deallocator for this memory.
  */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/errno.h>

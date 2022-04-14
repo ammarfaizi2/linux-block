@@ -8,6 +8,7 @@
  * Ryan Jackson <rjackson@lnxi.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/module.h>

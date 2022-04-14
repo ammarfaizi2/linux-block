@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/random.h>
 #include <linux/pci-dma-compat.h>

@@ -6,6 +6,7 @@
  *
  * Various evolutions by Benjamin Herrenschmidt & Henry Worth
  */
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

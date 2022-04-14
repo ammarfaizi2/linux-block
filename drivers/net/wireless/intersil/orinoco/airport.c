@@ -14,6 +14,7 @@
 #define DRIVER_NAME "airport"
 #define PFX DRIVER_NAME ": "
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

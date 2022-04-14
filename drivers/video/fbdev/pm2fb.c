@@ -27,6 +27,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -47,6 +47,7 @@
  * exchange is properly mapped during a transfer.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>

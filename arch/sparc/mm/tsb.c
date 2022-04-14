@@ -4,6 +4,7 @@
  * Copyright (C) 2006, 2008 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>

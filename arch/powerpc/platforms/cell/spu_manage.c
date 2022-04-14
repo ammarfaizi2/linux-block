@@ -7,6 +7,7 @@
  * (C) Copyright 2007 TOSHIBA CORPORATION
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "mvebu-coherency: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/device_api.h>
 #include <linux/cpuhotplug.h>

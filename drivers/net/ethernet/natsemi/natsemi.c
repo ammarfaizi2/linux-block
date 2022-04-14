@@ -27,6 +27,7 @@
 	* big endian support with CFG:BEM instead of cpu_to_le32
 */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api_lock.h>

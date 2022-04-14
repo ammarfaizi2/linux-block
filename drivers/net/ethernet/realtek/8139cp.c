@@ -53,6 +53,7 @@
 #define DRV_RELDATE		"Mar 22, 2004"
 
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/sched.h>

@@ -9,6 +9,7 @@
 #define DRV_MODULE_NAME "hlwd-pic"
 #define pr_fmt(fmt) DRV_MODULE_NAME ": " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

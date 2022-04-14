@@ -7,6 +7,7 @@
  *   Copyright (C) 2012 Analog Devices Inc.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/console.h>

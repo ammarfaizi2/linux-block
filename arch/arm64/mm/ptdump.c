@@ -9,6 +9,7 @@
  *
  * Author: Arjan van de Ven <arjan@linux.intel.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <asm/processor.h>

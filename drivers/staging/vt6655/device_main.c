@@ -31,6 +31,7 @@
  * Revision History:
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/io.h>

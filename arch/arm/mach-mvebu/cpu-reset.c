@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "mvebu-cpureset: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>

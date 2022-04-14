@@ -4,6 +4,7 @@
  * Copyright 2016 Freescale Semiconductor Inc.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>

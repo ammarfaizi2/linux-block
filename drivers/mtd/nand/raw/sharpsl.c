@@ -6,6 +6,7 @@
  *  Based on Sharp's NAND driver sharp_sl.c
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/slab.h>
 #include <linux/module.h>

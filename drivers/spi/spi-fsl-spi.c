@@ -15,6 +15,7 @@
  * Copyright (c) 2012 Aeroflex Gaisler AB.
  * Author: Andreas Larsson <andreas@gaisler.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

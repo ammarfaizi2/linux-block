@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/lockdep_api.h>

@@ -22,6 +22,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mm_api.h>
 #include <asm/pgtable.h>
 #include <linux/memblock.h>

@@ -3,6 +3,7 @@
  * Copyright 2016 Broadcom
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/device.h>
 #include <linux/io.h>

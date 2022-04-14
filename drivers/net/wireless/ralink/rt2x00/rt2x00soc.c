@@ -11,6 +11,7 @@
 	Abstract: rt2x00 generic soc device routines.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/bug.h>

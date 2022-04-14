@@ -4,6 +4,7 @@
  * Copyright (C) 2012 Intel, Inc.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/mod_devicetable.h>

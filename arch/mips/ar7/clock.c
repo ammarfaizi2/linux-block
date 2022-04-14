@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Florian Fainelli <florian@openwrt.org>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>

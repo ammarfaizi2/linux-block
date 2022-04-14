@@ -142,6 +142,8 @@
  * This will get the basic headers so that memeq() and others
  * can be defined.
  */
+#include <linux/vmalloc.h>
+
 #include "xz/xz_private.h"
 
 /*

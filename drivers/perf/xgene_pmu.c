@@ -7,6 +7,7 @@
  *         Tai Nguyen <ttnguyen@apm.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/perf_event_api.h>

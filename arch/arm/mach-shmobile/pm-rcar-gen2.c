@@ -7,6 +7,7 @@
  * Copyright (C) 2011  Magnus Damm
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

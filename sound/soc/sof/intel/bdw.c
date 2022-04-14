@@ -12,6 +12,7 @@
  * Hardware interface for audio DSP on Broadwell
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/ioport.h>

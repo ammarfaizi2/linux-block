@@ -6,6 +6,7 @@
  * Author: Johannes Thumshirn <johannes.thumshirn@men.de>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

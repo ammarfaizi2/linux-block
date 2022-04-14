@@ -3,6 +3,7 @@
  * Copyright 2019 NXP.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>

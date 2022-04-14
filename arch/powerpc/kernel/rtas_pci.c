@@ -8,6 +8,7 @@
  * Based on code from pci.c, chrp_pci.c and pSeries_pci.c
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/property.h>
 #include <linux/pm_wakeup.h>

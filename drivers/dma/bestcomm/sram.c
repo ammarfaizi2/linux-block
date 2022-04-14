@@ -11,6 +11,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

@@ -33,6 +33,7 @@
  * (which, incidentally, is about the same saving as a 2.5in hard disk
  * entering standby mode.)
  */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

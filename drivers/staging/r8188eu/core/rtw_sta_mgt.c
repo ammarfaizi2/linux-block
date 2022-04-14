@@ -3,6 +3,7 @@
 
 #define _RTW_STA_MGT_C_
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 
 #include "../include/osdep_service.h"

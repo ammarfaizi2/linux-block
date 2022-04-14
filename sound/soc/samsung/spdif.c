@@ -5,6 +5,7 @@
 // Copyright (c) 2010 Samsung Electronics Co. Ltd
 //		http://www.samsung.com/
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/clk.h>

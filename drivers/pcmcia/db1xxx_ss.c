@@ -22,6 +22,7 @@
  *	- Db1300:	  Db1200-like, no pwr ctrl, single socket (#1).
  */
 
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>

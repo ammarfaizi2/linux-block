@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)    "%s: " fmt, __func__
 
+#include <linux/vmalloc.h>
 #include <linux/pm_wakeup.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

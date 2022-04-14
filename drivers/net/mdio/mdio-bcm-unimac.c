@@ -5,6 +5,7 @@
  * Copyright (C) 2014-2017 Broadcom
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

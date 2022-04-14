@@ -7,6 +7,7 @@
  * Copyright (C) 2010-2012 Hauke Mehrtens <hauke@hauke-m.de>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/types.h>
 #include <linux/module.h>

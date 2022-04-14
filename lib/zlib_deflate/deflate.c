@@ -48,6 +48,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/bug.h>
 #include <linux/module.h>
 #include <linux/zutil.h>

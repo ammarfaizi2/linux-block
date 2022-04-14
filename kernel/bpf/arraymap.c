@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016,2017 Facebook
  */
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/seq_file.h>
 #include <linux/perf_event_api.h>

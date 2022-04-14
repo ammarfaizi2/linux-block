@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/netdevice_api.h>
 #include <linux/ioport.h>

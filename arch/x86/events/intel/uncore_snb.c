@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Nehalem/SandBridge/Haswell/Broadwell/Skylake uncore support */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <asm/msr.h>

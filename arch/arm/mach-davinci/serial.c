@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Texas Instruments.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/serial_8250.h>

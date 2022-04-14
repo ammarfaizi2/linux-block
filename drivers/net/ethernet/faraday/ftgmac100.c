@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>

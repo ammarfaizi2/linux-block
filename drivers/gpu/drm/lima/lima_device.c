@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/mm.h>
 #include <linux/mm_api_kvmalloc.h>

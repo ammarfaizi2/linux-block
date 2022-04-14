@@ -22,6 +22,7 @@
  *                 was usable/enabled ?)
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/init.h>

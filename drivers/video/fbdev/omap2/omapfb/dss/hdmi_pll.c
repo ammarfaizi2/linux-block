@@ -7,6 +7,7 @@
 
 #define DSS_SUBSYS_NAME "HDMIPLL"
 
+#include <linux/vmalloc.h>
 #include <linux/math64.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

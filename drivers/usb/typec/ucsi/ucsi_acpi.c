@@ -6,6 +6,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/uuid_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

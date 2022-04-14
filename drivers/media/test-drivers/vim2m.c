@@ -13,6 +13,7 @@
  * Pawel Osciak, <pawel@osciak.com>
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
+#include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>

@@ -16,6 +16,7 @@
  * Abstract: Hardware Device Interface for PMC SRC based controllers
  */
 
+#include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

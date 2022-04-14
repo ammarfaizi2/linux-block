@@ -124,6 +124,7 @@
  */
 #undef DEBUG
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

@@ -18,6 +18,7 @@
  * Framebuffer driver for Silicon Motion SM710, SM712, SM721 and SM722 chips
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io_extra.h>
 #include <linux/device_api.h>
 #include <linux/io.h>

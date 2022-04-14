@@ -3,6 +3,7 @@
  * Copyright (c) 2001-2002 by David Brownell
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

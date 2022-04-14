@@ -16,6 +16,7 @@
  * Kevin Chea
  */
 
+#include <linux/vmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

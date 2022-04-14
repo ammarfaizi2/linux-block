@@ -25,6 +25,7 @@
  * This file is based on the way the Amiga port handles Zorro II cards,
  * although we aren't so complicated...
  */
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

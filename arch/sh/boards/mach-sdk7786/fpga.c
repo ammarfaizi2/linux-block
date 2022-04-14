@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010  Paul Mundt
  */
+#include <linux/vmalloc.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/bcd.h>

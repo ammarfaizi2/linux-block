@@ -4,6 +4,8 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/vmalloc.h>
+
 #include "i915_drv.h"
 #include "i915_selftest.h"
 

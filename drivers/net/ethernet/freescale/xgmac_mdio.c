@@ -12,6 +12,7 @@
  * kind, whether express or implied.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

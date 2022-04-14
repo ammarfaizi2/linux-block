@@ -3,6 +3,7 @@
 
 #define _OSDEP_SERVICE_C_
 
+#include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>

@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/seq_file.h>
 #include <linux/mod_devicetable.h>
 #include <linux/err.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2004 Peter Fuerst    (pf@net.alphadv.de) - IP28
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/init.h>

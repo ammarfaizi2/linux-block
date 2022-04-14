@@ -21,6 +21,7 @@
  *	usb-ohci-tc6393.c(C) Copyright 2004 Lineo Solutions, Inc.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>

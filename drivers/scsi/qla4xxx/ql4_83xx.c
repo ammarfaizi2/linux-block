@@ -4,6 +4,7 @@
  * Copyright (c)   2003-2013 QLogic Corporation
  */
 
+#include <linux/vmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/delay.h>

@@ -11,6 +11,7 @@
  *   it during boot, try disabling Drive A: and B: in the boot order.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2010 Simon Guinot <sguinot@lacie.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/kernel.h>
 #include <linux/suspend.h>
 #include <linux/io.h>

@@ -10,6 +10,7 @@
  * storage device to each channel for storing ECC data.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/notifier_api.h>
 #include <linux/llist_api.h>
 #include <linux/hashtable_api.h>

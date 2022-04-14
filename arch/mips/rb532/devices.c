@@ -5,6 +5,7 @@
  *  Copyright (C) 2006 Felix Fietkau <nbd@openwrt.org>
  *  Copyright (C) 2007 Florian Fainelli <florian@openwrt.org>
  */
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

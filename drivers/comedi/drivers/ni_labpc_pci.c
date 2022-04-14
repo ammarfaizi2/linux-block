@@ -20,6 +20,7 @@
  * 340914a (pci-1200)
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

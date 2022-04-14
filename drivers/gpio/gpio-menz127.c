@@ -5,6 +5,7 @@
  * Copyright (C) 2016 MEN Mikroelektronik GmbH (www.men.de)
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

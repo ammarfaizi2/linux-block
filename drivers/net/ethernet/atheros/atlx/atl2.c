@@ -7,6 +7,7 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

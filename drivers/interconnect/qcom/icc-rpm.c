@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Linaro Ltd
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/ioport.h>

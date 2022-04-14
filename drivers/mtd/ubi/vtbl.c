@@ -45,6 +45,7 @@
  * damaged.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/align.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/crc32.h>

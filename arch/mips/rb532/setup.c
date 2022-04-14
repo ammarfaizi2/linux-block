@@ -3,6 +3,7 @@
  * setup.c - boot time setup code
  */
 
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/export.h>

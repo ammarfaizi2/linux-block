@@ -8,6 +8,7 @@
  * MPC512x Shared code
  */
 
+#include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/io_extra.h>

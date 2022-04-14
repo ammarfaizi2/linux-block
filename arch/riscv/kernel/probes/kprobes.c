@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/vmalloc.h>
 #include <linux/kprobes.h>
 #include <linux/extable.h>
 #include <linux/slab.h>

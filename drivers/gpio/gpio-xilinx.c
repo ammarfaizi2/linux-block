@@ -5,6 +5,7 @@
  * Copyright 2008 - 2013 Xilinx, Inc.
  */
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

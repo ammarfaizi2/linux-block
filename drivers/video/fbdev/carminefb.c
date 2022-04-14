@@ -7,6 +7,7 @@
  * - FB1 is display 1 with unique memory area
  * - both display use 32 bit colors
  */
+#include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/delay.h>

@@ -26,6 +26,7 @@
  * <zaitcev> Sounds reasonable
  */
 
+#include <linux/vmalloc.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

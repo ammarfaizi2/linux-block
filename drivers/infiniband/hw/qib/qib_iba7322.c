@@ -36,6 +36,7 @@
  * InfiniPath 7322 chip
  */
 
+#include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

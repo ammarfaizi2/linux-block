@@ -4,6 +4,7 @@
  * Author: James Liao <jamesjj.liao@mediatek.com>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/clk-provider.h>
 #include <linux/container_of.h>
 #include <linux/delay.h>

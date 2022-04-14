@@ -3,6 +3,7 @@
 
 #define _RTW_MLME_C_
 
+#include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

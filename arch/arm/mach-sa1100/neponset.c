@@ -2,6 +2,7 @@
 /*
  * linux/arch/arm/mach-sa1100/neponset.c
  */
+#include <linux/vmalloc.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

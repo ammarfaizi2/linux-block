@@ -7,6 +7,7 @@
 ** Started 1/16/98 @ 2:22 am
 */
 
+#include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/init.h>

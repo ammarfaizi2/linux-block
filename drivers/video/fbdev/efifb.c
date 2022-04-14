@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

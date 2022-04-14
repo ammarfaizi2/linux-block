@@ -6,6 +6,7 @@
  * (C) 2008, 2009, 2010, 2011 by Marc Kleine-Budde <kernel@pengutronix.de>
  */
 
+#include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

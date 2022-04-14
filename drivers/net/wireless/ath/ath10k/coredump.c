@@ -6,6 +6,7 @@
 
 #include "coredump.h"
 
+#include <linux/vmalloc.h>
 #include <linux/uuid_api.h>
 #include <linux/timekeeping.h>
 #include <linux/mutex_api.h>

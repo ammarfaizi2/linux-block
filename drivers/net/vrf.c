@@ -9,6 +9,7 @@
  * Based on dummy, team and ipvlan drivers
  */
 
+#include <linux/vmalloc.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
