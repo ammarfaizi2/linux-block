@@ -20,6 +20,7 @@
 #ifndef _MWIFIEX_11N_H_
 #define _MWIFIEX_11N_H_
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 
 #include "11n_aggr.h"

@@ -6,6 +6,7 @@
 #ifndef DRIVERS_NET_ETHERNET_TI_CPSW_PRIV_H_
 #define DRIVERS_NET_ETHERNET_TI_CPSW_PRIV_H_
 
+#include <linux/etherdevice_api.h>
 #include <linux/dev_printk.h>
 #include <uapi/linux/bpf.h>
 

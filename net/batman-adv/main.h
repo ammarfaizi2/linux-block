@@ -204,6 +204,7 @@ enum batadv_uev_type {
 
 /* Kernel headers */
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/atomic.h>
 #include <linux/compiler.h>

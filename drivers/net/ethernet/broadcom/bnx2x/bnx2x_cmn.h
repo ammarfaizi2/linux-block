@@ -19,6 +19,7 @@
 #ifndef BNX2X_CMN_H
 #define BNX2X_CMN_H
 
+#include <linux/etherdevice_api.h>
 #include <linux/types.h>
 #include <linux/pci.h>
 #include <linux/netdevice.h>

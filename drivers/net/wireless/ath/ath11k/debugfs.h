@@ -6,6 +6,7 @@
 #ifndef _ATH11K_DEBUGFS_H_
 #define _ATH11K_DEBUGFS_H_
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 
 #include "hal_tx.h"

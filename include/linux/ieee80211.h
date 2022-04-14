@@ -15,6 +15,7 @@
 #ifndef LINUX_IEEE80211_H
 #define LINUX_IEEE80211_H
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/types.h>
 #include <linux/if_ether.h>

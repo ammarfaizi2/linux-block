@@ -37,6 +37,7 @@
 
 #include "t4_hw.h"
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/dev_printk.h>
 #include <linux/bitops.h>

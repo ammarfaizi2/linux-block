@@ -33,6 +33,7 @@
 #ifndef __MLX5_MPFS_H__
 #define __MLX5_MPFS_H__
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/if_ether.h>
 #include <linux/mlx5/device.h>

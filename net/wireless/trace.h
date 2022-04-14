@@ -5,6 +5,7 @@
 #if !defined(__RDEV_OPS_TRACE) || defined(TRACE_HEADER_MULTI_READ)
 #define __RDEV_OPS_TRACE
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/tracepoint.h>
 

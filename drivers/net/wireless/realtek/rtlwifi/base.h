@@ -4,6 +4,7 @@
 #ifndef __RTL_BASE_H__
 #define __RTL_BASE_H__
 
+#include <linux/etherdevice_api.h>
 #include <linux/etherdevice_api_addr.h>
 #include <linux/types.h>
 
