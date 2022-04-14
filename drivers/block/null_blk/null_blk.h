@@ -5,6 +5,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/radix-tree.h>
 #include <linux/blkdev.h>
 #include <linux/slab.h>
 #include <linux/blk-mq.h>
