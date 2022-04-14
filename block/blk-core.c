@@ -1050,6 +1050,20 @@ void bio_start_io_acct_time(struct bio *bio, unsigned long start_time)
 }
 EXPORT_SYMBOL_GPL(bio_start_io_acct_time);
 
+void blk_wake_io_task(struct task_struct *waiter)
+{
+	/*
+	 * If we're polling, the task itself is doing the completions. For
+	 * that case, we don't need to signal a wakeup, it's enough to just
+	 * mark us as RUNNING.
+	 */
+	if (waiter == current)
+		__set_current_state(TASK_RUNNING);
+	else
+		wake_up_process(waiter);
+}
+EXPORT_SYMBOL(blk_wake_io_task);
+
 /**
  * bio_start_io_acct - start I/O accounting for bio based drivers
  * @bio:	bio to start account for
