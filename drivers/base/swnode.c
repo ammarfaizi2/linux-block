@@ -6,6 +6,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/log2.h>
 #include <linux/kobject_api.h>
 #include <linux/idr_api.h>
 #include <linux/fwnode.h>

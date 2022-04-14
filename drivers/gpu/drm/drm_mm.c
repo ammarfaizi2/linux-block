@@ -42,6 +42,7 @@
  * Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
+#include <linux/log2.h>
 #include <linux/export.h>
 #include <linux/interval_tree_generic.h>
 #include <linux/seq_file.h>

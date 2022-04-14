@@ -30,6 +30,7 @@
  * authorization from the copyright holder(s) and author(s).
  */
 
+#include <linux/log2.h>
 #include <linux/ctype.h>
 #include <linux/list.h>
 #include <linux/list_sort.h>

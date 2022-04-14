@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Google LLC
  */
 
+#include <linux/log2.h>
 #include <linux/ktime_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

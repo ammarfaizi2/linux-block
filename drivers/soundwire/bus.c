@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
 // Copyright(c) 2015-17 Intel Corporation.
 
+#include <linux/log2.h>
 #include <linux/jiffies.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

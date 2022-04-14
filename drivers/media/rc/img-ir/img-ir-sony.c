@@ -5,6 +5,8 @@
  * Copyright 2012-2014 Imagination Technologies Ltd.
  */
 
+#include <linux/log2.h>
+
 #include "img-ir-hw.h"
 
 /* Convert Sony data to a scancode */
