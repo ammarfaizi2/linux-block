@@ -18,6 +18,7 @@
 #ifndef _FNIC_H_
 #define _FNIC_H_
 
+#include <linux/cache.h>
 #include <linux/interrupt.h>
 #include <linux/netdevice.h>
 #include <linux/workqueue.h>

@@ -8,6 +8,7 @@
 #ifndef _MEMSTICK_H
 #define _MEMSTICK_H
 
+#include <linux/cache.h>
 #include <linux/workqueue.h>
 #include <linux/scatterlist.h>
 #include <linux/device.h>

@@ -4,6 +4,7 @@
 #ifndef _IONIC_DEV_H_
 #define _IONIC_DEV_H_
 
+#include <linux/cache.h>
 #include <linux/atomic.h>
 #include <linux/mutex.h>
 #include <linux/workqueue.h>

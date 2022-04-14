@@ -4,6 +4,7 @@
 /*
  * User space memory access functions
  */
+#include <linux/cache.h>
 #include <linux/compiler.h>
 #include <linux/kasan-checks.h>
 #include <linux/string.h>

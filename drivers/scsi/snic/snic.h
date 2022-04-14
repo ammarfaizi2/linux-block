@@ -18,6 +18,7 @@
 #ifndef _SNIC_H_
 #define _SNIC_H_
 
+#include <linux/cache.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/workqueue.h>

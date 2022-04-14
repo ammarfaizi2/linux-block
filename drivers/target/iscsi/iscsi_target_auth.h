@@ -2,6 +2,7 @@
 #ifndef _ISCSI_CHAP_H_
 #define _ISCSI_CHAP_H_
 
+#include <linux/cache.h>
 #include <linux/types.h>
 
 #define CHAP_DIGEST_UNKNOWN	0
