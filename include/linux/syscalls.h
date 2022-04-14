@@ -73,6 +73,7 @@ struct mount_attr;
 struct landlock_ruleset_attr;
 enum landlock_rule_type;
 
+#include <linux/error-injection.h>
 #include <linux/types.h>
 #include <linux/aio_abi.h>
 #include <linux/capability.h>
