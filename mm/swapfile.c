@@ -6,6 +6,7 @@
  *  Swap reorganised 29.12.95, Stephen Tweedie
  */
 
+#include <linux/swap_api_device.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched/signal.h>
