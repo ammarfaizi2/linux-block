@@ -8,6 +8,7 @@
 #ifndef __ASM_IO_H
 #define __ASM_IO_H
 
+#include <asm/pgtable-prot.h>
 #include <linux/types.h>
 #include <linux/pgtable.h>
 
