@@ -6,6 +6,7 @@
  *   Haiyang Zhang <haiyangz@microsoft.com>
  *   Hank Janssen  <hjanssen@microsoft.com>
  */
+#include <linux/netdevice_api_extra.h>
 #include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

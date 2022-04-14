@@ -5,6 +5,7 @@
  *
  *      TCPv6 GSO/GRO support
  */
+#include <linux/netdevice_api_extra.h>
 #include <linux/ipv6.h>
 #include <linux/indirect_call_wrapper.h>
 #include <linux/skbuff.h>

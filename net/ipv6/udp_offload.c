@@ -5,6 +5,7 @@
  *
  *      UDPv6 GSO support
  */
+#include <linux/netdevice_api_extra.h>
 #include <linux/ipv6.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>

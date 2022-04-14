@@ -2,6 +2,7 @@
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/ipv6.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>

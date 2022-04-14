@@ -4,6 +4,7 @@
 /* ethtool support for e1000 */
 
 #include "e1000.h"
+#include <linux/netdevice_api_extra.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/dma-mapping.h>

@@ -6,6 +6,7 @@
  * Copyright(c) 1999 - 2005 Intel Corporation. All rights reserved.
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

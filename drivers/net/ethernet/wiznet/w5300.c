@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Mike Sinkovsky <msink@permonline.ru>
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/device_api_lock.h>

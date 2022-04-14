@@ -5,6 +5,7 @@
 #include "pool.h"
 #include "en/xdp.h"
 #include "en/params.h"
+#include <linux/netdevice_api_extra.h>
 #include <net/xdp_sock_drv.h>
 
 int mlx5e_xsk_wakeup(struct net_device *dev, u32 qid, u32 flags)

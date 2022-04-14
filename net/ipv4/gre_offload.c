@@ -6,6 +6,7 @@
  *	GRE GSO support
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/skbuff.h>
 #include <linux/init.h>
 #include <net/protocol.h>

@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_ether_api.h>

@@ -5,6 +5,7 @@
  * All rights reserved.
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/if_vlan_api.h>

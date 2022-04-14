@@ -7,6 +7,7 @@
  *              - Ingress support
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

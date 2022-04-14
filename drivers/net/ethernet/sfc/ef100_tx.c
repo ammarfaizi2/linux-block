@@ -9,6 +9,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/if_vlan_api.h>
 #include <net/ip6_checksum.h>
 

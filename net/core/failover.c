@@ -7,6 +7,7 @@
  * The notifier and event handling code is based on netvsc driver.
  */
 
+#include <linux/netdevice_api_extra.h>
 #include <linux/etherdevice_api.h>
 #include <linux/module.h>
 #include <linux/etherdevice.h>
