@@ -10,6 +10,7 @@
 #include "cx88.h"
 #include "dvb-pll.h"
 
+#include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/module.h>

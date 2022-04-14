@@ -5,6 +5,7 @@
  * Allegro DVT video encoder driver
  */
 
+#include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/bits.h>

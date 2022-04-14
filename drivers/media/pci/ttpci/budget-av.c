@@ -29,6 +29,7 @@
 #include "tda1004x.h"
 #include "tua6100.h"
 #include "dvb-pll.h"
+#include <linux/export.h>
 #include <linux/etherdevice_api.h>
 #include <linux/delay.h>
 #include <media/drv-intf/saa7146_vv.h>

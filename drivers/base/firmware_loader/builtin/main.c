@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Builtin firmware support */
 
+#include <linux/export.h>
 #include <linux/firmware.h>
 #include "../firmware.h"
 

@@ -5,6 +5,7 @@
  * Author: Yong Deng <yong.deng@magewell.com>
  */
 
+#include <linux/export.h>
 #include <linux/of.h>
 
 #include <media/v4l2-device.h>

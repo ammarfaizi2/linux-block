@@ -10,6 +10,7 @@
  * Copyright (C) 2020 Daniel W. S. Almeida
  */
 
+#include <linux/export.h>
 #include <linux/dev_printk.h>
 #include <linux/moduleparam.h>
 #include <linux/mutex.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/usb.h>

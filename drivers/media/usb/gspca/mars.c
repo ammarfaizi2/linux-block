@@ -10,6 +10,7 @@
 
 #define MODULE_NAME "mars"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "gspca.h"

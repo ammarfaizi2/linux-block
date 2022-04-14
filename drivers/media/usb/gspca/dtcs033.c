@@ -7,6 +7,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 #define MODULE_NAME "dtcs033"
+#include <linux/export.h>
+
 #include "gspca.h"
 
 MODULE_AUTHOR("Robert Butora <robert.butora.fi@gmail.com>");

@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Henrik Kurelid <henrik@kurelid.se>
  */
 
+#include <linux/export.h>
 #include <linux/device.h>
 #include <linux/dvb/ca.h>
 #include <linux/fs.h>

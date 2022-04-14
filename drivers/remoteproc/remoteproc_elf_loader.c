@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt)    "%s: " fmt, __func__
 
+#include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <asm/io.h>
 #include <linux/module.h>

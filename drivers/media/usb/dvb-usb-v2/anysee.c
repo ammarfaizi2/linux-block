@@ -18,6 +18,7 @@
  * is highly welcome!
  */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "anysee.h"

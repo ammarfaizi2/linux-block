@@ -5,6 +5,7 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>

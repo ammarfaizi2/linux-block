@@ -51,6 +51,7 @@
 #include "ivtv-cards.h"
 #include "ivtv-gpio.h"
 #include "ivtv-i2c.h"
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <media/drv-intf/cx25840.h>
 

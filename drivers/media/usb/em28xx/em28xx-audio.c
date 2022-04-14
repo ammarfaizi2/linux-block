@@ -23,6 +23,7 @@
 
 #include "em28xx.h"
 
+#include <linux/export.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/usb.h>

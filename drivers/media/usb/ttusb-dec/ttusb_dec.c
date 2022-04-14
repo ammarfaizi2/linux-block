@@ -6,6 +6,7 @@
  * IR support by Peter Beutner <p.beutner@gmx.net>
  */
 
+#include <linux/export.h>
 #include <linux/list.h>
 #include <linux/module.h>
 #include <linux/pci.h>

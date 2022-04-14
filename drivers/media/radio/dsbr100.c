@@ -21,6 +21,7 @@
  * Copyright (c) 2000 Markus Demleitner <msdemlei@cl.uni-heidelberg.de>
 */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * Jon Oberheide <jon@oberheide.org>
  */
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include "arc4.h"
 

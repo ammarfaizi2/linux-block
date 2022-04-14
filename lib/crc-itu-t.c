@@ -3,6 +3,7 @@
  *      crc-itu-t.c
  */
 
+#include <linux/export.h>
 #include <linux/types.h>
 #include <linux/module.h>
 #include <linux/crc-itu-t.h>

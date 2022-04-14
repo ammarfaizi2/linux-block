@@ -9,6 +9,8 @@
 
 #define MODULE_NAME "sn9c2028"
 
+#include <linux/export.h>
+
 #include "gspca.h"
 
 MODULE_AUTHOR("Theodore Kilgore");

@@ -13,6 +13,7 @@
 
 #define DEBUG_VARIABLE debug
 
+#include <linux/export.h>
 #include <media/drv-intf/saa7146_vv.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

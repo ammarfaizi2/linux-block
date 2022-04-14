@@ -6,6 +6,7 @@
  * function are ported to clients that communicate to the SC.
  */
 
+#include <linux/export.h>
 #include <linux/firmware/imx/svc/rm.h>
 
 struct imx_sc_msg_rm_rsrc_owned {

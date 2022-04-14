@@ -23,6 +23,7 @@
  *  at once.
  */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

@@ -9,6 +9,7 @@
 
 #define MODULE_NAME "spca1528"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "gspca.h"

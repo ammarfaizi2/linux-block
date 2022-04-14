@@ -12,6 +12,7 @@
  *  Copyright (C) 2009 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "sp2_priv.h"

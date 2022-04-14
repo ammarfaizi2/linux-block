@@ -9,6 +9,7 @@
  * You may select, at your option, one of the above-listed licenses.
  */
 
+#include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/string.h>

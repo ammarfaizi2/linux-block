@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <media/drv-intf/saa7146_vv.h>
 #include <linux/module.h>

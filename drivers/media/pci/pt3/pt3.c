@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Akihiro Tsukada <tskd08@gmail.com>
  */
 
+#include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

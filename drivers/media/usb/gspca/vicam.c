@@ -18,6 +18,7 @@
 #define MODULE_NAME "vicam"
 #define HEADER_SIZE 64
 
+#include <linux/export.h>
 #include <linux/workqueue.h>
 #include <linux/slab.h>
 #include <linux/firmware.h>

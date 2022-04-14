@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "ce6230.h"

@@ -7,6 +7,7 @@
  * and Measurements PIAP
  */
 
+#include <linux/export.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>

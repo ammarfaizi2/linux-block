@@ -7,6 +7,7 @@
  * Copyright (c) 2012 Alexey Klimov <klimov.linux@gmail.com>
  */
 
+#include <linux/export.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -7,6 +7,7 @@
  * implementation
  */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/module.h>	/* Modules			*/
 #include <linux/init.h>		/* Initdata			*/

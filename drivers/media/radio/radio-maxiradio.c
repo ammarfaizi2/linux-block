@@ -34,6 +34,7 @@
  */
 
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/ioport.h>

@@ -12,6 +12,7 @@
 
 #define GSPCA_VERSION	"2.14.0"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/fs.h>

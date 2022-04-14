@@ -8,6 +8,7 @@
  *  Portions of this work were sponsored by ONELAN Limited.
  */
 
+#include <linux/export.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/module.h>

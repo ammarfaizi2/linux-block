@@ -7,6 +7,7 @@
  * Thanks to Afatech who kindly provided information.
  */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "af9015.h"

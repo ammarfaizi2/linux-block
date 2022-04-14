@@ -2,6 +2,7 @@
 /* Copyright 2016-2018 NXP
  * Copyright (c) 2018-2019, Vladimir Oltean <olteanv@gmail.com>
  */
+#include <linux/export.h>
 #include <linux/packing.h>
 #include <linux/module.h>
 #include <linux/bitops.h>

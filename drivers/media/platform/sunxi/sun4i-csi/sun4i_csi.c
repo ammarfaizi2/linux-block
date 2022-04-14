@@ -6,6 +6,7 @@
  * Author: Maxime Ripard <maxime.ripard@bootlin.com>
  */
 
+#include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

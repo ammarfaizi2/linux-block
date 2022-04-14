@@ -5,6 +5,8 @@
  *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
+#include <linux/export.h>
+
 #include "saa7164.h"
 
 #include "tda10048.h"

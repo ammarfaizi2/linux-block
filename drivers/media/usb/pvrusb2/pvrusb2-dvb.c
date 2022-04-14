@@ -5,6 +5,7 @@
  *  Copyright (C) 2007, 2008 Michael Krufky <mkrufky@linuxtv.org>
  */
 
+#include <linux/export.h>
 #include <linux/kthread.h>
 #include <linux/freezer.h>
 #include <linux/slab.h>

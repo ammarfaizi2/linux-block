@@ -31,6 +31,7 @@
  *		Changed API to V4L2
  */
 
+#include <linux/export.h>
 #include <linux/module.h>	/* Modules			*/
 #include <linux/init.h>		/* Initdata			*/
 #include <linux/ioport.h>	/* request_region		*/

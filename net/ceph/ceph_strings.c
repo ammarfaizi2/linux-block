@@ -2,6 +2,7 @@
 /*
  * Ceph string constants
  */
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/ceph/types.h>
 

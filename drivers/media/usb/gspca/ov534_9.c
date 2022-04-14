@@ -15,6 +15,7 @@
 
 #define MODULE_NAME "ov534_9"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 
 #include "gspca.h"

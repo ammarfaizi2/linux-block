@@ -38,6 +38,7 @@
  * - xxHash source repository: https://github.com/Cyan4973/xxHash
  */
 
+#include <linux/export.h>
 #include <asm/unaligned.h>
 #include <linux/errno.h>
 #include <linux/compiler.h>

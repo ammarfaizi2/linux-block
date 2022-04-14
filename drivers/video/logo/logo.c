@@ -10,6 +10,7 @@
  *  Copyright (C) 2003 Geert Uytterhoeven <geert@linux-m68k.org>
  */
 
+#include <linux/export.h>
 #include <linux/linux_logo.h>
 #include <linux/stddef.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
 /*                                            */
 /**********************************************/
 
+#include <linux/export.h>
 #include <linux/font.h>
 #include <linux/module.h>
 

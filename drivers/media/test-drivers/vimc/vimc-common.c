@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2017 Helen Koike <helen.fornazier@gmail.com>
  */
 
+#include <linux/export.h>
 #include <linux/init.h>
 #include <linux/module.h>
 

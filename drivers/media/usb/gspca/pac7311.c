@@ -48,6 +48,7 @@
 
 #define MODULE_NAME "pac7311"
 
+#include <linux/export.h>
 #include <linux/atomic_api.h>
 #include <linux/input.h>
 #include "gspca.h"

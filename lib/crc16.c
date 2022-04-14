@@ -3,6 +3,7 @@
  *      crc16.c
  */
 
+#include <linux/export.h>
 #include <linux/types.h>
 #include <linux/module.h>
 #include <linux/crc16.h>

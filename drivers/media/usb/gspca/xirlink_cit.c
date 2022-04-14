@@ -17,6 +17,7 @@
 
 #define MODULE_NAME "xirlink-cit"
 
+#include <linux/export.h>
 #include <linux/capability.h>
 #include <linux/input.h>
 #include "gspca.h"

@@ -11,6 +11,7 @@
  *  This is an almost identical implementation to the ICST525 clock generator.
  *  The s2div and idx2s files are different
  */
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <asm/div64.h>

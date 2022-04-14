@@ -11,6 +11,7 @@
 
 #define MODULE_NAME "spca561"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/input.h>
 #include "gspca.h"

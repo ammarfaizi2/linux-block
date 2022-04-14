@@ -11,6 +11,7 @@
  *  (C) 2011 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/slab.h>

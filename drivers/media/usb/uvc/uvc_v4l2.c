@@ -6,6 +6,7 @@
  *          Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/export.h>
 #include <linux/atomic_api.h>
 #include <linux/compat.h>
 #include <linux/kernel.h>

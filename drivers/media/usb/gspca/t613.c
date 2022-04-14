@@ -17,6 +17,7 @@
 
 #define MODULE_NAME "t613"
 
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <linux/input.h>
 #include <linux/slab.h>

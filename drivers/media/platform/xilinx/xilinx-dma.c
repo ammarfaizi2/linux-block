@@ -9,6 +9,7 @@
  *           Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/export.h>
 #include <linux/dma/xilinx_dma.h>
 #include <linux/lcm.h>
 #include <linux/list.h>

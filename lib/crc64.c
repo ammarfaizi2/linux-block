@@ -33,6 +33,7 @@
  *   Author: Coly Li <colyli@suse.de>
  */
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/crc64.h>

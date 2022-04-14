@@ -6,6 +6,8 @@
  */
 
 #define FC_LOG_PREFIX "flexcop-pci"
+#include <linux/export.h>
+
 #include "flexcop-common.h"
 
 static int enable_pid_filtering = 1;

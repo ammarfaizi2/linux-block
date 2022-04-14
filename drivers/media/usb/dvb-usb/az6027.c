@@ -14,6 +14,7 @@
 
 #include "stb6100.h"
 #include "stb6100_cfg.h"
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <media/dvb_ca_en50221.h>
 

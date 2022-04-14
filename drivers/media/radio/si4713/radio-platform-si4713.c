@@ -8,6 +8,7 @@
  * Contact: Eduardo Valentin <eduardo.valentin@nokia.com>
  */
 
+#include <linux/export.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

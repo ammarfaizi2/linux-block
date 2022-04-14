@@ -11,6 +11,7 @@
 
 #include "cx23885.h"
 #include "cimax2.h"
+#include <linux/export.h>
 #include <linux/delay.h>
 #include <media/dvb_ca_en50221.h>
 

@@ -10,6 +10,8 @@
 
 #define MODULE_NAME "conex"
 
+#include <linux/export.h>
+
 #include "gspca.h"
 #define CONEX_CAM 1		/* special JPEG header */
 #include "jpeg.h"

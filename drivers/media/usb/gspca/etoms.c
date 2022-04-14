@@ -9,6 +9,8 @@
 
 #define MODULE_NAME "etoms"
 
+#include <linux/export.h>
+
 #include "gspca.h"
 
 MODULE_AUTHOR("Michel Xhaard <mxhaard@users.sourceforge.net>");

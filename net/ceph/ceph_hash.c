@@ -1,4 +1,5 @@
 
+#include <linux/export.h>
 #include <linux/ceph/types.h>
 #include <linux/module.h>
 

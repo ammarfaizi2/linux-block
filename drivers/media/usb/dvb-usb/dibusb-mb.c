@@ -9,6 +9,8 @@
  *
  * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
+#include <linux/export.h>
+
 #include "dibusb.h"
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);

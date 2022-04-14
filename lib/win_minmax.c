@@ -22,6 +22,7 @@
  * every new min and overwrites 2nd & 3rd choices. The same property
  * holds for 2nd & 3rd best.
  */
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/win_minmax.h>
 
