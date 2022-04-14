@@ -7,6 +7,7 @@
  *	    Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/pci.h>

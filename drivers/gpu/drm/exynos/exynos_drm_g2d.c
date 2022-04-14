@@ -4,6 +4,7 @@
  * Authors: Joonyoung Shim <jy0922.shim@samsung.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/refcount.h>
 #include <linux/clk.h>
 #include <linux/component.h>

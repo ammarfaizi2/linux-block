@@ -3,6 +3,7 @@
  * Copyright (C) 2016 Cavium, Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 
 #include "cptvf.h"

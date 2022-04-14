@@ -7,6 +7,7 @@
  * Copyright (C) 2014 Sebastian Reichel <sre@kernel.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/gpio/consumer.h>
 #include <linux/hsi/hsi.h>
 #include <linux/init.h>

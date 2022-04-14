@@ -7,6 +7,7 @@
  * Copyright (C) 2001 - 2006  Paul Mundt
  * Copyright (C) 2001, 2002  M. R. Brown
  */
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/cpu.h>
 #include <linux/bitmap.h>

@@ -8,6 +8,7 @@
  * Copyright 1997 -- 2000 Martin Mares <mj@ucw.cz>
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>

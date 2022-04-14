@@ -6,6 +6,7 @@
  *	Inki Dae <inki.dae@samsung.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/component.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

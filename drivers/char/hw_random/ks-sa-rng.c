@@ -8,6 +8,7 @@
  *		Vitaly Andrianov
  */
 
+#include <linux/device_api.h>
 #include <linux/hw_random.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

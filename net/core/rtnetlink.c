@@ -12,6 +12,7 @@
  *	Vitaly E. Lavrov		RTA_OK arithmetic was wrong.
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/bitops.h>

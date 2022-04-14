@@ -12,6 +12,7 @@
 
 */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>
 #include <linux/errno.h>

@@ -5,6 +5,7 @@
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/iopoll.h>

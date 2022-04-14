@@ -9,6 +9,7 @@
  */
 
 #include "opl3_voice.h"
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/moduleparam.h>
 #include <linux/module.h>

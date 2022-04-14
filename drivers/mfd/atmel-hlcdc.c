@@ -6,6 +6,7 @@
  * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/iopoll.h>
 #include <linux/mfd/atmel-hlcdc.h>

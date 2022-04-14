@@ -9,6 +9,7 @@
  */
 
 #define pr_fmt(fmt) "pci-p2pdma: " fmt
+#include <linux/device_api.h>
 #include <linux/ctype.h>
 #include <linux/pci-p2pdma.h>
 #include <linux/module.h>

@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2017 Finn Thain
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
 #include <linux/list.h>

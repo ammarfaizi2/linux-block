@@ -11,6 +11,7 @@
  *	Jianhua Li <lijianhua@huawei.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 

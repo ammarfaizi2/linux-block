@@ -7,6 +7,7 @@
  * Copyright (C) 2017 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/init.h>
 #include <linux/mfd/intel_soc_pmic.h>

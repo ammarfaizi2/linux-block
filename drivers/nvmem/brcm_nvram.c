@@ -3,6 +3,7 @@
  * Copyright (C) 2021 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/device_api.h>
 #include <linux/io.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>

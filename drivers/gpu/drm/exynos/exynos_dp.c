@@ -6,6 +6,7 @@
  * Author: Jingoo Han <jg1.han@samsung.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/err.h>

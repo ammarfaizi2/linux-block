@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/cec.h>
 #include <linux/dmi.h>
 #include <linux/i2c.h>

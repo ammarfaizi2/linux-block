@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* sysfs entries for device PM */
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/kobject.h>

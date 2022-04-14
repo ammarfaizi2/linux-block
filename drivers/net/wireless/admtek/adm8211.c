@@ -11,6 +11,7 @@
  * Much thanks to Infineon-ADMtek for their support of this driver.
  */
 
+#include <linux/device_api.h>
 #include <linux/interrupt.h>
 #include <linux/if.h>
 #include <linux/skbuff.h>

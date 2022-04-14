@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Xilinx, Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/nvmem-provider.h>
 #include <linux/of.h>

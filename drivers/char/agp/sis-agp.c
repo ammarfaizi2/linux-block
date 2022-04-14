@@ -2,6 +2,7 @@
  * SiS AGPGART routines.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/init.h>

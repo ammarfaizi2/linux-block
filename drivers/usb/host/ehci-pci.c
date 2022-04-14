@@ -5,6 +5,7 @@
  * Copyright (c) 2000-2004 by David Brownell
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

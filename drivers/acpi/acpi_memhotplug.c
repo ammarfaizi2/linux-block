@@ -12,6 +12,7 @@
  * ranges.
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/memory.h>
 #include <linux/memory_hotplug.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2013 NVIDIA Corporation
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/host1x.h>

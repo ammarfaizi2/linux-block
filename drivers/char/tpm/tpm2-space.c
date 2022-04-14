@@ -11,6 +11,7 @@
  * used by the kernel internally.
  */
 
+#include <linux/device_api.h>
 #include <linux/gfp.h>
 #include <asm/unaligned.h>
 #include "tpm.h"

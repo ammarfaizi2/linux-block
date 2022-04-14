@@ -139,6 +139,7 @@
  *	manuals-design-guides/hms-hmsi-27-275.pdf
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

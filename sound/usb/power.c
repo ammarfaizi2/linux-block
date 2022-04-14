@@ -3,6 +3,7 @@
  *   UAC3 Power Domain state management functions
  */
 
+#include <linux/device_api.h>
 #include <linux/slab.h>
 #include <linux/usb.h>
 #include <linux/usb/audio.h>

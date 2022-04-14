@@ -13,6 +13,7 @@
  * Specifications at www.trustedcomputinggroup.org
  */
 
+#include <linux/device_api.h>
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>

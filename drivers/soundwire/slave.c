@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
 // Copyright(c) 2015-17 Intel Corporation.
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/of.h>
 #include <linux/soundwire/sdw.h>

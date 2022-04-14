@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Lubomir Rintel
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>

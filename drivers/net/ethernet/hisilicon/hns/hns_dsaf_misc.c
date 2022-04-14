@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 
 #include "hns_dsaf_mac.h"

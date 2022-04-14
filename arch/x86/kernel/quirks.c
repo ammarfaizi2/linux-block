@@ -2,6 +2,7 @@
 /*
  * This file contains work-arounds for x86 and x86_64 platform bugs.
  */
+#include <linux/device_api.h>
 #include <linux/dmi.h>
 #include <linux/pci.h>
 #include <linux/irq.h>

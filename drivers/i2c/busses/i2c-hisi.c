@@ -5,6 +5,7 @@
  * Copyright (c) 2021 HiSilicon Technologies Co., Ltd.
  */
 
+#include <linux/device_api.h>
 #include <linux/bits.h>
 #include <linux/bitfield.h>
 #include <linux/completion.h>

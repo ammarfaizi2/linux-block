@@ -5,6 +5,8 @@
  * Copyright (C) 2014 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/device_api.h>
+
 #include "mn88473_priv.h"
 
 static int mn88473_get_tune_settings(struct dvb_frontend *fe,

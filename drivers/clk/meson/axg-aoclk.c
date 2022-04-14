@@ -8,6 +8,7 @@
  * Copyright (c) 2018 Amlogic, inc.
  * Author: Qiufang Dai <qiufang.dai@amlogic.com>
  */
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>
 #include <linux/reset-controller.h>

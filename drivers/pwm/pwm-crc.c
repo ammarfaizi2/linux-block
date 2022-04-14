@@ -5,6 +5,7 @@
  * Author: Shobhit Kumar <shobhit.kumar@intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/regmap.h>
 #include <linux/mfd/intel_soc_pmic.h>

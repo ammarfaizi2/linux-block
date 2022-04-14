@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Sensoray Company Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/usb.h>

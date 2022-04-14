@@ -13,6 +13,7 @@
  *   periods are one or more input clock periods long.
  */
 
+#include <linux/device_api.h>
 #include <linux/bitops.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

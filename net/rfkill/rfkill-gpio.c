@@ -3,6 +3,7 @@
  * Copyright (c) 2011, NVIDIA Corporation.
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

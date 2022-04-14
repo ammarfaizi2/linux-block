@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/rpmsg.h>

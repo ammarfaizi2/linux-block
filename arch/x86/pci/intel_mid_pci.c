@@ -19,6 +19,7 @@
  * the writes.
  */
 
+#include <linux/device_api.h>
 #include <linux/sched.h>
 #include <linux/pci.h>
 #include <linux/ioport.h>

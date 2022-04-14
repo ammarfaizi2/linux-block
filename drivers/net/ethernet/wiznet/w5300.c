@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Mike Sinkovsky <msink@permonline.ru>
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

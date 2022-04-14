@@ -5,6 +5,7 @@
  *  Copyright (C) 2006 ARM Ltd.
  *  written by Russell King, Deep Blue Solutions Ltd.
  */
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/i2c.h>

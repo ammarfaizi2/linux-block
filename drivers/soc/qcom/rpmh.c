@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic.h>
 #include <linux/bug.h>
 #include <linux/interrupt.h>

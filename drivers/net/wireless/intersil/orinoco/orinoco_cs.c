@@ -13,6 +13,7 @@
 #define DRIVER_NAME "orinoco_cs"
 #define PFX DRIVER_NAME ": "
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

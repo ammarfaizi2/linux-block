@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Etnaviv Project
  */
 
+#include <linux/device_api.h>
 #include <linux/moduleparam.h>
 
 #include "etnaviv_drv.h"

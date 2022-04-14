@@ -8,6 +8,7 @@
  *   Wei WANG <wei_wang@realsil.com.cn>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/rtsx_pci.h>

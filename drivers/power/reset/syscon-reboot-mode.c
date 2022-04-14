@@ -3,6 +3,7 @@
  * Copyright (c) 2016, Fuzhou Rockchip Electronics Co., Ltd
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

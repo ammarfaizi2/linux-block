@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2011 Jonathan Cameron
  */
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/export.h>
 #include <linux/slab.h>

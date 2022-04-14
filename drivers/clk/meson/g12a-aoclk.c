@@ -8,6 +8,7 @@
  * Copyright (c) 2019 Baylibre SAS.
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>
 #include <linux/reset-controller.h>

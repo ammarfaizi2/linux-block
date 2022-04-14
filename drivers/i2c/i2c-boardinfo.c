@@ -3,6 +3,7 @@
  * i2c-boardinfo.c - collect pre-declarations of I2C devices
  */
 
+#include <linux/device_api.h>
 #include <linux/export.h>
 #include <linux/i2c.h>
 #include <linux/kernel.h>

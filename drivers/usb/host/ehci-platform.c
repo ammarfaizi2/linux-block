@@ -18,6 +18,7 @@
  * Copyright 1999 Linus Torvalds
  * Copyright 1999 Gregory P. Smith
  */
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

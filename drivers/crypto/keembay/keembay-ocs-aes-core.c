@@ -5,6 +5,7 @@
  * Copyright (C) 2018-2020 Intel Corporation
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/crypto.h>

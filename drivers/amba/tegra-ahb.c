@@ -11,6 +11,7 @@
  *	Hiroshi DOYU <hdoyu@nvidia.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

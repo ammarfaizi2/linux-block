@@ -20,6 +20,7 @@
 
 ======================================================================*/
 
+#include <linux/device_api.h>
 #include <linux/types.h>
 
 #ifdef __IN_PCMCIA_PACKAGE__

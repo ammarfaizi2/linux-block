@@ -21,6 +21,7 @@
    an i2c_algorithm to access them.
 */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/pci.h>

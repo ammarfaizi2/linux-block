@@ -6,6 +6,7 @@
  * based on the patches by Rockchip Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

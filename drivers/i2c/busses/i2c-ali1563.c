@@ -15,6 +15,7 @@
  *	with a little help from the ALi 1563 spec.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

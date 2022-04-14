@@ -5,6 +5,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/firmware.h>
 #include <linux/of.h>

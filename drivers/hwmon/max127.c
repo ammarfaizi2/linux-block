@@ -5,6 +5,7 @@
  * Copyright (c) 2020 Facebook Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/hwmon.h>
 #include <linux/i2c.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/sched/signal.h>
 #include <linux/acpi.h>

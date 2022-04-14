@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/if.h>

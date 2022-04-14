@@ -4,6 +4,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <sound/core.h>
 

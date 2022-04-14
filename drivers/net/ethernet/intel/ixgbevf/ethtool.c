@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/module.h>

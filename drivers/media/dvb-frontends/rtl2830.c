@@ -5,6 +5,8 @@
  * Copyright (C) 2011 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/device_api.h>
+
 #include "rtl2830_priv.h"
 
 /* Our regmap is bypassing I2C adapter lock, thus we do it! */

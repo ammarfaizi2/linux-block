@@ -3,6 +3,7 @@
  * Copyright(c) 2015, 2016 Intel Corporation.
  */
 
+#include <linux/device_api.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/fs.h>

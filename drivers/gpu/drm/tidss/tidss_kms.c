@@ -4,6 +4,7 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/dma-fence.h>
 
 #include <drm/drm_atomic.h>

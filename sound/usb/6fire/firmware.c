@@ -9,6 +9,7 @@
  * Copyright:	(C) Torsten Schenk
  */
 
+#include <linux/device_api.h>
 #include <linux/firmware.h>
 #include <linux/module.h>
 #include <linux/bitrev.h>

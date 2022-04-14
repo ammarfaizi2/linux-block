@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)     "DMAR: " fmt
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/pci.h>
 #include <linux/dmar.h>

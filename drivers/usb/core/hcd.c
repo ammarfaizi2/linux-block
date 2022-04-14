@@ -9,6 +9,7 @@
  * (C) Copyright David Brownell 2000-2002
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>
 #include <linux/bcd.h>

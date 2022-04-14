@@ -7,6 +7,7 @@
  * Allwinner A31 AR100 clock driver
  */
 
+#include <linux/device_api.h>
 #include <linux/bitops.h>
 #include <linux/clk-provider.h>
 #include <linux/init.h>

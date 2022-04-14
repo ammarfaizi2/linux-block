@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Marek Behún <kabel@kernel.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <dt-bindings/bus/moxtet.h>
 #include <linux/bitops.h>

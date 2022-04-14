@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 
 #include "cxd2820r_priv.h"

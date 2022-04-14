@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Intel Corporation. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/cpu.h>
 #include <linux/acpi.h>
 #include <asm/msr.h>

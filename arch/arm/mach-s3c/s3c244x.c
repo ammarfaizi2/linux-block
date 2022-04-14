@@ -5,6 +5,7 @@
 //
 // Samsung S3C2440 and S3C2442 Mobile CPU support (not S3C2443)
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

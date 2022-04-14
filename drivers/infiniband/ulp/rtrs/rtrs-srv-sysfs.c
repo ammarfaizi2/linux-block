@@ -9,6 +9,8 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
+#include <linux/device_api.h>
+
 #include "rtrs-pri.h"
 #include "rtrs-srv.h"
 #include "rtrs-log.h"

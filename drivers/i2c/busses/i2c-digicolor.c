@@ -7,6 +7,7 @@
  * Copyright (C) 2015 Paradox Innovation Ltd.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

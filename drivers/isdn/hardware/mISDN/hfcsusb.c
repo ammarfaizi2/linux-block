@@ -16,6 +16,7 @@
  * Revision: 0.3.3 (socket), 2008-11-05
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/usb.h>

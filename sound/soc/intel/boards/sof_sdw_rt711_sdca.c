@@ -5,6 +5,7 @@
  *  sof_sdw_rt711_sdca - Helpers to handle RT711-SDCA from generic machine driver
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/input.h>

@@ -15,6 +15,7 @@
 
 */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

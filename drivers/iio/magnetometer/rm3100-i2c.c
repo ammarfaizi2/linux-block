@@ -7,6 +7,7 @@
  * i2c slave address: 0x20 + SA1 << 1 + SA0.
  */
 
+#include <linux/device_api.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
 

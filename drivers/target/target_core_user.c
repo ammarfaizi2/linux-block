@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Chinamobile, Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

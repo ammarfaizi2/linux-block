@@ -3,6 +3,7 @@
  * Exceptions for specific devices. Usually work-arounds for fatal design flaws.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/dmi.h>
 #include <linux/pci.h>

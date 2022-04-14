@@ -11,6 +11,7 @@
  * Copyright (C) 2019-2020 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <linux/device_api.h>
 #include <asm/unaligned.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>

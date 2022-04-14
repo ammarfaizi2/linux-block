@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api.h>
 #include <linux/arm_ffa.h>
 #include <linux/device.h>
 #include <linux/fs.h>

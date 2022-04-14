@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

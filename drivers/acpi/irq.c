@@ -5,6 +5,7 @@
  * Copyright (C) 2015 ARM Ltd.
  * Author: Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
  */
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/irq.h>
 #include <linux/irqdomain.h>

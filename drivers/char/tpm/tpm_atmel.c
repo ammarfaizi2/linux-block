@@ -14,6 +14,8 @@
  * Specifications at www.trustedcomputinggroup.org	 
  */
 
+#include <linux/device_api.h>
+
 #include "tpm.h"
 #include "tpm_atmel.h"
 

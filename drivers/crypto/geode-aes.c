@@ -2,6 +2,7 @@
  /* Copyright (C) 2004-2006, Advanced Micro Devices, Inc.
   */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>

@@ -8,6 +8,7 @@
  *  MMC card bus driver model
  */
 
+#include <linux/device_api.h>
 #include <linux/export.h>
 #include <linux/device.h>
 #include <linux/err.h>

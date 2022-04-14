@@ -4,6 +4,7 @@
  * Copyright (C) 2016 Cavium, Inc.
  */
 
+#include <linux/device_api.h>
 #include <crypto/aes.h>
 #include <crypto/algapi.h>
 #include <crypto/authenc.h>

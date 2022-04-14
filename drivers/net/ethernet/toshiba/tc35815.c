@@ -26,6 +26,7 @@
 static const char version[] = "tc35815.c:v" DRV_VERSION "\n";
 #define MODNAME			"tc35815"
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

@@ -15,6 +15,7 @@
 
 #define _HAL_INIT_C_
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/usb.h>
 #include <linux/device.h>

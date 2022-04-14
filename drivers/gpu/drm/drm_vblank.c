@@ -24,6 +24,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/kthread.h>

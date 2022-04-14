@@ -18,6 +18,7 @@
  */
 #define pr_fmt(fmt) "intc: " fmt
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/irq.h>
 #include <linux/io.h>

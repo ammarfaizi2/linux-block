@@ -5,6 +5,7 @@
  *  Copyright (C) 2009 Magnus Damm
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/clockchips.h>
 #include <linux/clocksource.h>

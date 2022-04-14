@@ -4,6 +4,7 @@
  *
  * Based on drivers/char/serial.c
  */
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/tty.h>
 #include <linux/ioport.h>

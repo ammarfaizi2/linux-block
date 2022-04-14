@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/bitmap.h>
 #include <linux/init.h>

@@ -5,6 +5,7 @@
 //
 // S3C2410 (and compatible) Power Manager (Suspend-To-RAM) support
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/suspend.h>
 #include <linux/errno.h>

@@ -8,6 +8,8 @@
  * Some code borrowed from the Linux EHCI driver.
  */
 
+#include <linux/device_api.h>
+
 #include "xhci.h"
 
 char *xhci_get_slot_state(struct xhci_hcd *xhci,

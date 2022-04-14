@@ -5,6 +5,8 @@
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
+#include <linux/device_api.h>
+
 #include "tascam.h"
 
 MODULE_DESCRIPTION("TASCAM FireWire series Driver");

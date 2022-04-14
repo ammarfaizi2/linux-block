@@ -17,6 +17,7 @@
     We assume there can only be one SiS96x with one SMBus interface.
 */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/kernel.h>

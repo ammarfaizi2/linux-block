@@ -10,6 +10,7 @@
  */
 
 
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/types.h>

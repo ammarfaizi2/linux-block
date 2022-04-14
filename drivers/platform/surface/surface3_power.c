@@ -31,6 +31,7 @@
  *     dumps.
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/bits.h>
 #include <linux/freezer.h>

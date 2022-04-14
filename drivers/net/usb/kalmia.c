@@ -10,6 +10,7 @@
  * Based on the cdc_eem module.
  */
 
+#include <linux/device_api.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2012 Intel, Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/dma-mapping.h>

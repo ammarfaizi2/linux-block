@@ -7,6 +7,7 @@
  * Author: Maxime Coquelin <maxime.coquelin@st.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/err.h>

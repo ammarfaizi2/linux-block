@@ -13,6 +13,7 @@
  * - It is a dedicated PWM fan controller. There are no other consumers for
  *   this PWM controller.
  */
+#include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/module.h>

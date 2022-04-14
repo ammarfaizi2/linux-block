@@ -6,6 +6,7 @@
  *
  * Contact: Carlos Chinea <carlos.chinea@nokia.com>
  */
+#include <linux/device_api.h>
 #include <linux/hsi/hsi.h>
 #include <linux/compiler.h>
 #include <linux/list.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>
 

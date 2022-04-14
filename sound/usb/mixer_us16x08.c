@@ -5,6 +5,7 @@
  *   Copyright (c) 2016 by Detlef Urban (onkel@paraair.de)
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/usb.h>

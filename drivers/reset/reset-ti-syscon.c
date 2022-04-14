@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/device_api.h>
 #include <linux/mfd/syscon.h>
 #include <linux/module.h>
 #include <linux/of.h>

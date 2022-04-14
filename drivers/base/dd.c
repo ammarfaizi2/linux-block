@@ -16,6 +16,7 @@
  * Copyright (c) 2007-2009 Novell Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>

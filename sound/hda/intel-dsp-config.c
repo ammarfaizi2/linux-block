@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Jaroslav Kysela <perex@perex.cz>
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/bits.h>
 #include <linux/dmi.h>

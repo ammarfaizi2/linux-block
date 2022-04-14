@@ -6,6 +6,7 @@
  *
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>

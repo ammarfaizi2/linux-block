@@ -7,6 +7,7 @@
  * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/gpio.h>

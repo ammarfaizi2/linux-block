@@ -3,6 +3,7 @@
  * Copyright 2018 Noralf Trønnes
  */
 
+#include <linux/device_api.h>
 #include <linux/iosys-map.h>
 #include <linux/list.h>
 #include <linux/module.h>

@@ -10,6 +10,7 @@
  * Dynamic DMA mapping support, pSeries-specific parts, both SMP and LPAR.
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/slab.h>

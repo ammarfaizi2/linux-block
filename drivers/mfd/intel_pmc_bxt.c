@@ -13,6 +13,7 @@
  * turn sends messages between the IA and the PMC.
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/errno.h>

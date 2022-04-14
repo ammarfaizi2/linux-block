@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/aer.h>

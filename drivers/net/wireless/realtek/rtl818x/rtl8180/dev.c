@@ -43,6 +43,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/device_api.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
 #include <linux/slab.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Lars Povlsen <lars.povlsen@microchip.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/hwmon.h>

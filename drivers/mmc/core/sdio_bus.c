@@ -7,6 +7,7 @@
  * SDIO function driver model
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/err.h>

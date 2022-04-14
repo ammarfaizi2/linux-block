@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/ptrace.h>
 #include <linux/slab.h>

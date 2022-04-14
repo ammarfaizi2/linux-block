@@ -20,6 +20,7 @@
  *   CPU3: virtual adapter 4, channels 4 and 7
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

@@ -37,6 +37,7 @@
  *   within each minor will be concatenated together in the order given here.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/slab.h>

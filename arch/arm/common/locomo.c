@@ -12,6 +12,7 @@
  * Based on sa1111.c
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

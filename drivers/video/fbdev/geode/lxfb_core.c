@@ -6,6 +6,7 @@
  * Built from gxfb (which is Copyright (C) 2006 Arcom Control Systems Ltd.)
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

@@ -6,6 +6,7 @@
  * Author: Michael Brunner <michael.brunner@kontron.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/mfd/core.h>
 #include <linux/mfd/kempld.h>

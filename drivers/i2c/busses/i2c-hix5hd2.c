@@ -6,6 +6,7 @@
  * Now only support 7 bit address.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/i2c.h>

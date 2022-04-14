@@ -5,6 +5,7 @@
  * Copyright (C) 2017-2019 Cadence Design Systems Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/io.h>

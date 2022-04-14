@@ -23,6 +23,8 @@
  * Authors: AMD
  *
  */
+#include <linux/device_api.h>
+
 #include "rc_calc.h"
 
 /**

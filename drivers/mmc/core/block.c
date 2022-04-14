@@ -18,6 +18,7 @@
  * Author:  Andrew Christian
  *          28 May 2002
  */
+#include <linux/device_api.h>
 #include <linux/moduleparam.h>
 #include <linux/module.h>
 #include <linux/init.h>

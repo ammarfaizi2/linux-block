@@ -7,6 +7,7 @@
  * PDM360NG board setup
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/of_address.h>

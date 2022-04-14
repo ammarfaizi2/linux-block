@@ -12,6 +12,7 @@
  *  Serial driver for TX3927/TX4927/TX4925/TX4938 internal SIO controller
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/ioport.h>
 #include <linux/init.h>

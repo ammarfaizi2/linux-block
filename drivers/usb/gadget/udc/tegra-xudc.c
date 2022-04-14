@@ -6,6 +6,7 @@
  * Copyright (c) 2015, Google Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

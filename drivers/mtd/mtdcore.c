@@ -7,6 +7,7 @@
  * Copyright © 2006      Red Hat UK Limited 
  */
 
+#include <linux/device_api.h>
 #include <linux/backing-dev-api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

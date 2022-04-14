@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/io.h>
 #include <linux/fsl/mc.h>
 

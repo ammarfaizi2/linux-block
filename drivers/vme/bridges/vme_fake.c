@@ -21,6 +21,7 @@
  * Copyright 2004 Motorola Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>

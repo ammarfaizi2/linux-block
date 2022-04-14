@@ -8,6 +8,7 @@
  *          Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/device.h>
 #include <linux/err.h>

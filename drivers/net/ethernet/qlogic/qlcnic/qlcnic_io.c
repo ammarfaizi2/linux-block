@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/device_api.h>
 #include <linux/netdevice.h>
 #include <linux/if_vlan.h>
 #include <net/ip.h>

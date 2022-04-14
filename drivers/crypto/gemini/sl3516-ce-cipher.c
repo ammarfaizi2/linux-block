@@ -8,6 +8,7 @@
  * ECB mode.
  */
 
+#include <linux/device_api.h>
 #include <linux/crypto.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

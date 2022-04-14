@@ -4,6 +4,7 @@
  *  Copyright (c) 1998-1999 by Frank van de Pol <fvdpol@coil.demon.nl>
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>

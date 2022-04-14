@@ -5,6 +5,7 @@
  * by Omar Laazimani, Olivier Condemine
  */
 
+#include <linux/device_api.h>
 #include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

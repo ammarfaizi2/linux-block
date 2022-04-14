@@ -5,6 +5,7 @@
  * Copyright 2020 Kontron Europe GmbH
  */
 
+#include <linux/device_api.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/mod_devicetable.h>

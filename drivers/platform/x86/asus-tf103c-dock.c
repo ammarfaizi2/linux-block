@@ -11,6 +11,7 @@
  * Copyright (C) 2021 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/dmi.h>

@@ -9,6 +9,7 @@
  * You could find the datasheet in Documentation/arm/sunxi.rst
  */
 #include "sun4i-ss.h"
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <asm/unaligned.h>
 #include <linux/scatterlist.h>

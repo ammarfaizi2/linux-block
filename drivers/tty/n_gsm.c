@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/types.h>
 #include <linux/major.h>

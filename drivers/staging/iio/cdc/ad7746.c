@@ -5,6 +5,7 @@
  * Copyright 2011 Analog Devices Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/i2c.h>

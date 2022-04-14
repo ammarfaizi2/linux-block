@@ -3,6 +3,7 @@
  * Setup routines for AGP 3.5 compliant bridges.
  */
 
+#include <linux/device_api.h>
 #include <linux/list.h>
 #include <linux/pci.h>
 #include <linux/agp_backend.h>

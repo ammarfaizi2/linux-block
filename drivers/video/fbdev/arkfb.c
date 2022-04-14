@@ -11,6 +11,7 @@
  *  Code is based on s3fb
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

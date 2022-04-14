@@ -3,6 +3,7 @@
  * Copyright 2012 Alexandre Pereira da Silva <aletes.xgr@gmail.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/io.h>

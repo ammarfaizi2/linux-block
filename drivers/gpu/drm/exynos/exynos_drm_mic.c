@@ -5,6 +5,7 @@
  *	Hyungwon Hwang <human.hwang@samsung.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/delay.h>

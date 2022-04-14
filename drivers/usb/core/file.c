@@ -17,6 +17,7 @@
  * Released under the GPLv2 only.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/rwsem.h>

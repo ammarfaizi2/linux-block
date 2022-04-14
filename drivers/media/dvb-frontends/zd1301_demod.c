@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 
 #include "zd1301_demod.h"

@@ -6,6 +6,7 @@
  */
 
 #include "bcma_private.h"
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/mmc/sdio_func.h>
 #include <linux/platform_device.h>

@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>

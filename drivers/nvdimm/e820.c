@@ -3,6 +3,7 @@
  * Copyright (c) 2015, Christoph Hellwig.
  * Copyright (c) 2015, Intel Corporation.
  */
+#include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/memory_hotplug.h>
 #include <linux/libnvdimm.h>

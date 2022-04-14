@@ -7,6 +7,7 @@
  * Copyright (C) ST-Ericsson 2010-2012
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

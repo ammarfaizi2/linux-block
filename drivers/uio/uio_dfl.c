@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2021 Intel Corporation, Inc.
  */
+#include <linux/device_api.h>
 #include <linux/dfl.h>
 #include <linux/errno.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

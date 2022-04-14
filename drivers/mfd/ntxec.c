@@ -11,6 +11,7 @@
  * Copyright 2020 Jonathan Neuschäfer <j.neuschaefer@gmx.net>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/i2c.h>

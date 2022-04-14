@@ -18,6 +18,7 @@
  * Bultje <rbultje@ronald.bitfreak.net>
  */
 
+#include <linux/device_api.h>
 #include <linux/usb.h>
 #include <linux/firmware.h>
 #include <linux/errno.h>

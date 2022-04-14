@@ -7,6 +7,7 @@
 //
 // S3C2410 CPU PLL tables
 
+#include <linux/device_api.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

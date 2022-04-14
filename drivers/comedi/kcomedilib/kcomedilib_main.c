@@ -7,6 +7,7 @@
  * Copyright (C) 1997-2000 David A. Schleef <ds@schleef.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 
 #include <linux/errno.h>

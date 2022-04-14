@@ -7,6 +7,7 @@
  * Copyright (c) 2019 Andrew Lunn <andrew@lunn.ch>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/dmi.h>
 #include <linux/i2c.h>

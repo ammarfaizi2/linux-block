@@ -7,6 +7,7 @@
  * Authors: Jianguo Sun <sunjianguo1@huawei.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

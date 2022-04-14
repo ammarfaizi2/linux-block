@@ -25,6 +25,7 @@
 
 #define DEBUG /* for pr_debug() */
 
+#include <linux/device_api.h>
 #include <linux/debugfs.h>
 #include <linux/stdarg.h>
 

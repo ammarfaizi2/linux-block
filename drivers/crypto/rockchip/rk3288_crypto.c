@@ -10,6 +10,7 @@
  */
 
 #include "rk3288_crypto.h"
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>

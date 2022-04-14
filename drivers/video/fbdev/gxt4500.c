@@ -6,6 +6,7 @@
  * Copyright (C) 2006 Paul Mackerras, IBM Corp. <paulus@samba.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/fb.h>

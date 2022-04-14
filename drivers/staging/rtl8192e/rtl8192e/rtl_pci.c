@@ -7,6 +7,8 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/device_api.h>
+
 #include "rtl_pci.h"
 #include "rtl_core.h"
 

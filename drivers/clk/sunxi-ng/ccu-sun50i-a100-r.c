@@ -3,6 +3,7 @@
  * Copyright (c) 2020 Yangtao Li <frank@allwinnertech.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

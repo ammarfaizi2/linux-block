@@ -5,6 +5,7 @@
 // Copyright (C) 2012 Samsung Electornics
 // Jonghwa Lee <jonghwa3.lee@samsung.com>
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/err.h>

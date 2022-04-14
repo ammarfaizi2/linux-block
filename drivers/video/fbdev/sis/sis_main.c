@@ -19,6 +19,7 @@
  * which is (c) 1998 Gerd Knorr <kraxel@goldbach.in-berlin.de>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>

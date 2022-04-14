@@ -13,6 +13,7 @@
  * Copyright (C) 2015 Gabriele Mazzotta <gabriele.mzt@gmail.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/acpi.h>
 #include <linux/err.h>

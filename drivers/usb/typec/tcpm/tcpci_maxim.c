@@ -5,6 +5,7 @@
  * MAXIM TCPCI based TCPC driver
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/interrupt.h>
 #include <linux/i2c.h>

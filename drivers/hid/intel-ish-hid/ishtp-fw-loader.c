@@ -5,6 +5,7 @@
  * Copyright (c) 2019, Intel Corporation.
  */
 
+#include <linux/device_api.h>
 #include <linux/firmware.h>
 #include <linux/module.h>
 #include <linux/pci.h>

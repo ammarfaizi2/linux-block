@@ -9,6 +9,7 @@
  *  Author: Subhransu S. Prusty <subhransu.s.prusty@intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>
 #include <linux/device.h>

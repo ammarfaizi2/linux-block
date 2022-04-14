@@ -15,6 +15,7 @@
  *
  * 16 MiB of framebuffer memory is assumed to be available.
  */
+#include <linux/device_api.h>
 #include <asm/msr.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

@@ -8,6 +8,7 @@
  *	   Jon Lin <Jon.lin@rock-chips.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/completion.h>

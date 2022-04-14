@@ -57,6 +57,7 @@
  *  Slave mode                       no
  */
 
+#include <linux/device_api.h>
 #include <linux/align.h>
 #include <linux/module.h>
 #include <linux/pci.h>

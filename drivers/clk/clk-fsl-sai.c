@@ -5,6 +5,7 @@
  * Copyright 2020 Michael Walle <michael@walle.cc>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/clk-provider.h>

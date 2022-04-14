@@ -3,6 +3,7 @@
  * Copyright (c) 2011 Broadcom Corporation
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/crc32.h>
 #include <linux/kernel.h>

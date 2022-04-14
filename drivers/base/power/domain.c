@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>

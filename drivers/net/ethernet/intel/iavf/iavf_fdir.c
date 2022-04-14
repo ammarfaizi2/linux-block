@@ -3,6 +3,8 @@
 
 /* flow director ethtool support for iavf */
 
+#include <linux/device_api.h>
+
 #include "iavf.h"
 
 #define GTPU_PORT	2152

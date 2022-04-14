@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "CPUidle PSCI: " fmt
 
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/device.h>

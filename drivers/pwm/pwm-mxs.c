@@ -3,6 +3,7 @@
  * Copyright 2012 Freescale Semiconductor, Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/io.h>

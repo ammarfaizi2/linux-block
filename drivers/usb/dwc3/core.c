@@ -8,6 +8,7 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/version.h>
 #include <linux/module.h>

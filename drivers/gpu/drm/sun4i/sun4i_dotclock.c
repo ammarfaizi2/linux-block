@@ -6,6 +6,7 @@
  * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/regmap.h>
 

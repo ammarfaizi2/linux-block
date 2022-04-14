@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Intel Corporation. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/init.h>
 #include <linux/mfd/intel_soc_pmic.h>

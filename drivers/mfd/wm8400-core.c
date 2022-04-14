@@ -7,6 +7,7 @@
  * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/init.h>
 #include <linux/bug.h>
 #include <linux/err.h>

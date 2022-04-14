@@ -8,6 +8,7 @@
  * This driver is based on lm95241.c
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/hwmon.h>

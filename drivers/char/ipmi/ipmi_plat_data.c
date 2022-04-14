@@ -4,6 +4,7 @@
  * Add an IPMI platform device.
  */
 
+#include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include "ipmi_plat_data.h"
 #include "ipmi_si.h"

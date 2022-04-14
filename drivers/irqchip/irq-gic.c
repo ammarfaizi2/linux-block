@@ -17,6 +17,7 @@
  * As such, the enable set/clear, pending set/clear and active bit
  * registers are banked per-cpu for these sources.
  */
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/init.h>

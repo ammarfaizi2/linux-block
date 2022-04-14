@@ -5,6 +5,7 @@
  * Copyright (C) 2011 Intel Corporation
  * Author: Andrzej Zaborowski <balrogg@gmail.com>
  */
+#include <linux/device_api.h>
 #include <linux/etherdevice.h>
 #include <linux/ethtool.h>
 #include <linux/mii.h>

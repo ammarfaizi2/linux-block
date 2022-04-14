@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2021, Linaro Limited
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>
 #include <linux/slab.h>

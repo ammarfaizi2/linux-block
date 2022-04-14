@@ -24,6 +24,7 @@
  *	Li Peng <peng.li@intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 
 #include <drm/drm.h>

@@ -28,6 +28,7 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/export.h>
 #include <linux/pci.h>
 

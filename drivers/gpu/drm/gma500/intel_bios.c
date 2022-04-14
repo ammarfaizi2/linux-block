@@ -5,6 +5,7 @@
  * Authors:
  *    Eric Anholt <eric@anholt.net>
  */
+#include <linux/device_api.h>
 #include <drm/drm.h>
 #include <drm/dp/drm_dp_helper.h>
 

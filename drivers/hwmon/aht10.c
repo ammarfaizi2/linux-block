@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Johannes Cornelis Draaijer
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/hwmon.h>
 #include <linux/i2c.h>

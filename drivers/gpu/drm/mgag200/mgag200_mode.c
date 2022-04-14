@@ -8,6 +8,7 @@
  *	    Dave Airlie
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/iosys-map.h>
 

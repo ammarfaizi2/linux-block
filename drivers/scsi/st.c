@@ -20,6 +20,7 @@
 
 static const char *verstr = "20160209";
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <asm/cacheflush.h>

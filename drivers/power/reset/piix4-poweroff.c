@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/module.h>

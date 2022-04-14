@@ -2,6 +2,7 @@
 // Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
 // Copyright (c) 2017-2022 Linaro Limited.
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/i2c.h>

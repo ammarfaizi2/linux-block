@@ -13,6 +13,7 @@
  *   produced with old duty cycle but new period settings.
  */
 
+#include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>

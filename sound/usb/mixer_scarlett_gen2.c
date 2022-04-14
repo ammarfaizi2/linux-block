@@ -123,6 +123,7 @@
  *   to Off and power-cycling the device
  */
 
+#include <linux/device_api.h>
 #include <linux/slab.h>
 #include <linux/usb.h>
 #include <linux/moduleparam.h>

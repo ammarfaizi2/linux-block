@@ -8,6 +8,7 @@
  * Copyright (C) 2007 MontaVista Software Inc.
  * Copyright (C) 2009 Provigent Ltd.
  */
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/errno.h>

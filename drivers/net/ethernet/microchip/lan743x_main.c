@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /* Copyright (C) 2018 Microchip Technology Inc. */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/pci.h>

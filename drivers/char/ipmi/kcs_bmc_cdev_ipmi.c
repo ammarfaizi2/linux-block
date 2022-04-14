@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "kcs-bmc: " fmt
 
+#include <linux/device_api.h>
 #include <linux/errno.h>
 #include <linux/io.h>
 #include <linux/ipmi_bmc.h>

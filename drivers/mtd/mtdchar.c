@@ -3,6 +3,7 @@
  * Copyright © 1999-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/device.h>
 #include <linux/fs.h>

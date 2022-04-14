@@ -15,6 +15,7 @@
  * and many others.
  */
 
+#include <linux/device_api.h>
 #include <linux/blkdev.h>
 #include <linux/bug.h>
 #include <linux/completion.h>

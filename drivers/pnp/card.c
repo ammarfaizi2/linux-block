@@ -5,6 +5,7 @@
  * Copyright 2002 Adam Belay <ambx1@neo.rr.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/ctype.h>

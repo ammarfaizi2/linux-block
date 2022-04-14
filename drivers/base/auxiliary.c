@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "%s:%s: " fmt, KBUILD_MODNAME, __func__
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/slab.h>

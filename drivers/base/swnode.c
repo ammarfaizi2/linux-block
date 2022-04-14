@@ -6,6 +6,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/property.h>

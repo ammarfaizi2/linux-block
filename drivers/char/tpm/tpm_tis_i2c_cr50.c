@@ -16,6 +16,7 @@
  *   reading header and determining the remainder.
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/acpi.h>
 #include <linux/completion.h>

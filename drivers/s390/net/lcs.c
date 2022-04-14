@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT		"lcs"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/if.h>
 #include <linux/netdevice.h>

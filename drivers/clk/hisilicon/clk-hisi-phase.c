@@ -5,6 +5,7 @@
  * Simple HiSilicon phase clock implementation.
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/module.h>

@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/device_api.h>
 #include <linux/io.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>

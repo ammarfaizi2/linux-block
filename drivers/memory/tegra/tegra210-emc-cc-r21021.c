@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2020, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
 #include <linux/clk.h>

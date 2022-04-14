@@ -10,6 +10,7 @@
  * Adapted to sparc64 by David S. Miller davem@davemloft.net
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/irq.h>

@@ -7,6 +7,7 @@
  * Author: Samuel Iglesias Gonsalvez <siglesias@igalia.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include "tpci200.h"

@@ -12,6 +12,7 @@
  * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/init.h>
 #include <linux/io.h>

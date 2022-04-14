@@ -11,6 +11,7 @@
  * which was released under GPL V2
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>

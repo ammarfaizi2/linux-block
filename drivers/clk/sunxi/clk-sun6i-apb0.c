@@ -7,6 +7,7 @@
  * Allwinner A31 APB0 clock driver
  */
 
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/init.h>
 #include <linux/of.h>

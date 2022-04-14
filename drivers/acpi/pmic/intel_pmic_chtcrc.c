@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/init.h>
 #include <linux/mfd/intel_soc_pmic.h>

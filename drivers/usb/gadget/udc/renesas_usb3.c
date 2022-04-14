@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2017  Renesas Electronics Corporation
  */
 
+#include <linux/device_api.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

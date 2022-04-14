@@ -6,6 +6,8 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/device_api.h>
+
 #include "af9033_priv.h"
 
 struct af9033_dev {

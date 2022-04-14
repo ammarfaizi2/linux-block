@@ -9,6 +9,7 @@
  * PWM driver for Samsung SoCs
  */
 
+#include <linux/device_api.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/export.h>

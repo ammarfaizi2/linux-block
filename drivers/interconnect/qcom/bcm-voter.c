@@ -3,6 +3,7 @@
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device_api.h>
 #include <asm/div64.h>
 #include <linux/interconnect-provider.h>
 #include <linux/list_sort.h>

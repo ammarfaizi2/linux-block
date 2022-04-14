@@ -2,6 +2,7 @@
 /* Distributed Switch Architecture VSC9953 driver
  * Copyright (C) 2020, Maxim Kochetkov <fido_max@inbox.ru>
  */
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/types.h>
 #include <soc/mscc/ocelot_vcap.h>

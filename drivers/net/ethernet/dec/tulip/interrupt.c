@@ -10,6 +10,7 @@
         Please submit bugs to http://bugzilla.kernel.org/ .
 */
 
+#include <linux/device_api.h>
 #include <linux/pci.h>
 #include "tulip.h"
 #include <linux/etherdevice.h>

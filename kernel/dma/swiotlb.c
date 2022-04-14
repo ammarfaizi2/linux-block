@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "software IO TLB: " fmt
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 #include <linux/cache.h>
 #include <linux/cc_platform.h>

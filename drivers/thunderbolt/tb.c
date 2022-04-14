@@ -6,6 +6,7 @@
  * Copyright (C) 2019, Intel Corporation
  */
 
+#include <linux/device_api.h>
 #include <linux/slab.h>
 #include <linux/errno.h>
 #include <linux/delay.h>

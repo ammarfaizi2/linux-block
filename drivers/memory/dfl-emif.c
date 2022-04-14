@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Intel Corporation, Inc.
  *
  */
+#include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/dfl.h>
 #include <linux/errno.h>

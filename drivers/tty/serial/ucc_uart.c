@@ -16,6 +16,7 @@
  * (e.g. "11" for 1.1).
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/serial.h>
 #include <linux/serial_core.h>

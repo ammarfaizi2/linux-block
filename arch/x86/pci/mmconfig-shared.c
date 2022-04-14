@@ -11,6 +11,7 @@
  * themselves.
  */
 
+#include <linux/device_api.h>
 #include <asm/msr.h>
 #include <linux/acpi.h>
 #include <linux/pci.h>

@@ -9,6 +9,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/io.h>

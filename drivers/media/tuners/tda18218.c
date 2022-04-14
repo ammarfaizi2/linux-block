@@ -5,6 +5,8 @@
  * Copyright (C) 2010 Antti Palosaari <crope@iki.fi>
  */
 
+#include <linux/device_api.h>
+
 #include "tda18218_priv.h"
 
 /* Max transfer size done by I2C transfer functions */

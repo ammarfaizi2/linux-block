@@ -7,6 +7,8 @@
  *	    Alan Cox <alan@linux.intel.com>
  */
 
+#include <linux/device_api.h>
+
 #include "gem.h" /* TODO: for struct psb_gem_object, see psb_gtt_restore() */
 #include "psb_drv.h"
 

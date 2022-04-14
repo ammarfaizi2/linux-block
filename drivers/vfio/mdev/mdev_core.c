@@ -7,6 +7,7 @@
  *             Kirti Wankhede <kwankhede@nvidia.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/slab.h>

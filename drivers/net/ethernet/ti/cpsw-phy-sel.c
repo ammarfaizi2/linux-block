@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/netdevice.h>

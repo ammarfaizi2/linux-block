@@ -10,6 +10,8 @@
  *
  * You could find the datasheet in Documentation/arm/sunxi.rst
  */
+#include <linux/device_api.h>
+
 #include "sun4i-ss.h"
 
 static int noinline_for_stack sun4i_ss_opti_poll(struct skcipher_request *areq)

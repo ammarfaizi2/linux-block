@@ -8,6 +8,8 @@
  * Thanks to Afatech who kindly provided information.
  */
 
+#include <linux/device_api.h>
+
 #include "af9013_priv.h"
 
 struct af9013_state {

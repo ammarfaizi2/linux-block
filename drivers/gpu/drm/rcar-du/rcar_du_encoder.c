@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/device_api.h>
 #include <linux/export.h>
 #include <linux/slab.h>
 

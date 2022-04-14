@@ -8,6 +8,7 @@
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/init.h>

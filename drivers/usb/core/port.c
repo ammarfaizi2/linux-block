@@ -7,6 +7,7 @@
  * Author: Lan Tianyu <tianyu.lan@intel.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>
 #include <linux/slab.h>

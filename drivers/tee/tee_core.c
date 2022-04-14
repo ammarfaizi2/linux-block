@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/cdev.h>
 #include <linux/cred.h>

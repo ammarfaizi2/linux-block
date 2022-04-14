@@ -9,6 +9,7 @@
  * Copyright 2004 Motorola Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/mm.h>

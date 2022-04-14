@@ -5,6 +5,7 @@
  *  Copyright (C) 2013 Magnus Damm
  */
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

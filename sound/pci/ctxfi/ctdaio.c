@@ -15,6 +15,7 @@
 #include "ctdaio.h"
 #include "cthardware.h"
 #include "ctimap.h"
+#include <linux/device_api.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 

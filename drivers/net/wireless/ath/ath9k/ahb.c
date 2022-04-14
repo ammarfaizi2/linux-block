@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/device_api.h>
 #include <linux/nl80211.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>

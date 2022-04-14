@@ -6,6 +6,7 @@
  * Author: Georgi Djakov <georgi.djakov@linaro.org>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/kernel.h>

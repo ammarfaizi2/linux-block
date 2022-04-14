@@ -8,6 +8,7 @@
  * Copyright (C) 2006,2007 Pete Zaitcev (zaitcev@redhat.com)
  */
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/sched/signal.h>
 #include <linux/types.h>

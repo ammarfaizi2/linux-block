@@ -5,6 +5,7 @@
 //
 // http://armlinux.simtec.co.uk/.
 
+#include <linux/device_api.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>

@@ -9,6 +9,7 @@
  * Author: Laxman Dewangan <ldewangan@nvidia.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>

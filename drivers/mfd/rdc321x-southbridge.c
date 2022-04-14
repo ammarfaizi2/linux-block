@@ -5,6 +5,7 @@
  * Copyright (C) 2007-2010 Florian Fainelli <florian@openwrt.org>
  * Copyright (C) 2010 Bernhard Loos <bernhardloos@googlemail.com>
  */
+#include <linux/device_api.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

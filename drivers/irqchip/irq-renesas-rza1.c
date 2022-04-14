@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Glider bvba
  */
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

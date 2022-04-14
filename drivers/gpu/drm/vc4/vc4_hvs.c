@@ -19,6 +19,7 @@
  * each CRTC.
  */
 
+#include <linux/device_api.h>
 #include <linux/debugfs.h>
 #include <linux/atomic_api.h>
 #include <linux/bitfield.h>

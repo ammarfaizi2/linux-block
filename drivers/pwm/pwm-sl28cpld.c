@@ -33,6 +33,7 @@
  *   it will automatically switch back to GPIO mode.
  */
 
+#include <linux/device_api.h>
 #include <linux/bitfield.h>
 #include <linux/kernel.h>
 #include <linux/mod_devicetable.h>

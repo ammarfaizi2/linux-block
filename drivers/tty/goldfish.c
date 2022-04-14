@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Imagination Technologies Ltd.
  */
 
+#include <linux/device_api.h>
 #include <linux/console.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>

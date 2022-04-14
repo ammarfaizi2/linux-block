@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/device_api.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_device.h>
 #include <drm/drm_fourcc.h>

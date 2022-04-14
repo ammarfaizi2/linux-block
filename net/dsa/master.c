@@ -6,6 +6,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/capability.h>
 
 #include "dsa_priv.h"

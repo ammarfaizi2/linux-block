@@ -4,6 +4,7 @@
  * Author: Kevin-CW Chen <kevin-cw.chen@mediatek.com>
  */
 
+#include <linux/device_api.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>
 

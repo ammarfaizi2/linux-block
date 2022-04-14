@@ -9,6 +9,7 @@
  *  Implementation of a CRTC class for the HDLCD driver.
  */
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/of_graph.h>
 #include <linux/platform_data/simplefb.h>

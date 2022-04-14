@@ -15,6 +15,7 @@
  * into the region of the HVS that it has allocated for us.
  */
 
+#include <linux/device_api.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_atomic_uapi.h>

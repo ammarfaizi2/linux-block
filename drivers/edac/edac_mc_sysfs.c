@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/device_api.h>
 #include <linux/ctype.h>
 #include <linux/slab.h>
 #include <linux/edac.h>

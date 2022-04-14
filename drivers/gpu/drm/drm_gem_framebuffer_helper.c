@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Noralf Trønnes
  */
 
+#include <linux/device_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 

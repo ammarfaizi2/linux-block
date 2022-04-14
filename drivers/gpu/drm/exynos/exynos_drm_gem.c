@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/device_api.h>
 #include <linux/dma-buf.h>
 #include <linux/pfn_t.h>
 #include <linux/shmem_fs.h>

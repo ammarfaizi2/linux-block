@@ -43,6 +43,7 @@
  * WITH YOU.
  ***********************license end**************************************/
 
+#include <linux/device_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>
 

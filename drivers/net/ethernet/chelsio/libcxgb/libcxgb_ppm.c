@@ -37,6 +37,7 @@
 #define DRV_NAME "libcxgb"
 #define pr_fmt(fmt) DRV_NAME ": " fmt
 
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>
 #include <linux/kernel.h>

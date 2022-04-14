@@ -8,6 +8,7 @@
 #define DEBUG
 #endif
 
+#include <linux/device_api.h>
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
 #include <linux/err.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2020-2021 NVIDIA CORPORATION & AFFILIATES
  */
 
+#include <linux/device_api.h>
 #include <linux/interrupt.h>
 
 #include "mlxbf_gige.h"

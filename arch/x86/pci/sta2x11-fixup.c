@@ -7,6 +7,7 @@
  * Copyright (c) 2010-2011 Wind River Systems, Inc.
  */
 
+#include <linux/device_api.h>
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
 #include <linux/export.h>

@@ -11,6 +11,7 @@
  * creates the device files accordingly.
  */
 
+#include <linux/device_api.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/list.h>

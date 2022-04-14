@@ -6,6 +6,7 @@
 //  Kyungmin Park <kyungmin.park@samsung.com>
 //  Marek Szyprowski <m.szyprowski@samsung.com>
 
+#include <linux/device_api.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/slab.h>

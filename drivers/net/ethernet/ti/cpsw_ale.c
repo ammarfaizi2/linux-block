@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Texas Instruments
  *
  */
+#include <linux/device_api.h>
 #include <linux/bitmap.h>
 #include <linux/if_vlan.h>
 #include <linux/kernel.h>
