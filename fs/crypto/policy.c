@@ -10,6 +10,7 @@
  * Modified by Eric Biggers, 2019 for v2 policy support.
  */
 
+#include <linux/key.h>
 #include <linux/fs_api.h>
 #include <linux/random.h>
 #include <linux/seq_file.h>
