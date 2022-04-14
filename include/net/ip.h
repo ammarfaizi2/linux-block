@@ -18,6 +18,7 @@
 #ifndef _IP_H
 #define _IP_H
 
+#include <net/checksum.h>
 #include <linux/skbuff_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/types.h>
