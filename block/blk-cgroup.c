@@ -15,6 +15,7 @@
  * Copyright (C) 2015 Paolo Valente <paolo.valente@unimore.it>
  *                    Arianna Avanzini <avanzini.arianna@gmail.com>
  */
+#include <linux/radix-tree-api.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>

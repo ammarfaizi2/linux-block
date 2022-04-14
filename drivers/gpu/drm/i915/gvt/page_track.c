@@ -20,6 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/radix-tree-api.h>
 #include <linux/mutex_api.h>
 
 #include "i915_drv.h"

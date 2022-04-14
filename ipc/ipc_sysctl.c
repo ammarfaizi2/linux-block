@@ -5,6 +5,7 @@
  *  Author: Eric Biederman <ebiederm@xmision.com>
  */
 
+#include <linux/radix-tree-api.h>
 #include <linux/module.h>
 #include <linux/ipc.h>
 #include <linux/nsproxy.h>

@@ -18,6 +18,7 @@
  */
 #define pr_fmt(fmt) "intc: " fmt
 
+#include <linux/radix-tree-api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

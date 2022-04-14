@@ -3,6 +3,7 @@
  * Copyright (c) 2006-2007 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/radix-tree-api.h>
 #include <linux/jiffies.h>
 
 #include "xfs.h"

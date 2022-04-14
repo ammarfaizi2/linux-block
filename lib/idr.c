@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/radix-tree-api.h>
 #include <linux/idr_api.h>
 #include <linux/err.h>
 #include <linux/bitmap.h>

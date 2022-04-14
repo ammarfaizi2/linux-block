@@ -4,6 +4,7 @@
  * Written by Miao Xie <miaox@cn.fujitsu.com>
  */
 
+#include <linux/radix-tree-api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_entry_types.h>
 #include <linux/fs_api_sb.h>

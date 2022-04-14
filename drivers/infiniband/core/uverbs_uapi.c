@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2017, Mellanox Technologies inc.  All rights reserved.
  */
+#include <linux/radix-tree-api.h>
 #include <rdma/uverbs_ioctl.h>
 #include <rdma/rdma_user_ioctl.h>
 #include <linux/bitops.h>

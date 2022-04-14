@@ -12,6 +12,7 @@
 
 #define DEBUG		/* Enable initcall_debug */
 
+#include <linux/radix-tree-api.h>
 #include <linux/pid.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>

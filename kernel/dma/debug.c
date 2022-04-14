@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"DMA-API: " fmt
 
+#include <linux/radix-tree-api.h>
 #include <linux/pgtable_api.h>
 #include <linux/page-flags.h>
 #include <linux/notifier.h>

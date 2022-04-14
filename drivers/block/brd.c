@@ -9,6 +9,7 @@
  * of their respective owners.
  */
 
+#include <linux/radix-tree-api.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <asm/cacheflush.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2016 Intel, Ross Zwisler
  */
 
+#include <linux/radix-tree-api.h>
 #include <linux/idr_api.h>
 #include <linux/gfp_api.h>
 #include <linux/cpuhotplug.h>
