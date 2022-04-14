@@ -34,6 +34,7 @@
 #ifndef __MLX5E_EN_ACCEL_H__
 #define __MLX5E_EN_ACCEL_H__
 
+#include <linux/if_vlan_api.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
 #include "en_accel/ipsec_rxtx.h"
