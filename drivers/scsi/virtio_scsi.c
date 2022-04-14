@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/cache.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/mempool.h>
