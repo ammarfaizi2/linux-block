@@ -5,6 +5,7 @@
  * Copyright © 2003-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

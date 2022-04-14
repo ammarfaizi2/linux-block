@@ -9,6 +9,7 @@
  * This driver is powered by bad coffee and bombay mix.
  */
 
+#include <linux/sched/cond_resched.h>
 #include <linux/xarray_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
