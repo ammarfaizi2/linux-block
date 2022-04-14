@@ -5,6 +5,7 @@
 #ifndef __I915_GEM_WW_H__
 #define __I915_GEM_WW_H__
 
+#include <linux/errno.h>
 #include <drm/drm_drv.h>
 
 struct i915_gem_ww_ctx {

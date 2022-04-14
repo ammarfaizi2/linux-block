@@ -9,6 +9,7 @@
 #define _LINUX_IF_BRIDGE_H
 
 
+#include <linux/errno.h>
 #include <linux/netdevice.h>
 #include <uapi/linux/if_bridge.h>
 #include <linux/bitops.h>
