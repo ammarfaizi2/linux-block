@@ -42,6 +42,7 @@
 
 #include "amdgpu_ctx.h"
 
+#include <linux/debugfs.h>
 #include <linux/atomic.h>
 #include <linux/wait.h>
 #include <linux/list.h>

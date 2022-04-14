@@ -7,6 +7,7 @@
 #ifndef __VENUS_CORE_H_
 #define __VENUS_CORE_H_
 
+#include <linux/debugfs.h>
 #include <linux/bitops.h>
 #include <linux/list.h>
 #include <media/videobuf2-v4l2.h>
