@@ -5,6 +5,7 @@
 #if !defined(_TRACE_XEN_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_XEN_H
 
+#include <linux/pgtable.h>
 #include <linux/pgtable_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/tracepoint.h>
