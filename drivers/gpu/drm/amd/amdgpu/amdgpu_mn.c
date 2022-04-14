@@ -43,6 +43,7 @@
  * address space.
  */
 
+#include <linux/mmu_notifier.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/jiffies.h>
