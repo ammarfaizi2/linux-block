@@ -10,6 +10,7 @@
 #ifndef __DRIVERS_USB_CHIPIDEA_CI_H
 #define __DRIVERS_USB_CHIPIDEA_CI_H
 
+#include <asm/io.h>
 #include <linux/list.h>
 #include <linux/irqreturn.h>
 #include <linux/usb.h>

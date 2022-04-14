@@ -23,6 +23,7 @@
 #include "vnic_resource.h"
 #include "vnic_devcmd.h"
 
+#include <asm/io.h>
 #include <linux/types.h>
 
 #ifndef VNIC_PADDR_TARGET

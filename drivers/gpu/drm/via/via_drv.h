@@ -24,6 +24,7 @@
 #ifndef _VIA_DRV_H_
 #define _VIA_DRV_H_
 
+#include <asm/io.h>
 #include <linux/irqreturn.h>
 #include <linux/jiffies.h>
 #include <linux/sched.h>
