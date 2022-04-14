@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/seq_file_net.h>
 #include <linux/math64.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

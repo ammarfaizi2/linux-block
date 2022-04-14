@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/seq_file_net.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
 #include <linux/jiffies.h>

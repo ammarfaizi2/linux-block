@@ -9,6 +9,7 @@
  *  proc net directory handling functions
  */
 
+#include <linux/seq_file_net.h>
 #include <linux/pid.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

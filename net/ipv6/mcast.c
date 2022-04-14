@@ -22,6 +22,7 @@
  *		- MLDv2 support
  */
 
+#include <linux/seq_file_net.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/seq_file_net.h>
 #include <linux/seq_file.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
