@@ -5,6 +5,7 @@
 #ifndef _LINUX_PROC_FS_H
 #define _LINUX_PROC_FS_H
 
+#include <linux/err.h>
 #include <linux/bug.h>
 #include <linux/compiler.h>
 #include <linux/types.h>

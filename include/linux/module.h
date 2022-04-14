@@ -9,6 +9,7 @@
 #ifndef _LINUX_MODULE_H
 #define _LINUX_MODULE_H
 
+#include <linux/err.h>
 #include <linux/list.h>
 #include <linux/stat.h>
 #include <linux/buildid.h>

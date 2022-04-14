@@ -7,6 +7,7 @@
 #ifndef _LINUX_SWITCHDEV_H_
 #define _LINUX_SWITCHDEV_H_
 
+#include <linux/err.h>
 #include <linux/netdevice.h>
 #include <linux/notifier.h>
 #include <linux/list.h>

@@ -4,6 +4,7 @@
 
 #ifdef CONFIG_FAULT_INJECTION
 
+#include <linux/err.h>
 #include <linux/types.h>
 #include <linux/debugfs.h>
 #include <linux/ratelimit.h>

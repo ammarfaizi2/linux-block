@@ -2,6 +2,7 @@
 #ifndef _LINUX_TTY_H
 #define _LINUX_TTY_H
 
+#include <linux/err.h>
 #include <linux/fs.h>
 #include <linux/major.h>
 #include <linux/termios.h>
