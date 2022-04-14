@@ -6,6 +6,7 @@
 
 /* Internal header file for autofs */
 
+#include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/auto_fs.h>
 #include <linux/auto_dev-ioctl.h>

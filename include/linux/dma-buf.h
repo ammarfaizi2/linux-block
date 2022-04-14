@@ -13,6 +13,7 @@
 #ifndef __DMA_BUF_H__
 #define __DMA_BUF_H__
 
+#include <linux/fs_api.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/iosys-map.h>
 #include <linux/file.h>

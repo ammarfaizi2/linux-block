@@ -20,6 +20,7 @@
 #if !defined(_IOMAP_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _IOMAP_TRACE_H
 
+#include <linux/fs_api.h>
 #include <linux/tracepoint.h>
 
 struct inode;

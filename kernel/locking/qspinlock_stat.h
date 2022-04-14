@@ -11,6 +11,7 @@
 /*
  * Collect pvqspinlock locking event counts
  */
+#include <linux/fs_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched.h>
 #include <linux/sched/clock.h>

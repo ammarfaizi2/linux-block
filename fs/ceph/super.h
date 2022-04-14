@@ -2,6 +2,7 @@
 #ifndef _FS_CEPH_SUPER_H
 #define _FS_CEPH_SUPER_H
 
+#include <linux/fs_api.h>
 #include <linux/ceph/ceph_debug.h>
 
 #include <asm/unaligned.h>

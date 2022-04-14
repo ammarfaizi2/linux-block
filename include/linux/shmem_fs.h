@@ -2,6 +2,7 @@
 #ifndef __SHMEM_FS_H
 #define __SHMEM_FS_H
 
+#include <linux/fs_api.h>
 #include <linux/file.h>
 #include <linux/swap.h>
 #include <linux/mempolicy.h>

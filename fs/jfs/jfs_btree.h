@@ -5,6 +5,7 @@
 #ifndef	_H_JFS_BTREE
 #define _H_JFS_BTREE
 
+#include <linux/fs_api.h>
 #include <linux/types.h>
 
 /*

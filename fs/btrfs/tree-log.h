@@ -6,6 +6,8 @@
 #ifndef BTRFS_TREE_LOG_H
 #define BTRFS_TREE_LOG_H
 
+#include <linux/fs_api.h>
+
 #include "ctree.h"
 #include "transaction.h"
 

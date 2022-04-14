@@ -6,6 +6,8 @@
 #ifndef	__XFS_INODE_H__
 #define	__XFS_INODE_H__
 
+#include <linux/fs_api.h>
+
 #include "xfs_inode_buf.h"
 #include "xfs_inode_fork.h"
 

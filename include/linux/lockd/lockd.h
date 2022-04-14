@@ -12,6 +12,7 @@
 
 /* XXX: a lot of this should really be under fs/lockd. */
 
+#include <linux/fs_api.h>
 #include <linux/in.h>
 #include <linux/in6.h>
 #include <net/ipv6.h>
