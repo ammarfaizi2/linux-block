@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/acpi.h>
 #include <linux/firmware.h>
 #include "amdgpu.h"
 #include "amdgpu_vcn.h"

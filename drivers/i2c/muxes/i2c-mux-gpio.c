@@ -5,6 +5,7 @@
  * Peter Korsgaard <peter.korsgaard@barco.com>
  */
 
+#include <linux/acpi.h>
 #include <linux/i2c.h>
 #include <linux/i2c-mux.h>
 #include <linux/overflow.h>
