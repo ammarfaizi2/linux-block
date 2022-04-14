@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <net/sock.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmstat.h>
 #include <linux/topology.h>
