@@ -15,6 +15,7 @@
 
 #if !defined(__ASSEMBLY__)
 
+#include <linux/io_extra.h>
 #include <asm/pgtable.h>
 #include <linux/crash_core.h>
 #include <asm/io.h>

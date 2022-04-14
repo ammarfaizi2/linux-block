@@ -8,6 +8,7 @@
 #ifndef _ASM_X86_VGA_H
 #define _ASM_X86_VGA_H
 
+#include <linux/io_extra.h>
 #include <asm/set_memory.h>
 
 /*
