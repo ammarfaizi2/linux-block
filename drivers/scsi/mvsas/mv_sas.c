@@ -7,6 +7,8 @@
  * Copyright 2009-2011 Marvell. <yuxiangl@marvell.com>
 */
 
+#include <asm/unaligned.h>
+
 #include "mv_sas.h"
 
 static int mvs_find_tag(struct mvs_info *mvi, struct sas_task *task, u32 *tag)

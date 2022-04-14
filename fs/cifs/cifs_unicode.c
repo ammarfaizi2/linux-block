@@ -4,6 +4,7 @@
  *   Copyright (c) International Business Machines  Corp., 2000,2009
  *   Modified by Steve French (sfrench@us.ibm.com)
  */
+#include <asm/unaligned.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
 #include "cifs_fs_sb.h"

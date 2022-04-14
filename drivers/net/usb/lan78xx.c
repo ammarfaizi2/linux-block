@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2015 Microchip Technology
  */
+#include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>

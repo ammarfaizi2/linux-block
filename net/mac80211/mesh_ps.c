@@ -5,6 +5,8 @@
  * Copyright (C) 2021 Intel Corporation
  */
 
+#include <asm/unaligned.h>
+
 #include "mesh.h"
 #include "wme.h"
 

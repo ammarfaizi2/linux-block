@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Ilya Dryomov <idryomov@gmail.com>
  */
 
+#include <asm/unaligned.h>
 #include <linux/ceph/ceph_debug.h>
 
 #include <crypto/aead.h>

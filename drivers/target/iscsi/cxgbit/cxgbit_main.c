@@ -9,6 +9,7 @@
 
 #include "cxgbit.h"
 
+#include <asm/unaligned.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_CHELSIO_T4_DCB

@@ -5,6 +5,7 @@
  * Copyright (C) 2011-2013 ASIX
  */
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/etherdevice.h>
 #include <linux/mii.h>

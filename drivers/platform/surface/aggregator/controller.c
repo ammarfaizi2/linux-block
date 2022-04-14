@@ -5,6 +5,7 @@
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
+#include <asm/unaligned.h>
 #include <linux/acpi.h>
 #include <linux/atomic.h>
 #include <linux/completion.h>

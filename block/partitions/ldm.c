@@ -9,6 +9,7 @@
  * Documentation is available at http://www.linux-ntfs.org/doku.php?id=downloads 
  */
 
+#include <asm/unaligned.h>
 #include <linux/slab.h>
 #include <linux/pagemap.h>
 #include <linux/stringify.h>

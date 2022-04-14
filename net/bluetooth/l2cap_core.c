@@ -28,6 +28,7 @@
 
 /* Bluetooth L2CAP core. */
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 
 #include <linux/debugfs.h>

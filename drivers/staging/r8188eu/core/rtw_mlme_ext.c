@@ -3,6 +3,7 @@
 
 #define _RTW_MLME_EXT_C_
 
+#include <asm/unaligned.h>
 #include <linux/ieee80211.h>
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"

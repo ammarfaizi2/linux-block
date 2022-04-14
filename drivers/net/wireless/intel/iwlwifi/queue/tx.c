@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2020-2022 Intel Corporation
  */
+#include <asm/unaligned.h>
 #include <net/tso.h>
 #include <linux/tcp.h>
 

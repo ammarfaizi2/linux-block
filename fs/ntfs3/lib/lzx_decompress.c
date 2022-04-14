@@ -8,6 +8,8 @@
  * Copyright (C) 2015 Eric Biggers
  */
 
+#include <asm/unaligned.h>
+
 #include "decompress_common.h"
 #include "lib.h"
 

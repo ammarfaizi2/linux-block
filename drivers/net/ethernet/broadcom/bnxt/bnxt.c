@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 
 #include <linux/stringify.h>

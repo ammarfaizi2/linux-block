@@ -11,6 +11,7 @@
  * utilities for mac80211
  */
 
+#include <asm/unaligned.h>
 #include <net/mac80211.h>
 #include <linux/netdevice.h>
 #include <linux/export.h>

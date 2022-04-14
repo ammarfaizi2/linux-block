@@ -5,6 +5,7 @@
  *         Felix Fietkau <nbd@nbd.name>
  */
 
+#include <asm/unaligned.h>
 #include <linux/of.h>
 #include "mt7615.h"
 #include "eeprom.h"

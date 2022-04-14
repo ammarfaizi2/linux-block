@@ -7,6 +7,7 @@
  *  Joliet: Microsoft's Unicode extensions to iso9660
  */
 
+#include <asm/unaligned.h>
 #include <linux/types.h>
 #include <linux/nls.h>
 #include "isofs.h"

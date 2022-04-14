@@ -23,6 +23,7 @@
  */
 #include "priv.h"
 
+#include <asm/unaligned.h>
 #include <subdev/bios.h>
 #include <subdev/bios/bmp.h>
 #include <subdev/bios/bit.h>

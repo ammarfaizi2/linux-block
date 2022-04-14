@@ -3,6 +3,8 @@
 
 #define _IEEE80211_C
 
+#include <asm/unaligned.h>
+
 #include "../include/drv_types.h"
 #include "../include/ieee80211.h"
 #include "../include/wifi.h"

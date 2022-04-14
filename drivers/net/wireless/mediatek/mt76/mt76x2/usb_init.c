@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
+#include <asm/unaligned.h>
 #include <linux/delay.h>
 
 #include "mt76x2u.h"

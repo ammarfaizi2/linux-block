@@ -10,6 +10,7 @@
  * Outputs a small assembly wrapper with the appropriate symbols defined.
  */
 
+#include <asm/unaligned.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

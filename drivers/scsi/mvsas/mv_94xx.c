@@ -7,6 +7,8 @@
  * Copyright 2009-2011 Marvell. <yuxiangl@marvell.com>
 */
 
+#include <asm/unaligned.h>
+
 #include "mv_sas.h"
 #include "mv_94xx.h"
 #include "mv_chips.h"

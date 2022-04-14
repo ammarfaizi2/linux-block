@@ -25,6 +25,7 @@
  * Substantially overhauled by H. Peter Anvin, April 2007
  */
 
+#include <asm/unaligned.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

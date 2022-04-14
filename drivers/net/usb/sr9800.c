@@ -9,6 +9,7 @@
  * kind, whether express or implied.*
  */
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/kmod.h>
 #include <linux/init.h>

@@ -8,6 +8,7 @@
  *  Copyright (C) 2014 Codethink Limited
  */
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>

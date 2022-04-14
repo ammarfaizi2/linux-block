@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/unaligned.h>
 #include <linux/moduleparam.h>
 #include <linux/inetdevice.h>
 #include <linux/export.h>

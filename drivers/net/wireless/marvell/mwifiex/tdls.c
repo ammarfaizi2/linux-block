@@ -16,6 +16,8 @@
  * this warranty disclaimer.
  */
 
+#include <asm/unaligned.h>
+
 #include "main.h"
 #include "wmm.h"
 #include "11n.h"

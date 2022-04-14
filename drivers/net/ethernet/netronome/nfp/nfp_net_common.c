@@ -11,6 +11,7 @@
  *          Chris Telfer <chris.telfer@netronome.com>
  */
 
+#include <asm/unaligned.h>
 #include <linux/bitfield.h>
 #include <linux/bpf.h>
 #include <linux/module.h>

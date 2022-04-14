@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <asm/unaligned.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>

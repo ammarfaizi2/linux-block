@@ -4,6 +4,7 @@
  * Copyright (c)  2003-2017 QLogic Corporation
  */
 #include "qla_nvme.h"
+#include <asm/unaligned.h>
 #include <linux/scatterlist.h>
 #include <linux/delay.h>
 #include <linux/nvme.h>

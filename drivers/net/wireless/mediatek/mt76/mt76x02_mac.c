@@ -4,6 +4,8 @@
  * Copyright (C) 2018 Stanislaw Gruszka <stf_xl@wp.pl>
  */
 
+#include <asm/unaligned.h>
+
 #include "mt76x02.h"
 #include "mt76x02_trace.h"
 #include "trace.h"

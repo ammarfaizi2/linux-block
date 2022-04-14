@@ -5,6 +5,7 @@
  * Copyright (c) 2012-2016, Intel Corporation.
  */
 
+#include <asm/unaligned.h>
 #include <linux/hid.h>
 #include <linux/intel-ish-client-if.h>
 #include <uapi/linux/input.h>

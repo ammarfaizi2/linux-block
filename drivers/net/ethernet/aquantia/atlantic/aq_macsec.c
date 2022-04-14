@@ -5,6 +5,7 @@
 
 #include "aq_macsec.h"
 #include "aq_nic.h"
+#include <asm/unaligned.h>
 #include <linux/rtnetlink.h>
 
 #include "macsec/macsec_api.h"

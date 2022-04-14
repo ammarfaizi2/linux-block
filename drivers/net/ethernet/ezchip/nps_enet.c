@@ -3,6 +3,7 @@
  * Copyright(c) 2015 EZchip Technologies.
  */
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/etherdevice.h>
 #include <linux/interrupt.h>

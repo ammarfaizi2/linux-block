@@ -13,6 +13,7 @@
  */
 #include "ieee80211.h"
 
+#include <asm/unaligned.h>
 #include <linux/random.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

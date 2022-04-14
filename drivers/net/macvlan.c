@@ -9,6 +9,7 @@
  * Re-worked by Ben Greear <greearb@candelatech.com>
  * ---
  */
+#include <asm/unaligned.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <asm/unaligned.h>
 #include <kunit/test.h>
 
 #include "protocol.h"

@@ -19,6 +19,7 @@
  * The valid range of num_buffers is: num >= 2 && num <= 4.
  */
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 #include <linux/blkdev.h>
 #include <linux/file.h>

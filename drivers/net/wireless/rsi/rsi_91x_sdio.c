@@ -15,6 +15,7 @@
  *
  */
 
+#include <asm/unaligned.h>
 #include <linux/module.h>
 #include "rsi_sdio.h"
 #include "rsi_common.h"

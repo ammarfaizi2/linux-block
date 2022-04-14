@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <asm/unaligned.h>
 #include <linux/etherdevice.h>
 #include <linux/if.h>
 #include "rsi_debugfs.h"

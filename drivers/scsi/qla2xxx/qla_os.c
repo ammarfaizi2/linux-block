@@ -5,6 +5,7 @@
  */
 #include "qla_def.h"
 
+#include <asm/unaligned.h>
 #include <linux/moduleparam.h>
 #include <linux/vmalloc.h>
 #include <linux/delay.h>

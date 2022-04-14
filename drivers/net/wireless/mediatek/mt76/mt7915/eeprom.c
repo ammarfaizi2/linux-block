@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
+#include <asm/unaligned.h>
 #include <linux/firmware.h>
 #include "mt7915.h"
 #include "eeprom.h"
