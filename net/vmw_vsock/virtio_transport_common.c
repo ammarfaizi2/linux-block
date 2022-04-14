@@ -6,6 +6,7 @@
  * Author: Asias He <asias@redhat.com>
  *         Stefan Hajnoczi <stefanha@redhat.com>
  */
+#include <linux/sched/task_flags.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>
 #include <linux/module.h>

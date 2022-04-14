@@ -6,6 +6,7 @@
  *  Copyright (C) 2002 by Ron Minnich <rminnich@lanl.gov>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/refcount_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

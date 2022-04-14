@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
