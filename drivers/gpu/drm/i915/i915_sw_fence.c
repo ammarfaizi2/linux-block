@@ -4,6 +4,7 @@
  * (C) Copyright 2016 Intel Corporation
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/debugobjects.h>
 #include <linux/atomic_api.h>
 #include <linux/slab.h>

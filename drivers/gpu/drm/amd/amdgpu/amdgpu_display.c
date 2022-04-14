@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/dma-fence-api.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 #include "amdgpu_i2c.h"

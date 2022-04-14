@@ -22,6 +22,7 @@
  * Authors: Jerome Glisse
  */
 
+#include <linux/dma-fence-api.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 

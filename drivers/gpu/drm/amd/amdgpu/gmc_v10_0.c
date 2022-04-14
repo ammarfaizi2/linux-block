@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+#include <linux/dma-fence-api.h>
 #include <linux/firmware.h>
 #include <linux/pci.h>
 #include "amdgpu.h"

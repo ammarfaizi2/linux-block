@@ -4,6 +4,8 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/dma-fence-api.h>
+
 #include "i915_sw_fence_work.h"
 
 static void fence_complete(struct dma_fence_work *f)

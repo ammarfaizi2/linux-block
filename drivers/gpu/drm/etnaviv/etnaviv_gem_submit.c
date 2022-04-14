@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Etnaviv Project
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_file.h>
 #include <linux/dma-fence-array.h>

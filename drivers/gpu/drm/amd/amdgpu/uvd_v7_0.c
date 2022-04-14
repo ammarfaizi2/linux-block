@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 

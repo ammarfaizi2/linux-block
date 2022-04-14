@@ -4,6 +4,8 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/dma-fence-api.h>
+
 #include "msm_ringbuffer.h"
 #include "msm_gpu.h"
 

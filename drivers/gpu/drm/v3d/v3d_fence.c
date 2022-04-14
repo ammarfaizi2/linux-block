@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (C) 2017-2018 Broadcom */
 
+#include <linux/dma-fence-api.h>
+
 #include "v3d_drv.h"
 
 struct dma_fence *v3d_fence_create(struct v3d_dev *v3d, enum v3d_queue queue)

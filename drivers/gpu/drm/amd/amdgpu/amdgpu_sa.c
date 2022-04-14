@@ -42,6 +42,8 @@
  * rings. We just wait for any of those fence to complete.
  */
 
+#include <linux/dma-fence-api.h>
+
 #include "amdgpu.h"
 
 static void amdgpu_sa_bo_remove_locked(struct amdgpu_sa_bo *sa_bo);

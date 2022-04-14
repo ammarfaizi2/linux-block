@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>
 #include <linux/file.h>

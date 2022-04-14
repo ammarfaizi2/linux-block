@@ -27,6 +27,7 @@
  * Daniel Vetter <daniel.vetter@ffwll.ch>
  */
 
+#include <linux/dma-fence-api.h>
 #include <drm/drm_atomic_uapi.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_print.h>

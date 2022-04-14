@@ -9,6 +9,7 @@
  * of such GNU licence.
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-fence.h>
 
 #include <drm/drm_crtc.h>

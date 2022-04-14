@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Google, Inc.
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/file.h>
 #include <linux/fs.h>
 #include <linux/uaccess.h>

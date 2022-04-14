@@ -22,6 +22,7 @@
  * Authors: Ben Skeggs
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/pci.h>

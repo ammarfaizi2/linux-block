@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/dma-fence-api.h>
+
 #include "amdgpu_vm.h"
 #include "amdgpu_job.h"
 #include "amdgpu_object.h"

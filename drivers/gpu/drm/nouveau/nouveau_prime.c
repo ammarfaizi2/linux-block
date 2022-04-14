@@ -22,6 +22,7 @@
  * Authors: Dave Airlie
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-buf.h>
 
 #include "nouveau_drv.h"

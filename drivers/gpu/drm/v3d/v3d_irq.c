@@ -13,6 +13,7 @@
  * current job can make progress.
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/device_api.h>
 #include <linux/platform_device.h>
 

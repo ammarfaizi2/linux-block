@@ -22,6 +22,7 @@
  * Authors: Christian König
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/iosys-map.h>
 #include <linux/io-mapping.h>
 #include <linux/scatterlist.h>

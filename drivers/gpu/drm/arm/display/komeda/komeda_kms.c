@@ -4,6 +4,7 @@
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
+#include <linux/dma-fence-api.h>
 #include <linux/component.h>
 #include <linux/interrupt.h>
 

@@ -45,6 +45,7 @@
  * current job can make progress.
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/platform_device.h>
 
 #include <drm/drm_drv.h>

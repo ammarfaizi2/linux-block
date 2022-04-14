@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-fence.h>
 
 #include "msm_drv.h"
