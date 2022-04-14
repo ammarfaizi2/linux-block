@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "watchdog: " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/param.h>

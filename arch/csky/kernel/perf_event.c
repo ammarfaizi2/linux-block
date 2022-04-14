@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
 
+#include <linux/cpuhotplug.h>
 #include <asm/local64_api.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>

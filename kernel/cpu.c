@@ -3,6 +3,7 @@
  *
  * This code is licenced under the GPL.
  */
+#include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/mm.h>
 #include <linux/proc_fs.h>

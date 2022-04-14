@@ -15,6 +15,7 @@
  *	Oracle, 2004
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>
 #include <linux/profile.h>

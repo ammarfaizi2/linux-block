@@ -3,6 +3,7 @@
  *  Copyright (C) 2014 ARM Limited
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/cpu.h>
 #include <linux/init.h>
 #include <linux/list.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2016 Intel, Ross Zwisler
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>

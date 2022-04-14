@@ -5,6 +5,7 @@
  *  Copyright (C) 2002 ARM Ltd.
  *  All Rights Reserved
  */
+#include <linux/cpuhotplug.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/clk.h>

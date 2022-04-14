@@ -28,6 +28,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/cpuhotplug.h>
+
 #include "bman_priv.h"
 
 static struct bman_portal *affine_bportals[NR_CPUS];

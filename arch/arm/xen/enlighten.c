@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/cpuhotplug.h>
 #include <xen/xen.h>
 #include <xen/events.h>
 #include <xen/grant_table.h>

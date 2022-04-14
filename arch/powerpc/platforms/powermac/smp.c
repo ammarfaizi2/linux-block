@@ -17,6 +17,7 @@
  * Support for DayStar quad CPU cards
  * Copyright (C) XLR8, Inc. 1994-2000
  */
+#include <linux/cpuhotplug.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/sched/hotplug.h>

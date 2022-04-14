@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/cpuhotplug.h>
 #include <linux/console.h>
 #include <linux/cpu.h>
 #include <linux/kexec.h>

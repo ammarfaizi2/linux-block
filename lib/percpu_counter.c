@@ -3,6 +3,7 @@
  * Fast batching percpu counters.
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/percpu_counter.h>
 #include <linux/mutex.h>
 #include <linux/init.h>

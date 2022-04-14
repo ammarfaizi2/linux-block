@@ -28,6 +28,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/cpuhotplug.h>
+
 #include "qman_priv.h"
 
 struct qman_portal *qman_dma_portal;

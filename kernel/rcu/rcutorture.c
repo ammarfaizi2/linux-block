@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/types.h>

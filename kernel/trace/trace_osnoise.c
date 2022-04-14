@@ -16,6 +16,7 @@
  * Copyright (C) 2021 Daniel Bristot de Oliveira, Red Hat, Inc. <bristot@redhat.com>
  */
 
+#include <linux/cpuhotplug.h>
 #include <asm/local_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kthread.h>

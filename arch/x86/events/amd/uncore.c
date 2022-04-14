@@ -5,6 +5,7 @@
  * Author: Jacob Shin <jacob.shin@amd.com>
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <asm/local64_api.h>

@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "mips-gic-timer: " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/clk.h>
 #include <linux/clockchips.h>
 #include <linux/cpu.h>

@@ -14,6 +14,8 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/cpuhotplug.h>
+
 #include "bnx2i.h"
 
 static struct list_head adapter_list = LIST_HEAD_INIT(adapter_list);

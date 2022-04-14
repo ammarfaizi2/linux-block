@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "kvm-guest: " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <asm/processor_api.h>
 #include <asm/paravirt_api_clock.h>

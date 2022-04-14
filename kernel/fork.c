@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/bpf-cgroup-api.h>
 #include <linux/atomic_api.h>
 #include <linux/kprobes.h>

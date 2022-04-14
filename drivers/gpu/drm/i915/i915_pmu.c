@@ -4,6 +4,7 @@
  * Copyright © 2017-2018 Intel Corporation
  */
 
+#include <linux/cpuhotplug.h>
 #include <asm/local64_api.h>
 #include <linux/pm_runtime.h>
 

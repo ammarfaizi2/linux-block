@@ -7,6 +7,7 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/cpu.h>
 #include <linux/debugfs.h>
 #include <linux/hardirq.h>

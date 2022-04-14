@@ -12,6 +12,7 @@
  */
 #define pr_fmt(fmt) "hw-breakpoint: " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/errno.h>
 #include <linux/hardirq.h>
 #include <linux/perf_event.h>

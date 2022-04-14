@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "ODEBUG: " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/debugobjects.h>
 #include <linux/interrupt.h>
 #include <linux/sched.h>

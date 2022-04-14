@@ -12,6 +12,7 @@
  *		Initial version
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/backing-dev-api.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/task_flags.h>

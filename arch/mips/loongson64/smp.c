@@ -4,6 +4,7 @@
  * Author: Chen Huacai, chenhc@lemote.com
  */
 
+#include <linux/cpuhotplug.h>
 #include <irq.h>
 #include <linux/init.h>
 #include <linux/cpu.h>

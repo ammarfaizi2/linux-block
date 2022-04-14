@@ -19,6 +19,7 @@
  * Copyright 2011 - 2012 Bryan Wu <bryan.wu@canonical.com>
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

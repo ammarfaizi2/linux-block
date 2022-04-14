@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2004-2008, 2009, 2010 Cavium Networks
  */
+#include <linux/cpuhotplug.h>
 #include <linux/cpu.h>
 #include <linux/delay.h>
 #include <linux/smp.h>

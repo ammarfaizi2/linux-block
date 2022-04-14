@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "hw-breakpoint: " fmt
 
+#include <linux/cpuhotplug.h>
 #include <linux/compat.h>
 #include <linux/cpu_pm.h>
 #include <linux/errno.h>

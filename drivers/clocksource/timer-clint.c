@@ -7,6 +7,7 @@
  */
 
 #define pr_fmt(fmt) "clint: " fmt
+#include <linux/cpuhotplug.h>
 #include <linux/bitops.h>
 #include <linux/clocksource.h>
 #include <linux/clockchips.h>
