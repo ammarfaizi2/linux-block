@@ -8,6 +8,7 @@
 #ifndef _MMC_CORE_BUS_H
 #define _MMC_CORE_BUS_H
 
+#include <linux/stat.h>
 #include <linux/device.h>
 #include <linux/sysfs.h>
 

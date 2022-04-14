@@ -6,6 +6,7 @@
 #ifndef _EXFAT_FS_H
 #define _EXFAT_FS_H
 
+#include <linux/stat.h>
 #include <linux/fs.h>
 #include <linux/ratelimit.h>
 #include <linux/nls.h>
