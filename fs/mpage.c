@@ -13,6 +13,7 @@
  *		use bio_add_page() to build bio's just the right size
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/fs_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/kernel.h>

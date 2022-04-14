@@ -5,6 +5,7 @@
  * Copyright (C) 1999, 2000, 2002  Niibe Yutaka
  * Copyright (C) 2002 - 2010  Paul Mundt
  */
+#include <linux/highmem_extra.h>
 #include <linux/cpumask_api.h>
 #include <linux/mm.h>
 #include <linux/init.h>

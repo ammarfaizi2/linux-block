@@ -5,6 +5,7 @@
   * Copyright (c) 2019 Sven Schnelle <svens@stackframe.org>
   */
 
+#include <linux/highmem_extra.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
 #include <linux/kprobes.h>

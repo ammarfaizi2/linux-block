@@ -17,6 +17,7 @@
  * Copyright (C) 1999 Ingo Molnar <mingo@redhat.com>
  */
 
+#include <linux/highmem_extra.h>
 #include <asm/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/export.h>

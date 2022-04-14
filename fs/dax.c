@@ -6,6 +6,7 @@
  * Author: Ross Zwisler <ross.zwisler@linux.intel.com>
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/hashtable_api.h>
 #include <linux/hash.h>
 #include <linux/fs_api.h>

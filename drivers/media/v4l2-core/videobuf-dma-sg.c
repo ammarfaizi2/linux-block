@@ -15,6 +15,7 @@
  * (c) 2006 Ted Walther and John Sokol
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/init.h>
 #include <linux/module.h>

@@ -7,6 +7,7 @@
  * This handles copy_user_highpage and clear_user_page on Feroceon
  * more optimally than the generic implementations.
  */
+#include <linux/highmem_extra.h>
 #include <asm/cacheflush.h>
 #include <linux/init.h>
 #include <linux/highmem.h>

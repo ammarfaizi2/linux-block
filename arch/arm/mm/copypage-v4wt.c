@@ -7,6 +7,7 @@
  *  This is for CPUs with a writethrough cache and 'flush ID cache' is
  *  the only supported cache operation.
  */
+#include <linux/highmem_extra.h>
 #include <linux/init.h>
 #include <linux/highmem.h>
 

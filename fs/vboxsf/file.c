@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/fs_api.h>
 #include <linux/delayed_call.h>
 #include <asm/cacheflush.h>

@@ -20,6 +20,7 @@
  *		added IO completion notifier.
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/fs_api.h>
 #include <linux/fs_api_dio.h>
 #include <linux/atomic_api.h>

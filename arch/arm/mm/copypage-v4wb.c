@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-1999 Russell King
  */
+#include <linux/highmem_extra.h>
 #include <asm/cacheflush.h>
 #include <linux/init.h>
 #include <linux/highmem.h>

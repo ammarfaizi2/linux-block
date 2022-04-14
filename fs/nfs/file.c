@@ -17,6 +17,7 @@
  *  nfs regular file handling functions
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/backing-dev-api.h>

@@ -5,6 +5,7 @@
  */
 #include "zdata.h"
 #include "compress.h"
+#include <linux/highmem_extra.h>
 #include <linux/gfp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
