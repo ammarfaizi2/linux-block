@@ -8,6 +8,7 @@
  * to continually duplicate across every architecture.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

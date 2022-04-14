@@ -15,6 +15,7 @@
  */
 #define pr_fmt(fmt) "seccomp: " fmt
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/refcount_api.h>

@@ -15,6 +15,7 @@
  *     of fds to overcome nfds < 16390 descriptors limit (Tigran Aivazian).
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/poll_time.h>
 #include <linux/mm_api_kvmalloc.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2002, 2003, 2006 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>

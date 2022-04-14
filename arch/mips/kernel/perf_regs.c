@@ -9,6 +9,7 @@
  * Copyright (C) 2013 Cavium, Inc.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/perf_event.h>
 

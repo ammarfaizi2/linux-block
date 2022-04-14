@@ -7,6 +7,7 @@
  * Copyrignt (C) 2006 Michael Ellerman, IBM Corp
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>

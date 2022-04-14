@@ -10,6 +10,7 @@
 #include "saa7134.h"
 #include "saa7134-reg.h"
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

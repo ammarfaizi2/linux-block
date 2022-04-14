@@ -10,6 +10,7 @@
  * Generic code for virtio server in host kernel.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/prefetch.h>
 #include <linux/mutex_api.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2008 ARM Limited
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 

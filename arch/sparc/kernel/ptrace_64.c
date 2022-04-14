@@ -11,6 +11,7 @@
  * to emulate SunOS).
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/preempt.h>
 #include <linux/mm_api.h>

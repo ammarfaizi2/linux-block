@@ -3,6 +3,7 @@
  *
  *  Copyright (C) 2006-2009 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/pagefault_ctrl.h>
 #include <asm/ptrace.h>
 #include <linux/sched.h>

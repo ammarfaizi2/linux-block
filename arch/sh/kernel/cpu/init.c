@@ -7,6 +7,7 @@
  * Copyright (C) 2002 - 2009  Paul Mundt
  * Copyright (C) 2003  Richard Curnow
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

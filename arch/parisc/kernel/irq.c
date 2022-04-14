@@ -8,6 +8,7 @@
  * Copyright (C) 1999-2000 Grant Grundler
  * Copyright (c) 2005 Matthew Wilcox
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

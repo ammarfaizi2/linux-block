@@ -9,6 +9,7 @@
  *    Copyright (C) 1995  Linus Torvalds
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>

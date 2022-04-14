@@ -7,6 +7,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/perf_event_api.h>
 #include <linux/kernel.h>

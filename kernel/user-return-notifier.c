@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/user-return-notifier.h>

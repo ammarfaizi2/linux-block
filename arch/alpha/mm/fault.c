@@ -5,6 +5,7 @@
  *  Copyright (C) 1995  Linus Torvalds
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>

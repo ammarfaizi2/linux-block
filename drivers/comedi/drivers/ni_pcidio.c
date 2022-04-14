@@ -38,6 +38,7 @@
 
 #define USE_DMA
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/delay.h>

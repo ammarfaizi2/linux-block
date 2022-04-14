@@ -9,6 +9,7 @@
  *    Copyright (C) 1999-2020 Helge Deller <deller@gmx.de>
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/mm_api.h>
 #include <linux/uaccess.h>
 #include <asm/elf.h>

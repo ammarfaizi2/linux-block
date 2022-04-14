@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/sched/task_stack.h>

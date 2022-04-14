@@ -7,6 +7,7 @@
  * Author: Colin Cross <ccross@android.com>
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

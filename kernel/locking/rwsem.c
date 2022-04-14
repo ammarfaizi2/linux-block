@@ -15,6 +15,7 @@
  * Peter Zijlstra <peterz@infradead.org>.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/math.h>
 #include <linux/lockdep_api.h>

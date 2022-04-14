@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

@@ -7,6 +7,7 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/rculist.h>
 #include <linux/ptrace_api.h>
 #include <linux/preempt.h>

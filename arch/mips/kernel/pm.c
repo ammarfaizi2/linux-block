@@ -5,6 +5,7 @@
  * CPU PM notifiers for saving/restoring general CPU state.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/cpu_pm.h>
 #include <linux/init.h>
 

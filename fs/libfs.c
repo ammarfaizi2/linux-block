@@ -4,6 +4,7 @@
  *	Library for filesystems writers.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>

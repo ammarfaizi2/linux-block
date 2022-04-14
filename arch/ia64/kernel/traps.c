@@ -8,6 +8,7 @@
  * 05/12/00 grao <goutham.rao@intel.com> : added isr in siginfo for SIGFPE
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/preempt.h>

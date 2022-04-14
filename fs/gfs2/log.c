@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2007 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/jiffies.h>

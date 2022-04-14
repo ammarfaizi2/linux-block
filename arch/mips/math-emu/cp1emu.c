@@ -21,6 +21,7 @@
  * Note if you know that you won't have an FPU, then you'll get much
  * better performance by compiling with -msoft-float!
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/preempt.h>

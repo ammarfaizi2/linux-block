@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/refcount_api.h>
 #include <linux/prefetch.h>
 #include <linux/mutex_api.h>

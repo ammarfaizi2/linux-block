@@ -4,6 +4,7 @@
  * Author: Chen Huacai, chenhc@lemote.com
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

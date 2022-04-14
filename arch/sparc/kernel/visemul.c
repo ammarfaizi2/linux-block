@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2006 David S. Miller (davem@davemloft.net)
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Google LLC
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

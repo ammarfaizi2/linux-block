@@ -11,6 +11,7 @@
  * by Greg Banks <gnb@melbourne.sgi.com>
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/rculist.h>
 #include <linux/ptrace_api.h>

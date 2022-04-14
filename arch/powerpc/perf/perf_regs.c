@@ -3,6 +3,7 @@
  * Copyright 2016 Anju T, IBM Corporation.
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  *    Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2006 Ralf Baechle (ralf@linux-mips.org)
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

@@ -7,6 +7,7 @@
  * Copied from arch/tile/kernel/ptrace.c
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <asm/ptrace.h>

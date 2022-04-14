@@ -9,6 +9,7 @@
  *        Andrey Konovalov <andreyknvl@gmail.com>
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/task.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

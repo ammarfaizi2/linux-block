@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

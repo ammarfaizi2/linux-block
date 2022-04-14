@@ -11,6 +11,7 @@
 #include "cookie.h"
 #include "socket.h"
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/random.h>
 #include <linux/net.h>

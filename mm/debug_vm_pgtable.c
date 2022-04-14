@@ -10,6 +10,7 @@
  */
 #define pr_fmt(fmt) "debug_vm_pgtable: [%-25s]: " fmt, __func__
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_ptlock.h>

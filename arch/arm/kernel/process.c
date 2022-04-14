@@ -5,6 +5,7 @@
  *  Copyright (C) 1996-2000 Russell King - Converted to ARM.
  *  Original Copyright (C) 1995  Linus Torvalds
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>
 #include <linux/notifier_api.h>

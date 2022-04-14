@@ -9,6 +9,7 @@
 #define KMSG_COMPONENT "prng"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
