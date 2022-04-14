@@ -17,6 +17,7 @@
 #ifndef __LINUX_USB_GADGET_H
 #define __LINUX_USB_GADGET_H
 
+#include <linux/math.h>
 #include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/errno.h>

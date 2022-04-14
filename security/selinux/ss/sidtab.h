@@ -11,6 +11,7 @@
 #ifndef _SS_SIDTAB_H_
 #define _SS_SIDTAB_H_
 
+#include <linux/math.h>
 #include <linux/spinlock_types.h>
 #include <linux/log2.h>
 #include <linux/hashtable.h>

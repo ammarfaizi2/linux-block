@@ -10,6 +10,7 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/math.h>
 #include <linux/bitfield.h>
 #include <linux/mm_types.h>
 #include <linux/sched.h>

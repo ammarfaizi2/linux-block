@@ -7,6 +7,7 @@
 #ifndef _CRYPTO_INTERNAL_BLAKE2B_H
 #define _CRYPTO_INTERNAL_BLAKE2B_H
 
+#include <linux/math.h>
 #include <crypto/blake2b.h>
 #include <crypto/internal/hash.h>
 #include <linux/string.h>
