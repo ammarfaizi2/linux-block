@@ -7,6 +7,7 @@
 #ifndef __LINUX_IOMMU_H
 #define __LINUX_IOMMU_H
 
+#include <linux/limits.h>
 #include <linux/scatterlist.h>
 #include <linux/device.h>
 #include <linux/types.h>

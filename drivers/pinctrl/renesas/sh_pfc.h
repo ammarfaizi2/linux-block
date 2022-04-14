@@ -8,6 +8,7 @@
 #ifndef __SH_PFC_H
 #define __SH_PFC_H
 
+#include <linux/limits.h>
 #include <linux/bug.h>
 #include <linux/pinctrl/pinconf-generic.h>
 #include <linux/spinlock.h>
