@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
+#include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/module.h>

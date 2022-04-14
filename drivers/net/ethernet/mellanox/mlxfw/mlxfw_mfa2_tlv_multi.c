@@ -4,6 +4,7 @@
 #define pr_fmt(fmt) "MFA2: " fmt
 
 #include "mlxfw_mfa2_tlv_multi.h"
+#include <linux/err.h>
 #include <uapi/linux/netlink.h>
 
 #define MLXFW_MFA2_TLV_TOTAL_SIZE(tlv) \

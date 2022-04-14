@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "smccc: " fmt
 
+#include <linux/err.h>
 #include <linux/cache.h>
 #include <linux/init.h>
 #include <linux/arm-smccc.h>

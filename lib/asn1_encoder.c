@@ -5,6 +5,7 @@
  * Copyright (C) 2019 James.Bottomley@HansenPartnership.com
  */
 
+#include <linux/err.h>
 #include <linux/asn1_encoder.h>
 #include <linux/bug.h>
 #include <linux/string.h>

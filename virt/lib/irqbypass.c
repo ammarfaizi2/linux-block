@@ -14,6 +14,7 @@
  * bypass.
  */
 
+#include <linux/err.h>
 #include <linux/irqbypass.h>
 #include <linux/list.h>
 #include <linux/module.h>

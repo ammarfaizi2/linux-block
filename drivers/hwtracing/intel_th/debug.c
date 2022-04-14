@@ -5,6 +5,7 @@
  * Copyright (C) 2014-2015 Intel Corporation.
  */
 
+#include <linux/err.h>
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/debugfs.h>
