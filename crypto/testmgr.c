@@ -16,6 +16,7 @@
  *    Copyright (c) 2010, Intel Corporation.
  */
 
+#include <linux/crc32.h>
 #include <crypto/aead.h>
 #include <crypto/hash.h>
 #include <crypto/skcipher.h>

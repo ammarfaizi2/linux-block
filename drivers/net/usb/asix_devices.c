@@ -7,6 +7,8 @@
  * Copyright (c) 2002-2003 TiVo Inc.
  */
 
+#include <linux/crc32.h>
+
 #include "asix.h"
 
 #define PHY_MODE_MARVELL	0x0000

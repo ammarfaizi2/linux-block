@@ -8,6 +8,7 @@
  * Copyright (C) 2018 MIPS Tech, LLC
  */
 
+#include <linux/crc32.h>
 #include <linux/cpufeature.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

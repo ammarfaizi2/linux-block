@@ -8,6 +8,7 @@
 */
 
 #include "dl2k.h"
+#include <linux/crc32.h>
 #include <linux/capability.h>
 #include <linux/dma-mapping.h>
 

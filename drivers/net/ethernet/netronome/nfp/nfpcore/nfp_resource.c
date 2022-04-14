@@ -6,6 +6,7 @@
  * Author: Jakub Kicinski <jakub.kicinski@netronome.com>
  *         Jason McMullan <jason.mcmullan@netronome.com>
  */
+#include <linux/crc32.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>

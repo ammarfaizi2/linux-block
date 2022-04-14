@@ -31,6 +31,7 @@
  * Revision History:
  */
 
+#include <linux/crc32.h>
 #include <linux/file.h>
 #include "device.h"
 #include "card.h"

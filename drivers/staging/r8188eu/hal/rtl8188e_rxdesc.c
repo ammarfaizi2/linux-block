@@ -3,6 +3,8 @@
 
 #define _RTL8188E_REDESC_C_
 
+#include <linux/crc32.h>
+
 #include "../include/osdep_service.h"
 #include "../include/drv_types.h"
 #include "../include/rtl8188e_hal.h"

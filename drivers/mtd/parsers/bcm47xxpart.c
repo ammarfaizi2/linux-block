@@ -5,6 +5,7 @@
  * Copyright © 2012 Rafał Miłecki <zajec5@gmail.com>
  */
 
+#include <linux/crc32.h>
 #include <linux/bcm47xx_nvram.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

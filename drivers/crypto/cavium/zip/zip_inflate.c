@@ -43,6 +43,7 @@
  * WITH YOU.
  ***********************license end**************************************/
 
+#include <linux/crc32.h>
 #include <linux/atomic_api.h>
 #include <linux/delay.h>
 #include <linux/sched.h>

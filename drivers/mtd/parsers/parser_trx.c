@@ -5,6 +5,7 @@
  * Copyright (C) 2012 - 2017 Rafał Miłecki <rafal@milecki.pl>
  */
 
+#include <linux/crc32.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/mtd/mtd.h>
