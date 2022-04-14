@@ -7,6 +7,7 @@
 #ifndef _HFI1_KERNEL_H
 #define _HFI1_KERNEL_H
 
+#include <linux/seqlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/dev_printk.h>
