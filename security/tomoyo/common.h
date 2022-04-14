@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/srcu.h>
 #include <linux/ctype.h>
 #include <linux/string.h>
 #include <linux/mm.h>
