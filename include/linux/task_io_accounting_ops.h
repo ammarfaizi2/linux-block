@@ -5,6 +5,7 @@
 #ifndef __TASK_IO_ACCOUNTING_OPS_INCLUDED
 #define __TASK_IO_ACCOUNTING_OPS_INCLUDED
 
+#include <linux/string.h>
 #include <linux/sched.h>
 
 #ifdef CONFIG_TASK_IO_ACCOUNTING
