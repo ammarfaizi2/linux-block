@@ -15,6 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
  * NONINFRINGEMENT.  See the GNU General Public License for more details.
  ***********************************************************************/
+#include <uapi/linux/net_tstamp.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/tasklet_api.h>
