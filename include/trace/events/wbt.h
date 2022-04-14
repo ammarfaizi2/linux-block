@@ -5,6 +5,7 @@
 #if !defined(_TRACE_WBT_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_WBT_H
 
+#include <linux/backing-dev-api.h>
 #include <linux/tracepoint.h>
 #include "../../../block/blk-wbt.h"
 
