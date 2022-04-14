@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _NET_SUNRPC_SUNRPC_H
 #define _NET_SUNRPC_SUNRPC_H
 
+#include <net/sock_types.h>
 #include <net/dst.h>
 #include <linux/netdevice_types.h>
 #include <linux/netdev_features.h>
