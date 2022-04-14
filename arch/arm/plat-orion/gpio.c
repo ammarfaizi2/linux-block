@@ -10,6 +10,7 @@
 
 #define DEBUG
 
+#include <linux/irq_api_io.h>
 #include <linux/irq_api_gc_lock.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

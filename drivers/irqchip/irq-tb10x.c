@@ -7,6 +7,7 @@
  * Author: Christian Ruppert <christian.ruppert@abilis.com>
  */
 
+#include <linux/irq_api_io.h>
 #include <linux/irq_api_gc_lock.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

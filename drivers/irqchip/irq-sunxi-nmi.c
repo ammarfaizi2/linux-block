@@ -11,6 +11,7 @@
 #define DRV_NAME	"sunxi-nmi"
 #define pr_fmt(fmt)	DRV_NAME ": " fmt
 
+#include <linux/irq_api_io.h>
 #include <linux/irq_api_gc_lock.h>
 #include <linux/bitops.h>
 #include <linux/device.h>

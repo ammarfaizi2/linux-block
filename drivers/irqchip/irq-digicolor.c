@@ -10,6 +10,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/irq_api_io.h>
 #include <linux/io.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>
