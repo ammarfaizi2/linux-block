@@ -2,6 +2,7 @@
 /*
  * legacy.c - traditional, old school PCI bus probing
  */
+#include <asm/x86_init.h>
 #include <linux/init.h>
 #include <linux/export.h>
 #include <linux/pci.h>
