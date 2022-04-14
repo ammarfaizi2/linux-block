@@ -2,6 +2,7 @@
 #ifndef _KERNEL_TIME_TIMEKEEPING_H
 #define _KERNEL_TIME_TIMEKEEPING_H
 
+#include <linux/seqlock.h>
 #include <linux/types.h>
 
 /*
