@@ -17,6 +17,7 @@
  *  Send feedback to: megaraidlinux.pdl@broadcom.com
  */
 
+#include <linux/signal.h>
 #include <linux/semaphore.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>
