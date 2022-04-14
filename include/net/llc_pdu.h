@@ -12,6 +12,7 @@
  * See the GNU General Public License for more details.
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/if_ether.h>
 
 /* Lengths of frame formats */

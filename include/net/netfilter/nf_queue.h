@@ -2,6 +2,7 @@
 #ifndef _NF_QUEUE_H
 #define _NF_QUEUE_H
 
+#include <linux/if_ether_api.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/jhash.h>
