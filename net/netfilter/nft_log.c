@@ -6,6 +6,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/audit.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

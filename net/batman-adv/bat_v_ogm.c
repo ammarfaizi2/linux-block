@@ -7,6 +7,7 @@
 #include "bat_v_ogm.h"
 #include "main.h"
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>

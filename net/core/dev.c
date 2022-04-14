@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/gfp_api.h>

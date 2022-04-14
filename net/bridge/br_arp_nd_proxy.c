@@ -9,6 +9,7 @@
  *	Roopa Prabhu <roopa@cumulusnetworks.com>
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>

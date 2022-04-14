@@ -7,6 +7,7 @@
  * Copyright (c) 2020 Microsemi Corporation
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/consumer.h>
 #include <linux/ip.h>

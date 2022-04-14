@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Broadcom Corporation
  */
 
+#include <linux/if_ether_api.h>
 #include <linux/fs_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/debugfs.h>

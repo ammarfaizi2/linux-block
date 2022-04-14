@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/if_ether_api.h>
 #include <linux/highmem.h>
 #include <linux/gfp_api.h>
 #include <linux/dma-mapping.h>

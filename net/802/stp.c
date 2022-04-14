@@ -4,6 +4,7 @@
  *
  *	Copyright (c) 2008 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/mutex.h>
 #include <linux/skbuff.h>

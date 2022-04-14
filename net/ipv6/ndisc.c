@@ -25,6 +25,7 @@
 
 #define pr_fmt(fmt) "ICMPv6: " fmt
 
+#include <linux/if_ether_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>
 #include <linux/errno.h>

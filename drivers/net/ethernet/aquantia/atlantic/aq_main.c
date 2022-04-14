@@ -15,6 +15,7 @@
 #include "aq_filters.h"
 #include "aq_hw_utils.h"
 
+#include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/module.h>

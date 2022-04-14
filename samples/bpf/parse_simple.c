@@ -5,6 +5,7 @@
  * License as published by the Free Software Foundation.
  */
 #define KBUILD_MODNAME "foo"
+#include <linux/if_ether_api.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/in.h>

@@ -1,3 +1,4 @@
+#include <linux/if_ether_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
