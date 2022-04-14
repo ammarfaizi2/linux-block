@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Texas Instruments
  */
 
+#include <linux/skbuff_api_page_pool.h>
 #include <linux/rtnetlink.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

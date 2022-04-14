@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/skbuff_api_page_pool.h>
 #include <linux/skbuff_api_nf.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api_extra.h>
