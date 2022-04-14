@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #include "cgroup-internal.h"
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/seq_file.h>

@@ -9,6 +9,7 @@
  * Re-worked by Ben Greear <greearb@candelatech.com>
  * ---
  */
+#include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/rtnetlink.h>

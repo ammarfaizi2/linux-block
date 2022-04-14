@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/stringhash.h>

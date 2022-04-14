@@ -13,6 +13,7 @@
  *  For all the glorious comments look at include/net/red.h
  */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/slab.h>

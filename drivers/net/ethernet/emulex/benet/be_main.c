@@ -11,6 +11,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>

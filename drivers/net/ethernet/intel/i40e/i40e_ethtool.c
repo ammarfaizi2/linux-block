@@ -3,6 +3,7 @@
 
 /* ethtool support for i40e */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>

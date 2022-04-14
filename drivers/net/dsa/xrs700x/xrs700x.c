@@ -4,6 +4,7 @@
  * George McCollister <george.mccollister@gmail.com>
  */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>

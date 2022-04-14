@@ -2,6 +2,7 @@
 /*
  * (C) 2007 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

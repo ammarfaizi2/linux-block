@@ -5,6 +5,7 @@
  * Copyright 2015-2017 Socionext Inc.
  */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
