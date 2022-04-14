@@ -8,6 +8,7 @@
 #if !defined(_TRACE_NFS_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_NFS_H
 
+#include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/tracepoint.h>

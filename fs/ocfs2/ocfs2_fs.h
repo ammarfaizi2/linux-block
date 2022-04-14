@@ -10,6 +10,7 @@
 #ifndef _OCFS2_FS_H
 #define _OCFS2_FS_H
 
+#include <linux/fs_entry_types.h>
 #include <linux/magic.h>
 
 /* Version */

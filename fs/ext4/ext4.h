@@ -17,6 +17,7 @@
 #ifndef _EXT4_H
 #define _EXT4_H
 
+#include <linux/fs_entry_types.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/refcount.h>
