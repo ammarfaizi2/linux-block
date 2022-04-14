@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  */
+#include <linux/sched/mm.h>
 #include <linux/sched.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pid.h>

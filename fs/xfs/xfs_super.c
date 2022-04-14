@@ -39,6 +39,7 @@
 #include "xfs_ag.h"
 #include "xfs_defer.h"
 
+#include <linux/sched/mm.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/percpu.h>
