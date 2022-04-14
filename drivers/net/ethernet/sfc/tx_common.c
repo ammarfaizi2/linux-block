@@ -8,6 +8,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/tcp.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/netdevice_api.h>

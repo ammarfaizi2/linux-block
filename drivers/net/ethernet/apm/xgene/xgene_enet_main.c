@@ -7,6 +7,7 @@
  *	    Keyur Chudgar <kchudgar@apm.com>
  */
 
+#include <linux/tcp.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
