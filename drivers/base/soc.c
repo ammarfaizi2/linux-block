@@ -5,6 +5,7 @@
  * Author: Lee Jones <lee.jones@linaro.org> for ST-Ericsson.
  */
 
+#include <linux/device/bus.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/sysfs.h>

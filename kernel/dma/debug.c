@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt)	"DMA-API: " fmt
 
+#include <linux/device/bus.h>
 #include <linux/device_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/sched/task_stack.h>

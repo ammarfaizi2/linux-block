@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2011 Jonathan Cameron
  */
+#include <linux/device/bus.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/err.h>
