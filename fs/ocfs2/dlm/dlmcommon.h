@@ -8,6 +8,7 @@
 #ifndef DLMCOMMON_H
 #define DLMCOMMON_H
 
+#include <linux/dcache.h>
 #include <linux/bitmap.h>
 #include <linux/kref.h>
 

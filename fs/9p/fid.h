@@ -6,6 +6,7 @@
  */
 #ifndef FS_9P_FID_H
 #define FS_9P_FID_H
+#include <linux/dcache.h>
 #include <linux/list.h>
 
 struct p9_fid *v9fs_fid_lookup(struct dentry *dentry);

@@ -10,6 +10,7 @@
 #ifndef __AA_LIB_H
 #define __AA_LIB_H
 
+#include <linux/dcache.h>
 #include <linux/slab.h>
 #include <linux/fs.h>
 #include <linux/lsm_hooks.h>

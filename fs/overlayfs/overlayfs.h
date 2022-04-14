@@ -4,6 +4,7 @@
  * Copyright (C) 2011 Novell Inc.
  */
 
+#include <linux/dcache.h>
 #include <linux/kernel.h>
 #include <linux/uuid.h>
 #include <linux/fs.h>

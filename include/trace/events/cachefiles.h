@@ -10,6 +10,7 @@
 #if !defined(_TRACE_CACHEFILES_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_CACHEFILES_H
 
+#include <linux/dcache.h>
 #include <linux/tracepoint.h>
 
 /*

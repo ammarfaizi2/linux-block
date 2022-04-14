@@ -13,6 +13,7 @@
 #ifndef _LINUX_FSCRYPT_H
 #define _LINUX_FSCRYPT_H
 
+#include <linux/dcache.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/slab.h>

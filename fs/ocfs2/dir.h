@@ -10,6 +10,7 @@
 #ifndef OCFS2_DIR_H
 #define OCFS2_DIR_H
 
+#include <linux/dcache.h>
 #include <linux/types.h>
 
 struct ocfs2_dx_hinfo {
