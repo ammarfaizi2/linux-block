@@ -10,6 +10,7 @@
  * Copyright 1993, 1994: Eric Youngdale (ericy@cais.com).
  */
 
+#include <linux/time32.h>
 #include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>
 #include <linux/mmap_lock.h>
