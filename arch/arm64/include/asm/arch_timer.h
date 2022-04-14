@@ -8,6 +8,7 @@
 #ifndef __ASM_ARCH_TIMER_H
 #define __ASM_ARCH_TIMER_H
 
+#include <linux/percpu.h>
 #include <asm/barrier.h>
 #include <asm/hwcap.h>
 #include <asm/sysreg.h>

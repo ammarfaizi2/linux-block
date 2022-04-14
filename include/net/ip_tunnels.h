@@ -2,6 +2,7 @@
 #ifndef __NET_IP_TUNNELS_H
 #define __NET_IP_TUNNELS_H 1
 
+#include <linux/percpu.h>
 #include <linux/if_tunnel.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
