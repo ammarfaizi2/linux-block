@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/seq_file.h>
 #include <linux/pgtable_api.h>
 #include <linux/net.h>
 #include <linux/jiffies.h>

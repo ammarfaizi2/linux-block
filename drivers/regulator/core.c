@@ -7,6 +7,7 @@
 //
 // Author: Liam Girdwood <lrg@slimlogic.co.uk>
 
+#include <linux/seq_file.h>
 #include <linux/rwsem_api.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

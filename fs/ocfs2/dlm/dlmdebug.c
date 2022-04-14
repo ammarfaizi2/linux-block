@@ -7,6 +7,7 @@
  * Copyright (C) 2004, 2008 Oracle.  All rights reserved.
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

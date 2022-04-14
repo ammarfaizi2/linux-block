@@ -7,6 +7,7 @@
  *  Copyright (C) 2012 John Crispin <john@phrozen.org>
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/gpio/driver.h>

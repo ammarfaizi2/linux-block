@@ -6,6 +6,7 @@
  * Standard functionality for the common clock API.  See Documentation/driver-api/clk.rst
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

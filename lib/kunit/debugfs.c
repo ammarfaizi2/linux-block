@@ -4,6 +4,7 @@
  *    Author: Alan Maguire <alan.maguire@oracle.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include <linux/module.h>
 

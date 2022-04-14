@@ -8,6 +8,7 @@
  * For certain dcmd codes, the dongle interprets string data from the host.
  ******************************************************************************/
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

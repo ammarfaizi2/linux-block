@@ -15,6 +15,7 @@
 /************************************************************
  * include files
  ************************************************************/
+#include <linux/seq_file.h>
 #include <linux/delay.h>
 
 #include "halbt_precomp.h"

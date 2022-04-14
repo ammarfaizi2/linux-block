@@ -10,6 +10,7 @@
  *	Grzegorz Jaszczyk <grzegorz.jaszczyk@linaro.org> for Texas Instruments
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -4,6 +4,8 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/seq_file.h>
+
 #include "i915_drv.h"
 #include "intel_gt_debugfs.h"
 #include "intel_gt_regs.h"

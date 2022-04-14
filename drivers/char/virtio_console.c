@@ -4,6 +4,7 @@
  * Copyright (C) 2009, 2010, 2011 Red Hat, Inc.
  * Copyright (C) 2009, 2010, 2011 Amit Shah <amit.shah@redhat.com>
  */
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

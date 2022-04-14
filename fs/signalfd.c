@@ -18,6 +18,7 @@
  *      Attach to the sighand only during read() and poll().
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched/signal.h>
 #include <linux/fs_api.h>
 #include <linux/file.h>

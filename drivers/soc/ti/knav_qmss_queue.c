@@ -8,6 +8,7 @@
  *		Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/rculist.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>

@@ -17,6 +17,7 @@
  *
  * atp885 support add by ACARD Hao Ping Lian 2005/01/05
  */
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/module.h>

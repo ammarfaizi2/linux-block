@@ -4,6 +4,7 @@
  * Author: Benjamin Gaignard <benjamin.gaignard@st.com> for STMicroelectronics.
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>

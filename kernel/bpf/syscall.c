@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  */
+#include <linux/seq_file.h>
 #include <linux/sched/user.h>
 #include <linux/sched/task.h>
 #include <linux/sched/mm.h>

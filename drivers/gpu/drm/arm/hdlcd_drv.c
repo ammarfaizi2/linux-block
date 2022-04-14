@@ -9,6 +9,7 @@
  *  ARM HDLCD Driver
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/interrupt.h>

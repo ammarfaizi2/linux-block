@@ -7,6 +7,7 @@
  *	Jaswinder Singh <jassi.brar@samsung.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>

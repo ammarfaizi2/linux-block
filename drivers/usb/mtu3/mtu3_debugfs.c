@@ -7,6 +7,7 @@
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>

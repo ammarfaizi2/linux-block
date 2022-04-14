@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/seq_file.h>
 #include <linux/sched/user.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/task.h>

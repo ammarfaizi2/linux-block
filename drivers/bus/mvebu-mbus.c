@@ -47,6 +47,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/capability.h>
 #include <linux/kernel.h>

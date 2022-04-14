@@ -37,6 +37,7 @@
  * are deemed to be part of the source code.
  */
 
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/blkdev.h>

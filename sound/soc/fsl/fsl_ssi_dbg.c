@@ -6,6 +6,7 @@
 //
 // Split from fsl_ssi.c
 
+#include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

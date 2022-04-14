@@ -35,6 +35,7 @@
  *		Paul E. McKenney <paulmck@us.ibm.com>
  *		Patrick McHardy <kaber@trash.net>
  */
+#include <linux/seq_file.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/rculist.h>

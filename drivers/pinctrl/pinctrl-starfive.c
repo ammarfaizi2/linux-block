@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Emil Renner Berthing <kernel@esmil.dk>
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

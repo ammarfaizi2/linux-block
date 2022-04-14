@@ -6,6 +6,7 @@
  * ARM Mali DP500/DP550/DP650 KMS/DRM driver
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

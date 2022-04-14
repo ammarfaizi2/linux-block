@@ -3,6 +3,7 @@
  * Copyright IBM Corp. 2011
  * Author(s): Jan Glauber <jang@linux.vnet.ibm.com>
  */
+#include <linux/seq_file.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

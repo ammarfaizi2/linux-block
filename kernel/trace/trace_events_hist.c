@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Tom Zanussi <tom.zanussi@linux.intel.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>

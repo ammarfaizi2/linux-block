@@ -15,6 +15,7 @@
  *
  ******************************************************************************/
 
+#include <linux/seq_file.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

@@ -7,6 +7,7 @@
  * Contact: Carlos Chinea <carlos.chinea@nokia.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -2,6 +2,7 @@
 /* Copyright 2015 Freescale Semiconductor Inc.
  * Copyright 2018-2019 NXP
  */
+#include <linux/seq_file.h>
 #include <linux/math64.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>

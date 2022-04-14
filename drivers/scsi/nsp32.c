@@ -13,6 +13,7 @@
  *   1.2: PowerPC (big endian) support.
  */
 
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/module.h>

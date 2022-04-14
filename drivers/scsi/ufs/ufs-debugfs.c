@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2020 Intel Corporation
 
+#include <linux/seq_file.h>
 #include <linux/semaphore.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

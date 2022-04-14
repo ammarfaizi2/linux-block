@@ -21,6 +21,7 @@
  *  Copyright (C) 2016 Mellanox Technologies
  */
 
+#include <linux/seq_file.h>
 #include <linux/sem.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>

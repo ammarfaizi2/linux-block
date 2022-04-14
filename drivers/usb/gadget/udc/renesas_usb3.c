@@ -5,6 +5,7 @@
  * Copyright (C) 2015-2017  Renesas Electronics Corporation
  */
 
+#include <linux/seq_file.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>

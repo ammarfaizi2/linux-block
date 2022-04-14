@@ -23,6 +23,7 @@
  *          Roy Sun
  */
 
+#include <linux/seq_file.h>
 #include <linux/math64.h>
 #include <linux/debugfs.h>
 #include <linux/list.h>

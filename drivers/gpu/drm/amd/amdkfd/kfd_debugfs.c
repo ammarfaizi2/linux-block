@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include <linux/uaccess.h>
 

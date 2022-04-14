@@ -6,6 +6,7 @@
  * This dumps the content of BATS
  */
 
+#include <linux/seq_file.h>
 #include <linux/pgtable.h>
 #include <linux/debugfs.h>
 #include <asm/cpu_has_feature.h>

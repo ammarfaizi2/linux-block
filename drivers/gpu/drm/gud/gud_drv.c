@@ -3,6 +3,7 @@
  * Copyright 2020 Noralf Trønnes
  */
 
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

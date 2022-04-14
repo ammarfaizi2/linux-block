@@ -5,6 +5,7 @@
  *  Copyright (c) 2012, Jeff Layton <jlayton@redhat.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

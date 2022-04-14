@@ -6,6 +6,7 @@
  *
  * Core file which registers crypto algorithms supported by the hardware.
  */
+#include <linux/seq_file.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/clk.h>

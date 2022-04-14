@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/circ_buf.h>
 #include <linux/ctype.h>

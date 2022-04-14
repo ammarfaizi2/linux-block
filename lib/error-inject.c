@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 // error-inject.c: Function-level error injection table
+#include <linux/seq_file.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/error-injection.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Western Digital Corporation or its affiliates.
  */
 
+#include <linux/seq_file.h>
 #include <linux/blkdev.h>
 #include "blk-mq-debugfs.h"
 

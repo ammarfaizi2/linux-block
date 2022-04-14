@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "energy_model: " fmt
 
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/cpumask_api.h>

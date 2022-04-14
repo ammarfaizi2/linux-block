@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/seq_file.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>

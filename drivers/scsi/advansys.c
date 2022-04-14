@@ -15,6 +15,7 @@
  * On June 18, 2001 Initio Corp. acquired ConnectCom's SCSI assets
  */
 
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

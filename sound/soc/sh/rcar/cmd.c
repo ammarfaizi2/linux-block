@@ -5,6 +5,7 @@
 // Copyright (C) 2015 Renesas Solutions Corp.
 // Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 
+#include <linux/seq_file.h>
 #include <linux/device_api_lock.h>
 
 #include "rsnd.h"

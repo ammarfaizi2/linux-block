@@ -3,6 +3,7 @@
  * Copyright 2017 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/seq_file.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>

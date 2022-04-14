@@ -28,6 +28,7 @@
  *  Alon Levy <alevy@redhat.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/atomic_api.h>
 #include <drm/drm_debugfs.h>
 #include <drm/drm_file.h>

@@ -14,6 +14,7 @@
  * http://www.intersil.com/cda/deviceinfo/0,1477,X1205,00.html
  */
 
+#include <linux/seq_file.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>
 #include <linux/bcd.h>

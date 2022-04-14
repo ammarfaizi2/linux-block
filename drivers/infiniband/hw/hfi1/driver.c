@@ -4,6 +4,7 @@
  * Copyright(c) 2021 Cornelis Networks.
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/netdevice_api_dev_stats.h>

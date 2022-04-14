@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>

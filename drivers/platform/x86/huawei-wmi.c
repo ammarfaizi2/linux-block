@@ -5,6 +5,7 @@
  *  Copyright (C) 2018	      Ayman Bagabas <ayman.bagabas@gmail.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

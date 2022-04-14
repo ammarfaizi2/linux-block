@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/notifier_api.h>

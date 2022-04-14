@@ -6,6 +6,7 @@
  * Copyright (c) 2008, John W. Linville <linville@tuxdriver.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/net.h>

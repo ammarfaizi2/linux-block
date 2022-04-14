@@ -5,6 +5,7 @@
  * Soundwire Intel Master Driver
  */
 
+#include <linux/seq_file.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019, Linaro Limited
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

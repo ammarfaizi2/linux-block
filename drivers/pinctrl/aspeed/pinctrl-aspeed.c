@@ -3,6 +3,7 @@
  * Copyright (C) 2016 IBM Corp.
  */
 
+#include <linux/seq_file.h>
 #include <linux/mfd/syscon.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>

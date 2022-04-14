@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/seq_file.h>
 #include <linux/iosys-map.h>
 #include <linux/module.h>
 

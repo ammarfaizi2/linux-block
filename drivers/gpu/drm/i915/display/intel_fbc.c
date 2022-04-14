@@ -38,6 +38,7 @@
  * forcibly disable it to allow proper screen updates.
  */
 
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/fs_api.h>

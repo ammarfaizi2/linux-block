@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/fs_api.h>

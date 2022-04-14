@@ -25,6 +25,7 @@
 
 ***********************************************************************/
 
+#include <linux/seq_file.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>
 #include <linux/module.h>

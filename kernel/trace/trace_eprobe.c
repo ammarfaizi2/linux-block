@@ -9,6 +9,7 @@
  * Copyright (C) 2021, VMware Inc, Tzvetomir Stoyanov tz.stoyanov@gmail.com>
  *
  */
+#include <linux/seq_file.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

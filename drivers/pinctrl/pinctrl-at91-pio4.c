@@ -6,6 +6,7 @@
  *               2015 Ludovic Desroches <ludovic.desroches@atmel.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

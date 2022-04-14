@@ -7,6 +7,7 @@
  *  Manage the dynamic fd arrays in the process files_struct.
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

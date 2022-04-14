@@ -19,6 +19,7 @@
  * Copyright (C) 2016 Jens Axboe
  *
  */
+#include <linux/seq_file.h>
 #include <linux/sched/task_flags.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

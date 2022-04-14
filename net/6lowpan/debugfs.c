@@ -6,6 +6,7 @@
  * Copyright (c)  2015 Nordic Semiconductor. All Rights Reserved.
  */
 
+#include <linux/seq_file.h>
 #include <linux/rtnetlink.h>
 #include <linux/fs_api.h>
 #include <linux/debugfs.h>

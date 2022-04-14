@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1997-2005 Russell King
  */
+#include <linux/seq_file.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>

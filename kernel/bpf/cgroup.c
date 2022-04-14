@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Daniel Mack
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/percpu-refcount-api.h>
 #include <linux/mutex_api.h>

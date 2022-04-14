@@ -10,6 +10,7 @@
  *  Copyright (C) 2004-2006 Ingo Molnar
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
+#include <linux/seq_file.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <linux/kallsyms.h>

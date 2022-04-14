@@ -7,6 +7,7 @@
  *      Thomas Renninger <trenn@suse.de>
  */
 
+#include <linux/seq_file.h>
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
 #include <linux/acpi.h>

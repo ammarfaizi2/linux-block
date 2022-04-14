@@ -10,6 +10,7 @@
  *  release for licensing terms and conditions.
  */
 
+#include <linux/seq_file.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mm_api_kvmalloc.h>

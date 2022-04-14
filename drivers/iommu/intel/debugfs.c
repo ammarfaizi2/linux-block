@@ -8,6 +8,7 @@
  *	    Lu Baolu <baolu.lu@linux.intel.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/device_api.h>

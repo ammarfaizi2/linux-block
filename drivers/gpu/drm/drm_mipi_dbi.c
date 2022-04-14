@@ -5,6 +5,7 @@
  * Copyright 2016 Noralf Trønnes
  */
 
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>

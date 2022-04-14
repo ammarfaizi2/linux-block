@@ -2,6 +2,7 @@
 //
 // Copyright 2012 Freescale Semiconductor, Inc.
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

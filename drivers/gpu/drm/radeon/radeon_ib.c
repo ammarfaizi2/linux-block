@@ -27,6 +27,7 @@
  *          Christian König
  */
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/debugfs.h>
 #include <drm/drm_file.h>

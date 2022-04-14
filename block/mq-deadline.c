@@ -5,6 +5,7 @@
  *
  *  Copyright (C) 2016 Jens Axboe <axboe@kernel.dk>
  */
+#include <linux/seq_file.h>
 #include <linux/rbtree_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/kobject_api.h>

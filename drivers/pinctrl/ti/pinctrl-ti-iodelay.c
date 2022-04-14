@@ -9,6 +9,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/math64.h>
 #include <linux/ioport.h>

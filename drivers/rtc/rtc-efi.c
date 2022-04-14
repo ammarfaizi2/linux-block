@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/seq_file.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/stringify.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #include "cgroup-internal.h"
 
+#include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/percpu_rwsem_api.h>
 #include <linux/percpu-refcount-api.h>

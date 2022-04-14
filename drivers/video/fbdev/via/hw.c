@@ -5,6 +5,7 @@
 
  */
 
+#include <linux/seq_file.h>
 #include <linux/io.h>
 #include <linux/via-core.h>
 #include "global.h"
