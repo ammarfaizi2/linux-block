@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/thread_info.h>
 #include <linux/static_key.h>
 #include <linux/minmax.h>
 #include <linux/math.h>

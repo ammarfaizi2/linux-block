@@ -8,6 +8,7 @@
 
 #include "../../../kernel/sched/per_task_area_struct.h"
 
+#include <linux/thread_info.h>
 #include <linux/spinlock_api.h>
 #include <linux/signal.h>
 #include <linux/err.h>
