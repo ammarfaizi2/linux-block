@@ -3,6 +3,7 @@
  * Copyright(c) 2018 Intel Corporation.
  */
 
+#include <linux/net.h>
 #include <linux/lockdep_api.h>
 #include <linux/filter_api.h>
 #include <linux/atomic_api.h>

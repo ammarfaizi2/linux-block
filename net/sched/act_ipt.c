@@ -7,6 +7,7 @@
  * Copyright:	Jamal Hadi Salim (2002-13)
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/atomic_api.h>
 #include <linux/types.h>

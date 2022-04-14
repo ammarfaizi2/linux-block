@@ -11,6 +11,7 @@
  * Much thanks to Infineon-ADMtek for their support of this driver.
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

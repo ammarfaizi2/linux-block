@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/net.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/ipv6.h>

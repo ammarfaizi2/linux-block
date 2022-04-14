@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/net.h>
 #include <linux/fs_api.h>
 #include <linux/bitmap.h>
 #include <linux/file.h>

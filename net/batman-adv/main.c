@@ -6,6 +6,7 @@
 
 #include "main.h"
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/kref_api.h>
 #include <linux/kobject_api.h>

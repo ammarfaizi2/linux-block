@@ -4,6 +4,7 @@
  * Copyright (C) 2020 Linaro Ltd <loic.poulain@linaro.org>
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/if_arp.h>

@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/net.h>
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/slab.h>

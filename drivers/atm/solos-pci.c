@@ -15,6 +15,7 @@
 #define DEBUG
 #define VERBOSE_DEBUG
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

@@ -7,6 +7,7 @@
  *          Stefano Garzarella <sgarzare@redhat.com>
  *
  */
+#include <linux/net.h>
 #include <linux/spinlock.h>
 #include <linux/module.h>
 #include <linux/list.h>

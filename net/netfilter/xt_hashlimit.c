@@ -10,6 +10,7 @@
  * Development of this code was funded by Astaro AG, http://www.astaro.com/
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/net.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/math64.h>

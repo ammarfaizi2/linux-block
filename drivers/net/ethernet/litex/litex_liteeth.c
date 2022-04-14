@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/io_extra.h>
 #include <linux/etherdevice_api.h>

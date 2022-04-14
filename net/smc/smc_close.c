@@ -9,6 +9,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/net.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/workqueue.h>

@@ -7,6 +7,7 @@
  *    Lauro Ramos Venancio <lauro.venancio@openbossa.org>
  */
 
+#include <linux/net.h>
 #include <linux/nfc.h>
 #include <linux/module.h>
 

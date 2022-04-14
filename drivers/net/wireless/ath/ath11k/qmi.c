@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/net.h>
 #include <linux/module.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

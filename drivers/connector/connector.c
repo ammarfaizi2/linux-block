@@ -6,6 +6,7 @@
  * All rights reserved.
  */
 
+#include <linux/net.h>
 #include <linux/io.h>
 #include <linux/compiler.h>
 #include <linux/kernel.h>

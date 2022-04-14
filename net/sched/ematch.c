@@ -77,6 +77,7 @@
  *      open up a beer to watch the compilation going.
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/kmod.h>
 #include <linux/module.h>

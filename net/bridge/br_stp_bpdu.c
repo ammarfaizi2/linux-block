@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_ether_api.h>
 #include <linux/etherdevice_api.h>

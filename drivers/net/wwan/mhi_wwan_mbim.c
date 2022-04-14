@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/sched/cond_resched.h>

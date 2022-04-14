@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/net.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  */
 
+#include <linux/net.h>
 #include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/file.h>
