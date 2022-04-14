@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "drm_format: " fmt
 
+#include <vdso/limits.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 

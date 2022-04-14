@@ -21,6 +21,7 @@
  *   https://static.dev.sifive.com/FU540-C000-v1.0.pdf
  */
 
+#include <vdso/limits.h>
 #include <linux/bug.h>
 #include <linux/err.h>
 #include <linux/limits.h>

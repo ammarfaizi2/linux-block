@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <vdso/limits.h>
 #include <linux/syscalls_api.h>
 #include <linux/sched.h>
 #include <linux/fs.h>
