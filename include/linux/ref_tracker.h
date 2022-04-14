@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef _LINUX_REF_TRACKER_H
 #define _LINUX_REF_TRACKER_H
+#include <linux/list.h>
 #include <linux/refcount.h>
 #include <linux/types.h>
 #include <linux/spinlock.h>
