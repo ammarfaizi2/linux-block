@@ -6,6 +6,7 @@
 #ifndef __LINUX_BLK_CRYPTO_INTERNAL_H
 #define __LINUX_BLK_CRYPTO_INTERNAL_H
 
+#include <linux/string.h>
 #include <linux/bio.h>
 #include <linux/blk-mq.h>
 

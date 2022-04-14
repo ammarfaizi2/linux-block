@@ -6,6 +6,7 @@
 #ifndef __INTEL_SSEU_H__
 #define __INTEL_SSEU_H__
 
+#include <linux/string.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 

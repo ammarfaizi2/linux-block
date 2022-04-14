@@ -2,6 +2,7 @@
 #ifndef __LINUX_USB_H
 #define __LINUX_USB_H
 
+#include <linux/string.h>
 #include <linux/device/driver.h>
 #include <linux/device_api_lock.h>
 #include <linux/mod_devicetable.h>

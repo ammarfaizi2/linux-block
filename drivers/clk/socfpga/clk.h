@@ -8,6 +8,7 @@
 #ifndef __SOCFPGA_CLK_H
 #define __SOCFPGA_CLK_H
 
+#include <linux/string.h>
 #include <linux/clk-provider.h>
 
 /* Clock Manager offsets */

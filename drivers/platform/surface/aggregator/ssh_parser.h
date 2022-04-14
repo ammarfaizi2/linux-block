@@ -8,6 +8,7 @@
 #ifndef _SURFACE_AGGREGATOR_SSH_PARSER_H
 #define _SURFACE_AGGREGATOR_SSH_PARSER_H
 
+#include <linux/string.h>
 #include <linux/device.h>
 #include <linux/kfifo.h>
 #include <linux/slab.h>

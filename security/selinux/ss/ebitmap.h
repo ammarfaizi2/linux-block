@@ -15,6 +15,7 @@
 #ifndef _SS_EBITMAP_H_
 #define _SS_EBITMAP_H_
 
+#include <linux/string.h>
 #include <net/netlabel.h>
 
 #ifdef CONFIG_64BIT

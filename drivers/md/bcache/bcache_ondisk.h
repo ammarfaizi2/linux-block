@@ -6,6 +6,7 @@
  * Bcache on disk data structures
  */
 
+#include <linux/string.h>
 #include <linux/types.h>
 
 #define BITMASK(name, type, field, offset, size)		\

@@ -8,6 +8,7 @@
 #ifndef DLMCOMMON_H
 #define DLMCOMMON_H
 
+#include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/dcache.h>

@@ -2,6 +2,7 @@
 #ifndef _FAT_H
 #define _FAT_H
 
+#include <linux/string.h>
 #include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/buffer_head.h>

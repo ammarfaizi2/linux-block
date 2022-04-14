@@ -12,6 +12,7 @@
 #ifndef __RPMSG_INTERNAL_H__
 #define __RPMSG_INTERNAL_H__
 
+#include <linux/string.h>
 #include <linux/rpmsg.h>
 #include <linux/poll.h>
 
