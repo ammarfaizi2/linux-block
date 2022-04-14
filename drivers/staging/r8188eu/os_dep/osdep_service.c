@@ -116,19 +116,10 @@ void rtw_free_netdev(struct net_device *netdev)
 {
 	struct rtw_netdev_priv_indicator *pnpi;
 
-	if (!netdev)
-		goto RETURN;
-
 	pnpi = netdev_priv(netdev);
-
-	if (!pnpi->priv)
-		goto RETURN;
 
 	vfree(pnpi->priv);
 	free_netdev(netdev);
-
-RETURN:
-	return;
 }
 
 int rtw_change_ifname(struct adapter *padapter, const char *ifname)
@@ -220,7 +211,7 @@ keep_ori:
  */
 inline bool rtw_cbuf_empty(struct rtw_cbuf *cbuf)
 {
-	return (cbuf->write == cbuf->read) ? true : false;
+	return cbuf->write == cbuf->read;
 }
 
 /**
