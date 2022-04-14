@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <acpi/platform/aclinuxex_locking.h>
 #include <acpi/acpi.h>
 #include "accommon.h"
 
