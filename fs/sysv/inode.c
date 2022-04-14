@@ -22,6 +22,7 @@
  *  the superblock.
  */
 
+#include <linux/blkdev.h>
 #include <linux/highuid.h>
 #include <linux/slab.h>
 #include <linux/init.h>

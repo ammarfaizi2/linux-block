@@ -3,6 +3,7 @@
  * Optimized MPEG FS - inode and super operations.
  * Copyright (C) 2006 Bob Copeland <me@bobcopeland.com>
  */
+#include <linux/blkdev.h>
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
