@@ -27,6 +27,7 @@
 #include "xfs_trans.h"
 #include "xfs_acl.h"
 #include "xfs_btree.h"
+#include <linux/file.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/capability.h>

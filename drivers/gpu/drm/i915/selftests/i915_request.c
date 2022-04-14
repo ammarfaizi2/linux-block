@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/file.h>
 #include <linux/dma-fence-api.h>
 #include <linux/delay.h>
 #include <linux/cpumask_api.h>

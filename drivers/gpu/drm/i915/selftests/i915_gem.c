@@ -4,6 +4,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/file.h>
 #include <linux/random.h>
 
 #include "gem/i915_gem_internal.h"

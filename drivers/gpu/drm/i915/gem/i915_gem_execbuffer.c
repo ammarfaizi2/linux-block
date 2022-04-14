@@ -4,6 +4,7 @@
  * Copyright © 2008,2010 Intel Corporation
  */
 
+#include <linux/file.h>
 #include <linux/dma-fence-api.h>
 #include <linux/capability.h>
 #include <linux/atomic_api.h>

@@ -70,6 +70,7 @@
  *   wrappers provided below.
  */
 
+#include <linux/file.h>
 #include <linux/syscalls.h>
 #include <linux/errno.h>
 #include <linux/fs.h>

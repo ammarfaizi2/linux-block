@@ -15,6 +15,7 @@
  * the dcache entry is deleted or garbage collected.
  */
 
+#include <linux/file.h>
 #include <linux/dcache.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

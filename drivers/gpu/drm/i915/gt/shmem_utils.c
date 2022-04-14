@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/file.h>
 #include <linux/atomic_api.h>
 #include <linux/iosys-map.h>
 #include <linux/mm.h>

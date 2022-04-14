@@ -4,6 +4,7 @@
  * Copyright 2008 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/file.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
