@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/if_link.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/bitmap.h>
