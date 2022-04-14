@@ -11,6 +11,7 @@
  *		Wingman Kwok <w-kwok2@ti.com>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api_lock.h>

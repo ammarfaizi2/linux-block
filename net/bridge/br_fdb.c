@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/notifier_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

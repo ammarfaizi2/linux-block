@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2021 Google, Inc.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

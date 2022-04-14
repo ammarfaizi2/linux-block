@@ -44,6 +44,7 @@
  * SUCH DAMAGE.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/module.h>

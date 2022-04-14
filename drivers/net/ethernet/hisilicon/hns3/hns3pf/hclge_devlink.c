@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /* Copyright (c) 2021 Hisilicon Limited. */
 
+#include <linux/rtnetlink.h>
 #include <net/devlink.h>
 
 #include "hclge_devlink.h"

@@ -3,6 +3,7 @@
  * Copyright (C) 2007, 2008, 2009 Siemens AG
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>
 #include <linux/device/class.h>

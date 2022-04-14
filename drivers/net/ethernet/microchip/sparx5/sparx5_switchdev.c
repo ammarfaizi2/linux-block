@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Microchip Technology Inc. and its subsidiaries.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

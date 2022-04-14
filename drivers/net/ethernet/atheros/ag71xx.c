@@ -27,6 +27,7 @@
  *  Imre Kaloz <kaloz@openwrt.org>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

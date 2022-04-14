@@ -9,6 +9,7 @@
  * Copyright 2018-2021	Intel Corporation
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

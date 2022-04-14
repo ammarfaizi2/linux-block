@@ -9,6 +9,7 @@
  * Re-worked by Ben Greear <greearb@candelatech.com>
  * ---
  */
+#include <linux/rtnetlink.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>

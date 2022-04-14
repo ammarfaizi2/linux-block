@@ -6,6 +6,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

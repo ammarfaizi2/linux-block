@@ -18,6 +18,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rtnetlink.h>
 #include <linux/of_api.h>
 #include <linux/moduleparam.h>
 #include <linux/errno.h>

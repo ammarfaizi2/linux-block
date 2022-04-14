@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/property.h>
 #include <linux/prefetch.h>
 #include <linux/of_api.h>

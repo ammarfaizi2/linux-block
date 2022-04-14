@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2020 Facebook Inc.
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/fs_api.h>
 #include <linux/delay.h>

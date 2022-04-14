@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <net/xdp_sock_drv.h>
 

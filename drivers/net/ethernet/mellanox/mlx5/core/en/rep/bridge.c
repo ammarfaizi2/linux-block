@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021 Mellanox Technologies. */
 
+#include <linux/rtnetlink.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

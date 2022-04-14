@@ -17,6 +17,7 @@
 
 #include "core.h"
 
+#include <linux/rtnetlink.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/export.h>

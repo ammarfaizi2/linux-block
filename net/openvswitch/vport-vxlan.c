@@ -4,6 +4,7 @@
  * Copyright (c) 2013 Cisco Systems, Inc.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <linux/skbuff.h>

@@ -5,6 +5,7 @@
  * Author:	Jamal Hadi Salim
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/percpu.h>
 #include <linux/net.h>

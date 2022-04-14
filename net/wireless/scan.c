@@ -7,6 +7,7 @@
  * Copyright 2016	Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/rtnetlink.h>
 #include <linux/rculist.h>
 #include <linux/rbtree_api.h>
 #include <linux/net.h>

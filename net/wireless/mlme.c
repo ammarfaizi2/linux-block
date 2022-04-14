@@ -7,6 +7,7 @@
  * Copyright (C) 2019-2020 Intel Corporation
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/rculist.h>
 #include <linux/lockdep_api.h>
 #include <linux/jiffies.h>

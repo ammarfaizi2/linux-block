@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/ratelimit.h>
 #include <linux/notifier_api.h>
 #include <linux/net.h>

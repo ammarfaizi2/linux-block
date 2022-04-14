@@ -2,6 +2,7 @@
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>

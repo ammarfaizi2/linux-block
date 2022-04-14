@@ -39,6 +39,7 @@
  *
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/capability.h>
 #include <linux/module.h>

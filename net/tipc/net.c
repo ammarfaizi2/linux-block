@@ -34,6 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/atomic_api.h>
 
 #include "core.h"

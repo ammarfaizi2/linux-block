@@ -21,6 +21,7 @@
  *			fixed requeue routine
  *		and many others. thanks.
  */
+#include <linux/rtnetlink.h>
 #include <linux/rbtree_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

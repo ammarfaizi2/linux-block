@@ -9,6 +9,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/mutex_api.h>
 #include <linux/if_arp.h>
 

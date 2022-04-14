@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/random.h>
 #include <linux/prandom.h>
 #include <linux/mm_api_kvmalloc.h>

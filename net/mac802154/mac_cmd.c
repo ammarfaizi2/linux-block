@@ -10,6 +10,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/skbuff.h>
 #include <linux/if_arp.h>
 #include <linux/ieee802154.h>
