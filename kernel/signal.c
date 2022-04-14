@@ -54,6 +54,7 @@ DEFINE_PER_TASK(sigset_t, blocked);
 DEFINE_PER_TASK(sigset_t, real_blocked);
 
 DEFINE_PER_TASK(sigset_t, saved_sigmask);
+DEFINE_PER_TASK(kernel_siginfo_t *, last_siginfo);
 
 /* Restored if set_restore_sigmask() was used: */
 DEFINE_PER_TASK(struct sigpending, pending);
@@ -2257,7 +2258,7 @@ static int ptrace_stop(int exit_code, int why, int clear_code,
 	smp_wmb();
 
 	current->ptrace_message = message;
-	current->last_siginfo = info;
+	per_task(current, last_siginfo) = info;
 	current->exit_code = exit_code;
 
 	/*
@@ -2337,7 +2338,7 @@ static int ptrace_stop(int exit_code, int why, int clear_code,
 	spin_lock_irq(&current->sighand->siglock);
 	if (read_code)
 		exit_code = current->exit_code;
-	current->last_siginfo = NULL;
+	per_task(current, last_siginfo) = NULL;
 	current->ptrace_message = 0;
 	current->exit_code = 0;
 

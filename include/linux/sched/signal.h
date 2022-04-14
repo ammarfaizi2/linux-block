@@ -19,6 +19,7 @@ DECLARE_PER_TASK(sigset_t, blocked);
 DECLARE_PER_TASK(sigset_t, real_blocked);
 DECLARE_PER_TASK(sigset_t, saved_sigmask);
 DECLARE_PER_TASK(struct sigpending, pending);
+DECLARE_PER_TASK(kernel_siginfo_t *, last_siginfo);
 
 /*
  * Types defining task->signal and task->sighand and APIs using them:
