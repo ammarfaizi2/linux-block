@@ -7,6 +7,7 @@
  * Adapted for 3rd gen XScale core, no more mini-dcache
  * Author: Matt Gilbert (matthew.m.gilbert@intel.com)
  */
+#include <asm/cacheflush.h>
 #include <linux/init.h>
 #include <linux/highmem.h>
 

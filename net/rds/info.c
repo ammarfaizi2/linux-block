@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <asm/cacheflush.h>
 #include <linux/percpu.h>
 #include <linux/seq_file.h>
 #include <linux/slab.h>

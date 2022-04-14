@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/sched.h>
 #include <linux/slab.h>

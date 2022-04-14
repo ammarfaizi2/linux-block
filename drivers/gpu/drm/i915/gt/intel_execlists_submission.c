@@ -106,6 +106,7 @@
  * preemption, but just sampling the new tail pointer).
  *
  */
+#include <asm/cacheflush.h>
 #include <linux/interrupt.h>
 
 #include "i915_drv.h"

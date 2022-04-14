@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <asm/cacheflush.h>
 #include <linux/slab.h>
 
 #include "gem/i915_gem_lmem.h"

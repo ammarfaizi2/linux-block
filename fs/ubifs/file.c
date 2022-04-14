@@ -38,6 +38,7 @@
  */
 
 #include "ubifs.h"
+#include <asm/cacheflush.h>
 #include <linux/mount.h>
 #include <linux/slab.h>
 #include <linux/migrate.h>

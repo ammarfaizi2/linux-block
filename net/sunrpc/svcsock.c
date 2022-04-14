@@ -20,6 +20,7 @@
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/module.h>

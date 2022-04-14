@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <asm/cacheflush.h>
 #include <linux/errno.h>
 #include <linux/fs.h>
 #include <linux/gfp.h>

@@ -12,6 +12,7 @@
  *  http://www.sata-io.org/
  */
 
+#include <asm/cacheflush.h>
 #include <linux/kernel.h>
 #include <linux/gfp.h>
 #include <linux/pci.h>

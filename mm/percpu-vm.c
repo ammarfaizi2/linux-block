@@ -8,6 +8,8 @@
  * Chunks are mapped into vmalloc areas and populated page by page.
  * This is the default chunk allocator.
  */
+#include <asm/cacheflush.h>
+
 #include "internal.h"
 
 static struct page *pcpu_chunk_page(struct pcpu_chunk *chunk,

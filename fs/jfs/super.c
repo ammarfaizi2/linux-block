@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
+#include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/parser.h>

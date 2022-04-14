@@ -17,6 +17,7 @@
  * compression than if the symbolic link was compressed individually.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/vfs.h>
 #include <linux/kernel.h>

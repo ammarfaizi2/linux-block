@@ -3,6 +3,7 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/highmem.h>

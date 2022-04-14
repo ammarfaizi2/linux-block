@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <asm/cacheflush.h>
 #include <linux/buffer_head.h>
 #include <linux/slab.h>
 #include <linux/swap.h>

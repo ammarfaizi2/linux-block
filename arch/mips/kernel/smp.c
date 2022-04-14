@@ -6,6 +6,7 @@
  * Copyright (C) 2000, 2001 Silicon Graphics, Inc.
  * Copyright (C) 2000, 2001, 2003 Broadcom Corporation
  */
+#include <asm/cacheflush.h>
 #include <linux/cache.h>
 #include <linux/delay.h>
 #include <linux/init.h>

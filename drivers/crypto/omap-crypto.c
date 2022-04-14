@@ -6,6 +6,7 @@
  *   Tero Kristo <t-kristo@ti.com>
  */
 
+#include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/scatterlist.h>

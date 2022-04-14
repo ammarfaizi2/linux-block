@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/mm.h>
 
 #include <asm/cpuinfo.h>

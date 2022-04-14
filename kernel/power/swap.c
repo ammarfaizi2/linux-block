@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <asm/cacheflush.h>
 #include <linux/module.h>
 #include <linux/file.h>
 #include <linux/delay.h>

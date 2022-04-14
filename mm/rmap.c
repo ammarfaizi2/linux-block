@@ -52,6 +52,7 @@
  *             page->flags PG_locked (lock_page)
  */
 
+#include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/mm.h>
 #include <linux/sched/mm.h>

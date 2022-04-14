@@ -6,6 +6,7 @@
  * Copyright 1997 Linus Torvalds
  * Copyright 2002 Andi Kleen <ak@suse.de>
  */
+#include <asm/cacheflush.h>
 #include <linux/export.h>
 #include <linux/uaccess.h>
 #include <linux/highmem.h>

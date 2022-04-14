@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/init.h>

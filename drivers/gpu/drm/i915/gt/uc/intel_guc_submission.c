@@ -3,6 +3,7 @@
  * Copyright © 2014 Intel Corporation
  */
 
+#include <asm/cacheflush.h>
 #include <linux/circ_buf.h>
 
 #include "gem/i915_gem_context.h"

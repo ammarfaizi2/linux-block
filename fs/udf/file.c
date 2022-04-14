@@ -26,6 +26,7 @@
  */
 
 #include "udfdecl.h"
+#include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/kernel.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <asm/cacheflush.h>
 #include <linux/highmem.h>
 #include <linux/kdebug.h>
 #include <linux/types.h>

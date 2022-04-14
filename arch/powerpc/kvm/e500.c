@@ -9,6 +9,7 @@
  * by Hollis Blanchard <hollisb@us.ibm.com>.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/kvm_host.h>
 #include <linux/slab.h>
 #include <linux/err.h>

@@ -11,6 +11,7 @@
  *
  */
 
+#include <asm/cacheflush.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/kernel_stat.h>

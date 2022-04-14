@@ -13,6 +13,7 @@
  *  affs regular file handling primitives
  */
 
+#include <asm/cacheflush.h>
 #include <linux/uio.h>
 #include <linux/blkdev.h>
 #include "affs.h"

@@ -47,6 +47,7 @@
  * to the Linux RPC framework lives.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/highmem.h>
 
 #include <linux/sunrpc/svc_rdma.h>

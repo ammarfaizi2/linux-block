@@ -4,6 +4,7 @@
  *	Library for filesystems writers.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>
 #include <linux/export.h>

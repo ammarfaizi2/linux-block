@@ -8,6 +8,7 @@
  *              Jeremy Allison (jra@samba.org)
  *
  */
+#include <asm/cacheflush.h>
 #include <linux/fs.h>
 #include <linux/backing-dev.h>
 #include <linux/stat.h>
