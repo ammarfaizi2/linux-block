@@ -14,6 +14,7 @@
  * this driver provides active-backup functionality similar to those drivers.
  */
 
+#include <net/sch_generic_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

@@ -50,6 +50,7 @@
  * granted us permission to leverage.
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <net/inet_ecn.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+#include <net/sch_generic_api.h>
 #include <net/ipv6_stubs.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api_extra.h>

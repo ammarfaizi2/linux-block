@@ -7,6 +7,7 @@
  *            Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>

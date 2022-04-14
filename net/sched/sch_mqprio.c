@@ -5,6 +5,7 @@
  * Copyright (c) 2010 John Fastabend <john.r.fastabend@intel.com>
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>

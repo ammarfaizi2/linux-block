@@ -13,6 +13,7 @@
  *  For all the glorious comments look at include/net/red.h
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/net.h>

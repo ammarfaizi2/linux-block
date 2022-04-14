@@ -4,6 +4,7 @@
  * Copyright (c) 2019 Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <net/inet_ecn.h>
 #include <linux/spinlock_api.h>

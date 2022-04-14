@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <net/sch_generic_api.h>
 #include <net/pkt_cls_api_tcf_filter.h>
 #include <net/netlink_api.h>
 #include <net/act_api.h>

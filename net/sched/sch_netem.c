@@ -9,6 +9,7 @@
  *		Catalin(ux aka Dino) BOIE <catab at umbrella dot ro>
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

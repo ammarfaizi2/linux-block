@@ -5,6 +5,7 @@
  * Copyright (c) 2009 Patrick McHardy <kaber@trash.net>
  */
 
+#include <net/sch_generic_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/types.h>

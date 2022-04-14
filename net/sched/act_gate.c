@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /* Copyright 2020 NXP */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

@@ -7,6 +7,7 @@
  *	        original idea by Michel Machado, Cody Doucette, and Qiaobin Fu
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/string.h>
 #include <linux/module.h>

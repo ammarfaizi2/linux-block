@@ -49,6 +49,7 @@
  * a class whose fit-time exceeds the current time.
  */
 
+#include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/sched.h>
 #include <linux/rbtree_api.h>

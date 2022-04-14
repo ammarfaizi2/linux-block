@@ -2,6 +2,7 @@
 /* Copyright (c) 2016 Thomas Graf <tgraf@tgraf.ch>
  */
 
+#include <net/sch_generic_api.h>
 #include <net/route_api.h>
 #include <net/netlink_api.h>
 #include <net/l3mdev.h>
