@@ -3,6 +3,7 @@
  *
  * This code is licenced under the GPL.
  */
+#include <linux/perf_event.h>
 #include <linux/perf_event_api.h>
 #include <linux/percpu_rwsem_api.h>
 #include <linux/mutex_api.h>
