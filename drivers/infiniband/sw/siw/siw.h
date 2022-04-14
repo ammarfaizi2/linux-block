@@ -6,6 +6,7 @@
 #ifndef _SIW_H
 #define _SIW_H
 
+#include <linux/xarray_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/kref_api.h>
 #include <linux/fs.h>

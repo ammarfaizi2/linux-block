@@ -2,6 +2,7 @@
 #ifndef _LINUX_SWAPOPS_H
 #define _LINUX_SWAPOPS_H
 
+#include <linux/xarray_api.h>
 #include <linux/swap.h>
 #include <linux/mm_api.h>
 #include <linux/radix-tree.h>

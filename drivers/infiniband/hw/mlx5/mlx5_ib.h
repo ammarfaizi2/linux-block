@@ -7,6 +7,7 @@
 #ifndef MLX5_IB_H
 #define MLX5_IB_H
 
+#include <linux/xarray_api.h>
 #include <linux/wait_api.h>
 #include <linux/refcount_api.h>
 #include <linux/netdevice_api.h>

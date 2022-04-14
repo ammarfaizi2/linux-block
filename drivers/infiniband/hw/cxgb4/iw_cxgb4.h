@@ -31,6 +31,7 @@
 #ifndef __IW_CXGB4_H__
 #define __IW_CXGB4_H__
 
+#include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/mutex.h>
