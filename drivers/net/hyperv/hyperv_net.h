@@ -12,6 +12,7 @@
 #ifndef _HYPERV_NET_H
 #define _HYPERV_NET_H
 
+#include <linux/netdevice_api.h>
 #include <linux/list.h>
 #include <linux/hyperv.h>
 #include <linux/rndis.h>

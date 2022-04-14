@@ -4,6 +4,7 @@
 #ifndef _MLXSW_SPECTRUM_PTP_H
 #define _MLXSW_SPECTRUM_PTP_H
 
+#include <linux/netdevice_api.h>
 #include <linux/device.h>
 #include <linux/rhashtable.h>
 

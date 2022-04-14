@@ -8,6 +8,7 @@
 
 #include "ena_com.h"
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/types.h>
 

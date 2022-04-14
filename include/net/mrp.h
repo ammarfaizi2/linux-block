@@ -2,6 +2,7 @@
 #ifndef _NET_MRP_H
 #define _NET_MRP_H
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 
 #define MRP_END_MARK		0x0

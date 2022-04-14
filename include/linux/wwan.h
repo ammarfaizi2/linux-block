@@ -4,6 +4,7 @@
 #ifndef __WWAN_H
 #define __WWAN_H
 
+#include <linux/netdevice_api.h>
 #include <linux/poll.h>
 #include <linux/netdevice.h>
 #include <linux/types.h>

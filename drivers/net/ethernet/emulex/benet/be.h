@@ -14,6 +14,7 @@
 #ifndef BE_H
 #define BE_H
 
+#include <linux/netdevice_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dev_printk.h>
 #include <linux/cpumask_api.h>

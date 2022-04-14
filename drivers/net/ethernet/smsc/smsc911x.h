@@ -404,6 +404,7 @@
 #define smsc_get_mac(dev)		smsc911x_read_mac_address((dev))
 
 #ifdef CONFIG_SMSC911X_ARCH_HOOKS
+#include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <asm/smsc911x.h>
 #endif

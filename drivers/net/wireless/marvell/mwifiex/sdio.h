@@ -21,6 +21,7 @@
 #define	_MWIFIEX_SDIO_H
 
 
+#include <linux/netdevice_api.h>
 #include <linux/completion.h>
 #include <linux/mmc/sdio.h>
 #include <linux/mmc/sdio_ids.h>

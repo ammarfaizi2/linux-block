@@ -4,6 +4,7 @@
 #ifndef _E1000_IGB_HW_H_
 #define _E1000_IGB_HW_H_
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 #include <linux/delay.h>
 #include <linux/io.h>

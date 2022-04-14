@@ -13,6 +13,7 @@
 #ifndef __NET_TULIP_H__
 #define __NET_TULIP_H__
 
+#include <linux/netdevice_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

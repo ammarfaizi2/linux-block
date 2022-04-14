@@ -139,6 +139,7 @@ ath5k_debug_printtxbuf(struct ath5k_hw *ah, struct ath5k_buf *bf);
 
 #else /* no debugging */
 
+#include <linux/netdevice_api.h>
 #include <linux/compiler.h>
 
 static inline __printf(3, 4) void

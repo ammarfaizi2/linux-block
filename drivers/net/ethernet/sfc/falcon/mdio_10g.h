@@ -7,6 +7,7 @@
 #ifndef EF4_MDIO_10G_H
 #define EF4_MDIO_10G_H
 
+#include <linux/netdevice_api.h>
 #include <linux/mdio.h>
 
 /*

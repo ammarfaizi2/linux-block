@@ -6,6 +6,7 @@
 #ifndef _E1000_H_
 #define _E1000_H_
 
+#include <linux/netdevice_api.h>
 #include <linux/bitops.h>
 #include <linux/types.h>
 #include <linux/timer.h>

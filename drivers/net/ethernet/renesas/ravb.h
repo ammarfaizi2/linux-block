@@ -11,6 +11,7 @@
 #ifndef __RAVB_H__
 #define __RAVB_H__
 
+#include <linux/netdevice_api.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

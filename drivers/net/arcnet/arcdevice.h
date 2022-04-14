@@ -11,6 +11,7 @@
 #ifndef _LINUX_ARCDEVICE_H
 #define _LINUX_ARCDEVICE_H
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <asm/timex.h>
 #include <linux/if_arcnet.h>

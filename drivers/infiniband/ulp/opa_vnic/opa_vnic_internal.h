@@ -51,6 +51,7 @@
  * This file contains OPA VNIC driver internal declarations
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/dev_printk.h>
 #include <linux/bitops.h>

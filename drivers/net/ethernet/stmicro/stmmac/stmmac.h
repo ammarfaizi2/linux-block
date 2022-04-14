@@ -11,6 +11,7 @@
 
 #define STMMAC_RESOURCE_NAME   "stmmaceth"
 
+#include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/clk.h>
 #include <linux/hrtimer.h>

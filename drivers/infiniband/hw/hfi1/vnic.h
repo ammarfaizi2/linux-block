@@ -5,6 +5,7 @@
 
 #ifndef _HFI1_VNIC_H
 #define _HFI1_VNIC_H
+#include <linux/netdevice_api.h>
 #include <rdma/opa_vnic.h>
 #include "hfi.h"
 #include "sdma.h"

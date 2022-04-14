@@ -19,6 +19,7 @@
  */
 #ifndef IEEE80211_H
 #define IEEE80211_H
+#include <linux/netdevice_api.h>
 #include <linux/if_ether.h> /* ETH_ALEN */
 #include <linux/kernel.h>
 #include <linux/module.h>

@@ -52,6 +52,7 @@
 /*****************************************************************************/
 
 #if !defined(__GENKSYMS__)
+#include <linux/netdevice_api.h>
 #include <linux/module.h>
 #endif
 

@@ -4,6 +4,8 @@
 #ifndef __MLX5E_KTLS_H__
 #define __MLX5E_KTLS_H__
 
+#include <linux/netdevice_api.h>
+
 #include "en.h"
 
 #ifdef CONFIG_MLX5_EN_TLS

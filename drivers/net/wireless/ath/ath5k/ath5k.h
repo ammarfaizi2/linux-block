@@ -23,6 +23,7 @@
  * (rev. engineering needed) */
 #define CHAN_DEBUG	0
 
+#include <linux/netdevice_api.h>
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>

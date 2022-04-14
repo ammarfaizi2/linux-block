@@ -7,6 +7,7 @@
 #define _WG_QUEUEING_H
 
 #include "peer.h"
+#include <linux/netdevice_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/types.h>
 #include <linux/skbuff.h>

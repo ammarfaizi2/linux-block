@@ -4,6 +4,7 @@
 #ifndef _IONIC_LIF_H_
 #define _IONIC_LIF_H_
 
+#include <linux/netdevice_api.h>
 #include <linux/ptp_clock_kernel.h>
 #include <linux/timecounter.h>
 #include <uapi/linux/net_tstamp.h>

@@ -2,6 +2,7 @@
 #ifndef __NET_SCHED_GENERIC_H
 #define __NET_SCHED_GENERIC_H
 
+#include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/netdevice.h>

@@ -10,6 +10,7 @@
 #ifndef __XGENE_ENET_MAIN_H__
 #define __XGENE_ENET_MAIN_H__
 
+#include <linux/netdevice_api.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>
 #include <linux/efi.h>

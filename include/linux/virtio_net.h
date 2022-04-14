@@ -2,6 +2,7 @@
 #ifndef _LINUX_VIRTIO_NET_H
 #define _LINUX_VIRTIO_NET_H
 
+#include <linux/netdevice_api.h>
 #include <linux/if_vlan.h>
 #include <uapi/linux/tcp.h>
 #include <uapi/linux/udp.h>

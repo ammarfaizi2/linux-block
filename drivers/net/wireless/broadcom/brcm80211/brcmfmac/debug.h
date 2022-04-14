@@ -6,6 +6,7 @@
 #ifndef BRCMFMAC_DEBUG_H
 #define BRCMFMAC_DEBUG_H
 
+#include <linux/netdevice_api.h>
 #include <linux/net.h>	/* net_ratelimit() */
 
 /* message levels */

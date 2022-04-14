@@ -9,6 +9,7 @@ struct nfp_app;
 struct nfp_net;
 struct nfp_port;
 
+#include <linux/netdevice_api.h>
 #include <net/dst_metadata.h>
 
 /**

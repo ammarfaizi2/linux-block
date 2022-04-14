@@ -11,6 +11,7 @@
 #ifndef EFX_COMMON_H
 #define EFX_COMMON_H
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 
 int efx_init_io(struct efx_nic *efx, int bar, dma_addr_t dma_mask,

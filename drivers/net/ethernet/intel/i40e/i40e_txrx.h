@@ -4,6 +4,7 @@
 #ifndef _I40E_TXRX_H_
 #define _I40E_TXRX_H_
 
+#include <linux/netdevice_api.h>
 #include <net/xdp.h>
 
 /* Interrupt Throttling and Rate Limiting Goodies */

@@ -5,6 +5,7 @@
 #if !defined(__HFI1_TRACE_TX_H) || defined(TRACE_HEADER_MULTI_READ)
 #define __HFI1_TRACE_TX_H
 
+#include <linux/netdevice_api.h>
 #include <linux/tracepoint.h>
 #include <linux/trace_seq.h>
 

@@ -14,6 +14,7 @@
 
 #define VERSION "2.0 B"
 
+#include <linux/netdevice_api.h>
 #include <linux/sungem_phy.h>
 
 int spider_net_stop(struct net_device *netdev);

@@ -5,6 +5,7 @@
  * by Kurt Van Dijck, 2008-2010
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/atomic.h>
 #include <linux/netdevice.h>
 #include <linux/ktime.h>

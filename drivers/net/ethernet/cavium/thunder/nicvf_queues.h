@@ -6,6 +6,7 @@
 #ifndef NICVF_QUEUES_H
 #define NICVF_QUEUES_H
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/iommu.h>
 #include <net/xdp.h>

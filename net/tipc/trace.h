@@ -39,6 +39,7 @@
 #if !defined(_TIPC_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TIPC_TRACE_H
 
+#include <linux/netdevice_api.h>
 #include <linux/tracepoint.h>
 #include "core.h"
 #include "link.h"

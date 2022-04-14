@@ -9,6 +9,7 @@
 #ifndef _CAN_RX_OFFLOAD_H
 #define _CAN_RX_OFFLOAD_H
 
+#include <linux/netdevice_api.h>
 #include <linux/netdevice.h>
 #include <linux/can.h>
 

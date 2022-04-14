@@ -4,6 +4,7 @@
 #ifndef _MLXSW_SPECTRUM_H
 #define _MLXSW_SPECTRUM_H
 
+#include <linux/netdevice_api.h>
 #include <linux/ethtool.h>
 #include <linux/types.h>
 #include <linux/netdevice.h>

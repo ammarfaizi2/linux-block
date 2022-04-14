@@ -7,6 +7,7 @@
 #ifndef _TEHUTI_H
 #define _TEHUTI_H
 
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

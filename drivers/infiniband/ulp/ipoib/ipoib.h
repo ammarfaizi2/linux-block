@@ -35,6 +35,7 @@
 #ifndef _IPOIB_H
 #define _IPOIB_H
 
+#include <linux/netdevice_api.h>
 #include <linux/kref_api.h>
 #include <linux/list.h>
 #include <linux/skbuff.h>

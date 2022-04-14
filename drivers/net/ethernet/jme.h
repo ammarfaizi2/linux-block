@@ -11,6 +11,7 @@
 
 #ifndef __JME_H_INCLUDED__
 #define __JME_H_INCLUDED__
+#include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
 

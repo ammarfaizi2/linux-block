@@ -32,6 +32,7 @@
 #ifndef __MLX5_EN_H__
 #define __MLX5_EN_H__
 
+#include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/if_vlan.h>
 #include <linux/etherdevice.h>

@@ -10,6 +10,7 @@
 #ifndef BNXT_VFR_H
 #define BNXT_VFR_H
 
+#include <linux/netdevice_api.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_BNXT_SRIOV

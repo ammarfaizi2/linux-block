@@ -8,6 +8,7 @@
 #ifndef EFX_EFX_H
 #define EFX_EFX_H
 
+#include <linux/netdevice_api.h>
 #include <linux/indirect_call_wrapper.h>
 #include "net_driver.h"
 #include "ef100_rx.h"

@@ -19,6 +19,7 @@
 #ifndef BNX2X_CMN_H
 #define BNX2X_CMN_H
 
+#include <linux/netdevice_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

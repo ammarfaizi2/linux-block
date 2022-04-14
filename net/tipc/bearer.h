@@ -40,6 +40,7 @@
 #include "netlink.h"
 #include "core.h"
 #include "msg.h"
+#include <linux/netdevice_api.h>
 #include <net/genetlink.h>
 
 #define MAX_MEDIA	3
