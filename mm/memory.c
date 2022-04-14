@@ -39,6 +39,7 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
+#include <linux/mm_types_task.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_page_address.h>
 #include <linux/mmap_lock.h>
