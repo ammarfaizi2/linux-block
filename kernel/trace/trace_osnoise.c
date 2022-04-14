@@ -16,6 +16,7 @@
  * Copyright (C) 2021 Daniel Bristot de Oliveira, Red Hat, Inc. <bristot@redhat.com>
  */
 
+#include <linux/trace_clock.h>
 #include <linux/stacktrace.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
