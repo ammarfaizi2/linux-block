@@ -8,6 +8,7 @@
  * Author: Jonathan Chocron <jonnyc@amazon.com>
  */
 
+#include <linux/resource_ext_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

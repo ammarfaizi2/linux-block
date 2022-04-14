@@ -11,6 +11,7 @@
  * Author: Phil Edworthy <phil.edworthy@renesas.com>
  */
 
+#include <linux/resource_ext_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

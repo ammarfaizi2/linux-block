@@ -6,6 +6,7 @@
  *
  *  Bits taken from various places.
  */
+#include <linux/resource_ext_api.h>
 #include <linux/ioport.h>
 #include <linux/export.h>
 #include <linux/kernel.h>

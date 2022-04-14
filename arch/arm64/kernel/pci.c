@@ -6,6 +6,7 @@
  * Copyright (C) 2014 ARM Ltd.
  */
 
+#include <linux/resource_ext_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>

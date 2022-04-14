@@ -7,6 +7,7 @@
  *
  * 14/04/2005 Initial version, colin.king@philips.com
  */
+#include <linux/resource_ext_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

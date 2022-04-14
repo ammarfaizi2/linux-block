@@ -11,6 +11,7 @@
  * Storlink (C) 2003
  */
 
+#include <linux/resource_ext_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

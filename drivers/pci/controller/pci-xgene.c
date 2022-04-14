@@ -6,6 +6,7 @@
  *
  * Author: Tanmay Inamdar <tinamdar@apm.com>.
  */
+#include <linux/resource_ext_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>

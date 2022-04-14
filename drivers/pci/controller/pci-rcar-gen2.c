@@ -8,6 +8,7 @@
  * Author: Valentine Barshak <valentine.barshak@cogentembedded.com>
  */
 
+#include <linux/resource_ext_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

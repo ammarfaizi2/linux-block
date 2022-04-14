@@ -16,6 +16,7 @@
  * Arnd Bergmann <arnd@arndb.de>
  * Bjorn Helgaas <bhelgaas@google.com>
  */
+#include <linux/resource_ext_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/dma-mapping.h>
