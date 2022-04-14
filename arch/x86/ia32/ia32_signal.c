@@ -63,7 +63,7 @@ static bool ia32_restore_sigcontext(struct pt_regs *regs,
 	struct sigcontext_32 sc;
 
 	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	per_task(current, restart_block).fn = do_no_restart_syscall;
 
 	if (unlikely(copy_from_user(&sc, usc, sizeof(sc))))
 		return false;
