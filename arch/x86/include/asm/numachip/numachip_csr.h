@@ -14,6 +14,7 @@
 #ifndef _ASM_X86_NUMACHIP_NUMACHIP_CSR_H
 #define _ASM_X86_NUMACHIP_NUMACHIP_CSR_H
 
+#include <linux/smp_api.h>
 #include <linux/smp.h>
 #include <linux/io.h>
 

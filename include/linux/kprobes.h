@@ -15,6 +15,7 @@
  *		<jkenisto@us.ibm.com>  and Prasanna S Panchamukhi
  *		<prasanna@in.ibm.com> added function-return probes.
  */
+#include <linux/smp_api.h>
 #include <linux/compiler.h>
 #include <linux/linkage.h>
 #include <linux/list.h>

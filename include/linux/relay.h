@@ -11,6 +11,7 @@
 #ifndef _LINUX_RELAY_H
 #define _LINUX_RELAY_H
 
+#include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/irqflags.h>
 #include <linux/types.h>

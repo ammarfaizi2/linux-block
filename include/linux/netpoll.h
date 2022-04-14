@@ -8,6 +8,7 @@
 #ifndef _LINUX_NETPOLL_H
 #define _LINUX_NETPOLL_H
 
+#include <linux/smp_api.h>
 #include <linux/skbuff_types_head.h>
 #include <linux/semaphore.h>
 #include <linux/atomic_api.h>

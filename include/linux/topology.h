@@ -27,6 +27,7 @@
 #ifndef _LINUX_TOPOLOGY_H
 #define _LINUX_TOPOLOGY_H
 
+#include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/arch_topology.h>
 #include <linux/cpumask.h>

@@ -32,6 +32,7 @@
  * Macros and inline functions that does not naturally belong in other places
  */
 
+#include <linux/smp_api.h>
 #include <linux/interrupt.h>
 #include <linux/kgdb.h>
 #include <linux/preempt.h>

@@ -10,6 +10,7 @@
 #ifndef _ASM_BUGS_H
 #define _ASM_BUGS_H
 
+#include <linux/smp_api.h>
 #include <linux/bug.h>
 #include <linux/delay.h>
 #include <linux/smp.h>

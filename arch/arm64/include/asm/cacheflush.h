@@ -8,6 +8,7 @@
 #ifndef __ASM_CACHEFLUSH_H
 #define __ASM_CACHEFLUSH_H
 
+#include <linux/smp_api.h>
 #include <linux/kgdb.h>
 #include <linux/mm.h>
 

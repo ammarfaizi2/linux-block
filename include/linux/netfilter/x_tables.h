@@ -3,6 +3,7 @@
 #define _X_TABLES_H
 
 
+#include <linux/smp_api.h>
 #include <linux/netdevice.h>
 #include <linux/static_key.h>
 #include <linux/netfilter.h>
