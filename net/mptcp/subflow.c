@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "MPTCP: " fmt
 
+#include <uapi/linux/in_route.h>
 #include <net/socket_alloc.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
