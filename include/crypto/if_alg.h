@@ -8,6 +8,7 @@
 #ifndef _CRYPTO_IF_ALG_H
 #define _CRYPTO_IF_ALG_H
 
+#include <linux/poll.h>
 #include <linux/fs.h>
 #include <linux/compiler.h>
 #include <linux/completion.h>
