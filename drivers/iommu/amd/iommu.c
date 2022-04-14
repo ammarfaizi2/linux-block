@@ -8,6 +8,7 @@
 #define pr_fmt(fmt)     "AMD-Vi: " fmt
 #define dev_fmt(fmt)    pr_fmt(fmt)
 
+#include <asm/x86_irq.h>
 #include <linux/ratelimit.h>
 #include <linux/pci.h>
 #include <linux/acpi.h>

@@ -8,6 +8,7 @@
  *  Wei Liu <wei.liu@kernel.org>
  */
 
+#include <asm/x86_irq.h>
 #include <linux/pci.h>
 #include <linux/irq.h>
 #include <asm/mshyperv.h>

@@ -39,6 +39,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/x86_irq.h>
 #include <asm/tsc.h>
 #include <asm/processor_api.h>
 #include <asm/msr.h>

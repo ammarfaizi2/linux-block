@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt)     "DMAR-IR: " fmt
 
+#include <asm/x86_irq.h>
 #include <linux/interrupt.h>
 #include <linux/dmar.h>
 #include <linux/spinlock.h>

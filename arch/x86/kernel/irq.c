@@ -2,6 +2,7 @@
 /*
  * Common interrupt code for 32 and 64 bit
  */
+#include <asm/x86_irq.h>
 #include <linux/cpu.h>
 #include <linux/interrupt.h>
 #include <linux/kernel_stat.h>

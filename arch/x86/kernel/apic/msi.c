@@ -7,6 +7,7 @@
  * Jiang Liu <jiang.liu@linux.intel.com>
  *	Convert to hierarchical irqdomain
  */
+#include <asm/x86_irq.h>
 #include <linux/mm.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

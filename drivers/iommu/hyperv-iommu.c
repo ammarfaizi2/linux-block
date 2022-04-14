@@ -8,6 +8,7 @@
  * Author : Lan Tianyu <Tianyu.Lan@microsoft.com>
  */
 
+#include <asm/x86_irq.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
