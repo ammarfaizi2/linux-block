@@ -6,6 +6,7 @@
 #define pr_fmt(fmt)		"bcm47xx: " fmt
 #endif
 
+#include <linux/init.h>
 #include <linux/kernel.h>
 
 /* prom.c */

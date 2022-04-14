@@ -2,6 +2,7 @@
 /*
  * internal.h - printk internal definitions
  */
+#include <linux/init.h>
 #include <linux/percpu.h>
 
 #if defined(CONFIG_PRINTK) && defined(CONFIG_SYSCTL)

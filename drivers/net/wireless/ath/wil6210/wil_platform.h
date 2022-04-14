@@ -6,6 +6,7 @@
 #ifndef __WIL_PLATFORM_H__
 #define __WIL_PLATFORM_H__
 
+#include <linux/init.h>
 #include <linux/types.h>
 
 struct device;

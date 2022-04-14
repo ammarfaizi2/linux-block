@@ -18,6 +18,7 @@
  * in the structure.
  */
 
+#include <linux/init.h>
 #include <linux/cpumask_api.h>
 #include <linux/trace_events.h>
 

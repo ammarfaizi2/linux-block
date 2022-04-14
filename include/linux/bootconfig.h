@@ -8,6 +8,7 @@
  */
 
 #ifdef __KERNEL__
+#include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #else /* !__KERNEL__ */
