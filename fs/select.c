@@ -15,6 +15,7 @@
  *     of fds to overcome nfds < 16390 descriptors limit (Tigran Aivazian).
  */
 
+#include <linux/poll_time.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>
