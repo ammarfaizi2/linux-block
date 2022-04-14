@@ -8,6 +8,7 @@
 #ifndef _LINUX_QUOTAOPS_
 #define _LINUX_QUOTAOPS_
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 

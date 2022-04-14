@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/fs_types_sb.h>
 #include <linux/build_bug.h>
 #include <linux/types.h>
 

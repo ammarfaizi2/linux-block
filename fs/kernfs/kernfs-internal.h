@@ -10,6 +10,7 @@
 #ifndef __KERNFS_INTERNAL_H
 #define __KERNFS_INTERNAL_H
 
+#include <linux/fs_types_sb.h>
 #include <linux/dcache.h>
 #include <linux/lockdep.h>
 #include <linux/fs.h>

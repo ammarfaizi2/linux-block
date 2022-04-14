@@ -2,6 +2,7 @@
 #ifndef __CODA_PSDEV_H
 #define __CODA_PSDEV_H
 
+#include <linux/fs_types_sb.h>
 #include <linux/backing-dev.h>
 #include <linux/magic.h>
 #include <linux/mutex.h>

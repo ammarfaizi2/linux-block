@@ -11,6 +11,7 @@
 
 #include "befs_fs_types.h"
 
+#include <linux/fs_types_sb.h>
 #include <linux/build_bug.h>
 #include <linux/types.h>
 

@@ -2,6 +2,7 @@
 #ifndef _LINUX_HUGETLB_H
 #define _LINUX_HUGETLB_H
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/mm_types.h>
 #include <linux/mmdebug.h>

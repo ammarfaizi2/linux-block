@@ -16,6 +16,7 @@
 #ifndef _SELINUX_OBJSEC_H_
 #define _SELINUX_OBJSEC_H_
 
+#include <linux/fs_types_sb.h>
 #include <linux/cred.h>
 #include <linux/list.h>
 #include <linux/sched.h>

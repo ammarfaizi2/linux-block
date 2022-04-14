@@ -14,6 +14,7 @@
 #ifndef ECRYPTFS_KERNEL_H
 #define ECRYPTFS_KERNEL_H
 
+#include <linux/fs_types_sb.h>
 #include <linux/dcache.h>
 #include <crypto/skcipher.h>
 #include <keys/user-type.h>
