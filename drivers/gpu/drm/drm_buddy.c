@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/minmax.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kmemleak.h>
 #include <linux/module.h>
