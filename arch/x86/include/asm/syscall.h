@@ -15,6 +15,7 @@
 #include <linux/err.h>
 #include <asm/thread_info.h>	/* for TS_COMPAT */
 #include <asm/unistd.h>
+#include <asm/ptrace_types.h>
 
 typedef long (*sys_call_ptr_t)(const struct pt_regs *);
 extern const sys_call_ptr_t sys_call_table[];

@@ -10,6 +10,8 @@
 #include <asm/paravirt.h>
 #include <asm/rmwcc.h>
 
+#include <asm/vdso/processor.h>
+
 #define _Q_PENDING_LOOPS	(1 << 9)
 
 #define queued_fetch_set_pending_acquire queued_fetch_set_pending_acquire
