@@ -2,6 +2,7 @@
 #ifndef INT_BLK_MQ_H
 #define INT_BLK_MQ_H
 
+#include <linux/xarray_api.h>
 #include <linux/sched.h>
 #include <linux/cpumask_api.h>
 
