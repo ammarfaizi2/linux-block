@@ -7,6 +7,7 @@
 #include <linux/huge_mm.h>
 #include <linux/swap.h>
 #include <linux/string.h>
+#include <linux/kref_api.h>
 
 /**
  * folio_is_file_lru - Should the folio be on a file LRU or anon LRU?
