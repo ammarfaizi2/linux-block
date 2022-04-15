@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 #define FSCACHE_DEBUG_LEVEL OPERATION
+#include <linux/writeback_api.h>
 #include <linux/xarray_api.h>
 #include <linux/wait_bit.h>
 #include <linux/uio_api.h>
