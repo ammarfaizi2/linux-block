@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/xarray_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/bpf.h>
 #include <linux/crash_dump.h>
