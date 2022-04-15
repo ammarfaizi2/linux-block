@@ -273,7 +273,7 @@ static void cpsw_ndo_set_rx_mode(struct net_device *ndev)
 
 static unsigned int cpsw_rxbuf_total_len(unsigned int len)
 {
-	len += CPSW_HEADROOM;
+	len += CPSW_HEADROOM_NA;
 	len += SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
 
 	return SKB_DATA_ALIGN(len);
@@ -498,6 +498,8 @@ static void cpsw_restore(struct cpsw_priv *priv)
 
 	/* restore CBS offload */
 	cpsw_cbs_resume(&cpsw->slaves[priv->emac_port - 1], priv);
+
+	cpsw_qos_clsflower_resume(priv);
 }
 
 static void cpsw_init_stp_ale_entry(struct cpsw_common *cpsw)
@@ -1407,7 +1409,7 @@ static int cpsw_create_ports(struct cpsw_common *cpsw)
 		cpsw->slaves[i].ndev = ndev;
 
 		ndev->features |= NETIF_F_HW_VLAN_CTAG_FILTER |
-				  NETIF_F_HW_VLAN_CTAG_RX | NETIF_F_NETNS_LOCAL;
+				  NETIF_F_HW_VLAN_CTAG_RX | NETIF_F_NETNS_LOCAL | NETIF_F_HW_TC;
 
 		ndev->netdev_ops = &cpsw_netdev_ops;
 		ndev->ethtool_ops = &cpsw_ethtool_ops;
