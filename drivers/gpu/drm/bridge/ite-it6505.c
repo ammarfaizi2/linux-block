@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
+#include <linux/debugfs.h>
 #include <linux/workqueue_api.h>
 #include <linux/bits.h>
 #include <linux/delay.h>
