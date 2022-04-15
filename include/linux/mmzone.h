@@ -5,9 +5,10 @@
 #ifndef __ASSEMBLY__
 #ifndef __GENERATING_BOUNDS_H
 
-#include <linux/spinlock_api.h>
+#include <linux/atomic_api.h>
+#include <linux/math.h>
 #include <asm/cpufeature.h>
-#include <linux/spinlock.h>
+#include <linux/spinlock_types.h>
 #include <linux/list.h>
 #include <linux/wait.h>
 #include <linux/bitops.h>
