@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/wait_api.h>
 #include <linux/list.h>
 #include <linux/module.h>
 #include <linux/mutex.h>

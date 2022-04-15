@@ -2,6 +2,7 @@
 // Copyright 2020 IBM Corp.
 // Copyright (c) 2019-2020 Intel Corporation
 
+#include <linux/wait_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/atomic.h>
 #include <linux/bitfield.h>

@@ -3,6 +3,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <linux/wait_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/init.h>
 #include <linux/interconnect.h>

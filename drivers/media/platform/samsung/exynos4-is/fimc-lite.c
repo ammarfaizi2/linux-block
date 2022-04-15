@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
+#include <linux/wait_api.h>
 #include <linux/bug.h>
 #include <linux/clk.h>
 #include <linux/device.h>

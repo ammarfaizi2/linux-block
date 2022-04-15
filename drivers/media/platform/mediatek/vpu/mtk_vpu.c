@@ -3,6 +3,7 @@
 * Copyright (c) 2016 MediaTek Inc.
 * Author: Andrew-CT Chen <andrew-ct.chen@mediatek.com>
 */
+#include <linux/wait_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/clk.h>
 #include <linux/debugfs.h>

@@ -4,6 +4,7 @@
  * Author: Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/wait_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/usb.h>

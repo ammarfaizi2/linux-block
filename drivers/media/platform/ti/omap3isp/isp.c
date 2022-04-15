@@ -39,6 +39,7 @@
  *	Troy Laramy <t-laramy@ti.com>
  */
 
+#include <linux/wait_api.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>
 #include <linux/delay.h>

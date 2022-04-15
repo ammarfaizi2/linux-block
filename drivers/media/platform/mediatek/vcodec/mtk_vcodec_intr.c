@@ -4,6 +4,7 @@
 * Author: Tiffany Lin <tiffany.lin@mediatek.com>
 */
 
+#include <linux/wait_api.h>
 #include <linux/errno.h>
 #include <linux/wait.h>
 

@@ -17,6 +17,7 @@
  * Copyright (c) 2022 Google
  */
 
+#include <linux/wait_api.h>
 #include <linux/kthread.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>

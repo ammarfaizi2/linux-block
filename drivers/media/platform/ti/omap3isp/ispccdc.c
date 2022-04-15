@@ -11,6 +11,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/wait_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/module.h>
 #include <linux/uaccess.h>

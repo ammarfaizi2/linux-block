@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/wait_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>
