@@ -201,6 +201,7 @@ static inline void enable_copy_mc_fragile(void)
 #endif
 
 struct cper_ia_proc_ctx;
+struct cpuinfo_x86;
 
 #ifdef CONFIG_X86_MCE
 int mcheck_init(void);
