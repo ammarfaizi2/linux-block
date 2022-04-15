@@ -10,11 +10,9 @@
 #include <linux/smp_api.h>
 #include <linux/trace_recursion.h>
 #include <linux/jump_label.h>
-#include <linux/bitops.h>
-#include <linux/mutex.h>
 #include <linux/ptrace_types.h>
-#include <linux/sched.h>
 #include <linux/string.h>
+#include <linux/mutex.h>
 #include <linux/bug.h>
 #include <linux/irqflags.h>
 
