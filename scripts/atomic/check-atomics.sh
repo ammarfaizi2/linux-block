@@ -19,8 +19,7 @@ linux/atomic/atomic-long.h
 linux/atomic/atomic-arch-fallback.h
 EOF
 while read header; do
-	OLDSUM="$(tail -n 1 ${LINUXDIR}/include/${header})"
-	OLDSUM="${OLDSUM#// }"
+	OLDSUM="$(tail -n 1 ${LINUXDIR}/include/${header} | cut -d' ' -f2)"
 
 	NEWSUM="$(sed '$d' ${LINUXDIR}/include/${header} | sha1sum)"
 	NEWSUM="${NEWSUM%% *}"

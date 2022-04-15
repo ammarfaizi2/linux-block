@@ -16,5 +16,5 @@ while read script header args; do
 	/bin/sh ${ATOMICDIR}/${script} ${ATOMICTBL} ${args} > ${LINUXDIR}/include/${header}
 	HASH="$(sha1sum ${LINUXDIR}/include/${header})"
 	HASH="${HASH%% *}"
-	printf "// %s\n" "${HASH}" >> ${LINUXDIR}/include/${header}
+	printf "/* %s */\n" "${HASH}" >> ${LINUXDIR}/include/${header}
 done
