@@ -10,13 +10,11 @@
 #include <linux/mm_page_address.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/rwsem.h>
-#include <linux/memcontrol.h>
-#include <linux/highmem.h>
-#include <linux/pagemap.h>
+#include <linux/page-flags.h>
+#include <linux/pgtable.h>
+#include <linux/hugetlb_inline.h>
+
+#include "highmem-internal.h"
 
 /*
  * The anon_vma heads a list of private "related" vmas, to scan if

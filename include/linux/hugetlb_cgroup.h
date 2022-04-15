@@ -15,11 +15,12 @@
 #ifndef _LINUX_HUGETLB_CGROUP_H
 #define _LINUX_HUGETLB_CGROUP_H
 
-#include <linux/mmdebug.h>
+#include <linux/cgroup_api.h>
+#include <linux/hugetlb.h>
+#include <linux/page_counter.h>
 
-struct hugetlb_cgroup;
-struct resv_map;
 struct file_region;
+struct resv_map;
 
 #ifdef CONFIG_CGROUP_HUGETLB
 /*
