@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <net/xdp_api.h>
 #include <linux/netdevice_api_prefetch.h>
 #include <linux/netdevice_api.h>

@@ -17,6 +17,7 @@
  * Kris Katterjohn - Added many additional checks in bpf_check_classic()
  */
 
+#include <linux/skbuff_api_frag.h>
 #include <net/xdp_api.h>
 #include <net/udp_api_table.h>
 #include <net/sock_api.h>
