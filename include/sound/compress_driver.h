@@ -11,6 +11,8 @@
 #define __COMPRESS_DRIVER_H
 
 #include <linux/types.h>
+#include <linux/wait_api.h>
+
 #include <sound/core.h>
 #include <sound/compress_offload.h>
 #include <sound/asound.h>

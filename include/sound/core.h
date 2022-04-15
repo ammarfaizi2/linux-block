@@ -7,7 +7,6 @@
  *  Copyright (c) 1994-2001 by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <linux/wait_api.h>
 #include <linux/atomic_api.h>
 #include <linux/device.h>
 #include <linux/mutex.h>		/* struct mutex */
@@ -16,7 +15,7 @@
 #include <linux/stringify.h>
 #include <linux/printk.h>
 #include <linux/sched.h>
-#include <linux/wait.h>
+#include <linux/wait_types.h>
 
 /* number of supported soundcards */
 #ifdef CONFIG_SND_DYNAMIC_MINORS
@@ -152,11 +151,12 @@ static inline unsigned int snd_power_get_state(struct snd_card *card)
 	return READ_ONCE(card->power_state);
 }
 
-static inline void snd_power_change_state(struct snd_card *card, unsigned int state)
-{
-	WRITE_ONCE(card->power_state, state);
-	wake_up(&card->power_sleep);
-}
+#define snd_power_change_state(card, state)		\
+do {							\
+	WRITE_ONCE((card)->power_state, state);		\
+	(card)->power_state = state;			\
+	wake_up(&(card)->power_sleep);			\
+} while (0)
 
 /**
  * snd_power_ref - Take the reference count for power control
@@ -175,11 +175,11 @@ static inline void snd_power_ref(struct snd_card *card)
  * snd_power_unref - Release the reference count for power control
  * @card: sound card object
  */
-static inline void snd_power_unref(struct snd_card *card)
-{
-	if (atomic_dec_and_test(&card->power_ref))
-		wake_up(&card->power_ref_sleep);
-}
+#define snd_power_unref(card)						\
+do {									\
+	if (atomic_dec_and_test(&(card)->power_ref))			\
+		wake_up(&(card)->power_ref_sleep);			\
+} while (0)
 
 /**
  * snd_power_sync_ref - wait until the card power_ref is freed
@@ -188,10 +188,7 @@ static inline void snd_power_unref(struct snd_card *card)
  * This function is used to synchronize with the pending power_ref being
  * released.
  */
-static inline void snd_power_sync_ref(struct snd_card *card)
-{
-	wait_event(card->power_ref_sleep, !atomic_read(&card->power_ref));
-}
+#define snd_power_sync_ref(card) wait_event((card)->power_ref_sleep, !atomic_read(&(card)->power_ref))
 
 /* init.c */
 int snd_power_wait(struct snd_card *card);
