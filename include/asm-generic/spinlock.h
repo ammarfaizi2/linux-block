@@ -89,4 +89,4 @@ static __always_inline int arch_spin_value_unlocked(arch_spinlock_t lock)
 
 #include <asm/qrwlock.h>
 
-#endif /* __ASM_GENERIC_TICKET_LOCK_H */
+#endif /* __ASM_GENERIC_SPINLOCK_H */
