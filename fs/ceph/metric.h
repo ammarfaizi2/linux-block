@@ -4,7 +4,7 @@
 
 #include <linux/workqueue_api.h>
 #include <linux/ceph/types.h>
-#include <linux/percpu_counter.h>
+#include <linux/percpu_counter_api.h>
 #include <linux/ktime.h>
 
 extern bool disable_send_metrics;

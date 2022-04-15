@@ -140,6 +140,4 @@ struct wb_domain {
 	unsigned long dirty_limit;
 };
 
-#include <linux/writeback_api.h>
-
 #endif		/* WRITEBACK_H */
