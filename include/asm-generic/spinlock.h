@@ -14,7 +14,9 @@
  * a test-and-set.
  *
  * It further assumes atomic_*_release() + atomic_*_acquire() is RCpc and hence
- * uses atomic_fetch_add() which is SC to create an RCsc lock.
+ * uses atomic_fetch_add() which is RCsc to create an RCsc hot path, along with
+ * a full fence after the spin to upgrade the otherwise-RCpc
+ * atomic_cond_read_acquire().
  *
  * The implementation uses smp_cond_load_acquire() to spin, so if the
  * architecture has WFE like instructions to sleep instead of poll for word
@@ -22,21 +24,30 @@
  *
  */
 
-#ifndef __ASM_GENERIC_TICKET_LOCK_H
-#define __ASM_GENERIC_TICKET_LOCK_H
+#ifndef __ASM_GENERIC_SPINLOCK_H
+#define __ASM_GENERIC_SPINLOCK_H
 
 #include <linux/atomic.h>
 #include <asm-generic/spinlock_types.h>
 
 static __always_inline void arch_spin_lock(arch_spinlock_t *lock)
 {
-	u32 val = atomic_fetch_add(1<<16, lock); /* SC, gives us RCsc */
+	u32 val = atomic_fetch_add(1<<16, lock);
 	u16 ticket = val >> 16;
 
 	if (ticket == (u16)val)
 		return;
 
+	/*
+	 * atomic_cond_read_acquire() is RCpc, but rather than defining a
+	 * custom cond_read_rcsc() here we just emit a full fence.  We only
+	 * need the prior reads before subsequent writes ordering from
+	 * smb_mb(), but as atomic_cond_read_acquire() just emits reads and we
+	 * have no outstanding writes due to the atomic_fetch_add() the extra
+	 * orderings are free.
+	 */
 	atomic_cond_read_acquire(lock, ticket == (u16)VAL);
+	smp_mb();
 }
 
 static __always_inline bool arch_spin_trylock(arch_spinlock_t *lock)
