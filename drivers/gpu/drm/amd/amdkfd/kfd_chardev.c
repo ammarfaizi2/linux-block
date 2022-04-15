@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/ptrace_api.h>
 #include <linux/timekeeping.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
