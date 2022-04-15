@@ -21,6 +21,7 @@
 #include <linux/mnt_idmapping.h>
 #include <linux/slab.h>
 #include <linux/quota_types.h>
+#include <linux/wait_api.h>
 
 #include <uapi/linux/fs.h>
 
