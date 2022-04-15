@@ -9,19 +9,19 @@
 
 #include <linux/smp_api.h>
 #include <linux/trace_recursion.h>
-#include <linux/sched/per_task.h>
-#include <linux/trace_clock.h>
 #include <linux/jump_label.h>
-#include <linux/kallsyms.h>
-#include <linux/linkage.h>
 #include <linux/bitops.h>
-#include <linux/ktime.h>
+#include <linux/mutex.h>
+#include <linux/ptrace_types.h>
 #include <linux/sched.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/fs.h>
+#include <linux/string.h>
+#include <linux/bug.h>
+#include <linux/irqflags.h>
 
 #include <asm/ftrace.h>
+
+struct inode;
+struct file;
 
 /*
  * If the arch supports passing the variable contents of
@@ -897,6 +897,14 @@ static inline void __ftrace_enabled_restore(int enabled)
 #define CALLER_ADDR4 ((unsigned long)ftrace_return_address(4))
 #define CALLER_ADDR5 ((unsigned long)ftrace_return_address(5))
 #define CALLER_ADDR6 ((unsigned long)ftrace_return_address(6))
+
+#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+extern int in_lock_functions(unsigned long addr);
+#else
+# ifndef in_lock_functions
+#  define in_lock_functions(ADDR) 0
+# endif
+#endif
 
 static inline unsigned long get_lock_parent_ip(void)
 {
