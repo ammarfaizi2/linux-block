@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2019 Netronome Systems, Inc. */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/seq_file.h>
 
 #include "../nfp_net.h"

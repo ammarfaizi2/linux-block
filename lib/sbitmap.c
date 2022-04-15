@@ -4,6 +4,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/percpu.h>

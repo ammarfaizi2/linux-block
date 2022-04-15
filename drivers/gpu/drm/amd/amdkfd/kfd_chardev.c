@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/ptrace_api.h>
 #include <linux/timekeeping.h>
 #include <linux/pgtable_api.h>

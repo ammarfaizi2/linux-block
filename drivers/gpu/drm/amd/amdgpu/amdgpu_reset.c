@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/workqueue_api.h>
 
 #include "amdgpu_reset.h"

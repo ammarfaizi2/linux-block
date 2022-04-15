@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mm_api_kvmalloc.h>
 #include <kunit/test.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

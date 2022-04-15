@@ -9,6 +9,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <net/route_api.h>
 #include <net/netlink_api.h>
 #include <net/neighbour_api.h>

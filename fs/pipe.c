@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992, 1999  Linus Torvalds
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/wait_api.h>
 #include <linux/uio_api.h>
 #include <linux/syscalls_api.h>

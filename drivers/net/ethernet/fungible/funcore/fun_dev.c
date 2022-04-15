@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/workqueue_api.h>
 #include <linux/aer.h>
 #include <linux/bitmap.h>

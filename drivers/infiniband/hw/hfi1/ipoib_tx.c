@@ -8,6 +8,7 @@
  * This file contains HFI1 support for IPOIB SDMA functionality
  */
 
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>

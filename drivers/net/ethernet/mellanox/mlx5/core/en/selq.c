@@ -2,6 +2,7 @@
 /* Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES. All rights reserved. */
 
 #include "selq.h"
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/slab.h>
 #include <linux/netdevice.h>
 #include <linux/rcupdate.h>

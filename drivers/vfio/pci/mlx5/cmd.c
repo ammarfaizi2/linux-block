@@ -3,6 +3,8 @@
  * Copyright (c) 2021-2022, NVIDIA CORPORATION & AFFILIATES. All rights reserved
  */
 
+#include <linux/mm_api_kvmalloc.h>
+
 #include "cmd.h"
 
 int mlx5vf_cmd_suspend_vhca(struct pci_dev *pdev, u16 vhca_id, u16 op_mod)
