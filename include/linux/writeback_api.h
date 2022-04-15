@@ -12,7 +12,7 @@
 #include <linux/workqueue.h>
 #include <linux/fs.h>
 #include <linux/flex_proportions.h>
-#include <linux/backing-dev-types.h>
+#include <linux/backing-dev-api.h>
 #include <linux/blk_types.h>
 #include <linux/blk-cgroup.h>
 
