@@ -4,12 +4,14 @@
 
 #include <linux/pgtable_types.h>
 
+#include <asm/page.h>
 #include <asm/pgtable.h>
 
 #ifndef __ASSEMBLY__
 #ifdef CONFIG_MMU
 
 #include <linux/mm_types.h>
+#include <linux/mm_api.h>
 #include <linux/bug.h>
 #include <linux/errno.h>
 #include <asm-generic/pgtable_uffd.h>

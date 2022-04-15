@@ -3,6 +3,8 @@
 #define _ASM_X86_PGTABLE_H
 
 #include <linux/mem_encrypt.h>
+#include <linux/mm_api.h>
+
 #include <asm/page.h>
 #include <asm/pgtable_types.h>
 
