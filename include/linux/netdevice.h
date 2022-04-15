@@ -21,7 +21,7 @@
 #ifndef _LINUX_NETDEVICE_H
 #define _LINUX_NETDEVICE_H
 
-#include <linux/skbuff_types.h>
+#include <linux/skbuff.h>
 
 #include <linux/dynamic_queue_limits.h>
 #include <linux/hashtable.h>
