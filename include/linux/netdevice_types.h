@@ -21,14 +21,15 @@
 #ifndef _LINUX_NETDEVICE_TYPES_H
 #define _LINUX_NETDEVICE_TYPES_H
 
-#include <linux/skbuff.h>
+#include <linux/skbuff_types.h>
 #include <linux/dynamic_queue_limits.h>
-#include <linux/hashtable.h>
-#include <linux/hrtimer.h>
+#include <linux/hashtable_types.h>
+#include <linux/hrtimer_types.h>
 #include <linux/kobject_types.h>
+#include <linux/seqlock_types.h>
+#include <linux/timerqueue_types.h>
 #include <linux/device.h>
-#include <linux/rbtree.h>
-#include <linux/seqlock.h>
+#include <linux/rbtree_types.h>
 
 #include <net/net_trackers.h>
 #include <net/net_namespace_types_possible.h>
