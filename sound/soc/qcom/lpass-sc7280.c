@@ -5,6 +5,7 @@
  * lpass-sc7180.c -- ALSA SoC platform-machine driver for QTi LPASS
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <sound/pcm.h>
 #include <sound/soc.h>

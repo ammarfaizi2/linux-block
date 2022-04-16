@@ -2,6 +2,7 @@
 /*
  * Copyright © 2021 Broadcom
  */
+#include <linux/device_api_lock.h>
 #include <linux/bcma/bcma.h>
 #include <linux/bcma/bcma_driver_chipcommon.h>
 #include <linux/device.h>

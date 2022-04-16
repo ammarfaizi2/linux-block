@@ -19,6 +19,7 @@
  *     close(fd);
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/miscdevice.h>

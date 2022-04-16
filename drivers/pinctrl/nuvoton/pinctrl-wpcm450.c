@@ -9,6 +9,7 @@
 // - GPIO event (interrupt) registers, located centrally in the GPIO register
 //   block, shared between all GPIO banks
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/fwnode.h>
 #include <linux/gpio/driver.h>

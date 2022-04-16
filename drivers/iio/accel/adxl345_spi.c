@@ -5,6 +5,7 @@
  * Copyright (c) 2017 Eva Rachel Retuya <eraretuya@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/regmap.h>
 #include <linux/spi/spi.h>

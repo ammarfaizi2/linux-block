@@ -6,6 +6,7 @@
 //          Amadeusz Slawinski <amadeuszx.slawinski@linux.intel.com>
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/slab.h>
 #include "avs.h"
 #include "messages.h"

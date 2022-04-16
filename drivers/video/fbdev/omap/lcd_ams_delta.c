@@ -7,6 +7,7 @@
  * Copyright (C) 2006 Jonathan McDowell <noodles@earth.li>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/io.h>

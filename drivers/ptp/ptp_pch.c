@@ -8,6 +8,7 @@
  * This code was derived from the IXP46X driver.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/vmalloc.h>
 #include <linux/time64_api.h>
 #include <linux/string.h>

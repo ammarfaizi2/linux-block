@@ -5,6 +5,7 @@
  * Copyright 2011 Analog Devices Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>

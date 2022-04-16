@@ -9,6 +9,7 @@
  * Copyright (C) 2020-2022 Gabriel Somlo <gsomlo@gmail.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bits.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

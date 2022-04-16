@@ -39,6 +39,7 @@
  *	Troy Laramy <t-laramy@ti.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/wait_api.h>
 #include <linux/clk.h>

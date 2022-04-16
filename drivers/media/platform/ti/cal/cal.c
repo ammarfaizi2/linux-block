@@ -9,6 +9,7 @@
  *	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/wait_api.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2019 Sunplus Technology Inc., All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

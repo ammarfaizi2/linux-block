@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2021 Rafał Miłecki <rafal@milecki.pl> */
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/err.h>
 #include <linux/io.h>

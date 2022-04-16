@@ -5,6 +5,7 @@
  * Copyright (C) 2010, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

@@ -2,6 +2,7 @@
 // Copyright 2020 IBM Corp.
 // Copyright (c) 2019-2020 Intel Corporation
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/wait_api.h>
 #include <linux/workqueue_api.h>

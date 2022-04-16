@@ -3,6 +3,7 @@
  * Copyright (C) 2019-2021 Linaro Ltd.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/of.h>

@@ -5,6 +5,7 @@
  * Copyright 2021 Analog Devices Inc.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/iio/iio.h>
 #include <linux/iio/sysfs.h>

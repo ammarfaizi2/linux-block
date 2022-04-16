@@ -4,6 +4,7 @@
  * Author: Allen-KH Cheng <allen-kh.cheng@mediatek.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>

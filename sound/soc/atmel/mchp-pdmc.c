@@ -6,6 +6,7 @@
 //
 // Author: Codrin Ciubotariu <codrin.ciubotariu@microchip.com>
 
+#include <linux/device_api_lock.h>
 #include <dt-bindings/sound/microchip,pdmc.h>
 
 #include <linux/clk.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2022 Google, Inc
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/hid.h>
 #include <linux/input/vivaldi-fmap.h>

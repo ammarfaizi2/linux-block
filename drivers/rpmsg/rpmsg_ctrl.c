@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/cdev.h>
 #include <linux/device.h>

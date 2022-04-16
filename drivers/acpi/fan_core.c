@@ -7,6 +7,7 @@
  *  Copyright (C) 2022 Intel Corporation. All rights reserved.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/sysfs.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

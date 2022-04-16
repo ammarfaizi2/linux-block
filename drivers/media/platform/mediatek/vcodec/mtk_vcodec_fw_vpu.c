@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 
 #include "mtk_vcodec_fw_priv.h"

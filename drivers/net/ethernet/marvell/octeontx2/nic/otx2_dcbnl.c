@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 
 #include "otx2_common.h"

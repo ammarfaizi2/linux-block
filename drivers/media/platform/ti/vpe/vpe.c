@@ -14,6 +14,7 @@
  * Based on the virtual v4l2-mem2mem example device
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

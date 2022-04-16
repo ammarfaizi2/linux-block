@@ -3,6 +3,7 @@
  * Copyright (C) 2022 MediaTek Inc.
  * Author Fengping Yu <fengping.yu@mediatek.com>
  */
+#include <linux/device_api_lock.h>
 #include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/input/matrix_keypad.h>

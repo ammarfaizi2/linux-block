@@ -7,6 +7,7 @@
  * with RT1308/CS35L41 codec.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>
 #include <linux/module.h>

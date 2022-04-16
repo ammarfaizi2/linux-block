@@ -11,6 +11,7 @@
  * m2m-deinterlace, and vsp1 drivers.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

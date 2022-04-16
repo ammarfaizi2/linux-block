@@ -6,6 +6,7 @@
  * Copyright 2018 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/bits.h>
 #include <linux/i2c.h>

@@ -9,6 +9,7 @@
 //  Peter Ujfalusi <peter.ujfalusi@linux.intel.com>
 //
 
+#include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
 #include <linux/module.h>
 #include <linux/pm_runtime.h>

@@ -3,6 +3,7 @@
  *
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/pci-dma-compat.h>

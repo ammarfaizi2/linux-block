@@ -4,6 +4,7 @@
  * Copyright (C) 2021 Marvell.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/sysfs.h>
 #include <linux/init.h>
 #include <linux/io.h>

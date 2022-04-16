@@ -8,6 +8,7 @@
  * 0x53 (ALT ADDRESS pin grounded)
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

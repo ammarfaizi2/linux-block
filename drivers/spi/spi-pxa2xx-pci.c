@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2016, 2021 Intel Corporation
  */
+#include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/module.h>
 #include <linux/pci.h>
