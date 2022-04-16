@@ -31,4 +31,11 @@ static inline bool udp_unexpected_gso(struct sock *sk, struct sk_buff *skb)
 	return false;
 }
 
+#define UDP_HTABLE_SIZE_MIN		(CONFIG_BASE_SMALL ? 128 : 256)
+
+static inline u32 udp_hashfn(const struct net *net, u32 num, u32 mask)
+{
+	return (num + net_hash_mix(net)) & mask;
+}
+
 #endif	/* _LINUX_UDP_API_H */
