@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "PM: hibernation: " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
