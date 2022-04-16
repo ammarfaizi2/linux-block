@@ -21,8 +21,7 @@
 #ifndef __ASSEMBLY__
 #include <linux/spinlock.h>
 #include <asm/x86_init.h>
-#include <asm/pkru.h>
-#include <asm/fpu/api.h>
+#include <asm/cpufeature.h>
 #include <asm/coco.h>
 #include <asm-generic/pgtable_uffd.h>
 #include <linux/page_table_check.h>
