@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/pagemap_api_readahead.h>
 #include <linux/xarray_api.h>
 #include <linux/export.h>
 #include <linux/task_io_accounting_ops.h>
