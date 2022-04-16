@@ -8,10 +8,11 @@
 
 #include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api.h>
+#include <net/xdp_types.h>
+
 #include <linux/err.h>
 #include <linux/align.h>
 #include <linux/skbuff.h>
-#include <net/xdp.h>
 
 static __always_inline bool xdp_buff_has_frags(struct xdp_buff *xdp)
 {
