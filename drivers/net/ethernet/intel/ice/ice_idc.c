@@ -2,6 +2,7 @@
 /* Copyright (C) 2021, Intel Corporation. */
 
 /* Inter-Driver Communication */
+#include <linux/preempt.h>
 #include <linux/slab.h>
 #include <linux/device_api_lock.h>
 

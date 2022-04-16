@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/preempt.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

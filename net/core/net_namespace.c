@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/preempt.h>
 #include <net/sock_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/net_namespace_api.h>

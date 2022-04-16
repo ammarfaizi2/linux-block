@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) "rcu: " fmt
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/swait_api.h>

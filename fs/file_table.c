@@ -6,6 +6,7 @@
  *  Copyright (C) 1997 David S. Miller (davem@caip.rutgers.edu)
  */
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmstat.h>
 #include <linux/spinlock_api.h>

@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/preempt.h>
 #include <net/sock_api.h>
 #include <net/dst_api.h>
 #include <linux/vmalloc.h>

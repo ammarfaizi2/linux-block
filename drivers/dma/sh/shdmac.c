@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/ioport.h>

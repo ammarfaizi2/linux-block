@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/preempt.h>
 #include <net/netlink_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/percpu.h>

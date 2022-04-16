@@ -8,6 +8,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/preempt.h>
 #include <linux/signal.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>

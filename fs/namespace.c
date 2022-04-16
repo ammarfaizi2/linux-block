@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/preempt.h>
 #include <uapi/linux/unistd.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>

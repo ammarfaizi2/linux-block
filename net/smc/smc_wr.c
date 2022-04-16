@@ -22,6 +22,7 @@
  * Author(s):  Steffen Maier <maier@linux.vnet.ibm.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/wait_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

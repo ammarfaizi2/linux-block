@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/smp_api.h>

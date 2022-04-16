@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/interrupt.h>

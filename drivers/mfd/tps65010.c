@@ -6,6 +6,7 @@
  * Copyright (C) 2004-2005 David Brownell
  */
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

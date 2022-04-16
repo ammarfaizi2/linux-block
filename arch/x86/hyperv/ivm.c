@@ -6,6 +6,7 @@
  *  Tianyu Lan <Tianyu.Lan@microsoft.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/vmalloc.h>
 #include <linux/mm_page_address.h>
 #include <linux/bitfield.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/preempt.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

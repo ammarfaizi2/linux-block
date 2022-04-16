@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/preempt.h>
 #include <linux/timekeeping.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>

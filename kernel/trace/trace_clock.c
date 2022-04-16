@@ -13,6 +13,7 @@
  *
  * Tracer plugins will chose a default from these clocks.
  */
+#include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>

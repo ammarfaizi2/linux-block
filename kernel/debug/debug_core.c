@@ -27,6 +27,7 @@
 
 #define pr_fmt(fmt) "KGDB: " fmt
 
+#include <linux/preempt.h>
 #include <uapi/linux/signal.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>

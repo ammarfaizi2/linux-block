@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/stacktrace.h>
 #include <linux/sched/per_task.h>

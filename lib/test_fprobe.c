@@ -3,6 +3,7 @@
  * test_fprobe.c - simple sanity test for fprobe
  */
 
+#include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/fprobe.h>
 #include <linux/random.h>

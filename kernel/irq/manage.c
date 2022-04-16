@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "genirq: " fmt
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>

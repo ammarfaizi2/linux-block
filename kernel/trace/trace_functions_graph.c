@@ -7,6 +7,7 @@
  * is Copyright (c) Steven Rostedt <srostedt@redhat.com>
  *
  */
+#include <linux/preempt.h>
 #include <linux/trace_clock.h>
 #include <linux/seq_file.h>
 #include <linux/percpu.h>

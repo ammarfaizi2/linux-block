@@ -17,6 +17,7 @@
  *		http://lse.sourceforge.net/locking/rcupdate.html
  *
  */
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/srcu.h>
 #include <linux/sched.h>

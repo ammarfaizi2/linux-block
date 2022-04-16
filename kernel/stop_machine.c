@@ -7,6 +7,7 @@
  * Copyright (C) 2010		SUSE Linux Products GmbH
  * Copyright (C) 2010		Tejun Heo <tj@kernel.org>
  */
+#include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/sched/thread_info_api.h>

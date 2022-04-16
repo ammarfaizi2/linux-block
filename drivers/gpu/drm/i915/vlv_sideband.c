@@ -3,6 +3,7 @@
  * Copyright © 2013-2021 Intel Corporation
  */
 
+#include <linux/preempt.h>
 #include <linux/mutex_api.h>
 
 #include "i915_drv.h"

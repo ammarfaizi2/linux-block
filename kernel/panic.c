@@ -9,6 +9,7 @@
  * This function is used through-out the kernel (including mm and fs)
  * to indicate a major problem.
  */
+#include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/notifier_api.h>

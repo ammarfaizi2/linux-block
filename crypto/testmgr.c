@@ -16,6 +16,7 @@
  *    Copyright (c) 2010, Intel Corporation.
  */
 
+#include <linux/preempt.h>
 #include <linux/uio_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/scatterlist_api.h>

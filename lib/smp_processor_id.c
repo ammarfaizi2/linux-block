@@ -4,6 +4,7 @@
  *
  * DEBUG_PREEMPT variant of smp_processor_id().
  */
+#include <linux/preempt.h>
 #include <linux/smp_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/export.h>

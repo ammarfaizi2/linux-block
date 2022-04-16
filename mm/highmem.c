@@ -17,6 +17,7 @@
  * Copyright (C) 1999 Ingo Molnar <mingo@redhat.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>
 #include <linux/spinlock_api.h>

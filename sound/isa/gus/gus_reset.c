@@ -3,6 +3,7 @@
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>

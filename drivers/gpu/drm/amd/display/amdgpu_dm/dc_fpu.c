@@ -27,6 +27,7 @@
 #include "dc_trace.h"
 
 #if defined(CONFIG_X86)
+#include <linux/preempt.h>
 #include <asm/fpu/api.h>
 #elif defined(CONFIG_PPC64)
 #include <asm/switch_to.h>

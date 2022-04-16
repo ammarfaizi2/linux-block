@@ -7,6 +7,7 @@
  * Copyright (C) 2006-2007 Nokia Corporation
  */
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

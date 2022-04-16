@@ -71,6 +71,7 @@
  * by Adam Tla/lka <atlka@pg.gda.pl>, Aug 2006
  */
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sysfs.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
+#include <linux/preempt.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>

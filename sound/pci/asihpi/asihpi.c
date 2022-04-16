@@ -15,6 +15,7 @@
 #include "hpioctl.h"
 #include "hpicmn.h"
 
+#include <linux/preempt.h>
 #include <linux/pci.h>
 #include <linux/init.h>
 #include <linux/jiffies.h>

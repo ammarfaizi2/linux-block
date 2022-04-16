@@ -8,6 +8,7 @@
  * Copyright 2009-2017 Canonical Ltd.
  */
 
+#include <linux/preempt.h>
 #include <linux/net.h>
 
 #include "include/apparmor.h"

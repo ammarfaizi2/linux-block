@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/preempt.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>

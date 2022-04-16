@@ -22,6 +22,7 @@
  *	et. al.
  */
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/timerqueue_api.h>
 #include <linux/time64_api.h>

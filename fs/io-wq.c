@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Jens Axboe
  *
  */
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>

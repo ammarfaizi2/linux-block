@@ -15,6 +15,7 @@
  * Peter Zijlstra <peterz@infradead.org>.
  */
 
+#include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/rwsem_api.h>

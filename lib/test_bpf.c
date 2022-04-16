@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/preempt.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>

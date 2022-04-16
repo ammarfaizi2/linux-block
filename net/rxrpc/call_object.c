@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/preempt.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>

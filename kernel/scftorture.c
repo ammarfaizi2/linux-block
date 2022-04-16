@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/smp_api.h>
 #include <linux/jiffies.h>

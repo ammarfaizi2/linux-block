@@ -19,6 +19,7 @@
  * keep a count of how many are currently allocated from each page.
  */
 
+#include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm.h>

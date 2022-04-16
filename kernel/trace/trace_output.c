@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
+#include <linux/preempt.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

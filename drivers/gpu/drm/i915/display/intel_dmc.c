@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/module.h>

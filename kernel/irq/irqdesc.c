@@ -7,6 +7,7 @@
  * information is available in Documentation/core-api/genericirq.rst
  *
  */
+#include <linux/preempt.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/radix-tree-api.h>

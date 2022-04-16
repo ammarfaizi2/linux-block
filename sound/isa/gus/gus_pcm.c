@@ -10,6 +10,7 @@
  *  chip doesn't support autoinit DMA.
  */
 
+#include <linux/preempt.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

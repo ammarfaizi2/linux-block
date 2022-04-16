@@ -7,6 +7,7 @@
  * Author: Marcelo Henrique Cerri <mhcerri@br.ibm.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/types.h>
 #include <linux/err.h>

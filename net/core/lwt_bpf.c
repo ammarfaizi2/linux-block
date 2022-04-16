@@ -2,6 +2,7 @@
 /* Copyright (c) 2016 Thomas Graf <tgraf@tgraf.ch>
  */
 
+#include <linux/preempt.h>
 #include <net/sock_api.h>
 #include <net/sch_generic_api.h>
 #include <net/route_api.h>

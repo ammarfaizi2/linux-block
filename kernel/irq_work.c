@@ -6,6 +6,7 @@
  * context. The enqueueing is NMI-safe.
  */
 
+#include <linux/preempt.h>
 #include <linux/sched/signal.h>
 #include <linux/lockdep_api.h>
 #include <linux/llist_api.h>

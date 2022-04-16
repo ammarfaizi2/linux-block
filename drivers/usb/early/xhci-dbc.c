@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/preempt.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

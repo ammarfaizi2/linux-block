@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2019 Facebook */
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/u64_stats_sync_api.h>

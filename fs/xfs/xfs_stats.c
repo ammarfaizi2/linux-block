@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2003,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/preempt.h>
 #include <linux/seq_file.h>
 #include <linux/cpumask_api.h>
 

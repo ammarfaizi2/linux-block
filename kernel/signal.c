@@ -11,6 +11,7 @@
  *		to allow signals to be sent reliably.
  */
 
+#include <linux/preempt.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/time64_api.h>

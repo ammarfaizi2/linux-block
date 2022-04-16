@@ -5,6 +5,7 @@
  * Copyright IBM Corp. 2008
  */
 
+#include <linux/preempt.h>
 #include <linux/stacktrace.h>
 #include <linux/kernel.h>
 #include <linux/kprobes.h>

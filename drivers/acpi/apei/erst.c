@@ -12,6 +12,7 @@
  *   Author: Huang Ying <ying.huang@intel.com>
  */
 
+#include <linux/preempt.h>
 #include <linux/uuid_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

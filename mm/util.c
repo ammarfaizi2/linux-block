@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/sysctl.h>
 #include <linux/spinlock_api.h>

@@ -3,6 +3,7 @@
  * Copyright(c) 2015, 2016 Intel Corporation.
  */
 
+#include <linux/preempt.h>
 #include <linux/io.h>
 
 #include "hfi.h"

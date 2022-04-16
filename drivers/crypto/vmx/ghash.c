@@ -11,6 +11,7 @@
  *   Copyright (C) 2014 - 2018 Linaro Ltd. <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/preempt.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/types.h>
 #include <linux/err.h>

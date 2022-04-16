@@ -9,6 +9,7 @@
  * Copyright (c) 2015 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/preempt.h>
 #include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

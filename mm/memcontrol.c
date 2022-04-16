@@ -25,6 +25,7 @@
  * Copyright (C) 2020 Alibaba, Inc, Alex Shi
  */
 
+#include <linux/preempt.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

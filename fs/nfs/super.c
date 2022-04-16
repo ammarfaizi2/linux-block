@@ -21,6 +21,7 @@
  *   of another (see nfs_lookup())
  */
 
+#include <linux/preempt.h>
 #include <net/ipv6_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/rculist.h>

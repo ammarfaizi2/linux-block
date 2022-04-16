@@ -4,6 +4,7 @@
  * Copyright 2020 Google LLC.
  */
 
+#include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched/task_flags.h>

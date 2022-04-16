@@ -6,6 +6,7 @@
  *                             Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/preempt.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

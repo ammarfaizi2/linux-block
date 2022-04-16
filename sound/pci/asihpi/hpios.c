@@ -12,6 +12,7 @@ HPI Operating System function implementation for Linux
 #define SOURCEFILE_NAME "hpios.c"
 #include "hpi_internal.h"
 #include "hpidebug.h"
+#include <linux/preempt.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>

@@ -6,6 +6,7 @@
  *   Copyright (C) 2009 Renesas Technology Corp.
  */
 
+#include <linux/preempt.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

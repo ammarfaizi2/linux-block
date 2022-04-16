@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"powernv-cpufreq: " fmt
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

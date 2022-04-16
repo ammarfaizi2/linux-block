@@ -5,6 +5,7 @@
  * Copyright (C) Joel Fernandes (Google) <joel@joelfernandes.org>
  */
 
+#include <linux/preempt.h>
 #include <linux/kallsyms.h>
 #include <linux/uaccess.h>
 #include <linux/module.h>

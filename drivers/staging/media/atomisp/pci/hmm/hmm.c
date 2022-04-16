@@ -20,6 +20,7 @@
 /*
  * This file contains entry functions for memory management of ISP driver
  */
+#include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/io_extra.h>

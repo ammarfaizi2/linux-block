@@ -26,6 +26,7 @@
  * Copyright 2005 (C) Jes Sorensen <jes@trained-monkey.org>
  */
 
+#include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>

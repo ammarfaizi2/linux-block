@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "ODEBUG: " fmt
 
+#include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
