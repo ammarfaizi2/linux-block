@@ -11,6 +11,8 @@
 #include <linux/refcount.h>
 #include <net/sock.h>
 
+struct user_struct;
+
 void unix_inflight(struct user_struct *user, struct file *fp);
 void unix_notinflight(struct user_struct *user, struct file *fp);
 void unix_destruct_scm(struct sk_buff *skb);

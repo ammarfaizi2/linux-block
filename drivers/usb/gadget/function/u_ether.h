@@ -37,6 +37,7 @@
 	MODULE_PARM_DESC(host_addr, "Host Ethernet Address")
 
 struct eth_dev;
+struct sk_buff_head;
 
 /*
  * This represents the USB side of an "ethernet" link, managed by a USB
