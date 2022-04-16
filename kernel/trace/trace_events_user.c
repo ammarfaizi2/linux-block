@@ -6,6 +6,7 @@
  *   Beau Belgrave <beaub@linux.microsoft.com>
  */
 
+#include <linux/uio_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bitmap.h>
 #include <linux/cdev.h>

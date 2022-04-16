@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  * Copyright (c) 2017-2021 Christoph Hellwig.
  */
+#include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/srcu.h>
 #include <linux/slab.h>

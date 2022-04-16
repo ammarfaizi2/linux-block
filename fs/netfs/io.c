@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/uio_api.h>
 #include <linux/preempt.h>
 #include <linux/xarray_api.h>
 #include <linux/wait_api.h>
