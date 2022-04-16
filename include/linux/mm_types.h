@@ -1075,6 +1075,18 @@ static inline unsigned int compound_order(struct page *page)
 	return page[1].compound_order;
 }
 
+/* Returns the number of pages in this potentially compound page. */
+static inline unsigned long compound_nr(struct page *page)
+{
+	if (!((1UL << PG_head) & page->flags))
+		return 1;
+#ifdef CONFIG_64BIT
+	return page[1].compound_nr;
+#else
+	return 1UL << compound_order(page);
+#endif
+}
+
 /**
  * folio_order - The allocation order of a folio.
  * @folio: The folio.

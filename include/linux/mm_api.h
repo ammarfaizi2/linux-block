@@ -598,18 +598,6 @@ static inline void set_compound_order(struct page *page, unsigned int order)
 #endif
 }
 
-/* Returns the number of pages in this potentially compound page. */
-static inline unsigned long compound_nr(struct page *page)
-{
-	if (!PageHead(page))
-		return 1;
-#ifdef CONFIG_64BIT
-	return page[1].compound_nr;
-#else
-	return 1UL << compound_order(page);
-#endif
-}
-
 /**
  * thp_order - Order of a transparent huge page.
  * @page: Head page of a transparent huge page.
