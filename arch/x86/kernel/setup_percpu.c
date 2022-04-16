@@ -23,7 +23,7 @@
 #include <asm/apicdef.h>
 #include <asm/highmem.h>
 #include <asm/proto.h>
-#include <asm/cpumask.h>
+#include <asm/cpumask_arch.h>
 #include <asm/cpu.h>
 #include <asm/stackprotector.h>
 
