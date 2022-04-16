@@ -6,6 +6,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/rtnetlink.h>
 #include <linux/of_api.h>

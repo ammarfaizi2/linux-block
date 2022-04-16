@@ -8,6 +8,7 @@
  * Lad, Prabhakar <prabhakar.csengg@gmail.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/init.h>

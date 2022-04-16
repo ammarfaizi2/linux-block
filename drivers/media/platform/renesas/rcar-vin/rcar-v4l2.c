@@ -10,6 +10,7 @@
  * Based on the soc-camera rcar_vin driver
  */
 
+#include <linux/mutex_api.h>
 #include <linux/pm_runtime.h>
 
 #include <media/v4l2-event.h>

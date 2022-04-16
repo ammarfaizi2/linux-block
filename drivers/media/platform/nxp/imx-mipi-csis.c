@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>

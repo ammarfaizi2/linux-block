@@ -5,6 +5,7 @@
  *          Hugues Fruchet <hugues.fruchet@st.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>

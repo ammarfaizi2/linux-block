@@ -7,6 +7,7 @@
  * Author: Miquel Raynal <miquel.raynal@bootlin.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>

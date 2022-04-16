@@ -40,6 +40,7 @@
  * Copyright 2018-2019 NXP
  */
 
+#include <linux/mutex_api.h>
 #include <linux/wait_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

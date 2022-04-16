@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2021, HiSilicon Ltd.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/eventfd.h>
 #include <linux/file.h>

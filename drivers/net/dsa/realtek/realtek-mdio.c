@@ -19,6 +19,7 @@
  * Copyright (C) 2009-2010 Gabor Juhos <juhosg@openwrt.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/of_device.h>
 #include <linux/regmap.h>

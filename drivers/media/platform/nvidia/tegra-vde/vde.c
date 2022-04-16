@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/dma-buf.h>
 #include <linux/genalloc.h>

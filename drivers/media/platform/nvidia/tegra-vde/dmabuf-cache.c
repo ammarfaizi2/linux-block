@@ -5,6 +5,7 @@
  * Copyright (C) 2016-2019 GRATE-DRIVER project
  */
 
+#include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/dma-buf.h>
 #include <linux/iova.h>

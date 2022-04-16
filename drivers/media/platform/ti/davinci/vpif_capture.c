@@ -7,6 +7,7 @@
  *	  add static buffer allocation
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
 #include <linux/of_graph.h>

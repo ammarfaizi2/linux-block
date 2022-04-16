@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2022 Intel Corporation.
 
+#include <linux/mutex_api.h>
 #include <asm/unaligned.h>
 #include <linux/acpi.h>
 #include <linux/delay.h>

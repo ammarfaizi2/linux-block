@@ -5,6 +5,7 @@
  *         Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/clk.h>
 #include <linux/device.h>

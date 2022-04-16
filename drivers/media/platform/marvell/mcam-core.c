@@ -6,6 +6,7 @@
  * Copyright 2011 Jonathan Corbet corbet@lwn.net
  * Copyright 2018 Lubomir Rintel <lkundrak@v3.sk>
  */
+#include <linux/mutex_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/fs.h>

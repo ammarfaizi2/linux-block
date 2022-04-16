@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/clk.h>
 #include <linux/gpio/consumer.h>

@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/mutex_api.h>
 #include <media/v4l2-subdev.h>
 
 #include "vsp1.h"

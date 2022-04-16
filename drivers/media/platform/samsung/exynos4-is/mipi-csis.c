@@ -6,6 +6,7 @@
  * Author: Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/device.h>

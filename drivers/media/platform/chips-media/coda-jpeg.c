@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Philipp Zabel, Pengutronix
  */
 
+#include <linux/mutex_api.h>
 #include <asm/unaligned.h>
 #include <linux/irqreturn.h>
 #include <linux/kernel.h>

@@ -39,6 +39,7 @@
  *	Troy Laramy <t-laramy@ti.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/wait_api.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>

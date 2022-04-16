@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

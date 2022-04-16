@@ -2,6 +2,7 @@
 // Copyright (c) 2021 Sunplus Inc.
 // Author: Li-hao Kuo <lhjeff911@gmail.com>
 
+#include <linux/mutex_api.h>
 #include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/delay.h>

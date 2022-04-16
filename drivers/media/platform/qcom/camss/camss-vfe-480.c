@@ -8,6 +8,7 @@
  * Copyright (C) 2021 Jonathan Marek
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

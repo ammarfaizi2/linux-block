@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Marvell. */
 
+#include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/sched.h>
 

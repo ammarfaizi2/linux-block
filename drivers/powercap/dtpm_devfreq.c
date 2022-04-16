@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex_api.h>
 #include <linux/cpumask.h>
 #include <linux/devfreq.h>
 #include <linux/dtpm.h>

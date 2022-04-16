@@ -4,6 +4,7 @@
  * Author: Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

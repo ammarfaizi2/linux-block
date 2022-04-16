@@ -6,6 +6,7 @@
 //	    Peter Ujfalusi <peter.ujfalusi@linux.intel.com>
 //
 
+#include <linux/mutex_api.h>
 #include <linux/debugfs.h>
 #include <linux/errno.h>
 #include <linux/list.h>

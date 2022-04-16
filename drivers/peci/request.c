@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2021 Intel Corporation
 
+#include <linux/mutex_api.h>
 #include <linux/bug.h>
 #include <linux/export.h>
 #include <linux/pci.h>

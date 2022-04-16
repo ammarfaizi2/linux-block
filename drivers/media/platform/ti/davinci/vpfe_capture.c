@@ -52,6 +52,7 @@
  *		- Support for STREAMON before QBUF
  *		- Support for control ioctls
  */
+#include <linux/mutex_api.h>
 #include <linux/wait_api.h>
 #include <linux/module.h>
 #include <linux/slab.h>

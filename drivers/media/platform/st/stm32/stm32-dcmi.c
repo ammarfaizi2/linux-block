@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/delay.h>

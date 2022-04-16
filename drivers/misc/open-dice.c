@@ -19,6 +19,7 @@
  *     close(fd);
  */
 
+#include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/miscdevice.h>
 #include <linux/mm.h>

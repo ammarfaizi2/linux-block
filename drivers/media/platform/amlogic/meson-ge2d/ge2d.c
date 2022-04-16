@@ -4,6 +4,7 @@
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/bitfield.h>

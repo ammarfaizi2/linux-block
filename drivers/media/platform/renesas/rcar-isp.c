@@ -10,6 +10,7 @@
  * due to lack of documentation.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/of_device.h>

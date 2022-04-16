@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/gfp.h>
 #include <linux/sys_soc.h>

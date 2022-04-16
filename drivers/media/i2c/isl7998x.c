@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Michael Tretter <kernel@pengutronix.de>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>

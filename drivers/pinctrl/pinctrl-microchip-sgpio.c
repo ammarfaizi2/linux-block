@@ -7,6 +7,7 @@
  * Copyright (c) 2020 Microchip Technology Inc. and its subsidiaries.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/irqdesc.h>

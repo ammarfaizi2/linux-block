@@ -11,6 +11,7 @@
  * m2m-deinterlace, and vsp1 drivers.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

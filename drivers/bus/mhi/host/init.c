@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/bitfield.h>
 #include <linux/debugfs.h>

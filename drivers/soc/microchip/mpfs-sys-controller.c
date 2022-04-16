@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/mutex_api.h>
 #include <linux/slab.h>
 #include <linux/kref.h>
 #include <linux/module.h>

@@ -93,6 +93,7 @@
  *   - ondie + finish  + ecc + write: do nothing
  */
 
+#include <linux/mutex_api.h>
 #include <linux/of_api.h>
 #include <linux/module.h>
 #include <linux/mtd/nand.h>

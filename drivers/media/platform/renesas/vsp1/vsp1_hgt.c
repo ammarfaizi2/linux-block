@@ -7,6 +7,7 @@
  * Contact: Niklas Söderlund (niklas.soderlund@ragnatech.se)
  */
 
+#include <linux/mutex_api.h>
 #include <linux/device.h>
 #include <linux/gfp.h>
 

@@ -4,6 +4,7 @@
  * Author: Cosmin Tanislav <cosmin.tanislav@analog.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/sysfs.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>

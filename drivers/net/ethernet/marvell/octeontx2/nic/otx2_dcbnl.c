@@ -5,6 +5,8 @@
  *
  */
 
+#include <linux/mutex_api.h>
+
 #include "otx2_common.h"
 
 int otx2_config_priority_flow_ctrl(struct otx2_nic *pfvf)

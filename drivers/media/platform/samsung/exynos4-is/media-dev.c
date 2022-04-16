@@ -6,6 +6,7 @@
  * Author: Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bug.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

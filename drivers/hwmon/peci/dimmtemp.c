@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2018-2021 Intel Corporation
 
+#include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/auxiliary_bus.h>
 #include <linux/bitfield.h>

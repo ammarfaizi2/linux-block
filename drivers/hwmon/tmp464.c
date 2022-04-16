@@ -8,6 +8,7 @@
  * Lionel Pouliquen <lionel.lp.pouliquen@nokia.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/err.h>
 #include <linux/hwmon.h>
 #include <linux/i2c.h>

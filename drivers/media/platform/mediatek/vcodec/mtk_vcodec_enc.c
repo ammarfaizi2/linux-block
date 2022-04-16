@@ -5,6 +5,7 @@
 *         Tiffany Lin <tiffany.lin@mediatek.com>
 */
 
+#include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <media/v4l2-event.h>
 #include <media/v4l2-mem2mem.h>

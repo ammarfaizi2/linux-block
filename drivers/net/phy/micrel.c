@@ -19,6 +19,7 @@
  *			 ksz9477
  */
 
+#include <linux/mutex_api.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitmap.h>

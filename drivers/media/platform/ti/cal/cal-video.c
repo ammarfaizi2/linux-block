@@ -9,6 +9,7 @@
  *	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/mutex_api.h>
 #include <linux/ioctl.h>
 #include <linux/pm_runtime.h>
 #include <linux/videodev2.h>

@@ -6,6 +6,7 @@
  * The Sparx5 Chip Register Model can be browsed at this location:
  * https://github.com/microchip-ung/sparx-5_reginfo
  */
+#include <linux/mutex_api.h>
 #include <linux/ptp_classify.h>
 
 #include "sparx5_main_regs.h"

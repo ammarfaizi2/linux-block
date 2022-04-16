@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Renesas Electronics Corp.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

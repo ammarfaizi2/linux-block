@@ -7,6 +7,7 @@
  *   Author: Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/mutex_api.h>
 #include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/device.h>

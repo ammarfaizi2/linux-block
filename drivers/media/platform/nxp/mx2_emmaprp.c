@@ -12,6 +12,7 @@
  * Copyright (c) 2011 Vista Silicon S.L.
  * Javier Martin <javier.martin@vista-silicon.com>
  */
+#include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/clk.h>
 #include <linux/slab.h>

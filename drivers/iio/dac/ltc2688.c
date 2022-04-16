@@ -4,6 +4,7 @@
  *
  * Copyright 2022 Analog Devices Inc.
  */
+#include <linux/mutex_api.h>
 #include <linux/sysfs.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>

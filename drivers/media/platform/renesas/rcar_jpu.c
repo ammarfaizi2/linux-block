@@ -14,6 +14,7 @@
  *      3) V4L2_CID_JPEG_ACTIVE_MARKER
  */
 
+#include <linux/mutex_api.h>
 #include <asm/unaligned.h>
 #include <linux/clk.h>
 #include <linux/err.h>

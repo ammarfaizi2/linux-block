@@ -5,6 +5,7 @@
  * Copyright 2011 Analog Devices Inc.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/bitfield.h>
 #include <linux/bits.h>
 #include <linux/crc8.h>

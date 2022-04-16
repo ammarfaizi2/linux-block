@@ -5,6 +5,7 @@
  * Common part of most Semtech SAR sensor.
  */
 
+#include <linux/mutex_api.h>
 #include <linux/acpi.h>
 #include <linux/bitops.h>
 #include <linux/byteorder/generic.h>
