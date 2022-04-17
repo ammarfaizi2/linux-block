@@ -1,6 +1,9 @@
 #ifndef __LINUX_MROUTE_BASE_H
 #define __LINUX_MROUTE_BASE_H
 
+#include <linux/rcupdate.h>
+#include <linux/refcount_api.h>
+#include <linux/rtnetlink.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/netdevice.h>

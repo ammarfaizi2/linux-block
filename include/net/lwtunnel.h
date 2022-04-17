@@ -3,6 +3,8 @@
 #define __NET_LWTUNNEL_H 1
 
 #include <linux/lwtunnel.h>
+
+#include <linux/netlink.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/types.h>
