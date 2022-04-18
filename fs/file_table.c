@@ -6,6 +6,7 @@
  *  Copyright (C) 1997 David S. Miller (davem@caip.rutgers.edu)
  */
 
+#include <linux/pagemap.h>
 #include <linux/fs_api.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>
