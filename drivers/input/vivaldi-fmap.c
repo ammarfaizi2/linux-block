@@ -5,6 +5,7 @@
  * Copyright (C) 2022 Google, Inc
  */
 
+#include <linux/mm_types.h>
 #include <linux/export.h>
 #include <linux/input/vivaldi-fmap.h>
 #include <linux/kernel.h>
