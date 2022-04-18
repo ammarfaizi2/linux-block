@@ -5,6 +5,7 @@
  *  Copyright (C) 2015  Red Hat, Inc.
  */
 
+#include <asm/cacheflush.h>
 #include <linux/uaccess.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
