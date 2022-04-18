@@ -5,3 +5,7 @@
 #include <net/neighbour_types.h>
 
 #endif
+
+#ifndef CONFIG_FAST_HEADERS
+# include <net/neighbour_api.h>
+#endif

@@ -5,3 +5,7 @@
 #include <linux/of_types.h>
 
 #endif /* _LINUX_OF_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/of_api.h>
+#endif

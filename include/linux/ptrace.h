@@ -5,3 +5,7 @@
 #include <linux/ptrace_types.h>
 
 #endif /* _LINUX_PTRACE_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/ptrace_api.h>
+#endif

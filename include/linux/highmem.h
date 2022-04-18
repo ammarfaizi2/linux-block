@@ -152,3 +152,8 @@ void *kmap_atomic(struct page *page);
  */
 
 #endif /* _LINUX_HIGHMEM_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/hardirq.h>
+# include <linux/cacheflush.h>
+#endif

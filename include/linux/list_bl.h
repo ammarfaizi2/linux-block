@@ -5,3 +5,7 @@
 #include <linux/list_bl_types.h>
 
 #endif
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/list_bl_api.h>
+#endif

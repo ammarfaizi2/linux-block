@@ -5,3 +5,7 @@
 #include <linux/kobject_types.h>
 
 #endif /* _KOBJECT_H_ */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/kobject_api.h>
+#endif

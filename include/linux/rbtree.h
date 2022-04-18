@@ -5,3 +5,7 @@
 #include <linux/rbtree_types.h>
 
 #endif /* __LINUX_RBTREE_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/rbtree_api.h>
+#endif

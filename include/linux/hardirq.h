@@ -159,3 +159,8 @@ extern void rcu_nmi_exit(void);
 	} while (0)
 
 #endif /* LINUX_HARDIRQ_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/vtime.h>
+# include <linux/siphash.h>
+#endif

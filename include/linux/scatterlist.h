@@ -5,3 +5,7 @@
 #include <linux/scatterlist_types.h>
 
 #endif /* _LINUX_SCATTERLIST_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/scatterlist_api.h>
+#endif

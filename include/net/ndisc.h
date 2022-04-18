@@ -5,3 +5,7 @@
 #include <net/ndisc_types.h>
 
 #endif
+
+#ifndef CONFIG_FAST_HEADERS
+# include <net/ndisc_api.h>
+#endif

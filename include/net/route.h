@@ -5,3 +5,7 @@
 #include <net/route_types.h>
 
 #endif	/* _ROUTE_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <net/route_api.h>
+#endif

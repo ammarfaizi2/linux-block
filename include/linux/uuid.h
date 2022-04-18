@@ -11,3 +11,7 @@
 #include <linux/uuid_types.h>
 
 #endif
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/uuid_api.h>
+#endif

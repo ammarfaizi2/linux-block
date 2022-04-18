@@ -14,3 +14,7 @@ static inline void net_ns_init(void) {}
 #endif
 
 #endif /* __NET_NET_NAMESPACE_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <net/net_namespace_api.h>
+#endif

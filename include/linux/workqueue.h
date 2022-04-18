@@ -5,3 +5,7 @@
 #include <linux/workqueue_types.h>
 
 #endif /* __LINUX_WORKQUEUE_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/workqueue_api.h>
+#endif

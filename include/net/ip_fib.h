@@ -5,3 +5,7 @@
 #include <net/ip_fib_types.h>
 
 #endif /* _NET_IF_FIB_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <net/ip_fib_api.h>
+#endif

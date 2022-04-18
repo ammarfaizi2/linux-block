@@ -10,12 +10,16 @@
 
 #ifdef CONFIG_HAVE_ARCH_SECCOMP_FILTER
 extern int __secure_computing(const struct seccomp_data *sd);
-static inline int secure_computing(void)
-{
-	if (unlikely(test_syscall_work(SECCOMP)))
-		return  __secure_computing(NULL);
-	return 0;
-}
+#define secure_computing(void)					\
+({								\
+	int __ret;						\
+								\
+	if (unlikely(test_syscall_work(SECCOMP)))		\
+		__ret = __secure_computing(NULL);		\
+	else							\
+		__ret = 0;					\
+	__ret;							\
+})
 #else
 extern void secure_computing_strict(int this_syscall);
 #endif

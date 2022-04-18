@@ -5,3 +5,7 @@
 #include <linux/seqlock_types.h>
 
 #endif /* __LINUX_SEQLOCK_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/seqlock_api.h>
+#endif

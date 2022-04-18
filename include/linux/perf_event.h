@@ -17,3 +17,7 @@
 #include <linux/perf_event_types.h>
 
 #endif /* _LINUX_PERF_EVENT_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/perf_event_api.h>
+#endif

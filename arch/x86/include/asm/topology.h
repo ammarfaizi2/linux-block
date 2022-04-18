@@ -236,3 +236,7 @@ static inline bool amd_set_max_freq_ratio(u64 *ratio)
 #endif
 
 #endif /* _ASM_X86_TOPOLOGY_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <asm/mpspec.h>
+#endif

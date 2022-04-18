@@ -5,3 +5,7 @@
 #include <linux/dynamic_queue_limits_types.h>
 
 #endif /* _LINUX_DQL_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/dynamic_queue_limits_api.h>
+#endif

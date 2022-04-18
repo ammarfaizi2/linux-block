@@ -5,3 +5,7 @@
 #include <linux/percpu_counter_types.h>
 
 #endif /* __LINUX_PERCPU_COUNTER_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/percpu_counter_api.h>
+#endif

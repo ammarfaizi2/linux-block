@@ -5,3 +5,7 @@
 #include <linux/xarray_types.h>
 
 #endif /* _LINUX_XARRAY_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/xarray_api.h>
+#endif

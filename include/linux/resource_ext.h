@@ -9,3 +9,7 @@
 #include <linux/resource_ext_types.h>
 
 #endif /* _LINUX_RESOURCE_EXT_H */
+
+#ifndef CONFIG_FAST_HEADERS
+# include <linux/resource_ext_api.h>
+#endif
