@@ -2,7 +2,7 @@
 #ifndef _LINUX_PFN_T_H_
 #define _LINUX_PFN_T_H_
 
-#include <linux/mmzone.h>
+#include <linux/mmzone_api.h>
 #include <linux/pgtable_api.h>
 
 /*

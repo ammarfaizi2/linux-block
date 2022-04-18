@@ -287,19 +287,9 @@ extern int percpu_pagelist_high_fraction;
 extern char numa_zonelist_order[];
 #define NUMA_ZONELIST_ORDER_LEN	16
 
-#ifndef CONFIG_NUMA
-
-extern struct pglist_data contig_page_data;
-static inline struct pglist_data *NODE_DATA(int nid)
-{
-	return &contig_page_data;
-}
-
-#else /* CONFIG_NUMA */
-
-#include <asm/mmzone.h>
-
-#endif /* !CONFIG_NUMA */
+#ifdef CONFIG_NUMA
+# include <asm/mmzone.h>
+#endif
 
 extern struct pglist_data *first_online_pgdat(void);
 extern struct pglist_data *next_online_pgdat(struct pglist_data *pgdat);

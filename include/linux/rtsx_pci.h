@@ -16,6 +16,8 @@
 #include <linux/pci.h>
 #include <linux/rtsx_common.h>
 
+struct scatterlist;
+
 #define MAX_RW_REG_CNT			1024
 
 #define RTSX_HCBAR			0x00
