@@ -4,6 +4,7 @@
  *
  * Originally written by Jérôme Glisse.
  */
+#include <linux/mm_api_extra.h>
 #include <linux/export.h>
 #include <linux/memremap.h>
 #include <linux/migrate.h>
