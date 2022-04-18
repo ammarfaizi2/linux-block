@@ -950,7 +950,7 @@ struct io_kiocb {
 	struct io_ring_ctx		*ctx;
 	struct task_struct		*task;
 
-	struct percpu_ref		*fixed_rsrc_refs;
+	struct io_rsrc_node		*rsrc_node;
 	/* store used ubuf, so we can prevent reloading */
 	struct io_mapped_ubuf		*imu;
 
@@ -1355,31 +1355,36 @@ static inline void io_req_set_refcount(struct io_kiocb *req)
 
 #define IO_RSRC_REF_BATCH	100
 
+static void io_rsrc_put_node(struct io_rsrc_node *node, int nr)
+{
+	percpu_ref_put_many(&node->refs, nr);
+}
+
 static inline void io_req_put_rsrc_locked(struct io_kiocb *req,
 					  struct io_ring_ctx *ctx)
 	__must_hold(&ctx->uring_lock)
 {
-	struct percpu_ref *ref = req->fixed_rsrc_refs;
+	struct io_rsrc_node *node = req->rsrc_node;
 
-	if (ref) {
-		if (ref == &ctx->rsrc_node->refs)
+	if (node) {
+		if (node == ctx->rsrc_node)
 			ctx->rsrc_cached_refs++;
 		else
-			percpu_ref_put(ref);
+			io_rsrc_put_node(node, 1);
 	}
 }
 
-static inline void io_req_put_rsrc(struct io_kiocb *req, struct io_ring_ctx *ctx)
+static inline void io_req_put_rsrc(struct io_kiocb *req)
 {
-	if (req->fixed_rsrc_refs)
-		percpu_ref_put(req->fixed_rsrc_refs);
+	if (req->rsrc_node)
+		io_rsrc_put_node(req->rsrc_node, 1);
 }
 
 static __cold void io_rsrc_refs_drop(struct io_ring_ctx *ctx)
 	__must_hold(&ctx->uring_lock)
 {
 	if (ctx->rsrc_cached_refs) {
-		percpu_ref_put_many(&ctx->rsrc_node->refs, ctx->rsrc_cached_refs);
+		io_rsrc_put_node(ctx->rsrc_node, ctx->rsrc_cached_refs);
 		ctx->rsrc_cached_refs = 0;
 	}
 }
@@ -1395,8 +1400,8 @@ static inline void io_req_set_rsrc_node(struct io_kiocb *req,
 					struct io_ring_ctx *ctx,
 					unsigned int issue_flags)
 {
-	if (!req->fixed_rsrc_refs) {
-		req->fixed_rsrc_refs = &ctx->rsrc_node->refs;
+	if (!req->rsrc_node) {
+		req->rsrc_node = ctx->rsrc_node;
 
 		if (!(issue_flags & IO_URING_F_UNLOCKED)) {
 			lockdep_assert_held(&ctx->uring_lock);
@@ -1404,7 +1409,7 @@ static inline void io_req_set_rsrc_node(struct io_kiocb *req,
 			if (unlikely(ctx->rsrc_cached_refs < 0))
 				io_rsrc_refs_refill(ctx);
 		} else {
-			percpu_ref_get(req->fixed_rsrc_refs);
+			percpu_ref_get(&req->rsrc_node->refs);
 		}
 	}
 }
@@ -2198,7 +2203,7 @@ static void __io_req_complete_post(struct io_kiocb *req, s32 res,
 				req->link = NULL;
 			}
 		}
-		io_req_put_rsrc(req, ctx);
+		io_req_put_rsrc(req);
 		/*
 		 * Selected buffer deallocation in io_clean_op() assumes that
 		 * we don't hold ->completion_lock. Clean them here to avoid
@@ -2361,7 +2366,7 @@ static __cold void io_free_req(struct io_kiocb *req)
 {
 	struct io_ring_ctx *ctx = req->ctx;
 
-	io_req_put_rsrc(req, ctx);
+	io_req_put_rsrc(req);
 	io_dismantle_req(req);
 	io_put_task(req->task, 1);
 
@@ -7475,12 +7480,8 @@ static bool io_assign_file(struct io_kiocb *req, unsigned int issue_flags)
 		req->file = io_file_get_fixed(req, req->cqe.fd, issue_flags);
 	else
 		req->file = io_file_get_normal(req, req->cqe.fd);
-	if (req->file)
-		return true;
 
-	req_set_fail(req);
-	req->cqe.res = -EBADF;
-	return false;
+	return !!req->file;
 }
 
 static int io_issue_sqe(struct io_kiocb *req, unsigned int issue_flags)
@@ -7744,8 +7745,7 @@ static inline struct file *io_file_get_fixed(struct io_kiocb *req, int fd,
 	struct file *file = NULL;
 	unsigned long file_ptr;
 
-	if (issue_flags & IO_URING_F_UNLOCKED)
-		mutex_lock(&ctx->uring_lock);
+	io_ring_submit_lock(ctx, issue_flags);
 
 	if (unlikely((unsigned int)fd >= ctx->nr_user_files))
 		goto out;
@@ -7757,8 +7757,7 @@ static inline struct file *io_file_get_fixed(struct io_kiocb *req, int fd,
 	req->flags |= (file_ptr << REQ_F_SUPPORT_NOWAIT_BIT);
 	io_req_set_rsrc_node(req, ctx, 0);
 out:
-	if (issue_flags & IO_URING_F_UNLOCKED)
-		mutex_unlock(&ctx->uring_lock);
+	io_ring_submit_unlock(ctx, issue_flags);
 	return file;
 }
 
@@ -7985,7 +7984,7 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	req->flags = sqe_flags = READ_ONCE(sqe->flags);
 	req->cqe.user_data = READ_ONCE(sqe->user_data);
 	req->file = NULL;
-	req->fixed_rsrc_refs = NULL;
+	req->rsrc_node = NULL;
 	req->task = current;
 
 	if (unlikely(opcode >= IORING_OP_LAST)) {
