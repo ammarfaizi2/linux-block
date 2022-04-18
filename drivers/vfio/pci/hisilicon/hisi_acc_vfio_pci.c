@@ -3,6 +3,7 @@
  * Copyright (c) 2021, HiSilicon Ltd.
  */
 
+#include <linux/fs_api_f_count.h>
 #include <linux/fs_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device.h>
