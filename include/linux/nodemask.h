@@ -540,5 +540,9 @@ struct nodemask_scratch {
 					GFP_KERNEL | __GFP_NORETRY)
 #define NODEMASK_SCRATCH_FREE(x)	NODEMASK_FREE(x)
 
+static inline bool node_is_toptier(int node)
+{
+	return node_state(node, N_CPU);
+}
 
 #endif /* __LINUX_NODEMASK_H */
