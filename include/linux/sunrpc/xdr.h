@@ -12,7 +12,6 @@
 #define _SUNRPC_XDR_H_
 
 #include <linux/limits.h>
-#include <linux/mm.h>
 #include <linux/string.h>
 #include <linux/mm_page_address.h>
 #include <linux/uio.h>
