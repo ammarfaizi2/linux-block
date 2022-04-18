@@ -2,11 +2,9 @@
 #ifndef _LINUX_KASAN_H
 #define _LINUX_KASAN_H
 
-#include <linux/bug.h>
 #include <linux/kasan-enabled.h>
-#include <linux/kernel.h>
-#include <linux/static_key.h>
 #include <linux/types.h>
+#include <linux/build_bug.h>
 
 struct kmem_cache;
 struct page;
@@ -16,6 +14,7 @@ struct task_struct;
 
 #ifdef CONFIG_KASAN
 
+#include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/linkage.h>
 #include <asm/kasan.h>
