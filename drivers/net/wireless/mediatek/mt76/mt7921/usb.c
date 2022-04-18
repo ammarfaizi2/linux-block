@@ -4,6 +4,7 @@
  * Author: Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>

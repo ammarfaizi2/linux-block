@@ -17,6 +17,7 @@
  * Copyright (c) 2022 Google
  */
 
+#include <linux/skbuff_api_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/wait_api.h>
