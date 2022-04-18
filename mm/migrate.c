@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/cacheflush.h>
 #include <linux/xarray_api.h>
 #include <linux/vmstat.h>
 #include <linux/uaccess.h>
