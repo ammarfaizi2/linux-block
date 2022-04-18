@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"SEV: " fmt
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/uaccess.h>
 #include <linux/sched/signal.h>
 #include <linux/ratelimit.h>

@@ -6,6 +6,7 @@
  *   Beau Belgrave <beaub@linux.microsoft.com>
  */
 
+#include <linux/pagefault_ctrl.h>
 #include <linux/lockdep_api.h>
 #include <linux/uio_api.h>
 #include <linux/mutex_api.h>
