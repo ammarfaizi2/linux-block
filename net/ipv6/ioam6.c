@@ -6,6 +6,7 @@
  *  Justin Iurman <justin.iurman@uliege.be>
  */
 
+#include <linux/lockdep_api.h>
 #include <net/sch_generic_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>

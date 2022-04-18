@@ -1,6 +1,7 @@
 /*
  * Ext4 orphan inode handling
  */
+#include <linux/lockdep_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>

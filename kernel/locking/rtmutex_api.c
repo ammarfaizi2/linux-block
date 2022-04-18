@@ -2,6 +2,7 @@
 /*
  * rtmutex API
  */
+#include <linux/lockdep_api.h>
 #include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/task.h>

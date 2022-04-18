@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "SVM: " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/preempt.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>

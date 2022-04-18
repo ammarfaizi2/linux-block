@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt) "rethook: " fmt
 
+#include <linux/lockdep_api.h>
 #include <linux/llist_api.h>
 #include <linux/refcount_api.h>
 #include <linux/bug.h>

@@ -18,6 +18,7 @@
  *   The RT substitutions explicitly disable migration and take
  *   rcu_read_lock() across the lock held section.
  */
+#include <linux/lockdep_api.h>
 #include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
