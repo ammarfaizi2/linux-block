@@ -4,6 +4,7 @@
 
 #include <linux/mm_api.h>
 
+#include <linux/memremap.h>
 #include <linux/pgtable_api.h>
 
 #ifdef CONFIG_MMU
@@ -200,5 +201,25 @@ static inline int io_remap_pfn_range(struct vm_area_struct *vma,
 	return remap_pfn_range(vma, addr, pfn, size, pgprot_decrypted(prot));
 }
 #endif
+
+#if defined(CONFIG_ZONE_DEVICE) && defined(CONFIG_FS_DAX)
+DECLARE_STATIC_KEY_FALSE(devmap_managed_key);
+
+bool __put_devmap_managed_page(struct page *page);
+static inline bool put_devmap_managed_page(struct page *page)
+{
+	if (!static_branch_unlikely(&devmap_managed_key))
+		return false;
+	if (!is_zone_device_page(page))
+		return false;
+	return __put_devmap_managed_page(page);
+}
+
+#else /* CONFIG_ZONE_DEVICE && CONFIG_FS_DAX */
+static inline bool put_devmap_managed_page(struct page *page)
+{
+	return false;
+}
+#endif /* CONFIG_ZONE_DEVICE && CONFIG_FS_DAX */
 
 #endif /* _LINUX_MM_API_EXTRA_H */
