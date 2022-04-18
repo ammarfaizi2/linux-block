@@ -6,6 +6,7 @@
 //	    Peter Ujfalusi <peter.ujfalusi@linux.intel.com>
 //
 
+#include <linux/fs_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/auxiliary_bus.h>
 #include <linux/completion.h>

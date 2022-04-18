@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/fs_api.h>
 #include <linux/uio_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
