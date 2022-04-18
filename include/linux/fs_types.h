@@ -16,7 +16,6 @@
 #include <linux/workqueue_types.h>
 #include <linux/mutex_types.h>
 #include <linux/llist_types.h>
-#include <linux/shrinker.h>
 #include <linux/wait_types.h>
 
 #include <uapi/linux/fs.h>
@@ -70,6 +69,7 @@ struct fs_parameter_spec;
 struct fileattr;
 struct delayed_call;
 struct folio;
+struct shrink_control;
 
 extern unsigned int sysctl_nr_open;
 
