@@ -3,7 +3,6 @@
 #define _LINUX_FS_API_H
 
 #include <linux/fs_types.h>
-#include <linux/fs_types_sb.h>
 
 #include <linux/mnt_idmapping.h>
 #include <linux/stat.h>
@@ -1058,16 +1057,6 @@ extern void free_inode_nonrcu(struct inode *inode);
 extern int should_remove_suid(struct dentry *);
 extern int file_remove_privs(struct file *);
 
-/*
- * This must be used for allocating filesystems specific inodes to set
- * up the inode reclaim context correctly.
- */
-static inline void *
-alloc_inode_sb(struct super_block *sb, struct kmem_cache *cache, gfp_t gfp)
-{
-	return kmem_cache_alloc_lru(cache, &sb->s_inode_lru, gfp);
-}
-
 extern void __insert_inode_hash(struct inode *, unsigned long hashval);
 static inline void insert_inode_hash(struct inode *inode)
 {
@@ -1191,6 +1180,8 @@ static inline int vfs_lstat(const char __user *name, struct kstat *stat)
 
 extern const char *vfs_get_link(struct dentry *, struct delayed_call *);
 extern int vfs_readlink(struct dentry *, char __user *, int);
+
+struct block_device;
 
 extern struct file_system_type *get_filesystem(struct file_system_type *fs);
 extern void put_filesystem(struct file_system_type *fs);

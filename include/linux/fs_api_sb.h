@@ -2,6 +2,7 @@
 #ifndef _LINUX_FS_API_SB_H
 #define _LINUX_FS_API_SB_H
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 
 #include <linux/percpu_rwsem_api.h>
@@ -354,6 +355,16 @@ static inline bool HAS_UNMAPPED_ID(struct user_namespace *mnt_userns,
 static inline bool is_idmapped_mnt(const struct vfsmount *mnt)
 {
 	return mnt_user_ns(mnt) != mnt->mnt_sb->s_user_ns;
+}
+
+/*
+ * This must be used for allocating filesystems specific inodes to set
+ * up the inode reclaim context correctly.
+ */
+static inline void *
+alloc_inode_sb(struct super_block *sb, struct kmem_cache *cache, gfp_t gfp)
+{
+	return kmem_cache_alloc_lru(cache, &sb->s_inode_lru, gfp);
 }
 
 #endif /* _LINUX_FS_API_SB_H */

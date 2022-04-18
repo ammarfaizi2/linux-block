@@ -5,6 +5,7 @@
 /*
  * Copyright 1995 Linus Torvalds
  */
+#include <linux/fs_types_sb.h>
 #include <linux/xarray_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/huge_mm.h>
