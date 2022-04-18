@@ -6,6 +6,7 @@
 #include <linux/preempt.h>
 #include <linux/cpumask_api.h>
 #include <linux/mm_api.h>
+#include <linux/mm_page_address.h>
 #include <linux/vm_event_item.h>
 
 extern int sysctl_stat_interval;

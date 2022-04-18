@@ -4,6 +4,7 @@
 
 #include <linux/mm_api.h>
 
+#include <linux/mm_page_address.h>
 #include <linux/memremap.h>
 #include <linux/pgtable_api.h>
 #include <linux/kref.h>
