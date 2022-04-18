@@ -384,7 +384,7 @@ extern int of_setup_earlycon(const struct earlycon_id *match,
 			     const char *options);
 
 #ifdef CONFIG_SERIAL_EARLYCON
-extern bool earlycon_acpi_spcr_enable __initdata;
+extern bool earlycon_acpi_spcr_enable;
 int setup_earlycon(char *buf);
 #else
 static const bool earlycon_acpi_spcr_enable EARLYCON_USED_OR_UNUSED;

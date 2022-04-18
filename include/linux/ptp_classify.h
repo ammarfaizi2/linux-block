@@ -137,7 +137,7 @@ static inline u8 ptp_get_msgtype(const struct ptp_header *hdr,
  */
 bool ptp_msg_is_sync(struct sk_buff *skb, unsigned int type);
 
-void __init ptp_classifier_init(void);
+void ptp_classifier_init(void);
 #else
 static inline void ptp_classifier_init(void)
 {

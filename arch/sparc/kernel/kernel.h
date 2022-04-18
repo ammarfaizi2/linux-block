@@ -63,7 +63,7 @@ void do_signal32(struct pt_regs * regs);
 asmlinkage int do_sys32_sigstack(u32 u_ssptr, u32 u_ossptr, unsigned long sp);
 
 /* time_64.c */
-void __init time_init_early(void);
+void time_init_early(void);
 
 /* compat_audit.c */
 extern unsigned int sparc32_dir_class[];
@@ -101,9 +101,9 @@ void sun4m_clear_profile_irq(int cpu);
 /* sun4m_smp.c */
 void sun4m_cpu_pre_starting(void *arg);
 void sun4m_cpu_pre_online(void *arg);
-void __init smp4m_boot_cpus(void);
+void smp4m_boot_cpus(void);
 int smp4m_boot_one_cpu(int i, struct task_struct *idle);
-void __init smp4m_smp_done(void);
+void smp4m_smp_done(void);
 void smp4m_cross_call_irq(void);
 void smp4m_percpu_timer_interrupt(struct pt_regs *regs);
 
@@ -122,9 +122,9 @@ void sun4d_free_irq(unsigned int irq, void *dev_id);
 /* sun4d_smp.c */
 void sun4d_cpu_pre_starting(void *arg);
 void sun4d_cpu_pre_online(void *arg);
-void __init smp4d_boot_cpus(void);
+void smp4d_boot_cpus(void);
 int smp4d_boot_one_cpu(int i, struct task_struct *idle);
-void __init smp4d_smp_done(void);
+void smp4d_smp_done(void);
 void smp4d_cross_call_irq(void);
 void smp4d_percpu_timer_interrupt(struct pt_regs *regs);
 
@@ -180,15 +180,15 @@ asmlinkage void user_unaligned_trap(struct pt_regs *regs, unsigned int insn);
 void try_to_clear_window_buffer(struct pt_regs *regs, int who);
 
 /* auxio_32.c */
-void __init auxio_probe(void);
-void __init auxio_power_probe(void);
+void auxio_probe(void);
+void auxio_power_probe(void);
 
 /* pcic.c */
 extern void __iomem *pcic_regs;
 void pcic_nmi(unsigned int pend, struct pt_regs *regs);
 
 /* time_32.c */
-void __init time_init(void);
+void time_init(void);
 
 #else /* CONFIG_SPARC32 */
 #endif /* CONFIG_SPARC32 */

@@ -17,8 +17,8 @@
 
 #define irq_canonicalize(irq)	(irq)
 
-void __init init_IRQ(void);
-void __init sun4d_init_sbi_irq(void);
+void init_IRQ(void);
+void sun4d_init_sbi_irq(void);
 
 #define NO_IRQ		0xffffffff
 
