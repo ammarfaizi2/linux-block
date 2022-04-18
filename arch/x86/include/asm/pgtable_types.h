@@ -3,6 +3,7 @@
 #define _ASM_X86_PGTABLE_DEFS_H
 
 #include <asm/page_types.h>
+#include <asm/mem_encrypt.h>
 
 #define _PAGE_BIT_PRESENT	0	/* is present */
 #define _PAGE_BIT_RW		1	/* writeable */
