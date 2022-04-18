@@ -3,6 +3,8 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/align.h>
+
 #include "gt/intel_engine_pm.h"
 #include "gt/intel_gpu_commands.h"
 #include "i915_selftest.h"

@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Michael Walle <michael@walle.cc>
  */
 
+#include <linux/align.h>
 #include <linux/math64.h>
 #include <linux/log2.h>
 #include <linux/mtd/mtd.h>

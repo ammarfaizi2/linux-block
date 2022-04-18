@@ -21,6 +21,7 @@
 #endif
 #define CREATE_TRACE_POINTS
 
+#include <linux/align.h>
 #include <linux/vmstat.h>
 #include <linux/spinlock_api.h>
 #include <linux/mmzone_api.h>

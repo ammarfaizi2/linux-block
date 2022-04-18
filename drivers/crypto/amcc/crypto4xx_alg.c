@@ -8,6 +8,7 @@
  * This file implements the Linux crypto algorithms.
  */
 
+#include <linux/align.h>
 #include <linux/scatterlist_api.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>

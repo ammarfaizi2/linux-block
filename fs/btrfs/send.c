@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Alexander Block.  All rights reserved.
  */
 
+#include <linux/align.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

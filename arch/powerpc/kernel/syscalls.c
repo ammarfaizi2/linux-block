@@ -14,6 +14,7 @@
  * platform.
  */
 
+#include <linux/align.h>
 #include <linux/syscalls_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>

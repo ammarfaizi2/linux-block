@@ -11,6 +11,7 @@
  */
 
 
+#include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uio_api.h>

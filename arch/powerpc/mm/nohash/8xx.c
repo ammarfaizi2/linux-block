@@ -7,6 +7,7 @@
  *  Derived from arch/powerpc/mm/40x_mmu.c:
  */
 
+#include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/memblock.h>

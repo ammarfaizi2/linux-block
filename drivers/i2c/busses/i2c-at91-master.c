@@ -13,6 +13,7 @@
  *  Copyright (C) 2000 Philip Edelbrock <phil@stimpy.netroedge.com>
  */
 
+#include <linux/align.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/clk.h>

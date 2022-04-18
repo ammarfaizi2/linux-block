@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*  Copyright(c) 2021 Intel Corporation. */
 
+#include <linux/align.h>
 #include <linux/uaccess.h>
 #include <linux/module.h>
 #include <linux/mm_api.h>

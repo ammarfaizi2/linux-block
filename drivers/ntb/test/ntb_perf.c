@@ -67,6 +67,7 @@
  * root@self# cat $DBG_DIR/run
  */
 
+#include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>

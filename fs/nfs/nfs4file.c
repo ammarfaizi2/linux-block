@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1992  Rick Sladkey
  */
+#include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/fs_api.h>

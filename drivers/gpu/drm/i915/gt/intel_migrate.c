@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/align.h>
 #include <linux/scatterlist_api.h>
 #include <linux/random.h>
 #include <linux/math64.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
+#include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

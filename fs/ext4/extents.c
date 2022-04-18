@@ -17,6 +17,7 @@
  *   - smart tree reduction
  */
 
+#include <linux/align.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

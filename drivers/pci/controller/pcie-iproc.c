@@ -4,6 +4,7 @@
  * Copyright (C) 2015 Broadcom Corporation
  */
 
+#include <linux/align.h>
 #include <linux/resource_ext_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

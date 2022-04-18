@@ -22,6 +22,7 @@
 #define NVKM_VMM_LEVELS_MAX 5
 #include "vmm.h"
 
+#include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rbtree_api.h>

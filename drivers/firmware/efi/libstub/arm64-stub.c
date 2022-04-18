@@ -7,6 +7,7 @@
  */
 
 
+#include <linux/align.h>
 #include <linux/efi.h>
 #include <asm/efi.h>
 #include <asm/memory.h>

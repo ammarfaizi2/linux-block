@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2016, IBM Corporation.
  */
 
+#include <linux/align.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>

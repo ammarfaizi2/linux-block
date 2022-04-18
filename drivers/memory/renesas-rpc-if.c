@@ -7,6 +7,7 @@
  * Copyright (C) 2019-2020 Cogent Embedded, Inc.
  */
 
+#include <linux/align.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>

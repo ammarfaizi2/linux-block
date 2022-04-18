@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/align.h>
 #include <linux/xarray_api.h>
 #include <linux/uuid_api.h>
 #include <linux/uio_api.h>

@@ -7,6 +7,7 @@
  * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  */
 
+#include <linux/align.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>

@@ -5,6 +5,7 @@
  * Copyright 2016 Broadcom
  */
 
+#include <linux/align.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

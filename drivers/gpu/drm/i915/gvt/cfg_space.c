@@ -31,6 +31,8 @@
  *
  */
 
+#include <linux/align.h>
+
 #include "i915_drv.h"
 #include "gvt.h"
 

@@ -3,6 +3,7 @@
  * Copyright (C) STMicroelectronics 2018 - All Rights Reserved
  * Author: Ludovic.barre@st.com for STMicroelectronics.
  */
+#include <linux/align.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/io.h>

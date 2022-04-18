@@ -11,6 +11,7 @@
  *         Marco Elver <elver@google.com>
  */
 
+#include <linux/align.h>
 #include <linux/kthread.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_api.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2011, 2012 STRATO.  All rights reserved.
  */
 
+#include <linux/align.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>

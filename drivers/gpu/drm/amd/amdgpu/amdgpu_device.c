@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/align.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>

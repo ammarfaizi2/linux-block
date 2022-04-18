@@ -20,6 +20,7 @@
  * Special Publication 800-38E and IEEE P1619/D16.
  */
 
+#include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>

@@ -3,6 +3,7 @@
 /*
  * Copyright (C) 2021, Linaro Limited. All rights reserved.
  */
+#include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/scatterlist_api.h>

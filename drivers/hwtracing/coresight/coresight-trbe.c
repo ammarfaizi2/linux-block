@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) DRVNAME ": " fmt
 
+#include <linux/align.h>
 #include <linux/preempt.h>
 #include <linux/vmalloc.h>
 #include <linux/topology.h>

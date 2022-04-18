@@ -4,6 +4,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/align.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/math64.h>
 #include <linux/lockdep_api.h>

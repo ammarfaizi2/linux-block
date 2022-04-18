@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "hv-24x7: " fmt
 
+#include <linux/align.h>
 #include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/perf_event_api.h>

@@ -9,6 +9,7 @@
  * Author: Andreas Westin <andreas.westin@stericsson.com> for ST-Ericsson.
  */
 
+#include <linux/align.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pgtable_api.h>

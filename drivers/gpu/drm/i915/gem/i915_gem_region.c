@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/align.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>
 #include <linux/kref_api.h>

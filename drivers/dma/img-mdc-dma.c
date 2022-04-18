@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Google, Inc.
  */
 
+#include <linux/align.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

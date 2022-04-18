@@ -8,6 +8,7 @@
  * Author: Jingoo Han <jg1.han@samsung.com>
  */
 
+#include <linux/align.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -33,6 +33,7 @@
  *
  */
 
+#include <linux/align.h>
 #include <linux/vmalloc.h>
 #include <linux/mutex_api.h>
 

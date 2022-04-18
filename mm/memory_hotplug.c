@@ -5,6 +5,7 @@
  *  Copyright (C)
  */
 
+#include <linux/align.h>
 #include <linux/writeback_api.h>
 #include <linux/vmstat.h>
 #include <linux/topology.h>

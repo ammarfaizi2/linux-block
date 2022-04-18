@@ -4,6 +4,7 @@
  * Copyright 2008 Sascha Hauer, kernel@pengutronix.de
  */
 
+#include <linux/align.h>
 #include <linux/property.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

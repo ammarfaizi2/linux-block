@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Ilya Dryomov <idryomov@gmail.com>
  */
 
+#include <linux/align.h>
 #include <linux/vmalloc.h>
 #include <linux/uio_api.h>
 #include <linux/timekeeping.h>

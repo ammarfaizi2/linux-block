@@ -43,6 +43,7 @@
 #endif
 #endif
 
+#include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/mmzone_api.h>

@@ -34,6 +34,7 @@
  *
  */
 
+#include <linux/align.h>
 #include <linux/vmalloc.h>
 #include <linux/hashtable_api.h>
 #include <linux/atomic_api.h>

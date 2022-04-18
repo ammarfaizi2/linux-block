@@ -8,6 +8,7 @@
  * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
+#include <linux/align.h>
 #include <linux/mutex_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_page_address.h>

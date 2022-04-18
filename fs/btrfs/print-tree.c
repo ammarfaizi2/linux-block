@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/align.h>
 #include <linux/atomic_api.h>
 
 #include "ctree.h"

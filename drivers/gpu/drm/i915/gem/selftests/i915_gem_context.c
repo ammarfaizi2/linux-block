@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/align.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/sched/task.h>

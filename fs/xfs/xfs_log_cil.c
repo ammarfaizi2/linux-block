@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Red Hat, Inc. All Rights Reserved.
  */
 
+#include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>

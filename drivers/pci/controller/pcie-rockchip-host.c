@@ -11,6 +11,7 @@
  * ARM PCI Host generic driver.
  */
 
+#include <linux/align.h>
 #include <linux/resource_ext_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

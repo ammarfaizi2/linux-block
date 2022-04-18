@@ -14,6 +14,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/align.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2010-2014, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/device.h>

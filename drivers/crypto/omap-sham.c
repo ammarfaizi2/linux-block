@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/align.h>
 #include <linux/tasklet_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

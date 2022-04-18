@@ -8,6 +8,7 @@
  * Copyright (c) 2007 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/align.h>
 #include <crypto/internal/geniv.h>
 #include <crypto/scatterwalk.h>
 #include <crypto/skcipher.h>

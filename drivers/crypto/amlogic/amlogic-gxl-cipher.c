@@ -8,6 +8,7 @@
  * CBC and ECB mode.
  */
 
+#include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/jiffies.h>

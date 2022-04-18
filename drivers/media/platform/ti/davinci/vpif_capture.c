@@ -7,6 +7,7 @@
  *	  add static buffer allocation
  */
 
+#include <linux/align.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

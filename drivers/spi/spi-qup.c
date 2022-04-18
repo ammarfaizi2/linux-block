@@ -3,6 +3,7 @@
  * Copyright (c) 2008-2014, The Linux foundation. All rights reserved.
  */
 
+#include <linux/align.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>

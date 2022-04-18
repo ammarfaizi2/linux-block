@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Marvell. */
 
+#include <linux/align.h>
 #include <linux/smp_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>

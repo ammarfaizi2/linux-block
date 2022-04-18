@@ -9,6 +9,7 @@
  *        Andrey Konovalov <andreyknvl@gmail.com>
  */
 
+#include <linux/align.h>
 #include <linux/mm_api.h>
 #include <linux/export.h>
 #include <linux/interrupt.h>

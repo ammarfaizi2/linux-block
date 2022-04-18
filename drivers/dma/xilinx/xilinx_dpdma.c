@@ -7,6 +7,7 @@
  * Author: Hyun Woo Kwon <hyun.kwon@xilinx.com>
  */
 
+#include <linux/align.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/tasklet_api.h>

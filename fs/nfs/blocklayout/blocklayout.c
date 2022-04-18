@@ -30,6 +30,7 @@
  * possibility of such damages.
  */
 
+#include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/pagemap.h>

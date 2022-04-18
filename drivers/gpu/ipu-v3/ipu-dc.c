@@ -4,6 +4,7 @@
  * Copyright (C) 2005-2009 Freescale Semiconductor, Inc.
  */
 
+#include <linux/align.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/export.h>

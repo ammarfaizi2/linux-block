@@ -3,6 +3,7 @@
  * Copyright 2017 IBM Corporation
  */
 
+#include <linux/align.h>
 #include <linux/uaccess.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

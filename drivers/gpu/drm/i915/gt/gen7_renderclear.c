@@ -3,6 +3,8 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/align.h>
+
 #include "gen7_renderclear.h"
 #include "i915_drv.h"
 #include "intel_gpu_commands.h"

@@ -2,6 +2,7 @@
 /* Copyright 2017-2019 NXP */
 
 #include "enetc.h"
+#include <linux/align.h>
 #include <uapi/linux/net_tstamp.h>
 #include <net/xdp_api.h>
 #include <net/checksum.h>

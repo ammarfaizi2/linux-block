@@ -10,6 +10,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/align.h>
 #include <linux/skbuff_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

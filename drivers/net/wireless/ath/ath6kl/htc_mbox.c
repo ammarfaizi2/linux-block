@@ -21,6 +21,7 @@
 #include "hif-ops.h"
 #include "trace.h"
 
+#include <linux/align.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <asm/unaligned.h>

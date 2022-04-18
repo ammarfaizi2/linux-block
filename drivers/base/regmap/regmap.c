@@ -6,6 +6,7 @@
 //
 // Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
 
+#include <linux/align.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>

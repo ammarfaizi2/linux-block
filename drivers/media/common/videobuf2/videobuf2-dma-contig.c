@@ -10,6 +10,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/align.h>
 #include <linux/vmalloc.h>
 #include <linux/scatterlist_api.h>
 #include <linux/refcount_api.h>

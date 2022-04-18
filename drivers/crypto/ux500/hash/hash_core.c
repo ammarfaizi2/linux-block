@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "hashX hashX: " fmt
 
+#include <linux/align.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>

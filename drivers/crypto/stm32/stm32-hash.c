@@ -6,6 +6,7 @@
  * Author(s): Lionel DEBIEVE <lionel.debieve@st.com> for STMicroelectronics.
  */
 
+#include <linux/align.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>

@@ -12,6 +12,7 @@
 #define DRVNAME					PMUNAME "_pmu"
 #define pr_fmt(fmt)				DRVNAME ": " fmt
 
+#include <linux/align.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/pgtable_api.h>

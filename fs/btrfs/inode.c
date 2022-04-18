@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/align.h>
 #include <linux/uio_api.h>
 #include <linux/writeback_api.h>
 #include <linux/wait_api.h>

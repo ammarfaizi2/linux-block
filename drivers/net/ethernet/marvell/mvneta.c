@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/align.h>
 #include <net/xdp_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>

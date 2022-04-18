@@ -12,6 +12,7 @@
  * provides the key and IV to use.
  */
 
+#include <linux/align.h>
 #include <linux/fs_api.h>
 #include <linux/uio_api.h>
 #include <linux/pagemap.h>

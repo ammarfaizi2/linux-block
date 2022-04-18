@@ -3,6 +3,7 @@
  * linux/mm/page_isolation.c
  */
 
+#include <linux/align.h>
 #include <linux/vmstat.h>
 #include <linux/spinlock_api.h>
 #include <linux/mmzone_api.h>

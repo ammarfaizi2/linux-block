@@ -6,6 +6,7 @@
  * Copyright (C) 2001 Peter Bergner.
  */
 
+#include <linux/align.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
 #include <linux/memory_hotplug.h>

@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/topology.h>

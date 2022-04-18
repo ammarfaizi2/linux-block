@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/align.h>
 #include <linux/lockdep_api.h>
 #include <linux/sched/cond_resched.h>
 

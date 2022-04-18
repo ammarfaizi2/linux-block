@@ -2,6 +2,7 @@
 
 #define DISABLE_BRANCH_PROFILING
 
+#include <linux/align.h>
 #include <linux/pgtable_api.h>
 #include <linux/kasan.h>
 #include <linux/memblock.h>

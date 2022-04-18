@@ -9,6 +9,7 @@
 
 #include "nx-842.h"
 
+#include <linux/align.h>
 #include <linux/preempt.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>

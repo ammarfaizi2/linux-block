@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/align.h>
 #include <linux/uaccess.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pagemap.h>

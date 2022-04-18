@@ -3,6 +3,8 @@
  * Copyright © 2014 Intel Corporation
  */
 
+#include <linux/align.h>
+
 #include "gem/i915_gem_lmem.h"
 
 #include "gen8_engine_cs.h"

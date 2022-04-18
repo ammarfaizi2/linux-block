@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "radix-mmu: " fmt
 
+#include <linux/align.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>

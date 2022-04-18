@@ -9,6 +9,7 @@
  * Copyright (C) 2015 Red Hat. Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/align.h>
 #include <linux/vmalloc.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

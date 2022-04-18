@@ -7,6 +7,7 @@
  * Marcin Wojtas <mw@semihalf.com>
  */
 
+#include <linux/align.h>
 #include <net/xdp_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>

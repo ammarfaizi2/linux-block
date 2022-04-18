@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "kcsan: " fmt
 
+#include <linux/align.h>
 #include <linux/timex.h>
 #include <linux/irqflags.h>
 #include <linux/cpumask_api.h>

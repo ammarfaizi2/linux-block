@@ -3,6 +3,7 @@
  *    Copyright IBM Corp. 2006
  */
 
+#include <linux/align.h>
 #include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
