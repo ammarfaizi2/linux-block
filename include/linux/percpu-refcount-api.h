@@ -57,6 +57,7 @@
 #include <linux/kernel.h>
 #include <linux/percpu.h>
 #include <linux/rcupdate.h>
+#include <linux/irqflags.h>
 #include <linux/gfp.h>
 
 int __must_check percpu_ref_init(struct percpu_ref *ref,

@@ -21,6 +21,7 @@
 #include <linux/rcupdate.h>
 #include <linux/tracepoint-defs.h>
 #include <linux/static_call.h>
+#include <linux/irqflags.h>
 
 struct module;
 struct tracepoint;
