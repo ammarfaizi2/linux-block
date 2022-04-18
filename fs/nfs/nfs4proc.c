@@ -35,6 +35,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>
