@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/math64.h>
 #include <linux/align.h>
 #include <linux/minmax.h>
 #include <linux/sched/cond_resched.h>
